@@ -1,0 +1,42 @@
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+acorn_website=$1
+
+if [ -n "$acorn_website" ]; then
+    if [ -f acorn-git-clone-website ]; then
+        cd /var/www/
+        echo "${GREEN}INFO${NC}: Cloning $acorn_website"
+        bash acorn-git-clone-website $acorn_website
+        if [ $? != 0 ]; then
+            echo "${RED}ERROR${NC}: Could not clone $acorn_website"
+            exit 1
+        fi
+        cd -
+    else
+        echo "${RED}ERROR${NC}: Could not find acorn-git-clone-website"
+        exit 1
+    fi
+fi
+
+if [ -f acorn-cron-git-pull ]; then
+    # Create a cron job to run this 1/hour
+    dir=`pwd`
+    if [ -d /etc/cron.hourly/ ]; then
+        echo "${GREEN}INFO${NC}: Creating acorn-cron-git-pull in /etc/cron.hourly to refresh websites and cubes"
+        sudo cp acorn-cron-git-pull /etc/cron.hourly/
+        if [ $? != 0 ]; then
+            echo "${RED}ERROR${NC}: Could not create"
+            exit 1
+        fi
+    else
+        echo "${RED}ERROR${NC}: Could not find /etc/cron.hourly"
+        exit 1
+    fi
+fi

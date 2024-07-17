@@ -1,0 +1,148 @@
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+# --------------------------------------------- Inputs & situation
+port=$1
+if [ -z "$port" ]; then port=6001; fi
+
+dir=`pwd`
+subdir=`dirname $dir`
+website=`basename $dir`
+
+if [ "$subdir" != /var/www ]; then
+  echo "${RED}ERROR${NC}: This script must be run in a website under ${YELLOW}/var/www/${NC}"
+	exit 1
+fi
+
+if [ ! -f .env ]; then
+  echo "${RED}ERROR${NC}: No ${YELLOW}.env${NC} file found in this website at ${YELLOW}$dir${NC}. Is this a Laravel website?"
+  echo "Maybe run ${YELLOW}acorn-setup-new-winter${NC} or ${YELLOW}acorn-git-clone-website${NC}"
+	exit 1
+fi
+
+hostname=`grep -E "APP_URL"= .env | cut -d '=' -f 2 | sed -En 's#.*://##p'`
+if [ -z "$hostname" ]; then
+  echo "${RED}ERROR${NC}: Unable to ascertain hostname from APP_URL in ${YELLOW}.env${NC}"
+  exit 1
+fi
+
+# --------------------------------------------- Composer requirements
+if [ ! -d vendor/pusher/pusher-php-server ];      then composer    require pusher/pusher-php-server;      fi
+if [ ! -d vendor/beyondcode/laravel-websockets ]; then composer -W require beyondcode/laravel-websockets; fi
+# Maybe these are not needed
+# because they have been copied into our plugin directly
+#if [ ! -d node_modules/laravel-echo ];            then npm install --save-dev laravel-echo;            fi
+#if [ ! -d node_modules/pusher-js ];               then npm install --save-dev pusher-js;               fi
+
+# --------------------------------------------- Files & Patches
+echo "${GREEN}INFO${NC}: Installing websockets system for ${YELLOW}$website${NC}, hostname: ${YELLOW}$hostname${NC} on port ${YELLOW}$port${NC}"
+if [ -z "$(grep Laravel-Websockets .env)" ] && [ -z "$(grep LARAVEL_WEBSOCKETS .env)" ]; then
+  echo "${GREEN}INFO${NC}: Injecting Laravel-Websockets settings in to .env with port $port"
+  echo "
+# Laravel-Websockets, broacasting and Echo
+BROADCAST_DRIVER=pusher
+PUSHER_APP_ID=intranet
+PUSHER_APP_KEY=intranet
+PUSHER_APP_SECRET=intranet
+PUSHER_APP_CLUSTER=intranet
+PUSHER_APP_PATH=/app/intranet/
+PUSHER_SCHEME=http
+LARAVEL_WEBSOCKETS_PORT=$port
+LARAVEL_WEBSOCKETS_SSL_LOCAL_CERT=
+LARAVEL_WEBSOCKETS_SSL_LOCAL_PK=
+LARAVEL_WEBSOCKETS_SSL_PASSPHRASE=
+  " >> .env
+fi
+
+# Patch for beyondcode/laravel-websockets
+# because Winter has its own Authorisation system, not Laravel Gates
+# Check `composer status` for a full list of altered vendor packages
+service_file=vendor/beyondcode/laravel-websockets/src/WebSocketsServiceProvider.php
+if [ -z "$(grep ';//->registerDashboardGate' $service_file)" ]; then
+  echo "${GREEN}INFO${NC}: Patching ${YELLOW}WebSocketsServiceProvider.php${NC}"
+  echo "--- WebSocketsServiceProvider_original.php      2023-02-15 10:40:49.000000000 +0000
++++ WebSocketsServiceProvider.php       2023-06-05 07:59:48.411946490 +0100
+@@ -31,7 +31,7 @@
+
+        \$this
+            ->registerRoutes()
+-            ->registerDashboardGate();
++            ;//->registerDashboardGate();
+
+        \$this->loadViewsFrom(__DIR__.'/../resources/views/', 'websockets');
+
+" | patch -u $service_file
+  if [ $? != 0 ]; then
+    echo "${RED}ERROR${NC}: Failed to patch ${YELLOW}$service_file${NC}"
+    echo "Maybe new version?"
+    exit 1
+  fi
+fi
+
+# Configuration
+# https://beyondco.de/docs/laravel-websockets/basic-usage/pusher
+# 'When using Laravel WebSockets as a Pusher replacement
+# without having used Pusher before,
+# it does not matter what you set as your PUSHER_ variables.
+# Just make sure they are unique for each project.'
+if [ -z "$(grep $hostname config/broadcasting.php)" ]; then
+  echo "${GREEN}INFO${NC}: Setting configurations in ${YELLOW}broadcasting.php${NC}"
+  echo "--- broadcasting_original.php	2023-06-02 15:35:08.156939005 +0100
++++ broadcasting.php	2023-06-02 15:36:23.804429454 +0100
+@@ -39,4 +39,7 @@
+            'options' => [
+                'cluster' => env('PUSHER_APP_CLUSTER'),
+-                'useTLS' => true,
++                'encrypted' => true,
++                'host'    => '$hostname',
++                'port'    => $port,
++                'scheme'  => 'http'
+            ],
+" | patch -u config/broadcasting.php
+  if [ $? != 0 ]; then
+    echo "${RED}ERROR${NC}: Failed to patch ${YELLOW}config/broadcasting.php${NC}"
+    echo "Maybe new version?"
+    exit 1
+  fi
+fi
+
+# Now that our new installs have been referenced
+# add our ServiceProviders in to the providers
+if [ -z "$(grep WebSocketsServiceProvider::class config/app.php)" ]; then
+  echo "${GREEN}INFO${NC}: Patching file ${YELLOW}app.php${NC}"
+  echo "--- config/app.php      2024-06-16 11:18:26.789740084 +0300
++++ config/app-original.php     2024-07-09 22:35:46.136012850 +0300
+@@ -266,6 +266,8 @@
+         // 'Illuminate\Html\HtmlServiceProvider', // Example
+
+         System\ServiceProvider::class,
++        Illuminate\Broadcasting\BroadcastServiceProvider::class,
++        BeyondCode\LaravelWebSockets\WebSocketsServiceProvider::class,
+     ]),
+
+     /*
+" | patch -u config/app.php
+  if [ $? != 0 ]; then
+    echo "${RED}ERROR${NC}: Failed to patch ${YELLOW}config/app.php${NC} with new Service Provider"
+    echo "Maybe new version?"
+    exit 1
+  fi
+fi
+
+# ------------------------------------------------ Migrations
+# These publications require the app.php provider WebSocketsServiceProvider
+# php artisan vendor:publish --provider="BeyondCode\LaravelWebSockets\WebSocketsServiceProvider" --tag="config" # config/websockets.php
+# php artisan vendor:publish --provider="BeyondCode\LaravelWebSockets\WebSocketsServiceProvider" --tag="migrations"
+php artisan vendor:publish --all
+
+# To generate /storage/framework/packages.php
+php artisan package:discover
+
+# TODO: Enter this in Ubuntu services
+echo "${GREEN}INFO${NC}: To run the server run ${YELLOW}php artisan websockets:serve${NC}"

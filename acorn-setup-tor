@@ -1,0 +1,58 @@
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+# Pre-requisites
+if [ -z "$(which wget)" ]; then sudo apt -y install wget; fi
+if [ -z "$(which gpg)" ]; then sudo apt -y install gpg; fi
+
+if [ ! -d ~/Downloads ]; then
+    mkdir ~/Downloads
+    if [ $? != 0 ]; then echo "ERROR: Cannot create ~/Downloads"; exit 1; fi
+fi
+
+# Download and verify
+tor_version=13.5.1
+tor_file=tor-browser-linux-x86_64-$tor_version.tar.xz
+echo "INFO: Installing tor-proxy"
+if [ -f ~/Downloads/$tor_file ]; then
+    echo "WARNING: Re-using ~/Downloads/$tor_file for install"
+else
+    wget -O ~/Downloads/$tor_file https://www.torproject.org/dist/torbrowser/$tor_version/$tor_file
+fi
+
+if [ -f ~/Downloads/.tor.keyring ]; then
+    echo "WARNING: Found torbrowser@torproject.org keyring locally"
+else
+    echo "Verifying download: Locate and download torbrowser@torproject.org key"
+    gpg --auto-key-locate nodefault,wkd --locate-keys torbrowser@torproject.org
+    if [ $? != 0 ]; then echo "ERROR"; exit 1; fi
+    gpg --output ~/Downloads/.tor.keyring --export 0xEF6E286DDA85EA2A4BA7DE684E2C6E8793298290
+    if [ $? != 0 ]; then echo "ERROR"; exit 1; fi
+fi
+
+if [ -f $tor_file.asc ]; then
+    cp $tor_file.asc ~/Downloads
+else
+    echo "Getting ASC"
+    wget -O ~/Downloads/$tor_file.asc https://www.torproject.org/dist/torbrowser/$tor_version/$tor_file.asc
+fi
+echo "Verifying with GPGv"
+gpgv --keyring ~/Downloads/.tor.keyring ~/Downloads/$tor_file.asc ~/Downloads/$tor_file
+if [ $? != 0 ]; then echo "ERROR"; exit 1; fi
+
+# Extract and install
+echo "Extracting"
+tar -xJf ~/Downloads/$tor_file -C ~/Downloads/
+chmod +x ~/Downloads/tor-browser/start-tor-browser.desktop
+
+# Setup shortcut
+run=`grep ^Exec ~/Downloads/tor-browser/start-tor-browser.desktop | cut -d "=" -f 2`
+echo "#!/bin/bash" > ~/Downloads/tor-browser/start-tor-browser
+echo $run >> ~/Downloads/tor-browser/start-tor-browser
+chmod +x ~/Downloads/tor-browser/start-tor-browser

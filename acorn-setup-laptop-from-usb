@@ -1,0 +1,98 @@
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+central_server=acornassociated.org
+git_server=gitlab.$central_server
+download_dir=~/Downloads
+
+# Pre-requisites
+# We assume network connectivity
+if [ -z "$(which git)" ];  then sudo apt -y install git;  fi
+if [ -z "$(which wget)" ]; then sudo apt -y install wget; fi
+if [ -z "$(which gpg)" ];  then sudo apt -y install gpg;  fi
+
+if [ ! -d $download_dir ]; then
+    mkdir $download_dir
+    if [ $? != 0 ]; then echo "${RED}ERROR${NC}: Cannot create $download_dir"; exit 1; fi
+fi
+
+if [ ! -f $download_dir/tor-browser/start-tor-browser ]; then
+    # Install and run tor
+    if [ -f acorn-setup-tor ]; then
+        # Often on FAT32 filesystems, so no +x
+        bash ./acorn-setup-tor
+        if [ $? != 0 ]; then exit 1; fi
+    else
+        echo "${RED}ERROR${NC}: Cannot find ${YELLOW}acorn-setup-tor${NC}"
+        exit 1
+    fi
+else
+    echo "Found tor-browser"
+fi
+cd $download_dir/tor-browser/
+bash start-tor-browser
+cd -
+
+# Setup the server git profile for pulls
+if [ ! -f ~/.ssh/id_rsa.pub ]; then
+    echo "${GREEN}INFO${NC}: Generating SSH RSA keys"
+    ssh-keygen -t rsa -f ~/.ssh/id_rsa -q -N ""
+fi
+echo "${GREEN}INFO${NC}: Pulic key:"
+cat ~/.ssh/id_rsa.pub
+echo "${GREEN}INFO${NC}: Add the user ${YELLOW}$USER${NC} to ${YELLOW}http://$git_server${NC}, with the above ssh key and password ${YELLOW}@cornAssociated.org${NC}"
+echo "And give Reporter access to ${YELLOW}office/scripts${NC} and any repositories you wish to pull"
+read -p "Done (Maybe needs tor-browser running)? " yn
+
+# Primary aim is to git clone scripts and pass control over
+if [ ! -d ~/scripts/.git ]; then
+    # Detect if we need a proxy
+    wget -o $download_dir/test_git $git_server
+    if [ $? != 0 ]; then
+        echo "${RED}ERROR${NC}: Cannot access ${YELLOW}$git_server${NC}"
+
+        # Setup git (ssh) to use tor-browser socks5 on 9150
+        if [ ! -f ~/.ssh/config ]; then
+            echo "# acorn-setup-laptop" > ~/.ssh/config
+            if [ $? != 0 ]; then echo "${RED}ERROR${NC}: Writing ~/.ssh/config"; exit 1; fi
+        fi
+        if [ -n "$(grep $git_server ~/.ssh/config)" ]; then
+            echo "SSH config for $git_server already in ~/.ssh/config"
+        else
+            echo "Writing SSH config for ${YELLOW}$git_server${NC} to use tor"
+            echo "Host $git_server"  >> ~/.ssh/config
+            echo "  User sanchez"    >> ~/.ssh/config
+            echo "  ProxyCommand nc -X 5 -x localhost:9150 %h %p" >> ~/.ssh/config
+            echo "  PreferredAuthentications publickey" >> ~/.ssh/config
+        fi
+    else
+        echo "${GREEN}INFO${NC}: Direct Connection to ${YELLOW}$git_server${NC} achieved"
+    fi
+
+    # GitLab connection
+    if [ -z "$(git config --global user.name)" ]; then
+        git config --global user.name  $USER
+        git config --global user.email $USER@$central_server
+    fi
+
+    # Download latest acorn-setup-laptop
+    # Will also clone itself in to /var/www/ later
+    git clone git@$git_server:office/scripts.git ~/scripts
+    if [ $? != 0 ]; then echo "${RED}ERROR${NC}: Cloning office/scripts"; exit 1; fi
+else
+    echo "scripts found. Pulling"
+    cd ~/scripts
+    git pull
+    if [ $? != 0 ]; then echo "${RED}ERROR${NC}: Pulling latest office/scripts"; exit 1; fi
+    cd -
+    if [ ! -f ~/scripts/acorn-setup-laptop ]; then echo "${RED}ERROR${NC}: Didn't get the right scripts maybe?"; exit 1; fi
+fi
+
+# Pass over to the latest script
+bash ~/scripts/acorn-setup-laptop $@
