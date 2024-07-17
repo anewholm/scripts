@@ -1,0 +1,145 @@
+<?xml version="1.0"?>
+<Schema name="Winter">
+  <Cube name="Events" defaultMeasure="Num Events">
+    <Table name="acornassociated_calendar_instance">
+      <AggName name="agg_c_count_fact">
+        <AggFactCount column="id"/>
+        <AggLevel name="[Time].[Year]" column="id" />
+      </AggName>
+    </Table>
+
+    <Dimension name="Time" type="TimeDimension">
+      <Hierarchy hasAll="true" primaryKey="date">
+        <Table name="acornassociated_calendar_instance"/>
+        <Level name="Year" type="Numeric" uniqueMembers="true" levelType="TimeYears">
+          <KeyExpression><SQL>extract(year from date)</SQL></KeyExpression>
+        </Level>
+        <Level name="Month" type="String" uniqueMembers="false" levelType="TimeMonths">
+          <KeyExpression><SQL>TO_CHAR(date, 'Month')</SQL></KeyExpression>
+        </Level>
+        <Level name="Day" type="Numeric" uniqueMembers="false" levelType="TimeDays">
+          <KeyExpression><SQL>extract(day from date)</SQL></KeyExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Status" foreignKey="event_part_id">
+      <!-- WHERE instance.event_part_id = acornassociated_calendar_event_part.id -->
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acornassociated_calendar_event_part">
+        <!-- From FoodMart:
+          <Dimension name="Product">
+            <Hierarchy hasAll="true" primaryKey="product_id" primaryKeyTable="product">
+              <Join leftKey="product_class_id" rightKey="product_class_id">
+                <Table name="product"/>
+                <Table name="product_class"/>
+              </Join>
+            =
+              <Query><SQL>
+                // Note that product_class has product_class_id PK, not id
+                SELECT *
+                FROM "product", "product_class"
+                WHERE "product"."product_class_id" = "product_class"."product_class_id"
+              </SQL></Query>
+              <Level name="Product Subcategory" table="product_class" column="product_subcategory" uniqueMembers="false"/>
+              <Level name="Brand Name" table="product" column="brand_name" uniqueMembers="false"/>
+        -->
+        <Join leftKey="status_id" rightKey="id">
+          <Table name="acornassociated_calendar_event_part" alias="event_part"/>
+          <Table name="acornassociated_calendar_event_status" alias="event_status"/>
+          <!-- WHERE event_part.status_id = event_status.id =  -->
+        </Join>
+        <Level name="Status" table="event_status" column="id" nameColumn="name" uniqueMembers="true">
+          <Property name="Description" column="description"/>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Type" foreignKey="event_part_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acornassociated_calendar_event_part">
+        <Join leftKey="type_id" rightKey="id">
+          <Table name="acornassociated_calendar_event_part" alias="event_part"/>
+          <Table name="acornassociated_calendar_event_type" alias="event_type"/>
+        </Join>
+        <Level name="Type" table="event_type" column="id" nameColumn="name" uniqueMembers="true">
+          <Property name="Description" column="description"/>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Location" foreignKey="event_part_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acornassociated_calendar_event_part">
+        <Join leftKey="location_id" rightKey="id">
+          <Table name="acornassociated_calendar_event_part" alias="event_part"/>
+          <Table name="acornassociated_location_location" alias="location"/>
+        </Join>
+        <Level name="Location" table="location" column="id" nameColumn="name" uniqueMembers="true">
+          <Property name="Country" column="country_code" />
+          <Property name="State" column="state_code" />
+          <Property name="City" column="city" />
+          <Property name="Vicinity" column="vicinity" />
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Calendar" foreignKey="event_part_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acornassociated_calendar_event_part">
+        <Join leftKey="event_id" rightKey="id">
+          <Table name="acornassociated_calendar_event_part" alias="event_part" />
+          <Table name="acornassociated_calendar_event" alias="event" />
+        </Join>
+        <Level name="Calendar" table="event" column="calendar_id" uniqueMembers="true">
+          <CaptionExpression>
+            <SQL>(select name from acornassociated_calendar where id = event.calendar_id)</SQL>
+          </CaptionExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="UserGroup" foreignKey="event_part_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acornassociated_calendar_event_part">
+        <Join leftKey="id" rightKey="event_part_id">
+          <Table name="acornassociated_calendar_event_part" alias="event_part"/>
+          <Table name="acornassociated_calendar_event_user_group" alias="user_group"/>
+        </Join>
+        <Level name="Group" table="user_group" column="user_group_id" type="Numeric" uniqueMembers="true">
+          <CaptionExpression>
+            <SQL>(select name from backend_user_groups where id = user_group.user_group_id)</SQL>
+          </CaptionExpression>
+        </Level>
+        <!-- Level name="User" table="backend_users" column="id" parentColumn="user_group_id" type="Numeric" nameColumn="login" uniqueMembers="true">
+          <Closure parentColumn="user_group_id" childColumn="user_id">
+            <Table name="backend_users_groups"/>
+          </Closure>
+        </Level -->
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="User" foreignKey="event_part_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acornassociated_calendar_event_part">
+        <Join leftKey="id" rightKey="event_part_id">
+          <Table name="acornassociated_calendar_event_part" alias="event_part"/>
+          <Table name="acornassociated_calendar_event_user" alias="user"/>
+        </Join>
+        <Level name="User" table="user" column="user_id" type="Numeric" uniqueMembers="true">
+          <CaptionExpression>
+            <SQL>(select login from backend_users where id = "user".user_id)</SQL>
+          </CaptionExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Event" foreignKey="event_part_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acornassociated_calendar_event_part">
+        <Table name="acornassociated_calendar_event_part"/>
+        <Level name="Event" column="id" nameColumn="name" uniqueMembers="true">
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Measure name="Event period" aggregator="sum" formatString="Standard">
+      <MeasureExpression><SQL>extract(epoch from instance_end - instance_start) / 3600</SQL></MeasureExpression>
+    </Measure>
+
+    <Measure name="Num Events" column="id" aggregator="count" formatString="Standard"/>
+  </Cube>
+</Schema>
