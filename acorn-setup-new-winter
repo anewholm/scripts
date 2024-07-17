@@ -1,0 +1,250 @@
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+# This script installs ALL Acorn Associated plugins and runs the system
+# It can be run from within an existing Laravel / Winter installation
+# or to install the entire framework from scratch
+
+# Work only in the standard install place
+cd /var/www
+dir=`pwd`
+
+name=$1
+password=$2
+
+# -------------------------------------------- Sanitise inputs
+if [ ! -f acorn-setup-database ]; then
+	echo "${RED}ERROR${NC}: acorn-setup-database required"
+	exit 1
+fi
+if [ ! -f acorn-setup-hostname ]; then
+	echo "${RED}ERROR${NC}: acorn-setup-database required"
+	exit 1
+fi
+if [ "$dir" != "/var/www" ]; then
+	echo "${RED}ERROR${NC}: Currently, only full system install is supported, run only from /var/www/"
+	exit 1
+fi
+if [ -z "$name" ];     then name="winter"; fi
+if [ -z "$password" ]; then password="QueenPool1@"; fi
+
+
+if [ -z "$(groups | grep www-data)" ]; then
+	echo "${RED}ERROR${NC}: $USER was not in group www-data, so added. Please log out-in and re-run the script"
+	sudo usermod -a -G www-data $USER
+	exit 1
+fi
+
+# -------------------------------------------- 3rd party installs
+if [ -z "$(which php)" ]; then
+	echo "${GREEN}INFO${NC}: Installing PHP"
+	sudo apt install -y php php-pgsql
+fi
+
+if [ -z "$(which apache2ctl)" ]; then
+	echo "${GREEN}INFO${NC}: Installing Apache"
+	sudo apt install -y apache2
+fi
+
+if [ -z "$(which composer)" ]; then
+	echo "${GREEN}INFO${NC}: Installing Composer v2.5.8"
+	# https://getcomposer.org/download/
+	php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+	php -r "if (hash_file('sha384', 'composer-setup.php') === 'e21205b207c3ff031906575712edab6f13eb0b361f2085f1f1237b7126d785e826a450292b6cfd1d64d92e6563bbde02') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+	if [ -f composer-setup.php ]; then
+		php composer-setup.php
+		php -r "unlink('composer-setup.php');"
+		sudo mv composer.phar /usr/local/bin/composer
+	else
+		echo "${RED}ERROR${NC}: Composer setup not found. Has the version been upgraded? New hash?"
+		exit 1
+	fi
+fi
+if [ "$(composer --version | cut -d " " -f 3  | cut -d "." -f 1)" -lt 2 ]; then
+	echo "${RED}ERROR${NC}: Composer >= v2.5.8 required"
+	exit 1
+fi
+
+if [ -z "$(which psql)" ]; then
+	sudo apt install -y postgresql postgresql-contrib
+fi
+# Copied from Winter installation guide
+sudo apt install -y php php-ctype php-curl php-xml php-fileinfo php-gd php-json php-mbstring php-mysql php-sqlite3 php-zip
+
+# -------------------------------------------- Website Installation
+if [ -d $name ]; then
+	if [ -z "$(ls $name)" ]; then
+		echo "${YELLOW}WARNING${NC}: Directory [$name] already exists. Entering..."
+	else
+		read -p "${YELLOW}WARNING${NC}: Directory [$name] exists and is not empty. Continue? [Y/n] " yn
+		case $yn in
+			[Yy]* )
+				;;
+			* )
+				echo "ok, exciting process. please resolve manually"
+				exit 1;
+				;;
+		esac
+	fi
+else
+	echo "${GREEN}INFO${NC}: Installing Winter into directory [$name]"
+	composer create-project wintercms/winter $name
+	cd $name
+	sudo chown -R www-data:www-data .; sudo chmod -R gu+w .
+	sudo chmod +x artisan
+
+	linecount_env=`wc -l .env | cut -d " " -f 1`
+	if [ "$linecount_env" -le 2 ]; then
+		echo "${YELLOW}WARNING${NC}: Auto-populating> 2 the .env file"
+		echo "APP_NAME=intranet
+APP_DEBUG=true
+APP_URL='$hostname'
+
+# PostgreSQL only for intranet Calendar system
+DB_CONNECTION='pgsql'
+DB_HOST='127.0.0.1'
+DB_PORT=5432
+DB_DATABASE='$name'
+DB_USERNAME='$name'
+DB_PASSWORD='$password'
+
+CACHE_DRIVER='file'
+SESSION_DRIVER='file'
+QUEUE_CONNECTION='sync'
+
+# Basic AA SMTP setup. Set the username in your account
+MAIL_MAILER='smtp'
+MAIL_ENCRYPTION='tls'
+MAIL_HOST='smtp.stackmail.com'
+MAIL_PASSWORD=null
+MAIL_PORT=465
+MAIL_USERNAME=null
+
+ROUTES_CACHE=false
+ASSET_CACHE=false
+LINK_POLICY='detect'
+ENABLE_CSRF=true
+DATABASE_TEMPLATES=false
+" >> .env
+	fi
+
+	# This will also update the Laravel .env file to use the created database
+	../acorn-setup-database pgsql $name
+	# This will also update the Laravel .env file to use the hostname (.laptop)
+	sudo ../acorn-setup-hostname $name
+	hostname=$name.laptop
+fi
+
+# Initial installation
+# We could also use ./artisan winter:install --no-interaction
+composer install
+php artisan migrate
+if [ "$?" != 0 ]; then
+	echo "${RED}ERROR${NC}: Migration failed, exiting"
+	exit 0
+fi
+
+# IMAP & SMTP
+if [ ! -d vendor/webklex/php-imap ];     then composer require webklex/php-imap;     fi
+if [ ! -d vendor/webklex/laravel-imap ]; then composer require webklex/laravel-imap; fi
+sed -i "s|MAIL_HOST=\".*\"|MAIL_HOST=\"smtp.stackmail.com\"|" .env
+sed -i "s|MAIL_PORT=\".*\"|MAIL_PORT=465|" .env
+
+composer require winter/wn-builder-plugin
+composer require winter/wn-location-plugin
+composer require winter/wn-user-plugin
+
+# Temporary hack until we work out how to auto generate the classes.php
+if [ -f $dir/scripts/winter/classes.php ]; then
+	echo "${GREEN}INFO${NC}: Temporary hack to generate ~/storage/framework/classes.php"
+	cp $dir/scripts/winter/classes.php storage/framework/;
+fi
+
+# -------------------------------------------- Install AA modules and plugins
+cd modules
+if [ ! -d acornassociated ]; then git clone git@gitlab.acornassociated.org:office/acornassociated.git; fi
+if [ ! -d dbauth ];  then git clone git@gitlab.acornassociated.org:office/dbauth.git;  fi
+cd ..
+
+cd plugins
+mkdir -p acornassociated
+cd acornassociated
+if [ ! -d location ];  then git clone git@gitlab.acornassociated.org:office/location.git;  fi
+if [ ! -d messaging ]; then git clone git@gitlab.acornassociated.org:office/messaging.git; fi
+if [ ! -d calendar ];  then git clone git@gitlab.acornassociated.org:office/calendar.git;  fi
+cd ../..
+# TODO: Generate /storage/framework/classes.php because we have installed via git, not composer
+# php artisan package:discover or maybe
+# php artisan plugin:refresh location
+# php artisan plugin:refresh messaging
+# php artisan plugin:refresh calendar
+# TODO: The hack way above which copies a pre-written classes.php works for now...
+
+# Now that our new installs have been referenced
+# add our ServiceProviders in to the providers
+echo "--- app_original.php	2023-06-02 15:39:57.167122084 +0100
++++ app.php	2023-06-01 12:26:07.366171272 +0100
+@@ -266,6 +266,9 @@
+         // 'Illuminate\Html\HtmlServiceProvider', // Example
+
+         System\ServiceProvider::class,
++        DBAuth\ServiceProvider::class,
++        AcornAssociated\ServiceProvider::class,
++        Webklex\IMAP\Providers\LaravelServiceProvider::class,
+     ]),
+
+     /*
+" | patch -u config/app.php
+
+if [ -f acorn-add-websockets ]; then
+	./acorn-add-websockets
+fi
+
+# To generate /storage/framework/packages.php
+php artisan package:discover
+
+# Migrate our new plugins / modules
+php artisan migrate
+if [ "$?" != 0 ]; then
+	echo "${RED}ERROR${NC}: Migration failed, exiting"
+	exit 0
+fi
+
+# -------------------------------------------- Security
+# Note that our demons auto-run now
+# courtesy of our AA module
+echo "${GREEN}INFO${NC}: Resettings permissions"
+sudo chown -R www-data:www-data .; sudo chmod -R gu+w .
+
+php artisan winter:passwd -q admin password
+if [ "$?" == 0 ]; then
+	echo "${GREEN}INFO${NC}: [${YELLOW}admin${NC}] password set to [${YELLOW}password${NC}]"
+else
+	echo "${RED}ERROR${NC}: [${YELLOW}admin${NC}] password not set because user not found"
+fi
+
+php artisan winter:passwd -q $name $password
+if [ "$?" == 0 ]; then
+	echo "${GREEN}INFO${NC}: [${YELLOW}$name${NC}] password set to [${YELLOW}$password${NC}]"
+else
+	echo "${RED}ERROR${NC}: [${YELLOW}$name${NC}] password not set because user not found"
+fi
+
+echo "${YELLOW}WARNING${NC}: DBAuth was installed but not enabled. This is because setup would not have been possible without continually entering the user/pass for all artisan operations. Change .env DB_USERNAME=<DBAUTH> to enable."
+read -p "Enable now? [Y/n] " yn
+case $yn in
+	[Yy]* )
+		sed -i 's/^DB_USERNAME=.*/DB_USERNAME=<DBAUTH>/' .env
+		sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=<DBAUTH>/' .env
+		echo "${GREEN}INFO${NC}: DBAuth enabled."
+		;;
+esac
+
+echo "${GREEN}INFO${NC}: Login in to http://$name.laptop"
+

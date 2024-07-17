@@ -1,0 +1,168 @@
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+# --------------------------------------------------------------- Pre-requisities
+if [ -z "$(which snap)" ]; then
+	sudo apt-get install -y snapd
+fi
+
+if [ -z "$(which jq)" ]; then
+	sudo snap install jq
+fi
+
+# --------------------------------------------------------------- Ubuntu Pro
+# NOTE: ubuntu-advantage is the old security system for ubuntu
+# It only covered universe, not ESM. Ubuntu pro is newer and covers ESM
+if [ -z "$(which pro)" ]; then
+	# Download and install Ubuntu Pro
+	echo "Downloading and installing Ubuntu Pro..."
+	sudo apt-get install -y ubuntu-advantage-tools
+	if [ $? != 0 ]; then
+		echo "${RED}ERROR${NC}: Failed to install Ubuntu Pro"
+		exit 9
+	fi
+else
+	pro_version=`pro --version`
+	echo "Found Ubuntu Pro ${YELLOW}$pro_version${NC}"
+fi
+
+if [ "$(pro api u.pro.status.is_attached.v1 | jq -r '.data.attributes.is_attached')" != "true" ]; then
+	echo "UPS (Ubuntu Pro Support) security is not enabled."
+	echo "You will need to setup an UPS account. You need an email account, for example with ${YELLOW}https://gmail.com${NC}, to receive UPS verification."
+	echo "Go to ${YELLOW}https://login.ubuntu.com${NC}. When finished, UPS will give you an account ${YELLOW}TOKEN${NC}."
+	read -p "UPS Token: " token
+
+	sudo pro attach $token
+	if [ $? != 0 ]; then
+		echo "${RED}ERROR${NC}: Failed to attach to UPS account"
+		exit 9
+	fi
+fi
+
+pro_services=`pro api u.pro.status.enabled_services.v1 | jq -r '.data.attributes.enabled_services'`
+
+# FIPS (Federal Information Processing Standard) compliance
+# Encryption standards for networks and computers
+# NOTE: FIPS cannot be enabled with Livepatch
+# TODO: Do we want to switch depending on if this is a server or not?
+#if ! sudo pro status | grep -qE "fips-updates:.*enabled"; then
+#    # Register for Ubuntu Pro
+#    echo "Registering your system for Ubuntu Pro..."
+#    sudo pro enable fips
+#fi
+
+# ESM (Expanded Security Maintenance)
+# This covers packages from all universe, not just canonical
+service_enabled=`echo $pro_services | grep -A 1 esm-apps | grep variant_enabled | grep true`
+if [ -z "$service_enabled" ]; then
+    echo "Enabling ${YELLOW}ESM${NC} apps..."
+    sudo pro enable esm-apps
+fi
+
+service_enabled=`echo $pro_services | grep -A 1 esm-infra | grep variant_enabled | grep true`
+if [ -z "$service_enabled" ]; then
+    echo "Enabling ${YELLOW}ESM${NC} infra..."
+    sudo pro enable esm-infra
+fi
+
+service_enabled=`echo $pro_services | grep -A 1 usg | grep variant_enabled | grep true`
+if [ -z "$service_enabled" ]; then
+    echo "Enabling ${YELLOW}USG${NC}..."
+    sudo pro enable usg
+fi
+
+# LivePatch. Live updates to the OS without restarts
+# Requires a kernel that can do it
+if [ -z "$(which canonical-livepatch)" ]; then
+	sudo snap install canonical-livepatch
+	if [ $? != 0 ]; then
+			echo "${RED}ERROR${NC}: canonical-livepatch command failed to install"
+			exit 1
+	fi
+fi
+# Enable
+service_enabled=`echo $pro_services | grep -A 1 livepatch | grep variant_enabled | grep true`
+if [ -z "$service_enabled" ]; then
+		echo "Enabling Canonical ${YELLOW}LivePatch${NC}..."
+		read -p "UPS Token: " token
+		sudo canonical-livepatch enable $token
+		if [ $? != 0 ]; then
+				echo "${RED}ERROR${NC}: Failed to enable Canonical LivePatch."
+				exit 9
+		fi
+else
+		echo "Canonical LivePatch is already enabled."
+fi
+
+# --------------------------------------------------------------- UFW
+if [ -z "$(which ufw)" ]; then
+    sudo apt-get install -y ufw
+fi
+sudo ufw enable
+if [ $? != 0 ]; then
+    echo "${RED}ERROR${NC}: Failed to enable the firewall."
+    exit 9
+fi
+
+
+# Check if UFW is denying incoming traffic by default
+if ! sudo ufw status | grep -q "default deny (incoming)"; then
+    # Set UFW to deny incoming traffic by default
+    echo "Setting UFW to deny incoming traffic by default..."
+    sudo ufw default deny incoming
+		if [ $? != 0 ]; then
+				echo "${RED}ERROR${NC}: Failed."
+				exit 9
+		fi
+fi
+
+# Check if port 6001 (WebSockets) is allowed
+if ! sudo ufw status | grep -q "6001/tcp"; then
+    # Allow port 6001 (WebSockets)
+    echo "Allowing port 6001 (WebSockets)..."
+    sudo ufw allow 6001
+		if [ $? != 0 ]; then
+				echo "${RED}ERROR${NC}: Failed."
+				exit 9
+		fi
+fi
+
+# Check if port 80 (HTTP) is allowed
+if ! sudo ufw status | grep -q "80/tcp"; then
+    # Allow port 80 (HTTP)
+    echo "Allowing port 80 (HTTP)..."
+    sudo ufw allow 80
+		if [ $? != 0 ]; then
+				echo "${RED}ERROR${NC}: Failed."
+				exit 9
+		fi
+fi
+
+# Check if port 443 (HTTPS) is allowed
+if ! sudo ufw status | grep -q "443/tcp"; then
+    # Allow port 443 (HTTPS)
+    echo "Allowing port 443 (HTTPS)..."
+    sudo ufw allow 443
+		if [ $? != 0 ]; then
+				echo "${RED}ERROR${NC}: Failed."
+				exit 9
+		fi
+fi
+
+
+# Check if port 8090 is allowed
+if ! sudo ufw status | grep -q "8090/tcp"; then
+    # Allow port 8090
+    echo "Allowing port 8090 for Tomcat OLAP requests..."
+    sudo ufw allow 8090
+		if [ $? != 0 ]; then
+				echo "${RED}ERROR${NC}: Failed."
+				exit 9
+		fi
+fi

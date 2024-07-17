@@ -1,0 +1,146 @@
+#!/bin/bash
+# requirements:
+# webs server is Apache2 standard location
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+input=$1
+
+if [ "$1" == "help" ] || [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
+	echo "Usage: acorn-setup-hostname <hostname>"
+	echo
+	echo "hostname: Host Name. By default ${GREEN}the current directory${NC}."
+	exit 0
+fi
+
+# --------------------------------- checks
+if ! ps -A | grep -q apache2; then
+  echo "${RED}ERROR${NC}: Apache2 not running on this server"
+  exit 1;
+fi
+if [ -z "$input" ]; then
+  echo "${YELLOW}WARNING${NC}: \$1 parameter (domain name without TLD, which will be .laptop) required"
+  directory_current=`basename \`pwd\``
+  directory_current_no_dev=${directory_current/.laptop/}
+  read -p "Set domain name to current directory [${GREEN}$directory_current_no_dev${NC}]${YELLOW}.laptop${NC} [Y/n]? " yn
+  case $yn in
+    [Yy]* )
+      input="$directory_current_no_dev"
+      ;;
+    * )
+      exit 1
+      ;;
+  esac
+fi
+
+# --------------------------------- webserver
+# Bad substitution comes if we are not using BASH
+input_no_dev=${input/.laptop/}
+virtualhost_filename=$input_no_dev.conf
+hostname=$input_no_dev
+if [[ $hostname != *"."* ]]; then
+	hostname=$hostname.laptop
+else
+	echo ""
+	read -p "${YELLOW}WARNING${NC}: hostname $hostname contains a dot so .laptop was NOT added. Ok [Y/n]?" yn
+  case $yn in
+    [Yy]* )
+      echo "ok, using $hostname"
+      ;;
+    * )
+      echo "ok, exciting process. please resolve manually"
+      exit 1;
+      ;;
+  esac
+fi
+
+if [ "$(id -u)" != "0" ]; then
+  echo "${YELLOW}WARNING${NC}: need to be root to setup the virtual host"
+else
+  if [ -f /etc/apache2/sites-enabled/$virtualhost_filename ]; then
+    echo "/etc/apache2/sites-enabled/$virtualhost_filename already exists"
+  else
+    current_directory=`pwd`
+    if [ -f /etc/apache2/sites-available/$virtualhost_filename ]; then
+      rm /etc/apache2/sites-available/$virtualhost_filename
+      rm /etc/apache2/sites-enabled/$virtualhost_filename
+    fi
+    # We also enable .htaccess with AllowOverride All
+    printf "<VirtualHost *:80>\n \
+            ServerName $hostname\n \
+            ServerAlias www.$hostname\n \
+            DocumentRoot $current_directory\n \
+            <Directory $current_directory>\n \
+              AllowOverride All\n \
+            </Directory>\n \
+    </VirtualHost>" > /etc/apache2/sites-available/$virtualhost_filename
+    ln -s /etc/apache2/sites-available/$virtualhost_filename /etc/apache2/sites-enabled/$virtualhost_filename
+
+    # Laravel / Winter
+    if [ -f .env.example ] || [ -f .env ]; then
+        if [ -d public ]; then
+          echo "${GREEN}INFO${NC}: Using the public sub-folder for DOCUMENT_ROOT. Usually indicates a Laravel install"
+          sudo sed -i "s|DocumentRoot $current_directory|DocumentRoot $current_directory/public|" /etc/apache2/sites-available/$virtualhost_filename
+        fi
+    fi
+
+    # Drupal recommended_project
+    if [ -d "web/sites" ]; then
+        sudo sed -i "s|DocumentRoot $current_directory|DocumentRoot $current_directory/web|" /etc/apache2/sites-available/$virtualhost_filename
+        echo "${GREEN}INFO${NC}: Using the web sub-folder for DOCUMENT_ROOT. Usually indicates a Drupal composer recommended_project install"
+    fi
+
+    sudo systemctl restart apache2.service
+    echo "created virtual host $hostname.conf and restarted server"
+  fi
+
+  if grep -q $hostname /etc/hosts; then
+    echo "$hostname already exists in /etc/hosts";
+  else
+    echo "127.0.0.1        $hostname" >> /etc/hosts
+    echo "127.0.0.1        www.$hostname" >> /etc/hosts
+    echo "added $hostname to /etc/hosts"
+  fi
+fi
+
+# ------------------------------------ Update framework if present
+# Laravel / Winter
+if [ -f .env.example ] && [ ! -f .env ]; then
+  cp .env.example .env
+	echo "${GREEN}INFO${NC}: Moved the Laravel example .env file into place"
+fi
+if [ -f .env ]; then
+  echo "${GREEN}INFO${NC}: Detected Laravel"
+	sed -i "s|APP_URL=.*|APP_URL=\"$hostname\"|" .env
+	echo "Updated the Laravel .env file in this directory to use the hostname [$hostname]"
+fi
+
+# Drupal
+webroot=
+if [ -d "web" ]; then webroot=web/; fi
+settings_dir="${webroot}sites/default"
+if [ -d "$settings_dir" ]; then
+  echo "${GREEN}INFO${NC}: Detected Drupal"
+  if [ -f "$settings_dir/default.settings.php" ] && [ ! -f "$settings_dir/settings.php" ]; then
+    cp "$settings_dir/default.settings.php" "$settings_dir/settings.php"
+    echo "${GREEN}INFO${NC}: Moved the Drupal default settings file into place"
+  fi
+  if [ -f "${webroot}core/lib/Drupal/Core/DrupalKernel.php" ]; then
+    sed -i "s|error_reporting(E_STRICT \| E_ALL)|error_reporting(E_STRICT \| E_ALL ^ E_DEPRECATED)|" ${webroot}core/lib/Drupal/Core/DrupalKernel.php
+    echo "${GREEN}INFO${NC}: Turned off E_DEPRECATED warnings for potential 9.1.5 install"
+  fi
+fi
+
+# ------------------------------------ Permissions (if in group www-data)
+if [ -n "$(groups | grep www-data)" ]; then
+  chown -R www-data:www-data 2> /dev/null
+  chmod -R o-w .   2> /dev/null
+  chmod -R o+w .   2> /dev/null
+  chmod -R ug+rw . 2> /dev/null
+fi
+
