@@ -1,0 +1,51 @@
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+pg_version=14
+pg_root=/etc/postgresql/$pg_version/main
+pg_replication_user=repl_user
+
+if [ ! -d $pg_root ]; then
+  echo "PG base dir $pg_root not found"
+  read -p "Install PostGreSQL $pg_version? " yn
+  case $yn in
+    Y|y|"")
+      sudo apt-get install -y postgresql-$pg_version
+      if [ $? != 0 ]; then
+        echo "${RED}ERROR${NC}: Installation failed"
+        exit 1
+      fi
+      break
+      ;;
+    *)
+      exit 1
+      ;;
+  esac
+else
+  echo "${GREEN}INFO${NC}: Found PostGreSQL $pg_version"
+fi
+
+# Configure PG for replication
+pg_confg=$pg_root/postgresql.conf
+sudo sed -i "s/$# *listen_addresses/listen_addresses/" $pg_confg
+sudo sed -i "s/$# *wal_level *=.*/wal_level = logical/" $pg_confg
+sudo sed -i "s/$# *wal_log_hints *=.*/wal_log_hints = on/" $pg_confg
+
+# Configure authentication
+pg_auth=$pg_root/pg_hba.conf
+if [ -z "$(grep repl_user $pg_auth)" ]; then
+  read -p "IP-address/subnet-mask of other replication node (192.168.0.0/16)? " ip_node
+  if [ -z "$ip_node" ]; then ip_node="192.168.0.0/16"; fi
+  echo "host  replication $pg_replication_user $ip_node  md5" >> $pg_auth
+fi
+sudo systemctl restart postgresql
+
+# Create a replication user
+#TODO: sudo -u postgres -c "psql -e 'CREATE USER ...'
+

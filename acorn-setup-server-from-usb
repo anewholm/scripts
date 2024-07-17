@@ -1,0 +1,16 @@
+#!/bin/bash
+
+acorn_website=$1
+
+if [ -f acorn-setup-laptop-from-usb ]; then
+    # Often on FAT32 filesystems, so no +x
+    bash ./acorn-setup-laptop-from-usb $@
+    if [ $? != 0 ]; then exit 1; fi
+
+    # ~/scripts should hve been successfully git cloned
+    bash ~/scripts/acorn-setup-server $@
+    if [ $? != 0 ]; then exit 1; fi
+else
+    echo "ERROR: Cannot find acorn-setup-laptop-from-usb"
+    exit 1
+fi

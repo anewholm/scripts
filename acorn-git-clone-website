@@ -1,0 +1,112 @@
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+dir_script=`pwd`
+git_repo_fq_name=$1
+
+# -------------------------------------------- Sanitise inputs
+if [ "$1" == "help" ] || [ "$1" == "--help" ] || [ "$1" == "-h" ] || [ -z "$git_repo_fq_name" ]; then
+	echo "This script is for git-cloning a full website project from our gitlab server and setting it all up on our laptop."
+	echo "Depending on your /var/www permissions setup, you may need to run this script as root."
+	echo "For example: it creates and links the database, sets up a http://*.laptop local domain name"
+	echo "and runs all the necessary ./artisan winter:* commands to make the website work."
+	echo "Maybe."
+	echo "Usage: acorn-git-clone <@FQ git repo name>"
+	echo "  @FQ git repo name:   Fully Qualified git repository name e.g. ${GREEN}office${NC}/${GREEN}scripts${NC}. Required"
+	exit 0
+fi
+if [ ! -f acorn-setup-database ]; then
+	echo "${RED}ERROR${NC}: acorn-setup-database script is required"
+	exit 0
+fi
+if [ ! -f acorn-setup-hostname ]; then
+	echo "${RED}ERROR${NC}: acorn-setup-database script is required"
+	exit 0
+fi
+
+if [ -z "$(which apache2ctl)" ]; then
+	echo "${YELLOW}WARNING${NC}: Apache2 not found."
+	read -p "Install apache2 [Y/n]? " yn
+	case $yn in
+		[Yy]* )
+			sudo apt -y install apache2
+			if [ $? != 0 ]; then
+				echo "${RED}ERROR${NC}: Failed to install apache2"
+				exit 1
+			fi
+			;;
+		* )
+			exit 1
+			;;
+	esac
+fi
+
+if [ ! -d /var/www/ ]; then
+	echo "${YELLOW}WARNING${NC}: Creating /var/www/"
+	mkdir -p /var/www/
+	if [ $? != 0 ]; then exit 1; fi
+fi
+
+if [ -z "$(groups | grep www-data)" ]; then
+	echo "${RED}ERROR${NC}: $USER was not in group www-data, so added. Please log out-in and re-run the script"
+	sudo usermod -a -G www-data $USER
+	exit 1
+fi
+
+git_repo_fq_name="${git_repo_fq_name/.git$/}"
+git_repo_group=`dirname $git_repo_fq_name`
+git_repo_name=`basename $git_repo_fq_name`
+
+if [ -z "$git_repo_group" ]; then
+	echo "${RED}ERROR${NC}: The git group is empty from $git_repo_fq_name"
+	exit 0
+fi
+if [ -z "$git_repo_name" ]; then
+	echo "${RED}ERROR${NC}: The git name is empty from $git_repo_fq_name"
+	exit 0
+fi
+if [ -d /var/www/$git_repo_name/ ]; then
+	echo "${RED}ERROR${NC}: The directory /var/www/$git_repo_name/ already exists."
+  read -p "Delete it [Y/n]? " yn
+  case $yn in
+    [Yy]* )
+			rm -rf /var/www/$git_repo_name/
+			if [ $? != 0 ]; then
+				echo "${RED}ERROR${NC}: Failed to remove /var/www/$git_repo_name/"
+				exit 1
+			fi
+      ;;
+    * )
+      exit 1
+      ;;
+  esac
+fi
+
+# -------------------------------------------- Git setup checking
+if [ -z "$(which git)" ]; then
+	echo "${GREEN}INFO${NC}: Installing git"
+	sudo apt -y install git
+	if [ $? != 0 ]; then
+		echo "${RED}ERROR${NC}: Failed to install git"
+		exit 1
+	fi
+fi
+
+# -------------------------------------------- Main repo cloning
+git clone git@gitlab.acornassociated.org:$git_repo_group/$git_repo_name.git /var/www/$git_repo_name
+git config --global --add safe.directory /var/www/$git_repo_name
+
+# -------------------------------------------- Apache and database
+cd /var/www/$git_repo_name
+$dir_script/acorn-setup-database pgsql
+sudo $dir_script/acorn-setup-hostname
+# This is how I do permissions. Maybe there is a better way
+sudo chown -R www-data:www-data .
+sudo chmod -R g+rw .
+cd -

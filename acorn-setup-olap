@@ -1,0 +1,162 @@
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+database=$1
+port=$2
+type=$3
+
+if [ -z "$database" ]; then database=winter; fi
+if [ -z "$port" ]; then port=8090; fi
+if [ -z "$type" ]; then type=xmondrian; fi
+
+echo "Using settings: SQLDatabase:${YELLOW}$database${NC}, Port:${YELLOW}$port${NC}, Type:${YELLOW}$type${NC}"
+
+# ------------------------------- Pre-requisites
+if [ -z "$(which java)" ]; then
+  echo "${GREEN}INFO${NC}: Installing Java default"
+  sudo apt-get -y install default-jdk
+fi
+java_version=`java --version | head -n 1 | cut -d " " -f 2`
+java_major=`echo "$java_version" | cut -d "." -f 1`
+
+# Install the JDBC Postgres driver
+# before we install TomCat
+if [ ! -f /usr/share/java/postgresql.jar ]; then
+  echo "${GREEN}INFO${NC}: Installing postgres JDBC"
+  if [ ! -d /usr/share/java/ ]; then
+    echo "${RED}ERROR${NC}: /usr/share/java/ not found"
+    exit 1
+  fi
+  sudo wget -O /usr/share/java/postgresql.jar https://jdbc.postgresql.org/download/postgresql-42.7.3.jar
+fi
+
+if [ ! -d /var/lib/tomcat9 ]; then
+  ubuntu_version=`lsb_release -a 2> /dev/null | grep Release | cut -f 2 | cut -d '.' -f 1`
+  if [ $ubuntu_version != 22 ]; then
+    echo "${YELLOW}WARNING${NC}: Installing TomCat 9 on Ubuntu $ubuntu_version with jammy main universe"
+    sudo add-apt-repository -y -s "deb http://archive.ubuntu.com/ubuntu/ jammy main universe";
+  else
+    echo "${GREEN}INFO${NC}: Installing TomCat 9 on Ubuntu $ubuntu_version"
+  fi
+  sudo apt-get -y install tomcat9
+  if [ $? != 0 ]; then
+    echo "${RED}ERROR${NC}: Failed to install Tomcat 9"
+    exit 1
+  fi
+fi
+
+# Add current user in to the tomcat group
+if [ -z "$(groups | grep tomcat)" ]; then
+  sudo usermod -a -G tomcat $USER
+  if [ $? != 0 ]; then
+    echo "${RED}ERROR${NC}: Failed to add $USER to the tomcat group"
+    exit 1
+  fi
+  echo "${GREEN}INFO${NC}: User $USER added in to the tomcat group. Please log out and in again."
+  exit 0
+fi
+
+# Set TomCat port
+if [ -f /etc/tomcat9/server.xml ]; then
+  echo "${GREEN}INFO${NC}: Setting TomCat 9 port to $port"
+  sudo sed -i "s#<Connector port=\"8080\"#<Connector port=\"$port\"#" /etc/tomcat9/server.xml
+else
+  echo "${RED}ERROR${NC}: /etc/tomcat9/server.xml Tomcat 9 config not found"
+  exit 0
+fi
+
+# Install XMondrian WAR in to the tomcat9
+# Tomcat  will auto-expand the WAR
+webapps="/var/lib/tomcat9/webapps"
+if [ ! -f $webapps/$type.war ]; then
+  if [ -f $type.war ]; then
+    # Check for local installation copy first
+    cp $type.war $webapps/$type.war
+  else
+    case $type in
+      xmondrian )
+        echo "${GREEN}INFO${NC}: Installing OLAP system $type"
+        sudo wget -O $webapps/$type.war https://github.com/rpbouman/xmondrian/raw/master/dist/xmondrian.war
+        ;;
+      * )
+        echo "${RED}ERROR${NC}: OLAP system [$type] unknown"
+        exit 1
+        ;;
+    esac
+  fi
+  sudo chown tomcat:tomcat $webapps/$type.war
+  sudo chmod g+rw $webapps/$type.war
+
+  # Check TomCat auto-expansion
+  sleep 8
+  if [ ! -d "$webapps/$type" ]; then
+    echo "${RED}ERROR${NC}: Tomcat did not expand the $type WAR placed in its working area $webapps"
+    exit 1
+  fi
+  sudo chmod -R g+rw $webapps/$type
+  sudo chmod g+x $webapps/$type
+fi
+
+# Copy down latest Winter Cube(s) schema
+if [ -f olap/datasources.xml ]; then
+  echo "${GREEN}INFO${NC}: Copying local datasources.xml"
+  sudo cp olap/datasources.xml $webapps/$type/WEB-INF/
+  if [ "$database" != "winter" ]; then
+    echo "${GREEN}INFO${NC}: Altering datasources for database $database"
+    sudo sed -i "s#<DataSourceName>Winter</DataSourceName>#<DataSourceName>$database</DataSourceName>#" $webapps/$type/WEB-INF/datasources.xml
+    sudo sed -i "s#postgresql://localhost:5432/winter#postgresql://localhost:5432/$database#" $webapps/$type/WEB-INF/datasources.xml
+    sudo sed -i "s#Catalog=/WEB-INF/schema/Winter.xml#Catalog=/WEB-INF/schema/$database.xml#" $webapps/$type/WEB-INF/datasources.xml
+    sudo sed -i "s#JdbcUser=winter;#JdbcUser=$database;#" $webapps/$type/WEB-INF/datasources.xml
+    sudo sed -i "s#<Definition>/WEB-INF/schema/Winter.xml</Definition>#<Definition>/WEB-INF/schema/$database.xml</Definition>#" $webapps/$type/WEB-INF/datasources.xml
+    sudo sed -i "s#<Catalog name=\"Winter\">#<Catalog name=\"$database\">#" $webapps/$type/WEB-INF/datasources.xml
+  fi
+fi
+if [ -d olap/schema ]; then
+  echo "${GREEN}INFO${NC}: Copying local schemas"
+  sudo cp -n olap/schema/* $webapps/$type/WEB-INF/schema/
+  if [ "$database" != "winter" ]; then
+    if [ ! -f $webapps/$type/WEB-INF/schema/$database.xml ]; then
+      echo "${GREEN}INFO${NC}: Copying custom schema for database $database"
+      sudo cp olap/schema/Winter.xml $webapps/$type/WEB-INF/schema/$database.xml
+      sudo sed -i "s#Winter#$database#" $webapps/$type/WEB-INF/schema/$database.xml
+    fi
+  fi
+fi
+# postgresql.jar is needed in every webapps directory
+# Tomcat restart is necessary after installation
+sudo cp /usr/share/java/postgresql.jar $webapps/$type/WEB-INF/lib/
+
+# Custom files
+if [ -f olap/index.html ]; then cp -f olap/index.html $webapps/$type/xavier/index.html; fi
+cp -f olap/*.js $webapps/$type/xavier/resources/js/
+if [ -f olap/mondrian.properties ]; then cp -f olap/mondrian.properties $webapps/$type/WEB-INF/classes/; fi
+
+# Our patches
+echo "${GREEN}INFO${NC}: Patching Xavier"
+# This gives page JavaScript access to the application, for example:
+# xavierApplication.createVisualizationTab({id:'pivot-table'})
+# xavierApplication.workArea.tabs[xavierApplication.workArea.selectedTab].queryDesigner
+sudo sed -i "s#var xavierApplication#window.xavierApplication#" $webapps/$type/xavier/index.html
+
+echo "${GREEN}INFO${NC}: Setting group write access"
+sudo chmod -R g+rw $webapps/$type
+sudo chmod g+x $webapps/$type
+sudo chown -R tomcat:tomcat $webapps/$type
+
+# Redirect Apache to Tomcat
+echo "${GREEN}INFO${NC}: Redirecting Apache http://localhost:80/xmondrian => Tomcat"
+sudo a2enmod proxy
+sudo a2enmod proxy_http
+sudo cp olap/tomcat.conf /etc/apache2/conf-available
+sudo ln -s /etc/apache2/conf-available/tomcat.conf /etc/apache2/conf-enabled/tomcat.conf
+sudo systemctl restart apache2
+
+sudo service tomcat9 restart
+echo "${YELLOW}WARNING${NC}: This expects a database called ${YELLOW}$database${NC} with the AcornAssociated Calendar installed and a user: JdbcUser=${YELLOW}$database${NC}; JdbcPassword=${YELLOW}QueenPool1@${NC}. See $webapps/$type/WEB-INF/datasources.xml for schema and JDBC connection!"
+echo "Now go to http://localhost:$port/$type/"

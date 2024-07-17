@@ -1,0 +1,201 @@
+#!/bin/bash
+################################
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+###############################
+
+db_connection=$1
+db_port=5432
+db_name=$2
+db_username=$3
+db_password=$4
+db_collation=$5
+
+if [ "$1" == "help" ] || [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
+	echo "Usage: acorn-setup-database <db_connection> [<db_name> <db_username> <db_password>]"
+	echo
+	echo "db_connection:   Database connection ${GREEN}pgsql${NC}/${GREEN}mysql${NC}. Required"
+	echo "db_name:         Database name. Default: ${GREEN}the current directory${NC}."
+	echo "db_username:     Username.      Default: ${GREEN}the same as db_name${NC}."
+	echo "db_password:     Password.      Default: ${GREEN}QueenPool1@${NC}. This is a development server password ONLY."
+	echo "Note: if .env has DBAUTH set, no DB_USERNAME & DB_PASSWORD updates will happen for laravel."
+	exit 0
+fi
+
+if [ -z $db_connection ]; then
+    echo "${YELLOW}WARNING${NC}: acorn-setup-database: missing operand"
+	echo "Try 'acorn-setup-database help' for more information"
+    exit 1
+fi
+
+if  [ "$1" != "mysql" ] && [ "$1" != "pgsql" ] && [ "$1" = "$@" ]; then
+	echo "${YELLOW}WARNING${NC}: Wrong choice."
+	exit 
+fi
+
+if [ -z "$db_name" ]; then
+  echo "${YELLOW}WARNING${NC}: \$2 parameter (database name) not given"
+  db_name=`basename \`pwd\``
+  read -p "Set database name to current directory [${GREEN}`echo $db_name | tr -d '-' | tr -d '.'`${NC}] [Y/n]? " yn
+  case $yn in
+    [Yy]* )
+      ;;
+    * )
+      exit 1
+      ;;
+  esac
+fi
+db_name=`echo "$db_name" | tr -d '-' | tr -d '.'`
+if [ -z "$db_username" ]; then
+  db_username="$db_name"
+  echo "${YELLOW}WARNING${NC}: \$3 parameter (database username) set to database name [${GREEN}$db_username${NC}]"
+fi
+db_username=`echo "$db_username" | tr -d '-' | tr -d '.'`
+if [ -z "$db_password" ]; then
+  db_password="QueenPool1@"
+  echo "${YELLOW}WARNING${NC}: \$4 parameter (database password) set to default [${GREEN}$db_password${NC}]"
+fi
+echo
+
+if [ "$1" == "mysql" ]; then
+	db_port=3306
+	mysql_username=root
+	mysql_version=`mysql --version | cut -d " " -f 4 | cut -d "-" -f 1`
+	mysql_version_major=`echo $mysql_version | cut -d "." -f 1`
+	if [ -z $db_collation ]; then
+  	      db_collation="utf8mb4_0900_ai_ci"
+ 	      echo "${YELLOW}WARNING${NC}: \$5 parameter (database collation) set to default utf8mb4 [${GREEN}$db_collation${NC}]"
+	fi
+	echo "${GREEN}INFO${NC}: MySQL version $mysql_version_major"
+	# --------------------------------- db
+	read -s -p "Please enter the root mysql password: " mysql_password
+	db_exists=`mysql -u $mysql_username --password=$mysql_password -e "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '$db_name'" 2> /dev/null | wc -c`
+	echo ""
+	yn=y
+	if [ $db_exists = 0 ]; then
+  	   echo "DB [$db_name] does not exist yet. Creating..."
+	else
+  	   read -p "${YELLOW}WARNING${NC}: DB [$db_name] already exists. Re-create DB stuff [Y/n]? " yn
+	fi
+	case $yn in
+  	  [Yy]* )
+    	if [ ! $db_exists = 0 ]; then
+   	   mysql -u $mysql_username --password=$mysql_password -e "drop database \`$db_name\`;" 2> /dev/null
+    	   mysql -u $mysql_username --password=$mysql_password -e "drop user \`$db_username\`@\`localhost\`;" 2> /dev/null
+    	fi
+    	mysql -u $mysql_username --password=$mysql_password -e "create database \`$db_name\` CHARACTER SET utf8mb4 COLLATE $db_collation;" 2> /dev/null
+    	  if [ "$?" == "1" ]; then
+      	     echo "${RED}ERROR${NC}: Failed to create database [$db_name]"
+      	     exit; 
+    	fi
+    	mysql -u $mysql_username --password=$mysql_password -e "create user \`$db_username\`@\`localhost\` identified by '$db_password';" 2> /dev/null
+    	  if [ "$?" == "1" ]; then
+      	     echo "${RED}ERROR${NC}: Failed to create user $db_username with password [$db_password]"
+      	     exit; 
+    	  fi
+    	mysql -u $mysql_username --password=$mysql_password -e "grant all on \`$db_name\`.* to \`$db_username\`@\`localhost\`;" 2> /dev/null
+   	  if [ "$?" == "1" ]; then
+      	     echo "${RED}ERROR${NC}: Failed to grant privileges to user [$db_username]"
+     	     exit; 
+    	  fi
+    	echo "${GREEN}INFO${NC}: created database [${GREEN}$db_name${NC}] with user [${GREEN}$db_username${NC}] password [${GREEN}$db_password${NC}]";
+    	;;
+  	[Nn]* )
+    	  ;;
+  	[]* )
+          ;;
+  	* ) echo "eh?"
+          ;;
+	esac
+
+fi
+
+if [ "$1" == "pgsql" ]; then
+    yn=y
+    if sudo -i -u postgres psql -lqt | cut -d \| -f 1 | grep -wq $db_name; then
+	   read -p "${YELLOW}WARNING${NC}: DB [$db_name] already exists. Re-create DB stuff [Y/n]? " yn
+	else
+  	   echo "DB [$db_name] does not exist yet. Creating..."
+	fi
+
+	case $yn in
+	   [Yy]* )
+	   if sudo -i -u postgres psql -lqt | cut -d \| -f 1 | grep -wq $db_name; then
+     	      sudo -i -u postgres dropdb $db_name 
+     	      sudo -i -u postgres dropuser $db_name
+       fi
+  	   sudo -i -u postgres bash -c "psql -c \"CREATE USER $db_username WITH SUPERUSER CREATEROLE PASSWORD '$db_password';\"" &> /dev/null
+       if [ "$?" == "1" ]; then
+      	   echo "${RED}ERROR${NC}: Failed to create user $db_username with password [$db_password]"
+      	   exit; 
+       fi
+  	   sudo -i -u postgres bash -c "psql -c \"CREATE DATABASE $db_name OWNER $db_username;\"" &> /dev/null
+       if [ "$?" == "1" ]; then
+      	   echo "${RED}ERROR${NC}: Failed to create database [$db_name]"
+       	   exit; 
+       fi
+  	   echo "${GREEN}INFO${NC}: created database [${GREEN}$db_name${NC}] with user [${GREEN}$db_username${NC}] password [${GREEN}$db_password${NC}]";
+    	  ;;
+  	    [Nn]* )
+  	  	;;
+ 	 	[]* )
+    	;;
+  	 	* ) echo "eh?"
+    	  ;;
+    esac
+fi
+
+# ------------------------------------ Update framework if present
+if [ -f .env ]; then
+	echo "${GREEN}INFO${NC}: Laravel detected"
+	if [ -z "$(grep DB_CONNECTION .env)" ] && [ -f .env.example ]; then
+		echo "${YELLOW}WARNING${NC}: Feeding .env.example in to .env"
+		cat .env.example >> .env
+		sed -i 's|^APP_KEY="*$||' .env
+	fi
+	sed -i "s|DB_CONNECTION=.*|DB_CONNECTION=$1|" .env
+	sed -i "s|DB_PORT=.*|DB_PORT=$db_port|" .env
+	sed -i "s|DB_DATABASE=.*|DB_DATABASE=$db_name|" .env
+	if [ -z "$(grep ^DB_.*=.*\<DBAUTH\> .env)" ]; then
+		sed -i "s|DB_USERNAME=.*|DB_USERNAME=$db_username|" .env
+		sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$db_password|" .env
+		echo "${GREEN}INFO${NC}: Updated the Laravel .env file in this directory to use this database"
+	else
+		echo "${YELLOW}WARNING${NC}: Did not update the Laravel .env file DB_USERNAME & DB_PASSWORD in this directory because DBAUTH was set"
+	fi
+fi
+
+if [ -f wp-config.php ]; then
+	echo "${GREEN}INFO${NC}: WordPress detected"
+	sed -i "s|define( 'DB_NAME', '.*' );|define( 'DB_NAME', '$db_name' );|" wp-config.php
+	sed -i "s|define( 'DB_USER', '.*' );|define( 'DB_USER', '$db_username' );|" wp-config.php
+	sed -i "s|define( 'DB_PASSWORD', '.*' );|define( 'DB_PASSWORD', '$db_password' );|" wp-config.php
+	echo "${GREEN}INFO${NC}: Updated the WordPress wp-config.php file in this directory to use this database"
+fi
+
+webroot=
+if [ -d "web" ]; then webroot=web/; fi
+settings_dir="${webroot}sites/default"
+if [ -d "$settings_dir" ]; then
+  echo "${GREEN}INFO${NC}: Detected Drupal"
+	if [ -f "$settings_dir/settings.php" ]; then
+		# TODO: insert / update Drupal database settings
+		echo "${YELLOW}WARNING${NC}: Settings file found, but not updated"
+	else
+		if [ -f "$settings_dir/default.settings.php" ]; then
+			cp $settings_dir/default.settings.php $settings_dir/settings.php
+			echo "${GREEN}INFO${NC}: Settings file created, blank"
+		else
+			echo "${RED}ERROR${NC}: Settings file not found"
+		fi
+	fi
+  if [ -f "${webroot}core/lib/Drupal/Core/DrupalKernel.php" ]; then
+    sed -i "s|error_reporting(E_STRICT \| E_ALL)|error_reporting(E_STRICT \| E_ALL ^ E_DEPRECATED)|" ${webroot}core/lib/Drupal/Core/DrupalKernel.php
+    echo "${GREEN}INFO${NC}: Turned off E_DEPRECATED warnings for potential 9.1.5 install"
+  fi
+fi
+

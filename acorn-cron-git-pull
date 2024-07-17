@@ -1,0 +1,59 @@
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+central_server=acornassociated.org
+git_server=gitlab.$central_server
+
+# Overnight Apache2 repositories refresh
+apache_dir=/var/www
+if [ -d $apache_dir ]; then
+    for d in $apache_dir/*/ ; do
+        if [ -d $d/.git ]; then
+            echo "Refreshing Apache2 ${YELLOW}$d${NC}..."
+            git -C $d --recursive pull
+            if [ $? != 0 ]; then exit 1; fi
+        fi
+    done
+
+    if [ ! -d $apache_dir/scripts ]; then
+        echo "Cloning ${YELLOW}$apache_dir/scripts${NC}..."
+        git clone --recursive git@$git_server:office/scripts.git $apache_dir/scripts
+    fi
+fi
+
+# Overnight tomcat OLAP repositories refresh
+tomcat_dir=/var/lib/tomcat9/webapps
+if [ -d $tomcat_dir ]; then
+    for d in $tomcat_dir/*/ ; do
+        if [ -d $d/.git ]; then
+            echo "Refreshing TomCat9 ${YELLOW}$d${NC}..."
+            git -C $d --recursive pull
+            if [ $? != 0 ]; then exit 1; fi
+        fi
+    done
+fi
+
+# Home folder scripts refresh (optional)
+if [ -d scripts/.git ]; then
+    echo "Refreshing ${YELLOW}./scripts${NC}..."
+    git -C scripts --recursive pull
+fi
+
+# Remote command system
+server_type=`echo $HOSTNAME | sed -En "s/-.*$//p"`
+if [ "$server_type" == "server" ]; then
+    if [ -f scripts/$HOSTNAME ]; then
+        bash scripts/$HOSTNAME
+    fi
+
+    server_group=`echo $HOSTNAME | sed -En "s/-[0-9]+$//p"`
+    if [ -f scripts/$server_group ]; then
+        bash scripts/$server_group
+    fi
+fi
