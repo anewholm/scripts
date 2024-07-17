@@ -99,7 +99,7 @@ if [ -z "$(which git)" ]; then
 fi
 
 # -------------------------------------------- Main repo cloning
-git clone git@gitlab.acornassociated.org:$git_repo_group/$git_repo_name.git /var/www/$git_repo_name
+git clone git@gitlab.acorn.org:$git_repo_group/$git_repo_name.git /var/www/$git_repo_name
 git config --global --add safe.directory /var/www/$git_repo_name
 
 # -------------------------------------------- Apache and database

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Schema name="Winter">
   <Cube name="Events" defaultMeasure="Num Events">
-    <Table name="acornassociated_calendar_instance">
+    <Table name="acorn_calendar_instance">
       <AggName name="agg_c_count_fact">
         <AggFactCount column="id"/>
         <AggLevel name="[Time].[Year]" column="id" />
@@ -10,7 +10,7 @@
 
     <Dimension name="Time" type="TimeDimension">
       <Hierarchy hasAll="true" primaryKey="date">
-        <Table name="acornassociated_calendar_instance"/>
+        <Table name="acorn_calendar_instance"/>
         <Level name="Year" type="Numeric" uniqueMembers="true" levelType="TimeYears">
           <KeyExpression><SQL>extract(year from date)</SQL></KeyExpression>
         </Level>
@@ -24,8 +24,8 @@
     </Dimension>
 
     <Dimension name="Status" foreignKey="event_part_id">
-      <!-- WHERE instance.event_part_id = acornassociated_calendar_event_part.id -->
-      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acornassociated_calendar_event_part">
+      <!-- WHERE instance.event_part_id = acorn_calendar_event_part.id -->
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acorn_calendar_event_part">
         <!-- From FoodMart:
           <Dimension name="Product">
             <Hierarchy hasAll="true" primaryKey="product_id" primaryKeyTable="product">
@@ -44,8 +44,8 @@
               <Level name="Brand Name" table="product" column="brand_name" uniqueMembers="false"/>
         -->
         <Join leftKey="status_id" rightKey="id">
-          <Table name="acornassociated_calendar_event_part" alias="event_part"/>
-          <Table name="acornassociated_calendar_event_status" alias="event_status"/>
+          <Table name="acorn_calendar_event_part" alias="event_part"/>
+          <Table name="acorn_calendar_event_status" alias="event_status"/>
           <!-- WHERE event_part.status_id = event_status.id =  -->
         </Join>
         <Level name="Status" table="event_status" column="id" nameColumn="name" uniqueMembers="true">
@@ -55,10 +55,10 @@
     </Dimension>
 
     <Dimension name="Type" foreignKey="event_part_id">
-      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acornassociated_calendar_event_part">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acorn_calendar_event_part">
         <Join leftKey="type_id" rightKey="id">
-          <Table name="acornassociated_calendar_event_part" alias="event_part"/>
-          <Table name="acornassociated_calendar_event_type" alias="event_type"/>
+          <Table name="acorn_calendar_event_part" alias="event_part"/>
+          <Table name="acorn_calendar_event_type" alias="event_type"/>
         </Join>
         <Level name="Type" table="event_type" column="id" nameColumn="name" uniqueMembers="true">
           <Property name="Description" column="description"/>
@@ -67,10 +67,10 @@
     </Dimension>
 
     <Dimension name="Location" foreignKey="event_part_id">
-      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acornassociated_calendar_event_part">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acorn_calendar_event_part">
         <Join leftKey="location_id" rightKey="id">
-          <Table name="acornassociated_calendar_event_part" alias="event_part"/>
-          <Table name="acornassociated_location_location" alias="location"/>
+          <Table name="acorn_calendar_event_part" alias="event_part"/>
+          <Table name="acorn_location_location" alias="location"/>
         </Join>
         <Level name="Location" table="location" column="id" nameColumn="name" uniqueMembers="true">
           <Property name="Country" column="country_code" />
@@ -82,24 +82,24 @@
     </Dimension>
 
     <Dimension name="Calendar" foreignKey="event_part_id">
-      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acornassociated_calendar_event_part">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acorn_calendar_event_part">
         <Join leftKey="event_id" rightKey="id">
-          <Table name="acornassociated_calendar_event_part" alias="event_part" />
-          <Table name="acornassociated_calendar_event" alias="event" />
+          <Table name="acorn_calendar_event_part" alias="event_part" />
+          <Table name="acorn_calendar_event" alias="event" />
         </Join>
         <Level name="Calendar" table="event" column="calendar_id" uniqueMembers="true">
           <CaptionExpression>
-            <SQL>(select name from acornassociated_calendar where id = event.calendar_id)</SQL>
+            <SQL>(select name from acorn_calendar where id = event.calendar_id)</SQL>
           </CaptionExpression>
         </Level>
       </Hierarchy>
     </Dimension>
 
     <Dimension name="UserGroup" foreignKey="event_part_id">
-      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acornassociated_calendar_event_part">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acorn_calendar_event_part">
         <Join leftKey="id" rightKey="event_part_id">
-          <Table name="acornassociated_calendar_event_part" alias="event_part"/>
-          <Table name="acornassociated_calendar_event_user_group" alias="user_group"/>
+          <Table name="acorn_calendar_event_part" alias="event_part"/>
+          <Table name="acorn_calendar_event_user_group" alias="user_group"/>
         </Join>
         <Level name="Group" table="user_group" column="user_group_id" type="Numeric" uniqueMembers="true">
           <CaptionExpression>
@@ -115,10 +115,10 @@
     </Dimension>
 
     <Dimension name="User" foreignKey="event_part_id">
-      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acornassociated_calendar_event_part">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acorn_calendar_event_part">
         <Join leftKey="id" rightKey="event_part_id">
-          <Table name="acornassociated_calendar_event_part" alias="event_part"/>
-          <Table name="acornassociated_calendar_event_user" alias="user"/>
+          <Table name="acorn_calendar_event_part" alias="event_part"/>
+          <Table name="acorn_calendar_event_user" alias="user"/>
         </Join>
         <Level name="User" table="user" column="user_id" type="Numeric" uniqueMembers="true">
           <CaptionExpression>
@@ -129,8 +129,8 @@
     </Dimension>
 
     <Dimension name="Event" foreignKey="event_part_id">
-      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acornassociated_calendar_event_part">
-        <Table name="acornassociated_calendar_event_part"/>
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acorn_calendar_event_part">
+        <Table name="acorn_calendar_event_part"/>
         <Level name="Event" column="id" nameColumn="name" uniqueMembers="true">
         </Level>
       </Hierarchy>
