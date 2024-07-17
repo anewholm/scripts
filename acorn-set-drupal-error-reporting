@@ -1,6 +1,13 @@
 #!/bin/bash
-# turn on full error_reporting in drupal settings.php
 
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+# turn on full error_reporting in drupal settings.php
 cp ./sites/default/settings.php ./sites/default/settings_0.php
 
 # ------------------------------------ add lines if they are missing
