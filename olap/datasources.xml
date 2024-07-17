@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!-- http://mondrian.pentaho.com/documentation/installation.php#5_1_Describe_the_data_sources_in_datasources.xml -->
+<DataSources>
+  <!-- ONLY ONE DataSource is supported -->
+  <DataSource>
+    <DataSourceName>Foodmart</DataSourceName>
+    <DataSourceDescription>Foodmart Sample Data</DataSourceDescription>
+    <URL>http://localhost:8080/xmondrian/xmla</URL>
+    <DataSourceInfo>Provider=mondrian;Jdbc=jdbc:hsqldb:res:/hsqldb-foodmart/foodmart;JdbcDrivers=org.hsqldb.jdbc.JDBCDriver</DataSourceInfo>
+    <ProviderName>Mondrian</ProviderName>
+    <ProviderType>MDP</ProviderType>
+    <AuthenticationMode>Unauthenticated</AuthenticationMode>
+    <Catalogs>
+      <Catalog name="FoodMart">
+        <Definition>/WEB-INF/schema/Foodmart.xml</Definition>
+      </Catalog>
+    </Catalogs>
+  </DataSource>
+
+  <!-- DataSource>
+    <DataSourceName>Winter</DataSourceName>
+    <DataSourceDescription>Acorn Associated Calendar system</DataSourceDescription>
+    <URL>http://localhost:8080/xmondrian/xmla</URL>
+    <DataSourceInfo>
+      Provider=mondrian;
+      Jdbc=jdbc:postgresql://localhost:5432/winter;
+      JdbcDrivers=org.postgresql.Driver;
+      JdbcUser=winter;
+      JdbcPassword=QueenPool1@;
+      Catalog=/WEB-INF/schema/Winter.xml;
+      UseSchemaPool=false
+    </DataSourceInfo>
+    <ProviderName>Mondrian</ProviderName>
+    <ProviderType>MDP</ProviderType>
+    <AuthenticationMode>Unauthenticated</AuthenticationMode>
+    <Catalogs>
+        <Catalog name="Winter">
+            <Definition>/WEB-INF/schema/Winter.xml</Definition>
+        </Catalog>
+    </Catalogs>
+  </DataSource -->
+</DataSources>
