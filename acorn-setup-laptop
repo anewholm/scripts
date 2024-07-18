@@ -144,7 +144,7 @@ if [ -z "$apt_postgresql" ]; then
 
   user_exists=`sudo -u postgres psql postgres -tXAc "SELECT 1 FROM pg_roles WHERE rolname='$USER'"`
   if [ "$user_exists" != 1 ]; then
-    echo "${GREEN}INFO${NC}: Creating PostGreSQL super-user ${YELLOW}$USER${NC}. PLease use password ${YELLOW}@corn.org${NC}:"
+    echo "${GREEN}INFO${NC}: Creating PostGreSQL super-user ${YELLOW}$USER${NC}. PLease use password ${YELLOW}@cornAssociated.org${NC}:"
     sudo -u postgres createuser -d -e -E -l -P -r -s $USER
     check "Failed to create postgresql user ${YELLOW}$USER${NC}"
   else
@@ -166,14 +166,20 @@ fi
 
 # --------------------------------------------------------- PostGreSQL extensions
 if [ -d postgres/ ]; then
-  if [ -d postgres/pgsql-http/ ] && [ ! -f /usr/share/postgresql/$postgresql_version/extension/http.control ]; then
-    echo "${YELLOW}pgsql-http${NC} installing for PostGreSQL $postgresql_version..."
-    sudo apt-get install -y postgresql-server-dev-$postgresql_version libcurl4-openssl-dev make g++ 2> /dev/null # For pgsql-http extensions
-    cd postgres/pgsql-http/
-    make
-    sudo make install
-    cd -
-  fi
+  # Source compilation pre-requisities
+  sudo apt-get install -y postgresql-server-dev-$postgresql_version libcurl4-openssl-dev make g++ 2> /dev/null # For pgsql-http extensions
+
+  for d in postgres/* ; do
+    extension_name=`basname "$d"`
+    sudo mkdir -p /usr/share/postgresql/$postgresql_version/extension/
+    if [ ! -f /usr/share/postgresql/$postgresql_version/extension/$extension_name.control ]; then
+      echo "${YELLOW}$extension_name${NC} installing for PostGreSQL $postgresql_version..."
+      cd postgres/$extension_name/
+      make
+      sudo make install
+      cd -
+    fi
+  done
 fi
 
 pgadmin=`apt list --installed pgadmin4 2> /dev/null | grep -E installed`
