@@ -14,6 +14,7 @@ begin
 	if old.id != new.id then raise exception 'Cannot change id directly'; end if;
 	if old.version != new.version then raise exception 'Cannot change version directly'; end if;
 	if old.is_current_version != new.is_current_version then raise exception 'Cannot change is_current_version directly'; end if;
+	if not old.is_current_version then raise exception 'Can only change the current version'; end if;
 
 	if old.arrived_at is null and new.arrived_at is not null then
 		-- We do not make new versions for completion of null fields
