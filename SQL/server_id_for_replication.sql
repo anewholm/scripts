@@ -1,16 +1,22 @@
-create function f_server_id
-as
-@@body@@
+-- create extension hostname;
+
+CREATE OR REPLACE FUNCTION public.fn_server_id() 
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+AS $BODY$
 	declare pid bigint;
-	select into pid, id from servers where hostname = hostname();
-	if @@ROW_COUNT = 0 then
+begin
+	select "id" into pid from servers where hostname = hostname();
+	if pid is null then
 		insert into servers(hostname) values(hostname());
-		set pid = @@INCREMENT;
-	end if
+		pid := currval('server_id');
+	end if;
 	new.created_by_server_id = pid;
-@@body@@;
+	return new;
+end;
+$BODY$;
 
-create trigger for before insert on <every table>
-for each row
-execute function f_server_id(); 
-
+CREATE OR REPLACE TRIGGER tr_addresses_server_id
+    BEFORE INSERT ON public.addresses
+    FOR EACH ROW
+    EXECUTE FUNCTION public.fn_server_id()
