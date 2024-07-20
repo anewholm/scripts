@@ -7,13 +7,19 @@ NC="$(tput sgr0)"
 TICK="${GREEN}✓${NC}"
 CROSS="${RED}✘${NC}"
 
-dir_script=`pwd`
+dir_script="$(pwd)/$(dirname $0)"
 git_repo_fq_name=$1
+install_dir=/var/www
 
 # -------------------------------------------- Sanitise inputs
+if [[ ! "$git_repo_fq_name" == *"/"* ]]; then
+	git_repo_fq_name="office/$git_repo_fq_name"
+	echo "${YELLOW}WARNING${NC}: Assuming the repo is in the office group: ${YELLOW}$git_repo_fq_name${NC}"
+fi
+
 if [ "$1" == "help" ] || [ "$1" == "--help" ] || [ "$1" == "-h" ] || [ -z "$git_repo_fq_name" ]; then
 	echo "This script is for git-cloning a full website project from our gitlab server and setting it all up on our laptop."
-	echo "Depending on your /var/www permissions setup, you may need to run this script as root."
+	echo "Depending on your $install_dir permissions setup, you may need to run this script as root."
 	echo "For example: it creates and links the database, sets up a http://*.laptop local domain name"
 	echo "and runs all the necessary ./artisan winter:* commands to make the website work."
 	echo "Maybe."
@@ -21,11 +27,11 @@ if [ "$1" == "help" ] || [ "$1" == "--help" ] || [ "$1" == "-h" ] || [ -z "$git_
 	echo "  @FQ git repo name:   Fully Qualified git repository name e.g. ${GREEN}office${NC}/${GREEN}scripts${NC}. Required"
 	exit 0
 fi
-if [ ! -f acorn-setup-database ]; then
+if [ ! -f $dir_script/acorn-setup-database ]; then
 	echo "${RED}ERROR${NC}: acorn-setup-database script is required"
 	exit 0
 fi
-if [ ! -f acorn-setup-hostname ]; then
+if [ ! -f $dir_script/acorn-setup-hostname ]; then
 	echo "${RED}ERROR${NC}: acorn-setup-database script is required"
 	exit 0
 fi
@@ -47,9 +53,11 @@ if [ -z "$(which apache2ctl)" ]; then
 	esac
 fi
 
-if [ ! -d /var/www/ ]; then
-	echo "${YELLOW}WARNING${NC}: Creating /var/www/"
-	mkdir -p /var/www/
+if [ ! -d $install_dir/ ]; then
+	echo "${YELLOW}WARNING${NC}: Creating $install_dir/"
+	sudo mkdir -p $install_dir/
+	if [ $? != 0 ]; then exit 1; fi
+	sudo chown www-data:www-data $install_dir/
 	if [ $? != 0 ]; then exit 1; fi
 fi
 
@@ -71,14 +79,14 @@ if [ -z "$git_repo_name" ]; then
 	echo "${RED}ERROR${NC}: The git name is empty from $git_repo_fq_name"
 	exit 0
 fi
-if [ -d /var/www/$git_repo_name/ ]; then
-	echo "${RED}ERROR${NC}: The directory /var/www/$git_repo_name/ already exists."
+if [ -d $install_dir/$git_repo_name/ ]; then
+	echo "${RED}ERROR${NC}: The directory $install_dir/$git_repo_name/ already exists."
   read -p "Delete it [Y/n]? " yn
   case $yn in
     [Yy]* )
-			rm -rf /var/www/$git_repo_name/
+			rm -rf $install_dir/$git_repo_name/
 			if [ $? != 0 ]; then
-				echo "${RED}ERROR${NC}: Failed to remove /var/www/$git_repo_name/"
+				echo "${RED}ERROR${NC}: Failed to remove $install_dir/$git_repo_name/"
 				exit 1
 			fi
       ;;
@@ -99,11 +107,11 @@ if [ -z "$(which git)" ]; then
 fi
 
 # -------------------------------------------- Main repo cloning
-git clone git@gitlab.acorn.org:$git_repo_group/$git_repo_name.git /var/www/$git_repo_name
-git config --global --add safe.directory /var/www/$git_repo_name
+git clone git@gitlab.acornassociated.org:$git_repo_group/$git_repo_name.git $install_dir/$git_repo_name
+git config --global --add safe.directory $install_dir/$git_repo_name
 
 # -------------------------------------------- Apache and database
-cd /var/www/$git_repo_name
+cd $install_dir/$git_repo_name
 $dir_script/acorn-setup-database pgsql
 sudo $dir_script/acorn-setup-hostname
 # This is how I do permissions. Maybe there is a better way
