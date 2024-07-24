@@ -1,4 +1,12 @@
--- create extension hostname;
+CREATE EXTENSION IF NOT EXISTS hostname WITH SCHEMA public;
+
+CREATE TABLE public.servers (
+    id bigint NOT NULL,
+    hostname character varying(1024) DEFAULT public.hostname() NOT NULL
+);
+
+CREATE SEQUENCE public.servers_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1 OWNED BY public.servers.id;
+ ALTER TABLE ONLY public.servers ALTER COLUMN id SET DEFAULT nextval('public.servers_id_seq'::regclass);
 
 CREATE OR REPLACE FUNCTION public.fn_server_id() 
     RETURNS trigger

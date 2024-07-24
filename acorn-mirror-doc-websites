@@ -1,0 +1,41 @@
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+if [ -z "$(which httrack)" ]; then
+  sudo apt -y install httrack
+  if [ $? != 0 ]; then
+    echo "${RED}ERROR${NC}: Failed to install httrack"
+    exit 1
+  fi
+fi
+
+
+if [ ! -d /var/www ]; then
+    echo "${RED}ERROR${NC}: No Apache directory at /var/www/. Please install Apache2"
+    exit 1
+fi
+cd /var/www/
+
+if [ ! -d /var/www/scripts ]; then
+    echo "${RED}ERROR${NC}: No scripts repo in /var/www/scripts. Please git clone the office/scripts there"
+    exit 1
+fi
+
+echo "${GREEN}INFO${NC}: Mirroring wintercms.com"
+httrack http://wintercms.com/docs/v1.2/docs/
+cd wintercms.com
+sudo ../scripts/acorn-setup-hostname docs.wintercms.laptop
+cd -
+
+echo "${GREEN}INFO${NC}: Mirroring postgresql.org"
+httrack https://www.postgresql.org/docs/16/
+cd www.postgresql.org
+sudo ../scripts/acorn-setup-hostname docs.postgresql.laptop
+cd -
+
