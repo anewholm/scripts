@@ -35,7 +35,7 @@ fi
 if [ "$(pro api u.pro.status.is_attached.v1 | jq -r '.data.attributes.is_attached')" != "true" ]; then
 	echo "UPS (Ubuntu Pro Support) security is not enabled."
 	echo "You will need to setup an UPS account. You need an email account, for example with ${YELLOW}https://gmail.com${NC}, to receive UPS verification."
-	echo "Go to ${YELLOW}https://login.ubuntu.com${NC}. When finished, UPS will give you an account ${YELLOW}TOKEN${NC}."
+	echo "Go to ${YELLOW}https://ubuntu.com/pro${NC}. When finished, UPS will give you an account ${YELLOW}TOKEN${NC}."
 	read -p "UPS Token: " token
 
 	sudo pro attach $token
