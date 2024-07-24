@@ -53,6 +53,12 @@ if [ -z "$apache2" ]; then
   check "Failed to download apache2."
   sudo a2enmod actions fcgid alias proxy_fcgi setenvif 2> /dev/null
   sudo service apache2 restart
+
+  if [ -z "$(groups | grep www-data)" ]; then
+    sudo usermod -a -G www-data $USER
+    echo "${GREEN}INFO${NC}: You were added to the www-data group. This will not be effective until reboot."
+  fi
+
   echo "${GREEN}Done.${NC}"
   echo
 fi
@@ -144,7 +150,7 @@ if [ -z "$apt_postgresql" ]; then
 
   user_exists=`sudo -u postgres psql postgres -tXAc "SELECT 1 FROM pg_roles WHERE rolname='$USER'"`
   if [ "$user_exists" != 1 ]; then
-    echo "${GREEN}INFO${NC}: Creating PostGreSQL super-user ${YELLOW}$USER${NC}. PLease use password ${YELLOW}@cornAssociated.org${NC}:"
+    echo "${GREEN}INFO${NC}: Creating PostGreSQL super-user ${YELLOW}$USER${NC}. PLease use password ${YELLOW}@corn.org${NC}:"
     sudo -u postgres createuser -d -e -E -l -P -r -s $USER
     check "Failed to create postgresql user ${YELLOW}$USER${NC}"
   else
@@ -170,7 +176,7 @@ if [ -d postgres/ ]; then
   sudo apt-get install -y postgresql-server-dev-$postgresql_version libcurl4-openssl-dev make g++ 2> /dev/null # For pgsql-http extensions
 
   for d in postgres/* ; do
-    extension_name=`basname "$d"`
+    extension_name=`basename "$d"`
     sudo mkdir -p /usr/share/postgresql/$postgresql_version/extension/
     if [ ! -f /usr/share/postgresql/$postgresql_version/extension/$extension_name.control ]; then
       echo "${YELLOW}$extension_name${NC} installing for PostGreSQL $postgresql_version..."
@@ -255,4 +261,8 @@ fi
 
 if [ -f acorn-setup-olap ]; then
   ./acorn-setup-olap
+fi
+
+if [ -f acorn-mirror-doc-websites ]; then
+  ./acorn-mirror-doc-websites
 fi
