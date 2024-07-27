@@ -7,7 +7,7 @@ NC="$(tput sgr0)"
 TICK="${GREEN}✓${NC}"
 CROSS="${RED}✘${NC}"
 
-central_server=acorn.org
+central_server=acornassociated.org
 git_server=gitlab.$central_server
 download_dir=~/Downloads
 
@@ -46,7 +46,7 @@ if [ ! -f ~/.ssh/id_rsa.pub ]; then
 fi
 echo "${GREEN}INFO${NC}: Pulic key:"
 cat ~/.ssh/id_rsa.pub
-echo "${GREEN}INFO${NC}: Add the user ${YELLOW}$USER${NC} to ${YELLOW}http://$git_server${NC}, with the above ssh key and password ${YELLOW}@corn.org${NC}"
+echo "${GREEN}INFO${NC}: Add the user ${YELLOW}$USER${NC} to ${YELLOW}http://$git_server${NC}, with the above ssh key and password ${YELLOW}@cornAssociated.org${NC}"
 echo "And give Reporter access to ${YELLOW}office/scripts${NC} and any repositories you wish to pull"
 read -p "Done (Maybe needs tor-browser running)? " yn
 

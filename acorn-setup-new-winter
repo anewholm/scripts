@@ -7,39 +7,34 @@ NC="$(tput sgr0)"
 TICK="${GREEN}✓${NC}"
 CROSS="${RED}✘${NC}"
 
-# This script installs ALL Acorn plugins and runs the system
+# This script installs ALL Acorn Associated plugins and runs the system
 # It can be run from within an existing Laravel / Winter installation
 # or to install the entire framework from scratch
-
-# Work only in the standard install place
-cd /var/www
-dir=`pwd`
+run_dir=`pwd` # Bald
+script_subdir=`dirname $0`
+script_dir="$run_dir/$script_subdir"
+install_dir=/var/www
+install_grp=www-data
 
 name=$1
 password=$2
+db_port=$3
 
 # -------------------------------------------- Sanitise inputs
-if [ ! -f acorn-setup-database ]; then
+if [ ! -f $script_dir/acorn-setup-database ]; then
 	echo "${RED}ERROR${NC}: acorn-setup-database required"
 	exit 1
 fi
-if [ ! -f acorn-setup-hostname ]; then
+if [ ! -f $script_dir/acorn-setup-hostname ]; then
 	echo "${RED}ERROR${NC}: acorn-setup-database required"
 	exit 1
 fi
-if [ "$dir" != "/var/www" ]; then
-	echo "${RED}ERROR${NC}: Currently, only full system install is supported, run only from /var/www/"
+if [ -z "$name" ];     then
+	echo "${RED}ERROR${NC}: name parameter required"
 	exit 1
 fi
-if [ -z "$name" ];     then name="winter"; fi
 if [ -z "$password" ]; then password="QueenPool1@"; fi
-
-
-if [ -z "$(groups | grep www-data)" ]; then
-	echo "${RED}ERROR${NC}: $USER was not in group www-data, so added. Please log out-in and re-run the script"
-	sudo usermod -a -G www-data $USER
-	exit 1
-fi
+if [ -z "$db_port" ];  then db_port="5432"; fi
 
 # -------------------------------------------- 3rd party installs
 if [ -z "$(which php)" ]; then
@@ -77,6 +72,20 @@ fi
 # Copied from Winter installation guide
 sudo apt install -y php php-ctype php-curl php-xml php-fileinfo php-gd php-json php-mbstring php-mysql php-sqlite3 php-zip
 
+if [ -z "$(groups | grep $install_grp)" ]; then
+	echo "${RED}ERROR${NC}: $USER was not in group $install_grp, so added. Please log out-in and re-run the script"
+	sudo usermod -a -G $install_grp $USER
+	exit 1
+fi
+
+# Work only in the standard install place
+if [ ! -d $install_dir ]; then
+	echo "${YELLOW}WARNING${NC}: $install_dir was not found, creating..."
+	sudo mkdir -p $install_dir
+fi
+cd $install_dir
+sudo chown $install_grp:$install_grp .; sudo chmod g+rw .
+
 # -------------------------------------------- Website Installation
 if [ -d $name ]; then
 	if [ -z "$(ls $name)" ]; then
@@ -93,10 +102,10 @@ if [ -d $name ]; then
 		esac
 	fi
 else
-	echo "${GREEN}INFO${NC}: Installing Winter into directory [$name]"
+	echo "${GREEN}INFO${NC}: Installing Winter into directory $(pwd)/${YELLOW}$name${NC}"
 	composer create-project wintercms/winter $name
 	cd $name
-	sudo chown -R www-data:www-data .; sudo chmod -R gu+w .
+	sudo chown -R $install_grp:$install_grp .; sudo chmod -R g+rw .
 	sudo chmod +x artisan
 
 	linecount_env=`wc -l .env | cut -d " " -f 1`
@@ -106,10 +115,10 @@ else
 APP_DEBUG=true
 APP_URL='$hostname'
 
-# PostgreSQL only for intranet Calendar system
+# PostgreSQL only
 DB_CONNECTION='pgsql'
 DB_HOST='127.0.0.1'
-DB_PORT=5432
+DB_PORT=$db_port
 DB_DATABASE='$name'
 DB_USERNAME='$name'
 DB_PASSWORD='$password'
@@ -135,11 +144,11 @@ DATABASE_TEMPLATES=false
 	fi
 
 	# This will also update the Laravel .env file to use the created database
-	../acorn-setup-database pgsql $name
+	$script_dir/acorn-setup-database pgsql $name
 	# This will also update the Laravel .env file to use the hostname (.laptop)
-	sudo ../acorn-setup-hostname $name
-	hostname=$name.laptop
+	sudo $script_dir/acorn-setup-hostname $name
 fi
+hostname=$name.laptop
 
 # Initial installation
 # We could also use ./artisan winter:install --no-interaction
@@ -159,25 +168,27 @@ sed -i "s|MAIL_PORT=\".*\"|MAIL_PORT=465|" .env
 composer require winter/wn-builder-plugin
 composer require winter/wn-location-plugin
 composer require winter/wn-user-plugin
+composer require winter/wn-tailwindui-plugin # Menus
 
 # Temporary hack until we work out how to auto generate the classes.php
-if [ -f $dir/scripts/winter/classes.php ]; then
-	echo "${GREEN}INFO${NC}: Temporary hack to generate ~/storage/framework/classes.php"
-	cp $dir/scripts/winter/classes.php storage/framework/;
+if [ -f $script_dir/winter/classes.php ]; then
+	echo "${YELLOW}WARNING${NC}: Temporary hack to generate ~/storage/framework/classes.php"
+	cp $script_dir/winter/classes.php storage/framework/;
 fi
 
 # -------------------------------------------- Install AA modules and plugins
 cd modules
-if [ ! -d acorn ]; then git clone git@gitlab.acorn.org:office/acorn.git; fi
-if [ ! -d dbauth ];  then git clone git@gitlab.acorn.org:office/dbauth.git;  fi
+if [ ! -d acornassociated ]; then git clone git@gitlab.acornassociated.org:office/acornassociated.git; fi
+if [ ! -d dbauth ];          then git clone git@gitlab.acornassociated.org:office/dbauth.git;  fi
 cd ..
 
 cd plugins
-mkdir -p acorn
-cd acorn
-if [ ! -d location ];  then git clone git@gitlab.acorn.org:office/location.git;  fi
-if [ ! -d messaging ]; then git clone git@gitlab.acorn.org:office/messaging.git; fi
-if [ ! -d calendar ];  then git clone git@gitlab.acorn.org:office/calendar.git;  fi
+mkdir -p acornassociated
+cd acornassociated
+if [ ! -d rtler ];     then git clone git@gitlab.acornassociated.org:office/rtler.git;  fi
+if [ ! -d location ];  then git clone git@gitlab.acornassociated.org:office/location.git;  fi
+if [ ! -d messaging ]; then git clone git@gitlab.acornassociated.org:office/messaging.git; fi
+if [ ! -d calendar ];  then git clone git@gitlab.acornassociated.org:office/calendar.git;  fi
 cd ../..
 # TODO: Generate /storage/framework/classes.php because we have installed via git, not composer
 # php artisan package:discover or maybe
@@ -195,15 +206,15 @@ echo "--- app_original.php	2023-06-02 15:39:57.167122084 +0100
 
          System\ServiceProvider::class,
 +        DBAuth\ServiceProvider::class,
-+        Acorn\ServiceProvider::class,
++        AcornAssociated\ServiceProvider::class,
 +        Webklex\IMAP\Providers\LaravelServiceProvider::class,
      ]),
 
      /*
 " | patch -u config/app.php
 
-if [ -f acorn-add-websockets ]; then
-	./acorn-add-websockets
+if [ -f $script_dir/acorn-add-websockets ]; then
+	$script_dir/acorn-add-websockets
 fi
 
 # To generate /storage/framework/packages.php
@@ -220,20 +231,20 @@ fi
 # Note that our demons auto-run now
 # courtesy of our AA module
 echo "${GREEN}INFO${NC}: Resettings permissions"
-sudo chown -R www-data:www-data .; sudo chmod -R gu+w .
+sudo chown -R $install_grp:$install_grp .; sudo chmod -R g+rw .
 
 php artisan winter:passwd -q admin password
 if [ "$?" == 0 ]; then
-	echo "${GREEN}INFO${NC}: [${YELLOW}admin${NC}] password set to [${YELLOW}password${NC}]"
+	echo "${GREEN}INFO${NC}: ${YELLOW}admin${NC} password set to ${YELLOW}password${NC}"
 else
-	echo "${RED}ERROR${NC}: [${YELLOW}admin${NC}] password not set because user not found"
+	echo "${RED}ERROR${NC}: ${YELLOW}admin${NC} password not set because user not found"
 fi
 
 php artisan winter:passwd -q $name $password
 if [ "$?" == 0 ]; then
-	echo "${GREEN}INFO${NC}: [${YELLOW}$name${NC}] password set to [${YELLOW}$password${NC}]"
+	echo "${GREEN}INFO${NC}: ${YELLOW}$name${NC} password set to ${YELLOW}$password${NC}"
 else
-	echo "${RED}ERROR${NC}: [${YELLOW}$name${NC}] password not set because user not found"
+	echo "${RED}ERROR${NC}: ${YELLOW}$name${NC} password not set because user not found"
 fi
 
 echo "${YELLOW}WARNING${NC}: DBAuth was installed but not enabled. This is because setup would not have been possible without continually entering the user/pass for all artisan operations. Change .env DB_USERNAME=<DBAUTH> to enable."
