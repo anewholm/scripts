@@ -1,4 +1,4 @@
-# AcornAssociated helper scripts
+# Acorn helper scripts
 
 ## Installation of these scripts
 Clone this repository in to `/var/www/` so they can be run with `scripts/acorn-*`.
