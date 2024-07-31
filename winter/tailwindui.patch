@@ -1,0 +1,15 @@
+diff --git a/plugins/winter/tailwindui/assets/js/dist/app.js b/plugins/winter/tailwindui/assets/js/dist/app.js
+index 75167868..38704f4a 100644
+--- a/plugins/winter/tailwindui/assets/js/dist/app.js
++++ b/plugins/winter/tailwindui/assets/js/dist/app.js
+@@ -10034,8 +10034,9 @@
+                    if (e.length) {
+                      var n = e.position(),
+                        o = parseInt(e.css("marginLeft").replace("px", "")),
+-                        r = n.top + e.offset().top + e.outerHeight(!0),
++                        r = n.top +  e.outerHeight(!0),
+                        s = n.left + o;
++                        // remove this code r = n.top + e.offset().top + e.outerHeight(!0),
+                      if (t.length) {
+                        if(check == 'ar'){
+                          t.css({ top: r, right: $(window).width() - mouseX - 100});
