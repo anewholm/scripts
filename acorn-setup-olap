@@ -58,7 +58,7 @@ if [ -z "$(groups | grep tomcat)" ]; then
     echo "${RED}ERROR${NC}: Failed to add $USER to the tomcat group"
     exit 1
   fi
-  echo "${GREEN}INFO${NC}: User $USER added in to the tomcat group. Please log out and in again."
+	echo "${RED}ERROR${NC}: $USER was not in the Apache2 TomCat web-server group ${YELLOW}tomcat${NC}, so you have been added to it now. Please log out and in again from your laptop and then run this $0 script again"
   exit 0
 fi
 

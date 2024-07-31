@@ -26,7 +26,7 @@ if [ ! -f .env ]; then
 	exit 1
 fi
 
-hostname=`grep -E "APP_URL"= .env | cut -d '=' -f 2 | sed -En 's#.*://##p'`
+hostname=`grep -E "APP_URL=" .env | cut -d '=' -f 2 | sed -E 's#"##p' | sed -En 's#.*://##p'`
 if [ -z "$hostname" ]; then
   echo "${RED}ERROR${NC}: Unable to ascertain hostname from APP_URL in ${YELLOW}.env${NC}"
   exit 1
