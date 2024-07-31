@@ -70,10 +70,11 @@ if [ -z "$(which psql)" ]; then
 	sudo apt install -y postgresql postgresql-contrib
 fi
 # Copied from Winter installation guide
-sudo apt install -y php php-ctype php-curl php-xml php-fileinfo php-gd php-json php-mbstring php-mysql php-sqlite3 php-zip
+sudo apt install -y php php-curl php-xml php-gd php-json php-mbstring php-mysql php-sqlite3 php-zip
+# sudo apt install -y php-ctype php-fileinfo
 
 if [ -z "$(groups | grep $install_grp)" ]; then
-	echo "${RED}ERROR${NC}: $USER was not in group $install_grp, so added. Please log out-in and re-run the script"
+	echo "${RED}ERROR${NC}: $USER was not in the Apache2 web-server group $install_grp, so you have been added to it now. Please log out and in again from your laptop and then run this $0 script again"
 	sudo usermod -a -G $install_grp $USER
 	exit 1
 fi
@@ -217,6 +218,22 @@ if [ -f $script_dir/acorn-add-websockets ]; then
 	$script_dir/acorn-add-websockets
 fi
 
+# patches
+if [ -d $script_dir/winter ]; then
+	for pat in $script_dir/winter/*.patch; do
+		if [ -n "$pat" ]; then
+			file=`grep "^diff " $pat | cut -d ' ' -f 3`
+			echo "${GREEN}INFO${NC}: Applying patch ${YELLOW}$pat${NC} to ${YELLOW}$file${NC}"
+			patch $file $pat
+			if [ "$?" != 0 ]; then
+				echo "${RED}ERROR${NC}: Patch ${YELLOW}$pat${NC} failed"
+				read -p "Continue? " yn
+				if [ "$yn" != y ]; then exit 9; fi
+			fi
+		fi
+	done
+fi
+
 # To generate /storage/framework/packages.php
 php artisan package:discover
 
@@ -244,7 +261,7 @@ php artisan winter:passwd -q $name $password
 if [ "$?" == 0 ]; then
 	echo "${GREEN}INFO${NC}: ${YELLOW}$name${NC} password set to ${YELLOW}$password${NC}"
 else
-	echo "${RED}ERROR${NC}: ${YELLOW}$name${NC} password not set because user not found"
+	echo "${YELLOW}WARNING${NC}: ${YELLOW}$name${NC} password not set because user not found"
 fi
 
 echo "${YELLOW}WARNING${NC}: DBAuth was installed but not enabled. This is because setup would not have been possible without continually entering the user/pass for all artisan operations. Change .env DB_USERNAME=<DBAUTH> to enable."
