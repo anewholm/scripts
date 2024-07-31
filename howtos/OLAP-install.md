@@ -1,5 +1,5 @@
 # HowTo: Installing a new OLAP cube
-We use Open Source, Java JSP Apache TomCat9 based Pentaho Mondrian OLAP systems. Currently. Play with the demo first to get a feel: [http://demos.acornassociated.org/xmondrian/xavier/index.html](http://demos.acornassociated.org/xmondrian/xavier/index.html)
+We use Open Source, Java JSP Apache TomCat9 based Pentaho Mondrian OLAP systems. Currently. Play with the demo first to get a feel: [http://demos.acorn.org/xmondrian/xavier/index.html](http://demos.acorn.org/xmondrian/xavier/index.html)
 
 ## Read the documentation
 - [Pentaho Documentation](https://mondrian.pentaho.com/documentation/olap.php)
@@ -12,7 +12,7 @@ We use Open Source, Java JSP Apache TomCat9 based Pentaho Mondrian OLAP systems.
 Our scripts setup Apache2 websites in the standard `/var/www/` directory.
 ```
 cd /var/www/
-git clone git@gitlab.acornassociated.org:office/scripts.git
+git clone git@gitlab.acorn.org:office/scripts.git
 ```
 This will provide many scripts that should be run in the `/var/www/` directory like this:
 ```
@@ -48,7 +48,7 @@ It should contain your connection(s) to the administration system PostGreSQL dat
 ```
 <DataSource>
   <DataSourceName>universityacceptance</DataSourceName>
-  <DataSourceDescription>Acorn Associated Calendar system</DataSourceDescription>
+  <DataSourceDescription>Acorn Calendar system</DataSourceDescription>
   <URL>http://localhost:8080/xmondrian/xmla</URL>
   <DataSourceInfo>
     Provider=mondrian;
@@ -90,7 +90,7 @@ The best way to see errors is to actually open the `/var/log/tomcat9/mondrian.lo
 ## Edit / Add a Schema (Catalog)
 Schemas live in `./schema/*.xml`. It should have the same name as your project, e.g. `universityacceptance.xml`. It will contain the definition of your cubes. The `datasources.xml` Catalog property points to the schema you use. If you do not have `UseSchemaPool=false` in your `<DataSourceInfo>` then it is necessary to restart TomCat9 to see your schema changes: `sudo systemctl restart tomcat9`.
 
-## AcornAssociated Schema culture
+## Acorn Schema culture
 We don't generally use @hasAll because it is too verbose.
 
 ## JavaScript control of the XavierApplication
