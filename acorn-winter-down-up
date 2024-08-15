@@ -1,0 +1,6 @@
+#!/bin/bash
+sudo -u www-data ./artisan winter:down
+sudo -u www-data ./artisan cache:clear
+sudo -u www-data ./artisan winter:up
+sudo -u www-data ./artisan winter:passwd admin password
+sudo chown -R www-data:www-data .; sudo chmod -R g+rw .

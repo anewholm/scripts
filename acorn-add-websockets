@@ -26,9 +26,11 @@ if [ ! -f .env ]; then
 	exit 1
 fi
 
-hostname=`grep -E "APP_URL=" .env | cut -d '=' -f 2 | sed -E 's#"##p' | sed -En 's#.*://##p'`
+# grep -E "APP_URL=" .env | cut -d '=' -f 2 | tr -d '"' | sed -E 's#.*://##'
+app_url=`grep -E "APP_URL=" .env`
+hostname=`echo $app_url | cut -d '=' -f 2 | tr -d '"' | sed -E 's#.*://##'`
 if [ -z "$hostname" ]; then
-  echo "${RED}ERROR${NC}: Unable to ascertain hostname from APP_URL in ${YELLOW}.env${NC}"
+  echo "${RED}ERROR${NC}: Unable to ascertain hostname from APP_URL [$app_url] in ${YELLOW}.env${NC}"
   exit 1
 fi
 
@@ -41,9 +43,10 @@ if [ ! -d vendor/beyondcode/laravel-websockets ]; then composer -W require beyon
 #if [ ! -d node_modules/pusher-js ];               then npm install --save-dev pusher-js;               fi
 
 # --------------------------------------------- Files & Patches
+patch_file=".env"
 echo "${GREEN}INFO${NC}: Installing websockets system for ${YELLOW}$website${NC}, hostname: ${YELLOW}$hostname${NC} on port ${YELLOW}$port${NC}"
-if [ -z "$(grep Laravel-Websockets .env)" ] && [ -z "$(grep LARAVEL_WEBSOCKETS .env)" ]; then
-  echo "${GREEN}INFO${NC}: Injecting Laravel-Websockets settings in to .env with port $port"
+if [ -z "$(grep Laravel-Websockets $patch_file)" ] && [ -z "$(grep LARAVEL_WEBSOCKETS $patch_file)" ]; then
+  echo "${GREEN}INFO${NC}: Injecting Laravel-Websockets settings in to $patch_file with port $port"
   echo "
 # Laravel-Websockets, broacasting and Echo
 BROADCAST_DRIVER=pusher
@@ -57,14 +60,17 @@ LARAVEL_WEBSOCKETS_PORT=$port
 LARAVEL_WEBSOCKETS_SSL_LOCAL_CERT=
 LARAVEL_WEBSOCKETS_SSL_LOCAL_PK=
 LARAVEL_WEBSOCKETS_SSL_PASSPHRASE=
-  " >> .env
+  " >> $patch_file
+else
+  echo "${YELLOW}WARNING${NC}: Laravel-Websockets settings already present $patch_file"
 fi
 
-# Patch for beyondcode/laravel-websockets
+# ------------------------------------------------------- Patch for beyondcode/laravel-websockets
+# diff -u OriginalFile UpdatedFile > PatchFile
 # because Winter has its own Authorisation system, not Laravel Gates
 # Check `composer status` for a full list of altered vendor packages
-service_file=vendor/beyondcode/laravel-websockets/src/WebSocketsServiceProvider.php
-if [ -z "$(grep ';//->registerDashboardGate' $service_file)" ]; then
+patch_file="vendor/beyondcode/laravel-websockets/src/WebSocketsServiceProvider.php"
+if [ -z "$(grep ';//->registerDashboardGate' $patch_file)" ]; then
   echo "${GREEN}INFO${NC}: Patching ${YELLOW}WebSocketsServiceProvider.php${NC}"
   echo "--- WebSocketsServiceProvider_original.php      2023-02-15 10:40:49.000000000 +0000
 +++ WebSocketsServiceProvider.php       2023-06-05 07:59:48.411946490 +0100
@@ -77,22 +83,27 @@ if [ -z "$(grep ';//->registerDashboardGate' $service_file)" ]; then
 
         \$this->loadViewsFrom(__DIR__.'/../resources/views/', 'websockets');
 
-" | patch -u $service_file
+" | patch -u $patch_file
   if [ $? != 0 ]; then
-    echo "${RED}ERROR${NC}: Failed to patch ${YELLOW}$service_file${NC}"
-    echo "Maybe new version?"
-    exit 1
+    echo "${RED}ERROR${NC}: Failed to patch ${YELLOW}$patch_file${NC}"
+    read -p "Maybe new version. Continue [y/n] (y) ?" yn
+    if [ "$yn" == "n" ]; then exit 1; fi
   fi
+else
+  echo "${YELLOW}WARNING${NC}: $patch_file already patched"
 fi
 
-# Configuration
+# ------------------------------------------------------- Configuration
+# diff -u OriginalFile UpdatedFile > PatchFile
 # https://beyondco.de/docs/laravel-websockets/basic-usage/pusher
 # 'When using Laravel WebSockets as a Pusher replacement
 # without having used Pusher before,
 # it does not matter what you set as your PUSHER_ variables.
 # Just make sure they are unique for each project.'
-if [ -z "$(grep $hostname config/broadcasting.php)" ]; then
-  echo "${GREEN}INFO${NC}: Setting configurations in ${YELLOW}broadcasting.php${NC}"
+# diff -u OriginalFile UpdatedFile > PatchFile
+patch_file="config/broadcasting.php"
+if [ -z "$(grep $hostname $patch_file)" ]; then
+  echo "${GREEN}INFO${NC}: Setting configurations in ${YELLOW}$patch_file${NC}"
   echo "--- broadcasting_original.php	2023-06-02 15:35:08.156939005 +0100
 +++ broadcasting.php	2023-06-02 15:36:23.804429454 +0100
 @@ -39,4 +39,7 @@
@@ -103,36 +114,38 @@ if [ -z "$(grep $hostname config/broadcasting.php)" ]; then
 +                'host'    => '$hostname',
 +                'port'    => $port,
 +                'scheme'  => 'http'
-            ],
-" | patch -u config/broadcasting.php
+            ]," | patch -u $patch_file
   if [ $? != 0 ]; then
-    echo "${RED}ERROR${NC}: Failed to patch ${YELLOW}config/broadcasting.php${NC}"
-    echo "Maybe new version?"
-    exit 1
+    echo "${RED}ERROR${NC}: Failed to patch ${YELLOW}$patch_file${NC}"
+    read -p "Maybe new version. Continue [y/n] (y) ?" yn
+    if [ "$yn" == "n" ]; then exit 1; fi
   fi
+else
+  echo "${YELLOW}WARNING${NC}: $patch_file already patched"
 fi
 
-# Now that our new installs have been referenced
+# ------------------------------------------------------- Now that our new installs have been referenced
+# diff -u OriginalFile UpdatedFile > PatchFile
 # add our ServiceProviders in to the providers
-if [ -z "$(grep WebSocketsServiceProvider::class config/app.php)" ]; then
-  echo "${GREEN}INFO${NC}: Patching file ${YELLOW}app.php${NC}"
+patch_file="config/app.php"
+if [ -z "$(grep 'WebSocketsServiceProvider' $patch_file)" ] && [ -z "$(grep 'BroadcastServiceProvider' $patch_file)" ]; then
+  echo "${GREEN}INFO${NC}: Patching file ${YELLOW}$patch_file${NC}"
   echo "--- config/app.php      2024-06-16 11:18:26.789740084 +0300
 +++ config/app-original.php     2024-07-09 22:35:46.136012850 +0300
-@@ -266,6 +266,8 @@
+@@ -266,3 +266,5 @@
          // 'Illuminate\Html\HtmlServiceProvider', // Example
 
          System\ServiceProvider::class,
 +        Illuminate\Broadcasting\BroadcastServiceProvider::class,
 +        BeyondCode\LaravelWebSockets\WebSocketsServiceProvider::class,
-     ]),
-
-     /*
-" | patch -u config/app.php
+" | patch -u $patch_file
   if [ $? != 0 ]; then
-    echo "${RED}ERROR${NC}: Failed to patch ${YELLOW}config/app.php${NC} with new Service Provider"
-    echo "Maybe new version?"
-    exit 1
+    echo "${RED}ERROR${NC}: Failed to patch ${YELLOW}$patch_file${NC} with new Service Provider"
+    read -p "Maybe new version. Continue [y/n] (y) ?" yn
+    if [ "$yn" == "n" ]; then exit 1; fi
   fi
+else
+  echo "${YELLOW}WARNING${NC}: $patch_file already patched"
 fi
 
 # ------------------------------------------------ Migrations
@@ -145,4 +158,4 @@ php artisan vendor:publish --all
 php artisan package:discover
 
 # TODO: Enter this in Ubuntu services
-echo "${GREEN}INFO${NC}: To run the server run ${YELLOW}php artisan websockets:serve${NC}"
+echo "${GREEN}INFO${NC}: To run the server run ${YELLOW}./artisan websockets:serve${NC}"

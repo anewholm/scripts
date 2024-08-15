@@ -1,5 +1,25 @@
-SET @sqlString = concat('select * from ', (SELECT group_concat(concat('select "', table_name, ' as tbl", count(*) as cnt from ', table_name) separator ' union all ') FROM information_schema.tables where table_schema = DATABASE()), ' order by cnt desc');
+-- drop function fn_acorn_lojistiks_table_counts(_schema varchar(1024));
 
-PREPARE stmt FROM @sqlString;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt; 
+CREATE OR REPLACE FUNCTION fn_acorn_lojistiks_table_counts(_schema varchar(1024))
+  RETURNS table("table" text, "count" bigint)
+  LANGUAGE plpgsql AS
+$BODY$
+BEGIN
+	-- SELECT * FROM information_schema.tables;
+  	return query execute (select concat(
+		'select "table", "count" from (', 
+		(
+			SELECT string_agg(
+				concat('select ''', table_name, ''' as "table", count(*) as "count" from ', table_name),
+				' union all '
+			) 
+			FROM information_schema.tables 
+			where table_catalog = current_database()
+			and table_schema = _schema
+		), 
+		') data order by "count" desc, "table" asc'
+	));
+END
+$BODY$;
+
+select * from fn_acorn_lojistiks_table_counts('public');
