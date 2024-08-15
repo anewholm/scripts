@@ -67,7 +67,7 @@ if [ ! -d ~/scripts/.git ]; then
         else
             echo "Writing SSH config for ${YELLOW}$git_server${NC} to use tor"
             echo "Host $git_server"  >> ~/.ssh/config
-            echo "  User sanchez"    >> ~/.ssh/config
+            echo "  User sz"    >> ~/.ssh/config
             echo "  ProxyCommand nc -X 5 -x localhost:9150 %h %p" >> ~/.ssh/config
             echo "  PreferredAuthentications publickey" >> ~/.ssh/config
         fi

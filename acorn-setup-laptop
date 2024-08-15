@@ -181,6 +181,10 @@ if [ -d postgres/ ]; then
     if [ ! -f /usr/share/postgresql/$postgresql_version/extension/$extension_name.control ]; then
       echo "${YELLOW}$extension_name${NC} installing for PostGreSQL $postgresql_version..."
       cd postgres/$extension_name/
+      # We don't want to use a previously made and pushed version for the wrong PG version
+      sudo make uninstall
+      make clean
+      # Normal make and install
       make
       sudo make install
       cd -

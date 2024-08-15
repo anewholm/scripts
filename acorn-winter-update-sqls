@@ -1,0 +1,63 @@
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+outfile=up.sql
+
+# -------------------------------------------- .env parse
+# Get DB connection parameters from Laravel
+env="../../../../.env"
+DB_CONNECTION=`grep DB_CONNECTION $env | cut -d '=' -f 2`
+DB_HOST=`grep DB_HOST $env | cut -d '=' -f 2`
+DB_PORT=`grep DB_PORT $env | cut -d '=' -f 2`
+DB_DATABASE=`grep DB_DATABASE $env | cut -d '=' -f 2`
+DB_USERNAME=`grep DB_USERNAME $env | cut -d '=' -f 2`
+DB_PASSWORD=`grep DB_PASSWORD $env | cut -d '=' -f 2`
+echo "Dump Database: ${YELLOW}$DB_DATABASE${NC} with ${YELLOW}$DB_USERNAME${NC}/${YELLOW}$DB_PASSWORD${NC}"
+
+# -------------------------------------------- Plugin parse
+dir=`pwd`
+plugin_dir=`dirname $dir`
+plugin_name=`basename $plugin_dir`
+author_dir=`dirname $plugin_dir`
+author_name=`basename $author_dir`
+schema="*"
+author_plugin="${author_name}_${plugin_name}"
+table_space="$schema.${author_plugin}_*"
+function_space="[^ ]*$author_plugin[a-z0-9_]+\([a-z0-9, ]*\)"
+echo "Author: ${YELLOW}$author_name${NC}, Plugin: ${YELLOW}$plugin_name${NC}, Tablespace: ${YELLOW}$table_space${NC}"
+
+if [ -f $outfile ]; then rm $outfile; fi
+
+# -------------------------------------------- Up Functions
+IFS=$'\n' # Spaces in argument lists
+for f in `pg_dump -Fc -s $DB_DATABASE | pg_restore -l | grep -oE "^[0-9;]+ [0-9;]+ [0-9;]+ FUNCTION [a-z]+ $function_space" | cut -d ' ' -f 6,7,8,9,10,11,12`; do
+  echo "-- MANUAL FUNCTION DUMP $f" >> $outfile
+  echo $f
+  pg_dump -Fc -s $DB_DATABASE | pg_restore --clean --if-exists --no-owner --no-privileges --format=c --function="$f" -f - >> $outfile
+done
+IFS=$' '
+
+# -------------------------------------------- Up main
+# Tables, Sequences and views
+#--username=$DB_USERNAME --password=$DB_PASSWORD \
+#--host=$DB_HOST --port=$DB_PORT \
+echo "Main DB dump"
+pg_dump --no-owner --schema-only --table="$table_space" --no-privileges --clean --if-exists --inserts --no-security-labels --no-subscriptions \
+   $DB_DATABASE -f - >> $outfile
+
+# If we created new schemas then we need to reset
+echo "SET search_path TO public;" >> $outfile
+
+# -------------------------------------------- Down
+echo "All drops in to down.sql"
+if [ -f down.sql ]; then rm down.sql; fi
+grep -E "^ALTER TABLE IF EXISTS ONLY .* DROP CONSTRAINT .*" $outfile >> down.sql
+grep -E "^DROP.*" $outfile >> down.sql
+
+echo "Done."
