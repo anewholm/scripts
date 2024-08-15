@@ -7,11 +7,100 @@ NC="$(tput sgr0)"
 TICK="${GREEN}✓${NC}"
 CROSS="${RED}✘${NC}"
 
-pg_version=14
+pg_version=16
 pg_root=/etc/postgresql/$pg_version/main
 pg_replication_user=repl_user
+pg_current_version=$(psql --version | awk '{print $3}' | cut -d "." -f 1)
 
+echo "This script is not operational yet"
+exit 9
+
+# TODO: Auto-detect central or node server
+# TODO: read -p "IP-address/subnet-mask of other replication node (192.168.0.0/16)? " IP_NODE
+# TODO: List databases from 16 and create selection list. If there is only one, assume it is for that one
+read -p "please enter database name " db_name
+read -p "IP-address/subnet-mask of other replication node (192.168.0.0/16)? " ip_node
+
+sub_hostname=`hostname`
+pub_name="pub_${db_name}_all_tables" # pub_acorn_lojistiks_all_tables
+sub_name="sub_${db_name}_all_tables" # sub_acorn_lojistiks_all_tables
+slot_name="${sub_name}_${sub_hostname}"
+
+# ------------------------------------------------- Test connection, if node
+if [ ! $ip_node =~ ^192.168+\.[0-9]+\.[0-9]+$ ]; then
+  other_tables=`echo $PASS | psql -h $IP_NODE -p $DB_NODE_PORT -d $DB_NAME -U $USER_NAME -W $PASS -c psql -U postgres -d $MY_DB_NAME -c "CREATE PUBLICATION $PUB_NAME FOR ALL TABLES;""\dt"`
+  read -p "Failed conn. Continue? " yn
+  case $yn in
+    [Yy]* )
+      ;;
+    * )
+      nmap $ip_node
+      exit 9;
+      ;;
+  esac
+else
+  echo "The IP is not internal, or is of the wrong format"
+fi
+
+# This is the number of subscribers that can connect to a single publication
+SET max_replication_slots = 50;
+SET max_wal_senders = 50;
+# wal_keep_size sets how many WAL segments are retained when subscribers are down
+
+# https://www.postgresql.org/docs/current/logical-replication-publication.html
+# Every publication can have multiple subscribers.
+# Each subscription will receive changes via one replication slot.
+# Additional replication slots may be required for the initial data synchronization of pre-existing table data and those will be dropped at the end of data synchronization.
+
+# TODO: Sequence data is not replicated. The data in serial or identity columns backed by sequences will of course be replicated as part of the table, but the sequence itself would still show the start value on the subscriber. If the subscriber is used as a read-only database, then this should typically not be a problem. If, however, some kind of switchover or failover to the subscriber database is intended, then the sequences would need to be updated to the latest values, either by copying the current data from the publisher (perhaps using pg_dump) or by determining a sufficiently high value from the tables themselves.
+
+# https://www.postgresql.org/docs/current/logical-replication-architecture.html
+# TODO: The apply process on the subscriber database always runs with session_replication_role set to replica. This means that, by default, triggers and rules will not fire on a subscriber. Users can optionally choose to enable triggers and rules on a table using the ALTER TABLE command and the ENABLE TRIGGER and ENABLE RULE clauses.
+# The logical replication apply process currently only fires row triggers, not statement triggers. The initial table synchronization, however, is implemented like a COPY command and thus fires both row and statement triggers for INSERT.
+
+# TODO: REPLICA_IDENTITY and PUBLICATION WHERE clauses to restrict origin:
+# https://www.postgresql.org/docs/current/logical-replication-row-filter.html
+# If a publication publishes UPDATE or DELETE operations, the row filter WHERE clause must contain only columns that are covered by the replica identity (see REPLICA IDENTITY). If a publication publishes only INSERT operations, the row filter WHERE clause can use any column. For example: WHERE: server_id != 3
+CREATE PUBLICATION $pub_name
+  FOR ALL TABLES
+  WITH (
+		publish = 'insert, update, delete, truncate',
+		publish_via_partition_root = false
+	);
+
+
+central_conn_string="'host=$ip_central port=$db_port dbname=$db_name user=$db_user password=xxxxxx sslmode=disable'"
+CREATE SUBSCRIPTION $sub_name
+  CONNECTION $central_conn_string
+  PUBLICATION $pub_name
+  WITH (
+		-- Custom
+		-- By default, PG waits for the WAL log to fill (16MB) before updating subscribers
+		-- Streaming ships each new WAL log entry (DB change) immediately
+		streaming = 'True',
+    -- Replication slots provide an automated way to ensure that the primary does not remove WAL segments until they have been received by all standbys, and that the primary does not remove rows which could cause a recovery conflict even when the standby is disconnected.
+		create_slot = true,
+		slot_name = $slot_name,
+		-- Binary requires exact column data type matching, whereas non-binary, for example, allows integer to be mapped to bigint
+		binary = false,
+
+    -- The initial data in existing subscribed tables are snapshotted and copied in a parallel instance of a special kind of apply process. This process will create its own replication slot and copy the existing data. As soon as the copy is finished the table contents will become visible to other backends. Once existing data is copied, the worker enters synchronization mode, which ensures that the table is brought up to a synchronized state with the main apply process by streaming any changes that happened during the initial data copy using standard logical replication. During this synchronization phase, the changes are applied and committed in the same order as they happened on the publisher. Once synchronization is done, control of the replication of the table is given back to the main apply process where replication continues as normal.
+		copy_data = true,
+
+		-- Defaults
+		connect = true,
+		enabled = true,
+		synchronous_commit = 'off',
+		two_phase = false,
+		disable_on_error = false,
+		run_as_owner = false,
+		password_required = true,
+		origin = 'any'
+	);
+
+# ------------------------------------------------- Pre-requisites
 if [ ! -d $pg_root ]; then
+  # TODO: Check for 14 and advise
   echo "PG base dir $pg_root not found"
   read -p "Install PostGreSQL $pg_version? " yn
   case $yn in
@@ -31,21 +120,27 @@ else
   echo "${GREEN}INFO${NC}: Found PostGreSQL $pg_version"
 fi
 
-# Configure PG for replication
+# ------------------------------------------------- Configure PG for replication
 pg_confg=$pg_root/postgresql.conf
-sudo sed -i "s/$# *listen_addresses/listen_addresses/" $pg_confg
+# https://www.postgresql.org/docs/current/logical-replication.html
+# Logical replication is a method of replicating data objects and their changes, based upon their replication identity (usually a primary key).
+# We use the term logical in contrast to physical replication, which uses exact block addresses and byte-by-byte replication.
+# Logical replication allows fine-grained control over both data replication and security.
 sudo sed -i "s/$# *wal_level *=.*/wal_level = logical/" $pg_confg
 sudo sed -i "s/$# *wal_log_hints *=.*/wal_log_hints = on/" $pg_confg
+ip_server=`ifconfig | grep -Eo "inet 192.168.[0-9.]+" | cut -d ' ' -f 2`
+vpn_subnet_only="$ip_server/24"
+sudo sed -i "s%$# *listen_addresses.*%listen_addresses = '$vpn_subnet_only'%" $pg_confg
 
 # Configure authentication
 pg_auth=$pg_root/pg_hba.conf
 if [ -z "$(grep repl_user $pg_auth)" ]; then
-  read -p "IP-address/subnet-mask of other replication node (192.168.0.0/16)? " ip_node
   if [ -z "$ip_node" ]; then ip_node="192.168.0.0/16"; fi
-  echo "host  replication $pg_replication_user $ip_node  md5" >> $pg_auth
+  if [ -z "$(grep $ip_node $pg_auth)" ]; then
+    echo "host  $db_name $pg_replication_user $ip_node  scram-sha-256" >> $pg_auth
+  else
+    echo "already found in $pg_auth"
+  fi
 fi
 sudo systemctl restart postgresql
-
-# Create a replication user
-#TODO: sudo -u postgres -c "psql -e 'CREATE USER ...'
 

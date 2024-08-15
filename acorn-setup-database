@@ -9,7 +9,7 @@ CROSS="${RED}✘${NC}"
 ###############################
 
 db_connection=$1
-db_port=5432
+db_port=
 db_name=$2
 db_username=$3
 db_password=$4
@@ -115,38 +115,54 @@ if [ "$1" == "mysql" ]; then
 fi
 
 if [ "$1" == "pgsql" ]; then
-    yn=y
-    if sudo -i -u postgres psql -lqt | cut -d \| -f 1 | grep -wq $db_name; then
-	   read -p "${YELLOW}WARNING${NC}: DB [$db_name] already exists. Re-create DB stuff [Y/n]? " yn
+	db_port=5432
+	if [ -f /etc/postgresql/16/main/postgresql.conf ]; then
+		db_port=`grep "^port *=" /etc/postgresql/16/main/postgresql.conf | cut -d '=' -f 2 | tr -d ' ' | sed 's/\s.*//'`
+		if [ -z "$db_port" ]; then
+			echo "${RED}ERROR${NC}: Could not parse the PostGreSQL@16 port from postgresql.conf"
+			exit 1
+		elif [ "$db_port" != "5432" ]; then
+			read -p "${YELLOW}WARNING${NC}: PostGreSQL@16 found on non-standard port [$db_port]. Continue [Y/n]? " yn
+			case $yn in
+				[Yy]* )
+					;;
+				* )
+					exit 1
+					;;
+			esac
+		fi
+	fi
+
+	yn=y
+	if sudo -i -u postgres psql --port=$db_port -lqt | cut -d \| -f 1 | grep -wq $db_name; then
+		read -p "${YELLOW}WARNING${NC}: DB [$db_name] already exists. Re-create DB stuff [Y/n]? " yn
 	else
-  	   echo "DB [$db_name] does not exist yet. Creating..."
+		echo "DB [$db_name] does not exist yet. Creating..."
 	fi
 
 	case $yn in
-	   [Yy]* )
-	   if sudo -i -u postgres psql -lqt | cut -d \| -f 1 | grep -wq $db_name; then
-     	      sudo -i -u postgres dropdb $db_name 
-     	      sudo -i -u postgres dropuser $db_name
-       fi
-  	   sudo -i -u postgres bash -c "psql -c \"CREATE USER $db_username WITH SUPERUSER CREATEROLE PASSWORD '$db_password';\"" &> /dev/null
-       if [ "$?" == "1" ]; then
-      	   echo "${RED}ERROR${NC}: Failed to create user $db_username with password [$db_password]"
-      	   exit; 
-       fi
-  	   sudo -i -u postgres bash -c "psql -c \"CREATE DATABASE $db_name OWNER $db_username;\"" &> /dev/null
-       if [ "$?" == "1" ]; then
-      	   echo "${RED}ERROR${NC}: Failed to create database [$db_name]"
-       	   exit; 
-       fi
-  	   echo "${GREEN}INFO${NC}: created database [${GREEN}$db_name${NC}] with user [${GREEN}$db_username${NC}] password [${GREEN}$db_password${NC}]";
-    	  ;;
-  	    [Nn]* )
-  	  	;;
- 	 	[]* )
-    	;;
-  	 	* ) echo "eh?"
-    	  ;;
-    esac
+		[Yy]* )
+			if sudo -i -u postgres psql --port=$db_port -lqt | cut -d \| -f 1 | grep -wq $db_name; then
+					sudo -i -u postgres dropdb   --port=$db_port $db_name
+					sudo -i -u postgres dropuser --port=$db_port $db_name
+			fi
+			sudo -i -u postgres psql --port=$db_port -c "CREATE USER $db_username WITH SUPERUSER CREATEROLE PASSWORD '$db_password';"
+			if [ "$?" == "1" ]; then
+					echo "${RED}ERROR${NC}: Failed to create user $db_username with password [$db_password]"
+					exit;
+			fi
+			sudo -i -u postgres psql --port=$db_port -c "CREATE DATABASE $db_name OWNER $db_username;"
+			if [ "$?" == "1" ]; then
+					echo "${RED}ERROR${NC}: Failed to create database [$db_name]"
+					exit;
+			fi
+			echo "${GREEN}INFO${NC}: created database [${GREEN}$db_name${NC}] with user [${GREEN}$db_username${NC}] password [${GREEN}$db_password${NC}]";
+			;;
+		[Nn]* )
+			;;
+		* ) echo "eh?"
+			;;
+	esac
 fi
 
 # ------------------------------------ Update framework if present

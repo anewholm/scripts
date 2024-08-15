@@ -179,14 +179,26 @@ fi
 
 # -------------------------------------------- Install AA modules and plugins
 cd modules
-if [ ! -d acorn ]; then git clone git@gitlab.acorn.org:office/acorn.git; fi
+if [ ! -d acorn ]; then
+	git clone git@gitlab.acorn.org:office/acorn.git
+	if [ "$?" != 0 ]; then
+		echo "${RED}ERROR${NC}: Failed to checkout first office repository. Probably you do not have permissions. Please resolve and start again."
+		exit 1
+	fi
+fi
 if [ ! -d dbauth ];          then git clone git@gitlab.acorn.org:office/dbauth.git;  fi
 cd ..
 
 cd plugins
 mkdir -p acorn
 cd acorn
-if [ ! -d rtler ];     then git clone git@gitlab.acorn.org:office/rtler.git;  fi
+if [ ! -d rtler ];     then
+	git clone git@gitlab.acorn.org:office/rtler.git
+	if [ "$?" != 0 ]; then
+		echo "${RED}ERROR${NC}: Failed to checkout first office repository. Probably you do not have permissions. Please resolve and start again."
+		exit 1
+	fi
+fi
 if [ ! -d location ];  then git clone git@gitlab.acorn.org:office/location.git;  fi
 if [ ! -d messaging ]; then git clone git@gitlab.acorn.org:office/messaging.git; fi
 if [ ! -d calendar ];  then git clone git@gitlab.acorn.org:office/calendar.git;  fi
@@ -227,8 +239,15 @@ if [ -d $script_dir/winter ]; then
 			patch $file $pat
 			if [ "$?" != 0 ]; then
 				echo "${RED}ERROR${NC}: Patch ${YELLOW}$pat${NC} failed"
-				read -p "Continue? " yn
-				if [ "$yn" != y ]; then exit 9; fi
+				read -p "Continue (y) ? " yn
+				case $yn in
+					[Nn]* )
+						echo "ok, exciting process. please resolve manually"
+						exit 1;
+						;;
+					* )
+						;;
+				esac
 			fi
 		fi
 	done
@@ -243,12 +262,6 @@ if [ "$?" != 0 ]; then
 	echo "${RED}ERROR${NC}: Migration failed, exiting"
 	exit 0
 fi
-
-# -------------------------------------------- Security
-# Note that our demons auto-run now
-# courtesy of our AA module
-echo "${GREEN}INFO${NC}: Resettings permissions"
-sudo chown -R $install_grp:$install_grp .; sudo chmod -R g+rw .
 
 php artisan winter:passwd -q admin password
 if [ "$?" == 0 ]; then
@@ -273,6 +286,12 @@ case $yn in
 		echo "${GREEN}INFO${NC}: DBAuth enabled."
 		;;
 esac
+
+# -------------------------------------------- Security
+# Note that our demons auto-run now
+# courtesy of our AA module
+echo "${GREEN}INFO${NC}: Resettings permissions"
+sudo chown -R $install_grp:$install_grp .; sudo chmod -R g+rw .
 
 echo "${GREEN}INFO${NC}: Login in to http://$name.laptop"
 

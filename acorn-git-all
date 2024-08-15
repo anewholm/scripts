@@ -1,0 +1,8 @@
+#!/bin/bash
+if [ -z "$1" ]; then
+  echo "Usage: acorn-git-all <git-command>, e.g. acorn-git-all status"
+  exit 1
+fi
+
+# find . -name ".git" -type d | sed 's/\/.git//' |  xargs -P10 -I{} git config --global --add safe.directory {}
+find . -name ".git" -type d | sed 's/\/.git//' |  xargs -P10 -I{} git -C {} $@
