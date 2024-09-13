@@ -1,0 +1,717 @@
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+# -------------------------------------------- Functions
+function comment_array_add()
+{
+  # For lang.php PHP array files
+  # comment_array_add "$table_comment" 8 "$translation_group" "$field_name" $column_title "$path" 'translation'
+  #   section(translation_group): invoice, for 'invoice' => [ the array section at that indent
+  #   name(field_name):    amount
+  #   value(column_title): Amount
+  #   file(path):          lang/en/lang.php
+  comment=$1
+  indent=$2
+  section=$3
+  name=$4
+  value=$5
+  file=$6
+  alias=$7
+
+  if [ -z "$alias" ]; then alias="$name"; fi
+
+  for cl in "$comment"; do
+    comment_name=`echo "$cl" | cut -d ':' -f 1`
+    comment_value=`echo "$cl" | cut -d ':' -f 2`
+    if [ "$comment_name" == "$alias" ]; then
+      value="$comment_value"
+    fi
+  done
+
+  # Result
+  name_exists=`grep "^// $section.$name" "$file"`
+  if [ -z "$name_exists" ]; then
+    indent_string=`printf "%${indent}s"`
+    section_string="$indent_string'$section' => \["
+    section_exists=`grep "^$section_string" "$file"`
+    if [ -z "$section_exists" ]; then
+      echo "${RED}ERROR${NC}: Section ${YELLOW}$section${NC} does not exist in ${YELLOW}$file${NC}"
+      exit 1
+    fi
+    sed -i "s|^$section_string|$section_string\n$indent_string    '$name' => '$value',|" "$file"
+    echo "// $section.$name" >> "$file"
+  fi
+
+  return 0
+}
+
+function comment_override()
+{
+  # For YAML files
+  comment=$1
+  indent=$2
+  name=$3
+  value=$4
+  file=$5
+  alias=$6
+
+  if [ -z "$alias" ]; then alias="$name"; fi
+
+  # name
+  for cl in "$comment"; do
+    comment_name=`echo "$cl" | cut -d ':' -f 1`
+    comment_value=`echo "$cl" | cut -d ':' -f 2`
+    if [ "$comment_name" == "$alias" ]; then
+      value="$comment_value"
+    fi
+  done
+
+  # filestub.name
+  # Useful for dis-ambiguation
+  # fields.type: vs. columns.type:
+  filestub=`echo "$file" | cut -d '.' -f 1`
+  alias="$filestub.$alias"
+  for cl in "$comment"; do
+    comment_name=`echo "$cl" | cut -d ':' -f 1`
+    comment_value=`echo "$cl" | cut -d ':' -f 2`
+    if [ "$comment_name" == "$alias" ]; then
+      value="$comment_value"
+    fi
+  done
+
+  # Result
+  if [ -n "$value" ]; then
+    if [ -n "$file" ]; then
+      indent_string=`printf "%${indent}s"`
+      echo "$indent_string$name: $value" >> $file
+    else
+      echo "$value"
+    fi
+  fi
+
+  return 0
+}
+
+
+# -------------------------------------------- Options
+echo "Usage: $0 [<plugin> recreate|append-to push|ask|leave]"
+install_plugins="$1"
+command="$2" # recreate, append
+git_policy="$3" # push
+
+if [ -z "$command" ];    then command='append-to'; fi
+if [ -z "$git_policy" ]; then git_policy='ask'; fi
+
+version='1.0'
+central_server=acorn.org
+git_server=gitlab.$central_server
+git_group="office"
+author_namespace=Acorn
+run_dir=`pwd` # Bald
+script_dir=`dirname $(realpath $0)`
+script=`basename $0`
+
+# Fixed
+IFS=$'\n'
+Str='Winter\Storm\Support\Str'
+laravel_boot="require('vendor/autoload.php')"
+
+
+# -------------------------------------------- Optional WinterCMS Install
+if [ ! -f .env ]; then
+  echo "${RED}ERROR${NC}: This script must be run inside an existing winter installation with a .env config file"
+  if [ -f acorn-setup-new-winter ]; then
+    read -p "Name for Winter installation? " website_name
+    bash acorn-setup-new-winter $website_name
+    cd /var/www/$website_name
+  else
+    exit 1
+  fi
+fi
+
+
+# -------------------------------------------- .env parse
+# Get DB connection parameters from Laravel
+env=".env"
+DB_CONNECTION=`grep DB_CONNECTION $env | tr -d "'" | cut -d '=' -f 2`
+DB_HOST=`grep DB_HOST $env | tr -d "'" | cut -d '=' -f 2`
+DB_PORT=`grep DB_PORT $env | tr -d "'" | cut -d '=' -f 2`
+DB_DATABASE=`grep DB_DATABASE $env | tr -d "'" | cut -d '=' -f 2`
+DB_USERNAME=`grep DB_USERNAME $env | tr -d "'" | cut -d '=' -f 2`
+DB_PASSWORD=`grep DB_PASSWORD $env | tr -d "'" | cut -d '=' -f 2`
+echo "Database (from .env): ${YELLOW}$DB_DATABASE:$DB_PORT${NC} with ${YELLOW}$DB_USERNAME${NC}/${YELLOW}$DB_PASSWORD${NC}"
+if [ "$DB_CONNECTION" != 'pgsql' ] || [ "$DB_HOST" != "127.0.0.1" ]; then
+  echo "${RED}$DB_CONNECTION@$DB_HOST:$DB_PORT${NC} is not local. Aborted"
+  exit 1
+fi
+
+
+# -------------------------------------------- DB parse
+# Includes views
+author_lowercase=`echo "$author_namespace" | tr '[:upper:]' '[:lower:]'`
+table_match="${author_lowercase}_%"
+if [ -n "$install_plugins" ] && [ "$install_plugins" != '*' ]; then table_match="${author_lowercase}_${install_plugins}_%"; fi
+tables=`sudo -u postgres psql --port=$DB_PORT $DB_DATABASE --csv -c "select table_name from information_schema.tables \
+  where table_catalog = current_database() and table_name like('$table_match') \
+  order by table_name;"`
+if [ "$?" != 0 ]; then exit 1; fi
+
+
+# -------------------------------------------- First tables scan to show situation
+plugins=$IFS
+for table in $tables; do
+  author_lowercase=`echo "$table" | cut -d '_' -f 1`
+  plugin_lowercase=`echo "$table" | cut -d '_' -f 2`
+  if [ "$author_lowercase" == 'acorn' ]; then # Only our tables
+    if [[ ! "$plugins" =~ "$IFS$plugin_lowercase$IFS" ]]; then
+      plugins="$plugins$plugin_lowercase$IFS"
+    fi
+  fi
+done
+plugins=${plugins: 1: -1}
+
+if [ -z "$install_plugins" ] || [ "$install_plugins" == '*' ]; then
+  echo "${YELLOW}CHOICE${NC}: No plugin name has been provided"
+  i=1
+  echo "[${GREEN}0${NC}] all"
+  for plugin in $plugins; do
+    plugin_dir="plugins/$author_lowercase/$plugin"
+    if [ -d "$plugin_dir" ]; then
+      plugin_exists='exists'
+      plugin_git_exists="${RED}without git${NC}"
+      if [ -d "$plugin_dir/.git" ]; then plugin_git_exists='with git'; fi
+    fi
+    plugin_created_by=`grep "^// Created By $script" "$plugin_dir/Plugin.php"`
+    echo "[${GREEN}$i${NC}] $plugin ${YELLOW}$plugin_exists${NC} $plugin_git_exists ${GREEN}${plugin_created_by/\/\/ /}${NC}"
+    i=$((i + 1))
+  done
+  read -p "Which plugin would you like to $command? " iplugin
+  if [ "$iplugin" == '0' ]; then
+    install_plugins='*'
+  else
+    install_plugins=`echo "$plugins" | cut -d "$IFS" -f $iplugin`
+  fi
+fi
+if [ -z "$install_plugins" ]; then exit 0; fi
+echo "Choice: ${GREEN}$install_plugins${NC}"
+
+# Remove the table_name header
+tables=`echo "$tables" | sed '/^table_name$/d'`
+
+previous_plugin=
+for table in $tables ; do
+  # ---------------------------------------------------------------- names
+  author_lowercase=`echo "$table" | cut -d '_' -f 1`
+  plugin_lowercase=`echo "$table" | cut -d '_' -f 2`
+  model_snakecase_plural=`echo "$table" | cut -d '_' -f 3,4,5,6,7,8,9,10`
+  # Str::studly() = PascalCase
+  plugin_dir="plugins/$author_lowercase/$plugin_lowercase"
+  plugin_pascalcase=`      php -r "$laravel_boot; echo $Str::studly('$plugin_lowercase');"`
+  model_pascalcase_plural=`php -r "$laravel_boot; echo $Str::studly('$model_snakecase_plural');"`
+  model_squish_plural=`    echo "$model_pascalcase_plural" | tr '[:upper:]' '[:lower:]'`
+  model_name=`             php -r "$laravel_boot; echo $Str::singular('$model_pascalcase_plural');"` # TODO: Rename this variable
+
+  if [ "$author_lowercase" == 'acorn' ]; then # Only our tables
+    author_pascalcase='Acorn'
+
+    plugin_name="$author_namespace.$plugin_pascalcase"
+    translation_domain="$author_lowercase.$plugin_lowercase"
+    if [ -z "$install_plugins" ] || [ "$install_plugins" == '*' ] || [ "$install_plugins" == "$plugin_lowercase" ]; then
+      # Ignore singular tables
+      if [ "$model_snakecase_plural" == "$model_name" ]; then
+        echo "Ignoring ${RED}$table${NC} because singular"
+      else
+        if [ "$plugin_name" != "$previous_plugin" ]; then
+
+
+          # ---------------------------------------------------------------- recreate/append-to
+          echo "\nProcessing plugin ${GREEN}$plugin_name${NC}"
+          if [ -d "$plugin_dir" ]; then
+            if [ "$command" == 'recreate' ]; then
+              yn=y
+            else
+              read -p "${YELLOW}$plugin_dir${NC} exists. Remove its contents, ${YELLOW}except .git/${NC}, before re-processing this plugin (y/n)? [n] " yn
+            fi
+            if [ "$yn" == 'y' ]; then
+              echo "  removing..."
+              rm -r $plugin_dir/*
+            fi
+          fi
+
+
+          # ---------------------------------------------------------------- create:plugin
+          if [ ! -f "$plugin_dir/Plugin.php" ]; then
+            echo "  Creating Plugin $plugin_name"
+            ./artisan create:plugin $plugin_name
+            cd "$plugin_dir"
+
+            # GIT
+            if [ -d .git ]; then
+              echo "  Git repository found. Leaving un-changed"
+            else
+              echo "  Init git, without a  push, to assumed repo $git_group/$plugin_lowercase, branch main"
+              git init -b main
+              git remote add origin git@$git_server:$git_group/$plugin_lowercase.git
+              git config --global --add safe.directory "$run_dir/$plugin_dir"
+            fi
+
+            # Created by
+            echo '' >> "Plugin.php"
+            echo "// Created By $script v$version" >> "Plugin.php"
+
+            # Language support
+            if [ ! -f lang/ku/lang.php ]; then
+              mkdir -p lang/ku
+              cp lang/en/lang.php lang/ku/lang.php
+              sed -i "s|^];|    'models' => \[\n    \],\n];|" lang/ku/lang.php
+              sed -i "s|    'models' => \[|    'models' => \[\n        'general' => [\n            'name' => 'Name',\n            'id' => 'ID',\n        ],\n|" lang/ku/lang.php
+            fi
+            if [ ! -f lang/ar/lang.php ]; then
+              mkdir -p lang/ar
+              cp lang/en/lang.php lang/ar/lang.php
+              sed -i "s|^];|    'models' => \[\n    \],\n];|" lang/ar/lang.php
+              sed -i "s|    'models' => \[|    'models' => \[\n        'general' => [\n            'name' => 'Name',\n            'id' => 'ID',\n        ],\n|" lang/ar/lang.php
+            fi
+
+            cd -
+          fi
+
+          plugin_file_path="$plugin_dir/Plugin.php"
+          echo "  Removing registerNavigation() from $plugin_file_path"
+          sed -i '/^    public function registerNavigation\(\)/,/^    }/d' $plugin_file_path
+          sed -i 's/Registers backend navigation items for this plugin./Navigation in plugin.yaml./' $plugin_file_path
+
+          echo "  Adding standard dependencies to $plugin_file_path"
+          sed -i "s/^{\$/{\n    public \$require = ['Acorn.Calendar', 'Acorn.Location', 'Acorn.Messaging'];/" "$plugin_file_path"
+
+
+          # ---------------------------------------------------------------- updates/
+          # Check for updates/create_from_sql & pre-up.sql (with functions)
+          scripts_updates_dir="$script_dir/SQL/updates"
+          plugin_update_dir="$plugin_dir/updates"
+          if [ -d "$scripts_updates_dir" ]; then
+            echo "  Syncing ${GREEN}$plugin_update_dir${NC}"
+            if [ ! -d "$plugin_update_dir" ]; then
+              echo "  Made ${YELLOW}$plugin_update_dir${NC}"
+              mkdir -p "$plugin_update_dir"
+            fi
+            for file in $scripts_updates_dir/* ; do
+              filename=`basename $file`
+              if [ ! -f "$plugin_update_dir/$filename" ]; then
+                echo "    Copied ${YELLOW}$filename${NC} => updates/"
+                cp --no-clobber $file "$plugin_update_dir"
+                # ReWrite <Plugin> in the namespace(s) for copied files
+                sed -i "s|<Plugin>|$plugin_pascalcase|" "$plugin_update_dir/$filename"
+              else
+                echo "    Ommitting ${RED}$filename${NC}"
+              fi
+            done
+          else
+            echo "${RED}ERROR${NC}: No ${YELLOW}$scripts_updates_dir${NC} found to populate the plugin /updates/"
+            exit 1
+          fi
+
+          # updates/ commands
+          echo "  Run ${GREEN}pre-up.sql${NC} (functions, schemas, extensions)"
+          echo "  Run ${GREEN}acorn-winter-update-sqls${NC}"
+          cd "$plugin_update_dir"
+          # Create PGSQL extensions and schemas
+          if [ -f pre-up.sql ]; then
+            sudo -u postgres psql --port=$DB_PORT $DB_DATABASE -f pre-up.sql
+            if [ $? != 0 ]; then
+              echo "${RED}ERROR${NC}: Failed to pre-up.sql"
+              exit 1
+            fi
+          fi
+          # Re-create up & down.sql
+          if [ -f acorn-winter-update-sqls ]; then
+            bash acorn-winter-update-sqls
+            if [ $? != 0 ]; then
+              echo "${RED}ERROR${NC}: Failed to ${YELLOW}acorn-winter-update-sqls${NC}"
+              exit 1
+            fi
+          else
+            echo "${RED}ERROR${NC}: No ${YELLOW}acorn-winter-update-sqls${NC} available"
+            exit 1
+          fi
+          cd -
+        fi
+
+        if [ -n "$model_pascalcase_plural" ]; then
+
+
+          # ---------------------------------------------------------------- Controller
+          controller_name=$model_pascalcase_plural
+          controller_file="$controller_name.php"
+          controller_path="$plugin_dir/controllers/$controller_file"
+          controller_url="$author_lowercase/$plugin_lowercase/$model_squish_plural"
+          if [ ! -f $controller_path ]; then
+            echo "Creating Controller ${YELLOW}$controller_name${NC}"
+            ./artisan create:controller $plugin_name $controller_name
+            # Inherit from AA\Controller
+            echo "  Inheriting ${YELLOW}$controller_name${NC} from $author_namespace"
+            sed -i "s|^use Backend\\\\Classes\\\\Controller;|use $author_namespace\\\\Controller;|" "$controller_path"
+          else
+            echo "(Found Controller $controller_name)"
+          fi
+
+
+          # ---------------------------------------------------------------- Model
+          if [ -n "$model_name" ]; then
+            model_file="$model_name.php"
+            model_path="$plugin_dir/models/$model_file"
+            model_fq_name="$author_namespace\\$plugin_pascalcase\\Models\\$model_name"
+            lang_en_path="$plugin_dir/lang/en/lang.php"
+            lang_ar_path="$plugin_dir/lang/ar/lang.php"
+            lang_ku_path="$plugin_dir/lang/ku/lang.php"
+
+            if [ ! -f $model_path ]; then
+              echo "Creating Model ${YELLOW}$model_name${NC}"
+              ./artisan create:model $plugin_name $model_name
+
+              # Rewrite version.yaml to use create_from_sql.php: The create:model has updated it
+              # create:model makes the v1.0.1/ directories also. Remove them
+              echo "1.0.0:" > "$plugin_update_dir/version.yaml"
+              echo "  - 'First version of Finance'" >> "$plugin_update_dir/version.yaml"
+              echo "  - create_from_sql.php"        >> "$plugin_update_dir/version.yaml"
+              rm -r "$plugin_update_dir/v*/"
+
+
+              # ---------------------------------------------------------------- Prepare
+              model_dir=`echo "$model_name" | tr '[:upper:]' '[:lower:]'`
+              fields_path="$plugin_dir/models/$model_dir/fields.yaml"
+              columns_path="$plugin_dir/models/$model_dir/columns.yaml"
+              echo "  Check/create $fields_path, add fields:"
+              mkdir -p "$plugin_dir/models/$model_dir"
+              echo "# Created By $0 v$version" > "$fields_path"
+              echo 'fields:' >> "$fields_path"
+              echo "  Check/create $columns_path, add columns:"
+              mkdir -p "$plugin_dir/models/$model_dir"
+              echo "# Created By $0 v$version" > "$columns_path"
+              echo 'columns:' >> "$columns_path"
+
+              # Language: These files will not have been updated...
+              # TODO: Use comment_array_add for these sections
+              # TODO: Use table_comment override
+              sed -i "s|    'models' => \[\n|    'models' => \[\n        '$model_dir' => [\n            'label' => '$model_name',\n            'label_plural' => '...',\n        ],\n|" "$lang_ku_path"
+              sed -i "s|    'models' => \[\n|    'models' => \[\n        '$model_dir' => [\n            'label' => '$model_name',\n            'label_plural' => '...',\n        ],\n|" "$lang_ar_path"
+
+              # Prepare some Model arrays
+              sed -i "s|belongsTo *= *\[\];|belongsTo = [\n    ];|" "$model_path"
+              sed -i "s|morphMany *= *\[\];|morphMany = [\n    ];|" "$model_path"
+
+              columns=`sudo -u postgres psql --port=$DB_PORT $DB_DATABASE --csv -c "SELECT *, \
+                pg_catalog.col_description(format('%s.%s',table_schema,table_name)::regclass::oid, ordinal_position) \
+                FROM information_schema.columns WHERE table_name = '$table'"`
+              columns=`echo "$columns" | sed '/^table_catalog,.*$/d'`
+              has_dates=0
+              has_server_id=0
+              has_uuid=0
+              soft_delete_mode=0
+              for column in $columns ; do
+                column_name=`echo "$column" | cut -d ',' -f 4`
+                column_is_generated=`echo "$column" | cut -d ',' -f 42`
+                column_type=`echo "$column" | cut -d ',' -f 8 | cut -d ' ' -f 1`
+                column_last=`echo "$column_name" | rev | cut -d '_' -f 1 | rev`
+                column_first=`echo "$column_name" | cut -d '_' -f 1`
+                column_comment=`echo "$column" | cut -d ',' -f 45`
+                field_name="$column_name"
+                column_title=`php -r "$laravel_boot; echo $Str::title('${column_name/_id/}');"`
+                column_title="${column_title//_/ }"
+                column_name_full="$column_name"
+
+                # Special columns
+                if [ "$column_name" == 'updated_at' ] && [ "$column_type" == 'timestamp with time zone' ]; then has_dates=1; fi
+                if [ "$column_name" == 'server_id' ]  && [ "$column_type" == 'uuid' ]; then has_server_id=1; fi
+                if [ "$column_name" == 'id' ]         && [ "$column_type" == 'uuid' ]; then has_uuid=1; fi
+
+                # Translation
+                translation_group="$model_dir"
+                if [ "$column_name" == 'id' ] || [ "$column_name" == 'name' ]; then translation_group='general'; fi
+                translation="$translation_group.$column_name"
+
+                # Invisible and disabled
+                invisible='false'
+                hidden='false'
+                cssClass='col-xs-6'
+                if [ "$column_name" == 'id' ]; then
+                  invisible='true'
+                  hidden='true'
+                fi
+                context=
+                disabled=
+                if [ "$column_is_generated" != 'NEVER' ]; then
+                  disabled='true'
+                  context='update'
+                fi
+
+                # Characteristics
+                # TODO: Ambiguos fields problem: 2 x amount fields with relation
+                searchable='true'
+                sortable='false'
+
+                # Type
+                select=
+                field_type='text' # Also interval
+                column_yaml_type=
+                partial=
+                if [ "$column_type" == 'integer' ]   || [ "$column_type" == 'double' ] || [ "$column_type" == 'bigint' ]; then field_type='number'; fi
+                if [ "$column_type" == 'timestamp' ] || [ "$column_type" == 'date' ];   then field_type='datepicker'; fi
+                if [ "$column_type" == 'boolean' ];   then
+                  field_type='switch'
+                  column_yaml_type='partial'
+                  partial='tick'
+                fi
+                if [ "$column_type" == 'money' ]; then
+                  field_type='text';
+                  select="$table.$column_name::numeric"
+                fi
+                if [ -z "$column_yaml_type" ]; then column_yaml_type="$field_type"; fi
+
+
+                # ---------------------------------------------------------------- Foreign type
+                foreign_table_singular=
+                hierarchical=
+                field_options=
+                field_options_model=
+                nameFrom='name'
+                if [ "$column_name" != 'id' ] && [ "$column_last" == 'id' ]; then
+                  foreign_table_singular=`echo "$column_name" | rev | cut -d '_' -f 2,3,4,5,6,7,8,9,10 | rev` # backend_user (singular)
+                  field_name="$foreign_table_singular"
+                  if [ "$column_first" == 'parent' ]; then hierarchical='true'; fi
+                  # TODO: Check there is a FK
+                  # TODO: Process include:all like  => location[*] relation
+                  field_type='dropdown'
+                  options_static_method='dropdownOptions'
+                  if [ "$column_first" == 'backend' ]; then
+                    # Backend\\User
+                    # TODO: These relation names should be camelCase and should have keys
+                    # TODO: or the columns should be renamed...
+                    foreign_namespace='\Backend'
+                    foreign_model_singular=`echo "$foreign_table_singular" | cut -d '_' -f 2,3,4,5,6,7,8,9,10` # user
+                    foreign_model_name=`php -r "$laravel_boot; echo $Str::studly('$foreign_model_singular');"`
+                    # Go ahead with dropdownOptions(), but send it a config for the actual class to query
+                    foreign_fq_name="Acorn\\Model"
+                    field_options_model="$foreign_namespace\\Models\\$foreign_model_name"
+                    foreign_fq_relative_name="\\\\$foreign_namespace\\\\Models\\\\$foreign_model_name"
+                    translation=`echo "$translation" | rev | cut -d '_' -f 2,3,4,5,6,7,8,9,10 | rev`
+                    if [ "$foreign_model_name" == 'User' ]; then nameFrom='full_name'; fi
+                  else
+                    # Normal AA process
+                    foreign_namespace="$author_namespace\\$plugin_pascalcase"
+                    foreign_model_name=`php -r "$laravel_boot; echo $Str::studly('$foreign_table_singular');"`
+                    foreign_fq_name="$foreign_namespace\\Models\\$foreign_model_name"
+                    foreign_fq_relative_name="$foreign_model_name"
+                    translation="$foreign_table_singular.label"
+                    nameFrom='fully_qualified_name'
+                  fi
+                  field_options="$foreign_fq_name::$options_static_method"
+                  column_name_full="$foreign_table_singular[$nameFrom]"
+                  searchable='false'
+                  sortable='false'
+
+                  # belongsTo[]
+                  echo "  Adding belongsTo[$foreign_table_singular]"
+                  sed -i "s|belongsTo = \[|belongsTo = [\n        '$foreign_table_singular' => $foreign_fq_relative_name::class,|" "$model_path"
+                fi
+
+                echo "    Add $translation($field_type/$column_yaml_type): to YAML files ${GREEN}$foreign_table_singular${NC} $hierarchical"
+                if [ -n "$column_comment" ]; then echo "      Comment: ${GREEN}$column_comment${NC}"; fi
+
+
+                # ---------------------------------------------------------------- Write files
+                # Fields
+                echo "  $field_name:" >> "$fields_path"
+                comment_override "$column_comment" 4 label "$translation_domain::lang.models.$translation" "$fields_path"
+                comment_override "$column_comment" 4 type "$field_type"   "$fields_path"
+                comment_override "$column_comment" 4 span storm           "$fields_path"
+                comment_override "$column_comment" 4 cssClass "$cssClass" "$fields_path"
+                comment_override "$column_comment" 4 hidden "$hidden"     "$fields_path"
+                comment_override "$column_comment" 4 options "$field_options"            "$fields_path"
+                comment_override "$column_comment" 4 optionsModel "$field_options_model" "$fields_path"
+                comment_override "$column_comment" 4 hierarchical "$hierarchical"        "$fields_path"
+                comment_override "$column_comment" 4 nameFrom "$nameFrom" "$fields_path"
+                comment_override "$column_comment" 4 disabled "$disabled" "$fields_path"
+                comment_override "$column_comment" 4 context "$context"   "$fields_path"
+
+                # Columns
+                echo "  $column_name_full:" >> "$columns_path"
+                comment_override "$column_comment" 4 label "$translation_domain::lang.models.$translation" "$columns_path"
+                comment_override "$column_comment" 4 type "$column_yaml_type" "$columns_path" 'column_type'
+                comment_override "$column_comment" 4 path "$partial"          "$columns_path"
+                comment_override "$column_comment" 4 select "$select"         "$columns_path"
+                comment_override "$column_comment" 4 searchable "$searchable" "$columns_path"
+                comment_override "$column_comment" 4 sortable "$sortable"     "$columns_path"
+                comment_override "$column_comment" 4 invisible "$invisible"   "$columns_path"
+
+                # Translation
+                # 'general' section only appears after the first create:model
+                comment_array_add "$table_comment" 8 general name Name "$lang_en_path"
+                comment_array_add "$table_comment" 8 general add  Add  "$lang_en_path"
+                # Let's not repeat fields
+                if [ "$field_name" != 'id' ] && [ "$field_name" != 'created_at' ] && [ "$field_name" != 'updated_at' ] && [ "$field_name" != 'label' ] && [ "$field_name" != 'label_plural' ]; then
+                  comment_array_add "$column_comment" 8 "$translation_group" "$field_name" $column_title "$lang_en_path" 'translation'
+                  # TODO: Generic loop for languages update
+                  comment_array_add "$column_comment" 8 "$translation_group" "$field_name" $column_title "$lang_ar_path" 'translation.ar'
+                  comment_array_add "$column_comment" 8 "$translation_group" "$field_name" $column_title "$lang_ku_path" 'translation.ku'
+                fi
+              done
+
+
+              # ---------------------------------------------------------------- QR code support fields
+              # TODO: Move to QRCode FormField when available
+              echo "  Injecting _qrcode column"
+              echo "  _qrcode:" >> "$columns_path"
+              echo "      type: partial"           >> "$columns_path"
+              echo "      path: ~/modules/acorn/partials/_qrcode" >> "$columns_path"
+              echo "      sortable: false"       >> "$columns_path"
+              echo "      searchable: false"     >> "$columns_path"
+              echo "      invisible: true"       >> "$columns_path"
+              echo "  Injecting _qrcode field"
+              # TODO: Move to QRCode FormField when available
+              echo "  _qrcode:"  >> "$fields_path"
+              echo "      type: partial"         >> "$fields_path"
+              echo "      context: update"       >> "$fields_path"
+              echo "      span: storm"           >> "$fields_path"
+              echo "      cssClass: 'col-xs-6'"  >> "$fields_path"
+              echo "      path: ~/modules/acorn/partials/_qrcode" >> "$fields_path"
+
+
+              # ----------------------------------------------- <Model>.php setup
+              # Created By acorn-create-system v1.0
+              if [ -z "$(grep 'Created By ' $model_path)" ]; then
+                echo '' >> "$model_path"
+                echo "// Created By $0 v$version" >> "$model_path"
+              fi
+
+              # Add some AA classes
+              sed -i "s|^use Model;|use Model;\nuse $author_namespace\\\\Models\\\\Server;|" "$model_path"
+              sed -i "s|^use Model;|use Model;\nuse $author_namespace\\\\Collection;|" "$model_path"
+
+              # Useful
+              sed -i "s|^use Model;|use Model;\nuse BackendAuth;|" "$model_path"
+              sed -i "s|^use Model;|use Model;\nuse \Backend\Models\User;|" "$model_path"
+              sed -i "s|^use Model;|use Model;\nuse \Backend\Models\UserGroup;|" "$model_path"
+              sed -i "s|^use Model;|use Model;\nuse Exception;|" "$model_path"
+              sed -i "s|^use Model;|use Model;\nuse Flash;|" "$model_path"
+
+              # Inherit from AA\Model
+              echo "  Inheriting from $author_namespace\\\\Model"
+              sed -i "s|^use Model;|use $author_namespace\\\\Model;|" "$model_path"
+
+              # Relax guarding
+              # TODO: Popups need this for their ->fill($post) but this is wrong maybe
+              sed -i "s|^    protected \$guarded = ['\*'];|    protected \$guarded = [];|" "$model_path"
+
+              # Traits
+              echo "  Adding Trait Revisionable"
+              sed -i "s|^{\$|{\n    protected \$revisionable = [];\n|" "$model_path"
+              sed -i "s|morphMany = \[|morphMany = [\n        'revision_history' => ['System\\\\Models\\\\Revision', 'name' => 'revisionable'],|" "$model_path"
+              sed -i "s|^{\$|{\n    use \\\\Winter\\\\Storm\\\\Database\\\\Traits\\\\Revisionable;|" "$model_path"
+
+              if [ $soft_delete_mode == 1 ]; then
+                echo "  Adding Trait SoftDelete"
+                sed -i "s|^{\$|{\n    use \\\\Winter\\\\Storm\\\\Database\\\\Traits\\\\SoftDelete;|"   "$model_path"
+              fi
+              if [ $has_uuid == 1 ]; then
+                echo "  Adding Trait HasUuids"
+                sed -i "s|^{\$|{\n    use \\\\Illuminate\\\\Database\\\\Eloquent\\\\Concerns\\\\HasUuids;|" "$model_path"
+              fi
+
+              # Server
+              # TODO: Move Server in to AA
+              if [ $has_server_id == 1 ]; then
+                echo "  Adding Server"
+                sed -i "s|belongsTo = \[|belongsTo = [\n        'server' => Server::class,|" "$model_path"
+              fi
+
+              # TODO: created_by_user_id, updated_by_user_id
+
+              # Remove dates
+              if [ $has_dates == 0 ]; then
+                echo "  Removing date support"
+                sed -i "s|^    protected \$dates|    public \$timestamps = FALSE;\n    protected \$dates|" "$model_path"
+                sed -i "/^ *'created_at',\$/d" "$model_path"
+                sed -i "/^ *'updated_at',\$/d" "$model_path"
+              fi
+
+              # menuitemCount() for plugins.yaml
+              if [ -z "$(grep menuitemCount $model_path)" ]; then
+                echo "  Adding menuitemCount()"
+                sed -i "s|^}$|\n    # Auto-injected by acorn-create-system\n    public static function menuitemCount() {return self::all()->count();}\n}|" "$model_path"
+              fi
+
+              # Columns commenting in header
+              sed -i "s|^{\$|{\n     */\n|" "$model_path"
+              for column in $columns ; do
+                column_name=`echo "$column" | cut -d ',' -f 4`
+                column_is_generated=`echo "$column" | cut -d ',' -f 42`
+                column_type=`echo "$column" | cut -d ',' -f 8 | cut -d ' ' -f 1`
+
+                if [ "$column_is_generated" == 'NEVER' ]; then
+                  sed -i "s|^{\$|{\n     *   $column_name($column_type)|" "$model_path"
+                else
+                  sed -i "s|^{\$|{\n     *   $column_name($column_type) GENERATED($column_is_generated)|" "$model_path"
+                fi
+              done
+              sed -i "s|^{\$|{\n    /* Generated Fields:|" "$model_path"
+            else
+              echo "(Found Model $model_name)"
+            fi
+          fi # [ -n "$model_name" ]
+
+          # -------------------------------------- plugins.yaml navigation
+          plugin_yaml_path="$plugin_dir/plugin.yaml"
+          if [ ! -f $plugin_yaml_path ]; then
+            echo "" >> "$plugin_yaml_path"
+          fi
+          exists_navigation=`grep "^navigation:" $plugin_yaml_path`
+          if [ -z "$exists_navigation" ]; then
+            echo "  Adding navigation: top level"
+            echo "navigation:" >> "$plugin_yaml_path"
+          fi
+          exists_setup=`grep -E "^ +$plugin_lowercase-setup:" $plugin_yaml_path`
+          if [ -z "$exists_setup" ]; then
+            echo "  Adding navigation setup side-menu"
+            echo "    $plugin_lowercase-setup:" >> "$plugin_yaml_path"
+            echo "        label: $translation_domain::lang.plugin.name" >> "$plugin_yaml_path"
+            echo "        url:" >> "$plugin_yaml_path"
+            echo "        icon: icon-$plugin_lowercase" >> "$plugin_yaml_path"
+            echo "        sideMenu:" >> "$plugin_yaml_path"
+          fi
+          # CRUD Navigation item
+          if [ -z "$(grep \"$model_snakecase_plural:\" $plugin_yaml_path)" ]; then
+            echo "  Adding setup side-menu entry for $model_snakecase_plural"
+            echo "    @$controller_url"
+            echo "            $model_snakecase_plural:" >> "$plugin_yaml_path"
+            echo "                label: $translation_domain::lang.models.$model_dir.label_plural" >> "$plugin_yaml_path"
+            echo "                url: $controller_url" >> "$plugin_yaml_path"
+            echo "                icon: icon-$model_dir" >> "$plugin_yaml_path"
+            echo "                counter: \\$model_fq_name::menuitemCount" >> "$plugin_yaml_path"
+          fi
+        fi
+      fi # Plural tables only
+    fi # install_plugins
+  fi # acorn tables only
+
+  previous_plugin=$plugin_name
+done
+
+if [ -n "$install_plugins" ] && [ "$install_plugins" != '*' ] && [ "$git_policy" != 'leave' ]; then
+  if [ "$git_policy" == 'push' ]; then
+    yn=y
+  else
+    read -p "Git push ${YELLOW}$install_plugins${NC} to ${YELLOW}$git_group/$install_plugins${NC} with --set-upstream origin ${YELLOW}main${NC} [y|n]? (n) " yn
+  fi
+  if [ "$yn" == 'y' ]; then
+    cd "plugins/$author_lowercase/$install_plugins"
+    git push --set-upstream origin main
+    cd -
+  fi
+fi

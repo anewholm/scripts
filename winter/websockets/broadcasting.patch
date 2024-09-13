@@ -1,0 +1,16 @@
+https://beyondco.de/docs/laravel-websockets/basic-usage/pusher
+'When using Laravel WebSockets as a Pusher replacement
+without having used Pusher before,
+it does not matter what you set as your PUSHER_ variables.
+Just make sure they are unique for each project.'
+--- config/broadcasting.php	2023-06-02 15:35:08.156939005 +0100
++++ config/broadcasting-new.php	2023-06-02 15:36:23.804429454 +0100
+@@ -39,4 +39,7 @@
+            'options' => [
+                'cluster' => env('PUSHER_APP_CLUSTER'),
+-                'useTLS' => true,
++                'encrypted' => true,
++                'host'    => '$hostname',
++                'port'    => $port,
++                'scheme'  => 'http'
+            ],

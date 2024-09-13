@@ -16,6 +16,7 @@ BEGIN
 			FROM information_schema.tables 
 			where table_catalog = current_database()
 			and table_schema = _schema
+			and table_type = 'BASE TABLE'
 		), 
 		') data order by "count" desc, "table" asc'
 	));
