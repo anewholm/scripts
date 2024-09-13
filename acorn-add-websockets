@@ -11,17 +11,20 @@ CROSS="${RED}✘${NC}"
 port=$1
 if [ -z "$port" ]; then port=6001; fi
 
-dir=`pwd`
-subdir=`dirname $dir`
-website=`basename $dir`
+run_dir=`pwd` # Bald
+script_subdir=`dirname $0`
+script_dir="$run_dir/$script_subdir"
 
+# Check we are in /var/www/<website>
+subdir=`dirname $run_dir`
+website=`basename $run_dir`
 if [ "$subdir" != /var/www ]; then
   echo "${RED}ERROR${NC}: This script must be run in a website under ${YELLOW}/var/www/${NC}"
 	exit 1
 fi
 
 if [ ! -f .env ]; then
-  echo "${RED}ERROR${NC}: No ${YELLOW}.env${NC} file found in this website at ${YELLOW}$dir${NC}. Is this a Laravel website?"
+  echo "${RED}ERROR${NC}: No ${YELLOW}.env${NC} file found in this website at ${YELLOW}$run_dir${NC}. Is this a Laravel website?"
   echo "Maybe run ${YELLOW}acorn-setup-new-winter${NC} or ${YELLOW}acorn-git-clone-website${NC}"
 	exit 1
 fi
@@ -43,109 +46,10 @@ if [ ! -d vendor/beyondcode/laravel-websockets ]; then composer -W require beyon
 #if [ ! -d node_modules/pusher-js ];               then npm install --save-dev pusher-js;               fi
 
 # --------------------------------------------- Files & Patches
-patch_file=".env"
+# TODO: Allow acorn-apply-patch-directory to pass in parameters
 echo "${GREEN}INFO${NC}: Installing websockets system for ${YELLOW}$website${NC}, hostname: ${YELLOW}$hostname${NC} on port ${YELLOW}$port${NC}"
-if [ -z "$(grep Laravel-Websockets $patch_file)" ] && [ -z "$(grep LARAVEL_WEBSOCKETS $patch_file)" ]; then
-  echo "${GREEN}INFO${NC}: Injecting Laravel-Websockets settings in to $patch_file with port $port"
-  echo "
-# Laravel-Websockets, broacasting and Echo
-BROADCAST_DRIVER=pusher
-PUSHER_APP_ID=intranet
-PUSHER_APP_KEY=intranet
-PUSHER_APP_SECRET=intranet
-PUSHER_APP_CLUSTER=intranet
-PUSHER_APP_PATH=/app/intranet/
-PUSHER_SCHEME=http
-LARAVEL_WEBSOCKETS_PORT=$port
-LARAVEL_WEBSOCKETS_SSL_LOCAL_CERT=
-LARAVEL_WEBSOCKETS_SSL_LOCAL_PK=
-LARAVEL_WEBSOCKETS_SSL_PASSPHRASE=
-  " >> $patch_file
-else
-  echo "${YELLOW}WARNING${NC}: Laravel-Websockets settings already present $patch_file"
-fi
-
-# ------------------------------------------------------- Patch for beyondcode/laravel-websockets
-# diff -u OriginalFile UpdatedFile > PatchFile
-# because Winter has its own Authorisation system, not Laravel Gates
-# Check `composer status` for a full list of altered vendor packages
-patch_file="vendor/beyondcode/laravel-websockets/src/WebSocketsServiceProvider.php"
-if [ -z "$(grep ';//->registerDashboardGate' $patch_file)" ]; then
-  echo "${GREEN}INFO${NC}: Patching ${YELLOW}WebSocketsServiceProvider.php${NC}"
-  echo "--- WebSocketsServiceProvider_original.php      2023-02-15 10:40:49.000000000 +0000
-+++ WebSocketsServiceProvider.php       2023-06-05 07:59:48.411946490 +0100
-@@ -31,7 +31,7 @@
-
-        \$this
-            ->registerRoutes()
--            ->registerDashboardGate();
-+            ;//->registerDashboardGate();
-
-        \$this->loadViewsFrom(__DIR__.'/../resources/views/', 'websockets');
-
-" | patch -u $patch_file
-  if [ $? != 0 ]; then
-    echo "${RED}ERROR${NC}: Failed to patch ${YELLOW}$patch_file${NC}"
-    read -p "Maybe new version. Continue [y/n] (y) ?" yn
-    if [ "$yn" == "n" ]; then exit 1; fi
-  fi
-else
-  echo "${YELLOW}WARNING${NC}: $patch_file already patched"
-fi
-
-# ------------------------------------------------------- Configuration
-# diff -u OriginalFile UpdatedFile > PatchFile
-# https://beyondco.de/docs/laravel-websockets/basic-usage/pusher
-# 'When using Laravel WebSockets as a Pusher replacement
-# without having used Pusher before,
-# it does not matter what you set as your PUSHER_ variables.
-# Just make sure they are unique for each project.'
-# diff -u OriginalFile UpdatedFile > PatchFile
-patch_file="config/broadcasting.php"
-if [ -z "$(grep $hostname $patch_file)" ]; then
-  echo "${GREEN}INFO${NC}: Setting configurations in ${YELLOW}$patch_file${NC}"
-  echo "--- broadcasting_original.php	2023-06-02 15:35:08.156939005 +0100
-+++ broadcasting.php	2023-06-02 15:36:23.804429454 +0100
-@@ -39,4 +39,7 @@
-            'options' => [
-                'cluster' => env('PUSHER_APP_CLUSTER'),
--                'useTLS' => true,
-+                'encrypted' => true,
-+                'host'    => '$hostname',
-+                'port'    => $port,
-+                'scheme'  => 'http'
-            ]," | patch -u $patch_file
-  if [ $? != 0 ]; then
-    echo "${RED}ERROR${NC}: Failed to patch ${YELLOW}$patch_file${NC}"
-    read -p "Maybe new version. Continue [y/n] (y) ?" yn
-    if [ "$yn" == "n" ]; then exit 1; fi
-  fi
-else
-  echo "${YELLOW}WARNING${NC}: $patch_file already patched"
-fi
-
-# ------------------------------------------------------- Now that our new installs have been referenced
-# diff -u OriginalFile UpdatedFile > PatchFile
-# add our ServiceProviders in to the providers
-patch_file="config/app.php"
-if [ -z "$(grep 'WebSocketsServiceProvider' $patch_file)" ] && [ -z "$(grep 'BroadcastServiceProvider' $patch_file)" ]; then
-  echo "${GREEN}INFO${NC}: Patching file ${YELLOW}$patch_file${NC}"
-  echo "--- config/app.php      2024-06-16 11:18:26.789740084 +0300
-+++ config/app-original.php     2024-07-09 22:35:46.136012850 +0300
-@@ -266,3 +266,5 @@
-         // 'Illuminate\Html\HtmlServiceProvider', // Example
-
-         System\ServiceProvider::class,
-+        Illuminate\Broadcasting\BroadcastServiceProvider::class,
-+        BeyondCode\LaravelWebSockets\WebSocketsServiceProvider::class,
-" | patch -u $patch_file
-  if [ $? != 0 ]; then
-    echo "${RED}ERROR${NC}: Failed to patch ${YELLOW}$patch_file${NC} with new Service Provider"
-    read -p "Maybe new version. Continue [y/n] (y) ?" yn
-    if [ "$yn" == "n" ]; then exit 1; fi
-  fi
-else
-  echo "${YELLOW}WARNING${NC}: $patch_file already patched"
+if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter/websockets ]; then
+	$script_dir/acorn-apply-patch-directory "$script_dir/winter/websockets"
 fi
 
 # ------------------------------------------------ Migrations

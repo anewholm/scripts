@@ -11,8 +11,8 @@ CROSS="${RED}✘${NC}"
 # It can be run from within an existing Laravel / Winter installation
 # or to install the entire framework from scratch
 run_dir=`pwd` # Bald
-script_subdir=`dirname $0`
-script_dir="$run_dir/$script_subdir"
+script_dir=`dirname $(realpath $0)`
+script=`basename $0`
 install_dir=/var/www
 install_grp=www-data
 
@@ -50,8 +50,9 @@ fi
 if [ -z "$(which composer)" ]; then
 	echo "${GREEN}INFO${NC}: Installing Composer v2.5.8"
 	# https://getcomposer.org/download/
+	# e21205b207c3ff031906575712edab6f13eb0b361f2085f1f1237b7126d785e826a450292b6cfd1d64d92e6563bbde02
 	php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-	php -r "if (hash_file('sha384', 'composer-setup.php') === 'e21205b207c3ff031906575712edab6f13eb0b361f2085f1f1237b7126d785e826a450292b6cfd1d64d92e6563bbde02') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+	php -r "if (hash_file('sha384', 'composer-setup.php') === 'dac665fdc30fdd8ec78b38b9800061b4150413ff2e3b6f88543c636f7cd84f6db9189d43a81e5503cda447da73c7e5b6') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
 	if [ -f composer-setup.php ]; then
 		php composer-setup.php
 		php -r "unlink('composer-setup.php');"
@@ -160,16 +161,36 @@ if [ "$?" != 0 ]; then
 	exit 0
 fi
 
+# -------------------------------------------- Install 3rd party modules
 # IMAP & SMTP
 if [ ! -d vendor/webklex/php-imap ];     then composer require webklex/php-imap;     fi
 if [ ! -d vendor/webklex/laravel-imap ]; then composer require webklex/laravel-imap; fi
 sed -i "s|MAIL_HOST=\".*\"|MAIL_HOST=\"smtp.stackmail.com\"|" .env
 sed -i "s|MAIL_PORT=\".*\"|MAIL_PORT=465|" .env
 
-composer require winter/wn-builder-plugin
+# Copy Kurdish system and backend lang.php files in to place
+cp -r $script_dir/winter/system/lang/ku modules/system/lang
+if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install system module ku\lang.php"; exit 1; fi
+cp -r $script_dir/winter/backend/lang/ku modules/system/lang
+if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install backend module ku\lang.php"; exit 1; fi
+composer require winter/wn-translate-plugin
+if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 composer require winter/wn-location-plugin
-composer require winter/wn-user-plugin
+if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 composer require winter/wn-tailwindui-plugin # Menus
+if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+
+read -p "You can use acorn-create-system (DB => models) or builder-plugin (UI) to create plugins. Install wn-builder-plugin [yn] ? (n) " yn
+if [ "$yn" == 'y' ]; then
+	composer require winter/wn-builder-plugin
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+fi
+
+read -p "Will your system have a font-end? Does it need a front-end user-groups system? Install wn-user-plugin [yn] ? (n) " yn
+if [ "$yn" == 'y' ]; then
+	composer require winter/wn-user-plugin
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+fi
 
 # Temporary hack until we work out how to auto generate the classes.php
 if [ -f $script_dir/winter/classes.php ]; then
@@ -186,22 +207,37 @@ if [ ! -d acorn ]; then
 		exit 1
 	fi
 fi
-if [ ! -d dbauth ];          then git clone git@gitlab.acorn.org:office/dbauth.git;  fi
+if [ ! -d dbauth ]; then git clone git@gitlab.acorn.org:office/dbauth.git;  fi
 cd ..
 
 cd plugins
 mkdir -p acorn
 cd acorn
+
 if [ ! -d rtler ];     then
 	git clone git@gitlab.acorn.org:office/rtler.git
-	if [ "$?" != 0 ]; then
-		echo "${RED}ERROR${NC}: Failed to checkout first office repository. Probably you do not have permissions. Please resolve and start again."
-		exit 1
-	fi
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to checkout first office repository. Probably you do not have permissions. Please resolve and start again."; exit 1; fi
 fi
-if [ ! -d location ];  then git clone git@gitlab.acorn.org:office/location.git;  fi
-if [ ! -d messaging ]; then git clone git@gitlab.acorn.org:office/messaging.git; fi
-if [ ! -d calendar ];  then git clone git@gitlab.acorn.org:office/calendar.git;  fi
+if [ ! -d backendlocalization ];  then
+	git clone git@gitlab.acorn.org:office/backendlocalization.git
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+fi
+if [ ! -d finance ];  then
+	git clone git@gitlab.acorn.org:office/finance.git;
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+fi
+if [ ! -d location ];  then
+	git clone git@gitlab.acorn.org:office/location.git;
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+fi
+if [ ! -d messaging ]; then
+	git clone git@gitlab.acorn.org:office/messaging.git;
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+fi
+if [ ! -d calendar ];  then
+	git clone git@gitlab.acorn.org:office/calendar.git;
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+fi
 cd ../..
 # TODO: Generate /storage/framework/classes.php because we have installed via git, not composer
 # php artisan package:discover or maybe
@@ -210,47 +246,15 @@ cd ../..
 # php artisan plugin:refresh calendar
 # TODO: The hack way above which copies a pre-written classes.php works for now...
 
-# Now that our new installs have been referenced
-# add our ServiceProviders in to the providers
-echo "--- app_original.php	2023-06-02 15:39:57.167122084 +0100
-+++ app.php	2023-06-01 12:26:07.366171272 +0100
-@@ -266,6 +266,9 @@
-         // 'Illuminate\Html\HtmlServiceProvider', // Example
-
-         System\ServiceProvider::class,
-+        DBAuth\ServiceProvider::class,
-+        Acorn\ServiceProvider::class,
-+        Webklex\IMAP\Providers\LaravelServiceProvider::class,
-     ]),
-
-     /*
-" | patch -u config/app.php
+# patches
+# TODO: The tailwind patch will not work because app.js is now minified
+# service-providers.php patch will add the service providers in the correct order
+if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter ]; then
+	$script_dir/acorn-apply-patch-directory "$script_dir/winter"
+fi
 
 if [ -f $script_dir/acorn-add-websockets ]; then
 	$script_dir/acorn-add-websockets
-fi
-
-# patches
-if [ -d $script_dir/winter ]; then
-	for pat in $script_dir/winter/*.patch; do
-		if [ -n "$pat" ]; then
-			file=`grep "^diff " $pat | cut -d ' ' -f 3`
-			echo "${GREEN}INFO${NC}: Applying patch ${YELLOW}$pat${NC} to ${YELLOW}$file${NC}"
-			patch $file $pat
-			if [ "$?" != 0 ]; then
-				echo "${RED}ERROR${NC}: Patch ${YELLOW}$pat${NC} failed"
-				read -p "Continue (y) ? " yn
-				case $yn in
-					[Nn]* )
-						echo "ok, exciting process. please resolve manually"
-						exit 1;
-						;;
-					* )
-						;;
-				esac
-			fi
-		fi
-	done
 fi
 
 # To generate /storage/framework/packages.php
@@ -261,6 +265,15 @@ php artisan migrate
 if [ "$?" != 0 ]; then
 	echo "${RED}ERROR${NC}: Migration failed, exiting"
 	exit 0
+fi
+
+# -------------------------------------------- Admin
+if [ -d ../scripts ]; then
+	echo "${GREEN}INFO${NC}: Linking ${YELLOW}acorn-*${NC} scripts"
+	for script in ../scripts/acorn-git-* ../scripts/acorn-create-system ../scripts/acorn-winter-down-up; do
+		name=`basename "$script"`
+		if [ ! -f "$name" ]; then ln -s "$script" .; fi
+	done
 fi
 
 php artisan winter:passwd -q admin password

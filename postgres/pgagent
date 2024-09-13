@@ -1,0 +1,17 @@
+#!/bin/bash
+case "$1" in
+  start)
+	sudo -u postgres pgagent host=/var/run/postgresql dbname=postgres user=postgres
+        ;;
+  stop)
+	killall pgagent
+        ;;
+  restart)
+	killall pgagent
+	sudo -u postgres pgagent host=/var/run/postgresql dbname=postgres user=postgres
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart}" >&2
+        exit 3
+        ;;
+esac
