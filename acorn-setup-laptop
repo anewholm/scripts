@@ -50,6 +50,7 @@ if [ -z "$apache2" ]; then
   sudo apt-get install apache2 -y 2> /dev/null
   sudo a2enmod rewrite 2> /dev/null
   sudo apt-get install libapache2-mod-fcgid -y 2> /dev/null
+  sudo apt-get install libapache2-mod-php -y 2> /dev/null
   check "Failed to download apache2."
   sudo a2enmod actions fcgid alias proxy_fcgi setenvif 2> /dev/null
   sudo service apache2 restart
@@ -57,6 +58,13 @@ if [ -z "$apache2" ]; then
   if [ -z "$(groups | grep www-data)" ]; then
     sudo usermod -a -G www-data $USER
     echo "${GREEN}INFO${NC}: You were added to the www-data group. This will not be effective until reboot."
+  fi
+  sudo chown -R www-data:www-data /var/www/
+  sudo chmod g+wx /var/www/
+  sudo chmod -R g+rw /var/www/
+
+  if [ -d ~/scripts ]; then
+    ln -s ~/scripts /var/www/scripts
   fi
 
   echo "${GREEN}Done.${NC}"
@@ -73,8 +81,8 @@ if [ -z "$mysql" ] && [ -z "$(which mysql)" ]; then
     read -p "Create user root with password 'QueenPool1@'? [Y] " yn
     case $yn in
       Y|y|"")
-        mysql -e "create user root@`%` identified by 'QueenPool1@';" 2> /dev/null
-        musql -e "grant all on *.* to root@`%` with grant option;" 2> /dev/null
+        mysql -e "create user root@% identified by 'QueenPool1@';" 2> /dev/null
+        musql -e "grant all on *.* to root@% with grant option;" 2> /dev/null
         mysql -e "flush privileges;" 2> /dev/null
         break
       ;;
@@ -175,7 +183,7 @@ if [ -d postgres/ ]; then
   # Source compilation pre-requisities
   sudo apt-get install -y postgresql-server-dev-$postgresql_version libcurl4-openssl-dev make g++ 2> /dev/null # For pgsql-http extensions
 
-  for d in postgres/* ; do
+  for d in postgres/*/ ; do
     extension_name=`basename "$d"`
     sudo mkdir -p /usr/share/postgresql/$postgresql_version/extension/
     if [ ! -f /usr/share/postgresql/$postgresql_version/extension/$extension_name.control ]; then
@@ -190,6 +198,23 @@ if [ -d postgres/ ]; then
       cd -
     fi
   done
+fi
+
+if [ -z "$(which pgagent)" ]; then
+  echo "${YELLOW}Installing PGAgent for scheduled SQL tasks... ${NC}"
+  sudo apt install -y pgagent
+fi
+if [ -z "$(ps -A | grep pgagent)" ]; then
+  # Run the server immediately
+  sudo -u postgres pgagent host=/var/run/postgresql dbname=postgres user=postgres
+  sudo -u postgres psql postgres -c "create extension if not exists pgagent"
+  sudo systemctl restart postgresql@16-main.service
+fi
+# Run on startup
+if [ ! -f /etc/init.d/pgagent ] && [ -f postgres/pgagent ]; then
+  sudo cp postgres/pgagent /etc/init.d/
+  sudo ln -s /etc/init.d/pgagent /etc/rc2.d/S02pgagent # After postgres
+  sudo ln -s /etc/init.d/pgagent /etc/rc6.d/K02pgagent
 fi
 
 pgadmin=`apt list --installed pgadmin4 2> /dev/null | grep -E installed`
@@ -255,6 +280,23 @@ if [ -z "$(which nmap)" ]; then
   echo "${YELLOW}Installing nmap... ${NC}"
   sudo apt -y install nmap
   check "Failed to download nmap."
+  echo "${GREEN}Done.${NC}"
+  echo
+fi
+
+if [ -z "$(which vlc)" ]; then
+  echo "${YELLOW}Installing vlc... ${NC}"
+  sudo apt -y install vlc
+  check "Failed to download vlc."
+  echo "${GREEN}Done.${NC}"
+  echo
+fi
+
+if [ -z "$(which locate)" ]; then
+  echo "${YELLOW}Installing locate... ${NC}"
+  sudo apt -y install locate
+  check "Failed to download locate."
+  sudo updatedb
   echo "${GREEN}Done.${NC}"
   echo
 fi

@@ -1,0 +1,12 @@
+--- config/app.php     2024-09-10 16:33:09.107660828 +0300
++++ config/app-new.php 2024-09-10 16:33:20.984059686 +0300
+@@ -264,6 +264,9 @@
+    'providers' => array_merge(include(base_path('modules/system/providers.php')), [
+
+         // 'Illuminate\Html\HtmlServiceProvider', // Example
+
++        Acorn\ServiceProvider::class,
++        DBAuth\ServiceProvider::class,
++        Webklex\IMAP\Providers\LaravelServiceProvider::class,
+         System\ServiceProvider::class,
+    ]),

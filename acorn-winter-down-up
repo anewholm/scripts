@@ -1,6 +1,38 @@
 #!/bin/bash
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+# .env database setup
+env=.env
+DB_CONNECTION=`grep DB_CONNECTION $env | tr -d "'" | cut -d '=' -f 2`
+DB_HOST=`grep DB_HOST $env | tr -d "'" | cut -d '=' -f 2`
+DB_PORT=`grep DB_PORT $env | tr -d "'" | cut -d '=' -f 2`
+DB_DATABASE=`grep DB_DATABASE $env | tr -d "'" | cut -d '=' -f 2`
+DB_USERNAME=`grep DB_USERNAME $env | tr -d "'" | cut -d '=' -f 2`
+DB_PASSWORD=`grep DB_PASSWORD $env | tr -d "'" | cut -d '=' -f 2`
+echo "Dump Database: ${YELLOW}$DB_CONNECTION@$DB_HOST:$DB_PORT${NC}, db ${YELLOW}$DB_USERNAME${NC}@${YELLOW}$DB_DATABASE${NC}"
+
+echo "permissions => www-data"
+sudo chown -R www-data:www-data .; sudo chmod -R g+rw .
+
+if [ "$DB_CONNECTION" == 'pgsql' ] && [ "$DB_HOST" == "127.0.0.1" ]; then
+  # Using peer root connection to local DB. No explicit username
+  echo "${GREEN}Direct schema drop${NC} ${YELLOW}$DB_DATABASE${NC}"
+  sudo -u postgres psql -p $DB_PORT -d $DB_DATABASE -c "drop schema if exists public cascade"
+  sudo -u postgres psql -p $DB_PORT -d $DB_DATABASE -c "drop schema if exists product cascade" # Lojistiks specifc
+  sudo -u postgres psql -p $DB_PORT -d $DB_DATABASE -c "create schema if not exists public AUTHORIZATION $DB_USERNAME; SET search_path TO public;"
+fi
+
+echo "winter:down"
 sudo -u www-data ./artisan winter:down
+echo "cache:clear"
 sudo -u www-data ./artisan cache:clear
+echo "winter:up"
 sudo -u www-data ./artisan winter:up
 sudo -u www-data ./artisan winter:passwd admin password
+echo "permissions => www-data"
 sudo chown -R www-data:www-data .; sudo chmod -R g+rw .

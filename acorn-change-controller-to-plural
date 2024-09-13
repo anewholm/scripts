@@ -1,0 +1,37 @@
+#!/bin/bash
+
+Str='Winter\Storm\Support\Str'
+laravel_boot="require('../../../../vendor/autoload.php')"
+
+for controllerClassFile in *.php; do
+  # Class
+  controllerClassPascalCase=`echo $controllerClassFile | cut -d '.' -f 1`
+  controllerClassPascalCasePlural=`php -r "$laravel_boot; echo $Str::plural('$controllerClassPascalCase');"`
+  controllerClassPascalCaseSingular=`php -r "$laravel_boot; echo $Str::singular('$controllerClassPascalCase');"`
+  controllerDirectory=`echo "$controllerClassPascalCaseSingular" | tr '[:upper:]' '[:lower:]'`
+  controllerDirectoryPlural=`echo "$controllerClassPascalCasePlural" | tr '[:upper:]' '[:lower:]'`
+  controllerClassFilePlural="$controllerClassPascalCasePlural.php"
+
+  if [ $controllerClassPascalCase != $controllerClassPascalCasePlural ] && [ $controllerClassPascalCase != 'GPS' ] && [ $controllerClassPascalCase != 'DB' ] && [ $controllerClassPascalCase != 'FindByQrCode' ]; then
+    echo "$controllerClassFile($controllerClassPascalCase) => $controllerClassPascalCasePlural"
+    echo "  $controllerDirectory/ => $controllerDirectoryPlural/"
+
+    mv $controllerClassFile $controllerClassFilePlural
+    sed -i "s|/$controllerDirectory|/$controllerDirectoryPlural|" $controllerClassFilePlural
+    sed -i "s|'$controllerDirectory'|'$controllerDirectoryPlural'|" $controllerClassFilePlural
+    sed -i "s|^class $controllerClassPascalCase |class $controllerClassPascalCasePlural |" $controllerClassFilePlural
+
+    if [ ! -d $controllerDirectory ]; then
+      echo "$controllerDirectory not found"
+      exit 1
+    fi
+    mv $controllerDirectory $controllerDirectoryPlural
+    for f in $controllerDirectoryPlural/*; do
+      sed -i "s|/$controllerDirectory|/$controllerDirectoryPlural|" $f
+      sed -i "s|/models/$controllerDirectoryPlural|/models/$controllerDirectory|" $f
+    done
+
+    echo "  $controllerDirectory => $controllerDirectoryPlural in plugin.yaml"
+    sed -i "s|/$controllerDirectory|/$controllerDirectoryPlural|" ../plugin.yaml
+  fi
+done

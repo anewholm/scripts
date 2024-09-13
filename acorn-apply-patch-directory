@@ -1,0 +1,98 @@
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+patch_dir="$1"
+if [ -z "$patch_dir" ]; then
+	echo "${RED}USAGE${NC}: $0 <patch dir>"
+	exit 1
+fi
+
+if [ ! -d "$patch_dir" ]; then
+	echo "${RED}ERROR${NC}: Patch dir [$patch_dir] missing"
+	exit 1
+fi
+
+# TODO: Allow acorn-apply-patch-directory to recieve parameters
+# For dynamic variable replacement in patch files
+app_url=`grep -E "APP_URL=" .env`
+hostname=`echo $app_url | cut -d '=' -f 2 | tr -d '"' | sed -E 's#.*://##'`
+port=6001 # Websockets hardcoding
+
+# ---------------------------------------------------------- Patches
+for patch_file in $patch_dir/*.patch; do
+	if [ -n "$patch_file" ] && [ -z "$(grep -E ^\\[disabled\\] $patch_file)" ]; then
+		target_file=`grep "^--- " $patch_file | cut -d '	' -f 1 | cut -d ' ' -f 2`
+		if [ "${target_file:0:2}" == 'a/' ] || [ "${target_file:0:2}" == 'b/' ]; then
+			target_file=${target_file:2}
+		fi
+		if [ "${target_file:0:1}" == '/' ]; then
+			target_file=${target_file:1}
+		fi
+
+		if [ -n "$target_file" ]; then
+			if [ -f "$target_file" ]; then
+				echo "${GREEN}INFO${NC}: Applying patch ${YELLOW}$patch_file${NC} to ${YELLOW}$target_file${NC}"
+				patch_content=`cat $patch_file`
+				patch_content="${patch_content/\$hostname/$hostname}"
+				patch_content="${patch_content/\$port/$port}"
+
+				# Unified patches created with:
+				#   diff --unified=3 <orig> <new> > <patch file>
+				echo "$patch_content" | patch -N -l -u "$target_file"
+				if [ "$?" != 0 ]; then
+					echo "${RED}ERROR${NC}: Patch ${YELLOW}$patch_file${NC} failed"
+					line=`grep ^@@ "$patch_file" | cut -d ' ' -f 2 | cut -d ',' -f 1 | tr -d '-'`
+					count=`grep ^@@ "$patch_file" | cut -d ' ' -f 2 | cut -d ',' -f 2`
+					end=$((line + count - 1))
+					echo "Lines in ${YELLOW}$target_file${NC}: $line for $count"
+					head -n $end "$target_file" | tail -n $count
+
+					read -p "Continue (y) ? " yn
+					case $yn in
+						[Nn]* )
+							echo "ok, exciting process. please resolve manually"
+							exit 1;
+							;;
+						* )
+							;;
+					esac
+				fi
+			else
+				echo "${RED}ERROR${NC}: Target file [$target_file] missing for patch [$patch_file]"
+				exit 1
+			fi
+		else
+				echo "${RED}ERROR${NC}: Target file blank for patch [$patch_file]"
+				exit 1
+		fi
+	fi
+done
+
+# ---------------------------------------------------------- Appends
+if [ -f $patch_dir/*.append ]; then
+	for append_file in $patch_dir/*.append; do
+		if [ -n "$append_file" ]; then
+			target_file=`grep "^#!append " "$append_file" | cut -d ' ' -f 2`
+			search_term=`grep "^#!search " "$append_file" | cut -d ' ' -f 2,3,4,5,6,7,8,9,10`
+			if [ -n "$target_file" ] && [ -n "$search_term" ]; then
+				change_exists=`grep "$search_term" "$target_file"`
+				if [ -z "$change_exists" ]; then
+					echo "${GREEN}INFO${NC}: Applying append ${YELLOW}$append_file${NC} into ${YELLOW}$target_file${NC}"
+					# Not the whole file! Need to remove append and search lines
+					grep -vE "^#!append |^#!search " "$append_file" >> "$target_file"
+				else
+					echo "${YELLOW}WARNING${NC}: Target file [$target_file] already appended with [$append_file]"
+				fi
+			else
+				echo "${RED}ERROR${NC}: Target file [$target_file] missing for patch [$append_file]"
+				exit 1
+			fi
+		fi
+	done
+fi

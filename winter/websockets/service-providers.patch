@@ -1,0 +1,10 @@
+Add our ServiceProviders in to the providers
+--- config/app.php      2024-06-16 11:18:26.789740084 +0300
++++ config/app-new.php     2024-07-09 22:35:46.136012850 +0300
+@@ -264,4 +264,6 @@
+    'providers' => array_merge(include(base_path('modules/system/providers.php')), [
+
++        Illuminate\Broadcasting\BroadcastServiceProvider::class,
++        BeyondCode\LaravelWebSockets\WebSocketsServiceProvider::class,
+         // 'Illuminate\Html\HtmlServiceProvider', // Example
+

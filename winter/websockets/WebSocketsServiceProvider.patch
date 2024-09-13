@@ -1,0 +1,14 @@
+Patch for beyondcode/laravel-websockets
+Because Winter has its own Authorisation system, not Laravel Gates
+Check `composer status` for a full list of altered vendor packages
+--- vendor/beyondcode/laravel-websockets/src/WebSocketsServiceProvider.php      2023-02-15 10:40:49.000000000 +0000
++++ vendor/beyondcode/laravel-websockets/src/WebSocketsServiceProvider-new.php       2023-06-05 07:59:48.411946490 +0100
+@@ -31,7 +31,7 @@
+
+        \$this
+            ->registerRoutes()
+-            ->registerDashboardGate();
++            ;//->registerDashboardGate();
+
+        \$this->loadViewsFrom(__DIR__.'/../resources/views/', 'websockets');
+
