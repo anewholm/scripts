@@ -61,5 +61,17 @@ php artisan vendor:publish --all
 # To generate /storage/framework/packages.php
 php artisan package:discover
 
-# TODO: Enter this in Ubuntu services
+# Enter this in Ubuntu services
+if [ -f init.d/websockets ]; then
+  sudo cp init.d/websockets /etc/init.d/websockets
+  sudo chmod +x /etc/init.d/websockets
+  sudo ln -s /etc/init.d/websockets /etc/rc2.d/S01websockets
+  sudo ln -s /etc/init.d/websockets /etc/rc6.d/K01websockets
+  if [ ! -d /var/www/websockets-server ]; then
+    # TODO: Create a proper websockets-server cutdown website for us
+    if [ -d /var/www/acorn-lojistiks ]; then sudo cp -r /var/www/acorn-lojistiks /var/www/websockets-server; fi
+    if [ -d /var/www/lojistiks ];       then sudo cp -r /var/www/lojistiks       /var/www/websockets-server; fi
+  fi
+fi
+
 echo "${GREEN}INFO${NC}: To run the server run ${YELLOW}./artisan websockets:serve${NC}"

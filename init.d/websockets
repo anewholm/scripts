@@ -1,0 +1,19 @@
+#!/bin/bash
+case "$1" in
+  start)
+	/var/www/websockets-server/artisan websockets:serve &
+        ;;
+  stop)
+	pid=`ps -A -o pid,command | grep websocket:serve | xargs | cut -d ' ' -f 1`
+	kill pid
+        ;;
+  restart)
+	pid=`ps -A -o pid,command | grep websocket:serve | xargs | cut -d ' ' -f 1`
+        kill pid
+	/var/www/websockets-server/artisan websockets:serve &
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart}" >&2
+        exit 3
+        ;;
+esac

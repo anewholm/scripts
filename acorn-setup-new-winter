@@ -168,6 +168,9 @@ if [ ! -d vendor/webklex/laravel-imap ]; then composer require webklex/laravel-i
 sed -i "s|MAIL_HOST=\".*\"|MAIL_HOST=\"smtp.stackmail.com\"|" .env
 sed -i "s|MAIL_PORT=\".*\"|MAIL_PORT=465|" .env
 
+# QR Codes are supported in core now
+if [ ! -d vendor/simplesoftwareio/simple-qrcode ]; then composer require simplesoftwareio/simple-qrcode; fi
+
 # Copy Kurdish system and backend lang.php files in to place
 cp -r $script_dir/winter/system/lang/ku modules/system/lang
 if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install system module ku\lang.php"; exit 1; fi
@@ -179,18 +182,8 @@ composer require winter/wn-location-plugin
 if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 composer require winter/wn-tailwindui-plugin # Menus
 if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-
-read -p "You can use acorn-create-system (DB => models) or builder-plugin (UI) to create plugins. Install wn-builder-plugin [yn] ? (n) " yn
-if [ "$yn" == 'y' ]; then
-	composer require winter/wn-builder-plugin
-	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-fi
-
-read -p "Will your system have a font-end? Does it need a front-end user-groups system? Install wn-user-plugin [yn] ? (n) " yn
-if [ "$yn" == 'y' ]; then
-	composer require winter/wn-user-plugin
-	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-fi
+composer require winter/wn-builder-plugin
+if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 
 # Temporary hack until we work out how to auto generate the classes.php
 if [ -f $script_dir/winter/classes.php ]; then
@@ -222,8 +215,8 @@ if [ ! -d backendlocalization ];  then
 	git clone git@gitlab.acorn.org:office/backendlocalization.git
 	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 fi
-if [ ! -d finance ];  then
-	git clone git@gitlab.acorn.org:office/finance.git;
+if [ ! -d user ];  then
+	git clone git@gitlab.acorn.org:office/user.git
 	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 fi
 if [ ! -d location ];  then
@@ -270,9 +263,9 @@ fi
 # -------------------------------------------- Admin
 if [ -d ../scripts ]; then
 	echo "${GREEN}INFO${NC}: Linking ${YELLOW}acorn-*${NC} scripts"
-	for script in ../scripts/acorn-git-* ../scripts/acorn-create-system ../scripts/acorn-winter-down-up; do
-		name=`basename "$script"`
-		if [ ! -f "$name" ]; then ln -s "$script" .; fi
+	for script in ../scripts/acorn-git-* ../scripts/acorn-create-system ../scripts/acorn-winter-down-up ../scripts/acorn-winter-update-sqls; do
+		script_name=`basename "$script"`
+		if [ ! -f "$script_name" ]; then ln -s "$script" .; fi
 	done
 fi
 

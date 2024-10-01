@@ -1,7 +1,23 @@
 #!/bin/bash
-message=$1
-if [ -z "$message" ]; then message="no_message"; fi
 
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+commit_message=$1
+
+echo "## --------------------------------------------- ${GREEN}git add${NC}"
 ./acorn-git-all add .
-./acorn-git-all commit -m "'$message'"
+
+echo "## --------------------------------------------- ${GREEN}git commit${NC}"
+if [ -z "$commit_message" ]; then
+  read -p "Commit message? (no_message) " commit_message
+  if [ -z "$commit_message" ]; then commit_message="no_message"; fi
+fi
+./acorn-git-all commit -m "'$commit_message'"
+
+echo "## --------------------------------------------- ${GREEN}git push${NC}"
 ./acorn-git-all push
