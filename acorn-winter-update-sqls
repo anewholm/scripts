@@ -11,6 +11,8 @@ run_dir=`pwd` # Bald
 script_dir=`dirname $(realpath $0)`
 script=`basename $0`
 
+autoy="$1"
+
 outfile=up.sql
 
 # -------------------------------------------- .env parse
@@ -21,9 +23,16 @@ outfile=up.sql
 env='.env'
 if [ -f $env ] && [ -d plugins ]; then
   # Batch run on whole website
+  echo "This is a root run of all repos updates..."
   for plugin in plugins/acorn/*/; do
     if [ -f "$plugin/updates/$script" ]; then
-      read -p "${INFO}RUN${NC} ${YELLOW}$plugin${NC} (y|n)? [n] " yn
+      echo; echo;
+      if [ "$autoy" == 'y' ]; then
+        yn='y'
+        echo "${GREEN}------------------------------------------- RUNING${NC} ${YELLOW}$plugin/updates/$script${NC}"
+      else
+        read -p "${GREEN}RUN${NC} ${YELLOW}$plugin/updates/$script${NC} (y|n)? [n] " yn
+      fi
       if [ "$yn" == 'y' ]; then
         cd "$plugin/updates/"
         ./$script

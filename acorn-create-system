@@ -8,6 +8,35 @@ TICK="${GREEN}✓${NC}"
 CROSS="${RED}✘${NC}"
 
 # -------------------------------------------- Functions
+function comment_override()
+{
+  comment=$1
+  name=$2
+  default=$3 # Can be blank
+
+  # Comments are quoted if they are multi-line, and also double-quote
+  # TODO: Strip this processing from elsewhere
+  if [ "${comment:0:1}" == '"' ] && [ "${comment: -1}" == '"' ]; then
+    comment="${comment:1: -1}";
+    comment="${comment//\"\"/\"}"
+  fi
+
+  alias="$name"
+  value="$default"
+  for cl in $comment; do
+    # Skip sub-array lists, like seeding:
+    if [ "${cl:0:1}" != ' ' ]; then
+      comment_name=`echo "$cl"  | cut -d ':' -f 1 | sed 's/^[ \t]*//;s/[ \t]*$//'`
+      comment_value=`echo "$cl" | cut -d ':' -f 2 | sed 's/^[ \t]*//;s/[ \t]*$//'`
+      if [ "$comment_name" == "$alias" ]; then
+        value="$comment_value"
+      fi
+    fi
+  done
+
+  echo "$value"
+}
+
 function comment_array_add()
 {
   # For lang.php PHP array files
@@ -26,16 +55,10 @@ function comment_array_add()
 
   if [ -z "$alias" ]; then alias="$name"; fi
 
-  for cl in "$comment"; do
-    comment_name=`echo "$cl" | cut -d ':' -f 1`
-    comment_value=`echo "$cl" | cut -d ':' -f 2`
-    if [ "$comment_name" == "$alias" ]; then
-      value="$comment_value"
-    fi
-  done
+  value=`comment_override "$comment" "$alias" "$value"`
 
   # Result
-  name_exists=`grep "^// $section.$name" "$file"`
+  name_exists=`grep "^// $section.$name$" "$file"`
   if [ -z "$name_exists" ]; then
     indent_string=`printf "%${indent}s"`
     section_string="$indent_string'$section' => \["
@@ -51,7 +74,7 @@ function comment_array_add()
   return 0
 }
 
-function comment_override()
+function comment_yaml_add()
 {
   # For YAML files
   comment=$1
@@ -63,14 +86,7 @@ function comment_override()
 
   if [ -z "$alias" ]; then alias="$name"; fi
 
-  # name
-  for cl in "$comment"; do
-    comment_name=`echo "$cl" | cut -d ':' -f 1`
-    comment_value=`echo "$cl" | cut -d ':' -f 2`
-    if [ "$comment_name" == "$alias" ]; then
-      value="$comment_value"
-    fi
-  done
+  value=`comment_override "$comment" "$alias" "$value"`
 
   # filestub.name
   # Useful for dis-ambiguation
@@ -150,6 +166,12 @@ if [ "$DB_CONNECTION" != 'pgsql' ] || [ "$DB_HOST" != "127.0.0.1" ]; then
   echo "${RED}$DB_CONNECTION@$DB_HOST:$DB_PORT${NC} is not local. Aborted"
   exit 1
 fi
+icon_file="$run_dir/modules/backend/formwidgets/iconpicker/meta/libraries.yaml"
+icon_current=7
+if [ ! -f "$icon_file" ]; then
+  echo "${RED}ERROR${NC} icon file missing"
+  exit 1
+fi
 
 
 # -------------------------------------------- DB parse
@@ -157,18 +179,30 @@ fi
 author_lowercase=`echo "$author_namespace" | tr '[:upper:]' '[:lower:]'`
 table_match="${author_lowercase}_%"
 if [ -n "$install_plugins" ] && [ "$install_plugins" != '*' ]; then table_match="${author_lowercase}_${install_plugins}_%"; fi
-tables=`sudo -u postgres psql --port=$DB_PORT $DB_DATABASE --csv -c "select table_name from information_schema.tables \
-  where table_catalog = current_database() and table_name like('$table_match') \
-  order by table_name;"`
+tables=`sudo -u postgres psql --port=$DB_PORT $DB_DATABASE --csv -c "select table_schema, table_name,
+  substring(obj_description(concat(table_schema, '.', table_name)::regclass, 'pg_class'), 'order: ([0-9]+)')::int as \"order\" \
+  from information_schema.tables \
+  where table_catalog = current_database() and table_name like('$table_match')
+  order by coalesce(substring(obj_description(concat(table_schema, '.', table_name)::regclass, 'pg_class'), 'order: ([0-9]+)')::int, 10000) asc;"`
 if [ "$?" != 0 ]; then exit 1; fi
+# Remove the table_name header
+tables=`echo "$tables" | sed '/^table_schema/d'`
+if [ -z "$tables" ]; then
+  echo "${RED}NOT FOUND${NC} Any tables matching ${YELLOW}$table_match${NC}"
+  exit 1
+fi
 
 
 # -------------------------------------------- First tables scan to show situation
 plugins=$IFS
-for table in $tables; do
-  author_lowercase=`echo "$table" | cut -d '_' -f 1`
-  plugin_lowercase=`echo "$table" | cut -d '_' -f 2`
-  if [ "$author_lowercase" == 'acorn' ]; then # Only our tables
+for table_details_row in $tables; do
+  schema=`echo "$table_details_row" | cut -d ',' -f 1`
+  table_full_name=`echo "$table_details_row" | cut -d ',' -f 2`
+
+  author_lowercase=`echo "$table_full_name" | cut -d '_' -f 1`
+  plugin_lowercase=`echo "$table_full_name" | cut -d '_' -f 2`
+  table_name_part=`echo "$table_full_name" | cut -d '_' -f 3,4,5,6,7,8,9,10`
+  if [ -n "$table_name_part" ] && [ "$author_lowercase" == 'acorn' ]; then # Only our tables
     if [[ ! "$plugins" =~ "$IFS$plugin_lowercase$IFS" ]]; then
       plugins="$plugins$plugin_lowercase$IFS"
     fi
@@ -182,12 +216,14 @@ if [ -z "$install_plugins" ] || [ "$install_plugins" == '*' ]; then
   echo "[${GREEN}0${NC}] all"
   for plugin in $plugins; do
     plugin_dir="plugins/$author_lowercase/$plugin"
+    plugin_exists=
+    plugin_git_exists=
     if [ -d "$plugin_dir" ]; then
       plugin_exists='exists'
       plugin_git_exists="${RED}without git${NC}"
       if [ -d "$plugin_dir/.git" ]; then plugin_git_exists='with git'; fi
     fi
-    plugin_created_by=`grep "^// Created By $script" "$plugin_dir/Plugin.php"`
+    plugin_created_by=`grep -s "^// Created By $script" "$plugin_dir/Plugin.php"`
     echo "[${GREEN}$i${NC}] $plugin ${YELLOW}$plugin_exists${NC} $plugin_git_exists ${GREEN}${plugin_created_by/\/\/ /}${NC}"
     i=$((i + 1))
   done
@@ -201,46 +237,78 @@ fi
 if [ -z "$install_plugins" ]; then exit 0; fi
 echo "Choice: ${GREEN}$install_plugins${NC}"
 
-# Remove the table_name header
-tables=`echo "$tables" | sed '/^table_name$/d'`
-
 previous_plugin=
-for table in $tables ; do
-  # ---------------------------------------------------------------- names
-  author_lowercase=`echo "$table" | cut -d '_' -f 1`
-  plugin_lowercase=`echo "$table" | cut -d '_' -f 2`
-  model_snakecase_plural=`echo "$table" | cut -d '_' -f 3,4,5,6,7,8,9,10`
-  # Str::studly() = PascalCase
-  plugin_dir="plugins/$author_lowercase/$plugin_lowercase"
-  plugin_pascalcase=`      php -r "$laravel_boot; echo $Str::studly('$plugin_lowercase');"`
-  model_pascalcase_plural=`php -r "$laravel_boot; echo $Str::studly('$model_snakecase_plural');"`
-  model_squish_plural=`    echo "$model_pascalcase_plural" | tr '[:upper:]' '[:lower:]'`
-  model_name=`             php -r "$laravel_boot; echo $Str::singular('$model_pascalcase_plural');"` # TODO: Rename this variable
+for table_details_row in $tables ; do
+  schema=`echo "$table_details_row" | cut -d ',' -f 1`
+  table_full_name=`echo "$table_details_row" | cut -d ',' -f 2`
+  fq_table="$schema.$table_full_name"
+  table_comment=`sudo -u postgres psql --port=$DB_PORT $DB_DATABASE --csv -c "select obj_description('$fq_table'::regclass, 'pg_class');"`
+  # Remove the table_name header
+  table_comment=`echo "$table_comment" | sed '/^obj_description/d'`
+  # Only multi-line comments are quoted
+  if [ "${table_comment:0:1}" == '"' ]; then table_comment="${table_comment:1: -1}"; fi
+  table_comment="${table_comment//\"\"/\"}"
 
-  if [ "$author_lowercase" == 'acorn' ]; then # Only our tables
+  # ---------------------------------------------------------------- names
+  # Str::studly() = PascalCase
+  author_lowercase=`echo "$table_full_name" | cut -d '_' -f 1`
+  plugin_lowercase=`echo "$table_full_name" | cut -d '_' -f 2`
+  table_name_part=` echo "$table_full_name" | cut -d '_' -f 3,4,5,6,7,8,9,10` # invoices | groups | user_groups, but maybe singular
+  table_name_last=` echo "$table_full_name" | rev | cut -d '_' -f 1 | rev`    # legalcase_identifiers => identifiers
+  table_name_part_singular=`php -r "$laravel_boot; echo $Str::singular('$table_name_part');"` # invoice  | group  | user_group   (snake_case)
+  table_name_part_plural=`  php -r "$laravel_boot; echo $Str::plural('$table_name_part');"`   # invoices | groups | user_groups  (snake_case)
+  table_name_part_singular=`comment_override "$table_comment" singular "$table_name_part_singular"`
+  table_name_part_plural=`  comment_override "$table_comment" plural "$table_name_part_plural"`
+
+  # table-type: content indicates that the table is 'plural'. Useful for ambiguous words like evidence
+  table_type=`comment_override "$table_comment" 'table-type'`
+  table_is_singular=$(! [ "$table_name_part_singular" == "$table_name_part" ] || echo $?)
+
+  # Class names
+  plugin_pascalcase=`   php -r "$laravel_boot; echo $Str::studly('$plugin_lowercase');"`         # Finance | User
+  model_name=`          php -r "$laravel_boot; echo $Str::studly('$table_name_part_singular');"` # Invoice | User | UserGroup
+  controller_name=`     php -r "$laravel_boot; echo $Str::studly('$table_name_part_plural');"`   # Invoices | Users | UserGroups
+  controller_dir_name=` echo "${table_name_part_plural//_/}" | tr '[:upper:]' '[:lower:]'`       # invoices | usergroups (squished)
+
+  # Paths
+  # TODO: scan script input dir for lang sub-directories
+  plugin_dir="plugins/$author_lowercase/$plugin_lowercase"
+  lang_dir="$run_dir/$plugin_dir/lang"
+
+  if [ -n "$table_name_part" ] && [ "$author_lowercase" == 'acorn' ]; then # Only our tables
     author_pascalcase='Acorn'
 
-    plugin_name="$author_namespace.$plugin_pascalcase"
-    translation_domain="$author_lowercase.$plugin_lowercase"
     if [ -z "$install_plugins" ] || [ "$install_plugins" == '*' ] || [ "$install_plugins" == "$plugin_lowercase" ]; then
       # Ignore singular tables
-      if [ "$model_snakecase_plural" == "$model_name" ]; then
-        echo "Ignoring ${RED}$table${NC} because singular"
+      if [ "$table_is_singular" ] && [ "$table_type" != 'content' ]; then
+        echo "Ignoring ${RED}$table_full_name${NC} because singular (and without explicit ${GREEN}table-type: content${NC})"
       else
+        plugin_name="$author_namespace.$plugin_pascalcase"
         if [ "$plugin_name" != "$previous_plugin" ]; then
 
 
-          # ---------------------------------------------------------------- recreate/append-to
-          echo "\nProcessing plugin ${GREEN}$plugin_name${NC}"
-          if [ -d "$plugin_dir" ]; then
-            if [ "$command" == 'recreate' ]; then
-              yn=y
-            else
-              read -p "${YELLOW}$plugin_dir${NC} exists. Remove its contents, ${YELLOW}except .git/${NC}, before re-processing this plugin (y/n)? [n] " yn
+          echo; echo "------------------------------------------------- Processing plugin ${GREEN}$plugin_name${NC}"
+          if [ -d "$plugin_dir" ] && [ -n "$(ls -d $plugin_dir/*/ 2> /dev/null)" ]; then
+            if [ "$command" == '' ]; then
+              read -p "${YELLOW}$plugin_dir${NC} already exists with sub-directories. Would you like to remove its contents, ${YELLOW}except .git/${NC}, (recreate), patch record the differences (patch), or incrementally add Models (inc)? [recreate] " command
+              if [ "$command" == '' ]; then command='recreate'; fi
             fi
-            if [ "$yn" == 'y' ]; then
+
+            if [ "$command" == 'recreate' ]; then
               echo "  removing..."
               rm -r $plugin_dir/*
+            elif [ "$command" == 'patch' ]; then
+              echo "${GREEN}CHOICE${NC}: ${YELLOW}$command${NC} not fully supported yet..."
+              # Make a copy of the current code so we can generate a patch comparison
+              rm -rf $plugin_dir/.backup
+              mkdir -p $plugin_dir/.backup
+              cp -r $plugin_dir/* $plugin_dir/.backup/
+              exit 1
+            elif [ "$command" == 'inc' ]; then
+              echo "${GREEN}CHOICE${NC}: ${YELLOW}$command${NC}. Adding only new tables"
+            else
+              echo "${RED}ERROR${NC}: Command [${YELLOW}$command${NC}] unrecognised"
+              exit 1
             fi
           fi
 
@@ -261,25 +329,38 @@ for table in $tables ; do
               git config --global --add safe.directory "$run_dir/$plugin_dir"
             fi
 
+            # README.md
+            echo "# $plugin_name"
+            echo "Created By $script v$version"
+
             # Created by
+            sed -i "s|'description' *=> *'[.*]',|'description' => '$plugin_name (Created By $script v$version)',|" "$lang_dir/en/lang.php"
+            sed -i "s|'author' *=> *'Acorn',|'author' => 'Acorn',|" Plugin.php
             echo '' >> "Plugin.php"
             echo "// Created By $script v$version" >> "Plugin.php"
 
             # Language support
-            if [ ! -f lang/ku/lang.php ]; then
-              mkdir -p lang/ku
-              cp lang/en/lang.php lang/ku/lang.php
-              sed -i "s|^];|    'models' => \[\n    \],\n];|" lang/ku/lang.php
-              sed -i "s|    'models' => \[|    'models' => \[\n        'general' => [\n            'name' => 'Name',\n            'id' => 'ID',\n        ],\n|" lang/ku/lang.php
-            fi
-            if [ ! -f lang/ar/lang.php ]; then
-              mkdir -p lang/ar
-              cp lang/en/lang.php lang/ar/lang.php
-              sed -i "s|^];|    'models' => \[\n    \],\n];|" lang/ar/lang.php
-              sed -i "s|    'models' => \[|    'models' => \[\n        'general' => [\n            'name' => 'Name',\n            'id' => 'ID',\n        ],\n|" lang/ar/lang.php
-            fi
+            mkdir -p lang/ku
+            mkdir -p lang/ar
+
+            for lang_subpath in $lang_dir/*; do
+              lang_name=`basename "$lang_subpath"`
+              lang_path="$lang_subpath/lang.php"
+
+              if [ ! -f "$lang_path" ]; then
+                echo "${GREEN}LANG${NC}: Created ${YELLOW}$lang_name${NC} language file"
+                cp "$lang_dir/en/lang.php" "$lang_path"
+                sed -i "s|^];$|    'models' => \[\n    \],\n];|" "$lang_path"
+                sed -i "s|    'models' => \[$|    'models' => \[\n        'general' => [\n        ],|" "$lang_path"
+              elif [ "$lang_name" != 'en' ]; then
+                echo "${RED}LANG${NC}: ${YELLOW}$lang_name${NC} language file already exists"
+              fi
+            done
 
             cd -
+
+            # Plugin level directives
+            plugin_menu=`comment_override "$table_comment" 'plugin-menu'`
           fi
 
           plugin_file_path="$plugin_dir/Plugin.php"
@@ -287,6 +368,7 @@ for table in $tables ; do
           sed -i '/^    public function registerNavigation\(\)/,/^    }/d' $plugin_file_path
           sed -i 's/Registers backend navigation items for this plugin./Navigation in plugin.yaml./' $plugin_file_path
 
+          # $require Plugins will be added according to FKs below
           echo "  Adding standard dependencies to $plugin_file_path"
           sed -i "s/^{\$/{\n    public \$require = ['Acorn.Calendar', 'Acorn.Location', 'Acorn.Messaging'];/" "$plugin_file_path"
 
@@ -343,20 +425,37 @@ for table in $tables ; do
           cd -
         fi
 
-        if [ -n "$model_pascalcase_plural" ]; then
 
-
+        if [ -n "$controller_name" ]; then
           # ---------------------------------------------------------------- Controller
-          controller_name=$model_pascalcase_plural
+          printf "\n\n\n------------------------------------------------- ${GREEN}$controller_name${NC}\n"
           controller_file="$controller_name.php"
           controller_path="$plugin_dir/controllers/$controller_file"
-          controller_url="$author_lowercase/$plugin_lowercase/$model_squish_plural"
+          controller_url="$author_lowercase/$plugin_lowercase/$controller_dir_name"
+          controller_dir="$plugin_dir/controllers/$controller_dir_name"
+
+          if [ -n "$table_comment" ]; then echo "${GREEN}$table_comment${NC}"; fi
+
           if [ ! -f $controller_path ]; then
             echo "Creating Controller ${YELLOW}$controller_name${NC}"
             ./artisan create:controller $plugin_name $controller_name
-            # Inherit from AA\Controller
+
+            # Inherit from AA\Controller & FormController
             echo "  Inheriting ${YELLOW}$controller_name${NC} from $author_namespace"
             sed -i "s|^use Backend\\\\Classes\\\\Controller;|use $author_namespace\\\\Controller;|" "$controller_path"
+            sed -i "s|\\\\Backend\\\\Behaviors\\\\FormController::class|\\\\$author_namespace\\\\Behaviors\\\\FormController::class|" "$controller_path"
+            sed -i "s|\\\\Backend\\\\Behaviors\\\\ListController::class|\\\\$author_namespace\\\\Behaviors\\\\ListController::class|" "$controller_path"
+
+            # Explicit plural name injection
+            # Otherwise PathsHelper will get confused
+            controller_directive_plural=`comment_override "$table_comment" plural`
+            if [ -n "$controller_directive_plural" ]; then
+              sed -i "s|^{$|{\n    public \$namePlural = \'$controller_directive_plural\';\n|" "$controller_path"
+            fi
+
+            # Filters and things
+            echo "filter: config_filter.yaml" >> "$controller_dir/config_list.yaml"
+            echo "scopes:" >> "$controller_dir/config_filter.yaml"
           else
             echo "(Found Controller $controller_name)"
           fi
@@ -367,20 +466,39 @@ for table in $tables ; do
             model_file="$model_name.php"
             model_path="$plugin_dir/models/$model_file"
             model_fq_name="$author_namespace\\$plugin_pascalcase\\Models\\$model_name"
-            lang_en_path="$plugin_dir/lang/en/lang.php"
-            lang_ar_path="$plugin_dir/lang/ar/lang.php"
-            lang_ku_path="$plugin_dir/lang/ku/lang.php"
 
             if [ ! -f $model_path ]; then
               echo "Creating Model ${YELLOW}$model_name${NC}"
               ./artisan create:model $plugin_name $model_name
+
+              # Potentially rewrite $table because create:model will automatically plural it
+              sed -i "s|public *\$table *=.*;$|public \$table = '$table_full_name';|" "$model_path"
 
               # Rewrite version.yaml to use create_from_sql.php: The create:model has updated it
               # create:model makes the v1.0.1/ directories also. Remove them
               echo "1.0.0:" > "$plugin_update_dir/version.yaml"
               echo "  - 'First version of Finance'" >> "$plugin_update_dir/version.yaml"
               echo "  - create_from_sql.php"        >> "$plugin_update_dir/version.yaml"
-              rm -r "$plugin_update_dir/v*/"
+              rm -r "$plugin_update_dir/v1.0.1/"
+
+
+              # ---------------------------------------------------------------- Seeding
+              # This moves seeding: directives in to updates\seed.sql
+              seeding=0
+              seeder_path="$plugin_dir/updates/seed.sql"
+              for cl in $table_comment; do
+                comment_name=`echo "$cl" | cut -d ':' -f 1`
+                if [ "${cl:0:1}" != ' ' ]; then seeding=0; fi
+                if [ $seeding == 1 ]; then
+                  seeder_values=`echo "${cl//;/,}" | sed 's/^[ \t]*//;s/[ \t]*$//'`
+                  # Write row in to seed.sql for acorn-winter-down-up operations
+                  echo "insert into $schema.$table_full_name values($seeder_values);" >> "$seeder_path"
+                fi
+                if [ "$comment_name" == 'seeding' ]; then
+                  echo "  ${GREEN}SEEDING${NC}"
+                  seeding=1
+                fi
+              done
 
 
               # ---------------------------------------------------------------- Prepare
@@ -396,65 +514,118 @@ for table in $tables ; do
               echo "# Created By $0 v$version" > "$columns_path"
               echo 'columns:' >> "$columns_path"
 
-              # Language: These files will not have been updated...
-              # TODO: Use comment_array_add for these sections
-              # TODO: Use table_comment override
-              sed -i "s|    'models' => \[\n|    'models' => \[\n        '$model_dir' => [\n            'label' => '$model_name',\n            'label_plural' => '...',\n        ],\n|" "$lang_ku_path"
-              sed -i "s|    'models' => \[\n|    'models' => \[\n        '$model_dir' => [\n            'label' => '$model_name',\n            'label_plural' => '...',\n        ],\n|" "$lang_ar_path"
+              # Language: These non-en files will not have been updated by the create:model command
+              for lang_subpath in $lang_dir/*; do
+                lang_name=`basename "$lang_subpath"`
+                lang_path="$lang_subpath/lang.php"
+
+                # NOTE: This will always be false for en because the create:model has added them
+                has_model=`grep "'$model_dir'" "$lang_path"`
+                if [ -z "$has_model" ]; then
+                  echo "  Added ${YELLOW}$model_dir${NC} into ${YELLOW}$lang_name${NC} files $lang_path"
+                  sed -i "s|^    'models' => \[$|    'models' => \[\n        '$model_dir' => [\n        ],|" "$lang_path"
+                  comment_array_add "$table_comment" 8 "$model_dir" label        "$model_name"      "$lang_path"
+                  comment_array_add "$table_comment" 8 "$model_dir" label_plural "$controller_name" "$lang_path"
+                fi
+              done
 
               # Prepare some Model arrays
-              sed -i "s|belongsTo *= *\[\];|belongsTo = [\n    ];|" "$model_path"
-              sed -i "s|morphMany *= *\[\];|morphMany = [\n    ];|" "$model_path"
+              sed -i "s|\$belongsTo *= *\[\];$|\$belongsTo = [\n    ];|" "$model_path"
+              sed -i "s|\$hasMany *= *\[\];$|\$hasMany = [\n    ];|"     "$model_path"
+              sed -i "s|\$morphMany *= *\[\];$|\$morphMany = [\n    ];|" "$model_path"
+              sed -i "s|\$rules *= *\[\];$|\$rules = \[\n    ];|"        "$model_path"
 
-              columns=`sudo -u postgres psql --port=$DB_PORT $DB_DATABASE --csv -c "SELECT *, \
-                pg_catalog.col_description(format('%s.%s',table_schema,table_name)::regclass::oid, ordinal_position) \
-                FROM information_schema.columns WHERE table_name = '$table'"`
+              # Column processing can be recursive, for 1-1 includes
+              # Move to Python OO
+              columns=`sudo -u postgres psql --port=$DB_PORT $DB_DATABASE --csv -c "SELECT * FROM information_schema.columns \
+                WHERE table_schema = '$schema' and table_name = '$table_full_name' \
+                order by coalesce(substring(pg_catalog.col_description(concat(table_schema, '.', table_name)::regclass, ordinal_position), 'order: ([0-9]+)')::int, 10000) asc;"`
               columns=`echo "$columns" | sed '/^table_catalog,.*$/d'`
               has_dates=0
               has_server_id=0
               has_uuid=0
               soft_delete_mode=0
-              for column in $columns ; do
-                column_name=`echo "$column" | cut -d ',' -f 4`
-                column_is_generated=`echo "$column" | cut -d ',' -f 42`
-                column_type=`echo "$column" | cut -d ',' -f 8 | cut -d ' ' -f 1`
-                column_last=`echo "$column_name" | rev | cut -d '_' -f 1 | rev`
+              for column_details_row in $columns ; do
+                column_ordinal_position=`echo "$column_details_row" | cut -d ',' -f 5`
+                column_name=`echo "$column_details_row" | cut -d ',' -f 4`
+                column_is_generated=`echo "$column_details_row" | cut -d ',' -f 42` # NEVER|ALWAYS
+                column_is_nullable=`echo "$column_details_row" | cut -d ',' -f 7` # NO|YES
+                column_type=`echo "$column_details_row" | cut -d ',' -f 8 | cut -d ' ' -f 1`
                 column_first=`echo "$column_name" | cut -d '_' -f 1`
-                column_comment=`echo "$column" | cut -d ',' -f 45`
-                field_name="$column_name"
-                column_title=`php -r "$laravel_boot; echo $Str::title('${column_name/_id/}');"`
+                column_last=`echo "$column_name" | rev | cut -d '_' -f 1 | rev`
+                column_default=`echo "$column_details_row" | cut -d ',' -f 6` # gen_random_uuid()
+                column_without_id="$column_name"
+                if [ "$column_last" == 'id' ] && [ "$column_name" != 'id' ]; then column_without_id=`echo "$column_name" | rev | cut -d '_' -f 2,3,4,5,6,7,8,9,10 | rev`; fi
+                column_last_without_id=`echo "$column_without_id" | rev | cut -d '_' -f 1 | rev`
+                column_title=`php -r "$laravel_boot; echo $Str::title('$column_without_id');"`
                 column_title="${column_title//_/ }"
                 column_name_full="$column_name"
+                # Separate comment, because maybe multi-line
+                column_comment=`sudo -u postgres psql --port=$DB_PORT $DB_DATABASE --csv -c "SELECT pg_catalog.col_description('$fq_table'::regclass::oid, $column_ordinal_position)"`
+                column_comment=`echo "$column_comment" | sed '/^col_description.*$/d'`
+                if [ "${column_comment:0:1}" == '"' ]; then column_comment="${column_comment:1: -1}"; fi
+                column_comment="${column_comment//\"\"/\"}"
+                echo "    ${YELLOW}$column_name${NC}:"
 
                 # Special columns
                 if [ "$column_name" == 'updated_at' ] && [ "$column_type" == 'timestamp with time zone' ]; then has_dates=1; fi
+                if [ "$column_name" == 'created_at' ] && [ "$column_type" == 'timestamp with time zone' ]; then has_dates=1; fi
                 if [ "$column_name" == 'server_id' ]  && [ "$column_type" == 'uuid' ]; then has_server_id=1; fi
-                if [ "$column_name" == 'id' ]         && [ "$column_type" == 'uuid' ]; then has_uuid=1; fi
+                if [ "$column_name" == 'id' ]         && [ "$column_type" == 'uuid' ]; then
+                  has_uuid=1
+                  if [ "$column_default" != 'gen_random_uuid()' ]; then
+                    echo "${RED}ERROR${NC}: id without gen_random_uuid() [$column_default] default on ${YELLOW}$table_full_name${NC}"
+                    exit 1
+                  fi
+                fi
 
-                # Translation
-                translation_group="$model_dir"
-                if [ "$column_name" == 'id' ] || [ "$column_name" == 'name' ]; then translation_group='general'; fi
-                translation="$translation_group.$column_name"
+                # Translation:
+                #   For plugin table fields:    acorn.finance::lang.models.invoice.amount
+                #   For plugin standard fields: acorn.finance::lang.models.general.id | name
+                #   For foreign keys:           acorn.user::lang.models.usergroup.label
+                #   For qualified foreign keys: acorn.finance::lang.models.invoice.payee_user_group
+                #   For explicit translations:  acorn.finance::lang.models.invoice.user_group (translation: directive)
+                # Construction: $translation_domain::lang.$translation_group.$translation_subgroup.$translation_name
+                translation_domain="$author_lowercase.$plugin_lowercase" # acorn.finance
+                translation_group='models'
+                translation_subgroup="$model_dir" # usergroup | invoice
+                if [ "$column_name" == 'id' ] || [ "$column_name" == 'name' ]; then translation_subgroup='general'; fi
+                translation_name="$column_name" # amount | id | name
 
                 # Invisible and disabled
                 invisible='false'
                 hidden='false'
+                required='true'
+                readOnly='false'
+                placeholder=
+                new_row=`comment_override "$column_comment" 'new-row'`
                 cssClass='col-xs-6'
-                if [ "$column_name" == 'id' ]; then
-                  invisible='true'
-                  hidden='true'
+                if [ "$column_is_nullable" == 'YES' ] || [ "$column_name" == 'id' ]; then
+                  required='false'
+                  placeholder='backend::lang.form.select'
+                fi
+                if [   "$column_name" == 'created_at' ] || [ "$column_name" == 'created_at_event_id' ] \
+                  || [ "$column_name" == 'updated_at' ] || [ "$column_name" == 'updated_at_event_id' ] \
+                  || [ "$column_name" == 'created_by_user_id' ] \
+                  || [ "$column_name" == 'id' ];
+                then
+                  invisible='true' # In columns.yaml, but selectable still
+                  hidden='true'    # In fields.yaml
                 fi
                 context=
                 disabled=
                 if [ "$column_is_generated" != 'NEVER' ]; then
                   disabled='true'
                   context='update'
+                  required='false'
                 fi
 
                 # Characteristics
                 # TODO: Ambiguos fields problem: 2 x amount fields with relation
                 searchable='true'
                 sortable='false'
+                field_comment= # Automatically HTML
+                field_name="$column_name"
 
                 # Type
                 select=
@@ -470,106 +641,315 @@ for table in $tables ; do
                 fi
                 if [ "$column_type" == 'money' ]; then
                   field_type='text';
-                  select="$table.$column_name::numeric"
+                  select="$table_full_name.$column_name::numeric"
                 fi
                 if [ -z "$column_yaml_type" ]; then column_yaml_type="$field_type"; fi
 
 
                 # ---------------------------------------------------------------- Foreign type
-                foreign_table_singular=
+                fk_parent_name_singular=
+                columns_relation=
+                include=
+                include_model=
                 hierarchical=
                 field_options=
                 field_options_model=
                 nameFrom='name'
-                if [ "$column_name" != 'id' ] && [ "$column_last" == 'id' ]; then
-                  foreign_table_singular=`echo "$column_name" | rev | cut -d '_' -f 2,3,4,5,6,7,8,9,10 | rev` # backend_user (singular)
-                  field_name="$foreign_table_singular"
-                  if [ "$column_first" == 'parent' ]; then hierarchical='true'; fi
-                  # TODO: Check there is a FK
-                  # TODO: Process include:all like  => location[*] relation
-                  field_type='dropdown'
-                  options_static_method='dropdownOptions'
-                  if [ "$column_first" == 'backend' ]; then
-                    # Backend\\User
-                    # TODO: These relation names should be camelCase and should have keys
-                    # TODO: or the columns should be renamed...
-                    foreign_namespace='\Backend'
-                    foreign_model_singular=`echo "$foreign_table_singular" | cut -d '_' -f 2,3,4,5,6,7,8,9,10` # user
-                    foreign_model_name=`php -r "$laravel_boot; echo $Str::studly('$foreign_model_singular');"`
-                    # Go ahead with dropdownOptions(), but send it a config for the actual class to query
-                    foreign_fq_name="Acorn\\Model"
-                    field_options_model="$foreign_namespace\\Models\\$foreign_model_name"
-                    foreign_fq_relative_name="\\\\$foreign_namespace\\\\Models\\\\$foreign_model_name"
-                    translation=`echo "$translation" | rev | cut -d '_' -f 2,3,4,5,6,7,8,9,10 | rev`
-                    if [ "$foreign_model_name" == 'User' ]; then nameFrom='full_name'; fi
-                  else
-                    # Normal AA process
-                    foreign_namespace="$author_namespace\\$plugin_pascalcase"
-                    foreign_model_name=`php -r "$laravel_boot; echo $Str::studly('$foreign_table_singular');"`
-                    foreign_fq_name="$foreign_namespace\\Models\\$foreign_model_name"
-                    foreign_fq_relative_name="$foreign_model_name"
-                    translation="$foreign_table_singular.label"
-                    nameFrom='fully_qualified_name'
+                valueFrom="$nameFrom"
+                add_button=
+                create_button=
+                depends_on=
+                goto=
+                # Check there is a FK & load its comment
+                # acorn_finance_currencies | backend_users
+                fk_parent_table=`sudo -u postgres psql --port=$DB_PORT $DB_DATABASE --csv -c "select cl2.relname from
+                  (select
+                      unnest(con1.conkey), con1.confrelid, con1.conrelid, con1.oid
+                    from pg_class cl1
+                        join pg_namespace ns on cl1.relnamespace = ns.oid
+                        join pg_constraint con1 on con1.conrelid = cl1.oid
+                    where con1.contype = 'f'
+                        and ns.nspname = '$schema'
+                        and cl1.relname = '$table_full_name'
+                  ) con
+                  join pg_class cl2 on cl2.oid = con.confrelid
+                  join pg_attribute att2 on att2.attrelid = con.conrelid and att2.attnum = con.unnest
+                  where att2.attname = '$column_name'"`
+                fk_parent_table=`echo "$fk_parent_table" | sed '/^relname.*$/d'`
+                if [ "$column_name" != 'id' ] && [ "$column_last" == 'id' ] && [ -z "$fk_parent_table" ]; then
+                  echo "${RED}ERROR${NC}: FK not found for ${YELLOW}$column_name${NC} column ${YELLOW}$table_full_name.$column_name${NC}"
+                  exit 1
+                fi
+
+                if [ -n "$fk_parent_table" ]; then
+                  fk_author_namespace_lower=`echo "$fk_parent_table" | cut -d '_' -f 1` # acorn
+                  fk_author_namespace='Acorn' # TODO: Support other authors
+                  fk_plugin_namespace_lower=`echo "$fk_parent_table" | cut -d '_' -f 2` # finance | user
+                  fk_table_name_lower=`echo "$fk_parent_table" | cut -d '_' -f 3,4,5,6,7,8,9,10` # invoices | user_groups
+                  fk_table_name_squished="${fk_table_name_lower//_/}"
+                  fk_plugin_namespace=`php -r "$laravel_boot; echo $Str::studly('$fk_plugin_namespace_lower');"` # Finance | User
+                  fk_parent_table_singular=`php -r "$laravel_boot; echo $Str::singular('$fk_parent_table');"` # acorn_finance_currency | backend_user
+
+                  fk_comment=`sudo -u postgres psql --port=$DB_PORT $DB_DATABASE --csv -c "select descr.description from
+                    (select
+                        unnest(con1.conkey), con1.confrelid, con1.conrelid, con1.oid
+                      from pg_class cl1
+                          join pg_namespace ns on cl1.relnamespace = ns.oid
+                          join pg_constraint con1 on con1.conrelid = cl1.oid
+                      where con1.contype = 'f'
+                          and ns.nspname = '$schema'
+                          and cl1.relname = '$table_full_name'
+                    ) con
+                    join pg_class cl2 on cl2.oid = con.confrelid
+                    join pg_attribute att2 on att2.attrelid = con.conrelid and att2.attnum = con.unnest
+                    left outer join pg_description descr on descr.objoid = con.oid
+                    where att2.attname = '$column_name'"`
+                  fk_comment=`echo "$fk_comment" | sed '/^description.*$/d'`
+                  if [ "${fk_comment:0:1}" == '"' ]; then fk_comment="${fk_comment:1: -1}"; fi
+                  fk_comment="${fk_comment//\"\"/\"}"
+                  fk_type=`comment_override "$fk_comment" type`
+                  fk_name_object=`comment_override "$fk_comment" nameObject`
+
+                  # We only process FKs to our own system at the moment
+                  if [ "$fk_author_namespace_lower" != 'acorn' ]; then
+                    echo "${RED}ERROR${NC}: Namespace ${YELLOW}$fk_author_namespace_lower${NC} not supported"
+                    exit 1
                   fi
-                  field_options="$foreign_fq_name::$options_static_method"
-                  column_name_full="$foreign_table_singular[$nameFrom]"
+
+                  fk_self_referencing=$(! [ "$fk_parent_table" = "$table_full_name" ]; echo $?)
+                  if [ "$fk_self_referencing" == '1' ] && [ "$column_first" == 'parent' ]; then
+                    sed -i "s|\$belongsTo = \[|\$belongsTo = [\n        'parent' => [$model_name::class, 'key' => '$column_name'],|" "$model_path"
+                    sed -i "s|\$hasMany = \[|\$hasMany = [\n        'children' => [$model_name::class, 'key' => '$column_name'],|" "$model_path"
+                  fi
+
+                  fk_namespace="$fk_author_namespace\\$fk_plugin_namespace"
+                  fk_model_singular=`echo "$fk_parent_table_singular" | cut -d '_' -f 3,4,5,6,7,8,9,10` # currency
+                  fk_model_name=`php -r "$laravel_boot; echo $Str::studly('$fk_model_singular');"` # Currency
+                  fk_fq_model_name="\\$fk_namespace\\Models\\$fk_model_name"
+                  fk_fq_relative_name="$fk_model_name"
+                  fk_controller_url="/backend/$fk_author_namespace_lower/$fk_plugin_namespace_lower/$fk_table_name_squished/"
+
+                  # Add cross plugin $require
+                  if [ "$fk_plugin_namespace" != "$plugin_pascalcase" ]; then
+                    fk_foreign_plugin="$fk_author_namespace.$fk_plugin_namespace"
+                    fk_foreign_plugin_required=`grep "public \\\$require .*'$fk_foreign_plugin'" "$plugin_dir/Plugin.php"`
+                    if [ -z "$fk_foreign_plugin_required" ]; then
+                      echo "      Adding Plugin \$require ${YELLOW}$fk_foreign_plugin${NC}"
+                      sed -i "s|public \$require = \[|public \$require = ['$fk_foreign_plugin',|" "$plugin_dir/Plugin.php"
+                    fi
+                  fi
+                  # Relation name, field_name without _id
+                  field_name=`echo "$column_name" | rev | cut -d '_' -f 2,3,4,5,6,7,8,9,10 | rev` # payee_backend_user
+
+                  # Echo and belongsTo[] with type: leaf = 1to1 & nameObject
+                  fk_attributes=
+                  if [ "$fk_type" == 'leaf' ]; then
+                    fk_attributes="$fk_attributes, 'leaf' => TRUE"
+                  elif [ "$fk_name_object" == 'true' ]; then
+                    fk_attributes="$fk_attributes, 'name' => TRUE"
+                  fi
+                  echo "      FK => ${YELLOW}$fk_parent_table${NC} $field_name:$fk_model_name (${GREEN}$fk_comment${NC})"
+                  echo "      Adding belongsTo[$field_name => ${YELLOW}$fk_fq_relative_name${NC}${GREEN}$fk_attributes${NC}]"
+                  if [ -n "$fk_attributes" ]; then
+                    sed -i "s|belongsTo = \[|belongsTo = [\n        '$field_name' => [${fk_fq_model_name//\\/\\\\}::class$fk_attributes],|" "$model_path"
+                  else
+                    sed -i "s|belongsTo = \[|belongsTo = [\n        '$field_name' => ${fk_fq_model_name//\\/\\\\}::class,|" "$model_path"
+                  fi
+
+                  # Columns
+#                   column_name_full="$field_name"
+#                   columns_relation="$field_name"
+#                   valueFrom='fully_qualified_name'
+                  column_name_full="${field_name}[fully_qualified_name]"
                   searchable='false'
                   sortable='false'
 
-                  # belongsTo[]
-                  echo "  Adding belongsTo[$foreign_table_singular]"
-                  sed -i "s|belongsTo = \[|belongsTo = [\n        '$foreign_table_singular' => $foreign_fq_relative_name::class,|" "$model_path"
+                  # Process include:all like  => location[*] relation
+                  # leaf = 1to1 + nameObject
+                  if [ "$fk_type" == '1to1' ] || [ "$fk_type" == 'leaf' ]; then
+                    # FormController->makeConfig() is overridden to process include: 1to1 directives
+                    include='1to1'
+                    include_model="$fk_fq_model_name"
+                  else
+                    add_button=
+                    create_button=1
+                    depends_on="_create_$field_name"
+
+                    # User plugin does not inherit from AA\Model
+                    if [ "$fk_plugin_namespace" == 'User' ]; then create_button=0; add_button=0; fi
+                    if [ "$hidden" == 'true' ];              then create_button=0; add_button=0; fi
+                    field_comment="<span class='view-add-models new-page'>view / add <a tabindex='-1' href='$fk_controller_url'>${fk_table_name_lower//_/-}</a></span>"
+                    field_comment="$field_comment<a tabindex='-1' target='_blank' href='$fk_controller_url' class='goto-form-group-selection'></a>"
+                    # TODO: This is actually for annotating checkbox lists, not selects, but it does nothing if it is a dropdown
+                    # goto="$fk_controller_url"
+
+                    # FK Translation:
+                    #   For foreign keys:           acorn.user::lang.models.usergroup.label
+                    #   For qualified foreign keys: acorn.finance::lang.models.invoice.payee_user_group (payee_ makes it qualified)
+                    #   For explicit translations:  acorn.finance::lang.models.invoice.user_group (translation: comment directive)
+                    # Construction: $translation_domain::lang.$translation_group.$translation_subgroup.$translation_name
+                    # is_qualified: Does the field name, [user_group]_id, have the same name as the table it points to, acorn_user_[user_group]s?
+                    # If not, then it is qualified, and we need a local translation
+                    is_qualified=
+                    if [ "$field_name" != "$fk_model_singular" ]; then is_qualified='qualified'; fi
+                    # TODO: Explicit translations from the column comment would need to be stored on this local model, not the foreign lang
+                    has_explicit_translation=`comment_override "$column_comment" translation` # No default, so returns any overrides only
+                    use_local_translation="$is_qualified$has_explicit_translation"
+                    if [ -z "$use_local_translation" ]; then
+                      # Use Foreign model translation labels
+                      echo "      Using foreign translation label"
+                      translation_domain="$fk_author_namespace_lower.$fk_plugin_namespace_lower" # acorn.user
+                      translation_subgroup="${fk_model_singular//_/}" # currency | usergroup
+                      translation_name='label'
+                    else
+                      # Continue with an explicit local translation
+                      echo "      Using ${GREEN}local${NC} translation (${YELLOW}$use_local_translation${NC}) $field_name"
+                      translation_name="$field_name" # Without _id
+                    fi
+
+                    # 1-1 cannot be sorted by :/
+                    cssClass='col-xs-5 popup-col-xs-6'
+                    if [ "$column_first" == 'parent' ]; then hierarchical='true'; fi
+
+                    nameFrom='fully_qualified_name'
+                    options_static_method='dropdownOptions'
+                    field_type='dropdown'
+                    field_options="$fk_fq_model_name::$options_static_method"
+
+                    # Adding list filter
+                    echo "      Adding list filter for ${YELLOW}$field_name${NC}"
+                    echo "    $field_name:" >> "$controller_dir/config_filter.yaml"
+                    echo "        label: $translation_domain::lang.$translation_group.$translation_subgroup.$translation_name" >> "$controller_dir/config_filter.yaml"
+                    echo "        modelClass: $fk_fq_model_name" >> "$controller_dir/config_filter.yaml"
+                    if [ "$fk_parent_table" == 'acorn_calendar_event' ]; then
+                      # Created_at (calendar style)
+                      # Date Range filter
+                      echo "        type: daterange" >> "$controller_dir/config_filter.yaml"
+                      echo "        yearRange: 10" >> "$controller_dir/config_filter.yaml"
+                      echo "        conditions: ((select ce.created_at from acorn_calendar_event ce where ce.id = $table_full_name.$column_name) \
+                        between ':after' and ':before')" >> "$controller_dir/config_filter.yaml"
+                    else
+                      echo "        conditions: $column_name in(:filtered)" >> "$controller_dir/config_filter.yaml"
+                    fi
+                  fi # 1to1
+                fi # Foreign Type
+
+
+                # ---------------------------------------------------------------- Fields.yaml
+                echo "      Add ${YELLOW}$field_name${NC}($field_type/$column_yaml_type): to ${YELLOW}fields.yaml${NC}"
+                if [ -n "$column_comment" ]; then echo "      Comment: ${GREEN}$column_comment${NC}"; fi
+                cssNewRow=
+                if [ "$new_row" == 'true' ]; then cssNewRow='new-row'; fi
+                echo "  $field_name:" >> "$fields_path"
+                comment_yaml_add "$column_comment" 4 label "$translation_domain::lang.$translation_group.$translation_subgroup.$translation_name" "$fields_path"
+                comment_yaml_add "$column_comment" 4 type "$field_type"   "$fields_path"
+                comment_yaml_add "$column_comment" 4 span storm           "$fields_path"
+                comment_yaml_add "$column_comment" 4 hidden "$hidden"     "$fields_path"
+                comment_yaml_add "$column_comment" 4 required "$required" "$fields_path"
+                comment_yaml_add "$column_comment" 4 cssClass "$cssClass $cssNewRow"     "$fields_path"
+                comment_yaml_add "$column_comment" 4 placeholder "$placeholder"          "$fields_path"
+                comment_yaml_add "$column_comment" 4 options "$field_options"            "$fields_path"
+                comment_yaml_add "$column_comment" 4 optionsModel "$field_options_model" "$fields_path"
+                comment_yaml_add "$column_comment" 4 hierarchical "$hierarchical"        "$fields_path"
+                comment_yaml_add "$column_comment" 4 nameFrom "$nameFrom" "$fields_path"
+                comment_yaml_add "$column_comment" 4 disabled "$disabled" "$fields_path"
+                comment_yaml_add "$column_comment" 4 readOnly "$readOnly" "$fields_path"
+                comment_yaml_add "$column_comment" 4 context "$context"   "$fields_path"
+                comment_yaml_add "$column_comment" 4 dependsOn "$depends_on" "$fields_path"
+                comment_yaml_add "$column_comment" 4 comment "$field_comment" "$fields_path"
+                echo '    commentHtml: true' >> "$fields_path"
+                # goto-form-group-selection
+                if [ -n "$goto" ]; then
+                  echo "    containerAttributes:" >> "$fields_path"
+                  echo "        goto-form-group-selection: $goto" >> "$fields_path"
+                fi
+                comment_yaml_add "$column_comment" 4 include      "$include"       "$fields_path"
+                comment_yaml_add "$column_comment" 4 includeModel "$include_model" "$fields_path"
+                comment_yaml_add "$column_comment" 4 includePath  "$include_path"  "$fields_path"
+
+                # Special buttons
+                add_button=`comment_override "$column_comment" addButton "$add_button"`
+                if [ "$add_button" == '1' ]; then
+                  echo "      Injecting an ${GREEN}add_button${NC} for ${YELLOW}$field_name${NC}"
+                  echo "  _add_$field_name:" >> "$fields_path"
+                  echo "    type: partial" >> "$fields_path"
+                  echo "    path: add_button" >> "$fields_path"
+                  echo "    span: storm" >> "$fields_path"
+                  echo "    cssClass: 'col-xs-1 col-sm-1 p-0 hug-left popup-hide'" >> "$fields_path"
+                  echo "    context:" >> "$fields_path"
+                  echo "      - create" >> "$fields_path"
+                  echo "      - update" >> "$fields_path"
+                fi
+                create_button=`comment_override "$column_comment" createButton "$create_button"`
+                if [ "$create_button" == '1' ]; then
+                  echo "      Injecting a ${GREEN}create_button${NC} for ${YELLOW}$field_name${NC}"
+                  fk_controller_name=`php -r "$laravel_boot; echo $Str::plural('$fk_model_name');"` # acorn_finance_currency | backend_user
+                  echo "  _create_$field_name:" >> "$fields_path"
+                  echo "    type: partial" >> "$fields_path"
+                  echo "    path: popup_button" >> "$fields_path"
+                  echo "    controller: $fk_namespace\\Controllers\\$fk_controller_name" >> "$fields_path"
+                  echo "    span: storm" >> "$fields_path"
+                  echo "    cssClass: 'col-xs-1 col-sm-1 p-0 hug-left popup-hide'" >> "$fields_path"
+                  echo "    context:" >> "$fields_path"
+                  echo "      - create" >> "$fields_path"
+                  echo "      - update" >> "$fields_path"
                 fi
 
-                echo "    Add $translation($field_type/$column_yaml_type): to YAML files ${GREEN}$foreign_table_singular${NC} $hierarchical"
-                if [ -n "$column_comment" ]; then echo "      Comment: ${GREEN}$column_comment${NC}"; fi
 
-
-                # ---------------------------------------------------------------- Write files
-                # Fields
-                echo "  $field_name:" >> "$fields_path"
-                comment_override "$column_comment" 4 label "$translation_domain::lang.models.$translation" "$fields_path"
-                comment_override "$column_comment" 4 type "$field_type"   "$fields_path"
-                comment_override "$column_comment" 4 span storm           "$fields_path"
-                comment_override "$column_comment" 4 cssClass "$cssClass" "$fields_path"
-                comment_override "$column_comment" 4 hidden "$hidden"     "$fields_path"
-                comment_override "$column_comment" 4 options "$field_options"            "$fields_path"
-                comment_override "$column_comment" 4 optionsModel "$field_options_model" "$fields_path"
-                comment_override "$column_comment" 4 hierarchical "$hierarchical"        "$fields_path"
-                comment_override "$column_comment" 4 nameFrom "$nameFrom" "$fields_path"
-                comment_override "$column_comment" 4 disabled "$disabled" "$fields_path"
-                comment_override "$column_comment" 4 context "$context"   "$fields_path"
-
-                # Columns
+                # ---------------------------------------------------------------- Columns.yaml
+                echo "      Add ${YELLOW}$column_name_full${NC}($field_type/$column_yaml_type): to ${YELLOW}columns.yaml${NC}"
                 echo "  $column_name_full:" >> "$columns_path"
-                comment_override "$column_comment" 4 label "$translation_domain::lang.models.$translation" "$columns_path"
-                comment_override "$column_comment" 4 type "$column_yaml_type" "$columns_path" 'column_type'
-                comment_override "$column_comment" 4 path "$partial"          "$columns_path"
-                comment_override "$column_comment" 4 select "$select"         "$columns_path"
-                comment_override "$column_comment" 4 searchable "$searchable" "$columns_path"
-                comment_override "$column_comment" 4 sortable "$sortable"     "$columns_path"
-                comment_override "$column_comment" 4 invisible "$invisible"   "$columns_path"
+                comment_yaml_add "$column_comment" 4 label "$translation_domain::lang.$translation_group.$translation_subgroup.$translation_name" "$columns_path"
+                comment_yaml_add "$column_comment" 4 type "$column_yaml_type" "$columns_path" 'column_type'
+                comment_yaml_add "$column_comment" 4 path "$partial"          "$columns_path"
+                comment_yaml_add "$column_comment" 4 relation "$columns_relation" "$columns_path"
+                comment_yaml_add "$column_comment" 4 select "$select"         "$columns_path"
+                comment_yaml_add "$column_comment" 4 valueFrom "$valueFrom"   "$columns_path"
+                comment_yaml_add "$column_comment" 4 searchable "$searchable" "$columns_path"
+                comment_yaml_add "$column_comment" 4 sortable "$sortable"     "$columns_path"
+                comment_yaml_add "$column_comment" 4 invisible "$invisible"   "$columns_path"
+
+                # Rules
+                if [ "$required" == 'true' ]; then
+                  # TODO: This needs to be overrideable
+                  sed -i "s|^    public \$rules = \[\$|    public \$rules = \[\n        '$field_name' => 'required',|" "$model_path"
+                fi
+                # TODO: max length (Currency needs this) https://wintercms.com/docs/v1.2/docs/services/validation
 
                 # Translation
-                # 'general' section only appears after the first create:model
-                comment_array_add "$table_comment" 8 general name Name "$lang_en_path"
-                comment_array_add "$table_comment" 8 general add  Add  "$lang_en_path"
                 # Let's not repeat fields
-                if [ "$field_name" != 'id' ] && [ "$field_name" != 'created_at' ] && [ "$field_name" != 'updated_at' ] && [ "$field_name" != 'label' ] && [ "$field_name" != 'label_plural' ]; then
-                  comment_array_add "$column_comment" 8 "$translation_group" "$field_name" $column_title "$lang_en_path" 'translation'
-                  # TODO: Generic loop for languages update
-                  comment_array_add "$column_comment" 8 "$translation_group" "$field_name" $column_title "$lang_ar_path" 'translation.ar'
-                  comment_array_add "$column_comment" 8 "$translation_group" "$field_name" $column_title "$lang_ku_path" 'translation.ku'
+                if [ "$field_name" != 'id' ] && [ "$field_name" != 'created_event_id' ] && [ "$field_name" != 'updated_event_id' ] && [ "$translation_name" != 'label' ]; then
+                  # $translation_domain::lang.$translation_group.$translation_subgroup.$translation_name
+                  # acorn.finance::lang.models.invoice.amount
+                  # comment_array_add comment indent 'array_group_key' new_key => new_value lang_file_path comment_alias
+                  echo "      Add ${YELLOW}$translation_domain::lang.$translation_group.$translation_subgroup.$translation_name${NC} to ${YELLOW}lang/*${NC} for ${YELLOW}$field_name${NC}"
+                  for lang_subpath in $lang_dir/*; do
+                    lang_name=`basename "$lang_subpath"`
+                    lang_path="$lang_subpath/lang.php"
+
+                    # general section only appears after the first create:model
+                    comment_array_add "$table_comment" 8 general name Name "$lang_path"
+                    comment_array_add "$table_comment" 8 general add  Add  "$lang_path"
+                    comment_array_add "$table_comment" 8 general id   ID   "$lang_path"
+                    comment_array_add "$table_comment" 8 general created_at 'Created At' "$lang_path"
+                    comment_array_add "$table_comment" 8 general updated_at 'Updated At' "$lang_path"
+
+                    # invoice => amount | markpaid
+                    comment_array_add "$column_comment" 8 "$translation_subgroup" "$translation_name" $column_title "$lang_path" "translation.$lang_name"
+                  done
+                  # translation.en takes precedence above
+                  comment_array_add "$column_comment" 8 "$translation_subgroup" "$translation_name" $column_title "$lang_dir/en/lang.php" 'translation'
                 fi
-              done
+              done # Columns
 
 
-              # ---------------------------------------------------------------- QR code support fields
+              # ---------------------------------------------------------------- *.yaml: QR code support fields
               # TODO: Move to QRCode FormField when available
               echo "  Injecting _qrcode column"
               echo "  _qrcode:" >> "$columns_path"
               echo "      type: partial"           >> "$columns_path"
               echo "      path: ~/modules/acorn/partials/_qrcode" >> "$columns_path"
+              echo "      includeContext: no-include" >> "$columns_path"
               echo "      sortable: false"       >> "$columns_path"
               echo "      searchable: false"     >> "$columns_path"
               echo "      invisible: true"       >> "$columns_path"
@@ -577,10 +957,187 @@ for table in $tables ; do
               # TODO: Move to QRCode FormField when available
               echo "  _qrcode:"  >> "$fields_path"
               echo "      type: partial"         >> "$fields_path"
-              echo "      context: update"       >> "$fields_path"
+              echo "      includeContext: no-include" >> "$fields_path"
+              echo "      context:"              >> "$fields_path"
+              echo "         - update"           >> "$fields_path"
+              echo "         - preview"          >> "$fields_path"
               echo "      span: storm"           >> "$fields_path"
               echo "      cssClass: 'col-xs-6'"  >> "$fields_path"
               echo "      path: ~/modules/acorn/partials/_qrcode" >> "$fields_path"
+
+
+              # ---------------------------------------------------------------- Fields.yaml: reverse FKs
+              # FKs _to_ this table id
+              # For example: foreign defendants.legalcase_id => this legalcase.id table
+              # This means that this table form and columns should consider those foreign objects for editing, filtering & display
+              # FK comments:
+              #   type: 1toX|XtoX
+              #   nameObject: true
+              # NOTE: WinterCMS/Laravel does not support create mode management of 1-1[1-X] sub-relations, e.g. legalcase[legalcase_categories]
+              # but it DOES seem to support _update_ mode management of them
+              #
+              # ---------- type: 1to1|leaf ($belongsTo):
+              # This is not a _reverse_ FK because the FK will appear on _this_ table
+              # this defendants.leagalcase_id => foreign legalcase.id
+              # so it is handled above in the Foreign section
+              #
+              # ---------- type: 1toX ($hasMany) => this table.id:
+              # For example: foreign defendants(plural).legalcase_id (X)=>(1) this legalcase.id table
+              # This relation is identified by the plurality of the foreign table, thus a table-type: content table
+              # Present in manageable lists, probably in form tabs, with add and create popups
+              #
+              # ---------- type: XtoX ($hasManyThrough) => this table.id:
+              # For example: foreign users(plural) (X)=> defendant_user(singular pivot).user_id & defendant_user.legalcase_id =>(X) this legalcase.id table
+              # This relation is identified by the singularity of the direct FK foreign table (pivot only)
+              # Present in manageable lists, probably in form tabs, with add and create popups
+              fks_to_table=`sudo -u postgres psql --port=$DB_PORT $DB_DATABASE --csv -c "select tableFrom.relname as table_from, attFrom.attname as column_from,
+                    attTo.attname as column_to
+                from
+                (select
+                    constr.conrelid        as table_from_oid,
+                    unnest(constr.conkey)  as attnum_from,
+                    constr.confrelid       as table_to_oid,
+                    unnest(constr.confkey) as attnum_to
+                  from pg_constraint constr
+                    join pg_class constr_class on constr_class.oid = constr.confrelid
+                    join pg_namespace constr_schema on constr_schema.oid = constr_class.relnamespace
+                  where constr.contype = 'f'
+                      and constr_schema.nspname = 'public'
+                      and constr_class.relname = '$table_full_name'
+                ) constr_info
+                join pg_class tableFrom   on tableFrom.oid = constr_info.table_from_oid
+                join pg_attribute attFrom on attFrom.attrelid = constr_info.table_from_oid and attFrom.attnum = constr_info.attnum_from
+                join pg_attribute attTo   on attTo.attrelid = constr_info.table_to_oid and attTo.attnum = constr_info.attnum_to"`
+              fks_to_table=`echo "$fks_to_table" | sed '/^table_from.*$/d'`
+              if [ -n "$fks_to_table" ]; then
+                fk_first=1
+                for fk_to in $fks_to_table; do
+                  table_from=`echo "$fk_to" | cut -d ',' -f 1`
+                  column_from=`echo "$fk_to" | cut -d ',' -f 2`
+                  column_to=`echo "$fk_to" | cut -d ',' -f 3`
+                  fk_comment=`sudo -u postgres psql --port=$DB_PORT $DB_DATABASE --csv -c "select descr.description from
+                    (select
+                        unnest(con1.conkey), con1.confrelid, con1.conrelid, con1.oid
+                      from pg_class cl1
+                          join pg_namespace ns on cl1.relnamespace = ns.oid
+                          join pg_constraint con1 on con1.conrelid = cl1.oid
+                      where con1.contype = 'f'
+                          and ns.nspname = '$schema'
+                          and cl1.relname = '$table_from'
+                    ) con
+                    join pg_class cl2 on cl2.oid = con.confrelid
+                    join pg_attribute att2 on att2.attrelid = con.conrelid and att2.attnum = con.unnest
+                    left outer join pg_description descr on descr.objoid = con.oid
+                    where att2.attname = '$column_from'"`
+                  fk_comment=`echo "$fk_comment" | sed '/^description.*$/d'`
+                  fk_type=
+
+                  # If the table_from does not have an id field, assume XtoX
+                  fk_columns_from=`sudo -u postgres psql --port=$DB_PORT $DB_DATABASE --csv -c "SELECT column_name FROM information_schema.columns \
+                    WHERE table_schema = '$schema' and table_name = '$table_from';"`
+                  fk_columns_from=`echo "$fk_columns_from" | sed '/^column_name.*$/d'`
+                  table_from_has_id_column=`echo "$fk_columns_from" | grep '^id$'`
+                  if [ -z "$table_from_has_id_column" ]; then fk_type='XtoX'; fi
+
+                  fk_self_referencing=$(! [ "$table_from" = "$table_full_name" ]; echo $?)
+                  fk_type=`comment_override "$fk_comment" type "$fk_type"`
+                  if [ -z "$fk_type" ]; then fk_type='1toX'; fi
+
+                  # TODO: Support XtoX
+                  if [ "$fk_type" != '1to1' ] && [ "$fk_type" != 'XtoX' ] && [ "$fk_self_referencing" == '0' ] && [ "$column_to" == 'id' ]; then
+                    # Header
+                    if [ "$fk_first" == '1' ]; then
+                      fk_first=
+                      echo '' >> "$fields_path"
+                      echo '# Multi-select tab for 1toX sub-objects' >> "$fields_path"
+                      echo "tabs:" >> "$fields_path"
+                      echo "    fields:" >> "$fields_path"
+                    fi
+
+                    # table_from details
+                    table_from_author_lowercase=`echo "$table_from" | cut -d '_' -f 1` # acorn
+                    table_from_plugin_lowercase=`echo "$table_from" | cut -d '_' -f 2` # justice
+                    table_from_table_name=`echo "$table_from" | cut -d '_' -f 3,4,5,6,7,8,9,10`       # invoices
+                    table_from_model_snakecase_plural=`echo "$table_from" | cut -d '_' -f 3,4,5,6,7,8,9,10` # invoices | groups | user_groups
+                    table_from_name_singular=`php -r "$laravel_boot; echo $Str::singular('$table_from_table_name');"` # invoice | user_group
+                    table_from_name_squish=${table_from_name_singular//_/} # invoice | usergroup
+                    table_from_plugin_pascalcase=`      php -r "$laravel_boot; echo $Str::studly('$table_from_plugin_lowercase');"` # Finance | User
+                    table_from_controller_name=`php -r "$laravel_boot; echo $Str::studly('$table_from_model_snakecase_plural');"` # Invoices | Users | UserGroups
+                    table_from_model_name=`             php -r "$laravel_boot; echo $Str::singular('$table_from_controller_name');"` # Invoice | User | UserGroup
+                    table_from_translation_domain="$table_from_author_lowercase.$table_from_plugin_lowercase" # acorn.finance
+
+                    echo "  Creating tab multi-select for FK from ${YELLOW}$table_from${NC}.${YELLOW}$column_from${NC} => ${YELLOW}$column_to${NC} ($table_from_model_name)"
+                    if [ -n "$fk_type" ]; then echo "    explicit type: ${GREEN}$fk_type${NC}"; fi
+
+                    # values
+                    tab="$table_from_author_lowercase.$table_from_plugin_lowercase::lang.models.$table_from_name_squish.label_plural"
+                    table_from_model="\\$author_namespace\\$table_from_plugin_pascalcase\\Models\\$table_from_model_name"
+                    table_from_controller="\\$author_namespace\\$table_from_plugin_pascalcase\\Controllers\\$table_from_controller_name"
+                    data_field_name="_lc_$table_from_model_snakecase_plural"
+                    name_from="name"
+                    list_style="selected-only"
+                    placeholder=`comment_override "$fk_comment" placeholder 'backend::lang.form.select'`
+                    # TODO: Translatable "create new "
+                    comment="create new <a href='#' class='popup-add' data-field-name='$data_field_name' data-handler='onPopupRoute' data-request-data=\"route:'${table_from_controller//\\/\\\\}@create',fieldName:'$data_field_name'\" data-control='popup' tabindex='-1'>${table_from_name_singular//_/-}</a>"
+
+                    # Place add_button multi-relation system into a tab in fields.yaml
+                    echo "        # Multi-select tab for FK $table_from.$column_from" >> "$fields_path"
+                    echo "        _$table_from_name_singular:" >> "$fields_path"
+                    echo "            label: $table_from_translation_domain::lang.models.$table_from_name_squish.label" >> "$fields_path"
+                    echo "            type: dropdown" >> "$fields_path"
+                    echo "            options: $table_from_model::dropdownOptions" >> "$fields_path"
+                    echo "            nameFrom: fully_qualified_name" >> "$fields_path"
+                    echo "            context:" >> "$fields_path"
+                    echo "              - create" >> "$fields_path"
+                    echo "              - update" >> "$fields_path"
+                    echo "            comment: $comment" >> "$fields_path"
+                    echo "            commentHtml: true" >> "$fields_path"
+                    echo "            span: storm" >> "$fields_path"
+                    echo "            cssClass: 'col-xs-11 col-sm-4'" >> "$fields_path"
+                    echo "            dependsOn:" >> "$fields_path"
+                    echo "                - _add_$table_from_name_singular" >> "$fields_path"
+                    echo "                - _create_$table_from_name_singular" >> "$fields_path"
+                    echo "                - $data_field_name" >> "$fields_path"
+                    echo "            placeholder: $placeholder" >> "$fields_path"
+                    echo "            tab: $tab" >> "$fields_path"
+                    echo "        _add_$table_from_name_singular:" >> "$fields_path"
+                    echo "            type: partial" >> "$fields_path"
+                    echo "            path: add_button" >> "$fields_path"
+                    echo "            span: storm" >> "$fields_path"
+                    echo "            cssClass: 'col-xs-1 p-0 hug-left'" >> "$fields_path"
+                    echo "            context:" >> "$fields_path"
+                    echo "              - create" >> "$fields_path"
+                    echo "              - update" >> "$fields_path"
+                    echo "            tab: $tab" >> "$fields_path"
+                    echo "        _create_$table_from_name_singular:" >> "$fields_path"
+                    echo "            type: partial" >> "$fields_path"
+                    echo "            path: popup_button" >> "$fields_path"
+                    echo "            controller: $table_from_controller" >> "$fields_path"
+                    echo "            span: storm" >> "$fields_path"
+                    echo "            cssClass: 'col-xs-1 p-0 popup-hide'" >> "$fields_path"
+                    echo "            context:" >> "$fields_path"
+                    echo "              - create" >> "$fields_path"
+                    echo "              - update" >> "$fields_path"
+                    echo "            tab: $tab" >> "$fields_path"
+                    echo "        $table_from_model_snakecase_plural:" >> "$fields_path"
+                    echo "            type: relation" >> "$fields_path"
+                    echo "            nameFrom: $name_from" >> "$fields_path"
+                    echo "            cssClass: $list_style" >> "$fields_path"
+                    echo "            dependsOn:" >> "$fields_path"
+                    echo "                - _add_$table_from_name_singular" >> "$fields_path"
+                    echo "            tab: $tab" >> "$fields_path"
+                    echo '' >> "$fields_path"
+
+                    # Add hasMany in to the Model
+                    if [ "$fk_type" == '1toX' ]; then
+                      sed -i "s|\$hasMany = \[|\$hasMany = [\n        '$table_from_model_snakecase_plural' => ${table_from_model//\\/\\\\}::class,|" "$model_path"
+                    elif [ "$fk_type" == 'XtoX' ]; then
+                      # TODO: Need to read the 2nd FK on table_from to understand the final model
+                      sed -i "s|\$hasManyThrough = \[|\$hasManyThrough = [\n        '$table_from_model_snakecase_plural' => [${table_from_model//\\/\\\\}::class, 'throughTable' => '$table_from']|" "$model_path"
+                    fi
+                  fi
+                done
+              fi
 
 
               # ----------------------------------------------- <Model>.php setup
@@ -596,8 +1153,8 @@ for table in $tables ; do
 
               # Useful
               sed -i "s|^use Model;|use Model;\nuse BackendAuth;|" "$model_path"
-              sed -i "s|^use Model;|use Model;\nuse \Backend\Models\User;|" "$model_path"
-              sed -i "s|^use Model;|use Model;\nuse \Backend\Models\UserGroup;|" "$model_path"
+              sed -i "s|^use Model;|use Model;\nuse \\\\Backend\\\\Models\\\\User;|" "$model_path"
+              sed -i "s|^use Model;|use Model;\nuse \\\\Backend\\\\Models\\\\UserGroup;|" "$model_path"
               sed -i "s|^use Model;|use Model;\nuse Exception;|" "$model_path"
               sed -i "s|^use Model;|use Model;\nuse Flash;|" "$model_path"
 
@@ -606,8 +1163,8 @@ for table in $tables ; do
               sed -i "s|^use Model;|use $author_namespace\\\\Model;|" "$model_path"
 
               # Relax guarding
-              # TODO: Popups need this for their ->fill($post) but this is wrong maybe
-              sed -i "s|^    protected \$guarded = ['\*'];|    protected \$guarded = [];|" "$model_path"
+              # TODO: SECURITY: Relaxed guarding is ok?
+              sed -i "s|^    protected \$guarded = \['\*'\];\$|    protected \$guarded = [];|" "$model_path"
 
               # Traits
               echo "  Adding Trait Revisionable"
@@ -625,7 +1182,6 @@ for table in $tables ; do
               fi
 
               # Server
-              # TODO: Move Server in to AA
               if [ $has_server_id == 1 ]; then
                 echo "  Adding Server"
                 sed -i "s|belongsTo = \[|belongsTo = [\n        'server' => Server::class,|" "$model_path"
@@ -641,18 +1197,35 @@ for table in $tables ; do
                 sed -i "/^ *'updated_at',\$/d" "$model_path"
               fi
 
+              # ---------------------------------------------------------------- Model::functions
               # menuitemCount() for plugins.yaml
               if [ -z "$(grep menuitemCount $model_path)" ]; then
                 echo "  Adding menuitemCount()"
                 sed -i "s|^}$|\n    # Auto-injected by acorn-create-system\n    public static function menuitemCount() {return self::all()->count();}\n}|" "$model_path"
               fi
 
+              # get<Something>Attribute()s
+              # and general public functions
+              for cl in $table_comment; do
+                name=`echo "$cl" | cut -d ':' -f 1 | sed 's/^[ \t]*//;s/[ \t]*$//'`
+                value=`echo "$cl" | cut -d ':' -f 2 | sed 's/^[ \t]*//;s/[ \t]*$//'`
+                if [ "${name:0:1}" == '@' ]; then
+                  attribute_pascal=`php -r "$laravel_boot; echo $Str::studly('${name:1}');"`
+                  f_name="get${attribute_pascal}Attribute()"
+                  echo "  Injecting public ${YELLOW}$f_name${NC} into $model_name"
+                  sed -i "s|^}$|\n    public function $f_name {return $value;}\n}|" "$model_path"
+                elif [ "${name: -1}" == ')' ]; then
+                  echo "  Injecting public function ${YELLOW}$name${NC} into $model_name"
+                  sed -i "s|^}$|\n    public function $name {return $value;}\n}|" "$model_path"
+                fi
+              done
+
               # Columns commenting in header
               sed -i "s|^{\$|{\n     */\n|" "$model_path"
-              for column in $columns ; do
-                column_name=`echo "$column" | cut -d ',' -f 4`
-                column_is_generated=`echo "$column" | cut -d ',' -f 42`
-                column_type=`echo "$column" | cut -d ',' -f 8 | cut -d ' ' -f 1`
+              for column_details_row in $columns ; do
+                column_name=`echo "$column_details_row" | cut -d ',' -f 4`
+                column_is_generated=`echo "$column_details_row" | cut -d ',' -f 42`
+                column_type=`echo "$column_details_row" | cut -d ',' -f 8 | cut -d ' ' -f 1`
 
                 if [ "$column_is_generated" == 'NEVER' ]; then
                   sed -i "s|^{\$|{\n     *   $column_name($column_type)|" "$model_path"
@@ -667,33 +1240,66 @@ for table in $tables ; do
           fi # [ -n "$model_name" ]
 
           # -------------------------------------- plugins.yaml navigation
+          translation_domain="$author_lowercase.$plugin_lowercase" # In case FK work changed it
           plugin_yaml_path="$plugin_dir/plugin.yaml"
-          if [ ! -f $plugin_yaml_path ]; then
-            echo "" >> "$plugin_yaml_path"
-          fi
-          exists_navigation=`grep "^navigation:" $plugin_yaml_path`
-          if [ -z "$exists_navigation" ]; then
-            echo "  Adding navigation: top level"
-            echo "navigation:" >> "$plugin_yaml_path"
-          fi
-          exists_setup=`grep -E "^ +$plugin_lowercase-setup:" $plugin_yaml_path`
-          if [ -z "$exists_setup" ]; then
-            echo "  Adding navigation setup side-menu"
-            echo "    $plugin_lowercase-setup:" >> "$plugin_yaml_path"
-            echo "        label: $translation_domain::lang.plugin.name" >> "$plugin_yaml_path"
-            echo "        url:" >> "$plugin_yaml_path"
-            echo "        icon: icon-$plugin_lowercase" >> "$plugin_yaml_path"
-            echo "        sideMenu:" >> "$plugin_yaml_path"
-          fi
-          # CRUD Navigation item
-          if [ -z "$(grep \"$model_snakecase_plural:\" $plugin_yaml_path)" ]; then
-            echo "  Adding setup side-menu entry for $model_snakecase_plural"
-            echo "    @$controller_url"
-            echo "            $model_snakecase_plural:" >> "$plugin_yaml_path"
-            echo "                label: $translation_domain::lang.models.$model_dir.label_plural" >> "$plugin_yaml_path"
-            echo "                url: $controller_url" >> "$plugin_yaml_path"
-            echo "                icon: icon-$model_dir" >> "$plugin_yaml_path"
-            echo "                counter: \\$model_fq_name::menuitemCount" >> "$plugin_yaml_path"
+          if [ "$plugin_menu" != 'false' ]; then
+            if [ ! -f $plugin_yaml_path ]; then
+              echo "" >> "$plugin_yaml_path"
+            fi
+            exists_navigation=`grep "^navigation:" $plugin_yaml_path`
+            if [ -z "$exists_navigation" ]; then
+              echo "  Adding navigation: top level"
+              echo "navigation:" >> "$plugin_yaml_path"
+            fi
+            exists_setup=`grep -E "^ +$plugin_lowercase-setup:" $plugin_yaml_path`
+            if [ -z "$exists_setup" ]; then
+              plugin_icon=`comment_override "$table_comment" "plugin-icon" "$plugin_lowercase"`
+              plugin_url=`comment_override "$table_comment" "plugin-url"`
+
+              # Auto-select icon
+              icon_exists=`grep " icon-$plugin_icon'" "$icon_file"`
+              if [ -z "$icon_exists" ]; then
+                plugin_icon=`sed -n "${icon_current}p" "$icon_file" | grep -o icon[^\']*`
+                icon_current=$((icon_current + 1))
+                echo "  Auto-selected plugin icon ${YELLOW}$plugin_icon${NC}"
+              fi
+
+              echo "  Adding navigation setup side-menu"
+              echo "    $plugin_lowercase-setup:" >> "$plugin_yaml_path"
+              echo "        label: $translation_domain::lang.plugin.name" >> "$plugin_yaml_path"
+              echo "        url: $plugin_url" >> "$plugin_yaml_path"
+              echo "        icon: icon-$plugin_icon" >> "$plugin_yaml_path"
+              echo "        sideMenu:" >> "$plugin_yaml_path"
+            fi
+
+            # CRUD Navigation item
+            menu=`comment_override "$table_comment" menu`
+            if [ "$menu" != 'false' ] && [ -z "$(grep \"$table_name_part:\" $plugin_yaml_path)" ]; then
+              splitter=`comment_override "$table_comment" menuSplitter`
+              icon=`comment_override "$table_comment" icon "$model_dir"`
+              # Auto-select icon
+              icon_exists=`grep " icon-$icon'" "$icon_file"`
+              if [ -z "$icon_exists" ]; then
+                icon=`sed -n "${icon_current}p" "$icon_file" | grep -o icon[^\']*`
+                icon_current=$((icon_current + 1))
+                echo "  Auto-selected icon ${YELLOW}$icon${NC}"
+              fi
+
+              if [ "$splitter" == 'yes' ]; then
+                echo "            _splitter_$table_name_part:" >> "$plugin_yaml_path"
+                echo "                label: splitter" >> "$plugin_yaml_path"
+                echo "                url:   splitter" >> "$plugin_yaml_path"
+                echo "                icon:  acorn-splitter" >> "$plugin_yaml_path"
+              fi
+
+              echo "  Adding setup side-menu entry for $table_name_part"
+              echo "    @$controller_url"
+              echo "            $table_name_part:" >> "$plugin_yaml_path"
+              echo "                label: $translation_domain::lang.models.$model_dir.label_plural" >> "$plugin_yaml_path"
+              echo "                url: $controller_url" >> "$plugin_yaml_path"
+              echo "                icon: icon-$icon" >> "$plugin_yaml_path"
+              echo "                counter: \\$model_fq_name::menuitemCount" >> "$plugin_yaml_path"
+            fi
           fi
         fi
       fi # Plural tables only
@@ -702,6 +1308,14 @@ for table in $tables ; do
 
   previous_plugin=$plugin_name
 done
+
+if [ "$command" == 'patch' ]; then
+  # Generate and patch diff and store it
+  # TODO: We do not want to compare the hidden directories like .git
+  diff -u $plugin_dir/.backup/* $plugin_dir/* > $plugin_dir/.diff.patch
+  # Remove previous
+  rm -rf $plugin_dir/.backup
+fi
 
 if [ -n "$install_plugins" ] && [ "$install_plugins" != '*' ] && [ "$git_policy" != 'leave' ]; then
   if [ "$git_policy" == 'push' ]; then
