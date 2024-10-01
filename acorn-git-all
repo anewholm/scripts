@@ -1,12 +1,41 @@
 #!/bin/bash
+# Runs the git commands on all git repos in the tree under the current directory
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
 if [ -z "$1" ]; then
-  echo "Usage: acorn-git-all <git-command>, e.g. acorn-git-all status"
+  echo "${RED}USAGE${NC}: acorn-git-all <git-command>, e.g. acorn-git-all status"
   exit 1
 fi
 
-echo "Repositories found:"
-find . -name ".git" -type d | sed 's/\/.git//' |  xargs -P10 -I{} echo "{}"
-echo
+echo "${GREEN}INFO${NC}: Repositories found"
+repos=`find . -name ".git" -type d | sed 's/\/.git//'`
+for d in $repos; do
+  repo=`basename $d`
+  dir=`dirname $d`
+  remote=`git -C $d config --get remote.origin.url`
+  remote_server=`echo "$remote" | cut -d ':' -f 1`
+  remote_repo=`echo "$remote" | cut -d ':' -f 2`
+  remote_group=`echo "$remote_repo" | cut -d '/' -f 1`
+  remote_name=`echo "$remote_repo" | cut -d '/' -f 2`
+  echo "$dir/${YELLOW}$repo${NC} => $remote_server:${GREEN}$remote_group${NC}/${YELLOW}$remote_name${NC}"
+done
 
-# find . -name ".git" -type d | sed 's/\/.git//' |  xargs -P10 -I{} git config --global --add safe.directory {}
-find . -name ".git" -type d | sed 's/\/.git//' |  xargs -P10 -I{} git -C {} $@
+read -p "Ok (yn)? [y] " yn
+if [ "$yn" != 'n' ]; then
+  for d in $repos; do
+    # Check safe
+    rp=`realpath $d`
+    git config --global --add safe.directory $rp
+
+    repo=`basename $d`
+    echo; echo
+    echo "# --------------------------------------------- ${GREEN}$repo${NC} @ $d"
+    git -C $d $@
+  done
+fi
