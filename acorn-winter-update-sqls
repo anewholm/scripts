@@ -85,7 +85,7 @@ pg_dump -Fc -s $DB_DATABASE > dump.sql
 echo
 echo "${GREEN}Functions${NC} dump => ${YELLOW}$outfile${NC}"
 IFS=$'\n' # Avoid spaces in argument lists
-functions=`cat dump.sql | pg_restore -l | grep -oE "^[0-9;]+ [0-9;]+ [0-9;]+ FUNCTION [a-z]+ $function_space" | cut -d ' ' -f 6,7,8,9,10,11,12`
+functions=`pg_restore -l dump.sql | grep -oE "^[0-9;]+ [0-9;]+ [0-9;]+ FUNCTION [a-z]+ $function_space" | cut -d ' ' -f 6,7,8,9,10,11,12`
 for f in $functions; do
   echo "-- MANUAL FUNCTION DUMP $f" >> $outfile
   echo $f
@@ -97,7 +97,7 @@ IFS=$' '
 echo
 echo "${GREEN}Aggregates${NC} dump => ${YELLOW}$outfile${NC}"
 IFS=$'\n' # Avoid spaces in argument lists
-functions=`cat dump.sql | pg_restore -l | grep -oE "^[0-9;]+ [0-9;]+ [0-9;]+ AGGREGATE [a-z]+ $function_space" | cut -d ' ' -f 6,7,8,9,10,11,12`
+functions=`pg_restore -l dump.sql | grep -oE "^[0-9;]+ [0-9;]+ [0-9;]+ AGGREGATE [a-z]+ $function_space" | cut -d ' ' -f 6,7,8,9,10,11,12`
 for f in $functions; do
   echo "-- MANUAL AGGREGATE DUMP $f" >> $outfile
   echo $f

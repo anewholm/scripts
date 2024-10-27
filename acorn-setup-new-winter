@@ -182,8 +182,8 @@ composer require winter/wn-location-plugin
 if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 composer require winter/wn-tailwindui-plugin # Menus
 if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-composer require winter/wn-builder-plugin
-if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+# composer require winter/wn-builder-plugin
+# if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 
 # Temporary hack until we work out how to auto generate the classes.php
 if [ -f $script_dir/winter/classes.php ]; then
@@ -263,7 +263,7 @@ fi
 # -------------------------------------------- Admin
 if [ -d ../scripts ]; then
 	echo "${GREEN}INFO${NC}: Linking ${YELLOW}acorn-*${NC} scripts"
-	for script in ../scripts/acorn-git-* ../scripts/acorn-create-system ../scripts/acorn-winter-down-up ../scripts/acorn-winter-update-sqls; do
+	for script in ../scripts/acorn-git-* ../scripts/acorn-create-system.php ../scripts/acorn-winter-down-up ../scripts/acorn-winter-update-sqls; do
 		script_name=`basename "$script"`
 		if [ ! -f "$script_name" ]; then ln -s "$script" .; fi
 	done
