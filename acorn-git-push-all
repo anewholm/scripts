@@ -19,5 +19,9 @@ if [ -z "$commit_message" ]; then
 fi
 ./acorn-git-all commit -m "'$commit_message'"
 
+echo "## --------------------------------------------- ${GREEN}git pull${NC}"
+./acorn-git-all config pull.rebase false
+./acorn-git-all pull
+
 echo "## --------------------------------------------- ${GREEN}git push${NC}"
 ./acorn-git-all push
