@@ -53,6 +53,8 @@ if [ -z "$apache2" ]; then
   sudo apt-get install libapache2-mod-php -y 2> /dev/null
   check "Failed to download apache2."
   sudo a2enmod actions fcgid alias proxy_fcgi setenvif 2> /dev/null
+  echo "Setting ServerName to localhost"
+  sudo echo "ServerName localhost" >> /etc/apache2/apache2.conf
   sudo service apache2 restart
 
   if [ -z "$(groups | grep www-data)" ]; then
@@ -69,6 +71,30 @@ if [ -z "$apache2" ]; then
 
   echo "${GREEN}Done.${NC}"
   echo
+fi
+
+php_version=`php -v | head -n 1 | cut -d ' ' -f 2 | cut -d '.' -f 1,2`
+php_xdebug_ini="/etc/php/$php_version/mods-available/xdebug.ini"
+if [ ! -f "$php_xdebug_ini" ]; then
+  echo "${YELLOW}Installing XDebug for PHP [$php_version]... ${NC}"
+  sudo apt install php-xdebug
+  #sudo apt install php8.1-xdebug
+  #sudo apt install php8.3-xdebug
+  if [ ! -f "$php_xdebug_ini" ]; then
+   echo "${RED}ERROR${NC}: Failed to install PHP [$php_version] XDebug"
+   exit 1
+  fi
+
+  echo "xdebug.profiler_enable_trigger = 1
+xdebug.profiler_enable = 0
+xdebug.remote_enable = 1
+xdebug.remote_autostart = 1
+xdebug.mode = develop,debug
+xdebug.start_with_request = yes
+" >> "$php_xdebug_ini"
+  sudo apache2ctl restart
+
+  echo "Now install PHP Debug in VS Code and create the standard run configuration for listening on localhost:9003"
 fi
 
 mysql=`apt list --installed mysql-server 2> /dev/null | grep -E installed`
@@ -183,16 +209,23 @@ if [ -d postgres/ ]; then
   # Source compilation pre-requisities
   sudo apt-get install -y postgresql-server-dev-$postgresql_version libcurl4-openssl-dev make g++ 2> /dev/null # For pgsql-http extensions
 
+  # IMPORTANT: Installing on previous version:
+  # Change the Makefile to point to the previous pg_config
+  # PG_CONFIG = /usr/lib/postgresql/14/bin/pg_config
   for d in postgres/*/ ; do
     extension_name=`basename "$d"`
     sudo mkdir -p /usr/share/postgresql/$postgresql_version/extension/
     if [ ! -f /usr/share/postgresql/$postgresql_version/extension/$extension_name.control ]; then
       echo "${YELLOW}$extension_name${NC} installing for PostGreSQL $postgresql_version..."
       cd postgres/$extension_name/
+
       # We don't want to use a previously made and pushed version for the wrong PG version
       sudo make uninstall
       make clean
+
       # Normal make and install
+      # Change the Makefile first for previous versions
+      # PG_CONFIG = /usr/lib/postgresql/14/bin/pg_config
       make
       sudo make install
       cd -
