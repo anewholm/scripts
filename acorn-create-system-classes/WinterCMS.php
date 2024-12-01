@@ -101,6 +101,7 @@ class WinterCMS extends Framework
 
         $pluginDirectoryPath = $this->pluginDirectoryPath($plugin);
         $pluginFilePath      = "$pluginDirectoryPath/Plugin.php";
+        $createdBy           = $this->createdByString();
 
         if (file_exists($pluginFilePath) && $overwrite) unlink($pluginFilePath);
         if (file_exists($pluginFilePath)) {
@@ -109,7 +110,6 @@ class WinterCMS extends Framework
             $this->runWinterCommand('create:plugin', $plugin->dotClassName());
 
             // --------------------------------------------- Created bys, authors & README.md
-            $createdBy  = $this->createdByString();
             $readmePath = "$pluginDirectoryPath/README.md";
             if (!file_exists($readmePath)) {
                 $this->setFileContents($readmePath, "# $plugin->name");
@@ -168,10 +168,12 @@ class WinterCMS extends Framework
         }
 
         // English General
+        // TODO: Move these in to Semantic
         $this->arrayFileSet($langEnPath, 'models.general', array(
             'id'     => 'ID',
             'name'   => 'Name',
-            'short_name' => 'Short name',
+            'short_name'  => 'Short name',
+            'description' => 'Description',
             'type'   => 'Type',
             'image'  => 'Image',
             'select' => 'Select',
@@ -217,7 +219,8 @@ class WinterCMS extends Framework
         $this->arrayFileSet("$langDirPath/ar/lang.php", 'models.general', array(
             'id'     => 'المعرف',
             'name'   => 'الأسم',
-            'short_name' => 'الاسم المختصر',
+            'short_name'  => 'الاسم المختصر',
+            'description' => 'Description',
             'type'   => 'النوع',
             'image'  => 'الصور',
             'select' => 'إختيار',
@@ -263,7 +266,8 @@ class WinterCMS extends Framework
         $this->arrayFileSet("$langDirPath/ku/lang.php", 'models.general', array(
             'id'     => 'ID',
             'name'   => 'Name',
-            'short_name' => 'Short name',
+            'short_name'  => 'Short name',
+            'description' => 'Description',
             'type'   => 'Type',
             'image'  => 'Image',
             'select' => 'Select',
@@ -440,6 +444,8 @@ class WinterCMS extends Framework
         $modelDirName        = $model->dirName();
         $modelFilePath       = "$pluginDirectoryPath/models/$model->name.php";
         $modelDirPath        = "$pluginDirectoryPath/models/$modelDirName";
+        $translationDomain   = $model->plugin->translationDomain();
+        $langDirPath         = "$pluginDirectoryPath/lang";
 
         if (file_exists($modelFilePath) && $overwrite) unlink($modelFilePath);
         if (file_exists($modelFilePath)) {
@@ -503,7 +509,23 @@ class WinterCMS extends Framework
             // Relax guarding
             // TODO: SECURITY: Relaxed guarding is ok?
             $this->setPropertyInClassFile($modelFilePath, 'guarded', array(), TRUE, 'protected');
-            $this->setPropertyInClassFile($modelFilePath, 'actionFunctions', $model->actionFunctions, FALSE);
+
+            // ---------------------------------------------------------------- Model based action functions
+            // Write the labels to lang, and the translationKeys to the YAML
+            foreach ($model->actionFunctions as $name => &$defintion) {
+                foreach (scandir($langDirPath) as $langName) {
+                    $langFilePath = "$langDirPath/$langName/lang.php";
+                    if (!in_array($langName, array('.','..')) && file_exists($langFilePath)) {
+                        if (isset($defintion['labels'][$langName])) {
+                            $label = $defintion['labels'][$langName];
+                            $this->arrayFileSet($langFilePath, "actions.$name", $label, FALSE);
+                        }
+                    }
+                }
+                unset($defintion['labels']);
+                $defintion['label'] = "$translationDomain::lang.actions.$name";
+            }
+            $this->setPropertyInClassFile($modelFilePath, 'actionFunctions', $model->actionFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
 
             // ---------------------------------------------------------------- Seeding
             // This moves seeding: directives in to updates\seed.sql
@@ -529,7 +551,6 @@ class WinterCMS extends Framework
 
             // ----------------------------------------------------------------- Language
             // These non-en files will not have been updated by the create:model command
-            $langDirPath      = "$pluginDirectoryPath/lang";
             $modelSectionName = $model->langSectionName();
             $langEnPath       = "$langDirPath/en/lang.php";
 
@@ -580,6 +601,25 @@ class WinterCMS extends Framework
                 $relations['parent'] = array($relation->to, 'key' => $relation->column->name, 'type' => $relation->type());
             }
             $this->setPropertyInClassFile($modelFilePath, 'belongsTo', $relations);
+
+            // -------- hasManyDeep
+            // 1-1 => 1-X
+            $relations = array();
+            foreach ($model->relations1to1() as $name => &$relation) {
+                $isLeaf       = ($relation instanceof RelationLeaf);
+                $subRelations = array_merge(
+                    $relation->to->relations1fromX(),
+                    $relation->to->relationsXfromX(),
+                    $relation->to->relationsXfromXSemi(),
+                );
+                // Only supporting 1 level at the moment
+                foreach ($subRelations as $subName => &$deepRelation) {
+                    $deepName = Model::nestedFieldName($subName, array($name));
+                    if (isset($relations[$deepName])) throw new \Exception("Conflicting relations with [$deepName] on [$model->name]");
+                    $relations[$deepName] = array($deepRelation->to, 'throughRelations' => array($name, $subName));
+                }
+            }
+            $this->setPropertyInClassFile($modelFilePath, 'hasManyDeep', $relations, FALSE);
 
             // -------- hasMany
             $relations = array();
@@ -655,12 +695,17 @@ class WinterCMS extends Framework
             // get<Something>Attribute()s
             foreach ($model->attributeFunctions as $name => &$body) {
                 $namePascal = Str::studly($name);
-                $funcName   = "get${namePascal}Attribute";
+                $funcName   = "get${namePascal}Attribute"; // Encapsulation...
                 print("  Injecting public ${YELLOW}$funcName${NC}() into [$model->name]\n");
                 $this->addMethod($modelFilePath, $funcName, $body);
             }
             // methods()
             foreach ($model->methods as $funcName => &$body) {
+                print("  Injecting public function ${YELLOW}$funcName${NC}() into [$model->name]\n");
+                $this->addMethod($modelFilePath, $funcName, $body);
+            }
+            // static methods()
+            foreach ($model->staticMethods as $funcName => &$body) {
                 print("  Injecting public function ${YELLOW}$funcName${NC}() into [$model->name]\n");
                 $this->addStaticMethod($modelFilePath, $funcName, $body);
             }
@@ -693,17 +738,13 @@ class WinterCMS extends Framework
         $this->yamlFileUnSet($fieldsPath, 'fields.id');
         foreach ($model->fields() as $name => &$field) {
             print("      Add ${YELLOW}$name${NC}($field->fieldType/$field->columnType): to ${YELLOW}fields.yaml${NC}\n");
-            $dotPath = "fields.$field->fieldKey";
+            $dotPath = "fields.$field->fieldKey$field->fieldKeyQualifier";
             if (!$field->include) {
                 if      ($field->tabLocation == 2) $dotPath = "secondaryTabs.$dotPath";
                 else if ($field->tabLocation == 3) $dotPath = "tertiaryTabs.$dotPath";
                 else if ($field->tab)              $dotPath = "tabs.$dotPath";
             }
             $labelKey = $field->translationKey();
-
-            // Fields.yaml checks
-            if ($field->include) throw new \Exception("include: is depreceated on [$field->name]");
-
             $fieldTab = ($field->tab === 'INHERIT' ? $labelKey : $field->tab); // Can be NULL
             $fieldDefinition = array(
                 '#'         => $field->yamlComment,
@@ -714,9 +755,11 @@ class WinterCMS extends Framework
                 'required'  => $field->required,
                 'disabled'  => $field->disabled,
                 'readOnly'  => $field->readOnly,
-
                 'span'      => $field->span,
                 'cssClass'  => $field->cssClass(),
+                'comment'      => $field->fieldComment,
+                'commentHtml'  => ($field->commentHtml && $field->fieldComment),
+                'tab'          => $fieldTab,
 
                 'options'      => $field->fieldOptions,      // Function call
                 'optionsModel' => $field->fieldOptionsModel, // Model name
@@ -725,17 +768,16 @@ class WinterCMS extends Framework
                 'nameFrom'     => $field->nameFrom,
                 'context'      => array_keys($field->contexts),
                 'dependsOn'    => array_keys($field->dependsOn),
-
-                'comment'      => $field->fieldComment,
-                'commentHtml'  => ($field->commentHtml && $field->fieldComment),
+                'nested'       => ($field->nested    ?: NULL),
+                'nestLevel'    => ($field->nestLevel ?: NULL),
 
                 'include'      => $field->include,
                 'includeModel' => $field->includeModel,
                 'includePath'  => $field->includePath,
                 'includeContext' => $field->includeContext,
-                'tab'          => $fieldTab
             );
-            $fieldDefinition = $this->removeEmpty($fieldDefinition, TRUE);
+            if ($field->fieldConfig) $fieldDefinition = array_merge($fieldDefinition, $field->fieldConfig);
+            $fieldDefinition = $this->removeEmpty($fieldDefinition, TRUE); // Remove FALSE
             if ($field->goto) $fieldDefinition['containerAttributes'] = array('goto-form-group-selection' => $field->goto);
             $this->yamlFileSet($fieldsPath, $dotPath, $fieldDefinition);
 
@@ -744,20 +786,21 @@ class WinterCMS extends Framework
             // TODO: Make tab icon configuarble
             if ($icon = $field->icon) {
                 if (substr($icon, 0, 5) != 'icon-') $icon = "icon-$icon";
-                if      ($field->tabLocation == 2) $this->yamlFileSet($fieldsPath, 'secondaryTabs.icons', $icon, TRUE, $labelKey);
-                else if ($field->tabLocation == 3) $this->yamlFileSet($fieldsPath, 'tertiaryTabs.icons', $icon, TRUE, $labelKey);
-                else if ($field->tab)              $this->yamlFileSet($fieldsPath, 'tabs.icons',          $icon, TRUE, $labelKey);
+                if      ($field->tabLocation == 2) $this->yamlFileSet($fieldsPath, 'secondaryTabs.icons', $icon, TRUE,  $labelKey);
+                else if ($field->tabLocation == 3) $this->yamlFileSet($fieldsPath, 'tertiaryTabs.icons',  $icon, TRUE,  $labelKey);
+                else if ($field->tab)              $this->yamlFileSet($fieldsPath, 'tabs.icons',          $icon, FALSE, $labelKey);
             }
 
             // -------------------------------------------------------- Special ButtonFields
             foreach ($field->buttons as $buttonName => &$buttonField) {
                 if ($buttonField) { // Can be FALSE
+                    if ($buttonField->contexts) throw new \Exception("Button field different contexts to main field is not supported yet on [$name]");
                     $buttonDefinition = array(
-                        'name' => $buttonField->name,
-                        'type' => $buttonField->fieldType,
-                        'span' => $buttonField->span,
+                        'name'         => $buttonField->name,
+                        'type'         => $buttonField->fieldType,
+                        'span'         => $buttonField->span,
                         'cssClass'     => $buttonField->cssClass(),
-                        'context'      => array_keys($buttonField->contexts),
+                        'context'      => array_keys($field->contexts),
                         'dependsOn'    => array_keys($buttonField->dependsOn),
                         'options'      => $buttonField->fieldOptions,      // Function call
                         'optionsModel' => $buttonField->fieldOptionsModel, // Model name
@@ -816,11 +859,14 @@ class WinterCMS extends Framework
     protected function createController(Controller &$controller, bool $overwrite = FALSE) {
         global $GREEN, $YELLOW, $RED, $NC;
 
+        $createdBy           = $this->createdByString();
         $pluginDirectoryPath = $this->pluginDirectoryPath($controller->model->plugin);
         $controllerDirName   = $controller->dirName();
         $controllerFilePath  = "$pluginDirectoryPath/controllers/$controller->name.php";
         $controllerDirPath   = "$pluginDirectoryPath/controllers/$controllerDirName";
         $configFilterPath    = "$controllerDirPath/config_filter.yaml";
+        $configFormPath      = "$controllerDirPath/config_form.yaml";
+        $configRelationPath  = "$controllerDirPath/config_relation.yaml";
 
         if (file_exists($controllerFilePath) && $overwrite) unlink($controllerFilePath);
         if (file_exists($controllerFilePath)) {
@@ -832,63 +878,121 @@ class WinterCMS extends Framework
             $author = $controller->author();
             print("  Inheriting ${YELLOW}$controller->name${NC} from $author\n");
             $this->replaceInFile($controllerFilePath, '/^use Backend\\\\Classes\\\\Controller;$/m', "use $author\\\\Controller;");
-            $this->replaceInFile($controllerFilePath, '/\\\\Backend\\\\Behaviors\\\\FormController::class/', "\\\\$author\\\\Behaviors\\\\FormController::class");
-            $this->replaceInFile($controllerFilePath, '/\\\\Backend\\\\Behaviors\\\\ListController::class/', "\\\\$author\\\\Behaviors\\\\ListController::class");
+
+            // Implements
+            $this->setPropertyInClassFile($controllerFilePath, 'implement', array(
+                "\\\\$author\\\\Behaviors\\\\FormController",
+                "\\\\$author\\\\Behaviors\\\\ListController",
+                "Backend\\\\Behaviors\\\\RelationController", // Only here to prevent RelationController requirement error
+                "\\\\Acorn\\\\Behaviors\\\\RelationController",
+            ), Framework::OVERWRITE_EXISTING);
 
             // Explicit plural name injection
             // Otherwise PathsHelper will get confused when making URLs and things
             $plural = $controller->model->table->plural;
-            if ($plural) $this->setPropertyInClassFile($controllerFilePath, 'namePlural', $plural, FALSE);
+            if ($plural) $this->setPropertyInClassFile($controllerFilePath, 'namePlural', $plural, Framework::NEW_PROPERTY);
 
             // -------------------------------- Filters
             $indent = 0;
             $this->appendToFile("$controllerDirPath/config_list.yaml", "filter: config_filter.yaml");
+            $this->appendToFile($configFilterPath, "# $createdBy");
             foreach ($controller->model->fields() as $name => &$field) {
+                $filterDefinition = NULL;
+
                 if ($field->canFilter) {
                     // Usually PseudoField ?from? relation filters
-                    // The IdField also has all these relations on it
+                    // The IdField also has all these relations on it, but is usually marked as !canFilter
+                    // Time fields also have relations
+                    $filterDefinition = array(
+                        '#'          => $name,
+                        'label'      => $field->translationKey(Model::PLURAL),
+                        'type'       => $field->filterType,
+                        'conditions' => $field->conditions,
+                        'nameFrom'   => $field->nameFrom, // Often fully_qualified_name
+                    );
+
                     if (count($field->relations)) {
                         foreach ($field->relations as $name => &$relation) {
                             // RelationXfromX
                             // RelationXfrom1 does not
                             // Date based fields should have a datarange type filter
                             // Event fields should have a datarange type filter
+                            $otherModel       = &$relation->to;
+                            $otherModelFQN    = $otherModel->fullyQualifiedName();
+                            if (!isset($filterDefinition['modelClass'])) $filterDefinition['modelClass'] = $otherModelFQN;
+
                             if ($relation->canFilter) {
-                                // SQL
-                                $pivotTable       = &$relation->pivot;
-                                $keyColumn        = &$relation->keyColumn;
-                                $otherColumn      = &$relation->column;
+                                $filterDefinition['# Relation'] = (string) $relation;
+                                if ($relation instanceof RelationXfromX || $relation instanceof RelationXfromXSemi) {
+                                    // SQL
+                                    $pivotTable       = &$relation->pivot;
+                                    $keyColumn        = &$relation->keyColumn;
+                                    $otherColumn      = &$relation->column;
+                                    $pivotTableName   = $pivotTable->name;
 
-                                // Labels
-                                $otherModel       = &$relation->to;
-                                $otherModelFQN    = $otherModel->fullyQualifiedName();
-                                $nameFrom         = 'fully_qualified_name';
-
-                                $filterDefinition = array(
-                                    'label'      => $field->translationKey(Model::PLURAL),
-                                    'modelClass' => $otherModelFQN,
-                                    'nameFrom'   => $nameFrom,
-                                    'conditions' => "id in(select $pivotTable->name.$keyColumn->name from $pivotTable->name where $pivotTable->name.$otherColumn->name in(:filtered))",
-                                );
-
-                                // TODO: This should be the concern of something else?
-                                // TODO: These SQL statements should be elsewhere?
-                                if ($otherModelFQN == 'Acorn\\Calendar\\Models\\Event') {
-                                    // Created_at_event_id (calendar style) Date Range filter
-                                    $filterDefinition = array_merge($filterDefinition, array(
-                                        'type' => 'daterange',
-                                        'yearRange' => 10,
-                                        'conditions' => "((select aacep.start from acorn_calendar_event_part aacep where aacep.event_id = $columnSQLName order by start limit 1) between ':after' and ':before')",
-                                    ));
+                                    // TODO: Write these in to the Model Relations, not here
+                                    if (!isset($filterDefinition['conditions']) || is_null($filterDefinition['conditions']))
+                                        $filterDefinition['conditions'] = "id in(select $pivotTableName.$keyColumn->name from $pivotTableName where $pivotTableName.$otherColumn->name in(:filtered))";
+                                } else if ($relation instanceof RelationXto1) {
+                                    // Event and User canFilter foreign key fields come here
+                                    // conditions already defined
                                 }
 
+                                $filterDefinition = $this->removeEmpty($filterDefinition, TRUE);
                                 $this->yamlFileSet($configFilterPath, "scopes.$name", $filterDefinition);
+                            } else {
+                                $relationClass = preg_replace('/.*\\\\/', '', get_class($relation));
+                                $this->yamlFileSet($configFilterPath, "# ${name}[$relation] ($relationClass)", 'relation !canFilter');
                             }
                         }
+                    } else {
+                        // TODO: Non-relation fields, like dates
+                        // Nothing comes here at the moment
+                        // because everything is a foreign key: dates, users, etc.
+                        throw new \Exception("Un-considered filter [$name]");
+                        // $this->yamlFileSet($configFilterPath, "scopes.$name", $filterDefinition);
                     }
+                } else {
+                    $fieldClass = preg_replace('/.*\\\\/', '', get_class($field));
+                    $this->yamlFileSet($configFilterPath, "# ${name} ($fieldClass)", 'field !canFilter');
                 }
             }
         }
+
+        // ---------------------------------------- Relation Manager confiuration
+        // We always need a config_relation.yaml, because all controllers implement the behaviour
+        $this->yamlFileSet($configRelationPath, '#', $createdBy);
+        foreach ($controller->model->fields() as $name => &$field) {
+            if ($field->fieldType == 'relationmanager') {
+                if (count($field->relations) == 0) throw new \Exception("Field $name has no relations for relationmanager configuration");
+                if (count($field->relations) > 1)  throw new \Exception("Field $name has multiple relations for relationmanager configuration");
+                $relationModel           = end($field->relations)->to;
+                $relationPluginDirectory = $relationModel->plugin->dirName();
+                $relationModelDirName    = $relationModel->dirName();
+                $relationModelDirPath    = "/$relationPluginDirectory/models/$relationModelDirName";
+                $rlButtons               = ($field->rlButtons ?: array('create' => TRUE, 'delete' => TRUE));
+
+                $this->yamlFileSet($configRelationPath, $field->fieldKey, array(
+                    'label' => $field->translationKey(),
+                    'view' => array(
+                        'list' => "\$$relationModelDirPath/columns.yaml",
+                        'toolbarButtons' => implode('|', array_keys($rlButtons)),
+                        'showCheckboxes' => true,
+                        'recordsPerPage' => $field->recordsPerPage, // Can be false
+                    ),
+                    'manage' => array(
+                        'form' => "\$$relationModelDirPath/fields.yaml",
+                        'recordsPerPage' => $field->recordsPerPage,
+                    ),
+                ));
+            }
+        }
+
+        // ---------------------------------------- Controller based Actions
+        // config_form.yaml
+        // TODO: Write the labels to lang, and the translationKeys to the YAML
+        // TODO: These are not used yet, only the Model->actionFunctions set above
+        $this->yamlFileSet($configFormPath, 'actionFunctions', $controller->model->actionFunctions);
 
         // ----------------------------------------------- Interface variants
         foreach ($controller->model->fields() as $name => &$field) {
@@ -940,6 +1044,7 @@ class WinterCMS extends Framework
                 print("      Add ${YELLOW}$name${NC}($field->fieldType/$field->columnType): to ${YELLOW}columns.yaml${NC}\n");
                 $columnDefinition = array(
                     '#'          => $field->yamlComment,
+                    '# Debug:'   => $field->debugComment,
                     'label'      => $field->translationKey(),
                     'type'       => $field->columnType,
                     'valueFrom'  => $field->valueFrom,
@@ -949,6 +1054,8 @@ class WinterCMS extends Framework
                     'path'       => $field->columnPartial,
                     'relation'   => $field->relation,
                     'select'     => $field->sqlSelect,
+                    'nested'     => ($field->nested    ?: NULL),
+                    'nestLevel'  => ($field->nestLevel ?: NULL),
 
                     // TODO: Columns should also include Xto1 relations
                     'include'        => $field->include,
@@ -956,6 +1063,7 @@ class WinterCMS extends Framework
                     'includePath'    => $field->includePath,
                     'includeContext' => $field->includeContext,
                 );
+                if ($field->columnConfig) $columnDefinition = array_merge($columnDefinition, $field->columnConfig);
                 $columnDefinition = $this->removeEmpty($columnDefinition); // We do not remove falses
                 $this->yamlFileSet($columnsPath, "columns.$field->columnKey", $columnDefinition);
             }

@@ -49,3 +49,11 @@ if [ ! -d www.gnu.org ]; then
   sudo ../scripts/acorn-setup-hostname bashdocs
   cd -
 fi
+
+if [ ! -d www.php.net ]; then
+  echo "${GREEN}INFO${NC}: Mirroring PHP documentation to ${YELLOW}http://php.laptop${NC}"
+  httrack https://www.php.net/manual/en/ -O www.php.net
+  cd www.php.net
+  sudo ../scripts/acorn-setup-hostname php
+  cd -
+fi

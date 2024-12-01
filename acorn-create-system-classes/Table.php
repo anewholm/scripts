@@ -36,10 +36,15 @@ class Table {
     public $pluginDescriptions;
     public $labels;
     public $labelsPlural;
+    // PHP model methods
     public $attributeFunctions = array();
+    public $methods            = array();
+    public $staticMethods      = array();
 
     public $columns;
     public $actionFunctions;
+
+    public $filters = array();
 
     // This is set when models are created
     public $model;
@@ -50,9 +55,20 @@ class Table {
         return new Table($db, ...$row);
     }
 
-    public static function &get(string $name): Table
+    public static function &get(string $name, string $schema = NULL): Table
     {
-        return self::$tables[$name];
+        // Allow search with or without schema, with or without dot notation
+        // Note that the Lojistiks system uses 2 schemas: public and product
+        if ($schema) {
+            $qualifiedName = "$schema.$name";
+        } else {
+            $nameParts  = explode('.', $name);
+            $tableName  = (count($nameParts) == 2 ? $nameParts[1] : $nameParts[0]);
+            $schemaName = (count($nameParts) == 2 ? $nameParts[0] : 'public');
+            $qualifiedName = "$schemaName.$tableName";
+        }
+        if (!isset(self::$tables[$qualifiedName])) throw new \Exception("Table [$qualifiedName] not in static list");
+        return self::$tables[$qualifiedName];
     }
 
     protected function __construct(DB &$db, ...$properties)
@@ -69,6 +85,14 @@ class Table {
 
         $this->columns = $db->tableColumns($this);
 
+        $this->check();
+
+        $qualifiedName = "$this->schema.$this->name";
+        self::$tables[$qualifiedName] = $this;
+    }
+
+    public function check(): bool
+    {
         // Checks
         // We omit some of our own known plugins
         // because they do not conform yet to our naming requirements
@@ -85,13 +109,14 @@ class Table {
                 throw new \Exception("Pivot table [$this->name] does not have 2 custom foreign id columns");
             }
         }
-
-        self::$tables[$this->name] = $this;
+        return TRUE;
     }
 
     public function loadForeignKeys()
     {
-        foreach ($this->columns as &$column) $column->loadForeignKeys();
+        foreach ($this->columns as &$column) {
+            if ($column->shouldProcess()) $column->loadForeignKeys();
+        }
     }
 
     public function loadActionFunctions()
@@ -346,6 +371,7 @@ class Table {
 
     public function authorName(): string
     {
+        // Pascal case
         if ($this->isFrameworkTable() || $this->isFrameworkModuleTable()) {
             $authorName = 'Winter';
         } else {
@@ -359,6 +385,7 @@ class Table {
 
     public function moduleName(): string|NULL
     {
+        // Pascal case
         if ($this->isFrameworkTable()) {
             $moduleName = 'Winter';
         } else {
@@ -372,6 +399,7 @@ class Table {
 
     public function pluginName(): string|NULL
     {
+        // Pascal case
         $tableNameParts = explode('_', $this->name);
         $firstName      = ucfirst($tableNameParts[0]);
 

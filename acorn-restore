@@ -1,0 +1,53 @@
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+version=`psql --version | cut -d ' ' -f 3`
+
+# ------------------------------------------------- DB
+latest=`ls -t1 *.sql | head -n 1`
+db=`echo "$latest" | cut -d '-' -f 1 | cut -d '.' -f 1`
+if [ -n "$latest" ]; then
+	read -p "Restore ${GREEN}$latest${NC} into ${GREEN}$db${NC} server version [$version] (yn)? [y]" yn
+	if [ "$yn" != 'n' ]; then
+		sudo -u postgres psql "$db" < "$latest"
+	fi
+fi
+
+# ------------------------------------------------- Filesytem
+latest=`ls -t1 *.tar.gz | head -n 1`
+dir=`echo "$latest" | cut -d '-' -f 1 | cut -d '.' -f 1`
+if [ -n "$latest" ]; then
+	read -p "Restore ${GREEN}$latest${NC} into /var/www/${GREEN}$dir${NC}/ (yn)? [y]" yn
+	if [ "$yn" != 'n' ]; then
+		sudo rm -rf /var/www/$dir
+		sudo tar -xzf $latest -C /var/www/
+		sudo chown -R www-data:www-data /var/www/$dir
+		sudo chmod -R g+rw /var/www/$dir
+	fi
+fi
+
+# ------------------------------------------------- Config checks
+env="/var/www/$dir/.env"
+if [ -f "$env" ]; then
+	if [ -n "$(grep -E ^APP_DEBUG=true $env)" ]; then
+		read -p "Place system in to production mode (yn)? [y] " yn
+		if [ "$yn" != 'n' ]; then
+			sed -i 's/^APP_DEBUG=true/APP_DEBUG=false/' $env
+		fi
+	fi
+
+	# Adjust APP_URL .laptop => https://... acorn.org
+	if [ -n "$(grep $db\.laptop)" $env ]; then
+		read -p "Adjust URL from http .laptop to https .acorn.org (yn)? [y] " yn
+		if [ "$yn" != 'n' ]; then
+			sed -i "s/$db\.laptop/$db.acorn.org/" $env
+			sed -i 's|http://|https://|' $env
+		fi
+	fi
+fi

@@ -1,0 +1,51 @@
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+# Pre-requisities
+if [ -z "$(which scp)" ]; then
+    sudo apt install -y scp
+fi
+
+db=`basename $(pwd)`
+server="$db.acorn.org"
+
+latest=`ls -t1 $db-*.sql | head -n 1`
+lx=`echo "$latest" | cut -d '-' -f 2 | cut -d '.' -f 1`
+x=$((lx + 1))
+file="$db-$x.sql"
+read -p "Backup ${GREEN}$db${NC} database to ${GREEN}$file${NC} (yn)? [y] " yn
+if [ "$yn" != 'n' ]; then
+    echo "  Dumping plain SQL with DROP and CREATE database into $file"
+    pg_dump --create --clean --no-subscriptions --format=plain $db > $file
+    echo "  Removing incompitable LOCALE_PROVIDER"
+    sed -i 's/LOCALE_PROVIDER = libc//' $file
+    target="$server:Backups/$db/$file"
+    echo "  Sending $file to $target"
+    scp $file $target
+fi
+
+file="$db-$x.tar.gz"
+if [ -d /var/www/$db/ ]; then
+    read -p "Backup /var/www/${GREEN}$db${NC}/ to ${GREEN}$file${NC} (yn)? [y] " yn
+    if [ "$yn" != 'n' ]; then
+        echo "  Tar GZip website"
+        # We cd because we want the justice/ *relative* path in the tar
+        # not /var/www/justice
+        cd /var/www/
+        tar -czf $file $db
+        cd -
+        target="$server:Backups/$db/$file"
+        echo "  Sending $file to $target"
+        scp $file $target
+    fi
+else
+    echo "/var/www/$db/ not found."
+fi
+
+echo "Now run ${GREEN}./acorn-restore${NC} on the ${GREEN}$server${NC} in ${GREEN}~/Backups/$db/${NC}"
