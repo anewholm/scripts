@@ -20,10 +20,9 @@ require_once('acorn-create-system-classes/WinterCMS.php');
 
 // ------------------------------------------- Inputs
 $file = basename(__FILE__);
-print("Usage: $file [<plugin> recreate|append-to push|ask|leave]\n");
+print("Usage: $file [<plugin-name|all> <git command (push|ask|leave)>]\n");
 $installPlugins = (isset($argv[1]) ? $argv[1] : NULL);
-$command        = (isset($argv[2]) ? $argv[2] : NULL); # recreate|append-to
-$gitPolicy      = (isset($argv[3]) ? $argv[3] : NULL); # leave|push|ask
+$gitPolicy      = (isset($argv[2]) ? $argv[2] : NULL);
 
 // ------------------------------------------- Framework
 $version       = '1.0';
@@ -70,11 +69,13 @@ if ($installPlugins == '*') {
     $choices = array();
     print("[${GREEN}0${NC}] all\n");
     foreach ($plugins as $plugin) {
-        print("[${GREEN}$i${NC}] ");
-        $framework->showPluginStatus($plugin);
-        $choices["$i"] = $plugin;
-        print("\n");
-        $i++;
+        if ($plugin->isOurs()) {
+            print("[${GREEN}$i${NC}] ");
+            $framework->showPluginStatus($plugin);
+            $choices["$i"] = $plugin;
+            print("\n");
+            $i++;
+        }
     }
     $i = readline("Which plugin would you like to process? ");
     if ($i == '0') $chosenPlugins = &$plugins;
@@ -90,5 +91,5 @@ if ($installPlugins == '*') {
 // ------------------------------------------- Write the plugins
 // to the framework
 foreach ($chosenPlugins as $plugin) {
-    $framework->create($plugin, $command);
+    $framework->create($plugin);
 }

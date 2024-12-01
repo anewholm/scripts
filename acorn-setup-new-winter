@@ -182,6 +182,10 @@ composer require winter/wn-location-plugin
 if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 composer require winter/wn-tailwindui-plugin # Menus
 if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+composer require staudenmeir/eloquent-has-many-deep # New Deep relations
+if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+
+# We use acorn-create-system usually, so no builder
 # composer require winter/wn-builder-plugin
 # if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 

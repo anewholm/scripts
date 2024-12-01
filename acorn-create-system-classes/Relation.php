@@ -7,7 +7,8 @@ class Relation {
     public $foreignKey;
 
     public $comment;
-    public $type; // explicit typing
+    public $status; // ok|exclude|broken
+    public $type;   // explicit typing
     public $isFrom      = TRUE; // From this column, attached to it
     public $nameObject  = FALSE;
 
@@ -91,7 +92,11 @@ class Relation {
         if (strstr($fieldName, $baseName) === FALSE
             && $otherModel->isOurs()
             && !$otherModel->isKnownAcornPlugin()
-        ) throw new \Exception("Foreign table base name [$baseName] not found in foreign column field name [$fieldName]");
+        ) {
+            $thisModel = ($this->isFrom ? $this->from : $this->to);
+            $tableName = $thisModel->table->name;
+            throw new \Exception("Foreign table base name [$baseName] not found in foreign column field name [$fieldName] on [$tableName]");
+        }
 
         // payee
         return trim(str_replace($baseName, '', $fieldName), '_');
@@ -125,6 +130,17 @@ class Relation1from1 extends Relation {
 }
 
 class RelationXto1 extends Relation {
+    public function __construct(Model &$from, Model &$to, Column &$column, ForeignKey &$foreignKey)
+    {
+        parent::__construct($from, $to, $column, $foreignKey);
+
+        // Do either of our Models indicate that the field canFilter?
+        $relations = array($this);
+        $fieldDefinitions = array();
+        $from->standardTargetModelFieldDefinitions($column, $relations, $fieldDefinitions);
+        $to->standardTargetModelFieldDefinitions(  $column, $relations, $fieldDefinitions);
+        $this->canFilter = (isset($fieldDefinitions['canFilter']) ? $fieldDefinitions['canFilter'] : FALSE);
+    }
 }
 
 class RelationXfromXSemi extends Relation {

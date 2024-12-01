@@ -12,8 +12,8 @@ class Column {
 
     // Objects
     public $table;
-    public $foreignKeysFrom;
-    public $foreignKeysTo;
+    public $foreignKeysFrom = array();
+    public $foreignKeysTo   = array();
     public $autoFKType; // For auto-setting a single associated FK
 
     // --------------------- Database column settings
@@ -67,12 +67,15 @@ class Column {
     // --------------------- Column comment accepted values
     // These flow through to Field
     public $comment;
+    public $system; // Internal column, do not process
+    public $todo;   // TODO: This column structure has not been analysed / enabled yet
     // For fields
     public $fieldType;
     public $rule;
     public $span;
     // Arrays for css class
     public $cssClasses;   // css-classes: - hug-left
+    public $newRow;
     public $bootstraps;   // bootstrap: xs: 12 sm: 4
     public $popupClasses; // popup-classes: h
     public $containerAttributes;
@@ -119,17 +122,19 @@ class Column {
         $definition = array();
         switch ($name) {
             case 'created_at_event_id':
-                $definition = array(
-                    'autoFKType' => 'Xto1',
-                );
-                break;
             case 'created_by_user_id':
+            case 'server_id':
                 $definition = array(
                     'autoFKType' => 'Xto1',
                 );
                 break;
         }
         return $definition;
+    }
+
+    public function shouldProcess(): bool
+    {
+        return (!$this->system && !$this->todo);
     }
 
     public function loadForeignKeys()

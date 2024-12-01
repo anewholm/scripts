@@ -1,0 +1,3 @@
+# IMPORTANT: Installing on previous version:
+# Change the Makefile to point to the previous pg_config
+# PG_CONFIG = /usr/lib/postgresql/14/bin/pg_config

@@ -3,6 +3,11 @@
 class Framework
 {
     public const AND_FALSES = TRUE;
+    public const FIRST_MULTILINE = FALSE;
+    public const ALL_MULTILINE = TRUE;
+    public const STD_INDENT = 1;
+    public const OVERWRITE_EXISTING = TRUE;
+    public const NEW_PROPERTY = FALSE;
 
     protected $cwd;
     protected $script;
@@ -112,24 +117,26 @@ class Framework
         return is_dir($this->pluginDirectoryPath($plugin) . "/.git");
     }
 
-    protected function whoCreatedBy(Plugin &$plugin): string
+    protected function whoCreatedBy(Plugin &$plugin): string|NULL
     {
         $createdBy = NULL;
         $path      = $this->pluginFile($plugin);
-        if (!isset($this->FILES[$path])) $this->FILES[$path] = file_get_contents($path);
-        $contents  = &$this->FILES[$path];
+        if (file_exists($path)) {
+            if (!isset($this->FILES[$path])) $this->FILES[$path] = file_get_contents($path);
+            $contents  = &$this->FILES[$path];
 
-        if (preg_match("#^// Created By (.*) (.*)$#m", $contents, $matches)) {
-            $createdBy = $matches[1];
-            $version   = $matches[2];
+            if (preg_match("#^// Created By (.*) (.*)$#m", $contents, $matches)) {
+                $createdBy = $matches[1];
+                $version   = $matches[2];
+            }
         }
 
         return $createdBy;
     }
 
-    protected function wasCreatedByUs(Plugin &$plugin): bool
+    public function wasCreatedByUs(Plugin &$plugin): bool
     {
-        return ($this->whoCreatedBy(Plugin &$plugin) == 'acorn-create-system');
+        return ($this->whoCreatedBy($plugin) == 'acorn-create-system');
     }
 
     public function showPluginStatus(Plugin &$plugin, int $indent = 0)
@@ -158,6 +165,8 @@ class Framework
     // ----------------------------------------- Array files
     protected function &arrayFileLoad(string $path): array
     {
+        if (!$path)
+            throw new \Exception("ARRAY_FILE path is empty");
         if (!isset($this->ARRAY_FILES[$path])) $this->ARRAY_FILES[$path] = (file_exists($path) ? include($path) : array());
         return $this->ARRAY_FILES[$path];
     }
@@ -199,6 +208,7 @@ class Framework
     // ---------------------------------------------- Filesystem
     protected function removeDir(string $dirPath, bool $removeTopLevelHidden = TRUE, bool $removeTopLevel = TRUE, bool $throwIfNotFound = TRUE): void
     {
+        if (!$dirPath) throw new \Exception("removeDir path is empty");
         if (is_dir($dirPath)) {
             if (substr($dirPath, -1) != '/') $dirPath .= '/';
 
@@ -218,6 +228,7 @@ class Framework
 
     protected function setFileContents(string $path, string $newContent, bool $newline = TRUE)
     {
+        if (!$path) throw new \Exception("FileContents path is empty");
         $newlineCharacter = ($newline ? "\n" : '');
         $this->FILES[$path] = "$newContent$newlineCharacter";
     }
@@ -233,6 +244,7 @@ class Framework
     // ----------------------------------------- YAML
     protected function &yamlFileLoad(string $path): array
     {
+        if (!$path) throw new \Exception("YAML path is empty");
         if (!isset($this->YAML_FILES[$path])) $this->YAML_FILES[$path] = (file_exists($path) ? \Spyc::YAMLLoad($path) : array());
         return $this->YAML_FILES[$path];
     }
@@ -288,6 +300,7 @@ class Framework
     // ----------------------------------------- File
     protected function appendToFile(string $path, string $newContent, int $indent = 0, bool $newline = TRUE, bool $throwIfContentExists = TRUE)
     {
+        if (!$path) throw new \Exception("FILES path is empty");
         $newlineCharacter = ($newline ? "\n" : '');
         if (!isset($this->FILES[$path])) $this->FILES[$path] = (file_exists($path) ? file_get_contents($path) : '');
         $contents  = &$this->FILES[$path];
@@ -299,6 +312,7 @@ class Framework
 
     protected function replaceInFile(string $path, string $regex, string $replacement = '', bool $throwIfNotFound = TRUE)
     {
+        if (!$path) throw new \Exception("FILES path is empty");
         if (!isset($this->FILES[$path])) $this->FILES[$path] = file_get_contents($path);
         $contents = &$this->FILES[$path];
 
@@ -315,6 +329,7 @@ class Framework
 
     protected function runBashScript(string $path, bool $chdir = FALSE, string &$output = NULL, bool $throwOnNoZeroReturn = TRUE): int
     {
+        if (!$path) throw new \Exception("bash path is empty");
         $cwd = getcwd();
 
         if ($chdir) chdir(dirname($path));
@@ -328,6 +343,7 @@ class Framework
     // ---------------------------------------------- Functions & Property control
     protected function writeFileUses(string $path, array &$uses)
     {
+        if (!$path) throw new \Exception("FileUses path is empty");
         $usesString = '';
         foreach ($uses as $name => $include) {
             if ($include) $usesString .= "use $name;\n";
@@ -337,6 +353,7 @@ class Framework
 
     protected function writeClassTraits(string $path, array &$traits, int $indent = 1)
     {
+        if (!$path) throw new \Exception("ClassTraits path is empty");
         $indentString = str_repeat(' ', $indent*4);
         $traitsString = '';
         foreach ($traits as $name => $include) {
@@ -347,11 +364,13 @@ class Framework
 
     protected function addStaticMethod(string $path, string $name, string $body, string $scope = 'public', int $indent = 1)
     {
+        if (!$path) throw new \Exception("StaticMethod path is empty");
         return $this->addMethod($path, $name, $body, $scope, TRUE, $indent);
     }
 
     protected function addMethod(string $path, string $name, string $body, string $scope = 'public', bool $static = FALSE, int $indent = 1)
     {
+        if (!$path) throw new \Exception("Method path is empty");
         $indentString  = str_repeat(' ', $indent*4);
         $indentString2 = str_repeat(' ', ($indent+1)*4);
         $staticString  = ($static ? ' static' : '');
@@ -366,14 +385,15 @@ FUNCTION
         );
     }
 
-    protected function setPropertyInClassFile(string $path, string $name, string|int|array $value, bool $overwriteExisting = TRUE, string $scope = 'public', int $indent = 1)
+    protected function setPropertyInClassFile(string $path, string $name, string|int|array $value, bool $overwriteExisting = self::OVERWRITE_EXISTING, string $scope = 'public', int $indent = self::STD_INDENT, bool $passthrough = self::FIRST_MULTILINE)
     {
+        if (!$path) throw new \Exception("FILES path is empty");
         if (!isset($this->FILES[$path])) $this->FILES[$path] = file_get_contents($path);
         $contents = &$this->FILES[$path];
 
         $indentString = str_repeat(' ', $indent*4);
         $valueString  = $value;
-        if      (is_array($valueString))  $valueString = $this->varExport($valueString, $indent, TRUE, FALSE);
+        if      (is_array($valueString))  $valueString = $this->varExport($valueString, $indent, TRUE, $passthrough);
         else if (is_string($valueString)) $valueString = "'" . str_replace("'", "\\'", $valueString) . "'";
 
         if ($overwriteExisting) {
@@ -434,6 +454,7 @@ FUNCTION
 
     protected function removeFunction(string $path, string $functionName, string $scope = 'public', int $indent = 1)
     {
+        if (!$path) throw new \Exception("Function path is empty");
         $indentString = str_repeat(' ', $indent*4);
         $this->replaceInFile($path, "/$scope function $functionName\(/", "$scope function ${functionName}_REMOVED(");
     }
@@ -441,6 +462,7 @@ FUNCTION
     protected function changeArrayReturnFunction(string $path, string $functionName, string $arrayDotPath, $newValue)
     {
         // TODO: Support the function name searching support and dot path
+        if (!$path) throw new \Exception("ArrayReturnFunction path is empty");
         if (strstr($arrayDotPath, '.') !== FALSE) throw new \Exception("Dot array replacement [$arrayDotPath] not supported yet");
         $escapedValue = str_replace("'", "\\'", $newValue);
 
@@ -448,36 +470,14 @@ FUNCTION
     }
 
     // ---------------------------------------------- Create
-    public function create(Plugin &$plugin, string $command = NULL)
+    public function create(Plugin &$plugin)
     {
         global $YELLOW, $GREEN, $RED, $NC;
 
         if ($this->pluginExists($plugin)) {
-            print("\n");
-            if (!$command) {
-                print("${YELLOW}$plugin->name${NC} already exists with sub-directories. Would you like to remove its contents, ${YELLOW}except .git/${NC}, (recreate), patch record the differences (patch), or incrementally add Models (inc)? [append-to] ");
-                $command = readline();
-                if (!$command) $command='append-to';
-            }
-
-            if ($command == 'recreate') {
-                $pluginDirectoryPath = $this->pluginDirectoryPath($plugin);
-                print("${GREEN}REMOVING${NC} existing plugin sub-directories and files from [$pluginDirectoryPath]...\n");
-                $this->removeDir($pluginDirectoryPath, FALSE, FALSE);
-            } else if ($command == 'patch') {
-                print("${GREEN}CHOICE${NC}: ${YELLOW}$command${NC} not fully supported yet...\n");
-                /* Make a copy of the current code so we can generate a patch comparison
-                rm -rf $plugin_dir/.backup
-                mkdir -p $plugin_dir/.backup
-                cp -r $plugin_dir/* $plugin_dir/.backup/
-                */
-                exit(1);
-            } else if ($command == 'append-to') {
-                print("${GREEN}CHOICE${NC}: ${YELLOW}$command${NC}. Adding only new tables\n");
-            } else {
-                print("${RED}ERROR${NC}: Command [${YELLOW}$command${NC}] unrecognised\n");
-                exit(1);
-            }
+            $pluginDirectoryPath = $this->pluginDirectoryPath($plugin);
+            print("${GREEN}REMOVING${NC} existing plugin sub-directories and files from [$pluginDirectoryPath]...\n");
+            $this->removeDir($pluginDirectoryPath, FALSE, FALSE);
         }
 
         // Abstracted MVC creates

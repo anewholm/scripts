@@ -49,7 +49,9 @@
     <?php Block::endPut() ?>
 
     <?php Block::put('form-sidebar') ?>
-        <div class="hide-tabs"><?= $this->formTertiaryTabs() ?></div>
+        <div data-control="formwidget" data-refresh-handler="form::onRefresh" class="form-widget form-elements layout" role="form" id="Form" data-disposable="">
+            <div class="hide-tabs"><?= $this->formTertiaryTabs() ?></div>
+        </div>
     <?php Block::endPut() ?>
 
     <?php Block::put('body') ?>

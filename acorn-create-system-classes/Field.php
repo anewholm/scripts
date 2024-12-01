@@ -1,14 +1,18 @@
 <?php namespace Acorn\CreateSystem;
 
 class Field {
+    public const NO_COLUMN = NULL;
+
     public $model;
     public $column;    // Can be Null
     public $relations; // Can be empty array()
+    public $autoFKType;
 
     public $comment;     // From column->comment
     public $name;        // => fieldName & columnName
     public $yamlComment; // # field comment
     public $nested = FALSE;
+    public $nestLevel = 0;
     // Translation arrays
     public $labels;
     public $labelsPlural;
@@ -21,6 +25,7 @@ class Field {
 
     // Forms fields.yaml
     public $fieldKey;
+    public $fieldKeyQualifier; // Should always be added on to the fields.yaml name
     public $fieldType;
     public $hidden       = FALSE; // Set during __construct
     public $disabled     = FALSE;
@@ -39,7 +44,6 @@ class Field {
     public $fieldComment;
     public $commentHtml  = TRUE;
     public $hierarchical;
-    public $mode; // For type fileupload
     public $fieldOptions;
     public $fieldOptionsModel;
     public $dependsOn = array();
@@ -47,6 +51,12 @@ class Field {
     public $tab;
     public $icon;
     public $tabLocation; // primary|secondary|tertiary
+    // For type fileupload
+    public $mode;
+    public $imageHeight;
+    public $imageWidth;
+    public $thumbOptions;
+    public $fieldConfig;
 
     // Custom AA directives that indicate the field is an dynamic include form
     public $phpAttributeCalculation;
@@ -55,6 +65,7 @@ class Field {
     public $includePath;
     public $includeContext;
     public $buttons      = array(); // Of new ButtonField()s
+    public $rlButtons    = array(); // On the relationmanager
     public $goto;
     public $rule;
     public $controller; // For popups
@@ -69,9 +80,14 @@ class Field {
     public $columnPartial;
     public $sqlSelect;
     public $relation;  // relation: user_group
+    public $columnConfig;
 
     // Filter config_filter.yaml
     public $canFilter = FALSE;
+    public $filterType;
+    public $yearRange;
+    public $conditions;
+    public $autoRelationCanFilter;
 
     // --------------------------------------------- Construction
     protected function __construct(Model &$model, array $definition, Column $column = NULL, array $relations = array())
@@ -87,9 +103,11 @@ class Field {
             if (!is_null($value)) $this->$name = $value;
         }
 
-        // Initial fields.yaml and columns.yaml keys
-        $this->fieldKey  = $this->name;
-        $this->columnKey = $this->name;
+        // Defaults
+        if (!$this->fieldKey)      $this->fieldKey      = $this->name;
+        if (!$this->columnKey)     $this->columnKey     = $this->name;
+        if (!$this->columnType)    $this->columnType    = $this->fieldType;
+        if (!$this->columnPartial) $this->columnPartial = $this->partial;
 
         $classParts = explode('\\', get_class($this));
         $className  = end($classParts);
@@ -150,21 +168,25 @@ class Field {
                 $fieldDefinition['sqlSelect'] = "$tableName.$column->name::numeric";
                 break;
             case 'path':
-                $fieldDefinition['fieldType'] = 'fileupload';
-                $fieldDefinition['mode']      = 'image';
-                /* TODO: image upload settings
-                imageHeight: 260
-                imageWidth: 260
-                thumbOptions:
-                    mode: crop
-                    offset:
-                        - 0
-                        - 0
-                    quality: 90
-                    sharpen: 0
-                    interlace: false
-                    extension: auto
-                    */
+                // File uploads are NOT stored in the actual column
+                if (!$column->is_nullable) throw new \Exception("File upload column $column->column_name(path) must be nullable, because it does not store the path");
+                $uploadDefinition = array(
+                    'fieldType'    => 'fileupload',
+                    'mode'         => 'image',
+                    'columnType'   => 'image',   // Set to FALSE for !canDisplayAsColumn()
+                    'required'     => FALSE,
+                    'imageHeight'  => 260,
+                    'imageWidth'   => 260,
+                    'thumbOptions' => array(
+                        'mode'      => 'crop',
+                        'offset'    => array(0,0),
+                        'quality'   => 90,
+                        'sharpen'   => 0,
+                        'interlace' => FALSE,
+                        'extension' => 'auto',
+                    ),
+                );
+                $fieldDefinition = array_merge($fieldDefinition, $uploadDefinition);
                 break;
         }
 
@@ -180,7 +202,6 @@ class Field {
             $nameCamel = Str::camel($name);
             $fieldDefinition[$nameCamel] = $value;
         }
-        if (!isset($fieldDefinition['columnType'])) $fieldDefinition['columnType'] = $fieldDefinition['fieldType'];
 
         if      ($column->isTheIdColumn()) $field = new IdField(       $model, $fieldDefinition, $column, $relations);
         else if ($column->isForeignID())   $field = new ForeignIdField($model, $fieldDefinition, $column, $relations); // Includes RelationSelf
@@ -346,12 +367,15 @@ class ForeignIdField extends Field {
 
     // Based on relation: so can be searched and sorted
     // > 1 level nesting will turn this off if it cannot be
-    public $searchable   = TRUE;
-    public $sortable     = TRUE;
+    public $searchable     = TRUE;
+    public $sortable       = TRUE;
 
     protected function __construct(Model &$model, array $definition, Column &$column, array &$relations)
     {
         parent::__construct($model, $definition, $column, $relations);
+
+        // Always allow QR code scanning
+        $this->dependsOn['_qrscan'] = TRUE;
 
         // We omit some of our own known plugins
         // because they do not conform yet to our naming requirements
@@ -385,8 +409,20 @@ class ForeignIdField extends Field {
                 // We use relation, select and valueFrom because it can be column sorted and searched
                 // whereas 1to1 relation[value]: fields cannot
                 if (!isset($this->relation))  $this->relation  = $this->column->relationName();
-                if (!isset($this->sqlSelect)) $this->sqlSelect = 'name';
-                //if (!isset($this->valueFrom)) $this->valueFrom = 'fully_qualified_name';
+                // We should only set sqlSelect if the relation table has the column
+                // otherwise use valueFrom
+                // valueFrom will use name() which will consider nameObject relations
+                if ($this->relation1 && $this->relation1->to->table->hasColumn('name') && !isset($this->sqlSelect)) {
+                    $this->sqlSelect  = 'name';
+                    $this->valueFrom  = NULL;
+                    $this->sortable   = TRUE;
+                    $this->searchable = TRUE;
+                } else {
+                    $this->sqlSelect  = NULL;
+                    $this->valueFrom  = 'name';
+                    $this->sortable   = FALSE;
+                    $this->searchable = FALSE;
+                }
 
                 // ------------------------ Buttons interface???
                 // TODO: These should all be in a separate semantic interface class with WinterCMS rendering
@@ -401,15 +437,17 @@ class ForeignIdField extends Field {
                 }
 
                 // ------------------------ Create and select comment help
-                // AA/Models/Server has no controller
-                if ($controller = $this->model->controller(Model::NULL_IF_NOT_ONLY_1)) {
-                    // TODO: Comment translation
-                    $controllerUrl = $controller->absoluteBackendUrl();
-                    $title         = $this->model->name;
-                    $this->fieldComment  = "<span class='view-add-models new-page'>view / add <a tabindex='-1' href='$controllerUrl'>$title</a></span>";
-                    $this->fieldComment .= "<a tabindex='-1' target='_blank' href='$controllerUrl' class='goto-form-group-selection'></a>";
-                    // TODO: This is actually for annotating checkbox lists, not selects, but it does nothing if it is a dropdown
-                    // $goto = $controllerUrl;
+                if ($this->relation1) {
+                    // AA/Models/Server has no controller
+                    if ($controller = $this->relation1->to->controller(Model::NULL_IF_NOT_ONLY_1)) {
+                        // TODO: Comment translation
+                        $controllerUrl = $controller->absoluteBackendUrl();
+                        $title         = $this->relation1->to->name;
+                        $this->fieldComment  = "<span class='view-add-models new-page'>view / add <a tabindex='-1' href='$controllerUrl'>$title</a></span>";
+                        $this->fieldComment .= "<a tabindex='-1' target='_blank' href='$controllerUrl' class='goto-form-group-selection'></a>";
+                        // TODO: This is actually for annotating checkbox lists, not selects, but it does nothing if it is a dropdown
+                        // $goto = $controllerUrl;
+                    }
                 }
 
                 // ----------------------- Fields.yaml Dropdown
@@ -474,10 +512,11 @@ class PseudoField extends Field {
     public $required   = FALSE;
     public $isStandard = FALSE;
     public $translationKey;
+    public $recordsPerPage = 10;
 
     public function __construct(Model &$model, array $definition, array $relations = array())
     {
-        parent::__construct($model, $definition, NULL, $relations);
+        parent::__construct($model, $definition, Field::NO_COLUMN, $relations);
     }
 
     public function isStandard(): bool
@@ -492,6 +531,33 @@ class PseudoField extends Field {
         return ($this->translationKey && !$this->labels ? $this->translationKey : parent::translationKey());
     }
 }
+
+
+// --------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------
+class PseudoFromForeignIdField extends PseudoField {
+    // These do not have a column on this table
+    // They are extra fields from external from relations
+    // TODO: Use these PseudoFromForeignIdField
+    public $relation1;
+
+    public function __construct(Model &$model, array $definition, array $relations = array())
+    {
+        parent::__construct($model, $definition, $relations);
+
+        foreach ($this->relations as $name => &$relation) {
+            if (   $relation instanceof Relation1from1 // includes RelationLeaf
+                || $relation instanceof RelationXfrom1
+                || $relation instanceof RelationXfromX
+            ) {
+                if ($this->relation1) throw new \Exception("Multiple X/1from1/X relations on PseudoFromForeignIdField[$this->name]");
+                $this->relation1 = &$relation;
+            }
+        }
+    }
+}
+
 
 // --------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------

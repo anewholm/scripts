@@ -338,8 +338,8 @@ class Spyc {
     $string = NULL;
     $spaces = str_repeat(' ',$indent);
 
-    if ($key == '#' && $value) {
-      $string = "$spaces# $value\n";
+    if (is_string($key) && $key[0] == '#' && $value) {
+      $string = "$spaces$key $value\n";
     } else if (is_string ($value) && ((strpos($value,"\n") !== false || strpos($value,": ") !== false || strpos($value,"- ") !== false ||
       strpos($value,"*") !== false || strpos($value,"#") !== false || strpos($value,"<") !== false || strpos($value,">") !== false || strpos ($value, '%') !== false || strpos ($value, '  ') !== false ||
       strpos($value,"[") !== false || strpos($value,"]") !== false || strpos($value,"{") !== false || strpos($value,"}") !== false) || strpos($value,"&") !== false || strpos($value, "'") !== false || strpos($value, "!") === 0 ||

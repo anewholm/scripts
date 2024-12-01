@@ -25,17 +25,22 @@ class Plugin {
     {
         foreach ($tables as &$table) {
             if ($table->isPlugin()) {
-                // Modules have NULL plugin name
-                $authorName = $table->authorName();
-                $pluginName = $table->pluginName();
-                $pluginFullyQualifiedName = "$authorName\\$pluginName";
+                if ($table instanceof View) {
+                    // TODO: What to do with views?
+                    print("${YELLOW}WARNING${NC}: Ignoring view [$table->name]\n");
+                } else {
+                    // Modules have NULL plugin name
+                    $authorName = $table->authorName(); // Acorn
+                    $pluginName = $table->pluginName(); // Lojistiks
+                    $pluginFullyQualifiedName = "$authorName\\$pluginName";
 
-                if (isset(self::$plugins[$pluginFullyQualifiedName]))
-                    $plugin = self::$plugins[$pluginFullyQualifiedName];
-                else
-                    $plugin = new Plugin($framework, $authorName, $pluginName);
+                    if (isset(self::$plugins[$pluginFullyQualifiedName]))
+                        $plugin = self::$plugins[$pluginFullyQualifiedName];
+                    else
+                        $plugin = new Plugin($framework, $authorName, $pluginName);
 
-                $plugin->addTable($table);
+                    $plugin->addTable($table);
+                }
             }
         }
         return self::$plugins;
@@ -50,8 +55,8 @@ class Plugin {
     protected function __construct(Framework &$framework, string $authorName, string $pluginName)
     {
         $this->framework = $framework;
-        $this->author    = $authorName;
-        $this->name      = $pluginName;
+        $this->author    = $authorName; // Acorn
+        $this->name      = $pluginName; // Lojistiks
 
         self::$plugins[$this->fullyQualifiedName()] = &$this;
     }
@@ -134,7 +139,11 @@ class Plugin {
         return ($this->author == 'Acorn'
             && ($which == NULL || $this->name == $which)
         );
+    }
 
+    public function isCreateSystemPlugin(): bool
+    {
+        return $this->framework->wasCreatedByUs($this);
     }
 
     public function fullyQualifiedName(): string
