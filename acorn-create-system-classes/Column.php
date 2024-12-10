@@ -3,7 +3,7 @@
 require_once('ForeignKey.php');
 
 class Column {
-    protected const STANDARD_DATA_COLUMNS    = array('id', 'created_at_event_id', 'created_by_user_id', 'created_at', 'created_by', 'server_id');
+    protected const STANDARD_DATA_COLUMNS    = array('id', 'created_at_event_id', 'created_by_user_id', 'created_at', 'created_by', 'server_id', 'response');
     protected const STANDARD_CONTENT_COLUMNS = array('name', 'description');
     public    const DATA_COLUMN_ONLY = TRUE;
     public    const INCLUDE_SCHEMA   = TRUE;
@@ -18,6 +18,7 @@ class Column {
 
     // --------------------- Database column settings
     // information_schema.columns.* SQL standard
+    public $oid;
     public $column_name;
     public $table_name;
     public $ordinal_position;
@@ -67,12 +68,15 @@ class Column {
     // --------------------- Column comment accepted values
     // These flow through to Field
     public $comment;
-    public $system; // Internal column, do not process
-    public $todo;   // TODO: This column structure has not been analysed / enabled yet
+    public $system;  // Internal column, do not process
+    public $todo;    // TODO: This column structure has not been analysed / enabled yet
+    public $setting; // Only show the column if a Setting is TRUE
+    public $env;     // Only show the column if an env VAR is TRUE
     // For fields
     public $fieldType;
     public $rule;
     public $span;
+    public $hidden;
     // Arrays for css class
     public $cssClasses;   // css-classes: - hug-left
     public $newRow;
@@ -83,6 +87,7 @@ class Column {
     public $columnType;
     public $sqlSelect;
     public $valueFrom; // We should never use this because it cannot be sorted
+    public $invisible;
     // Translation arrays
     public $labels;
     public $labelsPlural;
@@ -124,17 +129,21 @@ class Column {
             case 'created_at_event_id':
             case 'created_by_user_id':
             case 'server_id':
+            case 'response':
                 $definition = array(
                     'autoFKType' => 'Xto1',
+                    // fields
+                    'hidden'    => TRUE,
+                    // columns
+                    'invisible' => TRUE,
                 );
-                break;
         }
         return $definition;
     }
 
     public function shouldProcess(): bool
     {
-        return (!$this->system && !$this->todo);
+        return ($this->table->shouldProcess() && !$this->system && !$this->todo);
     }
 
     public function loadForeignKeys()
@@ -155,6 +164,12 @@ class Column {
     protected function db()
     {
         return $this->table->db();
+    }
+
+    public function dbLangPath()
+    {
+        $tableLangPath = $this->table->dbLangPath();
+        return "$tableLangPath.columns.$this->column_name";
     }
 
     protected function firstName(): string

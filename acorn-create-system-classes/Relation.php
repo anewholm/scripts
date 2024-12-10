@@ -1,6 +1,7 @@
 <?php namespace Acorn\CreateSystem;
 
 class Relation {
+    public $oid;
     public $from; // Model
     public $to;   // Model
     public $column;
@@ -34,6 +35,7 @@ class Relation {
         //   because those are the FKs attached to this column
         // Relation?from? (REVERSE relations) will use the column->foreignKeysTo collection
         //   they are attached to other tables and reference this table ID column
+        $this->oid        = $foreignKey->oid;
         $this->from       = &$from;
         $this->to         = &$to;
         $this->column     = &$column;
@@ -103,13 +105,16 @@ class Relation {
     }
 }
 
+class RelationFrom extends Relation {
+}
+
 class Relation1to1 extends Relation {
 }
 
 class RelationLeaf extends Relation1to1 {
 }
 
-class Relation1fromX extends Relation {
+class Relation1fromX extends RelationFrom {
     public $isFrom    = FALSE;
 }
 
@@ -125,7 +130,7 @@ class RelationSelf extends Relation1fromX {
     }
 }
 
-class Relation1from1 extends Relation {
+class Relation1from1 extends RelationFrom {
     public $isFrom = FALSE;
 }
 
@@ -143,7 +148,7 @@ class RelationXto1 extends Relation {
     }
 }
 
-class RelationXfromXSemi extends Relation {
+class RelationXfromXSemi extends RelationFrom {
     public $pivot;
     public $pivotModel;
     public $keyColumn;
@@ -170,7 +175,7 @@ class RelationXfromXSemi extends Relation {
     }
 }
 
-class RelationXfromX extends Relation {
+class RelationXfromX extends RelationFrom {
     public $pivot;
     public $keyColumn;
     public $canFilter = TRUE;

@@ -20,9 +20,41 @@ require_once('acorn-create-system-classes/WinterCMS.php');
 
 // ------------------------------------------- Inputs
 $file = basename(__FILE__);
-print("Usage: $file [<plugin-name|all> <git command (push|ask|leave)>]\n");
+print("Usage: $file [<plugin-name|all|lang.yaml> <git command (push|ask|leave)>]\n");
 $installPlugins = (isset($argv[1]) ? $argv[1] : NULL);
 $gitPolicy      = (isset($argv[2]) ? $argv[2] : NULL);
+
+// ------------------------------------------- lang.yaml
+if ($installPlugins == 'lang.yaml') {
+    print("Importing language translation file [$installPlugins]\n");
+    $langTranslationFile = \Spyc::YAMLLoad($installPlugins);
+    $tables = $langTranslationFile['tables'];
+    foreach ($tables as $schemas) {
+        foreach ($schemas as $authors) {
+            foreach ($authors as $pluginName => $plugins) {
+                foreach ($plugins as $tableName => $table) {
+                    if (isset($table['columns'])) foreach ($table['columns'] as $columnName => $column) {
+                        $textEn = $column['en'];
+                        print("  $tableName:$columnName => $textEn\n");
+                    }
+                    if (isset($table['foreignkeys'])) foreach ($table['foreignkeys'] as $foreignkeyName => $foreignkey) {
+                        $textEn = $foreignkey['en'];
+                        print("  $tableName:$foreignkeyName => $textEn\n");
+                    }
+                    if (isset($table['label'])) {
+                        $textEn = $table['label']['en'];
+                        print("  $tableName:label => $textEn\n");
+                    }
+                    if (isset($table['label_plural'])) {
+                        $textEn = $table['label_plural']['en'];
+                        print("  $tableName:label_plural => $textEn\n");
+                    }
+                }
+            }
+        }
+    }
+    return;
+}
 
 // ------------------------------------------- Framework
 $version       = '1.0';

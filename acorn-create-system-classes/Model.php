@@ -15,6 +15,7 @@ class Model {
 
     public $controllers = array();
     public $actionFunctions;
+    public $printable;
 
     public $plugin;
     public $table;
@@ -93,6 +94,11 @@ class Model {
         } else $controller = end($this->controllers);
 
         return $controller;
+    }
+
+    public function dbObject()
+    {
+        return $this->table;
     }
 
     // ----------------------------------------- Semantic Info
@@ -729,7 +735,6 @@ class Model {
 
             print("      Creating tab multi-select for ${YELLOW}$relation${NC}\n");
             $buttons = array();
-            $comment = NULL;
             if (!$useRelationManager) {
                 if ($controller = $relation->to->controller(Model::NULL_IF_NOT_ONLY_1)) {
                     // Controller necessary for popup rendering
@@ -1088,6 +1093,42 @@ class Model {
             }
         }
 
+        // ------------------------------------------------------------- Debug
+        foreach ($fields as $name => &$field) {
+            // Nested fields will already have been annotated
+            if (!$field->nested) {
+                $dbLangPath = $field->dbObject()?->dbLangPath();
+                $disabled   = ($dbLangPath ? '' : 'disabled="disabled"');
+                $dbComment  = str_replace(" ", '&nbsp;', $field->comment); // Prevent YAML indentation normalization
+
+                $field->fieldComment .= <<<HTML
+                    <div class='debug debug-field'>
+                        <div class="title">$name</div>
+                        $field->debugComment
+                        <div class="create-system">
+                            <pre class="create-system-comment">$dbComment</pre>
+                            <div class="create-system-db-lang-path">$dbLangPath</div>
+                            <a class="create-system-comment-edit-link" $disabled href="#" title="$dbLangPath">edit</a>
+                        </div>
+                    </div>
+HTML;
+                if (is_array($field->buttons)) {
+                    foreach ($field->buttons as $buttonName => &$buttonField) {
+                        // $buttonField can be FALSE
+                        if ($buttonField) {
+                            if (!$buttonField->debugComment) $buttonField->debugComment = $buttonField->partial;
+                            $buttonField->fieldComment .= <<<HTML
+                                <div class='debug debug-field'>
+                                    <div class="title">$buttonName</div>
+                                    $buttonField->debugComment
+                                </div>
+HTML;
+                        }
+                    }
+                }
+            }
+        }
+
         // ------------------------------------------------------------- Nesting
         // A $relation1to1Path indicates that the caller routine, also this method, wants these fields nested
         // columns.yaml searching and sorting:
@@ -1140,11 +1181,13 @@ class Model {
                     }
 
                     // NOT SUPPORTED YET
+                    /*
                     else if ($topLevelNest && $fieldObj instanceof PseudoFromForeignIdField && $fieldObj->relation1 && $fieldObj->relation1 instanceof RelationXfromX) {
                         print("      ${RED}WARNING${NC}: Rejected tab multi-select for (${GREEN}$nestedColumnKey${NC}) because 1-1 => X-X hasManyDeep is not supported yet\n");
                         unset($fields[$localFieldName]);
                         continue;
                     }
+                    */
 
                     // Deep nesting: legalcase[another_relation][name]:
                     // Cannot shallow nest, so we give up
@@ -1190,33 +1233,6 @@ class Model {
                     );
 
                     // TODO: dependsOn morphing
-                }
-            }
-        }
-
-        // ------------------------------------------------------------- Debug
-        foreach ($fields as $name => &$field) {
-            if (!$field->nested) {
-                $field->fieldComment .= <<<HTML
-                    <div class='debug debug-field'>
-                        <div class="title">$name</div>
-                        $field->debugComment
-                        <pre>$field->comment</pre>
-                    </div>
-HTML;
-                if (is_array($field->buttons)) {
-                    foreach ($field->buttons as $buttonName => &$buttonField) {
-                        // $buttonField can be FALSE
-                        if ($buttonField) {
-                            if (!$buttonField->debugComment) $buttonField->debugComment = $buttonField->partial;
-                            $buttonField->fieldComment .= <<<HTML
-                                <div class='debug debug-field'>
-                                    <div class="title">$buttonName</div>
-                                    $buttonField->debugComment
-                                </div>
-HTML;
-                        }
-                    }
                 }
             }
         }

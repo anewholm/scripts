@@ -22,6 +22,8 @@ class Table {
     public $comment;
     public $packageType; // plugin|module
     public $pluginIcon;
+    public $system; // Internal do not process
+    public $todo;   // TODO: This structure has not been analysed / enabled yet
 
     public $icon;
     public $tableType; // TODO: create a Derived class instead?
@@ -43,6 +45,7 @@ class Table {
 
     public $columns;
     public $actionFunctions;
+    public $printable;
 
     public $filters = array();
 
@@ -85,7 +88,7 @@ class Table {
 
         $this->columns = $db->tableColumns($this);
 
-        $this->check();
+        if ($this->shouldProcess()) $this->check();
 
         $qualifiedName = "$this->schema.$this->name";
         self::$tables[$qualifiedName] = $this;
@@ -99,17 +102,54 @@ class Table {
         if ($this->isOurs() && !$this->isKnownAcornPlugin()) {
             $strPlural   = Str::plural($this->name);
             $strSingular = Str::singular($this->name);
-            if ($this->isContentTable() && !$this->hasColumn('id', 'uuid', 'gen_random_uuid()')) {
-                throw new \Exception("Content table [$this->name] has no id(uuid/gen_random_uuid()) column");
-            }
-            if ($this->isPivotTable()   && $this->hasColumn('id')) {
-                throw new \Exception("Pivot table [$this->name] ($this->plural/$strPlural) ($this->singular/$strSingular) has id column");
-            }
-            if ($this->isPivotTable()   && count($this->customForeignIdColumns()) != 2) {
-                throw new \Exception("Pivot table [$this->name] does not have 2 custom foreign id columns");
+            if ($this->isContentTable()) {
+                if (!$this->hasColumn('id', 'uuid', 'gen_random_uuid()')) {
+                    throw new \Exception("Content table [$this->name] has no id(uuid/gen_random_uuid()) column");
+                }
+
+                /*
+                $columnCheck = 'name';
+                if (!$this->hasColumn($columnCheck)) {
+                    $error = "Content table [$this->name] has no [$columnCheck] column";
+                    print("$error\n");
+                    $gen = readline("Create a generated [$columnCheck] with clause [<clause>|n] (id) ?");
+                    if ($gen != 'n') {
+                        if (!$gen) $gen = 'id';
+                        $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'character varying(1024)', $gen);
+                        print("Added [$columnCheck] with clause [$gen]\n");
+                    }
+                }
+
+                $columnCheck = 'created_at_event_id';
+                if (!$this->hasColumn($columnCheck)) {
+                    $error = "Content table [$this->name] has no [$columnCheck] column";
+                    print("$error\n");
+                    $yn = readline("Create [$columnCheck] (y) ?");
+                    if ($yn != 'n') {
+                        $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'uuid');
+                        // TODO: $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'character varying(1024)');
+                        print("Added [$columnCheck]\n");
+                    }
+                }
+
+                // TODO: auto-add other standard columns and FKs
+                */
+            } else if ($this->isPivotTable()) {
+                if ($this->hasColumn('id')) {
+                    throw new \Exception("Pivot table [$this->name] ($this->plural/$strPlural) ($this->singular/$strSingular) has id column");
+                }
+                if (count($this->customForeignIdColumns()) != 2) {
+                    $customForeignIdColumns = implode(', ', array_keys($this->customForeignIdColumns()));
+                    throw new \Exception("Pivot table [$this->name] does not have 2 custom foreign id columns [$customForeignIdColumns]");
+                }
             }
         }
         return TRUE;
+    }
+
+    public function shouldProcess(): bool
+    {
+        return (!$this->system && !$this->todo);
     }
 
     public function loadForeignKeys()
@@ -150,6 +190,13 @@ class Table {
     }
 
     // ----------------------------------------- Table basic details
+    public function dbLangPath()
+    {
+        $tableDotPathParts = explode('_', $this->fullyQualifiedName(FALSE));
+        $tableDotPath      = "$tableDotPathParts[0].$tableDotPathParts[1]." . implode('_', array_slice($tableDotPathParts, 2));
+        return "tables.$tableDotPath";
+    }
+
     public function hasIdColumn(): bool
     {
         return (bool) $this->idColumn();
@@ -340,9 +387,8 @@ class Table {
         foreach ($this->customForeignIdColumns() as &$fromTableColumn) {
             if ($fromTableColumn != $otherColumn) {
                 if ($throughColumn) {
-                    var_dump($otherColumn->name);
-                    var_dump(array_keys($this->customForeignIdColumns()));
-                    throw new \Exception("Pivot Table [$this->name] has too many custom foreign ID columns when ignoring [$otherColumn->name]");
+                    $customForeignIdColumns = implode(', ', array_keys($this->customForeignIdColumns()));
+                    throw new \Exception("Pivot Table [$this->name] has too many custom foreign ID columns [$customForeignIdColumns] when ignoring [$otherColumn->name]");
                 }
                 $throughColumn = &$fromTableColumn;
                 if ($firstOnly) break;
