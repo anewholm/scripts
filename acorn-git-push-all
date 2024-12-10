@@ -9,6 +9,10 @@ CROSS="${RED}✘${NC}"
 
 commit_message=$1
 
+echo "## --------------------------------------------- ${GREEN}pre-run checks${NC}"
+./acorn-git-all config --global --add safe.directory .
+./acorn-git-all config pull.rebase false
+
 echo "## --------------------------------------------- ${GREEN}git add${NC}"
 ./acorn-git-all add .
 
@@ -19,9 +23,8 @@ if [ -z "$commit_message" ]; then
 fi
 ./acorn-git-all commit -m "'$commit_message'"
 
-echo "## --------------------------------------------- ${GREEN}git pull${NC}"
-./acorn-git-all config pull.rebase false
-./acorn-git-all pull
+#echo "## --------------------------------------------- ${GREEN}git pull${NC}"
+#./acorn-git-all pull
 
 echo "## --------------------------------------------- ${GREEN}git push${NC}"
 ./acorn-git-all push

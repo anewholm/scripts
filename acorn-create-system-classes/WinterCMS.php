@@ -103,48 +103,43 @@ class WinterCMS extends Framework
         $pluginFilePath      = "$pluginDirectoryPath/Plugin.php";
         $createdBy           = $this->createdByString();
 
-        if (file_exists($pluginFilePath) && $overwrite) unlink($pluginFilePath);
-        if (file_exists($pluginFilePath)) {
-            print("  ${RED}WARNING${NC}: Plugin file [$pluginFilePath] already exists. Leaving.\n");
-        } else {
-            $this->runWinterCommand('create:plugin', $plugin->dotClassName());
+        $this->runWinterCommand('create:plugin', $plugin->dotClassName());
 
-            // --------------------------------------------- Created bys, authors & README.md
-            $readmePath = "$pluginDirectoryPath/README.md";
-            if (!file_exists($readmePath)) {
-                $this->setFileContents($readmePath, "# $plugin->name");
-                $this->appendToFile($readmePath, $createdBy);
-            }
+        // --------------------------------------------- Created bys, authors & README.md
+        $readmePath = "$pluginDirectoryPath/README.md";
+        if (!file_exists($readmePath)) {
+            $this->setFileContents($readmePath, "# $plugin->name");
+            $this->appendToFile($readmePath, $createdBy);
+        }
 
-            // --------------------------------------------- Plugin.php misc
-            // Alter the public function pluginDetails(): array function array return
-            // and append some comments
-            $this->changeArrayReturnFunction($pluginFilePath, 'pluginDetails', 'author', 'Acorn');
-            $this->removeFunction($pluginFilePath, 'registerNavigation');
-            $this->replaceInFile( $pluginFilePath, '/Registers backend navigation items for this plugin./', 'Navigation in plugin.yaml.');
-            $this->appendTofile(  $pluginFilePath, "\n// $createdBy");
+        // --------------------------------------------- Plugin.php misc
+        // Alter the public function pluginDetails(): array function array return
+        // and append some comments
+        $this->changeArrayReturnFunction($pluginFilePath, 'pluginDetails', 'author', 'Acorn');
+        $this->removeFunction($pluginFilePath, 'registerNavigation');
+        $this->replaceInFile( $pluginFilePath, '/Registers backend navigation items for this plugin./', 'Navigation in plugin.yaml.');
+        $this->appendTofile(  $pluginFilePath, "\n// $createdBy");
 
-            // Adding cross plugin dependencies
-            $requirePlugins = array(
-                'Acorn.Calendar'  => TRUE,
-                'Acorn.Location'  => TRUE,
-                'Acorn.Messaging' => TRUE
-            );
-            foreach ($plugin->otherPluginRelations() as &$relation) {
-                if (!$relation instanceof Relation1from1) {
-                    // Do not make requires to Modules
-                    $otherPlugin = &$relation->to->plugin;
-                    if ($otherPlugin instanceof Plugin) {
-                        $fqn         = $otherPlugin->dotClassName();
-                        if (!isset($requirePlugins[$fqn])) {
-                            print("      Adding Plugin \$require ${YELLOW}$fqn${NC}\n");
-                            $requirePlugins[$fqn] = TRUE;
-                        }
+        // Adding cross plugin dependencies
+        $requirePlugins = array(
+            'Acorn.Calendar'  => TRUE,
+            'Acorn.Location'  => TRUE,
+            'Acorn.Messaging' => TRUE
+        );
+        foreach ($plugin->otherPluginRelations() as &$relation) {
+            if (!$relation instanceof RelationFrom) {
+                // Do not make requires to Modules
+                $otherPlugin = &$relation->to->plugin;
+                if ($otherPlugin instanceof Plugin) {
+                    $fqn         = $otherPlugin->dotClassName();
+                    if (!isset($requirePlugins[$fqn])) {
+                        print("      Adding Plugin \$require ${YELLOW}$fqn${NC}\n");
+                        $requirePlugins[$fqn] = TRUE;
                     }
                 }
             }
-            $this->setPropertyInClassFile($pluginFilePath, 'require', array_keys($requirePlugins), FALSE);
         }
+        $this->setPropertyInClassFile($pluginFilePath, 'require', array_keys($requirePlugins), FALSE);
 
         // --------------------------------------------- Lang files
         $langDirPath = "$pluginDirectoryPath/lang";
@@ -209,6 +204,7 @@ class WinterCMS extends Framework
             'correct_and_print' => 'Correct and Print',
 
             // System
+            'response' => 'HTTP call response',
             'replication_debug' => 'Replication Debug',
             'trigger_http_call_response' => 'Trigger HTTP call response',
         ), FALSE);
@@ -256,6 +252,7 @@ class WinterCMS extends Framework
             'correct_and_print' => 'حفظ التصحيح وطباعته',
 
             // System
+            'response' => 'HTTP call response',
             'replication_debug' => 'تصحيح أخطاء التكرار',
             'trigger_http_call_response' => 'تشغيل استجابة اتصال HTTP',
         ), FALSE);
@@ -303,6 +300,7 @@ class WinterCMS extends Framework
             'correct_and_print' => 'Correct and Print',
 
             // System
+            'response' => 'HTTP call response', // TODO: Rename "response" to "http_response"
             'replication_debug' => 'Replication Debug',
             'trigger_http_call_response' => 'Trigger HTTP call response',
         ), FALSE);
@@ -359,6 +357,25 @@ class WinterCMS extends Framework
             $this->db->runSQLFile("$pluginUpdatePath/pre-up.sql");
         }
         */
+
+        // --------------------------------------------- Register plugin manually
+        // This can be necessary if winter:up is not run
+        // plugin registration is important to enable the plugin control system
+        // /backend/system/updates/manage
+        $dotClassName  = $plugin->dotClassName();
+        $pluginTable   = 'public.system_plugin_versions';
+        $registrations = $this->db->select("SELECT * FROM $pluginTable where code = :plugin",
+            array('plugin' => $dotClassName)
+        );
+        if (count($registrations)) {
+            print("  Plugin ${GREEN}$dotClassName${NC} is already registered in $pluginTable\n");
+        } else {
+            print("  Plugin ${GREEN}$dotClassName${NC} registered in $pluginTable\n");
+            $this->db->insert("INSERT into $pluginTable(code, version, created_at)
+                values(:plugin, '1.0.0', now())",
+                array('plugin' => $dotClassName)
+            );
+        }
     }
 
     protected function createMenus(Plugin &$plugin) {
@@ -454,7 +471,7 @@ class WinterCMS extends Framework
             $this->runWinterCommand('create:model', $model->plugin->dotClassName(), $model->name);
 
             // Potentially rewrite $table because create:model will automatically plural it
-            $this->setPropertyInClassFile($modelFilePath, 'table', $model->table->name);
+            $this->setPropertyInClassFile($modelFilePath, 'table', $model->table->fullyQualifiedName());
 
             $createdBy  = $this->createdByString();
             $this->appendToFile($modelFilePath, "// $createdBy");
@@ -571,10 +588,10 @@ class WinterCMS extends Framework
                         $label       = &$model->labels[$langName];
                         $labelPlural = (isset($model->labelsPlural[$langName]) ? $model->labelsPlural[$langName] : $label);
                         $throwIfAlreadySet = ($langName != 'en');
-                        $this->arrayFileSet($langFilePath, "models.$modelSectionName", array(
+                        $this->langFileSet($langFilePath, "models.$modelSectionName", array(
                             'label'        => $label,
                             'label_plural' => $labelPlural
-                        ), $throwIfAlreadySet);
+                        ), $langName, $model->dbObject(), $throwIfAlreadySet);
                     } else {
                         if (!env('APP_DEBUG')) print("  ${RED}ERROR${NC}: No ${YELLOW}$langName${NC} translation label for ${YELLOW}$modelSectionName${NC}\n");
                     }
@@ -674,7 +691,7 @@ class WinterCMS extends Framework
             $relations = array();
             foreach ($model->relations1from1() as $name => &$relation) {
                 if (isset($relations[$name])) throw new \Exception("Conflicting relations with [$name] on [$model->name]");
-                $relations[$name] = array($relation->from, 'key' => $relation->column->name, 'type' => $relation->type());
+                $relations[$name] = array($relation->to, 'key' => $relation->column->name, 'type' => $relation->type());
             }
             $this->setPropertyInClassFile($modelFilePath, 'hasOne', $relations);
 
@@ -701,13 +718,16 @@ class WinterCMS extends Framework
             }
             // methods()
             foreach ($model->methods as $funcName => &$body) {
-                print("  Injecting public function ${YELLOW}$funcName${NC}() into [$model->name]\n");
+                print("  Injecting public function ${YELLOW}$funcName${NC} into [$model->name]\n");
                 $this->addMethod($modelFilePath, $funcName, $body);
             }
             // static methods()
             foreach ($model->staticMethods as $funcName => &$body) {
                 print("  Injecting public function ${YELLOW}$funcName${NC}() into [$model->name]\n");
                 $this->addStaticMethod($modelFilePath, $funcName, $body);
+            }
+            if ($model->printable) {
+                $this->setPropertyInClassFile($modelFilePath, 'printable', TRUE, Framework::NEW_PROPERTY);
             }
 
             // ----------------------------------------------------------------- Columns commenting in header
@@ -826,7 +846,7 @@ class WinterCMS extends Framework
         foreach ($model->fields() as $name => &$field) {
             $rule = $field->rule;
             if (!$rule && !$field->isStandard()) {
-                if ($field->required) $rule .= 'required';
+                if ($field->required && !$field->nested) $rule .= 'required';
                 // TODO: max length (Currency needs this) https://wintercms.com/docs/v1.2/docs/services/validation
             }
             if ($rule) $rules[$name] = $rule;
@@ -842,14 +862,16 @@ class WinterCMS extends Framework
             if ($field->isLocalTranslationKey() && !$field->isStandard() && !$this->arrayFileValueExists($langEnPath, $localTranslationKey)) {
                 print("      Add ${YELLOW}$localTranslationKey${NC} to ${YELLOW}lang/*${NC} for ${YELLOW}$name${NC}\n");
                 // At least set the english label programmatically
-                if (!$field->labels || !isset($field->labels['en'])) $this->arrayFileSet($langEnPath, $localTranslationKey, $field->devEnTitle());
+                // during development, and translation file generation
+                if (!$field->labels || !isset($field->labels['en']))
+                    $this->langFileSet($langEnPath, $localTranslationKey, $field->devEnTitle(), 'en', $field->dbObject(), TRUE, $field->yamlComment);
                 // Then others, if we have them
                 // Leave the interface to show the keys, if the translation has not been added
                 if ($field->labels) {
                     foreach ($field->labels as $langName => &$translation) {
                         $langFilePath = "$langDirPath/$langName/lang.php";
                         if (!file_exists($langFilePath)) throw new \Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
-                        $this->arrayFileSet($langFilePath, $localTranslationKey, $translation);
+                        $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
                     }
                 }
             }

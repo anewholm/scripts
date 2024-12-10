@@ -34,6 +34,14 @@ if [ ! -d wintercms.com ]; then
   cd -
 fi
 
+if [ ! -d api.jquery.com ]; then
+  echo "${GREEN}INFO${NC}: Mirroring api.jquery.com documentation to ${YELLOW}http://api.jquery.laptop${NC}"
+  httrack https://api.jquery.com/ -O api.jquery.com
+  cd api.jquery.com
+  sudo ../scripts/acorn-setup-hostname jquery
+  cd -
+fi
+
 if [ ! -d www.postgresql.org ]; then
   echo "${GREEN}INFO${NC}: Mirroring postgresql.org documentation to ${YELLOW}http://postgresqldocs.laptop${NC}"
   httrack https://www.postgresql.org/docs/16/ -O www.postgresql.org

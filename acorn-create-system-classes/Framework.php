@@ -22,9 +22,15 @@ class Framework
     protected $iconFile;
     protected $iconCurrent;
 
+    // File cache. Flushed in ~destructor
     protected $FILES       = array();
     protected $ARRAY_FILES = array();
     protected $YAML_FILES  = array();
+    // For translation work
+    // DB Object => Language key, useful for translation work
+    // plugin: table|view|function: [column:] en|ku|ar: <text>
+    // All translations should be added in to this file
+    protected $LANG        = array();
 
     // ----------------------------------------- Construct
     protected function __construct(string $cwd, string $scriptDirPath, string $script = 'acorn-create-system', string $version = '1.0')
@@ -48,6 +54,13 @@ class Framework
 
     public function __destruct()
     {
+        // For translation work
+        // DB Object => Language key, useful for translation work
+        // plugin: table|view|function: [column:] en|ku|ar: <text>
+        // All translations should be added in to this file
+        $yamlString = \Spyc::YAMLDump($this->LANG, FALSE, 1000, TRUE);
+        file_put_contents('lang.yaml', $yamlString);
+
         foreach ($this->FILES as $path => &$contents) {
             file_put_contents($path, $contents);
         }
@@ -203,6 +216,33 @@ class Framework
         $level[$name] = $newValue;
 
         // Destructor will write cached arrays
+    }
+
+    protected function langFileSet(string $path, string $dotPath, string|array $text, string $langName, object|NULL $dbObject, bool $throwIfAlreadySet = TRUE, string $comment = NULL)
+    {
+        if (!$langName) throw new \Exception("Lang name required when setting [$dotPath]");
+
+        // Set the ~/lang/<language>/lang.php file
+        $this->arrayFileSet($path, $dotPath, $text, $throwIfAlreadySet);
+
+        if ($dbObject) {
+            // Contribute to the DB language translation file
+            // For ease for someone to translate and feed back in to the DB
+            if (!method_exists($dbObject, 'dbLangPath')) throw new \Exception("Incompatible DB object when setting [$dotPath]");
+            $dbLangPath = $dbObject->dbLangPath();
+
+            if (!is_array($text)) $text = array('' => $text);
+            if ($comment) $this->yamlFileSet('lang.yaml', "$dbLangPath.#", $comment, FALSE);
+            foreach ($text as $key => $value) {
+                $langFileDotPath = ($key ? "$dbLangPath.$key.$langName" : "$dbLangPath.$langName");
+                $this->yamlFileSet('lang.yaml', $langFileDotPath, $value, FALSE);
+                // Fill out missing values, to be completed
+                foreach (array('en', 'ku', 'ar') as $langNameMissing) {
+                    $langFileDotPath = ($key ? "$dbLangPath.$key.$langNameMissing" : "$dbLangPath.$langNameMissing");
+                    if (!$this->yamlFileValueExists('lang.yaml', $langFileDotPath)) $this->yamlFileSet('lang.yaml', $langFileDotPath, '.');
+                }
+            }
+        }
     }
 
     // ---------------------------------------------- Filesystem
@@ -371,12 +411,13 @@ class Framework
     protected function addMethod(string $path, string $name, string $body, string $scope = 'public', bool $static = FALSE, int $indent = 1)
     {
         if (!$path) throw new \Exception("Method path is empty");
+        $parameters    = (strstr($name, '(') !== FALSE ? '' : '()');
         $indentString  = str_repeat(' ', $indent*4);
         $indentString2 = str_repeat(' ', ($indent+1)*4);
         $staticString  = ($static ? ' static' : '');
         $this->replaceInFile($path, '/^}$/m', <<<FUNCTION
 
-$indentString$scope$staticString function $name() {
+$indentString$scope$staticString function $name$parameters {
 $indentString2# Auto-injected by acorn-create-system
 $indentString2$body
 $indentString}
@@ -478,6 +519,12 @@ FUNCTION
             $pluginDirectoryPath = $this->pluginDirectoryPath($plugin);
             print("${GREEN}REMOVING${NC} existing plugin sub-directories and files from [$pluginDirectoryPath]...\n");
             $this->removeDir($pluginDirectoryPath, FALSE, FALSE);
+
+            // Some FILES have already been cached in memory from the old plugin read
+            // Let's just reset everything
+            $this->FILES       = array();
+            $this->ARRAY_FILES = array();
+            $this->YAML_FILES  = array();
         }
 
         // Abstracted MVC creates

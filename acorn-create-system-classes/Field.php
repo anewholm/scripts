@@ -22,6 +22,7 @@ class Field {
     // fields.yaml <name>: is always 1to1 nested like this[that]:
     // whereas columns.yaml name we want to use this_that: with a relation:
     // to enable sorting and searching wherever possible
+    public $oid; // From column or FK or the like
 
     // Forms fields.yaml
     public $fieldKey;
@@ -57,6 +58,8 @@ class Field {
     public $imageWidth;
     public $thumbOptions;
     public $fieldConfig;
+    public $setting; // Only show the column if a Setting is TRUE
+    public $env;     // Only show the column if an env VAR is TRUE
 
     // Custom AA directives that indicate the field is an dynamic include form
     public $phpAttributeCalculation;
@@ -93,6 +96,7 @@ class Field {
     protected function __construct(Model &$model, array $definition, Column $column = NULL, array $relations = array())
     {
         // TODO: Ambiguos fields problem: 2 x amount fields with relation
+        $this->oid       = $column?->oid;
         $this->model     = &$model;
         $this->column    = $column;
         $this->relations = $relations;
@@ -206,7 +210,13 @@ class Field {
         if      ($column->isTheIdColumn()) $field = new IdField(       $model, $fieldDefinition, $column, $relations);
         else if ($column->isForeignID())   $field = new ForeignIdField($model, $fieldDefinition, $column, $relations); // Includes RelationSelf
         else $field = new Field($model, $fieldDefinition, $column, $relations);
+
         return $field;
+    }
+
+    public function dbObject()
+    {
+        return $this->column;
     }
 
     // --------------------------------------------- Display
@@ -524,6 +534,11 @@ class PseudoField extends Field {
         return $this->isStandard;
     }
 
+    public function dbObject()
+    {
+        return NULL;
+    }
+
     public function translationKey(): string
     {
         // parent::translationKey() will return a local domain key
@@ -553,8 +568,17 @@ class PseudoFromForeignIdField extends PseudoField {
             ) {
                 if ($this->relation1) throw new \Exception("Multiple X/1from1/X relations on PseudoFromForeignIdField[$this->name]");
                 $this->relation1 = &$relation;
+                $this->oid       = $this->relation1->oid;
             }
         }
+    }
+
+    public function dbObject()
+    {
+        return (count($this->relations) == 1
+            ? end($this->relations)->foreignKey
+            : NULL
+        );
     }
 }
 

@@ -36,11 +36,25 @@ class DB {
         return $this->framework->isFrameworkModuleTable($tablename);
     }
 
+    // --------------------------------------- General query interface
+    public function select($sql, $namedParameters = array()): array
+    {
+        $statement = $this->connection->prepare($sql);
+        foreach ($namedParameters as $name => $value) $statement->bindParam(":$name", $value);
+        $statement->execute();
+        return $statement->fetchAll(\PDO::FETCH_OBJ);
+    }
+
+    public function insert($sql, $namedParameters = array()): array
+    {
+        return $this->select($sql, $namedParameters);
+    }
+
     // --------------------------------------- Schema Queries
     public function actionFunctionsForTable(string $table): array
     {
-        $tableParts     = explode('_', $table);
-        $tableQualifier = implode('_', array_slice($tableParts, 3)); // legalcase
+        $tableParts     = explode('_', $table); // acorn_justice_legalcases
+        $tableQualifier = implode('_', array_slice($tableParts, 2)); // legalcases_*
         return (isset($tableParts[1]) ? $this->functions($tableParts[0], $tableParts[1], 'action', $tableQualifier) : array());
     }
 
@@ -52,7 +66,7 @@ class DB {
         $like .= ($qualifier1 ? "_$qualifier1" : '_%');
         $like .= ($qualifier2 ? "_$qualifier2" : '_%');
         $like .= '_%';
-        $statement = $this->connection->prepare("select proname as name, proargnames as parameters, proargtypes as types, obj_description(oid) as comment
+        $statement = $this->connection->prepare("select proname as name, proargnames as parameters, proargtypes as types, oid, obj_description(oid) as comment
             from pg_proc
             where proname like(:like)
             ORDER BY proname");
@@ -69,6 +83,7 @@ class DB {
                 $parameters[$name] = $types[$i];
             }
             $functions[$result->name] = array(
+                'oid'        => $result->oid,
                 'parameters' => $parameters,
                 'comment'    => $result->comment,
             );
@@ -81,7 +96,7 @@ class DB {
     {
         $comment = NULL;
 
-        $statement = $this->connection->prepare("SELECT pg_catalog.shobj_description(d.oid, 'pg_database') AS \"comment\"
+        $statement = $this->connection->prepare("SELECT d.oid, pg_catalog.shobj_description(d.oid, 'pg_database') AS \"comment\"
             FROM   pg_catalog.pg_database d
             WHERE  datname = :database");
         $statement->bindParam(':database', $this->database);
@@ -102,6 +117,7 @@ class DB {
     {
         $results = array();
 
+        // TODO: oid for comment write-back
         $statement = $this->connection->prepare("select table_schema as schema, table_name as name, table_type as type,
                 substring(obj_description(concat(table_schema, '.', table_name)::regclass, 'pg_class'), 'order: ([0-9]+)')::int as order,
                 obj_description(concat(table_schema, '.', table_name)::regclass, 'pg_class') as comment
@@ -128,7 +144,7 @@ class DB {
                 default:
                     throw new \Exception("Unknown object type [$row[type]]");
             }
-            $results[$object->fullyQualifiedName()] = $object;
+            if ($object->shouldProcess()) $results[$object->fullyQualifiedName()] = $object;
         }
 
         return $results;
@@ -139,6 +155,7 @@ class DB {
         // table-type: report (read-only)
         $results = array();
 
+        // TODO: oid for comment write-back
         $statement = $this->connection->prepare("select table_catalog, table_schema as schema, table_name as name,
                 substring(obj_description(concat(table_schema, '.', table_name)::regclass, 'pg_class'), 'order: ([0-9]+)')::int as order,
                 obj_description(concat(table_schema, '.', table_name)::regclass, 'pg_class') as comment
@@ -154,7 +171,7 @@ class DB {
         $statement->execute();
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
             $view = View::fromRow($this, $row);
-            $results[$view->fullyQualifiedName()] = $view;
+            if ($view->shouldProcess()) $results[$view->fullyQualifiedName()] = $view;
         }
 
         return $results;
@@ -164,6 +181,7 @@ class DB {
     {
         $results = array();
 
+        // TODO: oid for comment write-back
         $statement = $this->connection->prepare("SELECT *, pg_catalog.col_description(concat(table_schema, '.', table_name)::regclass::oid, ordinal_position) as comment
             FROM information_schema.columns
             WHERE   table_schema = :schema
@@ -175,7 +193,7 @@ class DB {
         $statement->execute();
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
             $column = Column::fromRow($table, $row);
-            $results[$column->name] = $column;
+            if ($column->shouldProcess()) $results[$column->name] = $column;
         }
 
         return $results;
@@ -192,6 +210,7 @@ class DB {
 
         $results   = array();
         $statement = $this->connection->prepare("select
+                    constr.oid                as oid,
                     constr.conname            as name,
                     descr.description         as comment,
 
@@ -227,8 +246,8 @@ class DB {
         $statement->execute();
 
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
-            $object = ForeignKey::fromRow($column, $to, $row);
-            $results[$object->fullyQualifiedName()] = $object;
+            $fk = ForeignKey::fromRow($column, $to, $row);
+            if ($fk->shouldProcess()) $results[$fk->fullyQualifiedName()] = $fk;
         }
 
         return $results;
@@ -245,6 +264,18 @@ class DB {
     }
 
     // --------------------------------------- Actions
+    public function addColumn($table, $column, $type, $gen = NULL)
+    {
+        $sql = 'ALTER TABLE IF EXISTS :table ADD COLUMN :column :type';
+        if ($gen) $sql .= ' GENERATED ALWAYS AS (:gen) STORED';
+        $this->connection->prepare($sql);
+        $statement->bindParam('table',  $table);
+        $statement->bindParam('column', $column);
+        $statement->bindParam('type',   $type);
+        if ($gen) $statement->bindParam('gen', $gen);
+        $statement->execute();
+    }
+
     public function runSQLFile(string $filePath, array $prepare = array(), int $indent = 4)
     {
         $indentString = str_repeat(' ', $indent * 2);

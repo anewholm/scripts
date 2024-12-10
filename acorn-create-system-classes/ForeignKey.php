@@ -2,6 +2,7 @@
 
 class ForeignKey {
     protected $column;
+    public $oid;
     public $name;
 
     // Display ONLY
@@ -57,8 +58,8 @@ class ForeignKey {
         }
         foreach (\Spyc::YAMLLoadString($this->comment) as $name => $value) {
             $nameCamel = Str::camel($name);
-            $tableName = $this->column->table->name;
-            if (!property_exists($this, $nameCamel)) throw new \Exception("Property [$nameCamel] does not exist on [$this->table_from_name.$column->name.$this->name]");
+            if (!property_exists($this, $nameCamel)) 
+                throw new \Exception("Property [$nameCamel] does not exist on [$this->table_from_name.$column->name.$this->name]");
             if (!isset($this->$nameCamel)) $this->$nameCamel = $value;
         }
 
@@ -68,43 +69,54 @@ class ForeignKey {
         $this->tableTo    = Table::get($this->table_to_name, $this->table_to_schema);
         $this->columnTo   = &$this->tableTo->columns[$this->table_to_column];
 
-        // Standard fields also appear on Pivot tables
-        // which can confuse the FK type understandings
-        // e.g. created_at_event_id, created_by_user_id
-        // so we can auto-hint from the column settings here
-        if ($this->columnFrom->autoFKType) $this->type = $this->columnFrom->autoFKType;
-        if ($this->columnTo->autoFKType)   $this->type = $this->columnTo->autoFKType;
-
-        // Checks
         if ($this->shouldProcess()) {
-            $tableName = $this->column->table->name;
-            $columnFQN = "$tableName.$this->column";
-            if ($this->columnFrom->name == 'id')
-                throw new \Exception("FK type [$this->type] on column objects [$columnFQN] is from the ID column");
-            if ($this->columnTo->name != 'id')
-                throw new \Exception("FK type [$this->type] on column objects [$columnFQN] is not to an ID column");
-            if ($this->to   && $this->column->name != $this->table_to_column)
-                throw new \Exception("FK type [$this->type] on column objects [$columnFQN] is different to column to data [$this->table_to_name.$this->table_to_column]");
-            if ($this->from && $this->column->name != $this->table_from_column)
-                throw new \Exception("FK type [$this->type] on column objects [$columnFQN] is different to column from data [$this->table_from_name.$this->table_from_column]");
-            if ($this->isUnknownType()) {
-                $direction = $this->directionName();
-                $details   = array(
-                    $this->isSelfReferencing(),
-                    $this->tableFrom->isContentTable(),
-                    $this->columnFrom->isForeignID(),
-                    $this->tableTo->isContentTable(),
-                    $this->columnTo->isTheIdColumn()
-                );
-                $detailsString = implode('|', $details);
-                throw new \Exception("Foreign Key [$this->name] on [$this->tableFrom] $direction [$columnFQN] has no type with [$detailsString]");
-            }
+            // Standard fields also appear on Pivot tables
+            // which can confuse the FK type understandings
+            // e.g. created_at_event_id, created_by_user_id
+            // so we can auto-hint from the column settings here
+            if ($this->columnFrom->autoFKType) $this->type = $this->columnFrom->autoFKType;
+            if ($this->columnTo->autoFKType)   $this->type = $this->columnTo->autoFKType;
+
+            // Checks
+            $this->check();
+        }
+    }
+
+    protected function check()
+    {
+        $tableName = $this->column->table->name;
+        $columnFQN = "$tableName.$this->column";
+        if ($this->columnFrom->name == 'id')
+            throw new \Exception("FK type [$this->type] on column objects [$columnFQN] is from the ID column");
+        if ($this->columnTo->name != 'id')
+            throw new \Exception("FK type [$this->type] on column objects [$columnFQN] is not to an ID column");
+        if ($this->to   && $this->column->name != $this->table_to_column)
+            throw new \Exception("FK type [$this->type] on column objects [$columnFQN] is different to column to data [$this->table_to_name.$this->table_to_column]");
+        if ($this->from && $this->column->name != $this->table_from_column)
+            throw new \Exception("FK type [$this->type] on column objects [$columnFQN] is different to column from data [$this->table_from_name.$this->table_from_column]");
+        if ($this->isUnknownType()) {
+            $direction = $this->directionName();
+            $details   = array(
+                $this->isSelfReferencing(),
+                $this->tableFrom->isContentTable(),
+                $this->columnFrom->isForeignID(),
+                $this->tableTo->isContentTable(),
+                $this->columnTo->isTheIdColumn()
+            );
+            $detailsString = implode('|', $details);
+            throw new \Exception("Foreign Key [$this->name] on [$this->tableFrom] $direction [$columnFQN] has no type with [$detailsString]");
         }
     }
 
     protected function db()
     {
         return $this->column->db();
+    }
+
+    public function dbLangPath()
+    {
+        $tableLangPath = $this->tableFrom->dbLangPath();
+        return "$tableLangPath.foreignkeys.$this->name";
     }
 
     // ----------------------------------------- Display
@@ -238,7 +250,12 @@ class ForeignKey {
 
     public function shouldProcess(): bool
     {
-        return (!$this->system && !$this->todo);
+        return ($this->tableFrom->shouldProcess() 
+            &&  $this->columnFrom->shouldProcess()
+            &&  $this->tableTo->shouldProcess()
+            &&  $this->columnTo->shouldProcess()
+            && !$this->system && !$this->todo
+        );
     }
 
     public function type(): string
