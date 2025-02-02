@@ -81,6 +81,11 @@ class Plugin {
 
             $this->models[$model->name] = &$model;
         }
+        //else if ($table->isPivotTable()) {
+            // TODO: hasManyDeep likes intermediate models?
+            //$model = new Model($this, $table);
+            //$this->models[$model->name] = &$model;
+        //}
 
         if ($table->isCentralTable()) {
             // Leaf system

@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	
+	xmlns:georss="http://www.georss.org/georss"
+	xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
+	
+	>
+<channel>
+	<title>
+	Comments for WordPress Developer Resources | Developer.WordPress.org	</title>
+	<atom:link href="https://developer.wordpress.org/comments/feed/" rel="self" type="application/rss+xml" />
+	<link>https://developer.wordpress.org</link>
+	<description>Official WordPress Developer Resources</description>
+	<lastBuildDate>Thu, 28 Nov 2024 11:04:39 +0000</lastBuildDate>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.8-alpha-59677</generator>
+	<item>
+		<title>
+		Comment on wp_theme_json_data_theme by maximebj		</title>
+		<link>https://developer.wordpress.org/reference/hooks/wp_theme_json_data_theme/#comment-7228</link>
+
+		<dc:creator><![CDATA[maximebj]]></dc:creator>
+		<pubDate>Thu, 28 Nov 2024 11:04:39 +0000</pubDate>
+		<guid isPermaLink="false">https://developer.wordpress.org/reference/hooks/wp_theme_json_data_theme/#comment-7228</guid>
+
+					<description><![CDATA[Split &lt;code&gt;theme.json&lt;/code&gt; in multiple files:
+
+[php]
+function wpdocs_compose_theme_json( $theme_json )
+{
+    // Load sub files
+    $theme_styles_raw   = file_get_contents( get_template_directory() . &#039;/theme-styles.json&#039; );
+    $theme_settings_raw = file_get_contents( get_template_directory() . &#039;/theme-settings.json&#039; );
+
+    // Convert JSON to array
+    $theme_styles   = json_decode( $theme_styles_raw, true );
+    $theme_settings = json_decode( $theme_settings_raw, true );
+
+    // Inject data
+    $new_data = [
+        &#039;version&#039;  =&#062; 3, // Mandatory, or it won’t work
+        &#039;settings&#039; =&#062; $theme_settings[&#039;settings&#039;],
+        &#039;styles&#039;   =&#062; $theme_styles[&#039;styles&#039;],
+    ];
+
+    // Update WordPress&#039; theme.json
+    return $theme_json-&#062;update_with( $new_data );
+}
+add_filter( &#039;wp_theme_json_data_theme&#039;, &#039;wpdocs_compose_theme_json&#039; );
+[/php]
+
+In &lt;code&gt;theme-settings.json&lt;/code&gt;:
+
+[js]
+{
+    &quot;$schema&quot;: &quot;https://schemas.wp.org/trunk/theme.json&quot;,
+    &quot;settings&quot;: {
+		    &quot;color&quot;: {}
+	  }
+}
+[/js]
+]]></description>
+			<content:encoded><![CDATA[<p>Split <code>theme.json</code> in multiple files:</p>
+<pre class="wp-block-code"><code lang="php" class="language-php line-numbers">function wpdocs_compose_theme_json( $theme_json )
+{
+    // Load sub files
+    $theme_styles_raw   = file_get_contents( get_template_directory() . '/theme-styles.json' );
+    $theme_settings_raw = file_get_contents( get_template_directory() . '/theme-settings.json' );
+
+    // Convert JSON to array
+    $theme_styles   = json_decode( $theme_styles_raw, true );
+    $theme_settings = json_decode( $theme_settings_raw, true );
+
+    // Inject data
+    $new_data = [
+        'version'  =&gt; 3, // Mandatory, or it won’t work
+        'settings' =&gt; $theme_settings['settings'],
+        'styles'   =&gt; $theme_styles['styles'],
+    ];
+
+    // Update WordPress' theme.json
+    return $theme_json-&gt;update_with( $new_data );
+}
+add_filter( 'wp_theme_json_data_theme', 'wpdocs_compose_theme_json' );</code></pre>
+<p>In <code>theme-settings.json</code>:</p>
+<pre class="wp-block-code"><code lang="js" class="language-js line-numbers">{
+    "$schema": "https://schemas.wp.org/trunk/theme.json",
+    "settings": {
+		    "color": {}
+	  }
+}</code></pre>
+]]></content:encoded>
+		
+			</item>
+		<item>
+		<title>
+		Comment on wp_theme_json_data_theme by maximebj		</title>
+		<link>https://developer.wordpress.org/reference/hooks/wp_theme_json_data_theme/#comment-7227</link>
+
+		<dc:creator><![CDATA[maximebj]]></dc:creator>
+		<pubDate>Thu, 28 Nov 2024 11:03:04 +0000</pubDate>
+		<guid isPermaLink="false">https://developer.wordpress.org/reference/hooks/wp_theme_json_data_theme/#comment-7227</guid>
+
+					<description><![CDATA[Add new colors to an existing palette and merge configuration:
+
+[php]
+function wpdocs_merge_custom_configuration( $theme_json ) {
+    $current_data = $theme_json-&#062;get_data();
+
+    $new_data = array(
+        &#039;version&#039;  =&#062; 3, // Mandatory, or it won’t work
+        &#039;settings&#039; =&#062; array(
+            &#039;color&#039; =&#062; array(
+                &#039;palette&#039; =&#062; array_merge($current_data[‘settings’][‘color’][‘palette’][‘theme’], array(
+                    array(
+                        &#039;slug&#039;  =&#062; &#039;base&#039;,
+                        &#039;color&#039; =&#062; &#039;white&#039;,
+                        &#039;name&#039;  =&#062; __( &#039;Base&#039;, &#039;textdomain&#039; ),
+                    ),
+                    array(
+                        &#039;slug&#039;  =&#062; &#039;contrast&#039;,
+                        &#039;color&#039; =&#062; &#039;black&#039;,
+                        &#039;name&#039;  =&#062; __( &#039;Contrast&#039;, &#039;textdomain&#039; ),
+                    ),
+                )),
+            ),
+        ),
+    );
+
+    return $theme_json-&#062;update_with( $new_data );
+}
+add_filter( &#039;wp_theme_json_data_theme&#039;, &#039;wpdocs_merge_custom_configuration&#039; );
+[/php]]]></description>
+			<content:encoded><![CDATA[<p>Add new colors to an existing palette and merge configuration:</p>
+<pre class="wp-block-code"><code lang="php" class="language-php line-numbers">function wpdocs_merge_custom_configuration( $theme_json ) {
+    $current_data = $theme_json-&gt;get_data();
+
+    $new_data = array(
+        'version'  =&gt; 3, // Mandatory, or it won’t work
+        'settings' =&gt; array(
+            'color' =&gt; array(
+                'palette' =&gt; array_merge($current_data[‘settings’][‘color’][‘palette’][‘theme’], array(
+                    array(
+                        'slug'  =&gt; 'base',
+                        'color' =&gt; 'white',
+                        'name'  =&gt; __( 'Base', 'textdomain' ),
+                    ),
+                    array(
+                        'slug'  =&gt; 'contrast',
+                        'color' =&gt; 'black',
+                        'name'  =&gt; __( 'Contrast', 'textdomain' ),
+                    ),
+                )),
+            ),
+        ),
+    );
+
+    return $theme_json-&gt;update_with( $new_data );
+}
+add_filter( 'wp_theme_json_data_theme', 'wpdocs_merge_custom_configuration' );</code></pre>
+]]></content:encoded>
+		
+			</item>
+		<item>
+		<title>
+		Comment on add_submenu_page() by Lance Cleveland		</title>
+		<link>https://developer.wordpress.org/reference/functions/add_submenu_page/#comment-7224</link>
+
+		<dc:creator><![CDATA[Lance Cleveland]]></dc:creator>
+		<pubDate>Wed, 27 Nov 2024 21:59:34 +0000</pubDate>
+		<guid isPermaLink="false">http://developer.wordpress.org/reference/functions/add_submenu_page/#comment-7224</guid>
+
+					<description><![CDATA[&lt;strong&gt;Documentation Errror&lt;/strong&gt;
+
+The position parameter CANNOT be a float as documented, the code will cast this to absint() , dropping anything after the decimal.     Use int only.
+
+&lt;strong&gt;Functional Issue&lt;/strong&gt;
+
+The position parameter is only useful within a stack of calls from a single module (class/method combo, plugin, etc.) as it only does a temporary in-memory sort based on the position int.  This is useless if you attach submenu entries from multiple classes or even different plugins that each add submenus to the same main menu.
+
+The documentation and/or codebase needs to be updated.]]></description>
+			<content:encoded><![CDATA[<p><strong>Documentation Errror</strong></p>
+<p>The position parameter CANNOT be a float as documented, the code will cast this to absint() , dropping anything after the decimal.     Use int only.</p>
+<p><strong>Functional Issue</strong></p>
+<p>The position parameter is only useful within a stack of calls from a single module (class/method combo, plugin, etc.) as it only does a temporary in-memory sort based on the position int.  This is useless if you attach submenu entries from multiple classes or even different plugins that each add submenus to the same main menu.</p>
+<p>The documentation and/or codebase needs to be updated.</p>
+]]></content:encoded>
+		
+			</item>
+		<item>
+		<title>
+		Comment on load_plugin_textdomain() by Pascal Birchler		</title>
+		<link>https://developer.wordpress.org/reference/functions/load_plugin_textdomain/#comment-7183</link>
+
+		<dc:creator><![CDATA[Pascal Birchler]]></dc:creator>
+		<pubDate>Thu, 17 Oct 2024 14:17:21 +0000</pubDate>
+		<guid isPermaLink="false">http://developer.wordpress.org/reference/functions/load_plugin_textdomain/#comment-7183</guid>
+
+					<description><![CDATA[In reply to &lt;a href=&quot;https://developer.wordpress.org/reference/functions/load_plugin_textdomain/#comment-7147&quot;&gt;FARAZFRANK&lt;/a&gt;.
+
+It&#039;s exactly the &lt;strong&gt;opposite&lt;/strong&gt;. &lt;code&gt;plugins_loaded&lt;/code&gt; is before &lt;code&gt;init&lt;/code&gt; and is &lt;strong&gt;too early&lt;/strong&gt; for loading translations.]]></description>
+			<content:encoded><![CDATA[<p>In reply to <a href="https://developer.wordpress.org/reference/functions/load_plugin_textdomain/#comment-7147">FARAZFRANK</a>.</p>
+<p>It&#8217;s exactly the <strong>opposite</strong>. <code>plugins_loaded</code> is before <code>init</code> and is <strong>too early</strong> for loading translations.</p>
+]]></content:encoded>
+		
+			</item>
+		<item>
+		<title>
+		Comment on add_submenu_page() by davidhbrown		</title>
+		<link>https://developer.wordpress.org/reference/functions/add_submenu_page/#comment-7177</link>
+
+		<dc:creator><![CDATA[davidhbrown]]></dc:creator>
+		<pubDate>Mon, 07 Oct 2024 15:40:39 +0000</pubDate>
+		<guid isPermaLink="false">http://developer.wordpress.org/reference/functions/add_submenu_page/#comment-7177</guid>
+
+					<description><![CDATA[In reply to &lt;a href=&quot;https://developer.wordpress.org/reference/functions/add_submenu_page/#comment-4596&quot;&gt;isabel104&lt;/a&gt;.
+
+Thank you so much, Isabel104! Another symptom I noticed is that the links to the submenu pages that weren&#039;t working were just &lt;code&gt;.../wp-admin/&lt;em&gt;menu_slug&lt;/em&gt;&lt;/code&gt; Once I fixed this as described here, they were the expected &lt;code&gt;.../wp-admin/admin.php?page=&lt;em&gt;menu_slug&lt;/em&gt;&lt;/code&gt;]]></description>
+			<content:encoded><![CDATA[<p>In reply to <a href="https://developer.wordpress.org/reference/functions/add_submenu_page/#comment-4596">isabel104</a>.</p>
+<p>Thank you so much, Isabel104! Another symptom I noticed is that the links to the submenu pages that weren&#8217;t working were just <code>.../wp-admin/<em>menu_slug</em></code> Once I fixed this as described here, they were the expected <code>.../wp-admin/admin.php?page=<em>menu_slug</em></code></p>
+]]></content:encoded>
+		
+			</item>
+		<item>
+		<title>
+		Comment on have_posts() by provopeople		</title>
+		<link>https://developer.wordpress.org/reference/functions/have_posts/#comment-7174</link>
+
+		<dc:creator><![CDATA[provopeople]]></dc:creator>
+		<pubDate>Tue, 01 Oct 2024 16:44:57 +0000</pubDate>
+		<guid isPermaLink="false">http://developer.wordpress.org/reference/functions/have_posts/#comment-7174</guid>
+
+					<description><![CDATA[In reply to &lt;a href=&quot;https://developer.wordpress.org/reference/functions/have_posts/#comment-5800&quot;&gt;johnhawley&lt;/a&gt;.
+
+Infinite loop? Loop that hangs your website?   Look at the section about Infinite Loops then scan through the other solutions (that didn&#039;t work for me) and finally I came up John Hawley&#039;s comment and that works for me. Thanks to John for posting!]]></description>
+			<content:encoded><![CDATA[<p>In reply to <a href="https://developer.wordpress.org/reference/functions/have_posts/#comment-5800">johnhawley</a>.</p>
+<p>Infinite loop? Loop that hangs your website?   Look at the section about Infinite Loops then scan through the other solutions (that didn&#8217;t work for me) and finally I came up John Hawley&#8217;s comment and that works for me. Thanks to John for posting!</p>
+]]></content:encoded>
+		
+			</item>
+		<item>
+		<title>
+		Comment on wp_check_filetype_and_ext by webdisrupt		</title>
+		<link>https://developer.wordpress.org/reference/hooks/wp_check_filetype_and_ext/#comment-7173</link>
+
+		<dc:creator><![CDATA[webdisrupt]]></dc:creator>
+		<pubDate>Mon, 30 Sep 2024 09:03:43 +0000</pubDate>
+		<guid isPermaLink="false">http://developer.wordpress.org/reference/hooks/wp_check_filetype_and_ext/#comment-7173</guid>
+
+					<description><![CDATA[You will want to use this filter as the function &lt;code&gt;finfo_file&lt;/code&gt; from PHP doesn’t always detect CSV files as &lt;code&gt;text/plain&lt;/code&gt; or &lt;code&gt;text/csv&lt;/code&gt;, instead it is tagged as &lt;code&gt;application/octet-stream&lt;/code&gt;.
+
+This creates a problem since WordPress will not allow you to upload the file to the library or even WooCommerce import and therefore you can use the filter as follows.
+
+The following code will help avoid using &lt;code&gt;ALLOW_UNFILTERED_UPLOADS&lt;/code&gt; when all you need to enable is one file type.
+
+[php]
+add_filter( &#039;wp_check_filetype_and_ext&#039;, function ( $data, $file, $filename ) {
+  // Get the extension of the uploaded file
+  $ext = pathinfo( $filename, PATHINFO_EXTENSION );
+
+  // Check if the file extension is CSV
+  if ( &#039;csv&#039; === $ext ) {
+      $data[‘ext’]  = &#039;csv&#039;;
+      $data[‘type’] = &#039;text/csv&#039;;
+  }
+
+  return $data;
+}, 10, 3 );
+[/php]]]></description>
+			<content:encoded><![CDATA[<p>You will want to use this filter as the function <code>finfo_file</code> from PHP doesn’t always detect CSV files as <code>text/plain</code> or <code>text/csv</code>, instead it is tagged as <code>application/octet-stream</code>.</p>
+<p>This creates a problem since WordPress will not allow you to upload the file to the library or even WooCommerce import and therefore you can use the filter as follows.</p>
+<p>The following code will help avoid using <code>ALLOW_UNFILTERED_UPLOADS</code> when all you need to enable is one file type.</p>
+<pre class="wp-block-code"><code lang="php" class="language-php line-numbers">add_filter( 'wp_check_filetype_and_ext', function ( $data, $file, $filename ) {
+  // Get the extension of the uploaded file
+  $ext = pathinfo( $filename, PATHINFO_EXTENSION );
+
+  // Check if the file extension is CSV
+  if ( 'csv' === $ext ) {
+      $data[‘ext’]  = 'csv';
+      $data[‘type’] = 'text/csv';
+  }
+
+  return $data;
+}, 10, 3 );</code></pre>
+]]></content:encoded>
+		
+			</item>
+		<item>
+		<title>
+		Comment on wp_enqueue_block_style() by Lovro Hrust		</title>
+		<link>https://developer.wordpress.org/reference/functions/wp_enqueue_block_style/#comment-7172</link>
+
+		<dc:creator><![CDATA[Lovro Hrust]]></dc:creator>
+		<pubDate>Fri, 27 Sep 2024 22:37:24 +0000</pubDate>
+		<guid isPermaLink="false">https://developer.wordpress.org/reference/functions/wp_enqueue_block_style/#comment-7172</guid>
+
+					<description><![CDATA[In reply to &lt;a href=&quot;https://developer.wordpress.org/reference/functions/wp_enqueue_block_style/#comment-6261&quot;&gt;Lovro Hrust&lt;/a&gt;.
+
+However, if you want to load block css optimally, only if block is present on page, you should use &lt;code&gt;add_filter( &#039;should_load_separate_core_block_assets&#039;, &#039;__return_true&#039; );&lt;/code&gt; in functions.php or plugin if you call &lt;code&gt;wp_enqueue_block_style()&lt;/code&gt; without hook. This setting should happen automatically if you are using FSE, but adding this filter to true happens in theme.php which is called after enqueueing starts. Alternatively, use &lt;code&gt;after_setup_theme&lt;/code&gt; hook to call this function, like in the example from abditsori.]]></description>
+			<content:encoded><![CDATA[<p>In reply to <a href="https://developer.wordpress.org/reference/functions/wp_enqueue_block_style/#comment-6261">Lovro Hrust</a>.</p>
+<p>However, if you want to load block css optimally, only if block is present on page, you should use <code>add_filter( 'should_load_separate_core_block_assets', '__return_true' );</code> in functions.php or plugin if you call <code>wp_enqueue_block_style()</code> without hook. This setting should happen automatically if you are using FSE, but adding this filter to true happens in theme.php which is called after enqueueing starts. Alternatively, use <code>after_setup_theme</code> hook to call this function, like in the example from abditsori.</p>
+]]></content:encoded>
+		
+			</item>
+		<item>
+		<title>
+		Comment on unregister_post_type() by Muhammad Saqib Sarwar		</title>
+		<link>https://developer.wordpress.org/reference/functions/unregister_post_type/#comment-7171</link>
+
+		<dc:creator><![CDATA[Muhammad Saqib Sarwar]]></dc:creator>
+		<pubDate>Tue, 24 Sep 2024 15:45:14 +0000</pubDate>
+		<guid isPermaLink="false">#comment-7171</guid>
+
+					<description><![CDATA[Disable announcement CPT if it is not main site.
+
+[php]
+function disable_announcement_cpt_for_subsite(): void {
+		if ( ! is_main_site() ) {
+			unregister_post_type( &#039;announcement&#039; );
+		}
+	}
+add_action( &#039;init&#039;, &#039;disable_announcement_cpt_for_subsite&#039; );
+[/php]]]></description>
+			<content:encoded><![CDATA[<p>Disable announcement CPT if it is not main site.</p>
+<pre class="wp-block-code"><code lang="php" class="language-php line-numbers">function disable_announcement_cpt_for_subsite(): void {
+		if ( ! is_main_site() ) {
+			unregister_post_type( 'announcement' );
+		}
+	}
+add_action( 'init', 'disable_announcement_cpt_for_subsite' );</code></pre>
+]]></content:encoded>
+		
+			</item>
+		<item>
+		<title>
+		Comment on WP_Style_Engine::compile_css() by Rocky Kev		</title>
+		<link>https://developer.wordpress.org/reference/classes/wp_style_engine/compile_css/#comment-7170</link>
+
+		<dc:creator><![CDATA[Rocky Kev]]></dc:creator>
+		<pubDate>Tue, 24 Sep 2024 03:37:04 +0000</pubDate>
+		<guid isPermaLink="false">https://developer.wordpress.org/reference/classes/wp_style_engine/compile_css/#comment-7170</guid>
+
+					<description><![CDATA[An example of it being used in this &lt;a href=&quot;https://developer.wordpress.org/news/2024/03/26/how-to-use-wordpress-react-components-for-plugin-pages/#displaying-the-announcement-bar-on-the-front-end&quot; rel=&quot;ugc&quot;&gt;developer blog post.&lt;/a&gt; 
+
+[php]
+$style = WP_Style_Engine::compile_css(
+    array(
+        &#039;background&#039; =&#062; &#039;var(–wp–preset–color–vivid-purple, #9b51e0)&#039;,
+        &#039;color&#039;      =&#062; &#039;var(–wp–preset–color–white, #ffffff)&#039;,
+        &#039;padding&#039;    =&#062; &#039;var(–wp–preset–spacing–20, 1.5rem)&#039;,
+        &#039;font-size&#039;  =&#062; $options[&#039;size&#039;],
+    ),
+);
+[/php]]]></description>
+			<content:encoded><![CDATA[<p>An example of it being used in this <a href="https://developer.wordpress.org/news/2024/03/26/how-to-use-wordpress-react-components-for-plugin-pages/#displaying-the-announcement-bar-on-the-front-end" rel="ugc">developer blog post.</a> </p>
+<pre class="wp-block-code"><code lang="php" class="language-php line-numbers">$style = WP_Style_Engine::compile_css(
+    array(
+        'background' =&gt; 'var(–wp–preset–color–vivid-purple, #9b51e0)',
+        'color'      =&gt; 'var(–wp–preset–color–white, #ffffff)',
+        'padding'    =&gt; 'var(–wp–preset–spacing–20, 1.5rem)',
+        'font-size'  =&gt; $options['size'],
+    ),
+);</code></pre>
+]]></content:encoded>
+		
+			</item>
+	</channel>
+</rss>

@@ -37,6 +37,39 @@ class DB {
     }
 
     // --------------------------------------- General query interface
+    public function serverID(bool $quote = FALSE): string
+    {
+        $results = $this->select("select id from acorn_servers where hostname=:hostname", array(
+            'hostname' => gethostname()
+        ));
+        $serverID = $results[0]->id;
+        if ($quote) $serverID = "'$serverID'";
+        return $serverID;
+    }
+
+    public function disableTriggers(): bool
+    {
+        $this->select("SET session_replication_role = replica;");
+        return TRUE;
+    }
+
+    public function enableTriggers(): bool
+    {
+        $this->select("SET session_replication_role = DEFAULT;");
+        return TRUE;
+    }
+
+    public function countRows(string $table): int
+    {
+        $results = $this->select("select count(*) from $table");
+        return $results[0]->count;
+    }
+
+    public function isEmpty(string $table): bool
+    {
+        return !$this->countRows($table);
+    }
+
     public function select($sql, $namedParameters = array()): array
     {
         $statement = $this->connection->prepare($sql);

@@ -692,14 +692,14 @@ class Model {
                 'labels'       => $relation->labelsPlural,
                 'fieldType'    => ($useRelationManager ? 'relationmanager' : 'relation'),
                 'nameFrom'     => $nameFrom,
-                'cssClasses'   => array(($useRelationManager ? '' : 'selected-only')),
+                'cssClasses'   => array('single-tab', 'single-tab-self', ($useRelationManager ? '' : 'selected-only')),
                 'tabLocation'  => $relation->tabLocation,
                 'debugComment' => "Tab multi-select for $relation on $plugin->name.$this->name",
                 'commentHtml'  => TRUE,
                 'comment'      => $relation->comment,
                 'icon'         => $relation->to->icon,
                 'tab'          => $tab,
-                // 'dependsOn' => array(),
+                'dependsOn'    => array('_paste' => TRUE),
                 // TODO: Select and Add ButtonFields
                 // TODO: Create button popup
 
@@ -726,7 +726,7 @@ class Model {
         */
         foreach ($this->relations1fromX() as $name => &$relation) {
             $nameFrom    = 'fully_qualified_name';
-            $dependsOn   = array();
+            $dependsOn   = array('_paste' => TRUE);
             // TODO: The tab should inherit the labels local key
             $tab         = $relation->to->translationKey(Model::PLURAL);
             $comment     = '';
@@ -818,7 +818,7 @@ class Model {
         foreach ($this->relationsXfromXSemi() as $name => &$relation) {
             $nameFrom    = 'fully_qualified_name';
             $tab         = $relation->pivotModel->translationKey(Model::PLURAL);
-            $dependsOn   = array();
+            $dependsOn   = array('_paste' => TRUE);
             $comment     = '';
             $valueFrom   = ($relation->to->hasField('name') ? 'name' : NULL); // For searcheable
             if ($relation->status == 'broken') continue;
@@ -942,7 +942,7 @@ class Model {
         foreach ($this->relationsXfromX() as $name => &$relation) {
             $nameFrom    = 'fully_qualified_name';
             $tab         = $relation->to->translationKey(Model::PLURAL);
-            $dependsOn   = array();
+            $dependsOn   = array('_paste' => TRUE);
             $comment     = '';
             $valueFrom   = ($relation->to->hasField('name') ? 'name' : NULL); // For searcheable
             if ($relation->status == 'broken') continue;

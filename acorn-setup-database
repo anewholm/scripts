@@ -63,7 +63,7 @@ echo
 
 if [ "$1" == "mysql" ]; then
 	db_port=3306
-	mysql_username=root
+	mysql_username=$USER
 	mysql_version=`mysql --version | cut -d " " -f 4 | cut -d "-" -f 1`
 	mysql_version_major=`echo $mysql_version | cut -d "." -f 1`
 	if [ -z $db_collation ]; then
@@ -72,7 +72,7 @@ if [ "$1" == "mysql" ]; then
 	fi
 	echo "${GREEN}INFO${NC}: MySQL version $mysql_version_major"
 	# --------------------------------- db
-	read -s -p "Please enter the root mysql password: " mysql_password
+	read -s -p "Please enter the ${YELLOW}$USER${NC} superuser mysql password: " mysql_password
 	db_exists=`mysql -u $mysql_username --password=$mysql_password -e "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '$db_name'" 2> /dev/null | wc -c`
 	echo ""
 	yn=y
