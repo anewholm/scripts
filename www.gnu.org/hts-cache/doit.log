@@ -1,8 +1,0 @@
-https://www.gnu.org/software/bash/manual/html_node/ -O www.gnu.org
-File generated automatically on Thu, 23 Jan 2025 16:53:40, do NOT edit
-
-To update a mirror, just launch httrack without any parameters
-The existing cache will be used (and modified)
-To have other options, retype all parameters and launch HTTrack
-To continue an interrupted mirror, just launch httrack without any parameters
-
