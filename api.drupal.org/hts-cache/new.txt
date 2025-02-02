@@ -1,4 +1,0 @@
-date	size'/'remotesize	flags(request:Update,Range state:File response:Modified,Chunked,gZipped)	statuscode	status ('servermsg')	MIME	Etag|Date	URL	localfile	(from URL)
-16:53:26	688/688	---M-Z	200	added ('OK')	text/plain	etag:%227eb-6275e5c2fb8de-gzip%22	https://api.drupal.org/robots.txt		(from )
-16:53:27	310/310	---M--	302	error ('Found')	text/html	date:Thu,%2023%20Jan%202025%2016:53:26%20GMT	https://api.drupal.org/	api.drupal.org/api.drupal.org/index.html	(from )
-16:53:28	22466/22466	---MCZ	200	added ('OK')	text/html	etag:%221737649288-gzip%22	https://api.drupal.org/api/drupal/11.x	api.drupal.org/api.drupal.org/api/drupal/11.html	(from https://api.drupal.org/)
