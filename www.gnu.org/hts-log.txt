@@ -1,0 +1,12 @@
+HTTrack3.49-5 launched on Thu, 23 Jan 2025 16:53:40 at https://www.gnu.org/software/bash/manual/html_node/
+(httrack https://www.gnu.org/software/bash/manual/html_node/ -O www.gnu.org )
+
+Information, Warnings and Errors reported for this mirror:
+note:	the hts-log.txt file, and hts-cache folder, may contain sensitive information,
+	such as username/password authentication for websites mirrored in this project
+	do not share these files/folders if you want these information to remain private
+
+16:53:43	Error: 	Exit requested by shell or user
+
+HTTrack Website Copier/3.49-5 mirror complete in 4 seconds : 3 links scanned, 2 files written (24884 bytes overall) [8226 bytes received at 2056 bytes/sec], 25285 bytes transferred using HTTP compression in 3 files, ratio 26%, 1.5 requests per connection
+(1 errors, 0 warnings, 0 messages)

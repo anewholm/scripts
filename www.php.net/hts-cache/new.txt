@@ -1,0 +1,5 @@
+date	size'/'remotesize	flags(request:Update,Range state:File response:Modified,Chunked,gZipped)	statuscode	status ('servermsg')	MIME	Etag|Date	URL	localfile	(from URL)
+16:53:45	149/149	---MCZ	200	added ('OK')	text/plain	etag:%2265c3a9d7-124%22	https://www.php.net/robots.txt		(from )
+16:53:46	31808/31808	---MCZ	200	added ('OK')	text/html	date:Thu,%2023%20Jan%202025%2016:01:09%20GMT	https://www.php.net/manual/en/	www.php.net/www.php.net/manual/en/index.html	(from )
+16:53:47	31808/31808	---MCZ	200	added ('OK')	text/html	date:Thu,%2023%20Jan%202025%2016:01:09%20GMT	https://www.php.net/manual/en/index.php	www.php.net/www.php.net/manual/en/index-2.html	(from https://www.php.net/manual/en/)
+16:53:47	26369/26369	---MCZ	200	added ('OK')	text/html	date:Thu,%2023%20Jan%202025%2016:00:37%20GMT	https://www.php.net/manual/en/getting-started.php	www.php.net/www.php.net/manual/en/getting-started.php	(from https://www.php.net/manual/en/)

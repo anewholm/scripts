@@ -1,0 +1,15 @@
+HTTrack3.49-5 launched on Thu, 23 Jan 2025 16:53:28 at https://api.jquery.com/
+(httrack https://api.jquery.com/ -O api.jquery.com )
+
+Information, Warnings and Errors reported for this mirror:
+note:	the hts-log.txt file, and hts-cache folder, may contain sensitive information,
+	such as username/password authentication for websites mirrored in this project
+	do not share these files/folders if you want these information to remain private
+
+16:53:36	Error: 	Exit requested by shell or user
+16:53:36	Warning: 	File not added due to mirror cancel: https://api.jquery.com/wp-content/themes/jquery/js/main.js?v=10baaffd
+16:53:37	Warning: 	File not added due to mirror cancel: https://api.jquery.com/wp-content/themes/jquery/js/main.js?v=10baaffd
+16:53:37	Error: 	"mirror stopped by user" (-1) at link https://api.jquery.com/wp-content/themes/jquery/js/main.js?v=10baaffd (from https://api.jquery.com/)
+
+HTTrack Website Copier/3.49-5 mirror complete in 9 seconds : 7 links scanned, 6 files written (412833 bytes overall) [52183 bytes received at 5798 bytes/sec], 412944 bytes transferred using HTTP compression in 7 files, ratio 11%, 3.5 requests per connection
+(2 errors, 2 warnings, 0 messages)
