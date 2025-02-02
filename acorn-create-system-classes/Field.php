@@ -28,6 +28,7 @@ class Field {
     public $fieldKey;
     public $fieldKeyQualifier; // Should always be added on to the fields.yaml name
     public $fieldType;
+    public $length;
     public $hidden       = FALSE; // Set during __construct
     public $disabled     = FALSE;
     public $required     = TRUE;
@@ -70,7 +71,7 @@ class Field {
     public $buttons      = array(); // Of new ButtonField()s
     public $rlButtons    = array(); // On the relationmanager
     public $goto;
-    public $rule;
+    public $rules = array();
     public $controller; // For popups
 
     // Lists columns.yaml
@@ -166,6 +167,9 @@ class Field {
                 $fieldDefinition['fieldType']     = 'switch';
                 $fieldDefinition['columnType']    = 'partial';
                 $fieldDefinition['columnPartial'] = 'tick';
+                break;
+            case 'char':
+                $fieldDefinition['length']     = 1;
                 break;
             case 'money':
                 $tableName = $column->table->name;
@@ -450,10 +454,10 @@ class ForeignIdField extends Field {
                 if ($this->relation1) {
                     // AA/Models/Server has no controller
                     if ($controller = $this->relation1->to->controller(Model::NULL_IF_NOT_ONLY_1)) {
-                        // TODO: Comment translation
+                        // TODO: Comment and model name translation
                         $controllerUrl = $controller->absoluteBackendUrl();
                         $title         = $this->relation1->to->name;
-                        $this->fieldComment  = "<span class='view-add-models new-page'>view / add <a tabindex='-1' href='$controllerUrl'>$title</a></span>";
+                        $this->fieldComment  = "<span class='view-add-models'>acorn::lang.helpblock.view_add <a tabindex='-1' href='$controllerUrl'>$title</a></span>";
                         $this->fieldComment .= "<a tabindex='-1' target='_blank' href='$controllerUrl' class='goto-form-group-selection'></a>";
                         // TODO: This is actually for annotating checkbox lists, not selects, but it does nothing if it is a dropdown
                         // $goto = $controllerUrl;

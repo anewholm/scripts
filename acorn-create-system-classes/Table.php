@@ -74,6 +74,15 @@ class Table {
         return self::$tables[$qualifiedName];
     }
 
+    static protected function blockingAlert(string $message, string $level = 'WARNING'): void
+    {
+        global $YELLOW, $NC;
+
+        print("$YELLOW$level$NC: $message. Continue (y)? ");
+        $yn = readline();
+        if (strtolower($yn) == 'n') exit(0);
+    }
+
     protected function __construct(DB &$db, ...$properties)
     {
         $this->db = &$db;
@@ -82,7 +91,7 @@ class Table {
         }
         foreach (\Spyc::YAMLLoadString($this->comment) as $name => $value) {
             $nameCamel = Str::camel($name);
-            if (!property_exists($this, $nameCamel)) throw new \Exception("Property [$nameCamel] does not exist on [$this->name]");
+            if (!property_exists($this, $nameCamel)) self::blockingAlert("Property [$nameCamel] does not exist on [$this->name]");
             if (!isset($this->$nameCamel)) $this->$nameCamel = $value;
         }
 
@@ -167,6 +176,11 @@ class Table {
     public function db()
     {
         return $this->db;
+    }
+
+    public function isEmpty(): bool
+    {
+        return $this->db->isEmpty($this->name);
     }
 
     // ----------------------------------------- Display

@@ -1,0 +1,15 @@
+HTTrack3.49-5 launched on Thu, 23 Jan 2025 16:53:25 at https://api.drupal.org
+(httrack https://api.drupal.org -O api.drupal.org )
+
+Information, Warnings and Errors reported for this mirror:
+note:	the hts-log.txt file, and hts-cache folder, may contain sensitive information,
+	such as username/password authentication for websites mirrored in this project
+	do not share these files/folders if you want these information to remain private
+
+16:53:27	Warning: 	Found for https://api.drupal.org/
+16:53:27	Warning: 	File has moved from https://api.drupal.org/ to /api/drupal/11.x
+16:53:27	Error: 	Exit requested by shell or user
+16:53:27	Warning: 	File not added due to mirror cancel: https://api.drupal.org/api/drupal/11.x
+
+HTTrack Website Copier/3.49-5 mirror complete in 3 seconds : 3 links scanned, 1 files written (22466 bytes overall) [10275 bytes received at 3425 bytes/sec], 23154 bytes transferred using HTTP compression in 2 files, ratio 31%, 3.0 requests per connection
+(1 errors, 3 warnings, 0 messages)

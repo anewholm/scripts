@@ -1,0 +1,4 @@
+date	size'/'remotesize	flags(request:Update,Range state:File response:Modified,Chunked,gZipped)	statuscode	status ('servermsg')	MIME	Etag|Date	URL	localfile	(from URL)
+16:53:42	401/401	---M-Z	200	added ('OK')	text/plain	etag:%224b0-5ef144aba6595-gzip%22	https://www.gnu.org/robots.txt		(from )
+16:53:43	21488/21488	---M-Z	200	added ('OK')	text/html	date:Thu,%2023%20Jan%202025%2016:53:42%20GMT	https://www.gnu.org/software/bash/manual/html_node/	www.gnu.org/www.gnu.org/software/bash/manual/html_node/index.html	(from )
+16:53:43	3396/3396	---M-Z	200	added ('OK')	text/html	date:Thu,%2023%20Jan%202025%2016:53:43%20GMT	https://www.gnu.org/software/bash/manual/html_node/Indexes.html	www.gnu.org/www.gnu.org/software/bash/manual/html_node/Indexes.html	(from https://www.gnu.org/software/bash/manual/html_node/)

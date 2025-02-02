@@ -1,0 +1,4 @@
+date	size'/'remotesize	flags(request:Update,Range state:File response:Modified,Chunked,gZipped)	statuscode	status ('servermsg')	MIME	Etag|Date	URL	localfile	(from URL)
+16:53:39	147/147	---M-Z	200	added ('OK')	text/plain	date:Thu,%2023%20Jan%202025%2010:48:36%20GMT	https://www.postgresql.org/robots.txt		(from )
+16:53:39	26314/26314	---MCZ	200	added ('OK')	text/html	date:Thu,%2023%20Jan%202025%2008:01:39%20GMT	https://www.postgresql.org/docs/16/	www.postgresql.org/www.postgresql.org/docs/16/index.html	(from )
+16:53:40	26314/26314	---MCZ	200	added ('OK')	text/html	date:Thu,%2023%20Jan%202025%2015:05:50%20GMT	https://www.postgresql.org/docs/16/index.html	www.postgresql.org/www.postgresql.org/docs/16/index-2.html	(from https://www.postgresql.org/docs/16/)

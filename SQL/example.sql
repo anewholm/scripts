@@ -118,16 +118,16 @@ COMMENT ON EXTENSION http IS 'HTTP client for PostgreSQL, allows web page retrie
 
 --
 -- TOC entry 398 (class 1255 OID 394085)
--- Name: fn_acornassociated_add_websockets_triggers(character varying, character varying); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_add_websockets_triggers(character varying, character varying); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acornassociated_add_websockets_triggers(schema character varying, table_prefix character varying) RETURNS void
+CREATE FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) RETURNS void
     LANGUAGE plpgsql
     AS $$
             
             begin
         -- SELECT * FROM information_schema.tables;
-        -- This assumes that fn_acornassociated_new_replicated_row() exists
+        -- This assumes that fn_acorn_new_replicated_row() exists
         -- Trigger on replpica also: ENABLE ALWAYS
         execute (
           SELECT string_agg(concat(
@@ -136,7 +136,7 @@ CREATE FUNCTION public.fn_acornassociated_add_websockets_triggers(schema charact
                 BEFORE INSERT
                 ON ', table_schema, '.', table_name, '
                 FOR EACH ROW
-                EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();',
+                EXECUTE FUNCTION public.fn_acorn_new_replicated_row();',
             'ALTER TABLE IF EXISTS ', table_schema, '.', table_name, ' ENABLE ALWAYS TRIGGER tr_', table_name, '_new_replicated_row;'
           ), ' ')
           FROM information_schema.tables
@@ -149,14 +149,14 @@ end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_add_websockets_triggers(schema character varying, table_prefix character varying) OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) OWNER TO justice;
 
 --
 -- TOC entry 480 (class 1255 OID 395440)
--- Name: fn_acornassociated_calendar_create_event(character varying); Type: FUNCTION; Schema: public; Owner: sanchez
+-- Name: fn_acorn_calendar_create_event(character varying); Type: FUNCTION; Schema: public; Owner: sz
 --
 
-CREATE FUNCTION public.fn_acornassociated_calendar_create_event(type character varying) RETURNS uuid
+CREATE FUNCTION public.fn_acorn_calendar_create_event(type character varying) RETURNS uuid
     LANGUAGE plpgsql
     AS $$
 declare 
@@ -170,13 +170,13 @@ begin
 	title := initcap(replace(type, '_', ' '));
 	-- We select the first user in the system
 	-- Intentional EXCEPTION if there is not one
-	select into owner_user_id fn_acornassociated_user_get_seed_user();
-	select into event_status_id id from public.acornassociated_calendar_event_status limit 1;
-	insert into public.acornassociated_calendar(name, owner_user_id) values(title, owner_user_id) returning id into calendar_id;
-	insert into public.acornassociated_calendar_event_type(name, colour, style) values('Create', '#091386', 'color:#fff') returning id into event_type_id;
+	select into owner_user_id fn_acorn_user_get_seed_user();
+	select into event_status_id id from public.acorn_calendar_event_status limit 1;
+	insert into public.acorn_calendar(name, owner_user_id) values(title, owner_user_id) returning id into calendar_id;
+	insert into public.acorn_calendar_event_type(name, colour, style) values('Create', '#091386', 'color:#fff') returning id into event_type_id;
 
-	insert into public.acornassociated_calendar_event(calendar_id, owner_user_id) values(calendar_id, owner_user_id) returning id into event_id;
-	insert into public.acornassociated_calendar_event_part(event_id, type_id, status_id, name, start, "end") 
+	insert into public.acorn_calendar_event(calendar_id, owner_user_id) values(calendar_id, owner_user_id) returning id into event_id;
+	insert into public.acorn_calendar_event_part(event_id, type_id, status_id, name, start, "end") 
 		values(event_id, event_type_id, event_status_id, concat(title, ' ', 'Create'), now(), now());
 
 	return event_id;
@@ -184,14 +184,14 @@ end;
 $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_calendar_create_event(type character varying) OWNER TO sanchez;
+ALTER FUNCTION public.fn_acorn_calendar_create_event(type character varying) OWNER TO sz;
 
 --
 -- TOC entry 468 (class 1255 OID 395553)
--- Name: fn_acornassociated_calendar_create_event(character varying, uuid); Type: FUNCTION; Schema: public; Owner: sanchez
+-- Name: fn_acorn_calendar_create_event(character varying, uuid); Type: FUNCTION; Schema: public; Owner: sz
 --
 
-CREATE FUNCTION public.fn_acornassociated_calendar_create_event(type character varying, user_id uuid) RETURNS uuid
+CREATE FUNCTION public.fn_acorn_calendar_create_event(type character varying, user_id uuid) RETURNS uuid
     LANGUAGE plpgsql
     AS $$
 declare 
@@ -206,16 +206,16 @@ begin
 	-- We select the first user in the system
 	-- Intentional EXCEPTION if there is not one
 	if user_id is null then 
-		owner_user_id := fn_acornassociated_user_get_seed_user();
+		owner_user_id := fn_acorn_user_get_seed_user();
 	else
 		owner_user_id := user_id;
 	end if;
-	select into event_status_id id from public.acornassociated_calendar_event_status limit 1;
-	insert into public.acornassociated_calendar(name, owner_user_id) values(title, owner_user_id) returning id into calendar_id;
-	insert into public.acornassociated_calendar_event_type(name, colour, style) values('Create', '#091386', 'color:#fff') returning id into event_type_id;
+	select into event_status_id id from public.acorn_calendar_event_status limit 1;
+	insert into public.acorn_calendar(name, owner_user_id) values(title, owner_user_id) returning id into calendar_id;
+	insert into public.acorn_calendar_event_type(name, colour, style) values('Create', '#091386', 'color:#fff') returning id into event_type_id;
 
-	insert into public.acornassociated_calendar_event(calendar_id, owner_user_id) values(calendar_id, owner_user_id) returning id into event_id;
-	insert into public.acornassociated_calendar_event_part(event_id, type_id, status_id, name, start, "end") 
+	insert into public.acorn_calendar_event(calendar_id, owner_user_id) values(calendar_id, owner_user_id) returning id into event_id;
+	insert into public.acorn_calendar_event_part(event_id, type_id, status_id, name, start, "end") 
 		values(event_id, event_type_id, event_status_id, concat(title, ' ', 'Create'), now(), now());
 
 	return event_id;
@@ -223,14 +223,14 @@ end;
 $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_calendar_create_event(type character varying, user_id uuid) OWNER TO sanchez;
+ALTER FUNCTION public.fn_acorn_calendar_create_event(type character varying, user_id uuid) OWNER TO sz;
 
 --
 -- TOC entry 414 (class 1255 OID 394764)
--- Name: fn_acornassociated_calendar_event_trigger_insert_function(); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_calendar_event_trigger_insert_function(); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acornassociated_calendar_event_trigger_insert_function() RETURNS trigger
+CREATE FUNCTION public.fn_acorn_calendar_event_trigger_insert_function() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
             declare
@@ -260,10 +260,10 @@ date_start date;
                 then
                     -- Settings
                     select coalesce((select substring("value" from '"days_before":"([^"]+)"')
-                        from system_settings where item = 'acornassociated_calendar_settings'), '1 year')
+                        from system_settings where item = 'acorn_calendar_settings'), '1 year')
                         into days_before;
                     select coalesce((select substring("value" from '"days_after":"([^"]+)"')
-                        from system_settings where item = 'acornassociated_calendar_settings'), '2 years')
+                        from system_settings where item = 'acorn_calendar_settings'), '2 years')
                         into days_after;
                     select extract('epoch' from days_before + days_after)/3600/24.0
                         into days_count;
@@ -271,10 +271,10 @@ date_start date;
                         into date_start;
 
                     -- For updates (id cannot change)
-                    delete from acornassociated_calendar_instance where event_part_id = NEW.id;
+                    delete from acorn_calendar_instance where event_part_id = NEW.id;
 
                     -- For inserts
-                    insert into acornassociated_calendar_instance("date", event_part_id, instance_start, instance_end, instance_num)
+                    insert into acorn_calendar_instance("date", event_part_id, instance_start, instance_end, instance_num)
                     select date_start + interval '1' day * gs as "date", ev.*
                     from generate_series(0, days_count) as gs
                     inner join (
@@ -302,7 +302,7 @@ date_start date;
                             NEW."end" + NEW.repeat_frequency * NEW."repeat" * gs.gs   as "instance_end",
                             gs.gs as instance_num
                         from generate_series(0, days_count) as gs
-                        inner join acornassociated_calendar_instance pcc on NEW.parent_event_part_id = pcc.event_part_id
+                        inner join acorn_calendar_instance pcc on NEW.parent_event_part_id = pcc.event_part_id
                             and (pcc.date, pcc.date + 1)
                             overlaps (NEW."start" + NEW.repeat_frequency * NEW."repeat" * gs.gs, NEW."end" + NEW.repeat_frequency * NEW."repeat" * gs.gs)
                         where not NEW.repeat is null
@@ -315,7 +315,7 @@ date_start date;
 
                     -- Recursively update child event parts
                     -- TODO: This could infinetly cycle
-                    update acornassociated_calendar_event_part set id = id
+                    update acorn_calendar_event_part set id = id
                         where parent_event_part_id = NEW.id
                         and not id = NEW.id;
                 end if;
@@ -325,14 +325,14 @@ end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_calendar_event_trigger_insert_function() OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_calendar_event_trigger_insert_function() OWNER TO justice;
 
 --
 -- TOC entry 485 (class 1255 OID 394750)
--- Name: fn_acornassociated_calendar_is_date(character varying, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_calendar_is_date(character varying, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acornassociated_calendar_is_date(s character varying, d timestamp with time zone) RETURNS timestamp with time zone
+CREATE FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp with time zone) RETURNS timestamp with time zone
     LANGUAGE plpgsql
     AS $$
             
@@ -350,14 +350,14 @@ end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_calendar_is_date(s character varying, d timestamp with time zone) OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp with time zone) OWNER TO justice;
 
 --
 -- TOC entry 467 (class 1255 OID 415345)
--- Name: fn_acornassociated_criminal_action_legalcase_defendants_cw(uuid, uuid); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_criminal_action_legalcase_defendants_cw(uuid, uuid); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acornassociated_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) RETURNS void
+CREATE FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) RETURNS void
     LANGUAGE plpgsql
     AS $$
 declare
@@ -365,41 +365,41 @@ declare
 	warrant_type_id uuid;
 begin
 	select into justice_legalcase_id cl.legalcase_id 
-		from public.acornassociated_criminal_legalcases cl
-		inner join public.acornassociated_criminal_legalcase_defendants ld on cl.id = ld.legalcase_id
+		from public.acorn_criminal_legalcases cl
+		inner join public.acorn_criminal_legalcase_defendants ld on cl.id = ld.legalcase_id
 		where ld.id = p_id;
-	select into warrant_type_id id from public.acornassociated_justice_warrant_types limit 1;
+	select into warrant_type_id id from public.acorn_justice_warrant_types limit 1;
 	
-	insert into public.acornassociated_justice_warrants(user_id, created_at_event_id, created_by_user_id, warrant_type_id, legalcase_id)
+	insert into public.acorn_justice_warrants(user_id, created_at_event_id, created_by_user_id, warrant_type_id, legalcase_id)
 		select user_id,
-			public.fn_acornassociated_calendar_create_event('create_warrant', p_user_id),
+			public.fn_acorn_calendar_create_event('create_warrant', p_user_id),
 			p_user_id,
 			warrant_type_id,
 			justice_legalcase_id
-		from public.acornassociated_criminal_legalcase_defendants
+		from public.acorn_criminal_legalcase_defendants
 		where id = p_id;
 end;
 $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) OWNER TO justice;
 
 --
 -- TOC entry 5053 (class 0 OID 0)
 -- Dependencies: 467
--- Name: FUNCTION fn_acornassociated_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid); Type: COMMENT; Schema: public; Owner: justice
+-- Name: FUNCTION fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid); Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON FUNCTION public.fn_acornassociated_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) IS 'labels:
+COMMENT ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) IS 'labels:
   en: Create Warrant';
 
 
 --
 -- TOC entry 432 (class 1255 OID 394091)
--- Name: fn_acornassociated_first(anyelement, anyelement); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_first(anyelement, anyelement); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acornassociated_first(anyelement, anyelement) RETURNS anyelement
+CREATE FUNCTION public.fn_acorn_first(anyelement, anyelement) RETURNS anyelement
     LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
     AS $_$
             
@@ -407,33 +407,33 @@ CREATE FUNCTION public.fn_acornassociated_first(anyelement, anyelement) RETURNS 
             $_$;
 
 
-ALTER FUNCTION public.fn_acornassociated_first(anyelement, anyelement) OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_first(anyelement, anyelement) OWNER TO justice;
 
 --
 -- TOC entry 394 (class 1255 OID 395547)
--- Name: fn_acornassociated_justice_action_legalcases_close_case(uuid, uuid); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_justice_action_legalcases_close_case(uuid, uuid); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acornassociated_justice_action_legalcases_close_case(model_id uuid, user_id uuid) RETURNS void
+CREATE FUNCTION public.fn_acorn_justice_action_legalcases_close_case(model_id uuid, user_id uuid) RETURNS void
     LANGUAGE plpgsql
     AS $$
 begin
-	update public.acornassociated_justice_legalcases 
-		set closed_at_event_id = public.fn_acornassociated_calendar_create_event('close_case', user_id)
+	update public.acorn_justice_legalcases 
+		set closed_at_event_id = public.fn_acorn_calendar_create_event('close_case', user_id)
 		where id = model_id;
 end;
 $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_justice_action_legalcases_close_case(model_id uuid, user_id uuid) OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_justice_action_legalcases_close_case(model_id uuid, user_id uuid) OWNER TO justice;
 
 --
 -- TOC entry 5054 (class 0 OID 0)
 -- Dependencies: 394
--- Name: FUNCTION fn_acornassociated_justice_action_legalcases_close_case(model_id uuid, user_id uuid); Type: COMMENT; Schema: public; Owner: justice
+-- Name: FUNCTION fn_acorn_justice_action_legalcases_close_case(model_id uuid, user_id uuid); Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON FUNCTION public.fn_acornassociated_justice_action_legalcases_close_case(model_id uuid, user_id uuid) IS 'labels:
+COMMENT ON FUNCTION public.fn_acorn_justice_action_legalcases_close_case(model_id uuid, user_id uuid) IS 'labels:
   en: Close Case
   ku: Bigre Sicil
 condition: closed_at_event_id is null';
@@ -441,29 +441,29 @@ condition: closed_at_event_id is null';
 
 --
 -- TOC entry 426 (class 1255 OID 404514)
--- Name: fn_acornassociated_justice_action_legalcases_reopen_case(uuid, uuid); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_justice_action_legalcases_reopen_case(uuid, uuid); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acornassociated_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid) RETURNS void
+CREATE FUNCTION public.fn_acorn_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid) RETURNS void
     LANGUAGE plpgsql
     AS $$
 begin
-	update public.acornassociated_justice_legalcases 
+	update public.acorn_justice_legalcases 
 		set closed_at_event_id = NULL
 		where id = model_id;
 end;
 $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid) OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid) OWNER TO justice;
 
 --
 -- TOC entry 5055 (class 0 OID 0)
 -- Dependencies: 426
--- Name: FUNCTION fn_acornassociated_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid); Type: COMMENT; Schema: public; Owner: justice
+-- Name: FUNCTION fn_acorn_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid); Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON FUNCTION public.fn_acornassociated_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid) IS 'labels:
+COMMENT ON FUNCTION public.fn_acorn_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid) IS 'labels:
   en: Re-open Case
   ku: Vekrî Sicil
 condition: not closed_at_event_id is null';
@@ -471,10 +471,10 @@ condition: not closed_at_event_id is null';
 
 --
 -- TOC entry 417 (class 1255 OID 395515)
--- Name: fn_acornassociated_justice_action_legalcases_transfer_case(uuid, uuid); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_justice_action_legalcases_transfer_case(uuid, uuid); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acornassociated_justice_action_legalcases_transfer_case(id uuid, user_id uuid) RETURNS void
+CREATE FUNCTION public.fn_acorn_justice_action_legalcases_transfer_case(id uuid, user_id uuid) RETURNS void
     LANGUAGE plpgsql
     AS $$
 begin
@@ -482,43 +482,43 @@ end;
 $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_justice_action_legalcases_transfer_case(id uuid, user_id uuid) OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_justice_action_legalcases_transfer_case(id uuid, user_id uuid) OWNER TO justice;
 
 --
 -- TOC entry 5056 (class 0 OID 0)
 -- Dependencies: 417
--- Name: FUNCTION fn_acornassociated_justice_action_legalcases_transfer_case(id uuid, user_id uuid); Type: COMMENT; Schema: public; Owner: justice
+-- Name: FUNCTION fn_acorn_justice_action_legalcases_transfer_case(id uuid, user_id uuid); Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON FUNCTION public.fn_acornassociated_justice_action_legalcases_transfer_case(id uuid, user_id uuid) IS 'labels:
+COMMENT ON FUNCTION public.fn_acorn_justice_action_legalcases_transfer_case(id uuid, user_id uuid) IS 'labels:
   en: Transfer Case';
 
 
 --
 -- TOC entry 457 (class 1255 OID 415350)
--- Name: fn_acornassociated_justice_action_warrants_revoke(uuid, uuid); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_justice_action_warrants_revoke(uuid, uuid); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acornassociated_justice_action_warrants_revoke(model_id uuid, p_user_id uuid) RETURNS void
+CREATE FUNCTION public.fn_acorn_justice_action_warrants_revoke(model_id uuid, p_user_id uuid) RETURNS void
     LANGUAGE plpgsql
     AS $$
 begin
-	update public.acornassociated_justice_warrants
-		set revoked_at_event_id = public.fn_acornassociated_calendar_create_event('revoke_warrant', p_user_id)
+	update public.acorn_justice_warrants
+		set revoked_at_event_id = public.fn_acorn_calendar_create_event('revoke_warrant', p_user_id)
 		where id = model_id;
 end;
 $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_justice_action_warrants_revoke(model_id uuid, p_user_id uuid) OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_justice_action_warrants_revoke(model_id uuid, p_user_id uuid) OWNER TO justice;
 
 --
 -- TOC entry 5057 (class 0 OID 0)
 -- Dependencies: 457
--- Name: FUNCTION fn_acornassociated_justice_action_warrants_revoke(model_id uuid, p_user_id uuid); Type: COMMENT; Schema: public; Owner: justice
+-- Name: FUNCTION fn_acorn_justice_action_warrants_revoke(model_id uuid, p_user_id uuid); Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON FUNCTION public.fn_acornassociated_justice_action_warrants_revoke(model_id uuid, p_user_id uuid) IS 'labels:
+COMMENT ON FUNCTION public.fn_acorn_justice_action_warrants_revoke(model_id uuid, p_user_id uuid) IS 'labels:
   en: Revoke
   ku: Bigre
 condition: revoked_at_event_id is null';
@@ -526,202 +526,202 @@ condition: revoked_at_event_id is null';
 
 --
 -- TOC entry 460 (class 1255 OID 412832)
--- Name: fn_acornassociated_justice_seed(); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_justice_seed(); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acornassociated_justice_seed() RETURNS void
+CREATE FUNCTION public.fn_acorn_justice_seed() RETURNS void
     LANGUAGE plpgsql
     AS $$
 declare 
 	parent_id uuid;
 	usergroup_id uuid;
 begin
-		insert into public.acornassociated_user_user_groups(name, parent_user_group_id)
+		insert into public.acorn_user_user_groups(name, parent_user_group_id)
 		values('Encumena Dadgeriya Civakî ya Rêveberiya Xweser Li Bakur û Rojhilatê Sûriyê', parent_id) returning id into usergroup_id;
 		insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-		values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"ايروس قزشو لامشل ةيتاذلا ةرادلإا يف ةيعامتجلاا ةلادعلا سلجم"}');
+		values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"ايروس قزشو لامشل ةيتاذلا ةرادلإا يف ةيعامتجلاا ةلادعلا سلجم"}');
 
-		insert into acornassociated_user_user_groups(name, parent_user_group_id)
+		insert into acorn_user_user_groups(name, parent_user_group_id)
 		values('Encumena Jinê a Dadgeriya Civakî Ya Rêveberiya Xweser Li Bakur û Rojhilatê Sûriyê', parent_id) returning id into usergroup_id;
 		insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-		values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"ايرىس قزشو لامشن تيتاذنا ةرادلإا يف تيعامتجلاا تنادعهن ةأزمنا سهجم"}');
+		values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"ايرىس قزشو لامشن تيتاذنا ةرادلإا يف تيعامتجلاا تنادعهن ةأزمنا سهجم"}');
 
-		insert into acornassociated_user_user_groups(name, parent_user_group_id)
+		insert into acorn_user_user_groups(name, parent_user_group_id)
 		values('Encumena Dadgeriya Civakî û Encumena Jinê Ya Dadgeriya Civakî Li Cizîrê', parent_id) returning id into usergroup_id;
 		insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-		values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"ةزيشجنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}');
+		values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"ةزيشجنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}');
 
-		insert into acornassociated_user_user_groups(name, parent_user_group_id)
+		insert into acorn_user_user_groups(name, parent_user_group_id)
 		values('Encumena Dadgeriya Civakî û Encumena Jinê Ya Dadgeriya Civakî Li Reqayê', parent_id) returning id into usergroup_id;
 		insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-		values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"تقزنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}');
+		values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"تقزنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}');
 
-		insert into acornassociated_user_user_groups(name, parent_user_group_id)
+		insert into acorn_user_user_groups(name, parent_user_group_id)
 		values('Encumena Dadgeriya Civakî û Encumena Jinê Ya Dadgeriya Civakî Li Feratê', parent_id) returning id into usergroup_id;
 		insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-		values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"ثازفنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}');
+		values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"ثازفنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}');
 
-		insert into acornassociated_user_user_groups(name, parent_user_group_id)
+		insert into acorn_user_user_groups(name, parent_user_group_id)
 		values('Encumena Dadgeriya Civakî û Encumena Jinê Ya Dadgeriya Civakî Li Dêra Zorê', parent_id) returning id into usergroup_id;
 		insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-		values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"روشنا زيد يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}');
+		values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"روشنا زيد يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}');
 
-		insert into acornassociated_user_user_groups(name, parent_user_group_id)
+		insert into acorn_user_user_groups(name, parent_user_group_id)
 		values('Encumena Dadgeriya Civakî û Encumena Jinê Ya Dadgeriya Civakî Li Munbicê', parent_id) returning id into usergroup_id;
 		insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-		values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"جبنم يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}');
+		values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"جبنم يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}');
 
-		insert into acornassociated_user_user_groups(name, parent_user_group_id)
+		insert into acorn_user_user_groups(name, parent_user_group_id)
 		values('Encumena Dadgeriya Civakî û Encumena Jinê Ya Dadgeriya Civakî Li Efrînê', parent_id) returning id into usergroup_id;
 		insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-		values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"هيزفع يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}');
+		values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"هيزفع يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}');
 
-		insert into acornassociated_user_user_groups(name, parent_user_group_id)
+		insert into acorn_user_user_groups(name, parent_user_group_id)
 		values('Encumena Dadgeriya Civakî û Encumena Jinê Ya Dadgeriya Civakî Li Tebqê', parent_id) returning id into usergroup_id;
 		insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-		values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"تقبطنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}');
+		values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"تقبطنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}');
 
-		insert into acornassociated_user_user_groups(name, parent_user_group_id)
+		insert into acorn_user_user_groups(name, parent_user_group_id)
 		values('Encumena Jinê Ya Dadgeriya Civakî Li Cizîrê', parent_id) returning id into usergroup_id;
 		insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-		values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"ةزيشجنا يف تيعامتجلاا تنادعهن ةأزمنا سهجم"}');
+		values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"ةزيشجنا يف تيعامتجلاا تنادعهن ةأزمنا سهجم"}');
 
-		insert into acornassociated_user_user_groups(name, parent_user_group_id)
+		insert into acorn_user_user_groups(name, parent_user_group_id)
 		values('Encumena Dadgeriya Civakî Li Cizîrê, ji van beşan pêk tê', parent_id) returning id into usergroup_id;
 		insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-		values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"هم فنأتي ،ةزيشجنا يف تيعامتجلاا تنادعنا سهجم"}');
+		values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"هم فنأتي ،ةزيشجنا يف تيعامتجلاا تنادعنا سهجم"}');
 
 				parent_id := usergroup_id;
-				insert into acornassociated_user_user_groups(name, parent_user_group_id)
+				insert into acorn_user_user_groups(name, parent_user_group_id)
 				values('Serokatiya Encumenê', parent_id) returning id into usergroup_id;
 				insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-				values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"سهجمنا تسائر"}');
+				values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"سهجمنا تسائر"}');
 
-				insert into acornassociated_user_user_groups(name, parent_user_group_id)
+				insert into acorn_user_user_groups(name, parent_user_group_id)
 				values('Komîteya Cêgratiyan', parent_id) returning id into usergroup_id;
 				insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-				values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"ثابايننا تنجن"}');
+				values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"ثابايننا تنجن"}');
 
-				insert into acornassociated_user_user_groups(name, parent_user_group_id)
+				insert into acorn_user_user_groups(name, parent_user_group_id)
 				values('Komîteya Çavnêrî Ya Dadwerî', parent_id) returning id into usergroup_id;
 				insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-				values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"يئاضقنا شيتفتنا تنجن"}');
+				values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"يئاضقنا شيتفتنا تنجن"}');
 
-				insert into acornassociated_user_user_groups(name, parent_user_group_id)
+				insert into acorn_user_user_groups(name, parent_user_group_id)
 				values('Komîteya Aştbûnê', parent_id) returning id into usergroup_id;
 				insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-				values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"حهصنا تنجن"}');
+				values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"حهصنا تنجن"}');
 
-				insert into acornassociated_user_user_groups(name, parent_user_group_id)
+				insert into acorn_user_user_groups(name, parent_user_group_id)
 				values('Komîteya Bi cihanînê', parent_id) returning id into usergroup_id;
 				insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-				values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"ذيفنتنا تنجن"}');
+				values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"ذيفنتنا تنجن"}');
 
-				insert into acornassociated_user_user_groups(name, parent_user_group_id)
+				insert into acorn_user_user_groups(name, parent_user_group_id)
 				values('Nivîsgeha Darayî û Rêveberî', parent_id) returning id into usergroup_id;
 				insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-				values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"يرادلإاو ينامنا بتكمنا"}');
+				values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"يرادلإاو ينامنا بتكمنا"}');
 
-				insert into acornassociated_user_user_groups(name, parent_user_group_id)
+				insert into acorn_user_user_groups(name, parent_user_group_id)
 				values('Dîwan û Cêgratiyên girêdayî Encumena Dadageriya Civakî li Cizîrê', parent_id) returning id into usergroup_id;
 				insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-				values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"ةزيشجنا يف تيعامتجلاا تنادعنا سهجمن تعباتنا ثاباينناو هيواودنا"}');
+				values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"ةزيشجنا يف تيعامتجلاا تنادعنا سهجمن تعباتنا ثاباينناو هيواودنا"}');
 
-				insert into acornassociated_user_user_groups(name, parent_user_group_id)
+				insert into acorn_user_user_groups(name, parent_user_group_id)
 				values('Dîwana Dadgeriya Civakî li Qamişlo', parent_id) returning id into usergroup_id;
 				insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-				values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"ىهشماق يف تيعامتجلاا تنادعنا ناىيد"}');
+				values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"ىهشماق يف تيعامتجلاا تنادعنا ناىيد"}');
 
-				insert into acornassociated_user_user_groups(name, parent_user_group_id)
+				insert into acorn_user_user_groups(name, parent_user_group_id)
 				values('Dîwana Dadgeriya Civakî li Hesîça', parent_id) returning id into usergroup_id;
 				insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-				values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"تكسحنا يف تيعامتجلاا تنادعنا ناىيد"}');
+				values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"تكسحنا يف تيعامتجلاا تنادعنا ناىيد"}');
 
-				insert into acornassociated_user_user_groups(name, parent_user_group_id)
+				insert into acorn_user_user_groups(name, parent_user_group_id)
 				values('Dîwana Dadgeriya Civakî li Tirbespiyê', parent_id) returning id into usergroup_id;
 				insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-				values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"هيبسبزت يف تيعامتجلاا تنادعنا ناىيد"}');
+				values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"هيبسبزت يف تيعامتجلاا تنادعنا ناىيد"}');
 
-				insert into acornassociated_user_user_groups(name, parent_user_group_id)
+				insert into acorn_user_user_groups(name, parent_user_group_id)
 				values('Dîwana Dadgeriya Civakî li Derbasiyê', parent_id) returning id into usergroup_id;
 				insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-				values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"هيسابرد يف تيعامتجلاا تنادعنا ناىيد"}');
+				values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"هيسابرد يف تيعامتجلاا تنادعنا ناىيد"}');
 
-				insert into acornassociated_user_user_groups(name, parent_user_group_id)
+				insert into acorn_user_user_groups(name, parent_user_group_id)
 				values('Dîwana Dadgeriya Civakî li Amûdê', parent_id) returning id into usergroup_id;
 				insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-				values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"ادىماع يف تيعامتجلاا تنادعنا ناىيد"}');
+				values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"ادىماع يف تيعامتجلاا تنادعنا ناىيد"}');
 
-				insert into acornassociated_user_user_groups(name, parent_user_group_id)
+				insert into acorn_user_user_groups(name, parent_user_group_id)
 				values('Dîwana Dadgeriya Civakî li Til Temir', parent_id) returning id into usergroup_id;
 				insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-				values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"زمت مت يف تيعامتجلاا تنادعنا ناىيد"}');
+				values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"زمت مت يف تيعامتجلاا تنادعنا ناىيد"}');
 
-				insert into acornassociated_user_user_groups(name, parent_user_group_id)
+				insert into acorn_user_user_groups(name, parent_user_group_id)
 				values('Dîwana Dadgeriya Civakî li Şedadê', parent_id) returning id into usergroup_id;
 				insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-				values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"يدادشنا يف تيعامتجلاا تنادعنا ناىيد"}');
+				values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"يدادشنا يف تيعامتجلاا تنادعنا ناىيد"}');
 
-				insert into acornassociated_user_user_groups(name, parent_user_group_id)
+				insert into acorn_user_user_groups(name, parent_user_group_id)
 				values('Dîwana Dadgeriya Civakî li Girkê Legê', parent_id) returning id into usergroup_id;
 				insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-				values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"يكن يكزك يف تيعامتجلاا تنادعنا ناىيد"}');
+				values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"يكن يكزك يف تيعامتجلاا تنادعنا ناىيد"}');
 
-				insert into acornassociated_user_user_groups(name, parent_user_group_id)
+				insert into acorn_user_user_groups(name, parent_user_group_id)
 				values('Dîwana Dadgeriya Civakî li Dêrikê', parent_id) returning id into usergroup_id;
 				insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-				values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"كزيد يف تيعامتجلاا تنادعنا ناىيد"}');
+				values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"كزيد يف تيعامتجلاا تنادعنا ناىيد"}');
 
 						parent_id := usergroup_id;
-						insert into acornassociated_user_user_groups(name, parent_user_group_id)
+						insert into acorn_user_user_groups(name, parent_user_group_id)
 						values('Cêgratiya Giştî li Zerganê', parent_id) returning id into usergroup_id;
 						insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-						values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"ناكرس يف تماعنا تبايننا"}');
+						values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"ناكرس يف تماعنا تبايننا"}');
 
-						insert into acornassociated_user_user_groups(name, parent_user_group_id)
+						insert into acorn_user_user_groups(name, parent_user_group_id)
 						values('Cêgratiya Giştî li Til Birakê', parent_id) returning id into usergroup_id;
 						insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-						values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"كازب مت يف تماعنا تبايننا"}');
+						values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"كازب مت يف تماعنا تبايننا"}');
 
-						insert into acornassociated_user_user_groups(name, parent_user_group_id)
+						insert into acorn_user_user_groups(name, parent_user_group_id)
 						values('Cêgratiya Giştî li Holê', parent_id) returning id into usergroup_id;
 						insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-						values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"لىهنا يف تماعنا تبايننا"}');
+						values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"لىهنا يف تماعنا تبايننا"}');
 
-						insert into acornassociated_user_user_groups(name, parent_user_group_id)
+						insert into acorn_user_user_groups(name, parent_user_group_id)
 						values('Cêgratiya Giştî li Til Hemîsê', parent_id) returning id into usergroup_id;
 						insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-						values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"سيمح مت يف تماعنا تبايننا"}');
+						values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"سيمح مت يف تماعنا تبايننا"}');
 
-						insert into acornassociated_user_user_groups(name, parent_user_group_id)
+						insert into acorn_user_user_groups(name, parent_user_group_id)
 						values('Cêgratiya Giştî li Çelaxa', parent_id) returning id into usergroup_id;
 						insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-						values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"اغآ مج يف تماعنا تبايننا"}');
+						values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"اغآ مج يف تماعنا تبايننا"}');
 
-						insert into acornassociated_user_user_groups(name, parent_user_group_id)
+						insert into acorn_user_user_groups(name, parent_user_group_id)
 						values('Cêgratiya Giştî li Til Koçerê', parent_id) returning id into usergroup_id;
 						insert into public.winter_translate_attributes(locale, model_id, model_type, attribute_data)
-						values('ar', usergroup_id, 'AcornAssociated\User\Models\UserGroup', '{"name":"زجىك مت يف تماعنا تبايننا"}');
+						values('ar', usergroup_id, 'Acorn\User\Models\UserGroup', '{"name":"زجىك مت يف تماعنا تبايننا"}');
 end;
 $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_justice_seed() OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_justice_seed() OWNER TO justice;
 
 --
 -- TOC entry 452 (class 1255 OID 396053)
--- Name: fn_acornassociated_justice_update_name_identifier(); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_justice_update_name_identifier(); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acornassociated_justice_update_name_identifier() RETURNS trigger
+CREATE FUNCTION public.fn_acorn_justice_update_name_identifier() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 begin
 	if old.name != new.name then
-		insert into public.acornassociated_justice_legalcase_identifiers(legalcase_id, name, created_at_event_id, created_by_user_id)
+		insert into public.acorn_justice_legalcase_identifiers(legalcase_id, name, created_at_event_id, created_by_user_id)
 			values(new.id, old.name, 
-				public.fn_acornassociated_calendar_create_event('identifier'),
-				public.fn_acornassociated_user_get_seed_user()
+				public.fn_acorn_calendar_create_event('identifier'),
+				public.fn_acorn_user_get_seed_user()
 			);
 	end if;
 	return new;
@@ -729,14 +729,14 @@ end;
 $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_justice_update_name_identifier() OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_justice_update_name_identifier() OWNER TO justice;
 
 --
 -- TOC entry 473 (class 1255 OID 394093)
--- Name: fn_acornassociated_last(anyelement, anyelement); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_last(anyelement, anyelement); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acornassociated_last(anyelement, anyelement) RETURNS anyelement
+CREATE FUNCTION public.fn_acorn_last(anyelement, anyelement) RETURNS anyelement
     LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
     AS $_$
             
@@ -744,25 +744,25 @@ CREATE FUNCTION public.fn_acornassociated_last(anyelement, anyelement) RETURNS a
             $_$;
 
 
-ALTER FUNCTION public.fn_acornassociated_last(anyelement, anyelement) OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_last(anyelement, anyelement) OWNER TO justice;
 
 --
 -- TOC entry 423 (class 1255 OID 413922)
--- Name: fn_acornassociated_lojistiks_distance(uuid, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: fn_acorn_lojistiks_distance(uuid, uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.fn_acornassociated_lojistiks_distance(source_location_id uuid, destination_location_id uuid) RETURNS double precision
+CREATE FUNCTION public.fn_acorn_lojistiks_distance(source_location_id uuid, destination_location_id uuid) RETURNS double precision
     LANGUAGE plpgsql
     AS $$
 begin
 	return (select point(sg.longitude, sg.latitude) <@> point(dg.longitude, dg.latitude)
-		from public.acornassociated_lojistiks_locations sl
-		inner join public.acornassociated_lojistiks_addresses sa on sl.address_id = sa.id
-		inner join public.acornassociated_lojistiks_gps sg on sa.gps_id = sg.id,
+		from public.acorn_lojistiks_locations sl
+		inner join public.acorn_lojistiks_addresses sa on sl.address_id = sa.id
+		inner join public.acorn_lojistiks_gps sg on sa.gps_id = sg.id,
 		
-		public.acornassociated_lojistiks_locations dl
-		inner join public.acornassociated_lojistiks_addresses da on dl.address_id = da.id
-		inner join public.acornassociated_lojistiks_gps dg on da.gps_id = dg.id
+		public.acorn_lojistiks_locations dl
+		inner join public.acorn_lojistiks_addresses da on dl.address_id = da.id
+		inner join public.acorn_lojistiks_gps dg on da.gps_id = dg.id
 		
 		where sl.id = source_location_id
 		and dl.id = destination_location_id
@@ -771,14 +771,14 @@ end;
 $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_lojistiks_distance(source_location_id uuid, destination_location_id uuid) OWNER TO postgres;
+ALTER FUNCTION public.fn_acorn_lojistiks_distance(source_location_id uuid, destination_location_id uuid) OWNER TO postgres;
 
 --
 -- TOC entry 427 (class 1255 OID 413923)
--- Name: fn_acornassociated_lojistiks_is_date(character varying, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: fn_acorn_lojistiks_is_date(character varying, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.fn_acornassociated_lojistiks_is_date(s character varying, d timestamp with time zone) RETURNS timestamp with time zone
+CREATE FUNCTION public.fn_acorn_lojistiks_is_date(s character varying, d timestamp with time zone) RETURNS timestamp with time zone
     LANGUAGE plpgsql
     AS $$
             begin
@@ -795,20 +795,20 @@ CREATE FUNCTION public.fn_acornassociated_lojistiks_is_date(s character varying,
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_lojistiks_is_date(s character varying, d timestamp with time zone) OWNER TO postgres;
+ALTER FUNCTION public.fn_acorn_lojistiks_is_date(s character varying, d timestamp with time zone) OWNER TO postgres;
 
 --
 -- TOC entry 391 (class 1255 OID 412944)
--- Name: fn_acornassociated_lojistiks_transfers_delete_calendar(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: fn_acorn_lojistiks_transfers_delete_calendar(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.fn_acornassociated_lojistiks_transfers_delete_calendar() RETURNS trigger
+CREATE FUNCTION public.fn_acorn_lojistiks_transfers_delete_calendar() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 begin
 	if not old.created_at is null then
 		-- Use the Calendar system
-		delete from acornassociated_calendar_event
+		delete from acorn_calendar_event
 			where id = old.created_at_event_id;
 	end if;
 	return old;
@@ -816,14 +816,14 @@ end;
 $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_lojistiks_transfers_delete_calendar() OWNER TO postgres;
+ALTER FUNCTION public.fn_acorn_lojistiks_transfers_delete_calendar() OWNER TO postgres;
 
 --
 -- TOC entry 472 (class 1255 OID 412945)
--- Name: fn_acornassociated_lojistiks_transfers_insert_calendar(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: fn_acorn_lojistiks_transfers_insert_calendar(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.fn_acornassociated_lojistiks_transfers_insert_calendar() RETURNS trigger
+CREATE FUNCTION public.fn_acorn_lojistiks_transfers_insert_calendar() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 declare
@@ -832,21 +832,21 @@ declare
 begin
 	-- Use the Calendar system
 	select into event_name concat('Transfer (', coalesce(name, 'Unknown'), ')')
-		from public.acornassociated_location_locations
+		from public.acorn_location_locations
 		where id = new.location_id;
-	insert into public.acornassociated_calendar_event(calendar_id, owner_user_id, owner_user_group_id, external_url) 
+	insert into public.acorn_calendar_event(calendar_id, owner_user_id, owner_user_group_id, external_url) 
 		select id,
         -- TODO: This should be passed through from the transfer BackendAuth::user()
-        (select id from acornassociated_user_users limit 1),
-        (select id from acornassociated_user_user_groups limit 1),
-        concat('/backend/acornassociated/lojistiks/transfers/update/', new.id)
-		from acornassociated_calendar
+        (select id from acorn_user_users limit 1),
+        (select id from acorn_user_user_groups limit 1),
+        concat('/backend/acorn/lojistiks/transfers/update/', new.id)
+		from acorn_calendar
 		where name = 'Default'
 		returning id into pid;
-	insert into public.acornassociated_calendar_event_part(event_id, "name", description, "start", "end", type_id, status_id)
+	insert into public.acorn_calendar_event_part(event_id, "name", description, "start", "end", type_id, status_id)
 		select pid, event_name, '', now(), now(), id,
-        (select id from acornassociated_calendar_event_status where name = 'Normal')
-		from acornassociated_calendar_event_type
+        (select id from acorn_calendar_event_status where name = 'Normal')
+		from acorn_calendar_event_type
 		where name = 'Transfer started';
 	new.created_at_event_id = pid;
 
@@ -855,14 +855,14 @@ end;
 $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_lojistiks_transfers_insert_calendar() OWNER TO postgres;
+ALTER FUNCTION public.fn_acorn_lojistiks_transfers_insert_calendar() OWNER TO postgres;
 
 --
 -- TOC entry 411 (class 1255 OID 412946)
--- Name: fn_acornassociated_lojistiks_transfers_update_calendar(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: fn_acorn_lojistiks_transfers_update_calendar(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.fn_acornassociated_lojistiks_transfers_update_calendar() RETURNS trigger
+CREATE FUNCTION public.fn_acorn_lojistiks_transfers_update_calendar() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 declare
@@ -871,9 +871,9 @@ begin
 	if not new.created_at_event_id is null then
 		-- Use the Calendar system
 		select into event_name        concat('Transfer to ', coalesce(name, 'Unknown'))
-			from public.acornassociated_location_locations
+			from public.acorn_location_locations
 			where id = new.location_id;
-		update acornassociated_calendar_event_part 
+		update acorn_calendar_event_part 
 			set name = event_name
 			where event_id = new.created_at_event_id;
 	end if;
@@ -882,14 +882,14 @@ end;
 $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_lojistiks_transfers_update_calendar() OWNER TO postgres;
+ALTER FUNCTION public.fn_acorn_lojistiks_transfers_update_calendar() OWNER TO postgres;
 
 --
 -- TOC entry 489 (class 1255 OID 394084)
--- Name: fn_acornassociated_new_replicated_row(); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_new_replicated_row(); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acornassociated_new_replicated_row() RETURNS trigger
+CREATE FUNCTION public.fn_acorn_new_replicated_row() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
             declare
@@ -916,14 +916,14 @@ end;
 $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_new_replicated_row() OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_new_replicated_row() OWNER TO justice;
 
 --
 -- TOC entry 397 (class 1255 OID 394086)
--- Name: fn_acornassociated_reset_sequences(character varying, character varying); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_reset_sequences(character varying, character varying); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acornassociated_reset_sequences(schema_like character varying, table_like character varying) RETURNS void
+CREATE FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) RETURNS void
     LANGUAGE plpgsql
     AS $$
             declare
@@ -956,23 +956,23 @@ end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_reset_sequences(schema_like character varying, table_like character varying) OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) OWNER TO justice;
 
 --
 -- TOC entry 482 (class 1255 OID 394090)
--- Name: fn_acornassociated_server_id(); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_server_id(); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acornassociated_server_id() RETURNS trigger
+CREATE FUNCTION public.fn_acorn_server_id() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
             declare
 pid uuid;
             begin
         if new.server_id is null then
-          select "id" into pid from acornassociated_servers where hostname = hostname();
+          select "id" into pid from acorn_servers where hostname = hostname();
           if pid is null then
-            insert into acornassociated_servers(hostname) values(hostname()) returning id into pid;
+            insert into acorn_servers(hostname) values(hostname()) returning id into pid;
           end if;
           new.server_id = pid;
         end if;
@@ -981,14 +981,14 @@ end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_server_id() OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_server_id() OWNER TO justice;
 
 --
 -- TOC entry 484 (class 1255 OID 394087)
--- Name: fn_acornassociated_table_counts(character varying); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_table_counts(character varying); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acornassociated_table_counts(_schema character varying) RETURNS TABLE("table" text, count bigint)
+CREATE FUNCTION public.fn_acorn_table_counts(_schema character varying) RETURNS TABLE("table" text, count bigint)
     LANGUAGE plpgsql
     AS $$
             
@@ -1012,14 +1012,14 @@ end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_table_counts(_schema character varying) OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_table_counts(_schema character varying) OWNER TO justice;
 
 --
 -- TOC entry 448 (class 1255 OID 394049)
--- Name: fn_acornassociated_truncate_database(character varying, character varying); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_truncate_database(character varying, character varying); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acornassociated_truncate_database(schema_like character varying, table_like character varying) RETURNS void
+CREATE FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) RETURNS void
     LANGUAGE plpgsql
     AS $$
             declare
@@ -1039,14 +1039,14 @@ end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_truncate_database(schema_like character varying, table_like character varying) OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) OWNER TO justice;
 
 --
 -- TOC entry 409 (class 1255 OID 395441)
--- Name: fn_acornassociated_user_get_seed_user(); Type: FUNCTION; Schema: public; Owner: sanchez
+-- Name: fn_acorn_user_get_seed_user(); Type: FUNCTION; Schema: public; Owner: sz
 --
 
-CREATE FUNCTION public.fn_acornassociated_user_get_seed_user() RETURNS uuid
+CREATE FUNCTION public.fn_acorn_user_get_seed_user() RETURNS uuid
     LANGUAGE plpgsql
     AS $$
 begin
@@ -1054,43 +1054,43 @@ begin
 	-- Intentional EXCEPTION if there is not one
 	return (select uu.id 
 		--from public.backend_users bu
-		--inner join public.acornassociated_user_users uu on bu.acornassociated_user_user_id = uu.id
+		--inner join public.acorn_user_users uu on bu.acorn_user_user_id = uu.id
 		--where bu.is_superuser
-		from public.acornassociated_user_users uu
+		from public.acorn_user_users uu
 		limit 1);
 end;
 $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_user_get_seed_user() OWNER TO sanchez;
+ALTER FUNCTION public.fn_acorn_user_get_seed_user() OWNER TO sz;
 
 --
 -- TOC entry 1533 (class 1255 OID 394092)
--- Name: agg_acornassociated_first(anyelement); Type: AGGREGATE; Schema: public; Owner: justice
+-- Name: agg_acorn_first(anyelement); Type: AGGREGATE; Schema: public; Owner: justice
 --
 
-CREATE AGGREGATE public.agg_acornassociated_first(anyelement) (
-    SFUNC = public.fn_acornassociated_first,
+CREATE AGGREGATE public.agg_acorn_first(anyelement) (
+    SFUNC = public.fn_acorn_first,
     STYPE = anyelement,
     PARALLEL = safe
 );
 
 
-ALTER AGGREGATE public.agg_acornassociated_first(anyelement) OWNER TO justice;
+ALTER AGGREGATE public.agg_acorn_first(anyelement) OWNER TO justice;
 
 --
 -- TOC entry 1534 (class 1255 OID 394094)
--- Name: agg_acornassociated_last(anyelement); Type: AGGREGATE; Schema: public; Owner: justice
+-- Name: agg_acorn_last(anyelement); Type: AGGREGATE; Schema: public; Owner: justice
 --
 
-CREATE AGGREGATE public.agg_acornassociated_last(anyelement) (
-    SFUNC = public.fn_acornassociated_last,
+CREATE AGGREGATE public.agg_acorn_last(anyelement) (
+    SFUNC = public.fn_acorn_last,
     STYPE = anyelement,
     PARALLEL = safe
 );
 
 
-ALTER AGGREGATE public.agg_acornassociated_last(anyelement) OWNER TO justice;
+ALTER AGGREGATE public.agg_acorn_last(anyelement) OWNER TO justice;
 
 SET default_tablespace = '';
 
@@ -1098,10 +1098,10 @@ SET default_table_access_method = heap;
 
 --
 -- TOC entry 360 (class 1259 OID 413924)
--- Name: acornassociated_lojistiks_computer_products; Type: TABLE; Schema: product; Owner: postgres
+-- Name: acorn_lojistiks_computer_products; Type: TABLE; Schema: product; Owner: postgres
 --
 
-CREATE TABLE product.acornassociated_lojistiks_computer_products (
+CREATE TABLE product.acorn_lojistiks_computer_products (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     electronic_product_id uuid NOT NULL,
     memory bigint,
@@ -1115,14 +1115,14 @@ CREATE TABLE product.acornassociated_lojistiks_computer_products (
 );
 
 
-ALTER TABLE product.acornassociated_lojistiks_computer_products OWNER TO postgres;
+ALTER TABLE product.acorn_lojistiks_computer_products OWNER TO postgres;
 
 --
 -- TOC entry 361 (class 1259 OID 413930)
--- Name: acornassociated_lojistiks_electronic_products; Type: TABLE; Schema: product; Owner: postgres
+-- Name: acorn_lojistiks_electronic_products; Type: TABLE; Schema: product; Owner: postgres
 --
 
-CREATE TABLE product.acornassociated_lojistiks_electronic_products (
+CREATE TABLE product.acorn_lojistiks_electronic_products (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     product_id uuid NOT NULL,
     server_id uuid NOT NULL,
@@ -1133,14 +1133,14 @@ CREATE TABLE product.acornassociated_lojistiks_electronic_products (
 );
 
 
-ALTER TABLE product.acornassociated_lojistiks_electronic_products OWNER TO postgres;
+ALTER TABLE product.acorn_lojistiks_electronic_products OWNER TO postgres;
 
 --
 -- TOC entry 309 (class 1259 OID 394650)
--- Name: acornassociated_calendar; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_calendar; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_calendar (
+CREATE TABLE public.acorn_calendar (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     description text,
@@ -1154,24 +1154,24 @@ CREATE TABLE public.acornassociated_calendar (
 );
 
 
-ALTER TABLE public.acornassociated_calendar OWNER TO justice;
+ALTER TABLE public.acorn_calendar OWNER TO justice;
 
 --
 -- TOC entry 5058 (class 0 OID 0)
 -- Dependencies: 309
--- Name: TABLE acornassociated_calendar; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_calendar; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_calendar IS 'package-type: plugin
+COMMENT ON TABLE public.acorn_calendar IS 'package-type: plugin
 table-type: content';
 
 
 --
 -- TOC entry 312 (class 1259 OID 394689)
--- Name: acornassociated_calendar_event; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_calendar_event; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_calendar_event (
+CREATE TABLE public.acorn_calendar_event (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     calendar_id uuid NOT NULL,
     external_url character varying(2048),
@@ -1183,23 +1183,23 @@ CREATE TABLE public.acornassociated_calendar_event (
 );
 
 
-ALTER TABLE public.acornassociated_calendar_event OWNER TO justice;
+ALTER TABLE public.acorn_calendar_event OWNER TO justice;
 
 --
 -- TOC entry 5059 (class 0 OID 0)
 -- Dependencies: 312
--- Name: TABLE acornassociated_calendar_event; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_calendar_event; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_calendar_event IS 'table-type: content';
+COMMENT ON TABLE public.acorn_calendar_event IS 'table-type: content';
 
 
 --
 -- TOC entry 313 (class 1259 OID 394714)
--- Name: acornassociated_calendar_event_part; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_part; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_calendar_event_part (
+CREATE TABLE public.acorn_calendar_event_part (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     event_id uuid NOT NULL,
     name character varying(1024) NOT NULL,
@@ -1223,23 +1223,23 @@ CREATE TABLE public.acornassociated_calendar_event_part (
 );
 
 
-ALTER TABLE public.acornassociated_calendar_event_part OWNER TO justice;
+ALTER TABLE public.acorn_calendar_event_part OWNER TO justice;
 
 --
 -- TOC entry 5060 (class 0 OID 0)
 -- Dependencies: 313
--- Name: TABLE acornassociated_calendar_event_part; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_calendar_event_part; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_calendar_event_part IS 'table-type: content';
+COMMENT ON TABLE public.acorn_calendar_event_part IS 'table-type: content';
 
 
 --
 -- TOC entry 311 (class 1259 OID 394681)
--- Name: acornassociated_calendar_event_status; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_status; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_calendar_event_status (
+CREATE TABLE public.acorn_calendar_event_status (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255) NOT NULL,
     description text,
@@ -1250,23 +1250,23 @@ CREATE TABLE public.acornassociated_calendar_event_status (
 );
 
 
-ALTER TABLE public.acornassociated_calendar_event_status OWNER TO justice;
+ALTER TABLE public.acorn_calendar_event_status OWNER TO justice;
 
 --
 -- TOC entry 5061 (class 0 OID 0)
 -- Dependencies: 311
--- Name: TABLE acornassociated_calendar_event_status; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_calendar_event_status; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_calendar_event_status IS 'table-type: content';
+COMMENT ON TABLE public.acorn_calendar_event_status IS 'table-type: content';
 
 
 --
 -- TOC entry 310 (class 1259 OID 394671)
--- Name: acornassociated_calendar_event_type; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_type; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_calendar_event_type (
+CREATE TABLE public.acorn_calendar_event_type (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(2048) NOT NULL,
     description text,
@@ -1279,23 +1279,23 @@ CREATE TABLE public.acornassociated_calendar_event_type (
 );
 
 
-ALTER TABLE public.acornassociated_calendar_event_type OWNER TO justice;
+ALTER TABLE public.acorn_calendar_event_type OWNER TO justice;
 
 --
 -- TOC entry 5062 (class 0 OID 0)
 -- Dependencies: 310
--- Name: TABLE acornassociated_calendar_event_type; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_calendar_event_type; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_calendar_event_type IS 'table-type: content';
+COMMENT ON TABLE public.acorn_calendar_event_type IS 'table-type: content';
 
 
 --
 -- TOC entry 315 (class 1259 OID 394766)
--- Name: acornassociated_calendar_event_user; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_user; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_calendar_event_user (
+CREATE TABLE public.acorn_calendar_event_user (
     event_part_id uuid NOT NULL,
     user_id uuid NOT NULL,
     role_id uuid,
@@ -1304,36 +1304,36 @@ CREATE TABLE public.acornassociated_calendar_event_user (
 );
 
 
-ALTER TABLE public.acornassociated_calendar_event_user OWNER TO justice;
+ALTER TABLE public.acorn_calendar_event_user OWNER TO justice;
 
 --
 -- TOC entry 5063 (class 0 OID 0)
 -- Dependencies: 315
--- Name: TABLE acornassociated_calendar_event_user; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_calendar_event_user; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_calendar_event_user IS 'table-type: content';
+COMMENT ON TABLE public.acorn_calendar_event_user IS 'table-type: content';
 
 
 --
 -- TOC entry 316 (class 1259 OID 394787)
--- Name: acornassociated_calendar_event_user_group; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_user_group; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_calendar_event_user_group (
+CREATE TABLE public.acorn_calendar_event_user_group (
     event_part_id uuid NOT NULL,
     user_group_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_calendar_event_user_group OWNER TO justice;
+ALTER TABLE public.acorn_calendar_event_user_group OWNER TO justice;
 
 --
 -- TOC entry 314 (class 1259 OID 394751)
--- Name: acornassociated_calendar_instance; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_calendar_instance; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_calendar_instance (
+CREATE TABLE public.acorn_calendar_instance (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     date date NOT NULL,
     event_part_id uuid NOT NULL,
@@ -1345,23 +1345,23 @@ CREATE TABLE public.acornassociated_calendar_instance (
 );
 
 
-ALTER TABLE public.acornassociated_calendar_instance OWNER TO justice;
+ALTER TABLE public.acorn_calendar_instance OWNER TO justice;
 
 --
 -- TOC entry 5064 (class 0 OID 0)
 -- Dependencies: 314
--- Name: TABLE acornassociated_calendar_instance; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_calendar_instance; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_calendar_instance IS 'table-type: content';
+COMMENT ON TABLE public.acorn_calendar_instance IS 'table-type: content';
 
 
 --
 -- TOC entry 322 (class 1259 OID 394899)
--- Name: acornassociated_civil_hearings; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_civil_hearings; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_civil_hearings (
+CREATE TABLE public.acorn_civil_hearings (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     legalcase_id uuid NOT NULL,
     created_at_event_id uuid NOT NULL,
@@ -1369,15 +1369,15 @@ CREATE TABLE public.acornassociated_civil_hearings (
 );
 
 
-ALTER TABLE public.acornassociated_civil_hearings OWNER TO justice;
+ALTER TABLE public.acorn_civil_hearings OWNER TO justice;
 
 --
 -- TOC entry 5065 (class 0 OID 0)
 -- Dependencies: 322
--- Name: TABLE acornassociated_civil_hearings; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_civil_hearings; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_civil_hearings IS 'icon: handshake
+COMMENT ON TABLE public.acorn_civil_hearings IS 'icon: handshake
 labels:
   en: Hearing
   ar: جلسة إستماع مدنية
@@ -1388,10 +1388,10 @@ labels-plural:
 
 --
 -- TOC entry 323 (class 1259 OID 394903)
--- Name: acornassociated_civil_legalcases; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_civil_legalcases; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_civil_legalcases (
+CREATE TABLE public.acorn_civil_legalcases (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     legalcase_id uuid NOT NULL,
     created_at_event_id uuid NOT NULL,
@@ -1399,15 +1399,15 @@ CREATE TABLE public.acornassociated_civil_legalcases (
 );
 
 
-ALTER TABLE public.acornassociated_civil_legalcases OWNER TO justice;
+ALTER TABLE public.acorn_civil_legalcases OWNER TO justice;
 
 --
 -- TOC entry 5066 (class 0 OID 0)
 -- Dependencies: 323
--- Name: TABLE acornassociated_civil_legalcases; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_civil_legalcases; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_civil_legalcases IS 'icon: angry
+COMMENT ON TABLE public.acorn_civil_legalcases IS 'icon: angry
 labels: 
   en: Case
   ar: القضية مدنية
@@ -1425,10 +1425,10 @@ plugin-icon: handshake';
 
 --
 -- TOC entry 324 (class 1259 OID 394943)
--- Name: acornassociated_criminal_appeals; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_appeals; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_appeals (
+CREATE TABLE public.acorn_criminal_appeals (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     legalcase_id uuid NOT NULL,
     created_at_event_id uuid NOT NULL,
@@ -1438,15 +1438,15 @@ CREATE TABLE public.acornassociated_criminal_appeals (
 );
 
 
-ALTER TABLE public.acornassociated_criminal_appeals OWNER TO justice;
+ALTER TABLE public.acorn_criminal_appeals OWNER TO justice;
 
 --
 -- TOC entry 5067 (class 0 OID 0)
 -- Dependencies: 324
--- Name: TABLE acornassociated_criminal_appeals; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_appeals; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_appeals IS 'icon: hand-paper
+COMMENT ON TABLE public.acorn_criminal_appeals IS 'icon: hand-paper
 labels: 
   en: Appeal
   ar: الاستئناف الجنائي
@@ -1459,10 +1459,10 @@ methods:
 
 --
 -- TOC entry 325 (class 1259 OID 394947)
--- Name: acornassociated_criminal_crime_evidence; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_evidence; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_crime_evidence (
+CREATE TABLE public.acorn_criminal_crime_evidence (
     defendant_crime_id uuid NOT NULL,
     legalcase_evidence_id uuid NOT NULL,
     created_at_event_id uuid NOT NULL,
@@ -1470,15 +1470,15 @@ CREATE TABLE public.acornassociated_criminal_crime_evidence (
 );
 
 
-ALTER TABLE public.acornassociated_criminal_crime_evidence OWNER TO justice;
+ALTER TABLE public.acorn_criminal_crime_evidence OWNER TO justice;
 
 --
 -- TOC entry 5068 (class 0 OID 0)
 -- Dependencies: 325
--- Name: TABLE acornassociated_criminal_crime_evidence; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_crime_evidence; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_crime_evidence IS 'order: 43
+COMMENT ON TABLE public.acorn_criminal_crime_evidence IS 'order: 43
 labels:
   ar: دليل الجريمة الجنائية
 labels-plural:
@@ -1488,10 +1488,10 @@ labels-plural:
 
 --
 -- TOC entry 326 (class 1259 OID 394950)
--- Name: acornassociated_criminal_crime_sentences; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_sentences; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_crime_sentences (
+CREATE TABLE public.acorn_criminal_crime_sentences (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     defendant_crime_id uuid NOT NULL,
     sentence_type_id uuid NOT NULL,
@@ -1502,15 +1502,15 @@ CREATE TABLE public.acornassociated_criminal_crime_sentences (
 );
 
 
-ALTER TABLE public.acornassociated_criminal_crime_sentences OWNER TO justice;
+ALTER TABLE public.acorn_criminal_crime_sentences OWNER TO justice;
 
 --
 -- TOC entry 5069 (class 0 OID 0)
 -- Dependencies: 326
--- Name: TABLE acornassociated_criminal_crime_sentences; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_crime_sentences; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_crime_sentences IS 'icon: id-card
+COMMENT ON TABLE public.acorn_criminal_crime_sentences IS 'icon: id-card
 order: 42
 labels:
   ar: حكم الجريمة الجنائية
@@ -1522,27 +1522,27 @@ methods:
 
 --
 -- TOC entry 327 (class 1259 OID 394955)
--- Name: acornassociated_criminal_crime_types; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_types; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_crime_types (
+CREATE TABLE public.acorn_criminal_crime_types (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     parent_crime_type_id uuid,
-    created_at_event_id uuid DEFAULT public.fn_acornassociated_calendar_create_event('crime_type'::character varying, NULL::uuid) NOT NULL,
-    created_by_user_id uuid DEFAULT public.fn_acornassociated_user_get_seed_user() NOT NULL
+    created_at_event_id uuid DEFAULT public.fn_acorn_calendar_create_event('crime_type'::character varying, NULL::uuid) NOT NULL,
+    created_by_user_id uuid DEFAULT public.fn_acorn_user_get_seed_user() NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_criminal_crime_types OWNER TO justice;
+ALTER TABLE public.acorn_criminal_crime_types OWNER TO justice;
 
 --
 -- TOC entry 5070 (class 0 OID 0)
 -- Dependencies: 327
--- Name: TABLE acornassociated_criminal_crime_types; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_crime_types; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_crime_types IS 'icon: keyboard
+COMMENT ON TABLE public.acorn_criminal_crime_types IS 'icon: keyboard
 order: 41
 seeding:
   - [DEFAULT, ''mysogyny'']
@@ -1556,10 +1556,10 @@ labels-plural:
 
 --
 -- TOC entry 328 (class 1259 OID 394961)
--- Name: acornassociated_criminal_crimes; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_crimes; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_crimes (
+CREATE TABLE public.acorn_criminal_crimes (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     crime_type_id uuid,
@@ -1568,15 +1568,15 @@ CREATE TABLE public.acornassociated_criminal_crimes (
 );
 
 
-ALTER TABLE public.acornassociated_criminal_crimes OWNER TO justice;
+ALTER TABLE public.acorn_criminal_crimes OWNER TO justice;
 
 --
 -- TOC entry 5071 (class 0 OID 0)
 -- Dependencies: 328
--- Name: TABLE acornassociated_criminal_crimes; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_crimes; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_crimes IS 'icon: allergies
+COMMENT ON TABLE public.acorn_criminal_crimes IS 'icon: allergies
 order: 40
 menuSplitter: yes
 labels:
@@ -1588,10 +1588,10 @@ labels-plural:
 
 --
 -- TOC entry 329 (class 1259 OID 394967)
--- Name: acornassociated_criminal_defendant_crimes; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_defendant_crimes; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_defendant_crimes (
+CREATE TABLE public.acorn_criminal_defendant_crimes (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     legalcase_defendant_id uuid NOT NULL,
     crime_id uuid NOT NULL,
@@ -1600,15 +1600,15 @@ CREATE TABLE public.acornassociated_criminal_defendant_crimes (
 );
 
 
-ALTER TABLE public.acornassociated_criminal_defendant_crimes OWNER TO justice;
+ALTER TABLE public.acorn_criminal_defendant_crimes OWNER TO justice;
 
 --
 -- TOC entry 5072 (class 0 OID 0)
 -- Dependencies: 329
--- Name: TABLE acornassociated_criminal_defendant_crimes; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_defendant_crimes; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_defendant_crimes IS 'icon: id-card
+COMMENT ON TABLE public.acorn_criminal_defendant_crimes IS 'icon: id-card
 labels:
   ar: جرائم المتهمين الجنائية
 labels-plural:
@@ -1619,10 +1619,10 @@ methods:
 
 --
 -- TOC entry 352 (class 1259 OID 412896)
--- Name: acornassociated_criminal_defendant_detentions; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_defendant_detentions; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_defendant_detentions (
+CREATE TABLE public.acorn_criminal_defendant_detentions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     transfer_id uuid NOT NULL,
     detention_reason_id uuid,
@@ -1633,25 +1633,25 @@ CREATE TABLE public.acornassociated_criminal_defendant_detentions (
 );
 
 
-ALTER TABLE public.acornassociated_criminal_defendant_detentions OWNER TO justice;
+ALTER TABLE public.acorn_criminal_defendant_detentions OWNER TO justice;
 
 --
 -- TOC entry 5073 (class 0 OID 0)
 -- Dependencies: 352
--- Name: TABLE acornassociated_criminal_defendant_detentions; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_defendant_detentions; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_defendant_detentions IS 'methods:
+COMMENT ON TABLE public.acorn_criminal_defendant_detentions IS 'methods:
   name: return $this->transfer->location->name . '' ('' . $this->detention_reason?->name . '')'';';
 
 
 --
 -- TOC entry 5074 (class 0 OID 0)
 -- Dependencies: 352
--- Name: COLUMN acornassociated_criminal_defendant_detentions.detention_reason_id; Type: COMMENT; Schema: public; Owner: justice
+-- Name: COLUMN acorn_criminal_defendant_detentions.detention_reason_id; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acornassociated_criminal_defendant_detentions.detention_reason_id IS 'labels:
+COMMENT ON COLUMN public.acorn_criminal_defendant_detentions.detention_reason_id IS 'labels:
   en: Reason
 new-row: true';
 
@@ -1659,56 +1659,56 @@ new-row: true';
 --
 -- TOC entry 5075 (class 0 OID 0)
 -- Dependencies: 352
--- Name: COLUMN acornassociated_criminal_defendant_detentions.detention_method_id; Type: COMMENT; Schema: public; Owner: justice
+-- Name: COLUMN acorn_criminal_defendant_detentions.detention_method_id; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acornassociated_criminal_defendant_detentions.detention_method_id IS 'labels:
+COMMENT ON COLUMN public.acorn_criminal_defendant_detentions.detention_method_id IS 'labels:
   en: Method';
 
 
 --
 -- TOC entry 5076 (class 0 OID 0)
 -- Dependencies: 352
--- Name: COLUMN acornassociated_criminal_defendant_detentions.name; Type: COMMENT; Schema: public; Owner: justice
+-- Name: COLUMN acorn_criminal_defendant_detentions.name; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acornassociated_criminal_defendant_detentions.name IS 'hidden: true';
+COMMENT ON COLUMN public.acorn_criminal_defendant_detentions.name IS 'hidden: true';
 
 
 --
 -- TOC entry 354 (class 1259 OID 412916)
--- Name: acornassociated_criminal_detention_methods; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_detention_methods; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_detention_methods (
+CREATE TABLE public.acorn_criminal_detention_methods (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     description character varying(2048)
 );
 
 
-ALTER TABLE public.acornassociated_criminal_detention_methods OWNER TO justice;
+ALTER TABLE public.acorn_criminal_detention_methods OWNER TO justice;
 
 --
 -- TOC entry 353 (class 1259 OID 412908)
--- Name: acornassociated_criminal_detention_reasons; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_detention_reasons; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_detention_reasons (
+CREATE TABLE public.acorn_criminal_detention_reasons (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     description character varying(2048)
 );
 
 
-ALTER TABLE public.acornassociated_criminal_detention_reasons OWNER TO justice;
+ALTER TABLE public.acorn_criminal_detention_reasons OWNER TO justice;
 
 --
 -- TOC entry 330 (class 1259 OID 394971)
--- Name: acornassociated_criminal_legalcase_defendants; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_defendants; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_legalcase_defendants (
+CREATE TABLE public.acorn_criminal_legalcase_defendants (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     legalcase_id uuid NOT NULL,
     user_id uuid NOT NULL,
@@ -1717,15 +1717,15 @@ CREATE TABLE public.acornassociated_criminal_legalcase_defendants (
 );
 
 
-ALTER TABLE public.acornassociated_criminal_legalcase_defendants OWNER TO justice;
+ALTER TABLE public.acorn_criminal_legalcase_defendants OWNER TO justice;
 
 --
 -- TOC entry 5077 (class 0 OID 0)
 -- Dependencies: 330
--- Name: TABLE acornassociated_criminal_legalcase_defendants; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_legalcase_defendants; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_legalcase_defendants IS 'icon: robot
+COMMENT ON TABLE public.acorn_criminal_legalcase_defendants IS 'icon: robot
 order: 6
 menu: false
 labels:
@@ -1737,10 +1737,10 @@ labels-plural:
 
 --
 -- TOC entry 331 (class 1259 OID 394975)
--- Name: acornassociated_criminal_legalcase_evidence; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_evidence; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_legalcase_evidence (
+CREATE TABLE public.acorn_criminal_legalcase_evidence (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     legalcase_id uuid NOT NULL,
     name character varying(1024) NOT NULL,
@@ -1749,15 +1749,15 @@ CREATE TABLE public.acornassociated_criminal_legalcase_evidence (
 );
 
 
-ALTER TABLE public.acornassociated_criminal_legalcase_evidence OWNER TO justice;
+ALTER TABLE public.acorn_criminal_legalcase_evidence OWNER TO justice;
 
 --
 -- TOC entry 5078 (class 0 OID 0)
 -- Dependencies: 331
--- Name: TABLE acornassociated_criminal_legalcase_evidence; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_legalcase_evidence; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_legalcase_evidence IS 'table-type: content
+COMMENT ON TABLE public.acorn_criminal_legalcase_evidence IS 'table-type: content
 plural: legalcase_evidence
 icon: object-group
 order: 3
@@ -1771,10 +1771,10 @@ labels-plural:
 
 --
 -- TOC entry 334 (class 1259 OID 394989)
--- Name: acornassociated_criminal_legalcase_plaintiffs; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_plaintiffs; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_legalcase_plaintiffs (
+CREATE TABLE public.acorn_criminal_legalcase_plaintiffs (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     legalcase_id uuid NOT NULL,
     user_id uuid NOT NULL,
@@ -1783,15 +1783,15 @@ CREATE TABLE public.acornassociated_criminal_legalcase_plaintiffs (
 );
 
 
-ALTER TABLE public.acornassociated_criminal_legalcase_plaintiffs OWNER TO justice;
+ALTER TABLE public.acorn_criminal_legalcase_plaintiffs OWNER TO justice;
 
 --
 -- TOC entry 5079 (class 0 OID 0)
 -- Dependencies: 334
--- Name: TABLE acornassociated_criminal_legalcase_plaintiffs; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_legalcase_plaintiffs; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_legalcase_plaintiffs IS 'icon: address-book
+COMMENT ON TABLE public.acorn_criminal_legalcase_plaintiffs IS 'icon: address-book
 order: 2
 menu: false
 labels:
@@ -1803,28 +1803,28 @@ labels-plural:
 
 --
 -- TOC entry 332 (class 1259 OID 394981)
--- Name: acornassociated_criminal_legalcase_prosecutor; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_prosecutor; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_legalcase_prosecutor (
+CREATE TABLE public.acorn_criminal_legalcase_prosecutor (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     legalcase_id uuid NOT NULL,
     user_id uuid NOT NULL,
     user_group_id uuid,
-    created_at_event_id uuid DEFAULT public.fn_acornassociated_calendar_create_event('legalcase_prosecutor'::character varying, NULL::uuid) NOT NULL,
-    created_by_user_id uuid DEFAULT public.fn_acornassociated_user_get_seed_user() NOT NULL
+    created_at_event_id uuid DEFAULT public.fn_acorn_calendar_create_event('legalcase_prosecutor'::character varying, NULL::uuid) NOT NULL,
+    created_by_user_id uuid DEFAULT public.fn_acorn_user_get_seed_user() NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_criminal_legalcase_prosecutor OWNER TO justice;
+ALTER TABLE public.acorn_criminal_legalcase_prosecutor OWNER TO justice;
 
 --
 -- TOC entry 5080 (class 0 OID 0)
 -- Dependencies: 332
--- Name: TABLE acornassociated_criminal_legalcase_prosecutor; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_legalcase_prosecutor; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_legalcase_prosecutor IS 'icon: id-card
+COMMENT ON TABLE public.acorn_criminal_legalcase_prosecutor IS 'icon: id-card
 order: 4
 menu: false
 labels:
@@ -1836,10 +1836,10 @@ labels-plural:
 
 --
 -- TOC entry 333 (class 1259 OID 394985)
--- Name: acornassociated_criminal_legalcase_related_events; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_related_events; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_legalcase_related_events (
+CREATE TABLE public.acorn_criminal_legalcase_related_events (
     event_id uuid NOT NULL,
     legalcase_id uuid NOT NULL,
     created_at_event_id uuid NOT NULL,
@@ -1848,15 +1848,15 @@ CREATE TABLE public.acornassociated_criminal_legalcase_related_events (
 );
 
 
-ALTER TABLE public.acornassociated_criminal_legalcase_related_events OWNER TO justice;
+ALTER TABLE public.acorn_criminal_legalcase_related_events OWNER TO justice;
 
 --
 -- TOC entry 5081 (class 0 OID 0)
 -- Dependencies: 333
--- Name: TABLE acornassociated_criminal_legalcase_related_events; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_legalcase_related_events; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_legalcase_related_events IS 'icon: address-book
+COMMENT ON TABLE public.acorn_criminal_legalcase_related_events IS 'icon: address-book
 order: 7
 labels:
   en: Legalcase Events
@@ -1869,10 +1869,10 @@ methods:
 
 --
 -- TOC entry 335 (class 1259 OID 394993)
--- Name: acornassociated_criminal_legalcase_witnesses; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_witnesses; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_legalcase_witnesses (
+CREATE TABLE public.acorn_criminal_legalcase_witnesses (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_id uuid NOT NULL,
     legalcase_id uuid NOT NULL,
@@ -1881,15 +1881,15 @@ CREATE TABLE public.acornassociated_criminal_legalcase_witnesses (
 );
 
 
-ALTER TABLE public.acornassociated_criminal_legalcase_witnesses OWNER TO justice;
+ALTER TABLE public.acorn_criminal_legalcase_witnesses OWNER TO justice;
 
 --
 -- TOC entry 5082 (class 0 OID 0)
 -- Dependencies: 335
--- Name: TABLE acornassociated_criminal_legalcase_witnesses; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_legalcase_witnesses; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_legalcase_witnesses IS 'icon: search
+COMMENT ON TABLE public.acorn_criminal_legalcase_witnesses IS 'icon: search
 order: 5
 menu: false
 labels:
@@ -1901,10 +1901,10 @@ labels-plural:
 
 --
 -- TOC entry 336 (class 1259 OID 394997)
--- Name: acornassociated_criminal_legalcases; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcases; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_legalcases (
+CREATE TABLE public.acorn_criminal_legalcases (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     legalcase_id uuid NOT NULL,
     created_at_event_id uuid NOT NULL,
@@ -1913,15 +1913,15 @@ CREATE TABLE public.acornassociated_criminal_legalcases (
 );
 
 
-ALTER TABLE public.acornassociated_criminal_legalcases OWNER TO justice;
+ALTER TABLE public.acorn_criminal_legalcases OWNER TO justice;
 
 --
 -- TOC entry 5083 (class 0 OID 0)
 -- Dependencies: 336
--- Name: TABLE acornassociated_criminal_legalcases; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_legalcases; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_legalcases IS 'icon: dizzy
+COMMENT ON TABLE public.acorn_criminal_legalcases IS 'icon: dizzy
 plugin-icon: address-book
 order: 1
 labels:
@@ -1931,15 +1931,15 @@ labels-plural:
 plugin-names:
   ar: القضية الجنائية
 filters:
-  owner_user_group: id in(select cl.id from acornassociated_criminal_legalcases cl inner join acornassociated_justice_legalcases  jl on jl.id = cl.legalcase_id where jl.owner_user_group_id in(:filtered))';
+  owner_user_group: id in(select cl.id from acorn_criminal_legalcases cl inner join acorn_justice_legalcases  jl on jl.id = cl.legalcase_id where jl.owner_user_group_id in(:filtered))';
 
 
 --
 -- TOC entry 337 (class 1259 OID 395001)
--- Name: acornassociated_criminal_sentence_types; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_sentence_types; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_sentence_types (
+CREATE TABLE public.acorn_criminal_sentence_types (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     created_at_event_id uuid NOT NULL,
@@ -1947,15 +1947,15 @@ CREATE TABLE public.acornassociated_criminal_sentence_types (
 );
 
 
-ALTER TABLE public.acornassociated_criminal_sentence_types OWNER TO justice;
+ALTER TABLE public.acorn_criminal_sentence_types OWNER TO justice;
 
 --
 -- TOC entry 5084 (class 0 OID 0)
 -- Dependencies: 337
--- Name: TABLE acornassociated_criminal_sentence_types; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_sentence_types; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_sentence_types IS 'icon: hand-rock
+COMMENT ON TABLE public.acorn_criminal_sentence_types IS 'icon: hand-rock
 order: 43
 labels:
   ar: نوع الحكم الجنائي
@@ -1966,10 +1966,10 @@ labels-plural:
 
 --
 -- TOC entry 338 (class 1259 OID 395007)
--- Name: acornassociated_criminal_session_recordings; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_session_recordings; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_session_recordings (
+CREATE TABLE public.acorn_criminal_session_recordings (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     trial_session_id uuid NOT NULL,
     created_at_event_id uuid NOT NULL,
@@ -1977,15 +1977,15 @@ CREATE TABLE public.acornassociated_criminal_session_recordings (
 );
 
 
-ALTER TABLE public.acornassociated_criminal_session_recordings OWNER TO justice;
+ALTER TABLE public.acorn_criminal_session_recordings OWNER TO justice;
 
 --
 -- TOC entry 5085 (class 0 OID 0)
 -- Dependencies: 338
--- Name: TABLE acornassociated_criminal_session_recordings; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_session_recordings; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_session_recordings IS 'icon: map
+COMMENT ON TABLE public.acorn_criminal_session_recordings IS 'icon: map
 order: 25
 menu: false
 labels:
@@ -1997,10 +1997,10 @@ labels-plural:
 
 --
 -- TOC entry 339 (class 1259 OID 395011)
--- Name: acornassociated_criminal_trial_judges; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_trial_judges; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_trial_judges (
+CREATE TABLE public.acorn_criminal_trial_judges (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     trial_id uuid NOT NULL,
     user_id uuid NOT NULL,
@@ -2010,15 +2010,15 @@ CREATE TABLE public.acornassociated_criminal_trial_judges (
 );
 
 
-ALTER TABLE public.acornassociated_criminal_trial_judges OWNER TO justice;
+ALTER TABLE public.acorn_criminal_trial_judges OWNER TO justice;
 
 --
 -- TOC entry 5086 (class 0 OID 0)
 -- Dependencies: 339
--- Name: TABLE acornassociated_criminal_trial_judges; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_trial_judges; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_trial_judges IS 'icon: thumbs-up
+COMMENT ON TABLE public.acorn_criminal_trial_judges IS 'icon: thumbs-up
 order: 22
 menu: false
 labels:
@@ -2031,10 +2031,10 @@ methods:
 
 --
 -- TOC entry 340 (class 1259 OID 395015)
--- Name: acornassociated_criminal_trial_sessions; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_trial_sessions; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_trial_sessions (
+CREATE TABLE public.acorn_criminal_trial_sessions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     trial_id uuid NOT NULL,
     created_at_event_id uuid NOT NULL,
@@ -2042,15 +2042,15 @@ CREATE TABLE public.acornassociated_criminal_trial_sessions (
 );
 
 
-ALTER TABLE public.acornassociated_criminal_trial_sessions OWNER TO justice;
+ALTER TABLE public.acorn_criminal_trial_sessions OWNER TO justice;
 
 --
 -- TOC entry 5087 (class 0 OID 0)
 -- Dependencies: 340
--- Name: TABLE acornassociated_criminal_trial_sessions; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_trial_sessions; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_trial_sessions IS 'icon: meh
+COMMENT ON TABLE public.acorn_criminal_trial_sessions IS 'icon: meh
 order: 21
 labels:
   ar: جلسة المحكمة الجنائية
@@ -2062,10 +2062,10 @@ methods:
 
 --
 -- TOC entry 341 (class 1259 OID 395019)
--- Name: acornassociated_criminal_trials; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_criminal_trials; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_criminal_trials (
+CREATE TABLE public.acorn_criminal_trials (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     legalcase_id uuid NOT NULL,
     created_at_event_id uuid NOT NULL,
@@ -2074,15 +2074,15 @@ CREATE TABLE public.acornassociated_criminal_trials (
 );
 
 
-ALTER TABLE public.acornassociated_criminal_trials OWNER TO justice;
+ALTER TABLE public.acorn_criminal_trials OWNER TO justice;
 
 --
 -- TOC entry 5088 (class 0 OID 0)
 -- Dependencies: 341
--- Name: TABLE acornassociated_criminal_trials; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_criminal_trials; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_criminal_trials IS 'icon: ankh
+COMMENT ON TABLE public.acorn_criminal_trials IS 'icon: ankh
 order: 20
 menuSplitter: yes
 labels:
@@ -2095,10 +2095,10 @@ methods:
 
 --
 -- TOC entry 355 (class 1259 OID 413791)
--- Name: acornassociated_finance_currencies; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_finance_currencies; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_finance_currencies (
+CREATE TABLE public.acorn_finance_currencies (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     shortname character(3) NOT NULL,
@@ -2106,15 +2106,15 @@ CREATE TABLE public.acornassociated_finance_currencies (
 );
 
 
-ALTER TABLE public.acornassociated_finance_currencies OWNER TO postgres;
+ALTER TABLE public.acorn_finance_currencies OWNER TO postgres;
 
 --
 -- TOC entry 5089 (class 0 OID 0)
 -- Dependencies: 355
--- Name: TABLE acornassociated_finance_currencies; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE acorn_finance_currencies; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON TABLE public.acornassociated_finance_currencies IS 'plugin-icon: money
+COMMENT ON TABLE public.acorn_finance_currencies IS 'plugin-icon: money
 icon: stripe
 seeding:
   - [DEFAULT, ''Syrian Pound'', ''SYR'', ''£'']
@@ -2126,10 +2126,10 @@ methods:
 
 --
 -- TOC entry 356 (class 1259 OID 413797)
--- Name: acornassociated_finance_invoices; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_finance_invoices; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_finance_invoices (
+CREATE TABLE public.acorn_finance_invoices (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     number integer NOT NULL,
     currency_id uuid NOT NULL,
@@ -2146,15 +2146,15 @@ CREATE TABLE public.acornassociated_finance_invoices (
 );
 
 
-ALTER TABLE public.acornassociated_finance_invoices OWNER TO postgres;
+ALTER TABLE public.acorn_finance_invoices OWNER TO postgres;
 
 --
 -- TOC entry 5090 (class 0 OID 0)
 -- Dependencies: 356
--- Name: TABLE acornassociated_finance_invoices; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE acorn_finance_invoices; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON TABLE public.acornassociated_finance_invoices IS 'methods:
+COMMENT ON TABLE public.acorn_finance_invoices IS 'methods:
   name:  return "#$this->number (" . $this->currency?->present($this->amount) . '') to '' . $this->payer_user_group?->name . '' '' . $this->payer_user?->name;
 icon: swift';
 
@@ -2162,10 +2162,10 @@ icon: swift';
 --
 -- TOC entry 5091 (class 0 OID 0)
 -- Dependencies: 356
--- Name: COLUMN acornassociated_finance_invoices.payer_user_id; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN acorn_finance_invoices.payer_user_id; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.acornassociated_finance_invoices.payer_user_id IS 'labels: 
+COMMENT ON COLUMN public.acorn_finance_invoices.payer_user_id IS 'labels: 
   en: Payer
 new-row: true';
 
@@ -2173,20 +2173,20 @@ new-row: true';
 --
 -- TOC entry 5092 (class 0 OID 0)
 -- Dependencies: 356
--- Name: COLUMN acornassociated_finance_invoices.payer_user_group_id; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN acorn_finance_invoices.payer_user_group_id; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.acornassociated_finance_invoices.payer_user_group_id IS 'labels: 
+COMMENT ON COLUMN public.acorn_finance_invoices.payer_user_group_id IS 'labels: 
   en: Payer Organisation';
 
 
 --
 -- TOC entry 5093 (class 0 OID 0)
 -- Dependencies: 356
--- Name: COLUMN acornassociated_finance_invoices.payee_user_id; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN acorn_finance_invoices.payee_user_id; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.acornassociated_finance_invoices.payee_user_id IS 'labels: 
+COMMENT ON COLUMN public.acorn_finance_invoices.payee_user_id IS 'labels: 
   en: Payee
 new-row: true';
 
@@ -2194,19 +2194,19 @@ new-row: true';
 --
 -- TOC entry 5094 (class 0 OID 0)
 -- Dependencies: 356
--- Name: COLUMN acornassociated_finance_invoices.payee_user_group_id; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN acorn_finance_invoices.payee_user_group_id; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.acornassociated_finance_invoices.payee_user_group_id IS 'labels: 
+COMMENT ON COLUMN public.acorn_finance_invoices.payee_user_group_id IS 'labels: 
   en: Payee Organisation';
 
 
 --
 -- TOC entry 357 (class 1259 OID 413807)
--- Name: acornassociated_finance_payments; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_finance_payments; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_finance_payments (
+CREATE TABLE public.acorn_finance_payments (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     invoice_id uuid NOT NULL,
     currency_id uuid NOT NULL,
@@ -2216,32 +2216,32 @@ CREATE TABLE public.acornassociated_finance_payments (
 );
 
 
-ALTER TABLE public.acornassociated_finance_payments OWNER TO postgres;
+ALTER TABLE public.acorn_finance_payments OWNER TO postgres;
 
 --
 -- TOC entry 5095 (class 0 OID 0)
 -- Dependencies: 357
--- Name: TABLE acornassociated_finance_payments; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE acorn_finance_payments; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON TABLE public.acornassociated_finance_payments IS 'icon: vine';
+COMMENT ON TABLE public.acorn_finance_payments IS 'icon: vine';
 
 
 --
 -- TOC entry 5096 (class 0 OID 0)
 -- Dependencies: 357
--- Name: COLUMN acornassociated_finance_payments.amount; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN acorn_finance_payments.amount; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.acornassociated_finance_payments.amount IS 'new-row: true';
+COMMENT ON COLUMN public.acorn_finance_payments.amount IS 'new-row: true';
 
 
 --
 -- TOC entry 358 (class 1259 OID 413814)
--- Name: acornassociated_finance_purchases; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_finance_purchases; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_finance_purchases (
+CREATE TABLE public.acorn_finance_purchases (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     number integer NOT NULL,
     mark_paid boolean DEFAULT false NOT NULL,
@@ -2257,24 +2257,24 @@ CREATE TABLE public.acornassociated_finance_purchases (
 );
 
 
-ALTER TABLE public.acornassociated_finance_purchases OWNER TO postgres;
+ALTER TABLE public.acorn_finance_purchases OWNER TO postgres;
 
 --
 -- TOC entry 5097 (class 0 OID 0)
 -- Dependencies: 358
--- Name: TABLE acornassociated_finance_purchases; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE acorn_finance_purchases; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON TABLE public.acornassociated_finance_purchases IS 'icon: wpforms';
+COMMENT ON TABLE public.acorn_finance_purchases IS 'icon: wpforms';
 
 
 --
 -- TOC entry 5098 (class 0 OID 0)
 -- Dependencies: 358
--- Name: COLUMN acornassociated_finance_purchases.payer_user_id; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN acorn_finance_purchases.payer_user_id; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.acornassociated_finance_purchases.payer_user_id IS 'labels: 
+COMMENT ON COLUMN public.acorn_finance_purchases.payer_user_id IS 'labels: 
   en: Payer
 new-row: true';
 
@@ -2282,20 +2282,20 @@ new-row: true';
 --
 -- TOC entry 5099 (class 0 OID 0)
 -- Dependencies: 358
--- Name: COLUMN acornassociated_finance_purchases.payer_user_group_id; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN acorn_finance_purchases.payer_user_group_id; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.acornassociated_finance_purchases.payer_user_group_id IS 'labels: 
+COMMENT ON COLUMN public.acorn_finance_purchases.payer_user_group_id IS 'labels: 
   en: Payer Organisation';
 
 
 --
 -- TOC entry 5100 (class 0 OID 0)
 -- Dependencies: 358
--- Name: COLUMN acornassociated_finance_purchases.payee_user_id; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN acorn_finance_purchases.payee_user_id; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.acornassociated_finance_purchases.payee_user_id IS 'labels: 
+COMMENT ON COLUMN public.acorn_finance_purchases.payee_user_id IS 'labels: 
   en: Payee
 new-row: true';
 
@@ -2303,19 +2303,19 @@ new-row: true';
 --
 -- TOC entry 5101 (class 0 OID 0)
 -- Dependencies: 358
--- Name: COLUMN acornassociated_finance_purchases.payee_user_group_id; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN acorn_finance_purchases.payee_user_group_id; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.acornassociated_finance_purchases.payee_user_group_id IS 'labels: 
+COMMENT ON COLUMN public.acorn_finance_purchases.payee_user_group_id IS 'labels: 
   en: Payee Organisation';
 
 
 --
 -- TOC entry 359 (class 1259 OID 413824)
--- Name: acornassociated_finance_receipts; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_finance_receipts; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_finance_receipts (
+CREATE TABLE public.acorn_finance_receipts (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     purchase_id uuid NOT NULL,
     number integer NOT NULL,
@@ -2325,32 +2325,32 @@ CREATE TABLE public.acornassociated_finance_receipts (
 );
 
 
-ALTER TABLE public.acornassociated_finance_receipts OWNER TO postgres;
+ALTER TABLE public.acorn_finance_receipts OWNER TO postgres;
 
 --
 -- TOC entry 5102 (class 0 OID 0)
 -- Dependencies: 359
--- Name: TABLE acornassociated_finance_receipts; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE acorn_finance_receipts; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON TABLE public.acornassociated_finance_receipts IS 'icon: receipt';
+COMMENT ON TABLE public.acorn_finance_receipts IS 'icon: receipt';
 
 
 --
 -- TOC entry 5103 (class 0 OID 0)
 -- Dependencies: 359
--- Name: COLUMN acornassociated_finance_receipts.currency_id; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN acorn_finance_receipts.currency_id; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.acornassociated_finance_receipts.currency_id IS 'new-row: true';
+COMMENT ON COLUMN public.acorn_finance_receipts.currency_id IS 'new-row: true';
 
 
 --
 -- TOC entry 342 (class 1259 OID 395394)
--- Name: acornassociated_houseofpeace_events; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_houseofpeace_events; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_houseofpeace_events (
+CREATE TABLE public.acorn_houseofpeace_events (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     legalcase_id uuid NOT NULL,
     created_at_event_id uuid NOT NULL,
@@ -2359,15 +2359,15 @@ CREATE TABLE public.acornassociated_houseofpeace_events (
 );
 
 
-ALTER TABLE public.acornassociated_houseofpeace_events OWNER TO justice;
+ALTER TABLE public.acorn_houseofpeace_events OWNER TO justice;
 
 --
 -- TOC entry 5104 (class 0 OID 0)
 -- Dependencies: 342
--- Name: TABLE acornassociated_houseofpeace_events; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_houseofpeace_events; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_houseofpeace_events IS 'icon: route
+COMMENT ON TABLE public.acorn_houseofpeace_events IS 'icon: route
 labels:
   ar: حدث بيت الصلح
 labels-plural:
@@ -2377,10 +2377,10 @@ labels-plural:
 
 --
 -- TOC entry 343 (class 1259 OID 395400)
--- Name: acornassociated_houseofpeace_legalcases; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_houseofpeace_legalcases; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_houseofpeace_legalcases (
+CREATE TABLE public.acorn_houseofpeace_legalcases (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     legalcase_id uuid NOT NULL,
     created_at_event_id uuid NOT NULL,
@@ -2388,15 +2388,15 @@ CREATE TABLE public.acornassociated_houseofpeace_legalcases (
 );
 
 
-ALTER TABLE public.acornassociated_houseofpeace_legalcases OWNER TO justice;
+ALTER TABLE public.acorn_houseofpeace_legalcases OWNER TO justice;
 
 --
 -- TOC entry 5105 (class 0 OID 0)
 -- Dependencies: 343
--- Name: TABLE acornassociated_houseofpeace_legalcases; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_houseofpeace_legalcases; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_houseofpeace_legalcases IS 'plugin-icon: heart
+COMMENT ON TABLE public.acorn_houseofpeace_legalcases IS 'plugin-icon: heart
 icon: hourglass
 order: 1
 labels:
@@ -2413,25 +2413,25 @@ plugin-names:
 
 --
 -- TOC entry 318 (class 1259 OID 394818)
--- Name: acornassociated_justice_legalcase_categories; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcase_categories; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_justice_legalcase_categories (
+CREATE TABLE public.acorn_justice_legalcase_categories (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     parent_legalcase_category_id uuid
 );
 
 
-ALTER TABLE public.acornassociated_justice_legalcase_categories OWNER TO justice;
+ALTER TABLE public.acorn_justice_legalcase_categories OWNER TO justice;
 
 --
 -- TOC entry 5106 (class 0 OID 0)
 -- Dependencies: 318
--- Name: TABLE acornassociated_justice_legalcase_categories; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_justice_legalcase_categories; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_justice_legalcase_categories IS 'icon: cat
+COMMENT ON TABLE public.acorn_justice_legalcase_categories IS 'icon: cat
 labels:
   ar: فئة القضية العدلية
 labels-plural:
@@ -2441,10 +2441,10 @@ labels-plural:
 
 --
 -- TOC entry 319 (class 1259 OID 394824)
--- Name: acornassociated_justice_legalcase_identifiers; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcase_identifiers; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_justice_legalcase_identifiers (
+CREATE TABLE public.acorn_justice_legalcase_identifiers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     legalcase_id uuid NOT NULL,
     name character varying(1024) NOT NULL,
@@ -2453,15 +2453,15 @@ CREATE TABLE public.acornassociated_justice_legalcase_identifiers (
 );
 
 
-ALTER TABLE public.acornassociated_justice_legalcase_identifiers OWNER TO justice;
+ALTER TABLE public.acorn_justice_legalcase_identifiers OWNER TO justice;
 
 --
 -- TOC entry 5107 (class 0 OID 0)
 -- Dependencies: 319
--- Name: TABLE acornassociated_justice_legalcase_identifiers; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_justice_legalcase_identifiers; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_justice_legalcase_identifiers IS 'icon: unity
+COMMENT ON TABLE public.acorn_justice_legalcase_identifiers IS 'icon: unity
 labels:
   ar: معرف قضايا العدالة
 labels-plural:
@@ -2471,26 +2471,26 @@ labels-plural:
 
 --
 -- TOC entry 320 (class 1259 OID 394830)
--- Name: acornassociated_justice_legalcase_legalcase_category; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcase_legalcase_category; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_justice_legalcase_legalcase_category (
+CREATE TABLE public.acorn_justice_legalcase_legalcase_category (
     legalcase_id uuid NOT NULL,
     legalcase_category_id uuid NOT NULL,
-    created_at_event_id uuid DEFAULT public.fn_acornassociated_calendar_create_event('legalcase_category'::character varying, NULL::uuid) NOT NULL,
-    created_by_user_id uuid DEFAULT public.fn_acornassociated_user_get_seed_user() NOT NULL
+    created_at_event_id uuid DEFAULT public.fn_acorn_calendar_create_event('legalcase_category'::character varying, NULL::uuid) NOT NULL,
+    created_by_user_id uuid DEFAULT public.fn_acorn_user_get_seed_user() NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_justice_legalcase_legalcase_category OWNER TO justice;
+ALTER TABLE public.acorn_justice_legalcase_legalcase_category OWNER TO justice;
 
 --
 -- TOC entry 5108 (class 0 OID 0)
 -- Dependencies: 320
--- Name: TABLE acornassociated_justice_legalcase_legalcase_category; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_justice_legalcase_legalcase_category; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_justice_legalcase_legalcase_category IS 'labels:
+COMMENT ON TABLE public.acorn_justice_legalcase_legalcase_category IS 'labels:
   ar:قضية عدالة فئة القضية
 labels-plural:
   ar: قضاية عدالة فئة القضية
@@ -2499,10 +2499,10 @@ labels-plural:
 
 --
 -- TOC entry 321 (class 1259 OID 394833)
--- Name: acornassociated_justice_legalcases; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcases; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_justice_legalcases (
+CREATE TABLE public.acorn_justice_legalcases (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     created_at_event_id uuid NOT NULL,
     created_by_user_id uuid NOT NULL,
@@ -2512,15 +2512,15 @@ CREATE TABLE public.acornassociated_justice_legalcases (
 );
 
 
-ALTER TABLE public.acornassociated_justice_legalcases OWNER TO justice;
+ALTER TABLE public.acorn_justice_legalcases OWNER TO justice;
 
 --
 -- TOC entry 5109 (class 0 OID 0)
 -- Dependencies: 321
--- Name: TABLE acornassociated_justice_legalcases; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_justice_legalcases; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_justice_legalcases IS '# Base table for all legal cases
+COMMENT ON TABLE public.acorn_justice_legalcases IS '# Base table for all legal cases
 table-type: central
 icon: angry
 labels:
@@ -2538,10 +2538,10 @@ plugin-icon: adjust
 --
 -- TOC entry 5110 (class 0 OID 0)
 -- Dependencies: 321
--- Name: COLUMN acornassociated_justice_legalcases.name; Type: COMMENT; Schema: public; Owner: justice
+-- Name: COLUMN acorn_justice_legalcases.name; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acornassociated_justice_legalcases.name IS 'labels: 
+COMMENT ON COLUMN public.acorn_justice_legalcases.name IS 'labels: 
   en: Identifier
   ku: Nav';
 
@@ -2549,30 +2549,30 @@ COMMENT ON COLUMN public.acornassociated_justice_legalcases.name IS 'labels:
 --
 -- TOC entry 5111 (class 0 OID 0)
 -- Dependencies: 321
--- Name: COLUMN acornassociated_justice_legalcases.closed_at_event_id; Type: COMMENT; Schema: public; Owner: justice
+-- Name: COLUMN acorn_justice_legalcases.closed_at_event_id; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acornassociated_justice_legalcases.closed_at_event_id IS 'labels:
+COMMENT ON COLUMN public.acorn_justice_legalcases.closed_at_event_id IS 'labels:
   en: Closed at';
 
 
 --
 -- TOC entry 5112 (class 0 OID 0)
 -- Dependencies: 321
--- Name: COLUMN acornassociated_justice_legalcases.owner_user_group_id; Type: COMMENT; Schema: public; Owner: justice
+-- Name: COLUMN acorn_justice_legalcases.owner_user_group_id; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acornassociated_justice_legalcases.owner_user_group_id IS 'labels:
+COMMENT ON COLUMN public.acorn_justice_legalcases.owner_user_group_id IS 'labels:
   en: Owner Organisation
 ';
 
 
 --
 -- TOC entry 344 (class 1259 OID 395459)
--- Name: acornassociated_justice_scanned_documents; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_justice_scanned_documents; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_justice_scanned_documents (
+CREATE TABLE public.acorn_justice_scanned_documents (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     document path,
@@ -2582,28 +2582,28 @@ CREATE TABLE public.acornassociated_justice_scanned_documents (
 );
 
 
-ALTER TABLE public.acornassociated_justice_scanned_documents OWNER TO justice;
+ALTER TABLE public.acorn_justice_scanned_documents OWNER TO justice;
 
 --
 -- TOC entry 387 (class 1259 OID 415289)
--- Name: acornassociated_justice_warrant_types; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_justice_warrant_types; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_justice_warrant_types (
+CREATE TABLE public.acorn_justice_warrant_types (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     description text
 );
 
 
-ALTER TABLE public.acornassociated_justice_warrant_types OWNER TO justice;
+ALTER TABLE public.acorn_justice_warrant_types OWNER TO justice;
 
 --
 -- TOC entry 386 (class 1259 OID 415283)
--- Name: acornassociated_justice_warrants; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_justice_warrants; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_justice_warrants (
+CREATE TABLE public.acorn_justice_warrants (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     created_at_event_id uuid,
     created_by_user_id uuid,
@@ -2614,23 +2614,23 @@ CREATE TABLE public.acornassociated_justice_warrants (
 );
 
 
-ALTER TABLE public.acornassociated_justice_warrants OWNER TO justice;
+ALTER TABLE public.acorn_justice_warrants OWNER TO justice;
 
 --
 -- TOC entry 5113 (class 0 OID 0)
 -- Dependencies: 386
--- Name: TABLE acornassociated_justice_warrants; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_justice_warrants; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_justice_warrants IS 'printable: true';
+COMMENT ON TABLE public.acorn_justice_warrants IS 'printable: true';
 
 
 --
 -- TOC entry 294 (class 1259 OID 394358)
--- Name: acornassociated_location_addresses; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_location_addresses; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_location_addresses (
+CREATE TABLE public.acorn_location_addresses (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     number character varying(1024),
@@ -2645,14 +2645,14 @@ CREATE TABLE public.acornassociated_location_addresses (
 );
 
 
-ALTER TABLE public.acornassociated_location_addresses OWNER TO justice;
+ALTER TABLE public.acorn_location_addresses OWNER TO justice;
 
 --
 -- TOC entry 295 (class 1259 OID 394365)
--- Name: acornassociated_location_area_types; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_location_area_types; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_location_area_types (
+CREATE TABLE public.acorn_location_area_types (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     server_id uuid NOT NULL,
@@ -2662,14 +2662,14 @@ CREATE TABLE public.acornassociated_location_area_types (
 );
 
 
-ALTER TABLE public.acornassociated_location_area_types OWNER TO justice;
+ALTER TABLE public.acorn_location_area_types OWNER TO justice;
 
 --
 -- TOC entry 296 (class 1259 OID 394372)
--- Name: acornassociated_location_areas; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_location_areas; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_location_areas (
+CREATE TABLE public.acorn_location_areas (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     area_type_id uuid NOT NULL,
@@ -2684,14 +2684,14 @@ CREATE TABLE public.acornassociated_location_areas (
 );
 
 
-ALTER TABLE public.acornassociated_location_areas OWNER TO justice;
+ALTER TABLE public.acorn_location_areas OWNER TO justice;
 
 --
 -- TOC entry 297 (class 1259 OID 394381)
--- Name: acornassociated_location_gps; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_location_gps; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_location_gps (
+CREATE TABLE public.acorn_location_gps (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     longitude double precision,
     latitude double precision,
@@ -2702,14 +2702,14 @@ CREATE TABLE public.acornassociated_location_gps (
 );
 
 
-ALTER TABLE public.acornassociated_location_gps OWNER TO justice;
+ALTER TABLE public.acorn_location_gps OWNER TO justice;
 
 --
 -- TOC entry 298 (class 1259 OID 394388)
--- Name: acornassociated_location_locations; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_location_locations; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_location_locations (
+CREATE TABLE public.acorn_location_locations (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     address_id uuid NOT NULL,
     name character varying(2048) NOT NULL,
@@ -2723,14 +2723,14 @@ CREATE TABLE public.acornassociated_location_locations (
 );
 
 
-ALTER TABLE public.acornassociated_location_locations OWNER TO justice;
+ALTER TABLE public.acorn_location_locations OWNER TO justice;
 
 --
 -- TOC entry 299 (class 1259 OID 394395)
--- Name: acornassociated_location_lookup; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_location_lookup; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_location_lookup (
+CREATE TABLE public.acorn_location_lookup (
     id uuid NOT NULL,
     address character varying(1024) NOT NULL,
     city character varying(1024) NOT NULL,
@@ -2744,14 +2744,14 @@ CREATE TABLE public.acornassociated_location_lookup (
 );
 
 
-ALTER TABLE public.acornassociated_location_lookup OWNER TO justice;
+ALTER TABLE public.acorn_location_lookup OWNER TO justice;
 
 --
 -- TOC entry 300 (class 1259 OID 394401)
--- Name: acornassociated_location_types; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_location_types; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_location_types (
+CREATE TABLE public.acorn_location_types (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     parent_type_id uuid,
@@ -2764,14 +2764,14 @@ CREATE TABLE public.acornassociated_location_types (
 );
 
 
-ALTER TABLE public.acornassociated_location_types OWNER TO justice;
+ALTER TABLE public.acorn_location_types OWNER TO justice;
 
 --
 -- TOC entry 362 (class 1259 OID 413954)
--- Name: acornassociated_lojistiks_brands; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_brands; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_brands (
+CREATE TABLE public.acorn_lojistiks_brands (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(2048) NOT NULL,
     image character varying(2048),
@@ -2782,14 +2782,14 @@ CREATE TABLE public.acornassociated_lojistiks_brands (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_brands OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_brands OWNER TO postgres;
 
 --
 -- TOC entry 363 (class 1259 OID 413960)
--- Name: acornassociated_lojistiks_containers; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_containers; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_containers (
+CREATE TABLE public.acorn_lojistiks_containers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     server_id uuid NOT NULL,
     created_at_event_id uuid,
@@ -2799,14 +2799,14 @@ CREATE TABLE public.acornassociated_lojistiks_containers (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_containers OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_containers OWNER TO postgres;
 
 --
 -- TOC entry 364 (class 1259 OID 413966)
--- Name: acornassociated_lojistiks_drivers; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_drivers; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_drivers (
+CREATE TABLE public.acorn_lojistiks_drivers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     person_id uuid NOT NULL,
     server_id uuid NOT NULL,
@@ -2817,14 +2817,14 @@ CREATE TABLE public.acornassociated_lojistiks_drivers (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_drivers OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_drivers OWNER TO postgres;
 
 --
 -- TOC entry 365 (class 1259 OID 413972)
--- Name: acornassociated_lojistiks_employees; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_employees; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_employees (
+CREATE TABLE public.acorn_lojistiks_employees (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     person_id uuid NOT NULL,
     user_role_id uuid NOT NULL,
@@ -2835,14 +2835,14 @@ CREATE TABLE public.acornassociated_lojistiks_employees (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_employees OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_employees OWNER TO postgres;
 
 --
 -- TOC entry 366 (class 1259 OID 413990)
--- Name: acornassociated_lojistiks_measurement_units; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_measurement_units; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_measurement_units (
+CREATE TABLE public.acorn_lojistiks_measurement_units (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     short_name character varying(1024),
@@ -2854,14 +2854,14 @@ CREATE TABLE public.acornassociated_lojistiks_measurement_units (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_measurement_units OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_measurement_units OWNER TO postgres;
 
 --
 -- TOC entry 370 (class 1259 OID 414024)
--- Name: acornassociated_lojistiks_offices; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_offices; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_offices (
+CREATE TABLE public.acorn_lojistiks_offices (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     location_id uuid NOT NULL,
     server_id uuid NOT NULL,
@@ -2871,14 +2871,14 @@ CREATE TABLE public.acornassociated_lojistiks_offices (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_offices OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_offices OWNER TO postgres;
 
 --
 -- TOC entry 371 (class 1259 OID 414030)
--- Name: acornassociated_lojistiks_people; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_people; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_people (
+CREATE TABLE public.acorn_lojistiks_people (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_id uuid,
     image character varying(2048),
@@ -2891,14 +2891,14 @@ CREATE TABLE public.acornassociated_lojistiks_people (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_people OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_people OWNER TO postgres;
 
 --
 -- TOC entry 372 (class 1259 OID 414036)
--- Name: acornassociated_lojistiks_product_attributes; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_attributes; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_product_attributes (
+CREATE TABLE public.acorn_lojistiks_product_attributes (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     product_id uuid NOT NULL,
     name character varying(1024) NOT NULL,
@@ -2910,14 +2910,14 @@ CREATE TABLE public.acornassociated_lojistiks_product_attributes (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_product_attributes OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_product_attributes OWNER TO postgres;
 
 --
 -- TOC entry 373 (class 1259 OID 414042)
--- Name: acornassociated_lojistiks_product_categories; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_categories; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_product_categories (
+CREATE TABLE public.acorn_lojistiks_product_categories (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     product_category_type_id uuid NOT NULL,
@@ -2929,14 +2929,14 @@ CREATE TABLE public.acornassociated_lojistiks_product_categories (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_product_categories OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_product_categories OWNER TO postgres;
 
 --
 -- TOC entry 374 (class 1259 OID 414048)
--- Name: acornassociated_lojistiks_product_category_types; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_category_types; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_product_category_types (
+CREATE TABLE public.acorn_lojistiks_product_category_types (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     server_id uuid NOT NULL,
@@ -2946,14 +2946,14 @@ CREATE TABLE public.acornassociated_lojistiks_product_category_types (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_product_category_types OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_product_category_types OWNER TO postgres;
 
 --
 -- TOC entry 367 (class 1259 OID 413997)
--- Name: acornassociated_lojistiks_product_instance_transfer; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_instance_transfer; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_product_instance_transfer (
+CREATE TABLE public.acorn_lojistiks_product_instance_transfer (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     transfer_id uuid NOT NULL,
     product_instance_id uuid NOT NULL,
@@ -2964,14 +2964,14 @@ CREATE TABLE public.acornassociated_lojistiks_product_instance_transfer (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_product_instance_transfer OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_product_instance_transfer OWNER TO postgres;
 
 --
 -- TOC entry 368 (class 1259 OID 414003)
--- Name: acornassociated_lojistiks_product_instances; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_instances; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_product_instances (
+CREATE TABLE public.acorn_lojistiks_product_instances (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     product_id uuid NOT NULL,
     quantity integer DEFAULT 1 NOT NULL,
@@ -2985,14 +2985,14 @@ CREATE TABLE public.acornassociated_lojistiks_product_instances (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_product_instances OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_product_instances OWNER TO postgres;
 
 --
 -- TOC entry 375 (class 1259 OID 414054)
--- Name: acornassociated_lojistiks_product_products; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_products; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_product_products (
+CREATE TABLE public.acorn_lojistiks_product_products (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     product_id uuid NOT NULL,
     sub_product_id uuid NOT NULL,
@@ -3004,14 +3004,14 @@ CREATE TABLE public.acornassociated_lojistiks_product_products (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_product_products OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_product_products OWNER TO postgres;
 
 --
 -- TOC entry 376 (class 1259 OID 414060)
--- Name: acornassociated_lojistiks_products; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_products (
+CREATE TABLE public.acorn_lojistiks_products (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     measurement_unit_id uuid NOT NULL,
@@ -3025,14 +3025,14 @@ CREATE TABLE public.acornassociated_lojistiks_products (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_products OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_products OWNER TO postgres;
 
 --
 -- TOC entry 377 (class 1259 OID 414066)
--- Name: acornassociated_lojistiks_products_product_categories; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products_product_categories; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_products_product_categories (
+CREATE TABLE public.acorn_lojistiks_products_product_categories (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     product_id uuid NOT NULL,
     product_category_id uuid NOT NULL,
@@ -3043,14 +3043,14 @@ CREATE TABLE public.acornassociated_lojistiks_products_product_categories (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_products_product_categories OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_products_product_categories OWNER TO postgres;
 
 --
 -- TOC entry 378 (class 1259 OID 414084)
--- Name: acornassociated_lojistiks_suppliers; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_suppliers; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_suppliers (
+CREATE TABLE public.acorn_lojistiks_suppliers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     location_id uuid NOT NULL,
     server_id uuid NOT NULL,
@@ -3060,14 +3060,14 @@ CREATE TABLE public.acornassociated_lojistiks_suppliers (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_suppliers OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_suppliers OWNER TO postgres;
 
 --
 -- TOC entry 380 (class 1259 OID 414100)
--- Name: acornassociated_lojistiks_transfer_container_product_instance; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_container_product_instance; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_transfer_container_product_instance (
+CREATE TABLE public.acorn_lojistiks_transfer_container_product_instance (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     transfer_container_id uuid NOT NULL,
     product_instance_transfer_id uuid NOT NULL,
@@ -3078,32 +3078,32 @@ CREATE TABLE public.acornassociated_lojistiks_transfer_container_product_instanc
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_transfer_container_product_instance OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_transfer_container_product_instance OWNER TO postgres;
 
 --
 -- TOC entry 5114 (class 0 OID 0)
 -- Dependencies: 380
--- Name: TABLE acornassociated_lojistiks_transfer_container_product_instance; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE acorn_lojistiks_transfer_container_product_instance; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON TABLE public.acornassociated_lojistiks_transfer_container_product_instance IS 'todo: true';
+COMMENT ON TABLE public.acorn_lojistiks_transfer_container_product_instance IS 'todo: true';
 
 
 --
 -- TOC entry 5115 (class 0 OID 0)
 -- Dependencies: 380
--- Name: COLUMN acornassociated_lojistiks_transfer_container_product_instance.transfer_container_id; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN acorn_lojistiks_transfer_container_product_instance.transfer_container_id; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.acornassociated_lojistiks_transfer_container_product_instance.transfer_container_id IS 'todo: true';
+COMMENT ON COLUMN public.acorn_lojistiks_transfer_container_product_instance.transfer_container_id IS 'todo: true';
 
 
 --
 -- TOC entry 379 (class 1259 OID 414092)
--- Name: acornassociated_lojistiks_transfer_containers; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_containers; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_transfer_containers (
+CREATE TABLE public.acorn_lojistiks_transfer_containers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     transfer_id uuid NOT NULL,
     container_id uuid NOT NULL,
@@ -3114,51 +3114,51 @@ CREATE TABLE public.acornassociated_lojistiks_transfer_containers (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_transfer_containers OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_transfer_containers OWNER TO postgres;
 
 --
 -- TOC entry 5116 (class 0 OID 0)
 -- Dependencies: 379
--- Name: TABLE acornassociated_lojistiks_transfer_containers; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: TABLE acorn_lojistiks_transfer_containers; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON TABLE public.acornassociated_lojistiks_transfer_containers IS 'todo: true';
+COMMENT ON TABLE public.acorn_lojistiks_transfer_containers IS 'todo: true';
 
 
 --
 -- TOC entry 381 (class 1259 OID 414108)
--- Name: acornassociated_lojistiks_transfer_invoice; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_invoice; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_transfer_invoice (
+CREATE TABLE public.acorn_lojistiks_transfer_invoice (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     transfer_id uuid NOT NULL,
     invoice_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_transfer_invoice OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_transfer_invoice OWNER TO postgres;
 
 --
 -- TOC entry 382 (class 1259 OID 414112)
--- Name: acornassociated_lojistiks_transfer_purchase; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_purchase; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_transfer_purchase (
+CREATE TABLE public.acorn_lojistiks_transfer_purchase (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     transfer_id uuid NOT NULL,
     purchase_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_transfer_purchase OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_transfer_purchase OWNER TO postgres;
 
 --
 -- TOC entry 369 (class 1259 OID 414011)
--- Name: acornassociated_lojistiks_transfers; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfers; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_transfers (
+CREATE TABLE public.acorn_lojistiks_transfers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     location_id uuid NOT NULL,
     driver_id uuid,
@@ -3173,32 +3173,32 @@ CREATE TABLE public.acornassociated_lojistiks_transfers (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_transfers OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_transfers OWNER TO postgres;
 
 --
 -- TOC entry 5117 (class 0 OID 0)
 -- Dependencies: 369
--- Name: COLUMN acornassociated_lojistiks_transfers.response; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN acorn_lojistiks_transfers.response; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.acornassociated_lojistiks_transfers.response IS 'env: APP_DEBUG';
+COMMENT ON COLUMN public.acorn_lojistiks_transfers.response IS 'env: APP_DEBUG';
 
 
 --
 -- TOC entry 5118 (class 0 OID 0)
 -- Dependencies: 369
--- Name: COLUMN acornassociated_lojistiks_transfers.sent_at_event_id; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: COLUMN acorn_lojistiks_transfers.sent_at_event_id; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.acornassociated_lojistiks_transfers.sent_at_event_id IS 'new-row: true';
+COMMENT ON COLUMN public.acorn_lojistiks_transfers.sent_at_event_id IS 'new-row: true';
 
 
 --
 -- TOC entry 383 (class 1259 OID 414121)
--- Name: acornassociated_lojistiks_vehicle_types; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_vehicle_types; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_vehicle_types (
+CREATE TABLE public.acorn_lojistiks_vehicle_types (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     server_id uuid NOT NULL,
@@ -3208,14 +3208,14 @@ CREATE TABLE public.acornassociated_lojistiks_vehicle_types (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_vehicle_types OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_vehicle_types OWNER TO postgres;
 
 --
 -- TOC entry 384 (class 1259 OID 414129)
--- Name: acornassociated_lojistiks_vehicles; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_vehicles; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_vehicles (
+CREATE TABLE public.acorn_lojistiks_vehicles (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     vehicle_type_id uuid NOT NULL,
     registration character varying(1024) NOT NULL,
@@ -3227,14 +3227,14 @@ CREATE TABLE public.acornassociated_lojistiks_vehicles (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_vehicles OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_vehicles OWNER TO postgres;
 
 --
 -- TOC entry 385 (class 1259 OID 414137)
--- Name: acornassociated_lojistiks_warehouses; Type: TABLE; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_warehouses; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.acornassociated_lojistiks_warehouses (
+CREATE TABLE public.acorn_lojistiks_warehouses (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     location_id uuid NOT NULL,
     server_id uuid NOT NULL,
@@ -3244,14 +3244,14 @@ CREATE TABLE public.acornassociated_lojistiks_warehouses (
 );
 
 
-ALTER TABLE public.acornassociated_lojistiks_warehouses OWNER TO postgres;
+ALTER TABLE public.acorn_lojistiks_warehouses OWNER TO postgres;
 
 --
 -- TOC entry 305 (class 1259 OID 394608)
--- Name: acornassociated_messaging_action; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_messaging_action; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_messaging_action (
+CREATE TABLE public.acorn_messaging_action (
     message_id uuid NOT NULL,
     action character varying(1024) NOT NULL,
     settings text NOT NULL,
@@ -3261,14 +3261,14 @@ CREATE TABLE public.acornassociated_messaging_action (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_action OWNER TO justice;
+ALTER TABLE public.acorn_messaging_action OWNER TO justice;
 
 --
 -- TOC entry 306 (class 1259 OID 394613)
--- Name: acornassociated_messaging_label; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_messaging_label; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_messaging_label (
+CREATE TABLE public.acorn_messaging_label (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255) NOT NULL,
     description character varying(255),
@@ -3277,14 +3277,14 @@ CREATE TABLE public.acornassociated_messaging_label (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_label OWNER TO justice;
+ALTER TABLE public.acorn_messaging_label OWNER TO justice;
 
 --
 -- TOC entry 301 (class 1259 OID 394563)
--- Name: acornassociated_messaging_message; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_messaging_message; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_messaging_message (
+CREATE TABLE public.acorn_messaging_message (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_from_id uuid NOT NULL,
     subject character varying(2048) NOT NULL,
@@ -3298,23 +3298,23 @@ CREATE TABLE public.acornassociated_messaging_message (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_message OWNER TO justice;
+ALTER TABLE public.acorn_messaging_message OWNER TO justice;
 
 --
 -- TOC entry 5119 (class 0 OID 0)
 -- Dependencies: 301
--- Name: TABLE acornassociated_messaging_message; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_messaging_message; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_messaging_message IS 'table-type: content';
+COMMENT ON TABLE public.acorn_messaging_message IS 'table-type: content';
 
 
 --
 -- TOC entry 317 (class 1259 OID 394802)
--- Name: acornassociated_messaging_message_instance; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_messaging_message_instance; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_messaging_message_instance (
+CREATE TABLE public.acorn_messaging_message_instance (
     message_id uuid NOT NULL,
     instance_id uuid NOT NULL,
     created_at timestamp(0) without time zone DEFAULT '2024-10-19 13:37:23.183819'::timestamp without time zone NOT NULL,
@@ -3322,14 +3322,14 @@ CREATE TABLE public.acornassociated_messaging_message_instance (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_message_instance OWNER TO justice;
+ALTER TABLE public.acorn_messaging_message_instance OWNER TO justice;
 
 --
 -- TOC entry 304 (class 1259 OID 394603)
--- Name: acornassociated_messaging_message_message; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_messaging_message_message; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_messaging_message_message (
+CREATE TABLE public.acorn_messaging_message_message (
     message1_id uuid NOT NULL,
     message2_id uuid NOT NULL,
     relationship integer NOT NULL,
@@ -3338,14 +3338,14 @@ CREATE TABLE public.acornassociated_messaging_message_message (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_message_message OWNER TO justice;
+ALTER TABLE public.acorn_messaging_message_message OWNER TO justice;
 
 --
 -- TOC entry 302 (class 1259 OID 394573)
--- Name: acornassociated_messaging_message_user; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_messaging_message_user; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_messaging_message_user (
+CREATE TABLE public.acorn_messaging_message_user (
     message_id uuid NOT NULL,
     user_id uuid NOT NULL,
     created_at timestamp(0) without time zone,
@@ -3353,14 +3353,14 @@ CREATE TABLE public.acornassociated_messaging_message_user (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_message_user OWNER TO justice;
+ALTER TABLE public.acorn_messaging_message_user OWNER TO justice;
 
 --
 -- TOC entry 303 (class 1259 OID 394588)
--- Name: acornassociated_messaging_message_user_group; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_messaging_message_user_group; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_messaging_message_user_group (
+CREATE TABLE public.acorn_messaging_message_user_group (
     message_id uuid NOT NULL,
     user_group_id uuid NOT NULL,
     created_at timestamp(0) without time zone,
@@ -3368,14 +3368,14 @@ CREATE TABLE public.acornassociated_messaging_message_user_group (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_message_user_group OWNER TO justice;
+ALTER TABLE public.acorn_messaging_message_user_group OWNER TO justice;
 
 --
 -- TOC entry 307 (class 1259 OID 394621)
--- Name: acornassociated_messaging_status; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_messaging_status; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_messaging_status (
+CREATE TABLE public.acorn_messaging_status (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255) NOT NULL,
     description character varying(255),
@@ -3384,23 +3384,23 @@ CREATE TABLE public.acornassociated_messaging_status (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_status OWNER TO justice;
+ALTER TABLE public.acorn_messaging_status OWNER TO justice;
 
 --
 -- TOC entry 5120 (class 0 OID 0)
 -- Dependencies: 307
--- Name: TABLE acornassociated_messaging_status; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_messaging_status; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_messaging_status IS 'table-type: content';
+COMMENT ON TABLE public.acorn_messaging_status IS 'table-type: content';
 
 
 --
 -- TOC entry 308 (class 1259 OID 394629)
--- Name: acornassociated_messaging_user_message_status; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_messaging_user_message_status; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_messaging_user_message_status (
+CREATE TABLE public.acorn_messaging_user_message_status (
     user_id uuid NOT NULL,
     message_id uuid NOT NULL,
     status_id uuid NOT NULL,
@@ -3410,23 +3410,23 @@ CREATE TABLE public.acornassociated_messaging_user_message_status (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_user_message_status OWNER TO justice;
+ALTER TABLE public.acorn_messaging_user_message_status OWNER TO justice;
 
 --
 -- TOC entry 5121 (class 0 OID 0)
 -- Dependencies: 308
--- Name: TABLE acornassociated_messaging_user_message_status; Type: COMMENT; Schema: public; Owner: justice
+-- Name: TABLE acorn_messaging_user_message_status; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acornassociated_messaging_user_message_status IS 'table-type: content';
+COMMENT ON TABLE public.acorn_messaging_user_message_status IS 'table-type: content';
 
 
 --
 -- TOC entry 275 (class 1259 OID 394095)
--- Name: acornassociated_servers; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_servers; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_servers (
+CREATE TABLE public.acorn_servers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     hostname character varying(1024) DEFAULT 'hostname()'::character varying NOT NULL,
     response text,
@@ -3436,92 +3436,92 @@ CREATE TABLE public.acornassociated_servers (
 );
 
 
-ALTER TABLE public.acornassociated_servers OWNER TO justice;
+ALTER TABLE public.acorn_servers OWNER TO justice;
 
 --
 -- TOC entry 346 (class 1259 OID 412558)
--- Name: acornassociated_university_course_teacher; Type: TABLE; Schema: public; Owner: sanchez
+-- Name: acorn_university_course_teacher; Type: TABLE; Schema: public; Owner: sz
 --
 
-CREATE TABLE public.acornassociated_university_course_teacher (
+CREATE TABLE public.acorn_university_course_teacher (
     course_id uuid NOT NULL,
     teacher_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_university_course_teacher OWNER TO sanchez;
+ALTER TABLE public.acorn_university_course_teacher OWNER TO sz;
 
 --
 -- TOC entry 347 (class 1259 OID 412561)
--- Name: acornassociated_university_courses; Type: TABLE; Schema: public; Owner: sanchez
+-- Name: acorn_university_courses; Type: TABLE; Schema: public; Owner: sz
 --
 
-CREATE TABLE public.acornassociated_university_courses (
+CREATE TABLE public.acorn_university_courses (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_university_courses OWNER TO sanchez;
+ALTER TABLE public.acorn_university_courses OWNER TO sz;
 
 --
 -- TOC entry 348 (class 1259 OID 412567)
--- Name: acornassociated_university_students; Type: TABLE; Schema: public; Owner: sanchez
+-- Name: acorn_university_students; Type: TABLE; Schema: public; Owner: sz
 --
 
-CREATE TABLE public.acornassociated_university_students (
+CREATE TABLE public.acorn_university_students (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_university_students OWNER TO sanchez;
+ALTER TABLE public.acorn_university_students OWNER TO sz;
 
 --
 -- TOC entry 349 (class 1259 OID 412571)
--- Name: acornassociated_university_teachers; Type: TABLE; Schema: public; Owner: sanchez
+-- Name: acorn_university_teachers; Type: TABLE; Schema: public; Owner: sz
 --
 
-CREATE TABLE public.acornassociated_university_teachers (
+CREATE TABLE public.acorn_university_teachers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_university_teachers OWNER TO sanchez;
+ALTER TABLE public.acorn_university_teachers OWNER TO sz;
 
 --
 -- TOC entry 351 (class 1259 OID 412879)
--- Name: acornassociated_user_language_user; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_user_language_user; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_user_language_user (
+CREATE TABLE public.acorn_user_language_user (
     user_id uuid NOT NULL,
     language_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_user_language_user OWNER TO justice;
+ALTER TABLE public.acorn_user_language_user OWNER TO justice;
 
 --
 -- TOC entry 350 (class 1259 OID 412871)
--- Name: acornassociated_user_languages; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_user_languages; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_user_languages (
+CREATE TABLE public.acorn_user_languages (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_user_languages OWNER TO justice;
+ALTER TABLE public.acorn_user_languages OWNER TO justice;
 
 --
 -- TOC entry 278 (class 1259 OID 394139)
--- Name: acornassociated_user_mail_blockers; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_user_mail_blockers; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_user_mail_blockers (
+CREATE TABLE public.acorn_user_mail_blockers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     email character varying(255),
     template character varying(255),
@@ -3531,14 +3531,14 @@ CREATE TABLE public.acornassociated_user_mail_blockers (
 );
 
 
-ALTER TABLE public.acornassociated_user_mail_blockers OWNER TO justice;
+ALTER TABLE public.acorn_user_mail_blockers OWNER TO justice;
 
 --
 -- TOC entry 281 (class 1259 OID 394169)
--- Name: acornassociated_user_roles; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_user_roles; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_user_roles (
+CREATE TABLE public.acorn_user_roles (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255),
     permissions text,
@@ -3547,14 +3547,14 @@ CREATE TABLE public.acornassociated_user_roles (
 );
 
 
-ALTER TABLE public.acornassociated_user_roles OWNER TO justice;
+ALTER TABLE public.acorn_user_roles OWNER TO justice;
 
 --
 -- TOC entry 277 (class 1259 OID 394128)
--- Name: acornassociated_user_throttle; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_user_throttle; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_user_throttle (
+CREATE TABLE public.acorn_user_throttle (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_id uuid,
     ip_address character varying(255),
@@ -3567,27 +3567,27 @@ CREATE TABLE public.acornassociated_user_throttle (
 );
 
 
-ALTER TABLE public.acornassociated_user_throttle OWNER TO justice;
+ALTER TABLE public.acorn_user_throttle OWNER TO justice;
 
 --
 -- TOC entry 280 (class 1259 OID 394162)
--- Name: acornassociated_user_user_group; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_user_user_group; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_user_user_group (
+CREATE TABLE public.acorn_user_user_group (
     user_id uuid NOT NULL,
     user_group_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_user_user_group OWNER TO justice;
+ALTER TABLE public.acorn_user_user_group OWNER TO justice;
 
 --
 -- TOC entry 345 (class 1259 OID 404475)
--- Name: acornassociated_user_user_group_types; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_user_user_group_types; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_user_user_group_types (
+CREATE TABLE public.acorn_user_user_group_types (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     colour character varying(1024),
@@ -3595,14 +3595,14 @@ CREATE TABLE public.acornassociated_user_user_group_types (
 );
 
 
-ALTER TABLE public.acornassociated_user_user_group_types OWNER TO justice;
+ALTER TABLE public.acorn_user_user_group_types OWNER TO justice;
 
 --
 -- TOC entry 279 (class 1259 OID 394153)
--- Name: acornassociated_user_user_groups; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_user_user_groups; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_user_user_groups (
+CREATE TABLE public.acorn_user_user_groups (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255) NOT NULL,
     code character varying(255),
@@ -3619,14 +3619,14 @@ CREATE TABLE public.acornassociated_user_user_groups (
 );
 
 
-ALTER TABLE public.acornassociated_user_user_groups OWNER TO justice;
+ALTER TABLE public.acorn_user_user_groups OWNER TO justice;
 
 --
 -- TOC entry 276 (class 1259 OID 394115)
--- Name: acornassociated_user_users; Type: TABLE; Schema: public; Owner: justice
+-- Name: acorn_user_users; Type: TABLE; Schema: public; Owner: justice
 --
 
-CREATE TABLE public.acornassociated_user_users (
+CREATE TABLE public.acorn_user_users (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255),
     email character varying(255),
@@ -3648,33 +3648,33 @@ CREATE TABLE public.acornassociated_user_users (
     is_superuser boolean DEFAULT false NOT NULL,
     created_ip_address character varying(255),
     last_ip_address character varying(255),
-    acornassociated_imap_username character varying(255),
-    acornassociated_imap_password character varying(255),
-    acornassociated_imap_server character varying(255),
-    acornassociated_imap_port integer,
-    acornassociated_imap_protocol character varying(255),
-    acornassociated_imap_encryption character varying(255),
-    acornassociated_imap_authentication character varying(255),
-    acornassociated_imap_validate_cert boolean,
-    acornassociated_smtp_server character varying(255),
-    acornassociated_smtp_port character varying(255),
-    acornassociated_smtp_encryption character varying(255),
-    acornassociated_smtp_authentication character varying(255),
-    acornassociated_smtp_username character varying(255),
-    acornassociated_smtp_password character varying(255),
-    acornassociated_messaging_sounds boolean,
-    acornassociated_messaging_email_notifications character(1),
-    acornassociated_messaging_autocreated boolean,
-    acornassociated_imap_last_fetch timestamp(0) without time zone,
-    acornassociated_default_calendar uuid,
-    acornassociated_start_of_week integer,
-    acornassociated_default_event_time_from date,
-    acornassociated_default_event_time_to date,
+    acorn_imap_username character varying(255),
+    acorn_imap_password character varying(255),
+    acorn_imap_server character varying(255),
+    acorn_imap_port integer,
+    acorn_imap_protocol character varying(255),
+    acorn_imap_encryption character varying(255),
+    acorn_imap_authentication character varying(255),
+    acorn_imap_validate_cert boolean,
+    acorn_smtp_server character varying(255),
+    acorn_smtp_port character varying(255),
+    acorn_smtp_encryption character varying(255),
+    acorn_smtp_authentication character varying(255),
+    acorn_smtp_username character varying(255),
+    acorn_smtp_password character varying(255),
+    acorn_messaging_sounds boolean,
+    acorn_messaging_email_notifications character(1),
+    acorn_messaging_autocreated boolean,
+    acorn_imap_last_fetch timestamp(0) without time zone,
+    acorn_default_calendar uuid,
+    acorn_start_of_week integer,
+    acorn_default_event_time_from date,
+    acorn_default_event_time_to date,
     is_system_user boolean DEFAULT false
 );
 
 
-ALTER TABLE public.acornassociated_user_users OWNER TO justice;
+ALTER TABLE public.acorn_user_users OWNER TO justice;
 
 --
 -- TOC entry 263 (class 1259 OID 393992)
@@ -3916,8 +3916,8 @@ CREATE TABLE public.backend_users (
     deleted_at timestamp(0) without time zone,
     is_superuser boolean DEFAULT false NOT NULL,
     metadata text,
-    acornassociated_url character varying(2048),
-    acornassociated_user_user_id uuid
+    acorn_url character varying(2048),
+    acorn_user_user_id uuid
 );
 
 
@@ -4885,7 +4885,7 @@ CREATE TABLE public.system_plugin_versions (
     created_at timestamp(0) without time zone,
     is_disabled boolean DEFAULT false NOT NULL,
     is_frozen boolean DEFAULT false NOT NULL,
-    acornassociated_infrastructure boolean DEFAULT false NOT NULL
+    acorn_infrastructure boolean DEFAULT false NOT NULL
 );
 
 
@@ -5286,650 +5286,650 @@ ALTER TABLE ONLY public.winter_translate_messages ALTER COLUMN id SET DEFAULT ne
 
 --
 -- TOC entry 4445 (class 2606 OID 414146)
--- Name: acornassociated_lojistiks_computer_products computer_products_pkey; Type: CONSTRAINT; Schema: product; Owner: postgres
+-- Name: acorn_lojistiks_computer_products computer_products_pkey; Type: CONSTRAINT; Schema: product; Owner: postgres
 --
 
-ALTER TABLE ONLY product.acornassociated_lojistiks_computer_products
+ALTER TABLE ONLY product.acorn_lojistiks_computer_products
     ADD CONSTRAINT computer_products_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4451 (class 2606 OID 414148)
--- Name: acornassociated_lojistiks_electronic_products office_products_pkey; Type: CONSTRAINT; Schema: product; Owner: postgres
+-- Name: acorn_lojistiks_electronic_products office_products_pkey; Type: CONSTRAINT; Schema: product; Owner: postgres
 --
 
-ALTER TABLE ONLY product.acornassociated_lojistiks_electronic_products
+ALTER TABLE ONLY product.acorn_lojistiks_electronic_products
     ADD CONSTRAINT office_products_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4343 (class 2606 OID 394840)
--- Name: acornassociated_justice_legalcases acornassocaited_justice_cases_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcases acornassocaited_justice_cases_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_legalcases
+ALTER TABLE ONLY public.acorn_justice_legalcases
     ADD CONSTRAINT acornassocaited_justice_cases_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4366 (class 2606 OID 395024)
--- Name: acornassociated_criminal_defendant_crimes acornassocaited_justice_defendant_crime_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_defendant_crimes acornassocaited_justice_defendant_crime_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_defendant_crimes
+ALTER TABLE ONLY public.acorn_criminal_defendant_crimes
     ADD CONSTRAINT acornassocaited_justice_defendant_crime_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4324 (class 2606 OID 394744)
--- Name: acornassociated_calendar_event_part acornassociated_calendar_event_part_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_part acorn_calendar_event_part_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_part
-    ADD CONSTRAINT acornassociated_calendar_event_part_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_calendar_event_part
+    ADD CONSTRAINT acorn_calendar_event_part_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4322 (class 2606 OID 394713)
--- Name: acornassociated_calendar_event acornassociated_calendar_event_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event acorn_calendar_event_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event
-    ADD CONSTRAINT acornassociated_calendar_event_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_calendar_event
+    ADD CONSTRAINT acorn_calendar_event_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4320 (class 2606 OID 394688)
--- Name: acornassociated_calendar_event_status acornassociated_calendar_event_status_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_status acorn_calendar_event_status_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_status
-    ADD CONSTRAINT acornassociated_calendar_event_status_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_calendar_event_status
+    ADD CONSTRAINT acorn_calendar_event_status_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4318 (class 2606 OID 394680)
--- Name: acornassociated_calendar_event_type acornassociated_calendar_event_type_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_type acorn_calendar_event_type_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_type
-    ADD CONSTRAINT acornassociated_calendar_event_type_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_calendar_event_type
+    ADD CONSTRAINT acorn_calendar_event_type_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4331 (class 2606 OID 394791)
--- Name: acornassociated_calendar_event_user_group acornassociated_calendar_event_user_group_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_user_group acorn_calendar_event_user_group_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_user_group
-    ADD CONSTRAINT acornassociated_calendar_event_user_group_pkey PRIMARY KEY (event_part_id, user_group_id);
+ALTER TABLE ONLY public.acorn_calendar_event_user_group
+    ADD CONSTRAINT acorn_calendar_event_user_group_pkey PRIMARY KEY (event_part_id, user_group_id);
 
 
 --
 -- TOC entry 4329 (class 2606 OID 404474)
--- Name: acornassociated_calendar_event_user acornassociated_calendar_event_user_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_user acorn_calendar_event_user_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_user
-    ADD CONSTRAINT acornassociated_calendar_event_user_pkey PRIMARY KEY (event_part_id, user_id);
+ALTER TABLE ONLY public.acorn_calendar_event_user
+    ADD CONSTRAINT acorn_calendar_event_user_pkey PRIMARY KEY (event_part_id, user_id);
 
 
 --
 -- TOC entry 4327 (class 2606 OID 394763)
--- Name: acornassociated_calendar_instance acornassociated_calendar_instance_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_instance acorn_calendar_instance_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_instance
-    ADD CONSTRAINT acornassociated_calendar_instance_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_calendar_instance
+    ADD CONSTRAINT acorn_calendar_instance_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4316 (class 2606 OID 394670)
--- Name: acornassociated_calendar acornassociated_calendar_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar acorn_calendar_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar
-    ADD CONSTRAINT acornassociated_calendar_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_calendar
+    ADD CONSTRAINT acorn_calendar_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4338 (class 2606 OID 394842)
--- Name: acornassociated_justice_legalcase_identifiers acornassociated_case_identifiers_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcase_identifiers acorn_case_identifiers_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_legalcase_identifiers
-    ADD CONSTRAINT acornassociated_case_identifiers_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_justice_legalcase_identifiers
+    ADD CONSTRAINT acorn_case_identifiers_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4347 (class 2606 OID 394908)
--- Name: acornassociated_civil_hearings acornassociated_civil_hearings_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_civil_hearings acorn_civil_hearings_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_civil_hearings
-    ADD CONSTRAINT acornassociated_civil_hearings_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_civil_hearings
+    ADD CONSTRAINT acorn_civil_hearings_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4350 (class 2606 OID 394910)
--- Name: acornassociated_civil_legalcases acornassociated_civil_legalcases_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_civil_legalcases acorn_civil_legalcases_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_civil_legalcases
-    ADD CONSTRAINT acornassociated_civil_legalcases_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_civil_legalcases
+    ADD CONSTRAINT acorn_civil_legalcases_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4353 (class 2606 OID 395026)
--- Name: acornassociated_criminal_appeals acornassociated_criminal_appeals_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_appeals acorn_criminal_appeals_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_appeals
-    ADD CONSTRAINT acornassociated_criminal_appeals_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_appeals
+    ADD CONSTRAINT acorn_criminal_appeals_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4419 (class 2606 OID 412901)
--- Name: acornassociated_criminal_defendant_detentions acornassociated_criminal_defendant_detentions_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_defendant_detentions acorn_criminal_defendant_detentions_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_defendant_detentions
-    ADD CONSTRAINT acornassociated_criminal_defendant_detentions_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_defendant_detentions
+    ADD CONSTRAINT acorn_criminal_defendant_detentions_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4427 (class 2606 OID 412923)
--- Name: acornassociated_criminal_detention_methods acornassociated_criminal_detention_methods_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_detention_methods acorn_criminal_detention_methods_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_detention_methods
-    ADD CONSTRAINT acornassociated_criminal_detention_methods_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_detention_methods
+    ADD CONSTRAINT acorn_criminal_detention_methods_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4425 (class 2606 OID 412915)
--- Name: acornassociated_criminal_detention_reasons acornassociated_criminal_detention_reasons_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_detention_reasons acorn_criminal_detention_reasons_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_detention_reasons
-    ADD CONSTRAINT acornassociated_criminal_detention_reasons_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_detention_reasons
+    ADD CONSTRAINT acorn_criminal_detention_reasons_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4376 (class 2606 OID 395028)
--- Name: acornassociated_criminal_legalcase_related_events acornassociated_criminal_legalcase_events_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_related_events acorn_criminal_legalcase_events_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_related_events
-    ADD CONSTRAINT acornassociated_criminal_legalcase_events_pkey PRIMARY KEY (event_id, legalcase_id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_related_events
+    ADD CONSTRAINT acorn_criminal_legalcase_events_pkey PRIMARY KEY (event_id, legalcase_id);
 
 
 --
 -- TOC entry 4383 (class 2606 OID 395030)
--- Name: acornassociated_criminal_legalcases acornassociated_criminal_legalcases_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcases acorn_criminal_legalcases_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcases
-    ADD CONSTRAINT acornassociated_criminal_legalcases_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_legalcases
+    ADD CONSTRAINT acorn_criminal_legalcases_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4386 (class 2606 OID 395032)
--- Name: acornassociated_criminal_sentence_types acornassociated_criminal_sentence_types_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_sentence_types acorn_criminal_sentence_types_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_sentence_types
-    ADD CONSTRAINT acornassociated_criminal_sentence_types_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_sentence_types
+    ADD CONSTRAINT acorn_criminal_sentence_types_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4388 (class 2606 OID 395034)
--- Name: acornassociated_criminal_session_recordings acornassociated_criminal_session_recordings_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_session_recordings acorn_criminal_session_recordings_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_session_recordings
-    ADD CONSTRAINT acornassociated_criminal_session_recordings_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_session_recordings
+    ADD CONSTRAINT acorn_criminal_session_recordings_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4391 (class 2606 OID 395036)
--- Name: acornassociated_criminal_trial_judges acornassociated_criminal_trial_judge_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_trial_judges acorn_criminal_trial_judge_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_trial_judges
-    ADD CONSTRAINT acornassociated_criminal_trial_judge_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_trial_judges
+    ADD CONSTRAINT acorn_criminal_trial_judge_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4394 (class 2606 OID 395038)
--- Name: acornassociated_criminal_trial_sessions acornassociated_criminal_trial_sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_trial_sessions acorn_criminal_trial_sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_trial_sessions
-    ADD CONSTRAINT acornassociated_criminal_trial_sessions_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_trial_sessions
+    ADD CONSTRAINT acorn_criminal_trial_sessions_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4396 (class 2606 OID 395040)
--- Name: acornassociated_criminal_trials acornassociated_criminal_trials_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_trials acorn_criminal_trials_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_trials
-    ADD CONSTRAINT acornassociated_criminal_trials_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_trials
+    ADD CONSTRAINT acorn_criminal_trials_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4429 (class 2606 OID 413832)
--- Name: acornassociated_finance_currencies acornassociated_finance_currency_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_currencies acorn_finance_currency_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_currencies
-    ADD CONSTRAINT acornassociated_finance_currency_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_finance_currencies
+    ADD CONSTRAINT acorn_finance_currency_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4431 (class 2606 OID 413834)
--- Name: acornassociated_finance_invoices acornassociated_finance_invoices_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_invoices acorn_finance_invoices_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_invoices
-    ADD CONSTRAINT acornassociated_finance_invoices_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_finance_invoices
+    ADD CONSTRAINT acorn_finance_invoices_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4437 (class 2606 OID 413836)
--- Name: acornassociated_finance_payments acornassociated_finance_payments_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_payments acorn_finance_payments_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_payments
-    ADD CONSTRAINT acornassociated_finance_payments_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_finance_payments
+    ADD CONSTRAINT acorn_finance_payments_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4439 (class 2606 OID 413838)
--- Name: acornassociated_finance_purchases acornassociated_finance_purchases_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_purchases acorn_finance_purchases_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_purchases
-    ADD CONSTRAINT acornassociated_finance_purchases_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_finance_purchases
+    ADD CONSTRAINT acorn_finance_purchases_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4443 (class 2606 OID 413840)
--- Name: acornassociated_finance_receipts acornassociated_finance_receipts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_receipts acorn_finance_receipts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_receipts
-    ADD CONSTRAINT acornassociated_finance_receipts_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_finance_receipts
+    ADD CONSTRAINT acorn_finance_receipts_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4398 (class 2606 OID 395405)
--- Name: acornassociated_houseofpeace_events acornassociated_houseofpeace_events_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_houseofpeace_events acorn_houseofpeace_events_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_houseofpeace_events
-    ADD CONSTRAINT acornassociated_houseofpeace_events_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_houseofpeace_events
+    ADD CONSTRAINT acorn_houseofpeace_events_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4400 (class 2606 OID 395407)
--- Name: acornassociated_houseofpeace_legalcases acornassociated_houseofpeace_legalcases_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_houseofpeace_legalcases acorn_houseofpeace_legalcases_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_houseofpeace_legalcases
-    ADD CONSTRAINT acornassociated_houseofpeace_legalcases_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_houseofpeace_legalcases
+    ADD CONSTRAINT acorn_houseofpeace_legalcases_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4335 (class 2606 OID 394844)
--- Name: acornassociated_justice_legalcase_categories acornassociated_justice_case_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcase_categories acorn_justice_case_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_legalcase_categories
-    ADD CONSTRAINT acornassociated_justice_case_categories_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_justice_legalcase_categories
+    ADD CONSTRAINT acorn_justice_case_categories_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4340 (class 2606 OID 394846)
--- Name: acornassociated_justice_legalcase_legalcase_category acornassociated_justice_case_category_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcase_legalcase_category acorn_justice_case_category_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_legalcase_legalcase_category
-    ADD CONSTRAINT acornassociated_justice_case_category_pkey PRIMARY KEY (legalcase_id, legalcase_category_id);
+ALTER TABLE ONLY public.acorn_justice_legalcase_legalcase_category
+    ADD CONSTRAINT acorn_justice_case_category_pkey PRIMARY KEY (legalcase_id, legalcase_category_id);
 
 
 --
 -- TOC entry 4356 (class 2606 OID 395042)
--- Name: acornassociated_criminal_crime_evidence acornassociated_justice_crime_evidence_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_evidence acorn_justice_crime_evidence_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crime_evidence
-    ADD CONSTRAINT acornassociated_justice_crime_evidence_pkey PRIMARY KEY (defendant_crime_id, legalcase_evidence_id);
+ALTER TABLE ONLY public.acorn_criminal_crime_evidence
+    ADD CONSTRAINT acorn_justice_crime_evidence_pkey PRIMARY KEY (defendant_crime_id, legalcase_evidence_id);
 
 
 --
 -- TOC entry 4359 (class 2606 OID 395044)
--- Name: acornassociated_criminal_crime_sentences acornassociated_justice_crime_sentences_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_sentences acorn_justice_crime_sentences_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crime_sentences
-    ADD CONSTRAINT acornassociated_justice_crime_sentences_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_crime_sentences
+    ADD CONSTRAINT acorn_justice_crime_sentences_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4362 (class 2606 OID 395046)
--- Name: acornassociated_criminal_crime_types acornassociated_justice_crime_types_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_types acorn_justice_crime_types_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crime_types
-    ADD CONSTRAINT acornassociated_justice_crime_types_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_crime_types
+    ADD CONSTRAINT acorn_justice_crime_types_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4364 (class 2606 OID 395048)
--- Name: acornassociated_criminal_crimes acornassociated_justice_crimes_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crimes acorn_justice_crimes_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crimes
-    ADD CONSTRAINT acornassociated_justice_crimes_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_crimes
+    ADD CONSTRAINT acorn_justice_crimes_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4370 (class 2606 OID 395050)
--- Name: acornassociated_criminal_legalcase_defendants acornassociated_justice_defendant_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_defendants acorn_justice_defendant_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_defendants
-    ADD CONSTRAINT acornassociated_justice_defendant_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_defendants
+    ADD CONSTRAINT acorn_justice_defendant_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4372 (class 2606 OID 395052)
--- Name: acornassociated_criminal_legalcase_evidence acornassociated_justice_legalcase_evidence_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_evidence acorn_justice_legalcase_evidence_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_evidence
-    ADD CONSTRAINT acornassociated_justice_legalcase_evidence_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_evidence
+    ADD CONSTRAINT acorn_justice_legalcase_evidence_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4374 (class 2606 OID 395054)
--- Name: acornassociated_criminal_legalcase_prosecutor acornassociated_justice_legalcase_prosecution_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_prosecutor acorn_justice_legalcase_prosecution_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_prosecutor
-    ADD CONSTRAINT acornassociated_justice_legalcase_prosecution_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_prosecutor
+    ADD CONSTRAINT acorn_justice_legalcase_prosecution_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4379 (class 2606 OID 395056)
--- Name: acornassociated_criminal_legalcase_plaintiffs acornassociated_justice_legalcase_victims_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_plaintiffs acorn_justice_legalcase_victims_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_plaintiffs
-    ADD CONSTRAINT acornassociated_justice_legalcase_victims_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
+    ADD CONSTRAINT acorn_justice_legalcase_victims_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4381 (class 2606 OID 395058)
--- Name: acornassociated_criminal_legalcase_witnesses acornassociated_justice_legalcase_witnesses_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_witnesses acorn_justice_legalcase_witnesses_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_witnesses
-    ADD CONSTRAINT acornassociated_justice_legalcase_witnesses_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_witnesses
+    ADD CONSTRAINT acorn_justice_legalcase_witnesses_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4402 (class 2606 OID 395496)
--- Name: acornassociated_justice_scanned_documents acornassociated_justice_scanned_documents_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_scanned_documents acorn_justice_scanned_documents_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_scanned_documents
-    ADD CONSTRAINT acornassociated_justice_scanned_documents_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_justice_scanned_documents
+    ADD CONSTRAINT acorn_justice_scanned_documents_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4550 (class 2606 OID 415296)
--- Name: acornassociated_justice_warrant_types acornassociated_justice_warrant_types_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_warrant_types acorn_justice_warrant_types_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_warrant_types
-    ADD CONSTRAINT acornassociated_justice_warrant_types_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_justice_warrant_types
+    ADD CONSTRAINT acorn_justice_warrant_types_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4547 (class 2606 OID 415288)
--- Name: acornassociated_justice_warrants acornassociated_justice_warrants_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_warrants acorn_justice_warrants_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_warrants
-    ADD CONSTRAINT acornassociated_justice_warrants_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_justice_warrants
+    ADD CONSTRAINT acorn_justice_warrants_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4295 (class 2606 OID 394409)
--- Name: acornassociated_location_lookup acornassociated_location_location_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_lookup acorn_location_location_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_lookup
-    ADD CONSTRAINT acornassociated_location_location_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_location_lookup
+    ADD CONSTRAINT acorn_location_location_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4464 (class 2606 OID 414150)
--- Name: acornassociated_lojistiks_employees acornassociated_lojistiks_employees_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_employees acorn_lojistiks_employees_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_employees
-    ADD CONSTRAINT acornassociated_lojistiks_employees_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_lojistiks_employees
+    ADD CONSTRAINT acorn_lojistiks_employees_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4509 (class 2606 OID 414152)
--- Name: acornassociated_lojistiks_product_products acornassociated_lojistiks_product_products_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_products acorn_lojistiks_product_products_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_products
-    ADD CONSTRAINT acornassociated_lojistiks_product_products_pkey PRIMARY KEY (product_id, sub_product_id);
+ALTER TABLE ONLY public.acorn_lojistiks_product_products
+    ADD CONSTRAINT acorn_lojistiks_product_products_pkey PRIMARY KEY (product_id, sub_product_id);
 
 
 --
 -- TOC entry 4543 (class 2606 OID 414154)
--- Name: acornassociated_lojistiks_warehouses acornassociated_lojistiks_warehouses_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_warehouses acorn_lojistiks_warehouses_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_warehouses
-    ADD CONSTRAINT acornassociated_lojistiks_warehouses_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_lojistiks_warehouses
+    ADD CONSTRAINT acorn_lojistiks_warehouses_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4310 (class 2606 OID 394620)
--- Name: acornassociated_messaging_label acornassociated_messaging_label_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_label acorn_messaging_label_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_label
-    ADD CONSTRAINT acornassociated_messaging_label_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_messaging_label
+    ADD CONSTRAINT acorn_messaging_label_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4300 (class 2606 OID 394572)
--- Name: acornassociated_messaging_message acornassociated_messaging_message_externalid_unique; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_message acorn_messaging_message_externalid_unique; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message
-    ADD CONSTRAINT acornassociated_messaging_message_externalid_unique UNIQUE ("externalID");
+ALTER TABLE ONLY public.acorn_messaging_message
+    ADD CONSTRAINT acorn_messaging_message_externalid_unique UNIQUE ("externalID");
 
 
 --
 -- TOC entry 4333 (class 2606 OID 394807)
--- Name: acornassociated_messaging_message_instance acornassociated_messaging_message_instance_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_message_instance acorn_messaging_message_instance_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_instance
-    ADD CONSTRAINT acornassociated_messaging_message_instance_pkey PRIMARY KEY (message_id, instance_id);
+ALTER TABLE ONLY public.acorn_messaging_message_instance
+    ADD CONSTRAINT acorn_messaging_message_instance_pkey PRIMARY KEY (message_id, instance_id);
 
 
 --
 -- TOC entry 4308 (class 2606 OID 394607)
--- Name: acornassociated_messaging_message_message acornassociated_messaging_message_message_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_message_message acorn_messaging_message_message_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_message
-    ADD CONSTRAINT acornassociated_messaging_message_message_pkey PRIMARY KEY (message1_id, message2_id, relationship);
+ALTER TABLE ONLY public.acorn_messaging_message_message
+    ADD CONSTRAINT acorn_messaging_message_message_pkey PRIMARY KEY (message1_id, message2_id, relationship);
 
 
 --
 -- TOC entry 4302 (class 2606 OID 394570)
--- Name: acornassociated_messaging_message acornassociated_messaging_message_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_message acorn_messaging_message_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message
-    ADD CONSTRAINT acornassociated_messaging_message_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_messaging_message
+    ADD CONSTRAINT acorn_messaging_message_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4306 (class 2606 OID 394592)
--- Name: acornassociated_messaging_message_user_group acornassociated_messaging_message_user_group_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_message_user_group acorn_messaging_message_user_group_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_user_group
-    ADD CONSTRAINT acornassociated_messaging_message_user_group_pkey PRIMARY KEY (message_id, user_group_id);
+ALTER TABLE ONLY public.acorn_messaging_message_user_group
+    ADD CONSTRAINT acorn_messaging_message_user_group_pkey PRIMARY KEY (message_id, user_group_id);
 
 
 --
 -- TOC entry 4304 (class 2606 OID 394577)
--- Name: acornassociated_messaging_message_user acornassociated_messaging_message_user_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_message_user acorn_messaging_message_user_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_user
-    ADD CONSTRAINT acornassociated_messaging_message_user_pkey PRIMARY KEY (message_id, user_id);
+ALTER TABLE ONLY public.acorn_messaging_message_user
+    ADD CONSTRAINT acorn_messaging_message_user_pkey PRIMARY KEY (message_id, user_id);
 
 
 --
 -- TOC entry 4312 (class 2606 OID 394628)
--- Name: acornassociated_messaging_status acornassociated_messaging_status_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_status acorn_messaging_status_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_status
-    ADD CONSTRAINT acornassociated_messaging_status_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_messaging_status
+    ADD CONSTRAINT acorn_messaging_status_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4314 (class 2606 OID 394633)
--- Name: acornassociated_messaging_user_message_status acornassociated_messaging_user_message_status_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_user_message_status acorn_messaging_user_message_status_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_user_message_status
-    ADD CONSTRAINT acornassociated_messaging_user_message_status_pkey PRIMARY KEY (message_id, status_id);
+ALTER TABLE ONLY public.acorn_messaging_user_message_status
+    ADD CONSTRAINT acorn_messaging_user_message_status_pkey PRIMARY KEY (message_id, status_id);
 
 
 --
 -- TOC entry 4228 (class 2606 OID 394105)
--- Name: acornassociated_servers acornassociated_servers_hostname_unique; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_servers acorn_servers_hostname_unique; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_servers
-    ADD CONSTRAINT acornassociated_servers_hostname_unique UNIQUE (hostname);
+ALTER TABLE ONLY public.acorn_servers
+    ADD CONSTRAINT acorn_servers_hostname_unique UNIQUE (hostname);
 
 
 --
 -- TOC entry 4230 (class 2606 OID 394103)
--- Name: acornassociated_servers acornassociated_servers_id_unique; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_servers acorn_servers_id_unique; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_servers
-    ADD CONSTRAINT acornassociated_servers_id_unique UNIQUE (id);
+ALTER TABLE ONLY public.acorn_servers
+    ADD CONSTRAINT acorn_servers_id_unique UNIQUE (id);
 
 
 --
 -- TOC entry 4411 (class 2606 OID 412576)
--- Name: acornassociated_university_students acornassociated_university_students_pkey; Type: CONSTRAINT; Schema: public; Owner: sanchez
+-- Name: acorn_university_students acorn_university_students_pkey; Type: CONSTRAINT; Schema: public; Owner: sz
 --
 
-ALTER TABLE ONLY public.acornassociated_university_students
-    ADD CONSTRAINT acornassociated_university_students_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_university_students
+    ADD CONSTRAINT acorn_university_students_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4413 (class 2606 OID 412578)
--- Name: acornassociated_university_teachers acornassociated_university_teachers_pkey; Type: CONSTRAINT; Schema: public; Owner: sanchez
+-- Name: acorn_university_teachers acorn_university_teachers_pkey; Type: CONSTRAINT; Schema: public; Owner: sz
 --
 
-ALTER TABLE ONLY public.acornassociated_university_teachers
-    ADD CONSTRAINT acornassociated_university_teachers_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_university_teachers
+    ADD CONSTRAINT acorn_university_teachers_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4417 (class 2606 OID 412883)
--- Name: acornassociated_user_language_user acornassociated_user_language_user_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_user_language_user acorn_user_language_user_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_user_language_user
-    ADD CONSTRAINT acornassociated_user_language_user_pkey PRIMARY KEY (user_id, language_id);
+ALTER TABLE ONLY public.acorn_user_language_user
+    ADD CONSTRAINT acorn_user_language_user_pkey PRIMARY KEY (user_id, language_id);
 
 
 --
 -- TOC entry 4415 (class 2606 OID 412878)
--- Name: acornassociated_user_languages acornassociated_user_languages_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_user_languages acorn_user_languages_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_user_languages
-    ADD CONSTRAINT acornassociated_user_languages_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_user_languages
+    ADD CONSTRAINT acorn_user_languages_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4251 (class 2606 OID 394176)
--- Name: acornassociated_user_roles acornassociated_user_roles_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_user_roles acorn_user_roles_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_user_roles
-    ADD CONSTRAINT acornassociated_user_roles_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_user_roles
+    ADD CONSTRAINT acorn_user_roles_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4238 (class 2606 OID 394136)
--- Name: acornassociated_user_throttle acornassociated_user_throttle_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_user_throttle acorn_user_throttle_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_user_throttle
-    ADD CONSTRAINT acornassociated_user_throttle_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_user_throttle
+    ADD CONSTRAINT acorn_user_throttle_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4249 (class 2606 OID 394166)
--- Name: acornassociated_user_user_group acornassociated_user_user_group_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_user_user_group acorn_user_user_group_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_user_user_group
-    ADD CONSTRAINT acornassociated_user_user_group_pkey PRIMARY KEY (user_id, user_group_id);
+ALTER TABLE ONLY public.acorn_user_user_group
+    ADD CONSTRAINT acorn_user_user_group_pkey PRIMARY KEY (user_id, user_group_id);
 
 
 --
 -- TOC entry 4405 (class 2606 OID 404482)
--- Name: acornassociated_user_user_group_types acornassociated_user_user_group_types_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_user_user_group_types acorn_user_user_group_types_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_user_user_group_types
-    ADD CONSTRAINT acornassociated_user_user_group_types_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_user_user_group_types
+    ADD CONSTRAINT acorn_user_user_group_types_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4247 (class 2606 OID 394160)
--- Name: acornassociated_user_user_groups acornassociated_user_user_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_user_user_groups acorn_user_user_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_user_user_groups
-    ADD CONSTRAINT acornassociated_user_user_groups_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_user_user_groups
+    ADD CONSTRAINT acorn_user_user_groups_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4234 (class 2606 OID 394123)
--- Name: acornassociated_user_users acornassociated_user_users_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_user_users acorn_user_users_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_user_users
-    ADD CONSTRAINT acornassociated_user_users_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_user_users
+    ADD CONSTRAINT acorn_user_users_pkey PRIMARY KEY (id);
 
 
 --
@@ -5997,10 +5997,10 @@ ALTER TABLE ONLY public.backend_users
 
 --
 -- TOC entry 4453 (class 2606 OID 414162)
--- Name: acornassociated_lojistiks_brands brands_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_brands brands_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_brands
+ALTER TABLE ONLY public.acorn_lojistiks_brands
     ADD CONSTRAINT brands_pkey PRIMARY KEY (id);
 
 
@@ -6042,19 +6042,19 @@ ALTER TABLE ONLY public.cms_theme_templates
 
 --
 -- TOC entry 4456 (class 2606 OID 414164)
--- Name: acornassociated_lojistiks_containers containers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_containers containers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_containers
+ALTER TABLE ONLY public.acorn_lojistiks_containers
     ADD CONSTRAINT containers_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4409 (class 2606 OID 412580)
--- Name: acornassociated_university_courses courses_pkey; Type: CONSTRAINT; Schema: public; Owner: sanchez
+-- Name: acorn_university_courses courses_pkey; Type: CONSTRAINT; Schema: public; Owner: sz
 --
 
-ALTER TABLE ONLY public.acornassociated_university_courses
+ALTER TABLE ONLY public.acorn_university_courses
     ADD CONSTRAINT courses_pkey PRIMARY KEY (id);
 
 
@@ -6069,10 +6069,10 @@ ALTER TABLE ONLY public.deferred_bindings
 
 --
 -- TOC entry 4461 (class 2606 OID 414166)
--- Name: acornassociated_lojistiks_drivers drivers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_drivers drivers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_drivers
+ALTER TABLE ONLY public.acorn_lojistiks_drivers
     ADD CONSTRAINT drivers_pkey PRIMARY KEY (id);
 
 
@@ -6123,55 +6123,55 @@ ALTER TABLE ONLY public.jobs
 
 --
 -- TOC entry 4280 (class 2606 OID 394411)
--- Name: acornassociated_location_addresses location_addresses_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_addresses location_addresses_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_addresses
+ALTER TABLE ONLY public.acorn_location_addresses
     ADD CONSTRAINT location_addresses_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4283 (class 2606 OID 394413)
--- Name: acornassociated_location_area_types location_area_types_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_area_types location_area_types_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_area_types
+ALTER TABLE ONLY public.acorn_location_area_types
     ADD CONSTRAINT location_area_types_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4286 (class 2606 OID 394415)
--- Name: acornassociated_location_areas location_areas_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_areas location_areas_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_areas
+ALTER TABLE ONLY public.acorn_location_areas
     ADD CONSTRAINT location_areas_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4289 (class 2606 OID 394417)
--- Name: acornassociated_location_gps location_gps_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_gps location_gps_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_gps
+ALTER TABLE ONLY public.acorn_location_gps
     ADD CONSTRAINT location_gps_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4293 (class 2606 OID 394419)
--- Name: acornassociated_location_locations location_locations_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_locations location_locations_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_locations
+ALTER TABLE ONLY public.acorn_location_locations
     ADD CONSTRAINT location_locations_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4298 (class 2606 OID 394421)
--- Name: acornassociated_location_types location_types_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_types location_types_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_types
+ALTER TABLE ONLY public.acorn_location_types
     ADD CONSTRAINT location_types_pkey PRIMARY KEY (id);
 
 
@@ -6186,10 +6186,10 @@ ALTER TABLE ONLY public.backend_users
 
 --
 -- TOC entry 4468 (class 2606 OID 414172)
--- Name: acornassociated_lojistiks_measurement_units measurement_units_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_measurement_units measurement_units_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_measurement_units
+ALTER TABLE ONLY public.acorn_lojistiks_measurement_units
     ADD CONSTRAINT measurement_units_pkey PRIMARY KEY (id);
 
 
@@ -6213,73 +6213,73 @@ ALTER TABLE ONLY public.backend_user_groups
 
 --
 -- TOC entry 4486 (class 2606 OID 414174)
--- Name: acornassociated_lojistiks_offices office_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_offices office_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_offices
+ALTER TABLE ONLY public.acorn_lojistiks_offices
     ADD CONSTRAINT office_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4494 (class 2606 OID 414176)
--- Name: acornassociated_lojistiks_people person_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_people person_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_people
+ALTER TABLE ONLY public.acorn_lojistiks_people
     ADD CONSTRAINT person_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4498 (class 2606 OID 414178)
--- Name: acornassociated_lojistiks_product_attributes product_attributes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_attributes product_attributes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_attributes
+ALTER TABLE ONLY public.acorn_lojistiks_product_attributes
     ADD CONSTRAINT product_attributes_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4503 (class 2606 OID 414180)
--- Name: acornassociated_lojistiks_product_categories product_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_categories product_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_categories
+ALTER TABLE ONLY public.acorn_lojistiks_product_categories
     ADD CONSTRAINT product_categories_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4507 (class 2606 OID 414182)
--- Name: acornassociated_lojistiks_product_category_types product_category_types_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_category_types product_category_types_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_category_types
+ALTER TABLE ONLY public.acorn_lojistiks_product_category_types
     ADD CONSTRAINT product_category_types_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4476 (class 2606 OID 414184)
--- Name: acornassociated_lojistiks_product_instances product_instances_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_instances product_instances_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_instances
+ALTER TABLE ONLY public.acorn_lojistiks_product_instances
     ADD CONSTRAINT product_instances_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4515 (class 2606 OID 414186)
--- Name: acornassociated_lojistiks_products products_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products products_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_products
+ALTER TABLE ONLY public.acorn_lojistiks_products
     ADD CONSTRAINT products_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4519 (class 2606 OID 414188)
--- Name: acornassociated_lojistiks_products_product_categories products_product_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products_product_categories products_product_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_products_product_categories
+ALTER TABLE ONLY public.acorn_lojistiks_products_product_categories
     ADD CONSTRAINT products_product_categories_pkey PRIMARY KEY (id);
 
 
@@ -6339,10 +6339,10 @@ ALTER TABLE ONLY public.winter_translate_messages
 
 --
 -- TOC entry 4244 (class 2606 OID 394146)
--- Name: acornassociated_user_mail_blockers rainlab_user_mail_blockers_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_user_mail_blockers rainlab_user_mail_blockers_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_user_mail_blockers
+ALTER TABLE ONLY public.acorn_user_mail_blockers
     ADD CONSTRAINT rainlab_user_mail_blockers_pkey PRIMARY KEY (id);
 
 
@@ -6366,10 +6366,10 @@ ALTER TABLE ONLY public.sessions
 
 --
 -- TOC entry 4523 (class 2606 OID 414190)
--- Name: acornassociated_lojistiks_suppliers suppliers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_suppliers suppliers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_suppliers
+ALTER TABLE ONLY public.acorn_lojistiks_suppliers
     ADD CONSTRAINT suppliers_pkey PRIMARY KEY (id);
 
 
@@ -6474,76 +6474,76 @@ ALTER TABLE ONLY public.system_settings
 
 --
 -- TOC entry 4526 (class 2606 OID 414192)
--- Name: acornassociated_lojistiks_transfer_containers transfer_container_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_containers transfer_container_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_containers
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_containers
     ADD CONSTRAINT transfer_container_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4530 (class 2606 OID 414194)
--- Name: acornassociated_lojistiks_transfer_container_product_instance transfer_container_products_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_container_product_instance transfer_container_products_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_container_product_instance
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_container_product_instance
     ADD CONSTRAINT transfer_container_products_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4472 (class 2606 OID 414196)
--- Name: acornassociated_lojistiks_product_instance_transfer transfer_product_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_instance_transfer transfer_product_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_instance_transfer
+ALTER TABLE ONLY public.acorn_lojistiks_product_instance_transfer
     ADD CONSTRAINT transfer_product_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4481 (class 2606 OID 414198)
--- Name: acornassociated_lojistiks_transfers transfers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfers transfers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfers
+ALTER TABLE ONLY public.acorn_lojistiks_transfers
     ADD CONSTRAINT transfers_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4537 (class 2606 OID 414200)
--- Name: acornassociated_lojistiks_vehicle_types vehicle_types_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_vehicle_types vehicle_types_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_vehicle_types
+ALTER TABLE ONLY public.acorn_lojistiks_vehicle_types
     ADD CONSTRAINT vehicle_types_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4541 (class 2606 OID 414202)
--- Name: acornassociated_lojistiks_vehicles vehicles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_vehicles vehicles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_vehicles
+ALTER TABLE ONLY public.acorn_lojistiks_vehicles
     ADD CONSTRAINT vehicles_pkey PRIMARY KEY (id);
 
 
 --
 -- TOC entry 4446 (class 1259 OID 414203)
--- Name: dr_acornassociated_lojistiks_computer_products_replica_identity; Type: INDEX; Schema: product; Owner: postgres
+-- Name: dr_acorn_lojistiks_computer_products_replica_identity; Type: INDEX; Schema: product; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_computer_products_replica_identity ON product.acornassociated_lojistiks_computer_products USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_computer_products_replica_identity ON product.acorn_lojistiks_computer_products USING btree (server_id, id);
 
-ALTER TABLE ONLY product.acornassociated_lojistiks_computer_products REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_computer_products_replica_identity;
+ALTER TABLE ONLY product.acorn_lojistiks_computer_products REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_computer_products_replica_identity;
 
 
 --
 -- TOC entry 4448 (class 1259 OID 414204)
--- Name: dr_acornassociated_lojistiks_electronic_products_replica_identi; Type: INDEX; Schema: product; Owner: postgres
+-- Name: dr_acorn_lojistiks_electronic_products_replica_identi; Type: INDEX; Schema: product; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_electronic_products_replica_identi ON product.acornassociated_lojistiks_electronic_products USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_electronic_products_replica_identi ON product.acorn_lojistiks_electronic_products USING btree (server_id, id);
 
-ALTER TABLE ONLY product.acornassociated_lojistiks_electronic_products REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_electronic_products_replica_identi;
+ALTER TABLE ONLY product.acorn_lojistiks_electronic_products REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_electronic_products_replica_identi;
 
 
 --
@@ -6551,7 +6551,7 @@ ALTER TABLE ONLY product.acornassociated_lojistiks_electronic_products REPLICA I
 -- Name: fki_created_at_event_id; Type: INDEX; Schema: product; Owner: postgres
 --
 
-CREATE INDEX fki_created_at_event_id ON product.acornassociated_lojistiks_electronic_products USING btree (created_at_event_id);
+CREATE INDEX fki_created_at_event_id ON product.acorn_lojistiks_electronic_products USING btree (created_at_event_id);
 
 
 --
@@ -6559,87 +6559,87 @@ CREATE INDEX fki_created_at_event_id ON product.acornassociated_lojistiks_electr
 -- Name: fki_server_id; Type: INDEX; Schema: product; Owner: postgres
 --
 
-CREATE INDEX fki_server_id ON product.acornassociated_lojistiks_computer_products USING btree (server_id);
+CREATE INDEX fki_server_id ON product.acorn_lojistiks_computer_products USING btree (server_id);
 
 
 --
 -- TOC entry 4325 (class 1259 OID 394756)
--- Name: acornassociated_calendar_instance_date_event_part_id_instance_n; Type: INDEX; Schema: public; Owner: justice
+-- Name: acorn_calendar_instance_date_event_part_id_instance_n; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX acornassociated_calendar_instance_date_event_part_id_instance_n ON public.acornassociated_calendar_instance USING btree (date, event_part_id, instance_num);
+CREATE INDEX acorn_calendar_instance_date_event_part_id_instance_n ON public.acorn_calendar_instance USING btree (date, event_part_id, instance_num);
 
 
 --
 -- TOC entry 4240 (class 1259 OID 394147)
--- Name: acornassociated_user_mail_blockers_email_index; Type: INDEX; Schema: public; Owner: justice
+-- Name: acorn_user_mail_blockers_email_index; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX acornassociated_user_mail_blockers_email_index ON public.acornassociated_user_mail_blockers USING btree (email);
+CREATE INDEX acorn_user_mail_blockers_email_index ON public.acorn_user_mail_blockers USING btree (email);
 
 
 --
 -- TOC entry 4241 (class 1259 OID 394148)
--- Name: acornassociated_user_mail_blockers_template_index; Type: INDEX; Schema: public; Owner: justice
+-- Name: acorn_user_mail_blockers_template_index; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX acornassociated_user_mail_blockers_template_index ON public.acornassociated_user_mail_blockers USING btree (template);
+CREATE INDEX acorn_user_mail_blockers_template_index ON public.acorn_user_mail_blockers USING btree (template);
 
 
 --
 -- TOC entry 4242 (class 1259 OID 394149)
--- Name: acornassociated_user_mail_blockers_user_id_index; Type: INDEX; Schema: public; Owner: justice
+-- Name: acorn_user_mail_blockers_user_id_index; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX acornassociated_user_mail_blockers_user_id_index ON public.acornassociated_user_mail_blockers USING btree (user_id);
+CREATE INDEX acorn_user_mail_blockers_user_id_index ON public.acorn_user_mail_blockers USING btree (user_id);
 
 
 --
 -- TOC entry 4236 (class 1259 OID 394138)
--- Name: acornassociated_user_throttle_ip_address_index; Type: INDEX; Schema: public; Owner: justice
+-- Name: acorn_user_throttle_ip_address_index; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX acornassociated_user_throttle_ip_address_index ON public.acornassociated_user_throttle USING btree (ip_address);
+CREATE INDEX acorn_user_throttle_ip_address_index ON public.acorn_user_throttle USING btree (ip_address);
 
 
 --
 -- TOC entry 4239 (class 1259 OID 394137)
--- Name: acornassociated_user_throttle_user_id_index; Type: INDEX; Schema: public; Owner: justice
+-- Name: acorn_user_throttle_user_id_index; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX acornassociated_user_throttle_user_id_index ON public.acornassociated_user_throttle USING btree (user_id);
+CREATE INDEX acorn_user_throttle_user_id_index ON public.acorn_user_throttle USING btree (user_id);
 
 
 --
 -- TOC entry 4245 (class 1259 OID 394161)
--- Name: acornassociated_user_user_groups_code_index; Type: INDEX; Schema: public; Owner: justice
+-- Name: acorn_user_user_groups_code_index; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX acornassociated_user_user_groups_code_index ON public.acornassociated_user_user_groups USING btree (code);
+CREATE INDEX acorn_user_user_groups_code_index ON public.acorn_user_user_groups USING btree (code);
 
 
 --
 -- TOC entry 4231 (class 1259 OID 394126)
--- Name: acornassociated_user_users_activation_code_index; Type: INDEX; Schema: public; Owner: justice
+-- Name: acorn_user_users_activation_code_index; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX acornassociated_user_users_activation_code_index ON public.acornassociated_user_users USING btree (activation_code);
+CREATE INDEX acorn_user_users_activation_code_index ON public.acorn_user_users USING btree (activation_code);
 
 
 --
 -- TOC entry 4232 (class 1259 OID 394150)
--- Name: acornassociated_user_users_login_index; Type: INDEX; Schema: public; Owner: justice
+-- Name: acorn_user_users_login_index; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX acornassociated_user_users_login_index ON public.acornassociated_user_users USING btree (username);
+CREATE INDEX acorn_user_users_login_index ON public.acorn_user_users USING btree (username);
 
 
 --
 -- TOC entry 4235 (class 1259 OID 394127)
--- Name: acornassociated_user_users_reset_password_code_index; Type: INDEX; Schema: public; Owner: justice
+-- Name: acorn_user_users_reset_password_code_index; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX acornassociated_user_users_reset_password_code_index ON public.acornassociated_user_users USING btree (reset_password_code);
+CREATE INDEX acorn_user_users_reset_password_code_index ON public.acorn_user_users USING btree (reset_password_code);
 
 
 --
@@ -6772,398 +6772,398 @@ CREATE INDEX deferred_bindings_slave_type_index ON public.deferred_bindings USIN
 
 --
 -- TOC entry 4278 (class 1259 OID 394422)
--- Name: dr_acornassociated_location_addresses_replica_identity; Type: INDEX; Schema: public; Owner: justice
+-- Name: dr_acorn_location_addresses_replica_identity; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_location_addresses_replica_identity ON public.acornassociated_location_addresses USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_location_addresses_replica_identity ON public.acorn_location_addresses USING btree (server_id, id);
 
 
 --
 -- TOC entry 4281 (class 1259 OID 394423)
--- Name: dr_acornassociated_location_area_types_replica_identity; Type: INDEX; Schema: public; Owner: justice
+-- Name: dr_acorn_location_area_types_replica_identity; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_location_area_types_replica_identity ON public.acornassociated_location_area_types USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_location_area_types_replica_identity ON public.acorn_location_area_types USING btree (server_id, id);
 
 
 --
 -- TOC entry 4284 (class 1259 OID 394424)
--- Name: dr_acornassociated_location_areas_replica_identity; Type: INDEX; Schema: public; Owner: justice
+-- Name: dr_acorn_location_areas_replica_identity; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_location_areas_replica_identity ON public.acornassociated_location_areas USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_location_areas_replica_identity ON public.acorn_location_areas USING btree (server_id, id);
 
 
 --
 -- TOC entry 4287 (class 1259 OID 394425)
--- Name: dr_acornassociated_location_gps_replica_identity; Type: INDEX; Schema: public; Owner: justice
+-- Name: dr_acorn_location_gps_replica_identity; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_location_gps_replica_identity ON public.acornassociated_location_gps USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_location_gps_replica_identity ON public.acorn_location_gps USING btree (server_id, id);
 
 
 --
 -- TOC entry 4290 (class 1259 OID 394426)
--- Name: dr_acornassociated_location_location_replica_identity; Type: INDEX; Schema: public; Owner: justice
+-- Name: dr_acorn_location_location_replica_identity; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_location_location_replica_identity ON public.acornassociated_location_locations USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_location_location_replica_identity ON public.acorn_location_locations USING btree (server_id, id);
 
 
 --
 -- TOC entry 4296 (class 1259 OID 394427)
--- Name: dr_acornassociated_location_types_replica_identity; Type: INDEX; Schema: public; Owner: justice
+-- Name: dr_acorn_location_types_replica_identity; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_location_types_replica_identity ON public.acornassociated_location_types USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_location_types_replica_identity ON public.acorn_location_types USING btree (server_id, id);
 
 
 --
 -- TOC entry 4454 (class 1259 OID 414208)
--- Name: dr_acornassociated_lojistiks_brands_replica_identity; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_brands_replica_identity; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_brands_replica_identity ON public.acornassociated_lojistiks_brands USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_brands_replica_identity ON public.acorn_lojistiks_brands USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_brands REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_brands_replica_identity;
+ALTER TABLE ONLY public.acorn_lojistiks_brands REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_brands_replica_identity;
 
 
 --
 -- TOC entry 4457 (class 1259 OID 414209)
--- Name: dr_acornassociated_lojistiks_containers_replica_identity; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_containers_replica_identity; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_containers_replica_identity ON public.acornassociated_lojistiks_containers USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_containers_replica_identity ON public.acorn_lojistiks_containers USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_containers REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_containers_replica_identity;
+ALTER TABLE ONLY public.acorn_lojistiks_containers REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_containers_replica_identity;
 
 
 --
 -- TOC entry 4459 (class 1259 OID 414210)
--- Name: dr_acornassociated_lojistiks_drivers_replica_identity; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_drivers_replica_identity; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_drivers_replica_identity ON public.acornassociated_lojistiks_drivers USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_drivers_replica_identity ON public.acorn_lojistiks_drivers USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_drivers REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_drivers_replica_identity;
+ALTER TABLE ONLY public.acorn_lojistiks_drivers REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_drivers_replica_identity;
 
 
 --
 -- TOC entry 4465 (class 1259 OID 414211)
--- Name: dr_acornassociated_lojistiks_employees_replica_identity; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_employees_replica_identity; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_employees_replica_identity ON public.acornassociated_lojistiks_employees USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_employees_replica_identity ON public.acorn_lojistiks_employees USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_employees REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_employees_replica_identity;
+ALTER TABLE ONLY public.acorn_lojistiks_employees REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_employees_replica_identity;
 
 
 --
 -- TOC entry 4466 (class 1259 OID 414214)
--- Name: dr_acornassociated_lojistiks_measurement_units_replica_identity; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_measurement_units_replica_identity; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_measurement_units_replica_identity ON public.acornassociated_lojistiks_measurement_units USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_measurement_units_replica_identity ON public.acorn_lojistiks_measurement_units USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_measurement_units REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_measurement_units_replica_identity;
+ALTER TABLE ONLY public.acorn_lojistiks_measurement_units REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_measurement_units_replica_identity;
 
 
 --
 -- TOC entry 4482 (class 1259 OID 414215)
--- Name: dr_acornassociated_lojistiks_office_replica_identity; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_office_replica_identity; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_office_replica_identity ON public.acornassociated_lojistiks_offices USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_office_replica_identity ON public.acorn_lojistiks_offices USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_offices REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_office_replica_identity;
+ALTER TABLE ONLY public.acorn_lojistiks_offices REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_office_replica_identity;
 
 
 --
 -- TOC entry 4487 (class 1259 OID 414216)
--- Name: dr_acornassociated_lojistiks_people_replica_identity; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_people_replica_identity; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_people_replica_identity ON public.acornassociated_lojistiks_people USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_people_replica_identity ON public.acorn_lojistiks_people USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_people REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_people_replica_identity;
+ALTER TABLE ONLY public.acorn_lojistiks_people REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_people_replica_identity;
 
 
 --
 -- TOC entry 4495 (class 1259 OID 414217)
--- Name: dr_acornassociated_lojistiks_product_attributes_replica_identit; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_product_attributes_replica_identit; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_product_attributes_replica_identit ON public.acornassociated_lojistiks_product_attributes USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_product_attributes_replica_identit ON public.acorn_lojistiks_product_attributes USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_attributes REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_product_attributes_replica_identit;
+ALTER TABLE ONLY public.acorn_lojistiks_product_attributes REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_product_attributes_replica_identit;
 
 
 --
 -- TOC entry 4499 (class 1259 OID 414218)
--- Name: dr_acornassociated_lojistiks_product_categories_replica_identit; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_product_categories_replica_identit; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_product_categories_replica_identit ON public.acornassociated_lojistiks_product_categories USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_product_categories_replica_identit ON public.acorn_lojistiks_product_categories USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_categories REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_product_categories_replica_identit;
+ALTER TABLE ONLY public.acorn_lojistiks_product_categories REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_product_categories_replica_identit;
 
 
 --
 -- TOC entry 4504 (class 1259 OID 414219)
--- Name: dr_acornassociated_lojistiks_product_category_types_replica_ide; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_product_category_types_replica_ide; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_product_category_types_replica_ide ON public.acornassociated_lojistiks_product_category_types USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_product_category_types_replica_ide ON public.acorn_lojistiks_product_category_types USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_category_types REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_product_category_types_replica_ide;
+ALTER TABLE ONLY public.acorn_lojistiks_product_category_types REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_product_category_types_replica_ide;
 
 
 --
 -- TOC entry 4469 (class 1259 OID 414220)
--- Name: dr_acornassociated_lojistiks_product_instance_transfer_replica_; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_product_instance_transfer_replica_; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_product_instance_transfer_replica_ ON public.acornassociated_lojistiks_product_instance_transfer USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_product_instance_transfer_replica_ ON public.acorn_lojistiks_product_instance_transfer USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_instance_transfer REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_product_instance_transfer_replica_;
+ALTER TABLE ONLY public.acorn_lojistiks_product_instance_transfer REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_product_instance_transfer_replica_;
 
 
 --
 -- TOC entry 4473 (class 1259 OID 414221)
--- Name: dr_acornassociated_lojistiks_product_instances_replica_identity; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_product_instances_replica_identity; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_product_instances_replica_identity ON public.acornassociated_lojistiks_product_instances USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_product_instances_replica_identity ON public.acorn_lojistiks_product_instances USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_instances REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_product_instances_replica_identity;
+ALTER TABLE ONLY public.acorn_lojistiks_product_instances REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_product_instances_replica_identity;
 
 
 --
 -- TOC entry 4510 (class 1259 OID 414222)
--- Name: dr_acornassociated_lojistiks_product_products_replica_identity; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_product_products_replica_identity; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_product_products_replica_identity ON public.acornassociated_lojistiks_product_products USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_product_products_replica_identity ON public.acorn_lojistiks_product_products USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_products REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_product_products_replica_identity;
+ALTER TABLE ONLY public.acorn_lojistiks_product_products REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_product_products_replica_identity;
 
 
 --
 -- TOC entry 4516 (class 1259 OID 414223)
--- Name: dr_acornassociated_lojistiks_products_product_categories_replic; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_products_product_categories_replic; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_products_product_categories_replic ON public.acornassociated_lojistiks_products_product_categories USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_products_product_categories_replic ON public.acorn_lojistiks_products_product_categories USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_products_product_categories REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_products_product_categories_replic;
+ALTER TABLE ONLY public.acorn_lojistiks_products_product_categories REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_products_product_categories_replic;
 
 
 --
 -- TOC entry 4512 (class 1259 OID 414224)
--- Name: dr_acornassociated_lojistiks_products_replica_identity; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_products_replica_identity; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_products_replica_identity ON public.acornassociated_lojistiks_products USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_products_replica_identity ON public.acorn_lojistiks_products USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_products REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_products_replica_identity;
+ALTER TABLE ONLY public.acorn_lojistiks_products REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_products_replica_identity;
 
 
 --
 -- TOC entry 4520 (class 1259 OID 414225)
--- Name: dr_acornassociated_lojistiks_suppliers_replica_identity; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_suppliers_replica_identity; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_suppliers_replica_identity ON public.acornassociated_lojistiks_suppliers USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_suppliers_replica_identity ON public.acorn_lojistiks_suppliers USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_suppliers REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_suppliers_replica_identity;
+ALTER TABLE ONLY public.acorn_lojistiks_suppliers REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_suppliers_replica_identity;
 
 
 --
 -- TOC entry 4527 (class 1259 OID 414226)
--- Name: dr_acornassociated_lojistiks_transfer_container_product_instanc; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_transfer_container_product_instanc; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_transfer_container_product_instanc ON public.acornassociated_lojistiks_transfer_container_product_instance USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_transfer_container_product_instanc ON public.acorn_lojistiks_transfer_container_product_instance USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_container_product_instance REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_transfer_container_product_instanc;
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_container_product_instance REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_transfer_container_product_instanc;
 
 
 --
 -- TOC entry 4524 (class 1259 OID 414227)
--- Name: dr_acornassociated_lojistiks_transfer_container_replica_identit; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_transfer_container_replica_identit; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_transfer_container_replica_identit ON public.acornassociated_lojistiks_transfer_containers USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_transfer_container_replica_identit ON public.acorn_lojistiks_transfer_containers USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_containers REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_transfer_container_replica_identit;
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_containers REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_transfer_container_replica_identit;
 
 
 --
 -- TOC entry 4477 (class 1259 OID 414228)
--- Name: dr_acornassociated_lojistiks_transfers_replica_identity; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_transfers_replica_identity; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_transfers_replica_identity ON public.acornassociated_lojistiks_transfers USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_transfers_replica_identity ON public.acorn_lojistiks_transfers USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfers REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_transfers_replica_identity;
+ALTER TABLE ONLY public.acorn_lojistiks_transfers REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_transfers_replica_identity;
 
 
 --
 -- TOC entry 4534 (class 1259 OID 414229)
--- Name: dr_acornassociated_lojistiks_vehicle_types_replica_identity; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_vehicle_types_replica_identity; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_vehicle_types_replica_identity ON public.acornassociated_lojistiks_vehicle_types USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_vehicle_types_replica_identity ON public.acorn_lojistiks_vehicle_types USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_vehicle_types REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_vehicle_types_replica_identity;
+ALTER TABLE ONLY public.acorn_lojistiks_vehicle_types REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_vehicle_types_replica_identity;
 
 
 --
 -- TOC entry 4538 (class 1259 OID 414230)
--- Name: dr_acornassociated_lojistiks_vehicles_replica_identity; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_vehicles_replica_identity; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_vehicles_replica_identity ON public.acornassociated_lojistiks_vehicles USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_vehicles_replica_identity ON public.acorn_lojistiks_vehicles USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_vehicles REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_vehicles_replica_identity;
+ALTER TABLE ONLY public.acorn_lojistiks_vehicles REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_vehicles_replica_identity;
 
 
 --
 -- TOC entry 4544 (class 1259 OID 414231)
--- Name: dr_acornassociated_lojistiks_warehouses_replica_identity; Type: INDEX; Schema: public; Owner: postgres
+-- Name: dr_acorn_lojistiks_warehouses_replica_identity; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_lojistiks_warehouses_replica_identity ON public.acornassociated_lojistiks_warehouses USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_lojistiks_warehouses_replica_identity ON public.acorn_lojistiks_warehouses USING btree (server_id, id);
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_warehouses REPLICA IDENTITY USING INDEX dr_acornassociated_lojistiks_warehouses_replica_identity;
+ALTER TABLE ONLY public.acorn_lojistiks_warehouses REPLICA IDENTITY USING INDEX dr_acorn_lojistiks_warehouses_replica_identity;
 
 
 --
 -- TOC entry 4458 (class 1259 OID 415156)
--- Name: fki_acornassociated_lojistiks_containers_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: fki_acorn_lojistiks_containers_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_acornassociated_lojistiks_containers_created_at_event_id ON public.acornassociated_lojistiks_containers USING btree (created_at_event_id);
+CREATE INDEX fki_acorn_lojistiks_containers_created_at_event_id ON public.acorn_lojistiks_containers USING btree (created_at_event_id);
 
 
 --
 -- TOC entry 4462 (class 1259 OID 415192)
--- Name: fki_acornassociated_lojistiks_drivers_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: fki_acorn_lojistiks_drivers_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_acornassociated_lojistiks_drivers_created_at_event_id ON public.acornassociated_lojistiks_drivers USING btree (created_at_event_id);
+CREATE INDEX fki_acorn_lojistiks_drivers_created_at_event_id ON public.acorn_lojistiks_drivers USING btree (created_at_event_id);
 
 
 --
 -- TOC entry 4483 (class 1259 OID 415144)
--- Name: fki_acornassociated_lojistiks_offices_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: fki_acorn_lojistiks_offices_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_acornassociated_lojistiks_offices_created_at_event_id ON public.acornassociated_lojistiks_offices USING btree (created_at_event_id);
+CREATE INDEX fki_acorn_lojistiks_offices_created_at_event_id ON public.acorn_lojistiks_offices USING btree (created_at_event_id);
 
 
 --
 -- TOC entry 4488 (class 1259 OID 415150)
--- Name: fki_acornassociated_lojistiks_people_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: fki_acorn_lojistiks_people_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_acornassociated_lojistiks_people_created_at_event_id ON public.acornassociated_lojistiks_people USING btree (created_at_event_id);
+CREATE INDEX fki_acorn_lojistiks_people_created_at_event_id ON public.acorn_lojistiks_people USING btree (created_at_event_id);
 
 
 --
 -- TOC entry 4496 (class 1259 OID 415162)
--- Name: fki_acornassociated_lojistiks_product_attributes_created_at_eve; Type: INDEX; Schema: public; Owner: postgres
+-- Name: fki_acorn_lojistiks_product_attributes_created_at_eve; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_acornassociated_lojistiks_product_attributes_created_at_eve ON public.acornassociated_lojistiks_product_attributes USING btree (created_at_event_id);
+CREATE INDEX fki_acorn_lojistiks_product_attributes_created_at_eve ON public.acorn_lojistiks_product_attributes USING btree (created_at_event_id);
 
 
 --
 -- TOC entry 4500 (class 1259 OID 415168)
--- Name: fki_acornassociated_lojistiks_product_categories_created_at_eve; Type: INDEX; Schema: public; Owner: postgres
+-- Name: fki_acorn_lojistiks_product_categories_created_at_eve; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_acornassociated_lojistiks_product_categories_created_at_eve ON public.acornassociated_lojistiks_product_categories USING btree (created_at_event_id);
+CREATE INDEX fki_acorn_lojistiks_product_categories_created_at_eve ON public.acorn_lojistiks_product_categories USING btree (created_at_event_id);
 
 
 --
 -- TOC entry 4505 (class 1259 OID 415174)
--- Name: fki_acornassociated_lojistiks_product_category_types_created_at; Type: INDEX; Schema: public; Owner: postgres
+-- Name: fki_acorn_lojistiks_product_category_types_created_at; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_acornassociated_lojistiks_product_category_types_created_at ON public.acornassociated_lojistiks_product_category_types USING btree (created_at_event_id);
+CREATE INDEX fki_acorn_lojistiks_product_category_types_created_at ON public.acorn_lojistiks_product_category_types USING btree (created_at_event_id);
 
 
 --
 -- TOC entry 4470 (class 1259 OID 415180)
--- Name: fki_acornassociated_lojistiks_product_instance_transfer_created; Type: INDEX; Schema: public; Owner: postgres
+-- Name: fki_acorn_lojistiks_product_instance_transfer_created; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_acornassociated_lojistiks_product_instance_transfer_created ON public.acornassociated_lojistiks_product_instance_transfer USING btree (created_at_event_id);
+CREATE INDEX fki_acorn_lojistiks_product_instance_transfer_created ON public.acorn_lojistiks_product_instance_transfer USING btree (created_at_event_id);
 
 
 --
 -- TOC entry 4474 (class 1259 OID 415186)
--- Name: fki_acornassociated_lojistiks_product_instances_created_at_even; Type: INDEX; Schema: public; Owner: postgres
+-- Name: fki_acorn_lojistiks_product_instances_created_at_even; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_acornassociated_lojistiks_product_instances_created_at_even ON public.acornassociated_lojistiks_product_instances USING btree (created_at_event_id);
+CREATE INDEX fki_acorn_lojistiks_product_instances_created_at_even ON public.acorn_lojistiks_product_instances USING btree (created_at_event_id);
 
 
 --
 -- TOC entry 4511 (class 1259 OID 415234)
--- Name: fki_acornassociated_lojistiks_product_products_created_at_event; Type: INDEX; Schema: public; Owner: postgres
+-- Name: fki_acorn_lojistiks_product_products_created_at_event; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_acornassociated_lojistiks_product_products_created_at_event ON public.acornassociated_lojistiks_product_products USING btree (created_at_event_id);
+CREATE INDEX fki_acorn_lojistiks_product_products_created_at_event ON public.acorn_lojistiks_product_products USING btree (created_at_event_id);
 
 
 --
 -- TOC entry 4513 (class 1259 OID 415222)
--- Name: fki_acornassociated_lojistiks_products_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: fki_acorn_lojistiks_products_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_acornassociated_lojistiks_products_created_at_event_id ON public.acornassociated_lojistiks_products USING btree (created_at_event_id);
+CREATE INDEX fki_acorn_lojistiks_products_created_at_event_id ON public.acorn_lojistiks_products USING btree (created_at_event_id);
 
 
 --
 -- TOC entry 4517 (class 1259 OID 415198)
--- Name: fki_acornassociated_lojistiks_products_product_categories_creat; Type: INDEX; Schema: public; Owner: postgres
+-- Name: fki_acorn_lojistiks_products_product_categories_creat; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_acornassociated_lojistiks_products_product_categories_creat ON public.acornassociated_lojistiks_products_product_categories USING btree (created_at_event_id);
+CREATE INDEX fki_acorn_lojistiks_products_product_categories_creat ON public.acorn_lojistiks_products_product_categories USING btree (created_at_event_id);
 
 
 --
 -- TOC entry 4521 (class 1259 OID 415228)
--- Name: fki_acornassociated_lojistiks_suppliers_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: fki_acorn_lojistiks_suppliers_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_acornassociated_lojistiks_suppliers_created_at_event_id ON public.acornassociated_lojistiks_suppliers USING btree (created_at_event_id);
+CREATE INDEX fki_acorn_lojistiks_suppliers_created_at_event_id ON public.acorn_lojistiks_suppliers USING btree (created_at_event_id);
 
 
 --
 -- TOC entry 4535 (class 1259 OID 415204)
--- Name: fki_acornassociated_lojistiks_vehicle_types_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: fki_acorn_lojistiks_vehicle_types_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_acornassociated_lojistiks_vehicle_types_created_at_event_id ON public.acornassociated_lojistiks_vehicle_types USING btree (created_at_event_id);
+CREATE INDEX fki_acorn_lojistiks_vehicle_types_created_at_event_id ON public.acorn_lojistiks_vehicle_types USING btree (created_at_event_id);
 
 
 --
 -- TOC entry 4539 (class 1259 OID 415210)
--- Name: fki_acornassociated_lojistiks_vehicles_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: fki_acorn_lojistiks_vehicles_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_acornassociated_lojistiks_vehicles_created_at_event_id ON public.acornassociated_lojistiks_vehicles USING btree (created_at_event_id);
+CREATE INDEX fki_acorn_lojistiks_vehicles_created_at_event_id ON public.acorn_lojistiks_vehicles USING btree (created_at_event_id);
 
 
 --
 -- TOC entry 4545 (class 1259 OID 415216)
--- Name: fki_acornassociated_lojistiks_warehouses_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: fki_acorn_lojistiks_warehouses_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_acornassociated_lojistiks_warehouses_created_at_event_id ON public.acornassociated_lojistiks_warehouses USING btree (created_at_event_id);
+CREATE INDEX fki_acorn_lojistiks_warehouses_created_at_event_id ON public.acorn_lojistiks_warehouses USING btree (created_at_event_id);
 
 
 --
@@ -7171,7 +7171,7 @@ CREATE INDEX fki_acornassociated_lojistiks_warehouses_created_at_event_id ON pub
 -- Name: fki_actual_release_transfer_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_actual_release_transfer_id ON public.acornassociated_criminal_defendant_detentions USING btree (actual_release_transfer_id);
+CREATE INDEX fki_actual_release_transfer_id ON public.acorn_criminal_defendant_detentions USING btree (actual_release_transfer_id);
 
 
 --
@@ -7179,7 +7179,7 @@ CREATE INDEX fki_actual_release_transfer_id ON public.acornassociated_criminal_d
 -- Name: fki_arrived_at_event_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_arrived_at_event_id ON public.acornassociated_lojistiks_transfers USING btree (arrived_at_event_id);
+CREATE INDEX fki_arrived_at_event_id ON public.acorn_lojistiks_transfers USING btree (arrived_at_event_id);
 
 
 --
@@ -7187,7 +7187,7 @@ CREATE INDEX fki_arrived_at_event_id ON public.acornassociated_lojistiks_transfe
 -- Name: fki_calendar_event_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_calendar_event_id ON public.acornassociated_criminal_legalcase_related_events USING btree (event_id);
+CREATE INDEX fki_calendar_event_id ON public.acorn_criminal_legalcase_related_events USING btree (event_id);
 
 
 --
@@ -7195,15 +7195,15 @@ CREATE INDEX fki_calendar_event_id ON public.acornassociated_criminal_legalcase_
 -- Name: fki_closed_at_event_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_closed_at_event_id ON public.acornassociated_justice_legalcases USING btree (closed_at_event_id);
+CREATE INDEX fki_closed_at_event_id ON public.acorn_justice_legalcases USING btree (closed_at_event_id);
 
 
 --
 -- TOC entry 4406 (class 1259 OID 412581)
--- Name: fki_course_id; Type: INDEX; Schema: public; Owner: sanchez
+-- Name: fki_course_id; Type: INDEX; Schema: public; Owner: sz
 --
 
-CREATE INDEX fki_course_id ON public.acornassociated_university_course_teacher USING btree (course_id);
+CREATE INDEX fki_course_id ON public.acorn_university_course_teacher USING btree (course_id);
 
 
 --
@@ -7211,7 +7211,7 @@ CREATE INDEX fki_course_id ON public.acornassociated_university_course_teacher U
 -- Name: fki_created_at; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_created_at ON public.acornassociated_finance_invoices USING btree (created_event_id);
+CREATE INDEX fki_created_at ON public.acorn_finance_invoices USING btree (created_event_id);
 
 
 --
@@ -7219,7 +7219,7 @@ CREATE INDEX fki_created_at ON public.acornassociated_finance_invoices USING btr
 -- Name: fki_created_at_event_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_created_at_event_id ON public.acornassociated_lojistiks_transfer_container_product_instance USING btree (created_at_event_id);
+CREATE INDEX fki_created_at_event_id ON public.acorn_lojistiks_transfer_container_product_instance USING btree (created_at_event_id);
 
 
 --
@@ -7227,7 +7227,7 @@ CREATE INDEX fki_created_at_event_id ON public.acornassociated_lojistiks_transfe
 -- Name: fki_created_by_user_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_created_by_user_id ON public.acornassociated_criminal_defendant_crimes USING btree (created_by_user_id);
+CREATE INDEX fki_created_by_user_id ON public.acorn_criminal_defendant_crimes USING btree (created_by_user_id);
 
 
 --
@@ -7235,7 +7235,7 @@ CREATE INDEX fki_created_by_user_id ON public.acornassociated_criminal_defendant
 -- Name: fki_crime_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_crime_id ON public.acornassociated_criminal_defendant_crimes USING btree (crime_id);
+CREATE INDEX fki_crime_id ON public.acorn_criminal_defendant_crimes USING btree (crime_id);
 
 
 --
@@ -7243,7 +7243,7 @@ CREATE INDEX fki_crime_id ON public.acornassociated_criminal_defendant_crimes US
 -- Name: fki_currency_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_currency_id ON public.acornassociated_finance_invoices USING btree (currency_id);
+CREATE INDEX fki_currency_id ON public.acorn_finance_invoices USING btree (currency_id);
 
 
 --
@@ -7251,7 +7251,7 @@ CREATE INDEX fki_currency_id ON public.acornassociated_finance_invoices USING bt
 -- Name: fki_defendant_crime_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_defendant_crime_id ON public.acornassociated_criminal_crime_evidence USING btree (defendant_crime_id);
+CREATE INDEX fki_defendant_crime_id ON public.acorn_criminal_crime_evidence USING btree (defendant_crime_id);
 
 
 --
@@ -7259,7 +7259,7 @@ CREATE INDEX fki_defendant_crime_id ON public.acornassociated_criminal_crime_evi
 -- Name: fki_event_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_event_id ON public.acornassociated_criminal_appeals USING btree (event_id);
+CREATE INDEX fki_event_id ON public.acorn_criminal_appeals USING btree (event_id);
 
 
 --
@@ -7267,7 +7267,7 @@ CREATE INDEX fki_event_id ON public.acornassociated_criminal_appeals USING btree
 -- Name: fki_invoice_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_invoice_id ON public.acornassociated_lojistiks_transfer_invoice USING btree (invoice_id);
+CREATE INDEX fki_invoice_id ON public.acorn_lojistiks_transfer_invoice USING btree (invoice_id);
 
 
 --
@@ -7275,7 +7275,7 @@ CREATE INDEX fki_invoice_id ON public.acornassociated_lojistiks_transfer_invoice
 -- Name: fki_last_product_instance_destination_location_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_last_product_instance_destination_location_id ON public.acornassociated_lojistiks_people USING btree (last_product_instance_location_id);
+CREATE INDEX fki_last_product_instance_destination_location_id ON public.acorn_lojistiks_people USING btree (last_product_instance_location_id);
 
 
 --
@@ -7283,7 +7283,7 @@ CREATE INDEX fki_last_product_instance_destination_location_id ON public.acornas
 -- Name: fki_last_product_instance_location_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_last_product_instance_location_id ON public.acornassociated_lojistiks_people USING btree (last_product_instance_location_id);
+CREATE INDEX fki_last_product_instance_location_id ON public.acorn_lojistiks_people USING btree (last_product_instance_location_id);
 
 
 --
@@ -7291,7 +7291,7 @@ CREATE INDEX fki_last_product_instance_location_id ON public.acornassociated_loj
 -- Name: fki_last_transfer_destination_location_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_last_transfer_destination_location_id ON public.acornassociated_lojistiks_people USING btree (last_transfer_location_id);
+CREATE INDEX fki_last_transfer_destination_location_id ON public.acorn_lojistiks_people USING btree (last_transfer_location_id);
 
 
 --
@@ -7299,7 +7299,7 @@ CREATE INDEX fki_last_transfer_destination_location_id ON public.acornassociated
 -- Name: fki_last_transfer_location_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_last_transfer_location_id ON public.acornassociated_lojistiks_people USING btree (last_transfer_location_id);
+CREATE INDEX fki_last_transfer_location_id ON public.acorn_lojistiks_people USING btree (last_transfer_location_id);
 
 
 --
@@ -7307,7 +7307,7 @@ CREATE INDEX fki_last_transfer_location_id ON public.acornassociated_lojistiks_p
 -- Name: fki_legalcase1_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_legalcase1_id ON public.acornassociated_civil_legalcases USING btree (legalcase_id);
+CREATE INDEX fki_legalcase1_id ON public.acorn_civil_legalcases USING btree (legalcase_id);
 
 
 --
@@ -7315,7 +7315,7 @@ CREATE INDEX fki_legalcase1_id ON public.acornassociated_civil_legalcases USING 
 -- Name: fki_legalcase2_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_legalcase2_id ON public.acornassociated_civil_hearings USING btree (legalcase_id);
+CREATE INDEX fki_legalcase2_id ON public.acorn_civil_hearings USING btree (legalcase_id);
 
 
 --
@@ -7323,7 +7323,7 @@ CREATE INDEX fki_legalcase2_id ON public.acornassociated_civil_hearings USING bt
 -- Name: fki_legalcase_category_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_legalcase_category_id ON public.acornassociated_justice_legalcase_legalcase_category USING btree (legalcase_category_id);
+CREATE INDEX fki_legalcase_category_id ON public.acorn_justice_legalcase_legalcase_category USING btree (legalcase_category_id);
 
 
 --
@@ -7331,7 +7331,7 @@ CREATE INDEX fki_legalcase_category_id ON public.acornassociated_justice_legalca
 -- Name: fki_legalcase_defendant_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_legalcase_defendant_id ON public.acornassociated_criminal_defendant_detentions USING btree (legalcase_defendant_id);
+CREATE INDEX fki_legalcase_defendant_id ON public.acorn_criminal_defendant_detentions USING btree (legalcase_defendant_id);
 
 
 --
@@ -7339,7 +7339,7 @@ CREATE INDEX fki_legalcase_defendant_id ON public.acornassociated_criminal_defen
 -- Name: fki_legalcase_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_legalcase_id ON public.acornassociated_justice_scanned_documents USING btree (legalcase_id);
+CREATE INDEX fki_legalcase_id ON public.acorn_justice_scanned_documents USING btree (legalcase_id);
 
 
 --
@@ -7347,7 +7347,7 @@ CREATE INDEX fki_legalcase_id ON public.acornassociated_justice_scanned_document
 -- Name: fki_location_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_location_id ON public.acornassociated_lojistiks_offices USING btree (location_id);
+CREATE INDEX fki_location_id ON public.acorn_lojistiks_offices USING btree (location_id);
 
 
 --
@@ -7355,7 +7355,7 @@ CREATE INDEX fki_location_id ON public.acornassociated_lojistiks_offices USING b
 -- Name: fki_method_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_method_id ON public.acornassociated_criminal_defendant_detentions USING btree (detention_method_id);
+CREATE INDEX fki_method_id ON public.acorn_criminal_defendant_detentions USING btree (detention_method_id);
 
 
 --
@@ -7363,7 +7363,7 @@ CREATE INDEX fki_method_id ON public.acornassociated_criminal_defendant_detentio
 -- Name: fki_owner_user_group_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_owner_user_group_id ON public.acornassociated_justice_legalcases USING btree (owner_user_group_id);
+CREATE INDEX fki_owner_user_group_id ON public.acorn_justice_legalcases USING btree (owner_user_group_id);
 
 
 --
@@ -7371,7 +7371,7 @@ CREATE INDEX fki_owner_user_group_id ON public.acornassociated_justice_legalcase
 -- Name: fki_parent_legalcase_category_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_parent_legalcase_category_id ON public.acornassociated_justice_legalcase_categories USING btree (parent_legalcase_category_id);
+CREATE INDEX fki_parent_legalcase_category_id ON public.acorn_justice_legalcase_categories USING btree (parent_legalcase_category_id);
 
 
 --
@@ -7379,7 +7379,7 @@ CREATE INDEX fki_parent_legalcase_category_id ON public.acornassociated_justice_
 -- Name: fki_parent_product_category_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_parent_product_category_id ON public.acornassociated_lojistiks_product_categories USING btree (parent_product_category_id);
+CREATE INDEX fki_parent_product_category_id ON public.acorn_lojistiks_product_categories USING btree (parent_product_category_id);
 
 
 --
@@ -7387,7 +7387,7 @@ CREATE INDEX fki_parent_product_category_id ON public.acornassociated_lojistiks_
 -- Name: fki_payee_user_group_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_payee_user_group_id ON public.acornassociated_finance_invoices USING btree (payee_user_group_id);
+CREATE INDEX fki_payee_user_group_id ON public.acorn_finance_invoices USING btree (payee_user_group_id);
 
 
 --
@@ -7395,7 +7395,7 @@ CREATE INDEX fki_payee_user_group_id ON public.acornassociated_finance_invoices 
 -- Name: fki_payee_user_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_payee_user_id ON public.acornassociated_finance_invoices USING btree (payee_user_id);
+CREATE INDEX fki_payee_user_id ON public.acorn_finance_invoices USING btree (payee_user_id);
 
 
 --
@@ -7403,7 +7403,7 @@ CREATE INDEX fki_payee_user_id ON public.acornassociated_finance_invoices USING 
 -- Name: fki_purchase_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_purchase_id ON public.acornassociated_lojistiks_transfer_purchase USING btree (purchase_id);
+CREATE INDEX fki_purchase_id ON public.acorn_lojistiks_transfer_purchase USING btree (purchase_id);
 
 
 --
@@ -7411,7 +7411,7 @@ CREATE INDEX fki_purchase_id ON public.acornassociated_lojistiks_transfer_purcha
 -- Name: fki_reason_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_reason_id ON public.acornassociated_criminal_defendant_detentions USING btree (detention_reason_id);
+CREATE INDEX fki_reason_id ON public.acorn_criminal_defendant_detentions USING btree (detention_reason_id);
 
 
 --
@@ -7419,7 +7419,7 @@ CREATE INDEX fki_reason_id ON public.acornassociated_criminal_defendant_detentio
 -- Name: fki_revoked_at_event_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_revoked_at_event_id ON public.acornassociated_justice_warrants USING btree (revoked_at_event_id);
+CREATE INDEX fki_revoked_at_event_id ON public.acorn_justice_warrants USING btree (revoked_at_event_id);
 
 
 --
@@ -7427,7 +7427,7 @@ CREATE INDEX fki_revoked_at_event_id ON public.acornassociated_justice_warrants 
 -- Name: fki_sent_at_event_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_sent_at_event_id ON public.acornassociated_lojistiks_transfers USING btree (sent_at_event_id);
+CREATE INDEX fki_sent_at_event_id ON public.acorn_lojistiks_transfers USING btree (sent_at_event_id);
 
 
 --
@@ -7435,7 +7435,7 @@ CREATE INDEX fki_sent_at_event_id ON public.acornassociated_lojistiks_transfers 
 -- Name: fki_sentence_type_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_sentence_type_id ON public.acornassociated_criminal_crime_sentences USING btree (sentence_type_id);
+CREATE INDEX fki_sentence_type_id ON public.acorn_criminal_crime_sentences USING btree (sentence_type_id);
 
 
 --
@@ -7443,15 +7443,15 @@ CREATE INDEX fki_sentence_type_id ON public.acornassociated_criminal_crime_sente
 -- Name: fki_server_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_server_id ON public.acornassociated_criminal_legalcases USING btree (server_id);
+CREATE INDEX fki_server_id ON public.acorn_criminal_legalcases USING btree (server_id);
 
 
 --
 -- TOC entry 4407 (class 1259 OID 412582)
--- Name: fki_teacher_id; Type: INDEX; Schema: public; Owner: sanchez
+-- Name: fki_teacher_id; Type: INDEX; Schema: public; Owner: sz
 --
 
-CREATE INDEX fki_teacher_id ON public.acornassociated_university_course_teacher USING btree (teacher_id);
+CREATE INDEX fki_teacher_id ON public.acorn_university_course_teacher USING btree (teacher_id);
 
 
 --
@@ -7459,7 +7459,7 @@ CREATE INDEX fki_teacher_id ON public.acornassociated_university_course_teacher 
 -- Name: fki_transfer_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_transfer_id ON public.acornassociated_lojistiks_transfer_invoice USING btree (transfer_id);
+CREATE INDEX fki_transfer_id ON public.acorn_lojistiks_transfer_invoice USING btree (transfer_id);
 
 
 --
@@ -7467,7 +7467,7 @@ CREATE INDEX fki_transfer_id ON public.acornassociated_lojistiks_transfer_invoic
 -- Name: fki_trial_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_trial_id ON public.acornassociated_criminal_trial_judges USING btree (trial_id);
+CREATE INDEX fki_trial_id ON public.acorn_criminal_trial_judges USING btree (trial_id);
 
 
 --
@@ -7475,7 +7475,7 @@ CREATE INDEX fki_trial_id ON public.acornassociated_criminal_trial_judges USING 
 -- Name: fki_trial_session_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_trial_session_id ON public.acornassociated_criminal_session_recordings USING btree (trial_session_id);
+CREATE INDEX fki_trial_session_id ON public.acorn_criminal_session_recordings USING btree (trial_session_id);
 
 
 --
@@ -7483,7 +7483,7 @@ CREATE INDEX fki_trial_session_id ON public.acornassociated_criminal_session_rec
 -- Name: fki_type_id; Type: INDEX; Schema: public; Owner: justice
 --
 
-CREATE INDEX fki_type_id ON public.acornassociated_location_locations USING btree (type_id);
+CREATE INDEX fki_type_id ON public.acorn_location_locations USING btree (type_id);
 
 
 --
@@ -7491,7 +7491,7 @@ CREATE INDEX fki_type_id ON public.acornassociated_location_locations USING btre
 -- Name: fki_user_group_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_user_group_id ON public.acornassociated_finance_purchases USING btree (payer_user_group_id);
+CREATE INDEX fki_user_group_id ON public.acorn_finance_purchases USING btree (payer_user_group_id);
 
 
 --
@@ -7499,7 +7499,7 @@ CREATE INDEX fki_user_group_id ON public.acornassociated_finance_purchases USING
 -- Name: fki_user_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX fki_user_id ON public.acornassociated_finance_purchases USING btree (payer_user_id);
+CREATE INDEX fki_user_id ON public.acorn_finance_purchases USING btree (payer_user_id);
 
 
 --
@@ -7768,1991 +7768,1991 @@ CREATE INDEX winter_translate_messages_code_pre_2_1_0_index ON public.winter_tra
 
 --
 -- TOC entry 4849 (class 2620 OID 414237)
--- Name: acornassociated_lojistiks_computer_products tr_acornassociated_lojistiks_computer_products_new_replicated_r; Type: TRIGGER; Schema: product; Owner: postgres
+-- Name: acorn_lojistiks_computer_products tr_acorn_lojistiks_computer_products_new_replicated_r; Type: TRIGGER; Schema: product; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_computer_products_new_replicated_r BEFORE INSERT ON product.acornassociated_lojistiks_computer_products FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_computer_products_new_replicated_r BEFORE INSERT ON product.acorn_lojistiks_computer_products FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE product.acornassociated_lojistiks_computer_products ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_computer_products_new_replicated_r;
+ALTER TABLE product.acorn_lojistiks_computer_products ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_computer_products_new_replicated_r;
 
 
 --
 -- TOC entry 4850 (class 2620 OID 414238)
--- Name: acornassociated_lojistiks_computer_products tr_acornassociated_lojistiks_computer_products_server_id; Type: TRIGGER; Schema: product; Owner: postgres
+-- Name: acorn_lojistiks_computer_products tr_acorn_lojistiks_computer_products_server_id; Type: TRIGGER; Schema: product; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_computer_products_server_id BEFORE INSERT ON product.acornassociated_lojistiks_computer_products FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_computer_products_server_id BEFORE INSERT ON product.acorn_lojistiks_computer_products FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4851 (class 2620 OID 414239)
--- Name: acornassociated_lojistiks_electronic_products tr_acornassociated_lojistiks_electronic_products_new_replicated; Type: TRIGGER; Schema: product; Owner: postgres
+-- Name: acorn_lojistiks_electronic_products tr_acorn_lojistiks_electronic_products_new_replicated; Type: TRIGGER; Schema: product; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_electronic_products_new_replicated BEFORE INSERT ON product.acornassociated_lojistiks_electronic_products FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_electronic_products_new_replicated BEFORE INSERT ON product.acorn_lojistiks_electronic_products FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE product.acornassociated_lojistiks_electronic_products ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_electronic_products_new_replicated;
+ALTER TABLE product.acorn_lojistiks_electronic_products ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_electronic_products_new_replicated;
 
 
 --
 -- TOC entry 4852 (class 2620 OID 414240)
--- Name: acornassociated_lojistiks_electronic_products tr_acornassociated_lojistiks_electronic_products_server_id; Type: TRIGGER; Schema: product; Owner: postgres
+-- Name: acorn_lojistiks_electronic_products tr_acorn_lojistiks_electronic_products_server_id; Type: TRIGGER; Schema: product; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_electronic_products_server_id BEFORE INSERT ON product.acornassociated_lojistiks_electronic_products FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_electronic_products_server_id BEFORE INSERT ON product.acorn_lojistiks_electronic_products FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4847 (class 2620 OID 394765)
--- Name: acornassociated_calendar_event_part tr_acornassociated_calendar_event_trigger_insert_function; Type: TRIGGER; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_part tr_acorn_calendar_event_trigger_insert_function; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acornassociated_calendar_event_trigger_insert_function AFTER INSERT OR UPDATE ON public.acornassociated_calendar_event_part FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_calendar_event_trigger_insert_function();
+CREATE TRIGGER tr_acorn_calendar_event_trigger_insert_function AFTER INSERT OR UPDATE ON public.acorn_calendar_event_part FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_event_trigger_insert_function();
 
 
 --
 -- TOC entry 4848 (class 2620 OID 396054)
--- Name: acornassociated_justice_legalcases tr_acornassociated_justice_update_name_identifier; Type: TRIGGER; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcases tr_acorn_justice_update_name_identifier; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acornassociated_justice_update_name_identifier AFTER UPDATE ON public.acornassociated_justice_legalcases FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_justice_update_name_identifier();
+CREATE TRIGGER tr_acorn_justice_update_name_identifier AFTER UPDATE ON public.acorn_justice_legalcases FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_justice_update_name_identifier();
 
-ALTER TABLE public.acornassociated_justice_legalcases DISABLE TRIGGER tr_acornassociated_justice_update_name_identifier;
+ALTER TABLE public.acorn_justice_legalcases DISABLE TRIGGER tr_acorn_justice_update_name_identifier;
 
 
 --
 -- TOC entry 4835 (class 2620 OID 394429)
--- Name: acornassociated_location_addresses tr_acornassociated_location_addresses_new_replicated_row; Type: TRIGGER; Schema: public; Owner: justice
+-- Name: acorn_location_addresses tr_acorn_location_addresses_new_replicated_row; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acornassociated_location_addresses_new_replicated_row BEFORE INSERT ON public.acornassociated_location_addresses FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_location_addresses_new_replicated_row BEFORE INSERT ON public.acorn_location_addresses FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_location_addresses ENABLE ALWAYS TRIGGER tr_acornassociated_location_addresses_new_replicated_row;
+ALTER TABLE public.acorn_location_addresses ENABLE ALWAYS TRIGGER tr_acorn_location_addresses_new_replicated_row;
 
 
 --
 -- TOC entry 4836 (class 2620 OID 394430)
--- Name: acornassociated_location_addresses tr_acornassociated_location_addresses_server_id; Type: TRIGGER; Schema: public; Owner: justice
+-- Name: acorn_location_addresses tr_acorn_location_addresses_server_id; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acornassociated_location_addresses_server_id BEFORE INSERT ON public.acornassociated_location_addresses FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_location_addresses_server_id BEFORE INSERT ON public.acorn_location_addresses FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4837 (class 2620 OID 394431)
--- Name: acornassociated_location_area_types tr_acornassociated_location_area_types_new_replicated_row; Type: TRIGGER; Schema: public; Owner: justice
+-- Name: acorn_location_area_types tr_acorn_location_area_types_new_replicated_row; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acornassociated_location_area_types_new_replicated_row BEFORE INSERT ON public.acornassociated_location_area_types FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_location_area_types_new_replicated_row BEFORE INSERT ON public.acorn_location_area_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_location_area_types ENABLE ALWAYS TRIGGER tr_acornassociated_location_area_types_new_replicated_row;
+ALTER TABLE public.acorn_location_area_types ENABLE ALWAYS TRIGGER tr_acorn_location_area_types_new_replicated_row;
 
 
 --
 -- TOC entry 4838 (class 2620 OID 394432)
--- Name: acornassociated_location_area_types tr_acornassociated_location_area_types_server_id; Type: TRIGGER; Schema: public; Owner: justice
+-- Name: acorn_location_area_types tr_acorn_location_area_types_server_id; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acornassociated_location_area_types_server_id BEFORE INSERT ON public.acornassociated_location_area_types FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_location_area_types_server_id BEFORE INSERT ON public.acorn_location_area_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4839 (class 2620 OID 394433)
--- Name: acornassociated_location_areas tr_acornassociated_location_areas_new_replicated_row; Type: TRIGGER; Schema: public; Owner: justice
+-- Name: acorn_location_areas tr_acorn_location_areas_new_replicated_row; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acornassociated_location_areas_new_replicated_row BEFORE INSERT ON public.acornassociated_location_areas FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_location_areas_new_replicated_row BEFORE INSERT ON public.acorn_location_areas FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_location_areas ENABLE ALWAYS TRIGGER tr_acornassociated_location_areas_new_replicated_row;
+ALTER TABLE public.acorn_location_areas ENABLE ALWAYS TRIGGER tr_acorn_location_areas_new_replicated_row;
 
 
 --
 -- TOC entry 4840 (class 2620 OID 394434)
--- Name: acornassociated_location_areas tr_acornassociated_location_areas_server_id; Type: TRIGGER; Schema: public; Owner: justice
+-- Name: acorn_location_areas tr_acorn_location_areas_server_id; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acornassociated_location_areas_server_id BEFORE INSERT ON public.acornassociated_location_areas FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_location_areas_server_id BEFORE INSERT ON public.acorn_location_areas FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4841 (class 2620 OID 394435)
--- Name: acornassociated_location_gps tr_acornassociated_location_gps_new_replicated_row; Type: TRIGGER; Schema: public; Owner: justice
+-- Name: acorn_location_gps tr_acorn_location_gps_new_replicated_row; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acornassociated_location_gps_new_replicated_row BEFORE INSERT ON public.acornassociated_location_gps FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_location_gps_new_replicated_row BEFORE INSERT ON public.acorn_location_gps FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_location_gps ENABLE ALWAYS TRIGGER tr_acornassociated_location_gps_new_replicated_row;
+ALTER TABLE public.acorn_location_gps ENABLE ALWAYS TRIGGER tr_acorn_location_gps_new_replicated_row;
 
 
 --
 -- TOC entry 4842 (class 2620 OID 394436)
--- Name: acornassociated_location_gps tr_acornassociated_location_gps_server_id; Type: TRIGGER; Schema: public; Owner: justice
+-- Name: acorn_location_gps tr_acorn_location_gps_server_id; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acornassociated_location_gps_server_id BEFORE INSERT ON public.acornassociated_location_gps FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_location_gps_server_id BEFORE INSERT ON public.acorn_location_gps FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4843 (class 2620 OID 394437)
--- Name: acornassociated_location_locations tr_acornassociated_location_locations_new_replicated_row; Type: TRIGGER; Schema: public; Owner: justice
+-- Name: acorn_location_locations tr_acorn_location_locations_new_replicated_row; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acornassociated_location_locations_new_replicated_row BEFORE INSERT ON public.acornassociated_location_locations FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_location_locations_new_replicated_row BEFORE INSERT ON public.acorn_location_locations FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_location_locations ENABLE ALWAYS TRIGGER tr_acornassociated_location_locations_new_replicated_row;
+ALTER TABLE public.acorn_location_locations ENABLE ALWAYS TRIGGER tr_acorn_location_locations_new_replicated_row;
 
 
 --
 -- TOC entry 4844 (class 2620 OID 394438)
--- Name: acornassociated_location_locations tr_acornassociated_location_locations_server_id; Type: TRIGGER; Schema: public; Owner: justice
+-- Name: acorn_location_locations tr_acorn_location_locations_server_id; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acornassociated_location_locations_server_id BEFORE INSERT ON public.acornassociated_location_locations FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_location_locations_server_id BEFORE INSERT ON public.acorn_location_locations FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4845 (class 2620 OID 394439)
--- Name: acornassociated_location_types tr_acornassociated_location_types_new_replicated_row; Type: TRIGGER; Schema: public; Owner: justice
+-- Name: acorn_location_types tr_acorn_location_types_new_replicated_row; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acornassociated_location_types_new_replicated_row BEFORE INSERT ON public.acornassociated_location_types FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_location_types_new_replicated_row BEFORE INSERT ON public.acorn_location_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_location_types ENABLE ALWAYS TRIGGER tr_acornassociated_location_types_new_replicated_row;
+ALTER TABLE public.acorn_location_types ENABLE ALWAYS TRIGGER tr_acorn_location_types_new_replicated_row;
 
 
 --
 -- TOC entry 4846 (class 2620 OID 394440)
--- Name: acornassociated_location_types tr_acornassociated_location_types_server_id; Type: TRIGGER; Schema: public; Owner: justice
+-- Name: acorn_location_types tr_acorn_location_types_server_id; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acornassociated_location_types_server_id BEFORE INSERT ON public.acornassociated_location_types FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_location_types_server_id BEFORE INSERT ON public.acorn_location_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4853 (class 2620 OID 414247)
--- Name: acornassociated_lojistiks_brands tr_acornassociated_lojistiks_brands_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_brands tr_acorn_lojistiks_brands_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_brands_new_replicated_row BEFORE INSERT ON public.acornassociated_lojistiks_brands FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_brands_new_replicated_row BEFORE INSERT ON public.acorn_lojistiks_brands FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_brands ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_brands_new_replicated_row;
+ALTER TABLE public.acorn_lojistiks_brands ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_brands_new_replicated_row;
 
 
 --
 -- TOC entry 4854 (class 2620 OID 414248)
--- Name: acornassociated_lojistiks_brands tr_acornassociated_lojistiks_brands_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_brands tr_acorn_lojistiks_brands_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_brands_server_id BEFORE INSERT ON public.acornassociated_lojistiks_brands FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_brands_server_id BEFORE INSERT ON public.acorn_lojistiks_brands FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4855 (class 2620 OID 414249)
--- Name: acornassociated_lojistiks_containers tr_acornassociated_lojistiks_containers_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_containers tr_acorn_lojistiks_containers_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_containers_new_replicated_row BEFORE INSERT ON public.acornassociated_lojistiks_containers FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_containers_new_replicated_row BEFORE INSERT ON public.acorn_lojistiks_containers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_containers ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_containers_new_replicated_row;
+ALTER TABLE public.acorn_lojistiks_containers ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_containers_new_replicated_row;
 
 
 --
 -- TOC entry 4856 (class 2620 OID 414250)
--- Name: acornassociated_lojistiks_containers tr_acornassociated_lojistiks_containers_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_containers tr_acorn_lojistiks_containers_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_containers_server_id BEFORE INSERT ON public.acornassociated_lojistiks_containers FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_containers_server_id BEFORE INSERT ON public.acorn_lojistiks_containers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4857 (class 2620 OID 414251)
--- Name: acornassociated_lojistiks_drivers tr_acornassociated_lojistiks_drivers_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_drivers tr_acorn_lojistiks_drivers_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_drivers_new_replicated_row BEFORE INSERT ON public.acornassociated_lojistiks_drivers FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_drivers_new_replicated_row BEFORE INSERT ON public.acorn_lojistiks_drivers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_drivers ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_drivers_new_replicated_row;
+ALTER TABLE public.acorn_lojistiks_drivers ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_drivers_new_replicated_row;
 
 
 --
 -- TOC entry 4858 (class 2620 OID 414252)
--- Name: acornassociated_lojistiks_drivers tr_acornassociated_lojistiks_drivers_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_drivers tr_acorn_lojistiks_drivers_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_drivers_server_id BEFORE INSERT ON public.acornassociated_lojistiks_drivers FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_drivers_server_id BEFORE INSERT ON public.acorn_lojistiks_drivers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4859 (class 2620 OID 414253)
--- Name: acornassociated_lojistiks_employees tr_acornassociated_lojistiks_employees_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_employees tr_acorn_lojistiks_employees_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_employees_new_replicated_row BEFORE INSERT ON public.acornassociated_lojistiks_employees FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_employees_new_replicated_row BEFORE INSERT ON public.acorn_lojistiks_employees FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_employees ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_employees_new_replicated_row;
+ALTER TABLE public.acorn_lojistiks_employees ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_employees_new_replicated_row;
 
 
 --
 -- TOC entry 4860 (class 2620 OID 414254)
--- Name: acornassociated_lojistiks_employees tr_acornassociated_lojistiks_employees_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_employees tr_acorn_lojistiks_employees_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_employees_server_id BEFORE INSERT ON public.acornassociated_lojistiks_employees FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_employees_server_id BEFORE INSERT ON public.acorn_lojistiks_employees FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4861 (class 2620 OID 414259)
--- Name: acornassociated_lojistiks_measurement_units tr_acornassociated_lojistiks_measurement_units_new_replicated_r; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_measurement_units tr_acorn_lojistiks_measurement_units_new_replicated_r; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_measurement_units_new_replicated_r BEFORE INSERT ON public.acornassociated_lojistiks_measurement_units FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_measurement_units_new_replicated_r BEFORE INSERT ON public.acorn_lojistiks_measurement_units FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_measurement_units ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_measurement_units_new_replicated_r;
+ALTER TABLE public.acorn_lojistiks_measurement_units ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_measurement_units_new_replicated_r;
 
 
 --
 -- TOC entry 4862 (class 2620 OID 414260)
--- Name: acornassociated_lojistiks_measurement_units tr_acornassociated_lojistiks_measurement_units_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_measurement_units tr_acorn_lojistiks_measurement_units_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_measurement_units_server_id BEFORE INSERT ON public.acornassociated_lojistiks_measurement_units FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_measurement_units_server_id BEFORE INSERT ON public.acorn_lojistiks_measurement_units FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4872 (class 2620 OID 414261)
--- Name: acornassociated_lojistiks_offices tr_acornassociated_lojistiks_offices_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_offices tr_acorn_lojistiks_offices_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_offices_new_replicated_row BEFORE INSERT ON public.acornassociated_lojistiks_offices FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_offices_new_replicated_row BEFORE INSERT ON public.acorn_lojistiks_offices FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_offices ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_offices_new_replicated_row;
+ALTER TABLE public.acorn_lojistiks_offices ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_offices_new_replicated_row;
 
 
 --
 -- TOC entry 4873 (class 2620 OID 414262)
--- Name: acornassociated_lojistiks_offices tr_acornassociated_lojistiks_offices_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_offices tr_acorn_lojistiks_offices_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_offices_server_id BEFORE INSERT ON public.acornassociated_lojistiks_offices FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_offices_server_id BEFORE INSERT ON public.acorn_lojistiks_offices FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4874 (class 2620 OID 414263)
--- Name: acornassociated_lojistiks_people tr_acornassociated_lojistiks_people_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_people tr_acorn_lojistiks_people_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_people_new_replicated_row BEFORE INSERT ON public.acornassociated_lojistiks_people FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_people_new_replicated_row BEFORE INSERT ON public.acorn_lojistiks_people FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_people ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_people_new_replicated_row;
+ALTER TABLE public.acorn_lojistiks_people ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_people_new_replicated_row;
 
 
 --
 -- TOC entry 4875 (class 2620 OID 414264)
--- Name: acornassociated_lojistiks_people tr_acornassociated_lojistiks_people_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_people tr_acorn_lojistiks_people_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_people_server_id BEFORE INSERT ON public.acornassociated_lojistiks_people FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_people_server_id BEFORE INSERT ON public.acorn_lojistiks_people FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4876 (class 2620 OID 414265)
--- Name: acornassociated_lojistiks_product_attributes tr_acornassociated_lojistiks_product_attributes_new_replicated_; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_attributes tr_acorn_lojistiks_product_attributes_new_replicated_; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_product_attributes_new_replicated_ BEFORE INSERT ON public.acornassociated_lojistiks_product_attributes FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_product_attributes_new_replicated_ BEFORE INSERT ON public.acorn_lojistiks_product_attributes FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_product_attributes ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_product_attributes_new_replicated_;
+ALTER TABLE public.acorn_lojistiks_product_attributes ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_product_attributes_new_replicated_;
 
 
 --
 -- TOC entry 4877 (class 2620 OID 414266)
--- Name: acornassociated_lojistiks_product_attributes tr_acornassociated_lojistiks_product_attributes_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_attributes tr_acorn_lojistiks_product_attributes_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_product_attributes_server_id BEFORE INSERT ON public.acornassociated_lojistiks_product_attributes FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_product_attributes_server_id BEFORE INSERT ON public.acorn_lojistiks_product_attributes FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4878 (class 2620 OID 414267)
--- Name: acornassociated_lojistiks_product_categories tr_acornassociated_lojistiks_product_categories_new_replicated_; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_categories tr_acorn_lojistiks_product_categories_new_replicated_; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_product_categories_new_replicated_ BEFORE INSERT ON public.acornassociated_lojistiks_product_categories FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_product_categories_new_replicated_ BEFORE INSERT ON public.acorn_lojistiks_product_categories FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_product_categories ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_product_categories_new_replicated_;
+ALTER TABLE public.acorn_lojistiks_product_categories ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_product_categories_new_replicated_;
 
 
 --
 -- TOC entry 4879 (class 2620 OID 414268)
--- Name: acornassociated_lojistiks_product_categories tr_acornassociated_lojistiks_product_categories_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_categories tr_acorn_lojistiks_product_categories_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_product_categories_server_id BEFORE INSERT ON public.acornassociated_lojistiks_product_categories FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_product_categories_server_id BEFORE INSERT ON public.acorn_lojistiks_product_categories FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4880 (class 2620 OID 414269)
--- Name: acornassociated_lojistiks_product_category_types tr_acornassociated_lojistiks_product_category_types_new_replica; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_category_types tr_acorn_lojistiks_product_category_types_new_replica; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_product_category_types_new_replica BEFORE INSERT ON public.acornassociated_lojistiks_product_category_types FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_product_category_types_new_replica BEFORE INSERT ON public.acorn_lojistiks_product_category_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_product_category_types ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_product_category_types_new_replica;
+ALTER TABLE public.acorn_lojistiks_product_category_types ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_product_category_types_new_replica;
 
 
 --
 -- TOC entry 4881 (class 2620 OID 414270)
--- Name: acornassociated_lojistiks_product_category_types tr_acornassociated_lojistiks_product_category_types_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_category_types tr_acorn_lojistiks_product_category_types_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_product_category_types_server_id BEFORE INSERT ON public.acornassociated_lojistiks_product_category_types FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_product_category_types_server_id BEFORE INSERT ON public.acorn_lojistiks_product_category_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4863 (class 2620 OID 414271)
--- Name: acornassociated_lojistiks_product_instance_transfer tr_acornassociated_lojistiks_product_instance_transfer_new_repl; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_instance_transfer tr_acorn_lojistiks_product_instance_transfer_new_repl; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_product_instance_transfer_new_repl BEFORE INSERT ON public.acornassociated_lojistiks_product_instance_transfer FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_product_instance_transfer_new_repl BEFORE INSERT ON public.acorn_lojistiks_product_instance_transfer FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_product_instance_transfer ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_product_instance_transfer_new_repl;
+ALTER TABLE public.acorn_lojistiks_product_instance_transfer ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_product_instance_transfer_new_repl;
 
 
 --
 -- TOC entry 4864 (class 2620 OID 414272)
--- Name: acornassociated_lojistiks_product_instance_transfer tr_acornassociated_lojistiks_product_instance_transfer_server_i; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_instance_transfer tr_acorn_lojistiks_product_instance_transfer_server_i; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_product_instance_transfer_server_i BEFORE INSERT ON public.acornassociated_lojistiks_product_instance_transfer FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_product_instance_transfer_server_i BEFORE INSERT ON public.acorn_lojistiks_product_instance_transfer FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4865 (class 2620 OID 414273)
--- Name: acornassociated_lojistiks_product_instances tr_acornassociated_lojistiks_product_instances_new_replicated_r; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_instances tr_acorn_lojistiks_product_instances_new_replicated_r; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_product_instances_new_replicated_r BEFORE INSERT ON public.acornassociated_lojistiks_product_instances FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_product_instances_new_replicated_r BEFORE INSERT ON public.acorn_lojistiks_product_instances FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_product_instances ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_product_instances_new_replicated_r;
+ALTER TABLE public.acorn_lojistiks_product_instances ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_product_instances_new_replicated_r;
 
 
 --
 -- TOC entry 4866 (class 2620 OID 414274)
--- Name: acornassociated_lojistiks_product_instances tr_acornassociated_lojistiks_product_instances_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_instances tr_acorn_lojistiks_product_instances_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_product_instances_server_id BEFORE INSERT ON public.acornassociated_lojistiks_product_instances FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_product_instances_server_id BEFORE INSERT ON public.acorn_lojistiks_product_instances FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4882 (class 2620 OID 414275)
--- Name: acornassociated_lojistiks_product_products tr_acornassociated_lojistiks_product_products_new_replicated_ro; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_products tr_acorn_lojistiks_product_products_new_replicated_ro; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_product_products_new_replicated_ro BEFORE INSERT ON public.acornassociated_lojistiks_product_products FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_product_products_new_replicated_ro BEFORE INSERT ON public.acorn_lojistiks_product_products FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_product_products ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_product_products_new_replicated_ro;
+ALTER TABLE public.acorn_lojistiks_product_products ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_product_products_new_replicated_ro;
 
 
 --
 -- TOC entry 4883 (class 2620 OID 414276)
--- Name: acornassociated_lojistiks_product_products tr_acornassociated_lojistiks_product_products_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_products tr_acorn_lojistiks_product_products_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_product_products_server_id BEFORE INSERT ON public.acornassociated_lojistiks_product_products FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_product_products_server_id BEFORE INSERT ON public.acorn_lojistiks_product_products FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4884 (class 2620 OID 414277)
--- Name: acornassociated_lojistiks_products tr_acornassociated_lojistiks_products_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products tr_acorn_lojistiks_products_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_products_new_replicated_row BEFORE INSERT ON public.acornassociated_lojistiks_products FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_products_new_replicated_row BEFORE INSERT ON public.acorn_lojistiks_products FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_products ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_products_new_replicated_row;
+ALTER TABLE public.acorn_lojistiks_products ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_products_new_replicated_row;
 
 
 --
 -- TOC entry 4886 (class 2620 OID 414278)
--- Name: acornassociated_lojistiks_products_product_categories tr_acornassociated_lojistiks_products_product_categories_new_re; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products_product_categories tr_acorn_lojistiks_products_product_categories_new_re; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_products_product_categories_new_re BEFORE INSERT ON public.acornassociated_lojistiks_products_product_categories FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_products_product_categories_new_re BEFORE INSERT ON public.acorn_lojistiks_products_product_categories FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_products_product_categories ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_products_product_categories_new_re;
+ALTER TABLE public.acorn_lojistiks_products_product_categories ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_products_product_categories_new_re;
 
 
 --
 -- TOC entry 4887 (class 2620 OID 414279)
--- Name: acornassociated_lojistiks_products_product_categories tr_acornassociated_lojistiks_products_product_categories_server; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products_product_categories tr_acorn_lojistiks_products_product_categories_server; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_products_product_categories_server BEFORE INSERT ON public.acornassociated_lojistiks_products_product_categories FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_products_product_categories_server BEFORE INSERT ON public.acorn_lojistiks_products_product_categories FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4885 (class 2620 OID 414280)
--- Name: acornassociated_lojistiks_products tr_acornassociated_lojistiks_products_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products tr_acorn_lojistiks_products_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_products_server_id BEFORE INSERT ON public.acornassociated_lojistiks_products FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_products_server_id BEFORE INSERT ON public.acorn_lojistiks_products FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4888 (class 2620 OID 414281)
--- Name: acornassociated_lojistiks_suppliers tr_acornassociated_lojistiks_suppliers_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_suppliers tr_acorn_lojistiks_suppliers_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_suppliers_new_replicated_row BEFORE INSERT ON public.acornassociated_lojistiks_suppliers FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_suppliers_new_replicated_row BEFORE INSERT ON public.acorn_lojistiks_suppliers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_suppliers ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_suppliers_new_replicated_row;
+ALTER TABLE public.acorn_lojistiks_suppliers ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_suppliers_new_replicated_row;
 
 
 --
 -- TOC entry 4889 (class 2620 OID 414282)
--- Name: acornassociated_lojistiks_suppliers tr_acornassociated_lojistiks_suppliers_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_suppliers tr_acorn_lojistiks_suppliers_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_suppliers_server_id BEFORE INSERT ON public.acornassociated_lojistiks_suppliers FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_suppliers_server_id BEFORE INSERT ON public.acorn_lojistiks_suppliers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4890 (class 2620 OID 414283)
--- Name: acornassociated_lojistiks_transfer_containers tr_acornassociated_lojistiks_transfer_container_new_replicated_; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_containers tr_acorn_lojistiks_transfer_container_new_replicated_; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_transfer_container_new_replicated_ BEFORE INSERT ON public.acornassociated_lojistiks_transfer_containers FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_transfer_container_new_replicated_ BEFORE INSERT ON public.acorn_lojistiks_transfer_containers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_transfer_containers ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_transfer_container_new_replicated_;
+ALTER TABLE public.acorn_lojistiks_transfer_containers ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_transfer_container_new_replicated_;
 
 
 --
 -- TOC entry 4892 (class 2620 OID 414284)
--- Name: acornassociated_lojistiks_transfer_container_product_instance tr_acornassociated_lojistiks_transfer_container_product_instanc; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_container_product_instance tr_acorn_lojistiks_transfer_container_product_instanc; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_transfer_container_product_instanc BEFORE INSERT ON public.acornassociated_lojistiks_transfer_container_product_instance FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_transfer_container_product_instanc BEFORE INSERT ON public.acorn_lojistiks_transfer_container_product_instance FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_transfer_container_product_instance ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_transfer_container_product_instanc;
+ALTER TABLE public.acorn_lojistiks_transfer_container_product_instance ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_transfer_container_product_instanc;
 
 
 --
 -- TOC entry 4891 (class 2620 OID 414285)
--- Name: acornassociated_lojistiks_transfer_containers tr_acornassociated_lojistiks_transfer_container_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_containers tr_acorn_lojistiks_transfer_container_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_transfer_container_server_id BEFORE INSERT ON public.acornassociated_lojistiks_transfer_containers FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_transfer_container_server_id BEFORE INSERT ON public.acorn_lojistiks_transfer_containers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4867 (class 2620 OID 414286)
--- Name: acornassociated_lojistiks_transfers tr_acornassociated_lojistiks_transfers_delete_calendar; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfers tr_acorn_lojistiks_transfers_delete_calendar; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_transfers_delete_calendar AFTER DELETE ON public.acornassociated_lojistiks_transfers FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_lojistiks_transfers_delete_calendar();
+CREATE TRIGGER tr_acorn_lojistiks_transfers_delete_calendar AFTER DELETE ON public.acorn_lojistiks_transfers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_lojistiks_transfers_delete_calendar();
 
 
 --
 -- TOC entry 4868 (class 2620 OID 414287)
--- Name: acornassociated_lojistiks_transfers tr_acornassociated_lojistiks_transfers_insert_calendar; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfers tr_acorn_lojistiks_transfers_insert_calendar; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_transfers_insert_calendar BEFORE INSERT ON public.acornassociated_lojistiks_transfers FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_lojistiks_transfers_insert_calendar();
+CREATE TRIGGER tr_acorn_lojistiks_transfers_insert_calendar BEFORE INSERT ON public.acorn_lojistiks_transfers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_lojistiks_transfers_insert_calendar();
 
 
 --
 -- TOC entry 4869 (class 2620 OID 414288)
--- Name: acornassociated_lojistiks_transfers tr_acornassociated_lojistiks_transfers_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfers tr_acorn_lojistiks_transfers_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_transfers_new_replicated_row BEFORE INSERT ON public.acornassociated_lojistiks_transfers FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_transfers_new_replicated_row BEFORE INSERT ON public.acorn_lojistiks_transfers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_transfers ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_transfers_new_replicated_row;
+ALTER TABLE public.acorn_lojistiks_transfers ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_transfers_new_replicated_row;
 
 
 --
 -- TOC entry 4870 (class 2620 OID 414289)
--- Name: acornassociated_lojistiks_transfers tr_acornassociated_lojistiks_transfers_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfers tr_acorn_lojistiks_transfers_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_transfers_server_id BEFORE INSERT ON public.acornassociated_lojistiks_transfers FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_transfers_server_id BEFORE INSERT ON public.acorn_lojistiks_transfers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4871 (class 2620 OID 414290)
--- Name: acornassociated_lojistiks_transfers tr_acornassociated_lojistiks_transfers_update_calendar; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfers tr_acorn_lojistiks_transfers_update_calendar; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_transfers_update_calendar BEFORE UPDATE ON public.acornassociated_lojistiks_transfers FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_lojistiks_transfers_update_calendar();
+CREATE TRIGGER tr_acorn_lojistiks_transfers_update_calendar BEFORE UPDATE ON public.acorn_lojistiks_transfers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_lojistiks_transfers_update_calendar();
 
 
 --
 -- TOC entry 4893 (class 2620 OID 414291)
--- Name: acornassociated_lojistiks_vehicle_types tr_acornassociated_lojistiks_vehicle_types_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_vehicle_types tr_acorn_lojistiks_vehicle_types_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_vehicle_types_new_replicated_row BEFORE INSERT ON public.acornassociated_lojistiks_vehicle_types FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_vehicle_types_new_replicated_row BEFORE INSERT ON public.acorn_lojistiks_vehicle_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_vehicle_types ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_vehicle_types_new_replicated_row;
+ALTER TABLE public.acorn_lojistiks_vehicle_types ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_vehicle_types_new_replicated_row;
 
 
 --
 -- TOC entry 4894 (class 2620 OID 414292)
--- Name: acornassociated_lojistiks_vehicle_types tr_acornassociated_lojistiks_vehicle_types_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_vehicle_types tr_acorn_lojistiks_vehicle_types_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_vehicle_types_server_id BEFORE INSERT ON public.acornassociated_lojistiks_vehicle_types FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_vehicle_types_server_id BEFORE INSERT ON public.acorn_lojistiks_vehicle_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4895 (class 2620 OID 414293)
--- Name: acornassociated_lojistiks_vehicles tr_acornassociated_lojistiks_vehicles_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_vehicles tr_acorn_lojistiks_vehicles_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_vehicles_new_replicated_row BEFORE INSERT ON public.acornassociated_lojistiks_vehicles FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_vehicles_new_replicated_row BEFORE INSERT ON public.acorn_lojistiks_vehicles FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_vehicles ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_vehicles_new_replicated_row;
+ALTER TABLE public.acorn_lojistiks_vehicles ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_vehicles_new_replicated_row;
 
 
 --
 -- TOC entry 4896 (class 2620 OID 414294)
--- Name: acornassociated_lojistiks_vehicles tr_acornassociated_lojistiks_vehicles_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_vehicles tr_acorn_lojistiks_vehicles_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_vehicles_server_id BEFORE INSERT ON public.acornassociated_lojistiks_vehicles FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_vehicles_server_id BEFORE INSERT ON public.acorn_lojistiks_vehicles FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4897 (class 2620 OID 414295)
--- Name: acornassociated_lojistiks_warehouses tr_acornassociated_lojistiks_warehouses_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_warehouses tr_acorn_lojistiks_warehouses_new_replicated_row; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_warehouses_new_replicated_row BEFORE INSERT ON public.acornassociated_lojistiks_warehouses FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_lojistiks_warehouses_new_replicated_row BEFORE INSERT ON public.acorn_lojistiks_warehouses FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_lojistiks_warehouses ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_warehouses_new_replicated_row;
+ALTER TABLE public.acorn_lojistiks_warehouses ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_warehouses_new_replicated_row;
 
 
 --
 -- TOC entry 4898 (class 2620 OID 414296)
--- Name: acornassociated_lojistiks_warehouses tr_acornassociated_lojistiks_warehouses_server_id; Type: TRIGGER; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_warehouses tr_acorn_lojistiks_warehouses_server_id; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER tr_acornassociated_lojistiks_warehouses_server_id BEFORE INSERT ON public.acornassociated_lojistiks_warehouses FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_lojistiks_warehouses_server_id BEFORE INSERT ON public.acorn_lojistiks_warehouses FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
 -- TOC entry 4719 (class 2606 OID 414297)
--- Name: acornassociated_lojistiks_computer_products computer_products_created_by_user; Type: FK CONSTRAINT; Schema: product; Owner: postgres
+-- Name: acorn_lojistiks_computer_products computer_products_created_by_user; Type: FK CONSTRAINT; Schema: product; Owner: postgres
 --
 
-ALTER TABLE ONLY product.acornassociated_lojistiks_computer_products
-    ADD CONSTRAINT computer_products_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY product.acorn_lojistiks_computer_products
+    ADD CONSTRAINT computer_products_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4723 (class 2606 OID 414938)
--- Name: acornassociated_lojistiks_electronic_products created_at_event_id; Type: FK CONSTRAINT; Schema: product; Owner: postgres
+-- Name: acorn_lojistiks_electronic_products created_at_event_id; Type: FK CONSTRAINT; Schema: product; Owner: postgres
 --
 
-ALTER TABLE ONLY product.acornassociated_lojistiks_electronic_products
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY product.acorn_lojistiks_electronic_products
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4720 (class 2606 OID 415099)
--- Name: acornassociated_lojistiks_computer_products created_at_event_id; Type: FK CONSTRAINT; Schema: product; Owner: postgres
+-- Name: acorn_lojistiks_computer_products created_at_event_id; Type: FK CONSTRAINT; Schema: product; Owner: postgres
 --
 
-ALTER TABLE ONLY product.acornassociated_lojistiks_computer_products
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY product.acorn_lojistiks_computer_products
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4721 (class 2606 OID 414302)
--- Name: acornassociated_lojistiks_computer_products electronic_product_id; Type: FK CONSTRAINT; Schema: product; Owner: postgres
+-- Name: acorn_lojistiks_computer_products electronic_product_id; Type: FK CONSTRAINT; Schema: product; Owner: postgres
 --
 
-ALTER TABLE ONLY product.acornassociated_lojistiks_computer_products
-    ADD CONSTRAINT electronic_product_id FOREIGN KEY (electronic_product_id) REFERENCES product.acornassociated_lojistiks_electronic_products(id) NOT VALID;
+ALTER TABLE ONLY product.acorn_lojistiks_computer_products
+    ADD CONSTRAINT electronic_product_id FOREIGN KEY (electronic_product_id) REFERENCES product.acorn_lojistiks_electronic_products(id) NOT VALID;
 
 
 --
 -- TOC entry 4724 (class 2606 OID 414307)
--- Name: acornassociated_lojistiks_electronic_products electronic_products_created_by_user; Type: FK CONSTRAINT; Schema: product; Owner: postgres
+-- Name: acorn_lojistiks_electronic_products electronic_products_created_by_user; Type: FK CONSTRAINT; Schema: product; Owner: postgres
 --
 
-ALTER TABLE ONLY product.acornassociated_lojistiks_electronic_products
-    ADD CONSTRAINT electronic_products_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY product.acorn_lojistiks_electronic_products
+    ADD CONSTRAINT electronic_products_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4725 (class 2606 OID 414312)
--- Name: acornassociated_lojistiks_electronic_products product_id; Type: FK CONSTRAINT; Schema: product; Owner: postgres
+-- Name: acorn_lojistiks_electronic_products product_id; Type: FK CONSTRAINT; Schema: product; Owner: postgres
 --
 
-ALTER TABLE ONLY product.acornassociated_lojistiks_electronic_products
-    ADD CONSTRAINT product_id FOREIGN KEY (product_id) REFERENCES public.acornassociated_lojistiks_products(id);
+ALTER TABLE ONLY product.acorn_lojistiks_electronic_products
+    ADD CONSTRAINT product_id FOREIGN KEY (product_id) REFERENCES public.acorn_lojistiks_products(id);
 
 
 --
 -- TOC entry 4722 (class 2606 OID 414796)
--- Name: acornassociated_lojistiks_computer_products server_id; Type: FK CONSTRAINT; Schema: product; Owner: postgres
+-- Name: acorn_lojistiks_computer_products server_id; Type: FK CONSTRAINT; Schema: product; Owner: postgres
 --
 
-ALTER TABLE ONLY product.acornassociated_lojistiks_computer_products
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY product.acorn_lojistiks_computer_products
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
 -- TOC entry 4726 (class 2606 OID 414802)
--- Name: acornassociated_lojistiks_electronic_products server_id; Type: FK CONSTRAINT; Schema: product; Owner: postgres
+-- Name: acorn_lojistiks_electronic_products server_id; Type: FK CONSTRAINT; Schema: product; Owner: postgres
 --
 
-ALTER TABLE ONLY product.acornassociated_lojistiks_electronic_products
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY product.acorn_lojistiks_electronic_products
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
 -- TOC entry 4583 (class 2606 OID 394697)
--- Name: acornassociated_calendar_event acornassociated_calendar_event_calendar_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event acorn_calendar_event_calendar_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event
-    ADD CONSTRAINT acornassociated_calendar_event_calendar_id_foreign FOREIGN KEY (calendar_id) REFERENCES public.acornassociated_calendar(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event
+    ADD CONSTRAINT acorn_calendar_event_calendar_id_foreign FOREIGN KEY (calendar_id) REFERENCES public.acorn_calendar(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4584 (class 2606 OID 394707)
--- Name: acornassociated_calendar_event acornassociated_calendar_event_owner_user_group_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event acorn_calendar_event_owner_user_group_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event
-    ADD CONSTRAINT acornassociated_calendar_event_owner_user_group_id_foreign FOREIGN KEY (owner_user_group_id) REFERENCES public.acornassociated_user_user_groups(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event
+    ADD CONSTRAINT acorn_calendar_event_owner_user_group_id_foreign FOREIGN KEY (owner_user_group_id) REFERENCES public.acorn_user_user_groups(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4585 (class 2606 OID 394702)
--- Name: acornassociated_calendar_event acornassociated_calendar_event_owner_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event acorn_calendar_event_owner_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event
-    ADD CONSTRAINT acornassociated_calendar_event_owner_user_id_foreign FOREIGN KEY (owner_user_id) REFERENCES public.acornassociated_user_users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event
+    ADD CONSTRAINT acorn_calendar_event_owner_user_id_foreign FOREIGN KEY (owner_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4586 (class 2606 OID 394723)
--- Name: acornassociated_calendar_event_part acornassociated_calendar_event_part_event_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_part acorn_calendar_event_part_event_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_part
-    ADD CONSTRAINT acornassociated_calendar_event_part_event_id_foreign FOREIGN KEY (event_id) REFERENCES public.acornassociated_calendar_event(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_part
+    ADD CONSTRAINT acorn_calendar_event_part_event_id_foreign FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_event(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4587 (class 2606 OID 394738)
--- Name: acornassociated_calendar_event_part acornassociated_calendar_event_part_locked_by_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_part acorn_calendar_event_part_locked_by_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_part
-    ADD CONSTRAINT acornassociated_calendar_event_part_locked_by_user_id_foreign FOREIGN KEY (locked_by_user_id) REFERENCES public.backend_users(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.acorn_calendar_event_part
+    ADD CONSTRAINT acorn_calendar_event_part_locked_by_user_id_foreign FOREIGN KEY (locked_by_user_id) REFERENCES public.backend_users(id) ON DELETE SET NULL;
 
 
 --
 -- TOC entry 4588 (class 2606 OID 394745)
--- Name: acornassociated_calendar_event_part acornassociated_calendar_event_part_parent_event_part_id_foreig; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_part acorn_calendar_event_part_parent_event_part_id_foreig; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_part
-    ADD CONSTRAINT acornassociated_calendar_event_part_parent_event_part_id_foreig FOREIGN KEY (parent_event_part_id) REFERENCES public.acornassociated_calendar_event_part(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_part
+    ADD CONSTRAINT acorn_calendar_event_part_parent_event_part_id_foreig FOREIGN KEY (parent_event_part_id) REFERENCES public.acorn_calendar_event_part(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4589 (class 2606 OID 394733)
--- Name: acornassociated_calendar_event_part acornassociated_calendar_event_part_status_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_part acorn_calendar_event_part_status_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_part
-    ADD CONSTRAINT acornassociated_calendar_event_part_status_id_foreign FOREIGN KEY (status_id) REFERENCES public.acornassociated_calendar_event_status(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_part
+    ADD CONSTRAINT acorn_calendar_event_part_status_id_foreign FOREIGN KEY (status_id) REFERENCES public.acorn_calendar_event_status(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4590 (class 2606 OID 394728)
--- Name: acornassociated_calendar_event_part acornassociated_calendar_event_part_type_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_part acorn_calendar_event_part_type_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_part
-    ADD CONSTRAINT acornassociated_calendar_event_part_type_id_foreign FOREIGN KEY (type_id) REFERENCES public.acornassociated_calendar_event_type(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_part
+    ADD CONSTRAINT acorn_calendar_event_part_type_id_foreign FOREIGN KEY (type_id) REFERENCES public.acorn_calendar_event_type(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4592 (class 2606 OID 394772)
--- Name: acornassociated_calendar_event_user acornassociated_calendar_event_user_event_part_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_user acorn_calendar_event_user_event_part_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_user
-    ADD CONSTRAINT acornassociated_calendar_event_user_event_part_id_foreign FOREIGN KEY (event_part_id) REFERENCES public.acornassociated_calendar_event_part(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_user
+    ADD CONSTRAINT acorn_calendar_event_user_event_part_id_foreign FOREIGN KEY (event_part_id) REFERENCES public.acorn_calendar_event_part(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4595 (class 2606 OID 394792)
--- Name: acornassociated_calendar_event_user_group acornassociated_calendar_event_user_group_event_part_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_user_group acorn_calendar_event_user_group_event_part_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_user_group
-    ADD CONSTRAINT acornassociated_calendar_event_user_group_event_part_id_foreign FOREIGN KEY (event_part_id) REFERENCES public.acornassociated_calendar_event_part(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_user_group
+    ADD CONSTRAINT acorn_calendar_event_user_group_event_part_id_foreign FOREIGN KEY (event_part_id) REFERENCES public.acorn_calendar_event_part(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4596 (class 2606 OID 394797)
--- Name: acornassociated_calendar_event_user_group acornassociated_calendar_event_user_group_user_group_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_user_group acorn_calendar_event_user_group_user_group_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_user_group
-    ADD CONSTRAINT acornassociated_calendar_event_user_group_user_group_id_foreign FOREIGN KEY (user_group_id) REFERENCES public.acornassociated_user_user_groups(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_user_group
+    ADD CONSTRAINT acorn_calendar_event_user_group_user_group_id_foreign FOREIGN KEY (user_group_id) REFERENCES public.acorn_user_user_groups(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4593 (class 2606 OID 394782)
--- Name: acornassociated_calendar_event_user acornassociated_calendar_event_user_role_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_user acorn_calendar_event_user_role_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_user
-    ADD CONSTRAINT acornassociated_calendar_event_user_role_id_foreign FOREIGN KEY (role_id) REFERENCES public.acornassociated_user_roles(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_user
+    ADD CONSTRAINT acorn_calendar_event_user_role_id_foreign FOREIGN KEY (role_id) REFERENCES public.acorn_user_roles(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4594 (class 2606 OID 394777)
--- Name: acornassociated_calendar_event_user acornassociated_calendar_event_user_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_event_user acorn_calendar_event_user_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_user
-    ADD CONSTRAINT acornassociated_calendar_event_user_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_user
+    ADD CONSTRAINT acorn_calendar_event_user_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4591 (class 2606 OID 394757)
--- Name: acornassociated_calendar_instance acornassociated_calendar_instance_event_part_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar_instance acorn_calendar_instance_event_part_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_instance
-    ADD CONSTRAINT acornassociated_calendar_instance_event_part_id_foreign FOREIGN KEY (event_part_id) REFERENCES public.acornassociated_calendar_event_part(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_instance
+    ADD CONSTRAINT acorn_calendar_instance_event_part_id_foreign FOREIGN KEY (event_part_id) REFERENCES public.acorn_calendar_event_part(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4581 (class 2606 OID 394664)
--- Name: acornassociated_calendar acornassociated_calendar_owner_user_group_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar acorn_calendar_owner_user_group_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar
-    ADD CONSTRAINT acornassociated_calendar_owner_user_group_id_foreign FOREIGN KEY (owner_user_group_id) REFERENCES public.acornassociated_user_user_groups(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar
+    ADD CONSTRAINT acorn_calendar_owner_user_group_id_foreign FOREIGN KEY (owner_user_group_id) REFERENCES public.acorn_user_user_groups(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4582 (class 2606 OID 394659)
--- Name: acornassociated_calendar acornassociated_calendar_owner_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_calendar acorn_calendar_owner_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar
-    ADD CONSTRAINT acornassociated_calendar_owner_user_id_foreign FOREIGN KEY (owner_user_id) REFERENCES public.acornassociated_user_users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar
+    ADD CONSTRAINT acorn_calendar_owner_user_id_foreign FOREIGN KEY (owner_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4597 (class 2606 OID 394813)
--- Name: acornassociated_messaging_message_instance acornassociated_messaging_message_instance_instance_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_message_instance acorn_messaging_message_instance_instance_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_instance
-    ADD CONSTRAINT acornassociated_messaging_message_instance_instance_id_foreign FOREIGN KEY (instance_id) REFERENCES public.acornassociated_calendar_instance(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_message_instance
+    ADD CONSTRAINT acorn_messaging_message_instance_instance_id_foreign FOREIGN KEY (instance_id) REFERENCES public.acorn_calendar_instance(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4598 (class 2606 OID 394808)
--- Name: acornassociated_messaging_message_instance acornassociated_messaging_message_instance_message_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_message_instance acorn_messaging_message_instance_message_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_instance
-    ADD CONSTRAINT acornassociated_messaging_message_instance_message_id_foreign FOREIGN KEY (message_id) REFERENCES public.acornassociated_messaging_message(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_message_instance
+    ADD CONSTRAINT acorn_messaging_message_instance_message_id_foreign FOREIGN KEY (message_id) REFERENCES public.acorn_messaging_message(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4576 (class 2606 OID 394593)
--- Name: acornassociated_messaging_message_user_group acornassociated_messaging_message_user_group_message_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_message_user_group acorn_messaging_message_user_group_message_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_user_group
-    ADD CONSTRAINT acornassociated_messaging_message_user_group_message_id_foreign FOREIGN KEY (message_id) REFERENCES public.acornassociated_messaging_message(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_message_user_group
+    ADD CONSTRAINT acorn_messaging_message_user_group_message_id_foreign FOREIGN KEY (message_id) REFERENCES public.acorn_messaging_message(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4577 (class 2606 OID 394598)
--- Name: acornassociated_messaging_message_user_group acornassociated_messaging_message_user_group_user_group_id_fore; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_message_user_group acorn_messaging_message_user_group_user_group_id_fore; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_user_group
-    ADD CONSTRAINT acornassociated_messaging_message_user_group_user_group_id_fore FOREIGN KEY (user_group_id) REFERENCES public.acornassociated_user_user_groups(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_message_user_group
+    ADD CONSTRAINT acorn_messaging_message_user_group_user_group_id_fore FOREIGN KEY (user_group_id) REFERENCES public.acorn_user_user_groups(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4574 (class 2606 OID 394583)
--- Name: acornassociated_messaging_message_user acornassociated_messaging_message_user_message_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_message_user acorn_messaging_message_user_message_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_user
-    ADD CONSTRAINT acornassociated_messaging_message_user_message_id_foreign FOREIGN KEY (message_id) REFERENCES public.acornassociated_messaging_message(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_message_user
+    ADD CONSTRAINT acorn_messaging_message_user_message_id_foreign FOREIGN KEY (message_id) REFERENCES public.acorn_messaging_message(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4575 (class 2606 OID 394578)
--- Name: acornassociated_messaging_message_user acornassociated_messaging_message_user_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_message_user acorn_messaging_message_user_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_user
-    ADD CONSTRAINT acornassociated_messaging_message_user_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_message_user
+    ADD CONSTRAINT acorn_messaging_message_user_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4578 (class 2606 OID 394639)
--- Name: acornassociated_messaging_user_message_status acornassociated_messaging_user_message_status_message_id_foreig; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_user_message_status acorn_messaging_user_message_status_message_id_foreig; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_user_message_status
-    ADD CONSTRAINT acornassociated_messaging_user_message_status_message_id_foreig FOREIGN KEY (message_id) REFERENCES public.acornassociated_messaging_message(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_user_message_status
+    ADD CONSTRAINT acorn_messaging_user_message_status_message_id_foreig FOREIGN KEY (message_id) REFERENCES public.acorn_messaging_message(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4579 (class 2606 OID 394644)
--- Name: acornassociated_messaging_user_message_status acornassociated_messaging_user_message_status_status_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_user_message_status acorn_messaging_user_message_status_status_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_user_message_status
-    ADD CONSTRAINT acornassociated_messaging_user_message_status_status_id_foreign FOREIGN KEY (status_id) REFERENCES public.acornassociated_messaging_status(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_user_message_status
+    ADD CONSTRAINT acorn_messaging_user_message_status_status_id_foreign FOREIGN KEY (status_id) REFERENCES public.acorn_messaging_status(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4580 (class 2606 OID 394634)
--- Name: acornassociated_messaging_user_message_status acornassociated_messaging_user_message_status_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_messaging_user_message_status acorn_messaging_user_message_status_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_user_message_status
-    ADD CONSTRAINT acornassociated_messaging_user_message_status_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_user_message_status
+    ADD CONSTRAINT acorn_messaging_user_message_status_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
 
 
 --
 -- TOC entry 4699 (class 2606 OID 414785)
--- Name: acornassociated_criminal_defendant_detentions actual_release_transfer_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_defendant_detentions actual_release_transfer_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_defendant_detentions
-    ADD CONSTRAINT actual_release_transfer_id FOREIGN KEY (actual_release_transfer_id) REFERENCES public.acornassociated_lojistiks_transfers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_defendant_detentions
+    ADD CONSTRAINT actual_release_transfer_id FOREIGN KEY (actual_release_transfer_id) REFERENCES public.acorn_lojistiks_transfers(id) NOT VALID;
 
 
 --
 -- TOC entry 5152 (class 0 OID 0)
 -- Dependencies: 4699
--- Name: CONSTRAINT actual_release_transfer_id ON acornassociated_criminal_defendant_detentions; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT actual_release_transfer_id ON acorn_criminal_defendant_detentions; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT actual_release_transfer_id ON public.acornassociated_criminal_defendant_detentions IS 'type: 1to1';
+COMMENT ON CONSTRAINT actual_release_transfer_id ON public.acorn_criminal_defendant_detentions IS 'type: 1to1';
 
 
 --
 -- TOC entry 4566 (class 2606 OID 394441)
--- Name: acornassociated_location_locations address_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_locations address_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_locations
-    ADD CONSTRAINT address_id FOREIGN KEY (address_id) REFERENCES public.acornassociated_location_addresses(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_location_locations
+    ADD CONSTRAINT address_id FOREIGN KEY (address_id) REFERENCES public.acorn_location_addresses(id) NOT VALID;
 
 
 --
 -- TOC entry 4553 (class 2606 OID 394446)
--- Name: acornassociated_location_addresses addresses_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_addresses addresses_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_addresses
-    ADD CONSTRAINT addresses_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_location_addresses
+    ADD CONSTRAINT addresses_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4554 (class 2606 OID 394451)
--- Name: acornassociated_location_addresses area_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_addresses area_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_addresses
-    ADD CONSTRAINT area_id FOREIGN KEY (area_id) REFERENCES public.acornassociated_location_areas(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_location_addresses
+    ADD CONSTRAINT area_id FOREIGN KEY (area_id) REFERENCES public.acorn_location_areas(id) NOT VALID;
 
 
 --
 -- TOC entry 4559 (class 2606 OID 394456)
--- Name: acornassociated_location_areas area_type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_areas area_type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_areas
-    ADD CONSTRAINT area_type_id FOREIGN KEY (area_type_id) REFERENCES public.acornassociated_location_area_types(id);
+ALTER TABLE ONLY public.acorn_location_areas
+    ADD CONSTRAINT area_type_id FOREIGN KEY (area_type_id) REFERENCES public.acorn_location_area_types(id);
 
 
 --
 -- TOC entry 4557 (class 2606 OID 394461)
--- Name: acornassociated_location_area_types area_types_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_area_types area_types_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_area_types
-    ADD CONSTRAINT area_types_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_location_area_types
+    ADD CONSTRAINT area_types_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4560 (class 2606 OID 394466)
--- Name: acornassociated_location_areas areas_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_areas areas_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_areas
-    ADD CONSTRAINT areas_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_location_areas
+    ADD CONSTRAINT areas_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4755 (class 2606 OID 415270)
--- Name: acornassociated_lojistiks_transfers arrived_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfers arrived_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfers
-    ADD CONSTRAINT arrived_at_event_id FOREIGN KEY (arrived_at_event_id) REFERENCES public.acornassociated_calendar_event(id) ON DELETE SET NULL NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_transfers
+    ADD CONSTRAINT arrived_at_event_id FOREIGN KEY (arrived_at_event_id) REFERENCES public.acorn_calendar_event(id) ON DELETE SET NULL NOT VALID;
 
 
 --
 -- TOC entry 4790 (class 2606 OID 414347)
--- Name: acornassociated_lojistiks_products brand_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products brand_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_products
-    ADD CONSTRAINT brand_id FOREIGN KEY (brand_id) REFERENCES public.acornassociated_lojistiks_brands(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_products
+    ADD CONSTRAINT brand_id FOREIGN KEY (brand_id) REFERENCES public.acorn_lojistiks_brands(id) NOT VALID;
 
 
 --
 -- TOC entry 4727 (class 2606 OID 414352)
--- Name: acornassociated_lojistiks_brands brands_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_brands brands_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_brands
-    ADD CONSTRAINT brands_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_brands
+    ADD CONSTRAINT brands_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4651 (class 2606 OID 395069)
--- Name: acornassociated_criminal_legalcase_related_events calendar_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_related_events calendar_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_related_events
-    ADD CONSTRAINT calendar_event_id FOREIGN KEY (event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_legalcase_related_events
+    ADD CONSTRAINT calendar_event_id FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4607 (class 2606 OID 395656)
--- Name: acornassociated_justice_legalcases closed_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcases closed_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_legalcases
-    ADD CONSTRAINT closed_at_event_id FOREIGN KEY (closed_at_event_id) REFERENCES public.acornassociated_calendar_event(id) ON DELETE SET NULL NOT VALID;
+ALTER TABLE ONLY public.acorn_justice_legalcases
+    ADD CONSTRAINT closed_at_event_id FOREIGN KEY (closed_at_event_id) REFERENCES public.acorn_calendar_event(id) ON DELETE SET NULL NOT VALID;
 
 
 --
 -- TOC entry 4804 (class 2606 OID 414357)
--- Name: acornassociated_lojistiks_transfer_containers container_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_containers container_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_containers
-    ADD CONSTRAINT container_id FOREIGN KEY (container_id) REFERENCES public.acornassociated_lojistiks_containers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_containers
+    ADD CONSTRAINT container_id FOREIGN KEY (container_id) REFERENCES public.acorn_lojistiks_containers(id);
 
 
 --
 -- TOC entry 4730 (class 2606 OID 414362)
--- Name: acornassociated_lojistiks_containers containers_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_containers containers_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_containers
-    ADD CONSTRAINT containers_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_containers
+    ADD CONSTRAINT containers_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4693 (class 2606 OID 412584)
--- Name: acornassociated_university_course_teacher course_id; Type: FK CONSTRAINT; Schema: public; Owner: sanchez
+-- Name: acorn_university_course_teacher course_id; Type: FK CONSTRAINT; Schema: public; Owner: sz
 --
 
-ALTER TABLE ONLY public.acornassociated_university_course_teacher
-    ADD CONSTRAINT course_id FOREIGN KEY (course_id) REFERENCES public.acornassociated_university_courses(id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
+ALTER TABLE ONLY public.acorn_university_course_teacher
+    ADD CONSTRAINT course_id FOREIGN KEY (course_id) REFERENCES public.acorn_university_courses(id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
 --
 -- TOC entry 4704 (class 2606 OID 413847)
--- Name: acornassociated_finance_invoices created_at; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_invoices created_at; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_invoices
-    ADD CONSTRAINT created_at FOREIGN KEY (created_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_finance_invoices
+    ADD CONSTRAINT created_at FOREIGN KEY (created_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4608 (class 2606 OID 394849)
--- Name: acornassociated_justice_legalcases created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcases created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_legalcases
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_justice_legalcases
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4600 (class 2606 OID 394854)
--- Name: acornassociated_justice_legalcase_identifiers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcase_identifiers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_legalcase_identifiers
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_justice_legalcase_identifiers
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4603 (class 2606 OID 394859)
--- Name: acornassociated_justice_legalcase_legalcase_category created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcase_legalcase_category created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_legalcase_legalcase_category
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_justice_legalcase_legalcase_category
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4614 (class 2606 OID 394913)
--- Name: acornassociated_civil_legalcases created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_civil_legalcases created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_civil_legalcases
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_civil_legalcases
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4611 (class 2606 OID 394918)
--- Name: acornassociated_civil_hearings created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_civil_hearings created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_civil_hearings
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_civil_hearings
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4663 (class 2606 OID 395074)
--- Name: acornassociated_criminal_legalcases created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcases created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcases
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_legalcases
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4621 (class 2606 OID 395079)
--- Name: acornassociated_criminal_crime_evidence created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_evidence created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crime_evidence
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_crime_evidence
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4625 (class 2606 OID 395084)
--- Name: acornassociated_criminal_crime_sentences created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_sentences created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crime_sentences
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_crime_sentences
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4672 (class 2606 OID 395089)
--- Name: acornassociated_criminal_trial_judges created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_trial_judges created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_trial_judges
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_trial_judges
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4667 (class 2606 OID 395094)
--- Name: acornassociated_criminal_sentence_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_sentence_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_sentence_types
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_sentence_types
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4655 (class 2606 OID 395099)
--- Name: acornassociated_criminal_legalcase_plaintiffs created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_plaintiffs created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_plaintiffs
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4652 (class 2606 OID 395104)
--- Name: acornassociated_criminal_legalcase_related_events created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_related_events created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_related_events
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_related_events
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4643 (class 2606 OID 395109)
--- Name: acornassociated_criminal_legalcase_evidence created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_evidence created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_evidence
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_evidence
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4632 (class 2606 OID 395114)
--- Name: acornassociated_criminal_crimes created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crimes created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crimes
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_crimes
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4629 (class 2606 OID 395119)
--- Name: acornassociated_criminal_crime_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crime_types
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_crime_types
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4635 (class 2606 OID 395124)
--- Name: acornassociated_criminal_defendant_crimes created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_defendant_crimes created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_defendant_crimes
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_defendant_crimes
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4617 (class 2606 OID 395129)
--- Name: acornassociated_criminal_appeals created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_appeals created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_appeals
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_appeals
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4639 (class 2606 OID 395134)
--- Name: acornassociated_criminal_legalcase_defendants created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_defendants created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_defendants
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_defendants
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4646 (class 2606 OID 395139)
--- Name: acornassociated_criminal_legalcase_prosecutor created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_prosecutor created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_prosecutor
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_prosecutor
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4659 (class 2606 OID 395144)
--- Name: acornassociated_criminal_legalcase_witnesses created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_witnesses created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_witnesses
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_witnesses
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4677 (class 2606 OID 395149)
--- Name: acornassociated_criminal_trial_sessions created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_trial_sessions created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_trial_sessions
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_trial_sessions
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4680 (class 2606 OID 395154)
--- Name: acornassociated_criminal_trials created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_trials created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_trials
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_trials
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4669 (class 2606 OID 395159)
--- Name: acornassociated_criminal_session_recordings created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_session_recordings created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_session_recordings
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_criminal_session_recordings
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4687 (class 2606 OID 395408)
--- Name: acornassociated_houseofpeace_legalcases created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_houseofpeace_legalcases created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_houseofpeace_legalcases
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_houseofpeace_legalcases
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4684 (class 2606 OID 395413)
--- Name: acornassociated_houseofpeace_events created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_houseofpeace_events created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_houseofpeace_events
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_houseofpeace_events
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4690 (class 2606 OID 395470)
--- Name: acornassociated_justice_scanned_documents created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_scanned_documents created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_scanned_documents
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id);
+ALTER TABLE ONLY public.acorn_justice_scanned_documents
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id);
 
 
 --
 -- TOC entry 4809 (class 2606 OID 414866)
--- Name: acornassociated_lojistiks_transfer_container_product_instance created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_container_product_instance created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_container_product_instance
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_container_product_instance
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4805 (class 2606 OID 414872)
--- Name: acornassociated_lojistiks_transfer_containers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_containers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_containers
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_containers
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4728 (class 2606 OID 414933)
--- Name: acornassociated_lojistiks_brands created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_brands created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_brands
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_brands
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4738 (class 2606 OID 415104)
--- Name: acornassociated_lojistiks_employees created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_employees created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_employees
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_employees
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4756 (class 2606 OID 415109)
--- Name: acornassociated_lojistiks_transfers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfers
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_transfers
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4743 (class 2606 OID 415134)
--- Name: acornassociated_lojistiks_measurement_units created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_measurement_units created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_measurement_units
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_measurement_units
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4763 (class 2606 OID 415139)
--- Name: acornassociated_lojistiks_offices created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_offices created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_offices
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_offices
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4767 (class 2606 OID 415145)
--- Name: acornassociated_lojistiks_people created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_people created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_people
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_people
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4731 (class 2606 OID 415151)
--- Name: acornassociated_lojistiks_containers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_containers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_containers
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_containers
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4773 (class 2606 OID 415157)
--- Name: acornassociated_lojistiks_product_attributes created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_attributes created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_attributes
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_product_attributes
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4777 (class 2606 OID 415163)
--- Name: acornassociated_lojistiks_product_categories created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_categories created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_categories
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_product_categories
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4782 (class 2606 OID 415169)
--- Name: acornassociated_lojistiks_product_category_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_category_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_category_types
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_product_category_types
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4746 (class 2606 OID 415175)
--- Name: acornassociated_lojistiks_product_instance_transfer created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_instance_transfer created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_instance_transfer
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_product_instance_transfer
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4751 (class 2606 OID 415181)
--- Name: acornassociated_lojistiks_product_instances created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_instances created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_instances
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_product_instances
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4733 (class 2606 OID 415187)
--- Name: acornassociated_lojistiks_drivers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_drivers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_drivers
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_drivers
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4795 (class 2606 OID 415193)
--- Name: acornassociated_lojistiks_products_product_categories created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products_product_categories created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_products_product_categories
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_products_product_categories
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4818 (class 2606 OID 415199)
--- Name: acornassociated_lojistiks_vehicle_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_vehicle_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_vehicle_types
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_vehicle_types
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4821 (class 2606 OID 415205)
--- Name: acornassociated_lojistiks_vehicles created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_vehicles created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_vehicles
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_vehicles
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4825 (class 2606 OID 415211)
--- Name: acornassociated_lojistiks_warehouses created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_warehouses created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_warehouses
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_warehouses
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4791 (class 2606 OID 415217)
--- Name: acornassociated_lojistiks_products created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_products
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_products
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4800 (class 2606 OID 415223)
--- Name: acornassociated_lojistiks_suppliers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_suppliers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_suppliers
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_suppliers
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4785 (class 2606 OID 415229)
--- Name: acornassociated_lojistiks_product_products created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_products created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_products
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_product_products
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4829 (class 2606 OID 415303)
--- Name: acornassociated_justice_warrants created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_warrants created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_warrants
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_justice_warrants
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4747 (class 2606 OID 414722)
--- Name: acornassociated_lojistiks_product_instance_transfer created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_instance_transfer created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_instance_transfer
-    ADD CONSTRAINT created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_product_instance_transfer
+    ADD CONSTRAINT created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4609 (class 2606 OID 394864)
--- Name: acornassociated_justice_legalcases created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcases created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_legalcases
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_justice_legalcases
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4604 (class 2606 OID 394869)
--- Name: acornassociated_justice_legalcase_legalcase_category created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcase_legalcase_category created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_legalcase_legalcase_category
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_justice_legalcase_legalcase_category
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4601 (class 2606 OID 394874)
--- Name: acornassociated_justice_legalcase_identifiers created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcase_identifiers created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_legalcase_identifiers
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_justice_legalcase_identifiers
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4615 (class 2606 OID 394923)
--- Name: acornassociated_civil_legalcases created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_civil_legalcases created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_civil_legalcases
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_civil_legalcases
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4612 (class 2606 OID 394928)
--- Name: acornassociated_civil_hearings created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_civil_hearings created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_civil_hearings
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_civil_hearings
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4664 (class 2606 OID 395164)
--- Name: acornassociated_criminal_legalcases created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcases created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcases
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_legalcases
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4622 (class 2606 OID 395169)
--- Name: acornassociated_criminal_crime_evidence created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_evidence created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crime_evidence
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_crime_evidence
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4626 (class 2606 OID 395174)
--- Name: acornassociated_criminal_crime_sentences created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_sentences created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crime_sentences
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_crime_sentences
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4673 (class 2606 OID 395179)
--- Name: acornassociated_criminal_trial_judges created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_trial_judges created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_trial_judges
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_trial_judges
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4668 (class 2606 OID 395184)
--- Name: acornassociated_criminal_sentence_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_sentence_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_sentence_types
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_sentence_types
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4656 (class 2606 OID 395189)
--- Name: acornassociated_criminal_legalcase_plaintiffs created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_plaintiffs created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_plaintiffs
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4653 (class 2606 OID 395194)
--- Name: acornassociated_criminal_legalcase_related_events created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_related_events created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_related_events
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_related_events
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4644 (class 2606 OID 395199)
--- Name: acornassociated_criminal_legalcase_evidence created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_evidence created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_evidence
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_evidence
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4633 (class 2606 OID 395204)
--- Name: acornassociated_criminal_crimes created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crimes created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crimes
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_crimes
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4630 (class 2606 OID 395209)
--- Name: acornassociated_criminal_crime_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crime_types
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_crime_types
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4636 (class 2606 OID 395214)
--- Name: acornassociated_criminal_defendant_crimes created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_defendant_crimes created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_defendant_crimes
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_defendant_crimes
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4618 (class 2606 OID 395219)
--- Name: acornassociated_criminal_appeals created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_appeals created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_appeals
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_appeals
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4640 (class 2606 OID 395224)
--- Name: acornassociated_criminal_legalcase_defendants created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_defendants created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_defendants
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_defendants
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4647 (class 2606 OID 395229)
--- Name: acornassociated_criminal_legalcase_prosecutor created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_prosecutor created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_prosecutor
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_prosecutor
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4660 (class 2606 OID 395234)
--- Name: acornassociated_criminal_legalcase_witnesses created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_witnesses created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_witnesses
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_legalcase_witnesses
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4678 (class 2606 OID 395239)
--- Name: acornassociated_criminal_trial_sessions created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_trial_sessions created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_trial_sessions
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_trial_sessions
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4681 (class 2606 OID 395244)
--- Name: acornassociated_criminal_trials created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_trials created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_trials
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_trials
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4670 (class 2606 OID 395249)
--- Name: acornassociated_criminal_session_recordings created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_session_recordings created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_session_recordings
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_session_recordings
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4688 (class 2606 OID 395418)
--- Name: acornassociated_houseofpeace_legalcases created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_houseofpeace_legalcases created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_houseofpeace_legalcases
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_houseofpeace_legalcases
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4685 (class 2606 OID 395423)
--- Name: acornassociated_houseofpeace_events created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_houseofpeace_events created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_houseofpeace_events
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_houseofpeace_events
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4691 (class 2606 OID 395465)
--- Name: acornassociated_justice_scanned_documents created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_scanned_documents created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_scanned_documents
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_justice_scanned_documents
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4830 (class 2606 OID 415308)
--- Name: acornassociated_justice_warrants created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_warrants created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_warrants
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_justice_warrants
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4637 (class 2606 OID 395254)
--- Name: acornassociated_criminal_defendant_crimes crime_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_defendant_crimes crime_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_defendant_crimes
-    ADD CONSTRAINT crime_id FOREIGN KEY (crime_id) REFERENCES public.acornassociated_criminal_crimes(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_defendant_crimes
+    ADD CONSTRAINT crime_id FOREIGN KEY (crime_id) REFERENCES public.acorn_criminal_crimes(id) NOT VALID;
 
 
 --
 -- TOC entry 4634 (class 2606 OID 395259)
--- Name: acornassociated_criminal_crimes crime_type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crimes crime_type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crimes
-    ADD CONSTRAINT crime_type_id FOREIGN KEY (crime_type_id) REFERENCES public.acornassociated_criminal_crime_types(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_crimes
+    ADD CONSTRAINT crime_type_id FOREIGN KEY (crime_type_id) REFERENCES public.acorn_criminal_crime_types(id) NOT VALID;
 
 
 --
 -- TOC entry 4705 (class 2606 OID 413852)
--- Name: acornassociated_finance_invoices currency_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_invoices currency_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_invoices
-    ADD CONSTRAINT currency_id FOREIGN KEY (currency_id) REFERENCES public.acornassociated_finance_currencies(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_finance_invoices
+    ADD CONSTRAINT currency_id FOREIGN KEY (currency_id) REFERENCES public.acorn_finance_currencies(id) NOT VALID;
 
 
 --
 -- TOC entry 4710 (class 2606 OID 413857)
--- Name: acornassociated_finance_payments currency_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_payments currency_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_payments
-    ADD CONSTRAINT currency_id FOREIGN KEY (currency_id) REFERENCES public.acornassociated_finance_currencies(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_finance_payments
+    ADD CONSTRAINT currency_id FOREIGN KEY (currency_id) REFERENCES public.acorn_finance_currencies(id) NOT VALID;
 
 
 --
 -- TOC entry 4712 (class 2606 OID 413862)
--- Name: acornassociated_finance_purchases currency_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_purchases currency_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_purchases
-    ADD CONSTRAINT currency_id FOREIGN KEY (currency_id) REFERENCES public.acornassociated_finance_currencies(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_finance_purchases
+    ADD CONSTRAINT currency_id FOREIGN KEY (currency_id) REFERENCES public.acorn_finance_currencies(id) NOT VALID;
 
 
 --
 -- TOC entry 4717 (class 2606 OID 413867)
--- Name: acornassociated_finance_receipts currency_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_receipts currency_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_receipts
-    ADD CONSTRAINT currency_id FOREIGN KEY (currency_id) REFERENCES public.acornassociated_finance_currencies(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_finance_receipts
+    ADD CONSTRAINT currency_id FOREIGN KEY (currency_id) REFERENCES public.acorn_finance_currencies(id) NOT VALID;
 
 
 --
 -- TOC entry 4623 (class 2606 OID 395264)
--- Name: acornassociated_criminal_crime_evidence defendant_crime_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_evidence defendant_crime_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crime_evidence
-    ADD CONSTRAINT defendant_crime_id FOREIGN KEY (defendant_crime_id) REFERENCES public.acornassociated_criminal_defendant_crimes(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_crime_evidence
+    ADD CONSTRAINT defendant_crime_id FOREIGN KEY (defendant_crime_id) REFERENCES public.acorn_criminal_defendant_crimes(id) NOT VALID;
 
 
 --
 -- TOC entry 4627 (class 2606 OID 395269)
--- Name: acornassociated_criminal_crime_sentences defendant_crime_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_sentences defendant_crime_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crime_sentences
-    ADD CONSTRAINT defendant_crime_id FOREIGN KEY (defendant_crime_id) REFERENCES public.acornassociated_criminal_defendant_crimes(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_crime_sentences
+    ADD CONSTRAINT defendant_crime_id FOREIGN KEY (defendant_crime_id) REFERENCES public.acorn_criminal_defendant_crimes(id) NOT VALID;
 
 
 --
 -- TOC entry 4757 (class 2606 OID 414382)
--- Name: acornassociated_lojistiks_transfers driver_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfers driver_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfers
-    ADD CONSTRAINT driver_id FOREIGN KEY (driver_id) REFERENCES public.acornassociated_lojistiks_drivers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_transfers
+    ADD CONSTRAINT driver_id FOREIGN KEY (driver_id) REFERENCES public.acorn_lojistiks_drivers(id) NOT VALID;
 
 
 --
 -- TOC entry 4734 (class 2606 OID 414387)
--- Name: acornassociated_lojistiks_drivers drivers_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_drivers drivers_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_drivers
-    ADD CONSTRAINT drivers_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_drivers
+    ADD CONSTRAINT drivers_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4739 (class 2606 OID 414392)
--- Name: acornassociated_lojistiks_employees employees_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_employees employees_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_employees
-    ADD CONSTRAINT employees_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_employees
+    ADD CONSTRAINT employees_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4619 (class 2606 OID 395526)
--- Name: acornassociated_criminal_appeals event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_appeals event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_appeals
-    ADD CONSTRAINT event_id FOREIGN KEY (event_id) REFERENCES public.acornassociated_calendar_event(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_appeals
+    ADD CONSTRAINT event_id FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_event(id) NOT VALID;
 
 
 --
 -- TOC entry 4682 (class 2606 OID 395683)
--- Name: acornassociated_criminal_trials event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_trials event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_trials
-    ADD CONSTRAINT event_id FOREIGN KEY (event_id) REFERENCES public.acornassociated_calendar_event(id) ON DELETE SET NULL NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_trials
+    ADD CONSTRAINT event_id FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_event(id) ON DELETE SET NULL NOT VALID;
 
 
 --
 -- TOC entry 4564 (class 2606 OID 394471)
--- Name: acornassociated_location_gps gps_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_gps gps_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_gps
-    ADD CONSTRAINT gps_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_location_gps
+    ADD CONSTRAINT gps_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4561 (class 2606 OID 394476)
--- Name: acornassociated_location_areas gps_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_areas gps_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_areas
-    ADD CONSTRAINT gps_id FOREIGN KEY (gps_id) REFERENCES public.acornassociated_location_gps(id);
+ALTER TABLE ONLY public.acorn_location_areas
+    ADD CONSTRAINT gps_id FOREIGN KEY (gps_id) REFERENCES public.acorn_location_gps(id);
 
 
 --
 -- TOC entry 4555 (class 2606 OID 394481)
--- Name: acornassociated_location_addresses gps_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_addresses gps_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_addresses
-    ADD CONSTRAINT gps_id FOREIGN KEY (gps_id) REFERENCES public.acornassociated_location_gps(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_location_addresses
+    ADD CONSTRAINT gps_id FOREIGN KEY (gps_id) REFERENCES public.acorn_location_gps(id) NOT VALID;
 
 
 --
 -- TOC entry 4711 (class 2606 OID 413872)
--- Name: acornassociated_finance_payments invoice_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_payments invoice_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_payments
-    ADD CONSTRAINT invoice_id FOREIGN KEY (invoice_id) REFERENCES public.acornassociated_finance_invoices(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_finance_payments
+    ADD CONSTRAINT invoice_id FOREIGN KEY (invoice_id) REFERENCES public.acorn_finance_invoices(id) NOT VALID;
 
 
 --
 -- TOC entry 4814 (class 2606 OID 414417)
--- Name: acornassociated_lojistiks_transfer_invoice invoice_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_invoice invoice_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_invoice
-    ADD CONSTRAINT invoice_id FOREIGN KEY (invoice_id) REFERENCES public.acornassociated_finance_invoices(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_invoice
+    ADD CONSTRAINT invoice_id FOREIGN KEY (invoice_id) REFERENCES public.acorn_finance_invoices(id) NOT VALID;
 
 
 --
 -- TOC entry 4697 (class 2606 OID 412889)
--- Name: acornassociated_user_language_user language_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_user_language_user language_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_user_language_user
-    ADD CONSTRAINT language_id FOREIGN KEY (language_id) REFERENCES public.acornassociated_user_languages(id);
+ALTER TABLE ONLY public.acorn_user_language_user
+    ADD CONSTRAINT language_id FOREIGN KEY (language_id) REFERENCES public.acorn_user_languages(id);
 
 
 --
 -- TOC entry 4768 (class 2606 OID 414927)
--- Name: acornassociated_lojistiks_people last_product_instance_location_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_people last_product_instance_location_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_people
-    ADD CONSTRAINT last_product_instance_location_id FOREIGN KEY (last_product_instance_location_id) REFERENCES public.acornassociated_location_locations(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_people
+    ADD CONSTRAINT last_product_instance_location_id FOREIGN KEY (last_product_instance_location_id) REFERENCES public.acorn_location_locations(id) NOT VALID;
 
 
 --
 -- TOC entry 4769 (class 2606 OID 414921)
--- Name: acornassociated_lojistiks_people last_transfer_location_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_people last_transfer_location_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_people
-    ADD CONSTRAINT last_transfer_location_id FOREIGN KEY (last_transfer_location_id) REFERENCES public.acornassociated_location_locations(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_people
+    ADD CONSTRAINT last_transfer_location_id FOREIGN KEY (last_transfer_location_id) REFERENCES public.acorn_location_locations(id) NOT VALID;
 
 
 --
 -- TOC entry 4605 (class 2606 OID 394879)
--- Name: acornassociated_justice_legalcase_legalcase_category legalcase_category_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcase_legalcase_category legalcase_category_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_legalcase_legalcase_category
-    ADD CONSTRAINT legalcase_category_id FOREIGN KEY (legalcase_category_id) REFERENCES public.acornassociated_justice_legalcase_categories(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_justice_legalcase_legalcase_category
+    ADD CONSTRAINT legalcase_category_id FOREIGN KEY (legalcase_category_id) REFERENCES public.acorn_justice_legalcase_categories(id) NOT VALID;
 
 
 --
 -- TOC entry 5153 (class 0 OID 0)
 -- Dependencies: 4605
--- Name: CONSTRAINT legalcase_category_id ON acornassociated_justice_legalcase_legalcase_category; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_category_id ON acorn_justice_legalcase_legalcase_category; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_category_id ON public.acornassociated_justice_legalcase_legalcase_category IS 'type: XtoX';
+COMMENT ON CONSTRAINT legalcase_category_id ON public.acorn_justice_legalcase_legalcase_category IS 'type: XtoX';
 
 
 --
 -- TOC entry 4638 (class 2606 OID 395274)
--- Name: acornassociated_criminal_defendant_crimes legalcase_defendant_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_defendant_crimes legalcase_defendant_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_defendant_crimes
-    ADD CONSTRAINT legalcase_defendant_id FOREIGN KEY (legalcase_defendant_id) REFERENCES public.acornassociated_criminal_legalcase_defendants(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_defendant_crimes
+    ADD CONSTRAINT legalcase_defendant_id FOREIGN KEY (legalcase_defendant_id) REFERENCES public.acorn_criminal_legalcase_defendants(id) NOT VALID;
 
 
 --
 -- TOC entry 5154 (class 0 OID 0)
 -- Dependencies: 4638
--- Name: CONSTRAINT legalcase_defendant_id ON acornassociated_criminal_defendant_crimes; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_defendant_id ON acorn_criminal_defendant_crimes; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_defendant_id ON public.acornassociated_criminal_defendant_crimes IS 'labels:
+COMMENT ON CONSTRAINT legalcase_defendant_id ON public.acorn_criminal_defendant_crimes IS 'labels:
   en: Crimes';
 
 
 --
 -- TOC entry 4700 (class 2606 OID 412902)
--- Name: acornassociated_criminal_defendant_detentions legalcase_defendant_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_defendant_detentions legalcase_defendant_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_defendant_detentions
-    ADD CONSTRAINT legalcase_defendant_id FOREIGN KEY (legalcase_defendant_id) REFERENCES public.acornassociated_criminal_legalcase_defendants(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_defendant_detentions
+    ADD CONSTRAINT legalcase_defendant_id FOREIGN KEY (legalcase_defendant_id) REFERENCES public.acorn_criminal_legalcase_defendants(id) NOT VALID;
 
 
 --
 -- TOC entry 5155 (class 0 OID 0)
 -- Dependencies: 4700
--- Name: CONSTRAINT legalcase_defendant_id ON acornassociated_criminal_defendant_detentions; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_defendant_id ON acorn_criminal_defendant_detentions; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_defendant_id ON public.acornassociated_criminal_defendant_detentions IS 'labels:
+COMMENT ON CONSTRAINT legalcase_defendant_id ON public.acorn_criminal_defendant_detentions IS 'labels:
   en: Detentions';
 
 
 --
 -- TOC entry 4624 (class 2606 OID 395279)
--- Name: acornassociated_criminal_crime_evidence legalcase_evidence_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_evidence legalcase_evidence_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crime_evidence
-    ADD CONSTRAINT legalcase_evidence_id FOREIGN KEY (legalcase_evidence_id) REFERENCES public.acornassociated_criminal_legalcase_evidence(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_crime_evidence
+    ADD CONSTRAINT legalcase_evidence_id FOREIGN KEY (legalcase_evidence_id) REFERENCES public.acorn_criminal_legalcase_evidence(id) NOT VALID;
 
 
 --
 -- TOC entry 4602 (class 2606 OID 394884)
--- Name: acornassociated_justice_legalcase_identifiers legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcase_identifiers legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_legalcase_identifiers
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acornassociated_justice_legalcases(id);
+ALTER TABLE ONLY public.acorn_justice_legalcase_identifiers
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_justice_legalcases(id);
 
 
 --
 -- TOC entry 5156 (class 0 OID 0)
 -- Dependencies: 4602
--- Name: CONSTRAINT legalcase_id ON acornassociated_justice_legalcase_identifiers; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_id ON acorn_justice_legalcase_identifiers; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_id ON public.acornassociated_justice_legalcase_identifiers IS 'tab-location: 3
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_justice_legalcase_identifiers IS 'tab-location: 3
 type: Xto1
 bootstraps:
   xs: 12';
@@ -9760,20 +9760,20 @@ bootstraps:
 
 --
 -- TOC entry 4606 (class 2606 OID 394889)
--- Name: acornassociated_justice_legalcase_legalcase_category legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcase_legalcase_category legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_legalcase_legalcase_category
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acornassociated_justice_legalcases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_justice_legalcase_legalcase_category
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_justice_legalcases(id) NOT VALID;
 
 
 --
 -- TOC entry 5157 (class 0 OID 0)
 -- Dependencies: 4606
--- Name: CONSTRAINT legalcase_id ON acornassociated_justice_legalcase_legalcase_category; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_id ON acorn_justice_legalcase_legalcase_category; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_id ON public.acornassociated_justice_legalcase_legalcase_category IS 'tab-location: 3
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_justice_legalcase_legalcase_category IS 'tab-location: 3
 bootstraps:
   xs: 12
 type: XtoX
@@ -9782,105 +9782,105 @@ type: XtoX
 
 --
 -- TOC entry 4616 (class 2606 OID 394933)
--- Name: acornassociated_civil_legalcases legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_civil_legalcases legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_civil_legalcases
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acornassociated_justice_legalcases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_civil_legalcases
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_justice_legalcases(id) NOT VALID;
 
 
 --
 -- TOC entry 5158 (class 0 OID 0)
 -- Dependencies: 4616
--- Name: CONSTRAINT legalcase_id ON acornassociated_civil_legalcases; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_id ON acorn_civil_legalcases; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_id ON public.acornassociated_civil_legalcases IS 'type: 1to1
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_civil_legalcases IS 'type: 1to1
 nameObject: true';
 
 
 --
 -- TOC entry 4613 (class 2606 OID 394938)
--- Name: acornassociated_civil_hearings legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_civil_hearings legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_civil_hearings
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acornassociated_civil_legalcases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_civil_hearings
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_civil_legalcases(id) NOT VALID;
 
 
 --
 -- TOC entry 4665 (class 2606 OID 395284)
--- Name: acornassociated_criminal_legalcases legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcases legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcases
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acornassociated_justice_legalcases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_legalcases
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_justice_legalcases(id) NOT VALID;
 
 
 --
 -- TOC entry 5159 (class 0 OID 0)
 -- Dependencies: 4665
--- Name: CONSTRAINT legalcase_id ON acornassociated_criminal_legalcases; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_id ON acorn_criminal_legalcases; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_id ON public.acornassociated_criminal_legalcases IS 'type: 1to1
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_criminal_legalcases IS 'type: 1to1
 nameObject: true';
 
 
 --
 -- TOC entry 4620 (class 2606 OID 395289)
--- Name: acornassociated_criminal_appeals legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_appeals legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_appeals
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acornassociated_criminal_legalcases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_appeals
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_criminal_legalcases(id) NOT VALID;
 
 
 --
 -- TOC entry 5160 (class 0 OID 0)
 -- Dependencies: 4620
--- Name: CONSTRAINT legalcase_id ON acornassociated_criminal_appeals; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_id ON acorn_criminal_appeals; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_id ON public.acornassociated_criminal_appeals IS 'tab-location: 2';
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_criminal_appeals IS 'tab-location: 2';
 
 
 --
 -- TOC entry 4641 (class 2606 OID 395294)
--- Name: acornassociated_criminal_legalcase_defendants legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_defendants legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_defendants
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acornassociated_criminal_legalcases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_legalcase_defendants
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_criminal_legalcases(id) NOT VALID;
 
 
 --
 -- TOC entry 5161 (class 0 OID 0)
 -- Dependencies: 4641
--- Name: CONSTRAINT legalcase_id ON acornassociated_criminal_legalcase_defendants; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_id ON acorn_criminal_legalcase_defendants; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_id ON public.acornassociated_criminal_legalcase_defendants IS 'labels-plural:
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_criminal_legalcase_defendants IS 'labels-plural:
   en: Defendants
   ku: XweBiparastinêni';
 
 
 --
 -- TOC entry 4654 (class 2606 OID 395299)
--- Name: acornassociated_criminal_legalcase_related_events legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_related_events legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_related_events
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acornassociated_criminal_legalcases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_legalcase_related_events
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_criminal_legalcases(id) NOT VALID;
 
 
 --
 -- TOC entry 5162 (class 0 OID 0)
 -- Dependencies: 4654
--- Name: CONSTRAINT legalcase_id ON acornassociated_criminal_legalcase_related_events; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_id ON acorn_criminal_legalcase_related_events; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_id ON public.acornassociated_criminal_legalcase_related_events IS 'tab-location: 2
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_criminal_legalcase_related_events IS 'tab-location: 2
 labels:
   en: Event
   ar: الحدث المتعلقة بالقضاية الجنائية
@@ -9892,20 +9892,20 @@ labels-plural:
 
 --
 -- TOC entry 4645 (class 2606 OID 395304)
--- Name: acornassociated_criminal_legalcase_evidence legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_evidence legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_evidence
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acornassociated_criminal_legalcases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_legalcase_evidence
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_criminal_legalcases(id) NOT VALID;
 
 
 --
 -- TOC entry 5163 (class 0 OID 0)
 -- Dependencies: 4645
--- Name: CONSTRAINT legalcase_id ON acornassociated_criminal_legalcase_evidence; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_id ON acorn_criminal_legalcase_evidence; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_id ON public.acornassociated_criminal_legalcase_evidence IS 'status: broken
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_criminal_legalcase_evidence IS 'status: broken
 labels:
   en: Evidence
   ar: دليل القضايا الجنائية
@@ -9917,20 +9917,20 @@ tab-location: 2';
 
 --
 -- TOC entry 4648 (class 2606 OID 395309)
--- Name: acornassociated_criminal_legalcase_prosecutor legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_prosecutor legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_prosecutor
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acornassociated_criminal_legalcases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_legalcase_prosecutor
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_criminal_legalcases(id) NOT VALID;
 
 
 --
 -- TOC entry 5164 (class 0 OID 0)
 -- Dependencies: 4648
--- Name: CONSTRAINT legalcase_id ON acornassociated_criminal_legalcase_prosecutor; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_id ON acorn_criminal_legalcase_prosecutor; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_id ON public.acornassociated_criminal_legalcase_prosecutor IS 'labels:
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_criminal_legalcase_prosecutor IS 'labels:
   en: Prosecutor
   ar: المدعي العام للقضية الجنائية
 labels-plural:
@@ -9941,20 +9941,20 @@ labels-plural:
 
 --
 -- TOC entry 4657 (class 2606 OID 395314)
--- Name: acornassociated_criminal_legalcase_plaintiffs legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_plaintiffs legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_plaintiffs
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acornassociated_criminal_legalcases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_criminal_legalcases(id) NOT VALID;
 
 
 --
 -- TOC entry 5165 (class 0 OID 0)
 -- Dependencies: 4657
--- Name: CONSTRAINT legalcase_id ON acornassociated_criminal_legalcase_plaintiffs; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_id ON acorn_criminal_legalcase_plaintiffs; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_id ON public.acornassociated_criminal_legalcase_plaintiffs IS 'labels:
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_criminal_legalcase_plaintiffs IS 'labels:
   en: Plaintiff
   ar: ضحية القضية الجنائية
 labels-plural:
@@ -9965,20 +9965,20 @@ labels-plural:
 
 --
 -- TOC entry 4661 (class 2606 OID 395319)
--- Name: acornassociated_criminal_legalcase_witnesses legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_witnesses legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_witnesses
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acornassociated_criminal_legalcases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_legalcase_witnesses
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_criminal_legalcases(id) NOT VALID;
 
 
 --
 -- TOC entry 5166 (class 0 OID 0)
 -- Dependencies: 4661
--- Name: CONSTRAINT legalcase_id ON acornassociated_criminal_legalcase_witnesses; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_id ON acorn_criminal_legalcase_witnesses; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_id ON public.acornassociated_criminal_legalcase_witnesses IS 'labels:
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_criminal_legalcase_witnesses IS 'labels:
   en: Witness
   ar: شاهد القضية الجنائية
 labels-plural:
@@ -9989,66 +9989,66 @@ labels-plural:
 
 --
 -- TOC entry 4683 (class 2606 OID 395324)
--- Name: acornassociated_criminal_trials legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_trials legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_trials
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acornassociated_criminal_legalcases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_trials
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_criminal_legalcases(id) NOT VALID;
 
 
 --
 -- TOC entry 5167 (class 0 OID 0)
 -- Dependencies: 4683
--- Name: CONSTRAINT legalcase_id ON acornassociated_criminal_trials; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_id ON acorn_criminal_trials; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_id ON public.acornassociated_criminal_trials IS 'tab-location: 2';
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_criminal_trials IS 'tab-location: 2';
 
 
 --
 -- TOC entry 4689 (class 2606 OID 395428)
--- Name: acornassociated_houseofpeace_legalcases legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_houseofpeace_legalcases legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_houseofpeace_legalcases
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acornassociated_justice_legalcases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_houseofpeace_legalcases
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_justice_legalcases(id) NOT VALID;
 
 
 --
 -- TOC entry 5168 (class 0 OID 0)
 -- Dependencies: 4689
--- Name: CONSTRAINT legalcase_id ON acornassociated_houseofpeace_legalcases; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_id ON acorn_houseofpeace_legalcases; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_id ON public.acornassociated_houseofpeace_legalcases IS 'type: 1to1
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_houseofpeace_legalcases IS 'type: 1to1
 nameObject: true';
 
 
 --
 -- TOC entry 4686 (class 2606 OID 395433)
--- Name: acornassociated_houseofpeace_events legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_houseofpeace_events legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_houseofpeace_events
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acornassociated_houseofpeace_legalcases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_houseofpeace_events
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_houseofpeace_legalcases(id) NOT VALID;
 
 
 --
 -- TOC entry 4692 (class 2606 OID 395503)
--- Name: acornassociated_justice_scanned_documents legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_scanned_documents legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_scanned_documents
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acornassociated_justice_legalcases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_justice_scanned_documents
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_justice_legalcases(id) NOT VALID;
 
 
 --
 -- TOC entry 5169 (class 0 OID 0)
 -- Dependencies: 4692
--- Name: CONSTRAINT legalcase_id ON acornassociated_justice_scanned_documents; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_id ON acorn_justice_scanned_documents; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_id ON public.acornassociated_justice_scanned_documents IS 'tab-location: 3
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_justice_scanned_documents IS 'tab-location: 3
 type: Xto1
 bootstraps:
   xs: 12';
@@ -10056,1156 +10056,1156 @@ bootstraps:
 
 --
 -- TOC entry 4831 (class 2606 OID 415313)
--- Name: acornassociated_justice_warrants legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_warrants legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_warrants
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acornassociated_justice_legalcases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_justice_warrants
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_justice_legalcases(id) NOT VALID;
 
 
 --
 -- TOC entry 5170 (class 0 OID 0)
 -- Dependencies: 4831
--- Name: CONSTRAINT legalcase_id ON acornassociated_justice_warrants; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_id ON acorn_justice_warrants; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_id ON public.acornassociated_justice_warrants IS 'tab-location: 2
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_justice_warrants IS 'tab-location: 2
 type: Xto1';
 
 
 --
 -- TOC entry 4551 (class 2606 OID 394546)
--- Name: acornassociated_servers location_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_servers location_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_servers
-    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acornassociated_location_locations(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.acorn_servers
+    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acorn_location_locations(id) ON DELETE SET NULL;
 
 
 --
 -- TOC entry 4764 (class 2606 OID 414900)
--- Name: acornassociated_lojistiks_offices location_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_offices location_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_offices
-    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acornassociated_location_locations(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_offices
+    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acorn_location_locations(id) NOT VALID;
 
 
 --
 -- TOC entry 4801 (class 2606 OID 414906)
--- Name: acornassociated_lojistiks_suppliers location_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_suppliers location_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_suppliers
-    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acornassociated_location_locations(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_suppliers
+    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acorn_location_locations(id) NOT VALID;
 
 
 --
 -- TOC entry 4758 (class 2606 OID 414911)
--- Name: acornassociated_lojistiks_transfers location_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfers location_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfers
-    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acornassociated_location_locations(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_transfers
+    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acorn_location_locations(id) NOT VALID;
 
 
 --
 -- TOC entry 4826 (class 2606 OID 414916)
--- Name: acornassociated_lojistiks_warehouses location_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_warehouses location_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_warehouses
-    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acornassociated_location_locations(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_warehouses
+    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acorn_location_locations(id) NOT VALID;
 
 
 --
 -- TOC entry 4567 (class 2606 OID 394486)
--- Name: acornassociated_location_locations locations_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_locations locations_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_locations
-    ADD CONSTRAINT locations_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_location_locations
+    ADD CONSTRAINT locations_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4792 (class 2606 OID 414457)
--- Name: acornassociated_lojistiks_products measurement_unit_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products measurement_unit_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_products
-    ADD CONSTRAINT measurement_unit_id FOREIGN KEY (measurement_unit_id) REFERENCES public.acornassociated_lojistiks_measurement_units(id);
+ALTER TABLE ONLY public.acorn_lojistiks_products
+    ADD CONSTRAINT measurement_unit_id FOREIGN KEY (measurement_unit_id) REFERENCES public.acorn_lojistiks_measurement_units(id);
 
 
 --
 -- TOC entry 4744 (class 2606 OID 414462)
--- Name: acornassociated_lojistiks_measurement_units measurement_units_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_measurement_units measurement_units_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_measurement_units
-    ADD CONSTRAINT measurement_units_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_measurement_units
+    ADD CONSTRAINT measurement_units_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4701 (class 2606 OID 412924)
--- Name: acornassociated_criminal_defendant_detentions method_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_defendant_detentions method_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_defendant_detentions
-    ADD CONSTRAINT method_id FOREIGN KEY (detention_method_id) REFERENCES public.acornassociated_criminal_detention_methods(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_defendant_detentions
+    ADD CONSTRAINT method_id FOREIGN KEY (detention_method_id) REFERENCES public.acorn_criminal_detention_methods(id) NOT VALID;
 
 
 --
 -- TOC entry 4765 (class 2606 OID 414467)
--- Name: acornassociated_lojistiks_offices offices_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_offices offices_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_offices
-    ADD CONSTRAINT offices_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_offices
+    ADD CONSTRAINT offices_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4610 (class 2606 OID 412753)
--- Name: acornassociated_justice_legalcases owner_user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcases owner_user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_legalcases
-    ADD CONSTRAINT owner_user_group_id FOREIGN KEY (owner_user_group_id) REFERENCES public.acornassociated_user_user_groups(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_justice_legalcases
+    ADD CONSTRAINT owner_user_group_id FOREIGN KEY (owner_user_group_id) REFERENCES public.acorn_user_user_groups(id) NOT VALID;
 
 
 --
 -- TOC entry 4562 (class 2606 OID 394491)
--- Name: acornassociated_location_areas parent_area_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_areas parent_area_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_areas
-    ADD CONSTRAINT parent_area_id FOREIGN KEY (parent_area_id) REFERENCES public.acornassociated_location_areas(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_location_areas
+    ADD CONSTRAINT parent_area_id FOREIGN KEY (parent_area_id) REFERENCES public.acorn_location_areas(id) NOT VALID;
 
 
 --
 -- TOC entry 4631 (class 2606 OID 395329)
--- Name: acornassociated_criminal_crime_types parent_crime_type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_types parent_crime_type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crime_types
-    ADD CONSTRAINT parent_crime_type_id FOREIGN KEY (parent_crime_type_id) REFERENCES public.acornassociated_criminal_crime_types(id);
+ALTER TABLE ONLY public.acorn_criminal_crime_types
+    ADD CONSTRAINT parent_crime_type_id FOREIGN KEY (parent_crime_type_id) REFERENCES public.acorn_criminal_crime_types(id);
 
 
 --
 -- TOC entry 5171 (class 0 OID 0)
 -- Dependencies: 4631
--- Name: CONSTRAINT parent_crime_type_id ON acornassociated_criminal_crime_types; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT parent_crime_type_id ON acorn_criminal_crime_types; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT parent_crime_type_id ON public.acornassociated_criminal_crime_types IS 'labels-plural:
+COMMENT ON CONSTRAINT parent_crime_type_id ON public.acorn_criminal_crime_types IS 'labels-plural:
   en: Child Types';
 
 
 --
 -- TOC entry 4599 (class 2606 OID 394894)
--- Name: acornassociated_justice_legalcase_categories parent_legalcase_category_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcase_categories parent_legalcase_category_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_legalcase_categories
-    ADD CONSTRAINT parent_legalcase_category_id FOREIGN KEY (parent_legalcase_category_id) REFERENCES public.acornassociated_justice_legalcase_categories(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_justice_legalcase_categories
+    ADD CONSTRAINT parent_legalcase_category_id FOREIGN KEY (parent_legalcase_category_id) REFERENCES public.acorn_justice_legalcase_categories(id) NOT VALID;
 
 
 --
 -- TOC entry 4778 (class 2606 OID 414860)
--- Name: acornassociated_lojistiks_product_categories parent_product_category_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_categories parent_product_category_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_categories
-    ADD CONSTRAINT parent_product_category_id FOREIGN KEY (parent_product_category_id) REFERENCES public.acornassociated_lojistiks_product_categories(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_product_categories
+    ADD CONSTRAINT parent_product_category_id FOREIGN KEY (parent_product_category_id) REFERENCES public.acorn_lojistiks_product_categories(id) NOT VALID;
 
 
 --
 -- TOC entry 4571 (class 2606 OID 394496)
--- Name: acornassociated_location_types parent_type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_types parent_type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_types
-    ADD CONSTRAINT parent_type_id FOREIGN KEY (parent_type_id) REFERENCES public.acornassociated_location_types(id);
+ALTER TABLE ONLY public.acorn_location_types
+    ADD CONSTRAINT parent_type_id FOREIGN KEY (parent_type_id) REFERENCES public.acorn_location_types(id);
 
 
 --
 -- TOC entry 4706 (class 2606 OID 413877)
--- Name: acornassociated_finance_invoices payee_user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_invoices payee_user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_invoices
-    ADD CONSTRAINT payee_user_group_id FOREIGN KEY (payee_user_group_id) REFERENCES public.acornassociated_user_user_groups(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_finance_invoices
+    ADD CONSTRAINT payee_user_group_id FOREIGN KEY (payee_user_group_id) REFERENCES public.acorn_user_user_groups(id) NOT VALID;
 
 
 --
 -- TOC entry 4713 (class 2606 OID 413882)
--- Name: acornassociated_finance_purchases payee_user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_purchases payee_user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_purchases
-    ADD CONSTRAINT payee_user_group_id FOREIGN KEY (payee_user_group_id) REFERENCES public.acornassociated_user_user_groups(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_finance_purchases
+    ADD CONSTRAINT payee_user_group_id FOREIGN KEY (payee_user_group_id) REFERENCES public.acorn_user_user_groups(id) NOT VALID;
 
 
 --
 -- TOC entry 4707 (class 2606 OID 413887)
--- Name: acornassociated_finance_invoices payee_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_invoices payee_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_invoices
-    ADD CONSTRAINT payee_user_id FOREIGN KEY (payee_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_finance_invoices
+    ADD CONSTRAINT payee_user_id FOREIGN KEY (payee_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4714 (class 2606 OID 413892)
--- Name: acornassociated_finance_purchases payee_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_purchases payee_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_purchases
-    ADD CONSTRAINT payee_user_id FOREIGN KEY (payee_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_finance_purchases
+    ADD CONSTRAINT payee_user_id FOREIGN KEY (payee_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4715 (class 2606 OID 413897)
--- Name: acornassociated_finance_purchases payer_user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_purchases payer_user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_purchases
-    ADD CONSTRAINT payer_user_group_id FOREIGN KEY (payer_user_group_id) REFERENCES public.acornassociated_user_user_groups(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_finance_purchases
+    ADD CONSTRAINT payer_user_group_id FOREIGN KEY (payer_user_group_id) REFERENCES public.acorn_user_user_groups(id) NOT VALID;
 
 
 --
 -- TOC entry 4708 (class 2606 OID 413902)
--- Name: acornassociated_finance_invoices payer_user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_invoices payer_user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_invoices
-    ADD CONSTRAINT payer_user_group_id FOREIGN KEY (payer_user_group_id) REFERENCES public.acornassociated_user_user_groups(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_finance_invoices
+    ADD CONSTRAINT payer_user_group_id FOREIGN KEY (payer_user_group_id) REFERENCES public.acorn_user_user_groups(id) NOT VALID;
 
 
 --
 -- TOC entry 4716 (class 2606 OID 413907)
--- Name: acornassociated_finance_purchases payer_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_purchases payer_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_purchases
-    ADD CONSTRAINT payer_user_id FOREIGN KEY (payer_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_finance_purchases
+    ADD CONSTRAINT payer_user_id FOREIGN KEY (payer_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4709 (class 2606 OID 413912)
--- Name: acornassociated_finance_invoices payer_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_invoices payer_user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_invoices
-    ADD CONSTRAINT payer_user_id FOREIGN KEY (payer_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_finance_invoices
+    ADD CONSTRAINT payer_user_id FOREIGN KEY (payer_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4770 (class 2606 OID 414482)
--- Name: acornassociated_lojistiks_people people_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_people people_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_people
-    ADD CONSTRAINT people_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_people
+    ADD CONSTRAINT people_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4735 (class 2606 OID 414487)
--- Name: acornassociated_lojistiks_drivers person_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_drivers person_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_drivers
-    ADD CONSTRAINT person_id FOREIGN KEY (person_id) REFERENCES public.acornassociated_lojistiks_people(id);
+ALTER TABLE ONLY public.acorn_lojistiks_drivers
+    ADD CONSTRAINT person_id FOREIGN KEY (person_id) REFERENCES public.acorn_lojistiks_people(id);
 
 
 --
 -- TOC entry 4740 (class 2606 OID 414492)
--- Name: acornassociated_lojistiks_employees person_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_employees person_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_employees
-    ADD CONSTRAINT person_id FOREIGN KEY (person_id) REFERENCES public.acornassociated_lojistiks_people(id);
+ALTER TABLE ONLY public.acorn_lojistiks_employees
+    ADD CONSTRAINT person_id FOREIGN KEY (person_id) REFERENCES public.acorn_lojistiks_people(id);
 
 
 --
 -- TOC entry 4774 (class 2606 OID 414497)
--- Name: acornassociated_lojistiks_product_attributes product_attributes_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_attributes product_attributes_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_attributes
-    ADD CONSTRAINT product_attributes_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_product_attributes
+    ADD CONSTRAINT product_attributes_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4779 (class 2606 OID 414502)
--- Name: acornassociated_lojistiks_product_categories product_categories_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_categories product_categories_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_categories
-    ADD CONSTRAINT product_categories_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_product_categories
+    ADD CONSTRAINT product_categories_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4796 (class 2606 OID 414507)
--- Name: acornassociated_lojistiks_products_product_categories product_category_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products_product_categories product_category_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_products_product_categories
-    ADD CONSTRAINT product_category_id FOREIGN KEY (product_category_id) REFERENCES public.acornassociated_lojistiks_product_categories(id);
+ALTER TABLE ONLY public.acorn_lojistiks_products_product_categories
+    ADD CONSTRAINT product_category_id FOREIGN KEY (product_category_id) REFERENCES public.acorn_lojistiks_product_categories(id);
 
 
 --
 -- TOC entry 4780 (class 2606 OID 414512)
--- Name: acornassociated_lojistiks_product_categories product_category_type_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_categories product_category_type_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_categories
-    ADD CONSTRAINT product_category_type_id FOREIGN KEY (product_category_type_id) REFERENCES public.acornassociated_lojistiks_product_category_types(id);
+ALTER TABLE ONLY public.acorn_lojistiks_product_categories
+    ADD CONSTRAINT product_category_type_id FOREIGN KEY (product_category_type_id) REFERENCES public.acorn_lojistiks_product_category_types(id);
 
 
 --
 -- TOC entry 4783 (class 2606 OID 414517)
--- Name: acornassociated_lojistiks_product_category_types product_category_types_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_category_types product_category_types_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_category_types
-    ADD CONSTRAINT product_category_types_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_product_category_types
+    ADD CONSTRAINT product_category_types_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4797 (class 2606 OID 414522)
--- Name: acornassociated_lojistiks_products_product_categories product_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products_product_categories product_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_products_product_categories
-    ADD CONSTRAINT product_id FOREIGN KEY (product_id) REFERENCES public.acornassociated_lojistiks_products(id);
+ALTER TABLE ONLY public.acorn_lojistiks_products_product_categories
+    ADD CONSTRAINT product_id FOREIGN KEY (product_id) REFERENCES public.acorn_lojistiks_products(id);
 
 
 --
 -- TOC entry 4752 (class 2606 OID 414527)
--- Name: acornassociated_lojistiks_product_instances product_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_instances product_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_instances
-    ADD CONSTRAINT product_id FOREIGN KEY (product_id) REFERENCES public.acornassociated_lojistiks_products(id);
+ALTER TABLE ONLY public.acorn_lojistiks_product_instances
+    ADD CONSTRAINT product_id FOREIGN KEY (product_id) REFERENCES public.acorn_lojistiks_products(id);
 
 
 --
 -- TOC entry 4786 (class 2606 OID 414532)
--- Name: acornassociated_lojistiks_product_products product_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_products product_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_products
-    ADD CONSTRAINT product_id FOREIGN KEY (product_id) REFERENCES public.acornassociated_lojistiks_products(id);
+ALTER TABLE ONLY public.acorn_lojistiks_product_products
+    ADD CONSTRAINT product_id FOREIGN KEY (product_id) REFERENCES public.acorn_lojistiks_products(id);
 
 
 --
 -- TOC entry 4775 (class 2606 OID 414537)
--- Name: acornassociated_lojistiks_product_attributes product_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_attributes product_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_attributes
-    ADD CONSTRAINT product_id FOREIGN KEY (product_id) REFERENCES public.acornassociated_lojistiks_products(id);
+ALTER TABLE ONLY public.acorn_lojistiks_product_attributes
+    ADD CONSTRAINT product_id FOREIGN KEY (product_id) REFERENCES public.acorn_lojistiks_products(id);
 
 
 --
 -- TOC entry 4748 (class 2606 OID 414542)
--- Name: acornassociated_lojistiks_product_instance_transfer product_instance_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_instance_transfer product_instance_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_instance_transfer
-    ADD CONSTRAINT product_instance_id FOREIGN KEY (product_instance_id) REFERENCES public.acornassociated_lojistiks_product_instances(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_product_instance_transfer
+    ADD CONSTRAINT product_instance_id FOREIGN KEY (product_instance_id) REFERENCES public.acorn_lojistiks_product_instances(id) NOT VALID;
 
 
 --
 -- TOC entry 4810 (class 2606 OID 414717)
--- Name: acornassociated_lojistiks_transfer_container_product_instance product_instance_transfer_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_container_product_instance product_instance_transfer_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_container_product_instance
-    ADD CONSTRAINT product_instance_transfer_id FOREIGN KEY (product_instance_transfer_id) REFERENCES public.acornassociated_lojistiks_product_instance_transfer(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_container_product_instance
+    ADD CONSTRAINT product_instance_transfer_id FOREIGN KEY (product_instance_transfer_id) REFERENCES public.acorn_lojistiks_product_instance_transfer(id) NOT VALID;
 
 
 --
 -- TOC entry 4753 (class 2606 OID 414547)
--- Name: acornassociated_lojistiks_product_instances product_instances_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_instances product_instances_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_instances
-    ADD CONSTRAINT product_instances_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_product_instances
+    ADD CONSTRAINT product_instances_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4787 (class 2606 OID 414552)
--- Name: acornassociated_lojistiks_product_products product_products_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_products product_products_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_products
-    ADD CONSTRAINT product_products_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_product_products
+    ADD CONSTRAINT product_products_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4793 (class 2606 OID 414557)
--- Name: acornassociated_lojistiks_products products_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products products_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_products
-    ADD CONSTRAINT products_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_products
+    ADD CONSTRAINT products_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4798 (class 2606 OID 414562)
--- Name: acornassociated_lojistiks_products_product_categories products_product_categories_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products_product_categories products_product_categories_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_products_product_categories
-    ADD CONSTRAINT products_product_categories_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_products_product_categories
+    ADD CONSTRAINT products_product_categories_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4718 (class 2606 OID 413917)
--- Name: acornassociated_finance_receipts purchase_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_finance_receipts purchase_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_finance_receipts
-    ADD CONSTRAINT purchase_id FOREIGN KEY (purchase_id) REFERENCES public.acornassociated_finance_purchases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_finance_receipts
+    ADD CONSTRAINT purchase_id FOREIGN KEY (purchase_id) REFERENCES public.acorn_finance_purchases(id) NOT VALID;
 
 
 --
 -- TOC entry 4816 (class 2606 OID 414567)
--- Name: acornassociated_lojistiks_transfer_purchase purchase_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_purchase purchase_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_purchase
-    ADD CONSTRAINT purchase_id FOREIGN KEY (purchase_id) REFERENCES public.acornassociated_finance_purchases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_purchase
+    ADD CONSTRAINT purchase_id FOREIGN KEY (purchase_id) REFERENCES public.acorn_finance_purchases(id) NOT VALID;
 
 
 --
 -- TOC entry 4702 (class 2606 OID 412930)
--- Name: acornassociated_criminal_defendant_detentions reason_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_defendant_detentions reason_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_defendant_detentions
-    ADD CONSTRAINT reason_id FOREIGN KEY (detention_reason_id) REFERENCES public.acornassociated_criminal_detention_reasons(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_defendant_detentions
+    ADD CONSTRAINT reason_id FOREIGN KEY (detention_reason_id) REFERENCES public.acorn_criminal_detention_reasons(id) NOT VALID;
 
 
 --
 -- TOC entry 4832 (class 2606 OID 415326)
--- Name: acornassociated_justice_warrants revoked_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_warrants revoked_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_warrants
-    ADD CONSTRAINT revoked_at_event_id FOREIGN KEY (revoked_at_event_id) REFERENCES public.acornassociated_calendar_event(id) ON DELETE SET NULL NOT VALID;
+ALTER TABLE ONLY public.acorn_justice_warrants
+    ADD CONSTRAINT revoked_at_event_id FOREIGN KEY (revoked_at_event_id) REFERENCES public.acorn_calendar_event(id) ON DELETE SET NULL NOT VALID;
 
 
 --
 -- TOC entry 4759 (class 2606 OID 415264)
--- Name: acornassociated_lojistiks_transfers sent_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfers sent_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfers
-    ADD CONSTRAINT sent_at_event_id FOREIGN KEY (sent_at_event_id) REFERENCES public.acornassociated_calendar_event(id) ON DELETE SET NULL NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_transfers
+    ADD CONSTRAINT sent_at_event_id FOREIGN KEY (sent_at_event_id) REFERENCES public.acorn_calendar_event(id) ON DELETE SET NULL NOT VALID;
 
 
 --
 -- TOC entry 4628 (class 2606 OID 395334)
--- Name: acornassociated_criminal_crime_sentences sentence_type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_sentences sentence_type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_crime_sentences
-    ADD CONSTRAINT sentence_type_id FOREIGN KEY (sentence_type_id) REFERENCES public.acornassociated_criminal_sentence_types(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_crime_sentences
+    ADD CONSTRAINT sentence_type_id FOREIGN KEY (sentence_type_id) REFERENCES public.acorn_criminal_sentence_types(id) NOT VALID;
 
 
 --
 -- TOC entry 4568 (class 2606 OID 394501)
--- Name: acornassociated_location_locations server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_locations server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_locations
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_location_locations
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4565 (class 2606 OID 394506)
--- Name: acornassociated_location_gps server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_gps server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_gps
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_location_gps
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4556 (class 2606 OID 394511)
--- Name: acornassociated_location_addresses server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_addresses server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_addresses
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_location_addresses
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4558 (class 2606 OID 394516)
--- Name: acornassociated_location_area_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_area_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_area_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_location_area_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4563 (class 2606 OID 394521)
--- Name: acornassociated_location_areas server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_areas server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_areas
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_location_areas
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4572 (class 2606 OID 394526)
--- Name: acornassociated_location_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_location_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4666 (class 2606 OID 395339)
--- Name: acornassociated_criminal_legalcases server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcases server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcases
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_legalcases
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
 -- TOC entry 4745 (class 2606 OID 414592)
--- Name: acornassociated_lojistiks_measurement_units server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_measurement_units server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_measurement_units
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_measurement_units
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4794 (class 2606 OID 414597)
--- Name: acornassociated_lojistiks_products server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_products
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_products
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4749 (class 2606 OID 414602)
--- Name: acornassociated_lojistiks_product_instance_transfer server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_instance_transfer server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_instance_transfer
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_product_instance_transfer
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4771 (class 2606 OID 414607)
--- Name: acornassociated_lojistiks_people server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_people server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_people
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_people
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4819 (class 2606 OID 414612)
--- Name: acornassociated_lojistiks_vehicle_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_vehicle_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_vehicle_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_vehicle_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4732 (class 2606 OID 414617)
--- Name: acornassociated_lojistiks_containers server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_containers server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_containers
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_containers
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4822 (class 2606 OID 414622)
--- Name: acornassociated_lojistiks_vehicles server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_vehicles server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_vehicles
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_vehicles
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4736 (class 2606 OID 414627)
--- Name: acornassociated_lojistiks_drivers server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_drivers server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_drivers
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_drivers
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4806 (class 2606 OID 414632)
--- Name: acornassociated_lojistiks_transfer_containers server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_containers server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_containers
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_containers
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4811 (class 2606 OID 414637)
--- Name: acornassociated_lojistiks_transfer_container_product_instance server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_container_product_instance server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_container_product_instance
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_container_product_instance
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4784 (class 2606 OID 414642)
--- Name: acornassociated_lojistiks_product_category_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_category_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_category_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_product_category_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4781 (class 2606 OID 414647)
--- Name: acornassociated_lojistiks_product_categories server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_categories server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_categories
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_product_categories
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4799 (class 2606 OID 414652)
--- Name: acornassociated_lojistiks_products_product_categories server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_products_product_categories server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_products_product_categories
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_products_product_categories
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4760 (class 2606 OID 414662)
--- Name: acornassociated_lojistiks_transfers server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfers server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfers
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_transfers
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
 -- TOC entry 4729 (class 2606 OID 414791)
--- Name: acornassociated_lojistiks_brands server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_brands server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_brands
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_brands
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
 -- TOC entry 4741 (class 2606 OID 414807)
--- Name: acornassociated_lojistiks_employees server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_employees server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_employees
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_employees
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
 -- TOC entry 4766 (class 2606 OID 414812)
--- Name: acornassociated_lojistiks_offices server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_offices server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_offices
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_offices
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
 -- TOC entry 4776 (class 2606 OID 414829)
--- Name: acornassociated_lojistiks_product_attributes server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_attributes server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_attributes
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_product_attributes
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
 -- TOC entry 4754 (class 2606 OID 414834)
--- Name: acornassociated_lojistiks_product_instances server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_instances server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_instances
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_product_instances
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
 -- TOC entry 4827 (class 2606 OID 414845)
--- Name: acornassociated_lojistiks_warehouses server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_warehouses server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_warehouses
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_warehouses
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
 -- TOC entry 4802 (class 2606 OID 414850)
--- Name: acornassociated_lojistiks_suppliers server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_suppliers server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_suppliers
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_suppliers
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
 -- TOC entry 4788 (class 2606 OID 414855)
--- Name: acornassociated_lojistiks_product_products server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_products server_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_products
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_product_products
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
 -- TOC entry 4789 (class 2606 OID 414672)
--- Name: acornassociated_lojistiks_product_products sub_product_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_products sub_product_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_products
-    ADD CONSTRAINT sub_product_id FOREIGN KEY (sub_product_id) REFERENCES public.acornassociated_lojistiks_products(id);
+ALTER TABLE ONLY public.acorn_lojistiks_product_products
+    ADD CONSTRAINT sub_product_id FOREIGN KEY (sub_product_id) REFERENCES public.acorn_lojistiks_products(id);
 
 
 --
 -- TOC entry 4803 (class 2606 OID 414677)
--- Name: acornassociated_lojistiks_suppliers suppliers_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_suppliers suppliers_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_suppliers
-    ADD CONSTRAINT suppliers_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_suppliers
+    ADD CONSTRAINT suppliers_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4694 (class 2606 OID 412589)
--- Name: acornassociated_university_course_teacher teacher_id; Type: FK CONSTRAINT; Schema: public; Owner: sanchez
+-- Name: acorn_university_course_teacher teacher_id; Type: FK CONSTRAINT; Schema: public; Owner: sz
 --
 
-ALTER TABLE ONLY public.acornassociated_university_course_teacher
-    ADD CONSTRAINT teacher_id FOREIGN KEY (teacher_id) REFERENCES public.acornassociated_university_teachers(id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
+ALTER TABLE ONLY public.acorn_university_course_teacher
+    ADD CONSTRAINT teacher_id FOREIGN KEY (teacher_id) REFERENCES public.acorn_university_teachers(id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
 --
 -- TOC entry 4807 (class 2606 OID 414682)
--- Name: acornassociated_lojistiks_transfer_containers transfer_container_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_containers transfer_container_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_containers
-    ADD CONSTRAINT transfer_container_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_containers
+    ADD CONSTRAINT transfer_container_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4812 (class 2606 OID 414687)
--- Name: acornassociated_lojistiks_transfer_container_product_instance transfer_container_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_container_product_instance transfer_container_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_container_product_instance
-    ADD CONSTRAINT transfer_container_id FOREIGN KEY (transfer_container_id) REFERENCES public.acornassociated_lojistiks_transfer_containers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_container_product_instance
+    ADD CONSTRAINT transfer_container_id FOREIGN KEY (transfer_container_id) REFERENCES public.acorn_lojistiks_transfer_containers(id);
 
 
 --
 -- TOC entry 5172 (class 0 OID 0)
 -- Dependencies: 4812
--- Name: CONSTRAINT transfer_container_id ON acornassociated_lojistiks_transfer_container_product_instance; Type: COMMENT; Schema: public; Owner: postgres
+-- Name: CONSTRAINT transfer_container_id ON acorn_lojistiks_transfer_container_product_instance; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON CONSTRAINT transfer_container_id ON public.acornassociated_lojistiks_transfer_container_product_instance IS 'type: Xto1';
+COMMENT ON CONSTRAINT transfer_container_id ON public.acorn_lojistiks_transfer_container_product_instance IS 'type: Xto1';
 
 
 --
 -- TOC entry 4813 (class 2606 OID 414692)
--- Name: acornassociated_lojistiks_transfer_container_product_instance transfer_container_product_instances_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_container_product_instance transfer_container_product_instances_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_container_product_instance
-    ADD CONSTRAINT transfer_container_product_instances_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_container_product_instance
+    ADD CONSTRAINT transfer_container_product_instances_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4750 (class 2606 OID 414697)
--- Name: acornassociated_lojistiks_product_instance_transfer transfer_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_product_instance_transfer transfer_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_product_instance_transfer
-    ADD CONSTRAINT transfer_id FOREIGN KEY (transfer_id) REFERENCES public.acornassociated_lojistiks_transfers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_product_instance_transfer
+    ADD CONSTRAINT transfer_id FOREIGN KEY (transfer_id) REFERENCES public.acorn_lojistiks_transfers(id);
 
 
 --
 -- TOC entry 4808 (class 2606 OID 414702)
--- Name: acornassociated_lojistiks_transfer_containers transfer_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_containers transfer_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_containers
-    ADD CONSTRAINT transfer_id FOREIGN KEY (transfer_id) REFERENCES public.acornassociated_lojistiks_transfers(id);
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_containers
+    ADD CONSTRAINT transfer_id FOREIGN KEY (transfer_id) REFERENCES public.acorn_lojistiks_transfers(id);
 
 
 --
 -- TOC entry 4815 (class 2606 OID 414707)
--- Name: acornassociated_lojistiks_transfer_invoice transfer_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_invoice transfer_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_invoice
-    ADD CONSTRAINT transfer_id FOREIGN KEY (transfer_id) REFERENCES public.acornassociated_lojistiks_transfers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_invoice
+    ADD CONSTRAINT transfer_id FOREIGN KEY (transfer_id) REFERENCES public.acorn_lojistiks_transfers(id) NOT VALID;
 
 
 --
 -- TOC entry 4817 (class 2606 OID 414712)
--- Name: acornassociated_lojistiks_transfer_purchase transfer_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfer_purchase transfer_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfer_purchase
-    ADD CONSTRAINT transfer_id FOREIGN KEY (transfer_id) REFERENCES public.acornassociated_lojistiks_transfers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_purchase
+    ADD CONSTRAINT transfer_id FOREIGN KEY (transfer_id) REFERENCES public.acorn_lojistiks_transfers(id) NOT VALID;
 
 
 --
 -- TOC entry 4703 (class 2606 OID 414780)
--- Name: acornassociated_criminal_defendant_detentions transfer_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_defendant_detentions transfer_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_defendant_detentions
-    ADD CONSTRAINT transfer_id FOREIGN KEY (transfer_id) REFERENCES public.acornassociated_lojistiks_transfers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_defendant_detentions
+    ADD CONSTRAINT transfer_id FOREIGN KEY (transfer_id) REFERENCES public.acorn_lojistiks_transfers(id) NOT VALID;
 
 
 --
 -- TOC entry 5173 (class 0 OID 0)
 -- Dependencies: 4703
--- Name: CONSTRAINT transfer_id ON acornassociated_criminal_defendant_detentions; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT transfer_id ON acorn_criminal_defendant_detentions; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT transfer_id ON public.acornassociated_criminal_defendant_detentions IS 'type: 1to1';
+COMMENT ON CONSTRAINT transfer_id ON public.acorn_criminal_defendant_detentions IS 'type: 1to1';
 
 
 --
 -- TOC entry 4761 (class 2606 OID 414727)
--- Name: acornassociated_lojistiks_transfers transfers_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfers transfers_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfers
-    ADD CONSTRAINT transfers_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_transfers
+    ADD CONSTRAINT transfers_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4674 (class 2606 OID 395344)
--- Name: acornassociated_criminal_trial_judges trial_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_trial_judges trial_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_trial_judges
-    ADD CONSTRAINT trial_id FOREIGN KEY (trial_id) REFERENCES public.acornassociated_criminal_trials(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_trial_judges
+    ADD CONSTRAINT trial_id FOREIGN KEY (trial_id) REFERENCES public.acorn_criminal_trials(id) NOT VALID;
 
 
 --
 -- TOC entry 4679 (class 2606 OID 395349)
--- Name: acornassociated_criminal_trial_sessions trial_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_trial_sessions trial_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_trial_sessions
-    ADD CONSTRAINT trial_id FOREIGN KEY (trial_id) REFERENCES public.acornassociated_criminal_trials(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_trial_sessions
+    ADD CONSTRAINT trial_id FOREIGN KEY (trial_id) REFERENCES public.acorn_criminal_trials(id) NOT VALID;
 
 
 --
 -- TOC entry 4671 (class 2606 OID 395354)
--- Name: acornassociated_criminal_session_recordings trial_session_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_session_recordings trial_session_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_session_recordings
-    ADD CONSTRAINT trial_session_id FOREIGN KEY (trial_session_id) REFERENCES public.acornassociated_criminal_trial_sessions(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_session_recordings
+    ADD CONSTRAINT trial_session_id FOREIGN KEY (trial_session_id) REFERENCES public.acorn_criminal_trial_sessions(id) NOT VALID;
 
 
 --
 -- TOC entry 4569 (class 2606 OID 394531)
--- Name: acornassociated_location_locations type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_locations type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_locations
-    ADD CONSTRAINT type_id FOREIGN KEY (type_id) REFERENCES public.acornassociated_location_types(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_location_locations
+    ADD CONSTRAINT type_id FOREIGN KEY (type_id) REFERENCES public.acorn_location_types(id) NOT VALID;
 
 
 --
 -- TOC entry 4552 (class 2606 OID 404483)
--- Name: acornassociated_user_user_groups type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_user_user_groups type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_user_user_groups
-    ADD CONSTRAINT type_id FOREIGN KEY (type_id) REFERENCES public.acornassociated_user_user_group_types(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_user_user_groups
+    ADD CONSTRAINT type_id FOREIGN KEY (type_id) REFERENCES public.acorn_user_user_group_types(id) NOT VALID;
 
 
 --
 -- TOC entry 4833 (class 2606 OID 415297)
--- Name: acornassociated_justice_warrants type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_warrants type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_warrants
-    ADD CONSTRAINT type_id FOREIGN KEY (warrant_type_id) REFERENCES public.acornassociated_justice_warrant_types(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_justice_warrants
+    ADD CONSTRAINT type_id FOREIGN KEY (warrant_type_id) REFERENCES public.acorn_justice_warrant_types(id) NOT VALID;
 
 
 --
 -- TOC entry 4573 (class 2606 OID 394536)
--- Name: acornassociated_location_types types_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_types types_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_types
-    ADD CONSTRAINT types_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_location_types
+    ADD CONSTRAINT types_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4570 (class 2606 OID 394541)
--- Name: acornassociated_location_locations user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_location_locations user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_location_locations
-    ADD CONSTRAINT user_group_id FOREIGN KEY (user_group_id) REFERENCES public.acornassociated_user_user_groups(id);
+ALTER TABLE ONLY public.acorn_location_locations
+    ADD CONSTRAINT user_group_id FOREIGN KEY (user_group_id) REFERENCES public.acorn_user_user_groups(id);
 
 
 --
 -- TOC entry 4649 (class 2606 OID 395359)
--- Name: acornassociated_criminal_legalcase_prosecutor user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_prosecutor user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_prosecutor
-    ADD CONSTRAINT user_group_id FOREIGN KEY (user_group_id) REFERENCES public.acornassociated_user_user_groups(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_legalcase_prosecutor
+    ADD CONSTRAINT user_group_id FOREIGN KEY (user_group_id) REFERENCES public.acorn_user_user_groups(id) NOT VALID;
 
 
 --
 -- TOC entry 5174 (class 0 OID 0)
 -- Dependencies: 4649
--- Name: CONSTRAINT user_group_id ON acornassociated_criminal_legalcase_prosecutor; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT user_group_id ON acorn_criminal_legalcase_prosecutor; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT user_group_id ON public.acornassociated_criminal_legalcase_prosecutor IS 'nameObject: true';
+COMMENT ON CONSTRAINT user_group_id ON public.acorn_criminal_legalcase_prosecutor IS 'nameObject: true';
 
 
 --
 -- TOC entry 4675 (class 2606 OID 395364)
--- Name: acornassociated_criminal_trial_judges user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_trial_judges user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_trial_judges
-    ADD CONSTRAINT user_group_id FOREIGN KEY (user_group_id) REFERENCES public.acornassociated_user_user_groups(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_trial_judges
+    ADD CONSTRAINT user_group_id FOREIGN KEY (user_group_id) REFERENCES public.acorn_user_user_groups(id) NOT VALID;
 
 
 --
 -- TOC entry 4642 (class 2606 OID 395369)
--- Name: acornassociated_criminal_legalcase_defendants user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_defendants user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_defendants
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_legalcase_defendants
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 5175 (class 0 OID 0)
 -- Dependencies: 4642
--- Name: CONSTRAINT user_id ON acornassociated_criminal_legalcase_defendants; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT user_id ON acorn_criminal_legalcase_defendants; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT user_id ON public.acornassociated_criminal_legalcase_defendants IS 'nameObject: true';
+COMMENT ON CONSTRAINT user_id ON public.acorn_criminal_legalcase_defendants IS 'nameObject: true';
 
 
 --
 -- TOC entry 4650 (class 2606 OID 395374)
--- Name: acornassociated_criminal_legalcase_prosecutor user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_prosecutor user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_prosecutor
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_legalcase_prosecutor
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 5176 (class 0 OID 0)
 -- Dependencies: 4650
--- Name: CONSTRAINT user_id ON acornassociated_criminal_legalcase_prosecutor; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT user_id ON acorn_criminal_legalcase_prosecutor; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT user_id ON public.acornassociated_criminal_legalcase_prosecutor IS 'nameObject: true';
+COMMENT ON CONSTRAINT user_id ON public.acorn_criminal_legalcase_prosecutor IS 'nameObject: true';
 
 
 --
 -- TOC entry 4658 (class 2606 OID 395379)
--- Name: acornassociated_criminal_legalcase_plaintiffs user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_plaintiffs user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_plaintiffs
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 5177 (class 0 OID 0)
 -- Dependencies: 4658
--- Name: CONSTRAINT user_id ON acornassociated_criminal_legalcase_plaintiffs; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT user_id ON acorn_criminal_legalcase_plaintiffs; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT user_id ON public.acornassociated_criminal_legalcase_plaintiffs IS 'nameObject: true';
+COMMENT ON CONSTRAINT user_id ON public.acorn_criminal_legalcase_plaintiffs IS 'nameObject: true';
 
 
 --
 -- TOC entry 4662 (class 2606 OID 395384)
--- Name: acornassociated_criminal_legalcase_witnesses user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_legalcase_witnesses user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_legalcase_witnesses
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_legalcase_witnesses
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 5178 (class 0 OID 0)
 -- Dependencies: 4662
--- Name: CONSTRAINT user_id ON acornassociated_criminal_legalcase_witnesses; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT user_id ON acorn_criminal_legalcase_witnesses; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT user_id ON public.acornassociated_criminal_legalcase_witnesses IS 'nameObject: true';
+COMMENT ON CONSTRAINT user_id ON public.acorn_criminal_legalcase_witnesses IS 'nameObject: true';
 
 
 --
 -- TOC entry 4676 (class 2606 OID 395389)
--- Name: acornassociated_criminal_trial_judges user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_trial_judges user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_criminal_trial_judges
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_trial_judges
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4695 (class 2606 OID 412594)
--- Name: acornassociated_university_students user_id; Type: FK CONSTRAINT; Schema: public; Owner: sanchez
+-- Name: acorn_university_students user_id; Type: FK CONSTRAINT; Schema: public; Owner: sz
 --
 
-ALTER TABLE ONLY public.acornassociated_university_students
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_students
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 5179 (class 0 OID 0)
 -- Dependencies: 4695
--- Name: CONSTRAINT user_id ON acornassociated_university_students; Type: COMMENT; Schema: public; Owner: sanchez
+-- Name: CONSTRAINT user_id ON acorn_university_students; Type: COMMENT; Schema: public; Owner: sz
 --
 
-COMMENT ON CONSTRAINT user_id ON public.acornassociated_university_students IS 'type: 1to1';
+COMMENT ON CONSTRAINT user_id ON public.acorn_university_students IS 'type: 1to1';
 
 
 --
 -- TOC entry 4696 (class 2606 OID 412599)
--- Name: acornassociated_university_teachers user_id; Type: FK CONSTRAINT; Schema: public; Owner: sanchez
+-- Name: acorn_university_teachers user_id; Type: FK CONSTRAINT; Schema: public; Owner: sz
 --
 
-ALTER TABLE ONLY public.acornassociated_university_teachers
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_teachers
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 5180 (class 0 OID 0)
 -- Dependencies: 4696
--- Name: CONSTRAINT user_id ON acornassociated_university_teachers; Type: COMMENT; Schema: public; Owner: sanchez
+-- Name: CONSTRAINT user_id ON acorn_university_teachers; Type: COMMENT; Schema: public; Owner: sz
 --
 
-COMMENT ON CONSTRAINT user_id ON public.acornassociated_university_teachers IS 'type: 1to1';
+COMMENT ON CONSTRAINT user_id ON public.acorn_university_teachers IS 'type: 1to1';
 
 
 --
 -- TOC entry 4698 (class 2606 OID 412884)
--- Name: acornassociated_user_language_user user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_user_language_user user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_user_language_user
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_user_language_user
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
 -- TOC entry 4772 (class 2606 OID 414737)
--- Name: acornassociated_lojistiks_people user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_people user_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_people
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_people
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4834 (class 2606 OID 415318)
--- Name: acornassociated_justice_warrants user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_warrants user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acornassociated_justice_warrants
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_justice_warrants
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4742 (class 2606 OID 414742)
--- Name: acornassociated_lojistiks_employees user_role_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_employees user_role_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_employees
-    ADD CONSTRAINT user_role_id FOREIGN KEY (user_role_id) REFERENCES public.acornassociated_user_roles(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_employees
+    ADD CONSTRAINT user_role_id FOREIGN KEY (user_role_id) REFERENCES public.acorn_user_roles(id) NOT VALID;
 
 
 --
 -- TOC entry 4762 (class 2606 OID 414747)
--- Name: acornassociated_lojistiks_transfers vehicle_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_transfers vehicle_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_transfers
-    ADD CONSTRAINT vehicle_id FOREIGN KEY (vehicle_id) REFERENCES public.acornassociated_lojistiks_vehicles(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_transfers
+    ADD CONSTRAINT vehicle_id FOREIGN KEY (vehicle_id) REFERENCES public.acorn_lojistiks_vehicles(id) NOT VALID;
 
 
 --
 -- TOC entry 4737 (class 2606 OID 414752)
--- Name: acornassociated_lojistiks_drivers vehicle_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_drivers vehicle_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_drivers
-    ADD CONSTRAINT vehicle_id FOREIGN KEY (vehicle_id) REFERENCES public.acornassociated_lojistiks_vehicles(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_drivers
+    ADD CONSTRAINT vehicle_id FOREIGN KEY (vehicle_id) REFERENCES public.acorn_lojistiks_vehicles(id) NOT VALID;
 
 
 --
 -- TOC entry 4823 (class 2606 OID 414757)
--- Name: acornassociated_lojistiks_vehicles vehicle_type_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_vehicles vehicle_type_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_vehicles
-    ADD CONSTRAINT vehicle_type_id FOREIGN KEY (vehicle_type_id) REFERENCES public.acornassociated_lojistiks_vehicle_types(id);
+ALTER TABLE ONLY public.acorn_lojistiks_vehicles
+    ADD CONSTRAINT vehicle_type_id FOREIGN KEY (vehicle_type_id) REFERENCES public.acorn_lojistiks_vehicle_types(id);
 
 
 --
 -- TOC entry 4820 (class 2606 OID 414762)
--- Name: acornassociated_lojistiks_vehicle_types vehicle_types_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_vehicle_types vehicle_types_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_vehicle_types
-    ADD CONSTRAINT vehicle_types_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_vehicle_types
+    ADD CONSTRAINT vehicle_types_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4824 (class 2606 OID 414767)
--- Name: acornassociated_lojistiks_vehicles vehicles_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_vehicles vehicles_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_vehicles
-    ADD CONSTRAINT vehicles_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_vehicles
+    ADD CONSTRAINT vehicles_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
 -- TOC entry 4828 (class 2606 OID 414772)
--- Name: acornassociated_lojistiks_warehouses warehouses_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: acorn_lojistiks_warehouses warehouses_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.acornassociated_lojistiks_warehouses
-    ADD CONSTRAINT warehouses_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_lojistiks_warehouses
+    ADD CONSTRAINT warehouses_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --

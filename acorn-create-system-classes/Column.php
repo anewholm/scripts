@@ -74,7 +74,7 @@ class Column {
     public $env;     // Only show the column if an env VAR is TRUE
     // For fields
     public $fieldType;
-    public $rule;
+    public $rules = array();
     public $span;
     public $hidden;
     // Arrays for css class
@@ -97,6 +97,15 @@ class Column {
         return new self($table, ...$row);
     }
 
+    static protected function blockingAlert(string $message, string $level = 'WARNING'): void
+    {
+        global $YELLOW, $NC;
+
+        print("$YELLOW$level$NC: $message. Continue (y)? ");
+        $yn = readline();
+        if (strtolower($yn) == 'n') exit(0);
+    }
+
     protected function __construct(Table &$table, ...$properties)
     {
         $this->table = &$table;
@@ -105,6 +114,9 @@ class Column {
         }
         $this->name = $this->column_name;
 
+        // Columns data types will be quoted if they are reserved words
+        $this->data_type = str_replace('"', '', $this->data_type);
+
         // TODO: This needs to be moved to the standardTargetModelFieldDefinitions()
         foreach ($this->standardFieldDefinitions($this->name) as $name => $value) {
             if (property_exists($this, $name)) $this->$name = $value;
@@ -112,7 +124,7 @@ class Column {
 
         foreach (\Spyc::YAMLLoadString($this->comment) as $name => $value) {
             $nameCamel = Str::camel($name);
-            if (!property_exists($this, $nameCamel)) throw new \Exception("Property [$nameCamel] does not exist on [$this->table.$this->name]");
+            if (!property_exists($this, $nameCamel)) self::blockingAlert("Property [$nameCamel] does not exist on [$this->table.$this->name]");
             if (!isset($this->$nameCamel)) $this->$nameCamel = $value;
         }
 

@@ -546,23 +546,41 @@ class WinterCMS extends Framework
 
             // ---------------------------------------------------------------- Seeding
             // This moves seeding: directives in to updates\seed.sql
-            $seederPath = "$pluginDirectoryPath/updates/seed.sql";
             if ($model->table->seeding) {
-                $schema = $model->table->schema;
-                $table  = $model->table->name;
+                $seederPath = "$pluginDirectoryPath/updates/seed.sql";
+                $schema     = $model->table->schema;
+                $table      = $model->table->name;
+                $inserts    = array();
+
                 print("  ${GREEN}SEEDING${NC} for [$table]\n");
-                // TODO: Seeding does not work yet: NULLs and strings. Also not creating NOT NULL associated calendar events. Need function?
                 foreach ($model->table->seeding as $row) {
                     $valuesSQL = '';
                     foreach ($row as $value) {
-                        if      ($value === 'DEFAULT') $valueSQL = 'DEFAULT';
+                        // TODO: Creation of NOT NULL associated calendar events: EVENT_ID => $this->db->createCalendarEvent('SEEDER')
+                        if      ($value === 'DEFAULT')   $valueSQL = 'DEFAULT';
+                        else if ($value === 'SERVER_ID') $valueSQL = $this->db->serverID(TRUE);
+                        else if ($value === 'EVENT_ID')  $valueSQL = $this->db->createCalendarEvent('SEEDER');
                         else if (substr($value, 0, 19) === 'fn_acorn_' && substr($value, -1) == ')') $valueSQL = $value;
                         else $valueSQL = var_export($value, TRUE);
                         if ($valuesSQL) $valuesSQL .= ',';
                         $valuesSQL .= $valueSQL;
                     }
                     $insert = "insert into $schema.$table values($valuesSQL);";
+                    array_push($inserts, $insert);
                     $this->appendToFile($seederPath, $insert);
+                }
+
+                // Run the seeding file IF there are no records in the table
+                // Because we are not doing a winter:down,up here, but we still want the records
+                if ($model->table->isEmpty()) {
+                    print("  Running seed.sql because the table is empty [");
+                    $this->db->disableTriggers();
+                    foreach ($inserts as $insert) {
+                        print(".");
+                        $this->db->insert($insert);
+                    }
+                    $this->db->enableTriggers();
+                    print("]\n");
                 }
             }
 
@@ -842,16 +860,18 @@ class WinterCMS extends Framework
         }
 
         // ---------------------------------------- Rules
-        $rules = array();
+        // https://wintercms.com/docs/v1.2/docs/services/validation
+        $allRules = array();
         foreach ($model->fields() as $name => &$field) {
-            $rule = $field->rule;
-            if (!$rule && !$field->isStandard()) {
-                if ($field->required && !$field->nested) $rule .= 'required';
-                // TODO: max length (Currency needs this) https://wintercms.com/docs/v1.2/docs/services/validation
+            $fieldRules = $field->rules;
+            if (!$field->isStandard()) {
+                if ($field->required && !$field->nested) array_push($fieldRules, 'required');
+                // TODO: max length (Currency needs this)
+                if ($field->length) array_push($fieldRules, "max:$field->length");
             }
-            if ($rule) $rules[$name] = $rule;
+            if ($fieldRules) $allRules[$name] = implode('|', $fieldRules);
         }
-        $this->setPropertyInClassFile($modelFilePath, 'rules', $rules);
+        if ($allRules) $this->setPropertyInClassFile($modelFilePath, 'rules', $allRules);
 
         // ---------------------------------------- Lang
         $langDirPath   = "$pluginDirectoryPath/lang";
@@ -981,7 +1001,7 @@ class WinterCMS extends Framework
             }
         }
 
-        // ---------------------------------------- Relation Manager confiuration
+        // ---------------------------------------- Relation Manager configuration
         // We always need a config_relation.yaml, because all controllers implement the behaviour
         $this->yamlFileSet($configRelationPath, '#', $createdBy);
         foreach ($controller->model->fields() as $name => &$field) {
@@ -1017,22 +1037,20 @@ class WinterCMS extends Framework
         $this->yamlFileSet($configFormPath, 'actionFunctions', $controller->model->actionFunctions);
 
         // ----------------------------------------------- Interface variants
+        $maxTabLocation = 0;
         foreach ($controller->model->fields() as $name => &$field) {
-            if ($field->tabLocation == 3) {
-                // form-with-sidebar layout required
-                $this->setPropertyInClassFile($controllerFilePath, 'bodyClass', 'compact-container', FALSE);
+            if ($field->tabLocation > $maxTabLocation) $maxTabLocation = $field->tabLocation;
+        }
+        $layout = ($maxTabLocation >= 3 ? 'form-with-sidebar' : 'form');
+        $this->setPropertyInClassFile($controllerFilePath, 'bodyClass', 'compact-container', FALSE);
+        print("    Tab max ${YELLOW}$maxTabLocation${NC} template: ${YELLOW}$layout${NC}\n");
 
-                $interfaceVariantsDirPath = "$this->scriptDirPath/acorn-create-system-classes/frameworks/winter/controllers/form-with-sidebar";
-                foreach (scandir($interfaceVariantsDirPath) as $controllerFile) {
-                    $controllerFilePath = "$interfaceVariantsDirPath/$controllerFile";
-                    if (!in_array($controllerFile, array(".",".."))) {
-                        print("    Copied ${YELLOW}$controllerFile${NC} => $controllerDirPath/\n");
-                        copy($controllerFilePath, "$controllerDirPath/$controllerFile");
-                    }
-                }
-
-                // Only necessary once
-                break;
+        $interfaceVariantsDirPath = "$this->scriptDirPath/acorn-create-system-classes/frameworks/winter/controllers/$layout";
+        foreach (scandir($interfaceVariantsDirPath) as $controllerFile) {
+            $controllerFilePath = "$interfaceVariantsDirPath/$controllerFile";
+            if (!in_array($controllerFile, array(".",".."))) {
+                print("    Copied ${YELLOW}$layout/$controllerFile${NC} => $controllerDirPath/\n");
+                copy($controllerFilePath, "$controllerDirPath/$controllerFile");
             }
         }
     }

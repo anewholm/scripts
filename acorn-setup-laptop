@@ -28,7 +28,7 @@ add_hostname ()
 echo -e "GET http://google.com HTTP/1.0\n\n" | nc google.com 80 > /dev/null 2>&1
 check "No internet connection."
 
-echo "${YELLOW}Running apt-get update && sudo apt upgrade... ${NC}"
+echo "${YELLOW}Running apt-get update && sudo apt upgrade${NC}... "
 sudo apt-get update
 check "Failed to update."
 # sudo apt-get -y upgrade
@@ -37,7 +37,7 @@ echo
 
 gpg=`apt list --installed gpg 2> /dev/null | grep -E installed`
 if [ -z "$gpg" ]; then
-  echo "${YELLOW}Installing gpg... ${NC}"
+  echo "Installing ${YELLOW}gpg${NC}... "
   sudo apt-get install gpg -y 2> /dev/null
   check "Failed to download gpg."
   echo "${GREEN}Done.${NC}"
@@ -46,7 +46,7 @@ fi
 
 apache2=`apt list --installed apache2 2> /dev/null | grep -E installed`
 if [ -z "$apache2" ]; then
-  echo "${YELLOW}Installing apache2... ${NC}"
+  echo "Installing ${YELLOW}apache2${NC}... "
   sudo apt-get install apache2 -y 2> /dev/null
   sudo a2enmod rewrite 2> /dev/null
   sudo apt-get install libapache2-mod-fcgid -y 2> /dev/null
@@ -76,7 +76,7 @@ fi
 php_version=`php -v | head -n 1 | cut -d ' ' -f 2 | cut -d '.' -f 1,2`
 php_xdebug_ini="/etc/php/$php_version/mods-available/xdebug.ini"
 if [ ! -f "$php_xdebug_ini" ]; then
-  echo "${YELLOW}Installing XDebug for PHP [$php_version]... ${NC}"
+  echo "Installing ${YELLOW}XDebug for PHP [$php_version]${NC}... "
   sudo apt install php-xdebug
   #sudo apt install php8.1-xdebug
   #sudo apt install php8.3-xdebug
@@ -99,7 +99,7 @@ fi
 
 mysql=`apt list --installed mysql-server 2> /dev/null | grep -E installed`
 if [ -z "$mysql" ] && [ -z "$(which mysql)" ]; then
-  echo "${YELLOW}Installing mysql... ${NC}"
+  echo "Installing ${YELLOW}mysql${NC}... "
   sudo apt-get install mysql-server-8.0 mysql-client-8.0 -y 2> /dev/null
   sudo apt-get install php-mysql 2> /dev/null
   check "Failed to download mysql"
@@ -108,14 +108,9 @@ if [ -z "$mysql" ] && [ -z "$(which mysql)" ]; then
     case $yn in
       Y|y|"")
         mysql -e "create user root@% identified by 'QueenPool1@';" 2> /dev/null
-        musql -e "grant all on *.* to root@% with grant option;" 2> /dev/null
+        mysql -e "grant all on *.* to root@% with grant option;" 2> /dev/null
         mysql -e "flush privileges;" 2> /dev/null
         break
-      ;;
-      N|n)
-        break
-      ;;
-      *)
       ;;
     esac
   done
@@ -125,7 +120,7 @@ fi
 
 snap=`apt list --installed snapd 2> /dev/null | grep -E installed`
 if [ -z "$snap" ]; then
-  echo "${YELLOW}Installing snap... ${NC}"
+  echo "Installing ${YELLOW}snap${NC}... "
   sudo apt-get install snapd -y 2> /dev/null
   check "Failed to download snapd."
   echo "${GREEN}Done.${NC}"
@@ -133,16 +128,18 @@ if [ -z "$snap" ]; then
 fi
 
 if [ -z "$(which mysql-workbench-community)" ]; then
-  echo "${YELLOW}Installing MySQL Workbench... ${NC}"
+  echo "Installing ${YELLOW}MySQL Workbench${NC}... "
   sudo snap install mysql-workbench-community 2> /dev/null
   check "Failed to download MySQL Workbench."
+  echo "  Connecting AppArmour policy"
+  sudo snap connect mysql-workbench-community:password-manager-service :password-manager-service
   echo "${GREEN}Done.${NC}"
   echo
 fi
 
 php=`apt list --installed php 2> /dev/null | grep -E installed`
 if [ -z "$php" ]; then
-  echo "${YELLOW}Installing php... ${NC}"
+  echo "Installing ${YELLOW}php${NC}... "
   sudo apt-get install php -y 2> /dev/null
   sudo apt-get install php-mysql php-curl php-mbstring phpunit php-zip php-gd php-xml php-json -y 2> /dev/null
   sudo apt-get install php-pgsql -y 2> /dev/null
@@ -152,9 +149,28 @@ if [ -z "$php" ]; then
   echo
 fi
 
+# That was php8.4 or above, so lets load 8.1 also
+# sudo update-alternatives --config php
+php=`apt list --installed php8.1 2> /dev/null | grep -E installed`
+if [ -z "$php" ]; then
+  echo "Installing ${YELLOW}php8.1${NC}... "
+  sudo apt-get install php8.1 -y 2> /dev/null
+  sudo apt-get install php8.1-mysql php8.1-curl php8.1-mbstring php8.1-zip php8.1-gd php8.1-xml -y 2> /dev/null
+  sudo apt-get install php8.1-pgsql -y 2> /dev/null
+  check "Failed to download php."
+
+  # Winter CMS current version requires <= 8.1
+  echo "Setting PHP to 8.1 back version"
+  whichPhp81=`which php8.1`
+  check "PHP 8.1 binary not found"
+  sudo update-alternatives --set php $whichPhp81
+  echo "${GREEN}Done.${NC}"
+  echo
+fi
+
 curl=`apt list --installed curl 2> /dev/null | grep -E installed`
 if [ -z "$curl" ]; then
-  echo "${YELLOW}Installing curl... ${NC}"
+  echo "Installing ${YELLOW}curl${NC}... "
   sudo apt-get install curl -y 2> /dev/null
   check "Failed to download curl."
   echo "${GREEN}Done.${NC}"
@@ -163,7 +179,7 @@ fi
 
 wget=`apt list --installed wget 2> /dev/null | grep -E installed`
 if [ -z "$wget" ]; then
-  echo "${YELLOW}Installing wget... ${NC}"
+  echo "Installing ${YELLOW}wget${NC}... "
   sudo apt-get install wget -y 2> /dev/null
   check "Failed to download wget."
   echo "${GREEN}Done.${NC}"
@@ -182,13 +198,14 @@ if [ -z "$apt_postgresql" ]; then
   sudo apt-get install -y postgresql-$postgresql_version
   check "Failed to download postgresql $postgresql_version"
 
-  user_exists=`sudo -u postgres psql postgres -tXAc "SELECT 1 FROM pg_roles WHERE rolname='$USER'"`
+  outeruser=$USER
+  user_exists=`sudo -u postgres psql postgres -tXAc "SELECT 1 FROM pg_roles WHERE rolname='$outeruser'"`
   if [ "$user_exists" != 1 ]; then
-    echo "${GREEN}INFO${NC}: Creating PostGreSQL super-user ${YELLOW}$USER${NC}. PLease use password ${YELLOW}@corn.org${NC}:"
-    sudo -u postgres createuser -d -e -E -l -P -r -s $USER
-    check "Failed to create postgresql user ${YELLOW}$USER${NC}"
+    echo "${GREEN}INFO${NC}: Creating PostGreSQL super-user ${YELLOW}$outeruser${NC}. PLease use password ${YELLOW}@corn.org${NC}:"
+    sudo -u postgres createuser -d -e -E -l -P -r -s $outeruser
+    check "Failed to create postgresql user ${YELLOW}$outeruser${NC}"
   else
-    echo "${YELLOW}WARNING${NC}: User ${YELLOW}$USER${NC} already exists. I hope they have connection permissions. Continuing."
+    echo "${YELLOW}WARNING${NC}: User ${YELLOW}$outeruser${NC} already exists. I hope they have connection permissions. Continuing."
   fi
 
   echo "${GREEN}Done.${NC}"
@@ -234,7 +251,7 @@ if [ -d postgres/ ]; then
 fi
 
 if [ -z "$(which pgagent)" ]; then
-  echo "${YELLOW}Installing PGAgent for scheduled SQL tasks... ${NC}"
+  echo "Installing ${YELLOW}PGAgent for scheduled SQL tasks${NC}... "
   sudo apt install -y pgagent
 fi
 if [ -z "$(ps -A | grep pgagent)" ]; then
@@ -250,12 +267,10 @@ if [ ! -f /etc/init.d/pgagent ] && [ -f postgres/pgagent ]; then
   sudo ln -s /etc/init.d/pgagent /etc/rc6.d/K02pgagent
 fi
 
-pgadmin=`apt list --installed pgadmin4 2> /dev/null | grep -E installed`
+pgadmin=`snap list pgadmin 2> /dev/null`
 if [ -z "$pgadmin" ]; then 
-  echo "${YELLOW}Installing pgAdmin4... ${NC}"
-  curl -fsS https://www.pgadmin.org/static/packages_pgadmin_org.pub | sudo gpg --dearmor -o /usr/share/keyrings/packages-pgadmin-org.gpg 2> /dev/null
-  sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/packages-pgadmin-org.gpg] https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/$(lsb_release -cs) pgadmin4 main" > /etc/apt/sources.list.d/pgadmin4.list && apt update' 2> /dev/null
-  sudo apt-get install pgadmin4 -y 2> /dev/null
+  echo "Installing ${YELLOW}pgAdmin4${NC}... "
+  snap install pgadmin4
   check "Failed to download pgAdmin4"
   echo "${GREEN}Done.${NC}"
   echo
@@ -263,7 +278,7 @@ fi
 
 git=`apt list --installed git 2> /dev/null | grep -E installed`
 if [ -z "$git" ]; then
-  echo "${YELLOW}Installing git... ${NC}"
+  echo "Installing ${YELLOW}git${NC}... "
   sudo apt-get install git -y 2> /dev/null
   check "Failed to download git."
   echo "${GREEN}Done.${NC}"
@@ -272,7 +287,7 @@ fi
 
 composer=`apt list --installed composer 2> /dev/null | grep -E installed`
 if [ -z "$composer" ] && [ -z "$(which composer)" ]; then
-  echo "${YELLOW}Installing composer... ${NC}"
+  echo "Installing ${YELLOW}composer${NC}... "
   #hash="55ce33d7678c5a611085589f1f3ddf8b3c52d662cd01d4ba75c0ee0459970c2200a51f492d557530c71c15d8dba01eae"
   hash="dac665fdc30fdd8ec78b38b9800061b4150413ff2e3b6f88543c636f7cd84f6db9189d43a81e5503cda447da73c7e5b6"
   php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
@@ -286,7 +301,7 @@ if [ -z "$composer" ] && [ -z "$(which composer)" ]; then
 fi
 
 if [ -z "$(which code)" ]; then
-  echo "${YELLOW}Installing VS Code... ${NC}"
+  echo "Installing ${YELLOW}VS Code${NC}... "
   sudo snap install code --classic
   check "Failed to download VS code."
   echo "${GREEN}Done.${NC}"
@@ -294,7 +309,7 @@ if [ -z "$(which code)" ]; then
 fi
 
 if [ -z "$(which signal-desktop)" ]; then
-  echo "${YELLOW}Installing Signal... ${NC}"
+  echo "Installing ${YELLOW}Signal${NC}... "
   sudo snap install signal-desktop
   check "Failed to download Signal."
   echo "${GREEN}Done.${NC}"
@@ -302,7 +317,7 @@ if [ -z "$(which signal-desktop)" ]; then
 fi
 
 if [ -z "$(which ifconfig)" ]; then
-  echo "${YELLOW}Installing net-tools... ${NC}"
+  echo "Installing ${YELLOW}net-tools${NC}... "
   sudo apt -y install net-tools
   check "Failed to download net-tools."
   echo "${GREEN}Done.${NC}"
@@ -310,7 +325,7 @@ if [ -z "$(which ifconfig)" ]; then
 fi
 
 if [ -z "$(which nmap)" ]; then
-  echo "${YELLOW}Installing nmap... ${NC}"
+  echo "Installing ${YELLOW}nmap${NC}... "
   sudo apt -y install nmap
   check "Failed to download nmap."
   echo "${GREEN}Done.${NC}"
@@ -318,7 +333,7 @@ if [ -z "$(which nmap)" ]; then
 fi
 
 if [ -z "$(which vlc)" ]; then
-  echo "${YELLOW}Installing vlc... ${NC}"
+  echo "Installing ${YELLOW}vlc${NC}... "
   sudo apt -y install vlc
   check "Failed to download vlc."
   echo "${GREEN}Done.${NC}"
@@ -326,7 +341,7 @@ if [ -z "$(which vlc)" ]; then
 fi
 
 if [ -z "$(which locate)" ]; then
-  echo "${YELLOW}Installing locate... ${NC}"
+  echo "Installing ${YELLOW}locate${NC}... "
   sudo apt -y install locate
   check "Failed to download locate."
   sudo updatedb
@@ -343,5 +358,11 @@ if [ -f acorn-setup-olap ]; then
 fi
 
 if [ -f acorn-mirror-doc-websites ]; then
-  ./acorn-mirror-doc-websites
+  read -p "Mirror websites now (several hours work)? [Y] " yn
+  case $yn in
+    Y|y|"")
+      ./acorn-mirror-doc-websites
+      break
+    ;;
+  esac
 fi

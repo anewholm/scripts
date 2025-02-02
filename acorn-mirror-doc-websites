@@ -26,42 +26,88 @@ if [ ! -d /var/www/scripts ]; then
     exit 1
 fi
 
-if [ ! -d wintercms.com ]; then
+# ------------------------------------------------------------------- Web Frameworks
+if [ -d wintercms.com ]; then
+  cd wintercms.com
+  httrack --continue
+  cd ..
+else
   echo "${GREEN}INFO${NC}: Mirroring wintercms.com documentation to ${YELLOW}http://wintercmsdocs.laptop${NC}"
   httrack https://wintercms.com/docs/v1.2/docs/ -O wintercms.com
-  cd wintercms.com
-  sudo ../scripts/acorn-setup-hostname wintercmsdocs
-  cd -
 fi
+cd wintercms.com
+sudo ../scripts/acorn-setup-hostname wintercmsdocs
+cd -
+
+if [ ! -d developer.wordpress.org ]; then
+  cd developer.wordpress.org
+  httrack --continue
+  cd ..
+else
+  echo "${GREEN}INFO${NC}: Mirroring developer.wordpress.org documentation to ${YELLOW}http://wordpressdeveloper.laptop${NC}"
+  httrack https://developer.wordpress.org -O developer.wordpress.org
+fi
+cd developer.wordpress.org
+sudo ../scripts/acorn-setup-hostname wordpressdeveloper
+cd -
+
+if [ ! -d api.drupal.org ]; then
+  cd api.drupal.org
+  httrack --continue
+  cd ..
+else
+  echo "${GREEN}INFO${NC}: Mirroring api.drupal.org documentation to ${YELLOW}http://drupalapi.laptop${NC}"
+  httrack https://api.drupal.org -O api.drupal.org
+fi
+cd developer.wordpress.org
+sudo ../scripts/acorn-setup-hostname drupalapi
+cd -
 
 if [ ! -d api.jquery.com ]; then
+  cd api.jquery.com
+  httrack --continue
+  cd ..
+else
   echo "${GREEN}INFO${NC}: Mirroring api.jquery.com documentation to ${YELLOW}http://api.jquery.laptop${NC}"
   httrack https://api.jquery.com/ -O api.jquery.com
-  cd api.jquery.com
-  sudo ../scripts/acorn-setup-hostname jquery
-  cd -
 fi
+cd api.jquery.com
+sudo ../scripts/acorn-setup-hostname jquery
+cd -
 
+# ------------------------------------------------------------------- Infrastructure
 if [ ! -d www.postgresql.org ]; then
+  cd www.postgresql.org
+  httrack --continue
+  cd ..
+else
   echo "${GREEN}INFO${NC}: Mirroring postgresql.org documentation to ${YELLOW}http://postgresqldocs.laptop${NC}"
   httrack https://www.postgresql.org/docs/16/ -O www.postgresql.org
-  cd www.postgresql.org
-  sudo ../scripts/acorn-setup-hostname postgresqldocs
-  cd -
 fi
+cd www.postgresql.org
+sudo ../scripts/acorn-setup-hostname postgresqldocs
+cd -
 
 if [ ! -d www.gnu.org ]; then
+  cd www.gnu.org
+  httrack --continue
+  cd ..
+else
   echo "${GREEN}INFO${NC}: Mirroring Gnu bash documentation to ${YELLOW}http://bashdocs.laptop${NC}"
   httrack https://www.gnu.org/software/bash/manual/html_node/ -O www.gnu.org
-  cd www.gnu.org
-  sudo ../scripts/acorn-setup-hostname bashdocs
-  cd -
 fi
+cd www.gnu.org
+sudo ../scripts/acorn-setup-hostname bashdocs
+cd -
 
 if [ ! -d www.php.net ]; then
+  cd www.php.net
+  httrack --continue
+  cd ..
+else
   echo "${GREEN}INFO${NC}: Mirroring PHP documentation to ${YELLOW}http://php.laptop${NC}"
   httrack https://www.php.net/manual/en/ -O www.php.net
-  cd www.php.net
-  sudo ../scripts/acorn-setup-hostname php
-  cd -
 fi
+cd www.php.net
+sudo ../scripts/acorn-setup-hostname php
+cd -
