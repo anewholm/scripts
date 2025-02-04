@@ -67,7 +67,8 @@ class Column {
 
     // --------------------- Column comment accepted values
     // These flow through to Field
-    public $comment;
+    public $comment; // YAML comment
+    public $fieldComment; // HTML field comment
     public $system;  // Internal column, do not process
     public $todo;    // TODO: This column structure has not been analysed / enabled yet
     public $setting; // Only show the column if a Setting is TRUE
@@ -88,6 +89,9 @@ class Column {
     public $sqlSelect;
     public $valueFrom; // We should never use this because it cannot be sorted
     public $invisible;
+    public $tab;
+    public $icon;
+    public $tabLocation; // primary|secondary|tertiary
     // Translation arrays
     public $labels;
     public $labelsPlural;

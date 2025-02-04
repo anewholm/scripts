@@ -696,6 +696,7 @@ class Model {
                 'tabLocation'  => $relation->tabLocation,
                 'debugComment' => "Tab multi-select for $relation on $plugin->name.$this->name",
                 'commentHtml'  => TRUE,
+                'relatedModel' => $relation->to->fullyQualifiedName(),
                 'comment'      => $relation->comment,
                 'icon'         => $relation->to->icon,
                 'tab'          => $tab,
@@ -780,6 +781,7 @@ class Model {
                 'debugComment' => "Tab multi-select for $relation on $plugin->name.$this->name",
                 'comment'      => $relation->comment,
                 'commentHtml'  => TRUE,
+                'relatedModel' => $relation->to->fullyQualifiedName(),
                 'canFilter'    => FALSE, // These are linked only to the content table
                 'tab'          => 'INHERIT',
 
@@ -908,6 +910,7 @@ class Model {
                 'debugComment'   => "Tab multi-select for $relation on $plugin->name.$this->name",
                 'comment'        => $relation->comment,
                 'commentHtml'    => TRUE,
+                'relatedModel'   => $relation->to->fullyQualifiedName(),
                 'canFilter'      => TRUE,
                 'tab'            => 'INHERIT',
                 'dependsOn'      => $dependsOn,
@@ -1028,6 +1031,7 @@ class Model {
                 'icon'           => $relation->to->icon,
                 'debugComment'   => "Tab multi-select for $relation on $plugin->name.$this->name",
                 'commentHtml'    => TRUE,
+                'relatedModel'   => $relation->to->fullyQualifiedName(),
                 'canFilter'      => TRUE,
                 'tab'            => $tab,
                 'dependsOn'      => $dependsOn,

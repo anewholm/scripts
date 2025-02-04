@@ -52,7 +52,8 @@ class Field {
     public $containerAttributes;
     public $tab;
     public $icon;
-    public $tabLocation; // primary|secondary|tertiary
+    public $tabLocation;  // primary|secondary|tertiary
+    public $relatedModel; // For relationmanagers only
     // For type fileupload
     public $mode;
     public $imageHeight;
@@ -170,6 +171,9 @@ class Field {
                 break;
             case 'char':
                 $fieldDefinition['length']     = 1;
+                break;
+            case 'text':
+                $fieldDefinition['fieldType']     = 'textarea';
                 break;
             case 'money':
                 $tableName = $column->table->name;
@@ -457,7 +461,8 @@ class ForeignIdField extends Field {
                         // TODO: Comment and model name translation
                         $controllerUrl = $controller->absoluteBackendUrl();
                         $title         = $this->relation1->to->name;
-                        $this->fieldComment  = "<span class='view-add-models'>acorn::lang.helpblock.view_add <a tabindex='-1' href='$controllerUrl'>$title</a></span>";
+                        if (is_null($this->fieldComment)) $this->fieldComment = '';
+                        $this->fieldComment .= "<span class='view-add-models'>acorn::lang.helpblock.view_add <a tabindex='-1' href='$controllerUrl'>$title</a></span>";
                         $this->fieldComment .= "<a tabindex='-1' target='_blank' href='$controllerUrl' class='goto-form-group-selection'></a>";
                         // TODO: This is actually for annotating checkbox lists, not selects, but it does nothing if it is a dropdown
                         // $goto = $controllerUrl;
