@@ -274,6 +274,7 @@ class Table {
 
     protected function namePlural(): string
     {
+        // acorn_user_user_groups | acorn_finance_invoices
         return ($this->plural ?: Str::plural($this->name));
     }
 

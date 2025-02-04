@@ -483,6 +483,11 @@ class WinterCMS extends Framework
             copy("$scriptsUpdatesPath/version.yaml", "$pluginUpdatePath/version.yaml");
             $this->removeDir("$pluginDirectoryPath/updates/v1.0.1/", TRUE, TRUE, FALSE);
 
+            // Explicit plural name injection
+            // Otherwise PathsHelper will get confused when making URLs and things
+            $plural = $model->table->plural;
+            if ($plural) $this->setPropertyInClassFile($modelFilePath, 'namePlural', $plural, Framework::NEW_PROPERTY);
+
             // ----------------------------------------------------------------- Behaviours, Uses, Classes & inheritance
             // TODO: SoftDelete
             $dateColumns = array_keys($model->table->dateColumns());
@@ -803,6 +808,7 @@ class WinterCMS extends Framework
                 'optionsModel' => $field->fieldOptionsModel, // Model name
                 'placeholder'  => $field->placeholder,
                 'hierarchical' => $field->hierarchical,
+                'relatedModel' => $field->relatedModel,      // Model name
                 'nameFrom'     => $field->nameFrom,
                 'context'      => array_keys($field->contexts),
                 'dependsOn'    => array_keys($field->dependsOn),
@@ -1124,7 +1130,7 @@ class WinterCMS extends Framework
             if (!in_array($modelDirName, array(".","..")) && is_dir($modelDirPath)) {
                 print('.');
                 $fieldsFilePath = "$modelDirPath/fields.yaml";
-                $fields         = $this->yamlFileLoad($fieldsFilePath);
+                $fields         = $this->yamlFileLoad($fieldsFilePath, Framework::NO_CACHE);
                 if (isset($fields['fields'])) {
                     foreach ($fields['fields'] as $name => $config) {
                         if (is_array($config) && isset($config['label'])) {
@@ -1150,7 +1156,7 @@ class WinterCMS extends Framework
                 }
 
                 $columnsFilePath = "$modelDirPath/columns.yaml";
-                $columns         = $this->yamlFileLoad($columnsFilePath);
+                $columns         = $this->yamlFileLoad($columnsFilePath, Framework::NO_CACHE);
                 if (isset($columns['columns'])) {
                     foreach ($columns['columns'] as $name => $config) {
                         if (is_array($config) && isset($config['label'])) {
@@ -1200,6 +1206,7 @@ class WinterCMS extends Framework
     {
         $keyParts      = explode('::', $key);
         $domain        = $keyParts[0];                     // acorn.user | acorn
+        if (count($keyParts) < 2) throw new \Exception("Translation key ''$domain' needs 2 dot parts");
         $localParts    = explode('.', $keyParts[1]);       // lang, models, general, id
         $localKey      = implode('.', array_slice($localParts, 1)); // models.general.id
         $isModule      = (strstr($domain, '.') === FALSE); // acorn
@@ -1207,6 +1214,6 @@ class WinterCMS extends Framework
         $domainDirPath = ($isModule ? "modules/$domainRelDir" : "plugins/$domainRelDir");
         $langFilePath  = realpath("$domainDirPath/lang/en/lang.php");
 
-        return $this->arrayFileValueExists($langFilePath, $localKey);
+        return $this->arrayFileValueExists($langFilePath, $localKey, Framework::NO_CACHE);
     }
 }

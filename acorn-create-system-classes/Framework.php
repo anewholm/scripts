@@ -8,6 +8,8 @@ class Framework
     public const STD_INDENT = 1;
     public const OVERWRITE_EXISTING = TRUE;
     public const NEW_PROPERTY = FALSE;
+    public const CACHE = TRUE;
+    public const NO_CACHE = FALSE;
 
     protected $cwd;
     protected $script;
@@ -54,6 +56,19 @@ class Framework
 
     public function __destruct()
     {
+        $this->writeOutFiles();
+    }
+
+    protected function writeOutFiles(bool $show = FALSE)
+    {
+        if ($show) {
+            $allFiles = array_merge($this->FILES, $this->ARRAY_FILES, $this->YAML_FILES, array(
+                'lang.yaml' => TRUE
+            ));
+            print(implode("\n", array_keys($allFiles)) . "\n");
+            exit(0);
+        }
+
         // For translation work
         // DB Object => Language key, useful for translation work
         // plugin: table|view|function: [column:] en|ku|ar: <text>
@@ -135,8 +150,8 @@ class Framework
         $createdBy = NULL;
         $path      = $this->pluginFile($plugin);
         if (file_exists($path)) {
-            if (!isset($this->FILES[$path])) $this->FILES[$path] = file_get_contents($path);
-            $contents  = &$this->FILES[$path];
+            // We do not want to cache in FILES and thus overwrite the Plugin files
+            $contents = file_get_contents($path);
 
             if (preg_match("#^// Created By (.*) (.*)$#m", $contents, $matches)) {
                 $createdBy = $matches[1];
@@ -176,17 +191,20 @@ class Framework
     }
 
     // ----------------------------------------- Array files
-    protected function &arrayFileLoad(string $path): array
+    protected function &arrayFileLoad(string $path, bool $cache = self::CACHE): array
     {
-        if (!$path)
-            throw new \Exception("ARRAY_FILE path is empty");
-        if (!isset($this->ARRAY_FILES[$path])) $this->ARRAY_FILES[$path] = (file_exists($path) ? include($path) : array());
-        return $this->ARRAY_FILES[$path];
+        if (!$path) throw new \Exception("ARRAY_FILE path is empty");
+        $content = (file_exists($path) ? include($path) : array());
+        if ($cache) {
+            if (!isset($this->ARRAY_FILES[$path])) $this->ARRAY_FILES[$path] = $content;
+            return $this->ARRAY_FILES[$path];
+        }
+        return $content;
     }
 
-    protected function arrayFileValueExists(string $path, string $dotPath): bool
+    protected function arrayFileValueExists(string $path, string $dotPath, bool $cache = self::CACHE): bool
     {
-        $array = &$this->arrayFileLoad($path);
+        $array = &$this->arrayFileLoad($path, $cache);
         $keys  = explode('.', $dotPath);
         $name  = array_pop($keys);
         $level = &$array;
@@ -275,23 +293,27 @@ class Framework
 
     protected function getNextIcon(): string
     {
-        $array    = &$this->yamlFileLoad($this->iconFile);
+        $array    = &$this->yamlFileLoad($this->iconFile, self::NO_CACHE);
         $fqn      = $array[0]['icons'][$this->iconCurrent++];
         $fqnParts = explode(' ', $fqn);
         return end($fqnParts);
     }
 
     // ----------------------------------------- YAML
-    protected function &yamlFileLoad(string $path): array
+    protected function &yamlFileLoad(string $path, bool $cache = self::CACHE): array
     {
         if (!$path) throw new \Exception("YAML path is empty");
-        if (!isset($this->YAML_FILES[$path])) $this->YAML_FILES[$path] = (file_exists($path) ? \Spyc::YAMLLoad($path) : array());
-        return $this->YAML_FILES[$path];
+        $content = (file_exists($path) ? \Spyc::YAMLLoad($path) : array());
+        if ($cache) {
+            if (!isset($this->YAML_FILES[$path])) $this->YAML_FILES[$path] = $content;
+            return $this->YAML_FILES[$path];
+        }
+        return $content;
     }
 
-    protected function yamlFileValueExists(string $path, string $dotPath): bool
+    protected function yamlFileValueExists(string $path, string $dotPath, bool $cache = self::CACHE): bool
     {
-        $array = &$this->yamlFileLoad($path);
+        $array = &$this->yamlFileLoad($path, $cache);
         $keys  = explode('.', $dotPath);
         $name  = array_pop($keys);
         $level = &$array;
@@ -519,12 +541,6 @@ FUNCTION
             $pluginDirectoryPath = $this->pluginDirectoryPath($plugin);
             print("${GREEN}REMOVING${NC} existing plugin sub-directories and files from [$pluginDirectoryPath]...\n");
             $this->removeDir($pluginDirectoryPath, FALSE, FALSE);
-
-            // Some FILES have already been cached in memory from the old plugin read
-            // Let's just reset everything
-            $this->FILES       = array();
-            $this->ARRAY_FILES = array();
-            $this->YAML_FILES  = array();
         }
 
         // Abstracted MVC creates
@@ -539,6 +555,7 @@ FUNCTION
             }
         }
 
+        $this->writeOutFiles();
         $this->runChecks($plugin);
 
         /* TODO: GIT
