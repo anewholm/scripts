@@ -23,6 +23,8 @@ class Plugin {
     // ----------------------------------------- Construction
     public static function allFromTables(Framework &$framework, array &$tables): array
     {
+        global $YELLOW, $NC;
+
         foreach ($tables as &$table) {
             if ($table->isPlugin()) {
                 if ($table instanceof View) {

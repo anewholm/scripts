@@ -578,13 +578,18 @@ class WinterCMS extends Framework
                 // Run the seeding file IF there are no records in the table
                 // Because we are not doing a winter:down,up here, but we still want the records
                 if ($model->table->isEmpty()) {
-                    print("  Running seed.sql because the table is empty [");
-                    $this->db->disableTriggers();
+                    print("  Running seed.sql because the table is empty: [");
+                    $triggersDisabled = FALSE;
+                    try {
+                        $this->db->disableTriggers();
+                        $triggersDisabled = TRUE;
+                    } catch (\Exception $ex) {print("Failed to disable triggers");}
                     foreach ($inserts as $insert) {
                         print(".");
                         $this->db->insert($insert);
                     }
-                    $this->db->enableTriggers();
+                    if ($triggersDisabled) $this->db->enableTriggers();
+                    print("E");
                     print("]\n");
                 }
             }
@@ -1076,10 +1081,11 @@ class WinterCMS extends Framework
         $this->setFileContents($columnsPath, "# $createdBy");
 
         // -------------------------------- Columns.yaml
+        // Remove the standard columns. If the model has them, they will be re-created
         $indent = 1;
         $this->yamlFileUnSet($columnsPath, 'columns.id');
-        if (!$model->hasField('created_at')) $this->yamlFileUnSet($columnsPath, 'columns.created_at');
-        if (!$model->hasField('updated_at')) $this->yamlFileUnSet($columnsPath, 'columns.updated_at');
+        $this->yamlFileUnSet($columnsPath, 'columns.created_at');
+        $this->yamlFileUnSet($columnsPath, 'columns.updated_at');
 
         foreach ($model->fields() as $name => &$field) {
             if ($field->canDisplayAsColumn()) {

@@ -103,19 +103,23 @@ if [ -d $name ]; then
 				;;
 		esac
 	fi
+	cd $name
 else
 	echo "${GREEN}INFO${NC}: Installing Winter into directory $(pwd)/${YELLOW}$name${NC}"
-	composer create-project wintercms/winter $name
+	# https://getcomposer.org/doc/03-cli.md#create-project
+	# We have our own install procedures below, so we disable the standard scripts
+	composer create-project wintercms/winter $name --no-scripts
 	cd $name
 	sudo chown -R $install_grp:$install_grp .; sudo chmod -R g+rw .
 	sudo chmod +x artisan
 
-	linecount_env=`wc -l .env | cut -d " " -f 1`
-	if [ "$linecount_env" -le 2 ]; then
+	linecount_env=0
+	if [ -f .env ]; then linecount_env=`wc -l .env | cut -d " " -f 1`; fi
+	if [ $linecount_env -le 2 ]; then
 		echo "${YELLOW}WARNING${NC}: Auto-populating> 2 the .env file"
 		echo "APP_NAME=intranet
 APP_DEBUG=true
-APP_URL='$hostname'
+APP_URL='http://$hostname'
 
 # PostgreSQL only
 DB_CONNECTION='pgsql'
@@ -154,14 +158,18 @@ hostname=$name.laptop
 
 # Initial installation
 # We could also use ./artisan winter:install --no-interaction
+echo "${GREEN}INFO${NC}: composer install"
 composer install
+echo "${GREEN}INFO${NC}: artisan migrate"
 php artisan migrate
 if [ "$?" != 0 ]; then
 	echo "${RED}ERROR${NC}: Migration failed, exiting"
 	exit 0
 fi
+php artisan key:generate
 
 # -------------------------------------------- Install 3rd party modules
+echo "${GREEN}INFO${NC}: composer require 3rd party vendor modules"
 # IMAP & SMTP
 if [ ! -d vendor/webklex/php-imap ];     then composer require webklex/php-imap;     fi
 if [ ! -d vendor/webklex/laravel-imap ]; then composer require webklex/laravel-imap; fi
@@ -196,68 +204,74 @@ if [ -f $script_dir/winter/classes.php ]; then
 fi
 
 # -------------------------------------------- Install AA modules and plugins
-cd modules
-if [ ! -d acorn ]; then
-	git clone git@gitlab.acorn.org:office/acorn.git
-	if [ "$?" != 0 ]; then
-		echo "${RED}ERROR${NC}: Failed to checkout first office repository. Probably you do not have permissions. Please resolve and start again."
-		exit 1
+echo "${GREEN}INFO${NC}: composer require AA modules (from AA gitlab)"
+read -p "Install AA infrastructure (requires GitLab keys) [y|n]? (y) " yn
+if [ "$yn" == 'y' ]; then
+	cd modules
+	if [ ! -d acorn ]; then
+		git clone git@gitlab.acorn.org:office/acorn.git
+		if [ "$?" != 0 ]; then
+			echo "${RED}ERROR${NC}: Failed to checkout first office repository. Probably you do not have permissions. Please resolve and start again."
+			exit 1
+		fi
 	fi
-fi
-if [ ! -d dbauth ]; then git clone git@gitlab.acorn.org:office/dbauth.git;  fi
-cd ..
+	if [ ! -d dbauth ]; then git clone git@gitlab.acorn.org:office/dbauth.git;  fi
+	cd ..
 
-cd plugins
-mkdir -p acorn
-cd acorn
+	cd plugins
+	mkdir -p acorn
+	cd acorn
 
-if [ ! -d rtler ];     then
-	git clone git@gitlab.acorn.org:office/rtler.git
-	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to checkout first office repository. Probably you do not have permissions. Please resolve and start again."; exit 1; fi
-fi
-if [ ! -d backendlocalization ];  then
-	git clone git@gitlab.acorn.org:office/backendlocalization.git
-	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-fi
-if [ ! -d user ];  then
-	git clone git@gitlab.acorn.org:office/user.git
-	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-fi
-if [ ! -d location ];  then
-	git clone git@gitlab.acorn.org:office/location.git;
-	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-fi
-if [ ! -d messaging ]; then
-	git clone git@gitlab.acorn.org:office/messaging.git;
-	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-fi
-if [ ! -d calendar ];  then
-	git clone git@gitlab.acorn.org:office/calendar.git;
-	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-fi
-cd ../..
-# TODO: Generate /storage/framework/classes.php because we have installed via git, not composer
-# php artisan package:discover or maybe
-# php artisan plugin:refresh location
-# php artisan plugin:refresh messaging
-# php artisan plugin:refresh calendar
-# TODO: The hack way above which copies a pre-written classes.php works for now...
+	if [ ! -d rtler ];     then
+		git clone git@gitlab.acorn.org:office/rtler.git
+		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to checkout first office repository. Probably you do not have permissions. Please resolve and start again."; exit 1; fi
+	fi
+	if [ ! -d backendlocalization ];  then
+		git clone git@gitlab.acorn.org:office/backendlocalization.git
+		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+	fi
+	if [ ! -d user ];  then
+		git clone git@gitlab.acorn.org:office/user.git
+		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+	fi
+	if [ ! -d location ];  then
+		git clone git@gitlab.acorn.org:office/location.git;
+		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+	fi
+	if [ ! -d messaging ]; then
+		git clone git@gitlab.acorn.org:office/messaging.git;
+		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+	fi
+	if [ ! -d calendar ];  then
+		git clone git@gitlab.acorn.org:office/calendar.git;
+		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+	fi
+	cd ../..
+	# TODO: Generate /storage/framework/classes.php because we have installed via git, not composer
+	# php artisan package:discover or maybe
+	# php artisan plugin:refresh location
+	# php artisan plugin:refresh messaging
+	# php artisan plugin:refresh calendar
+	# TODO: The hack way above which copies a pre-written classes.php works for now...
 
-# patches
-# TODO: The tailwind patch will not work because app.js is now minified
-# service-providers.php patch will add the service providers in the correct order
-if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter ]; then
-	$script_dir/acorn-apply-patch-directory "$script_dir/winter"
-fi
+	# patches
+	echo "${GREEN}INFO${NC}: Patches"
+	# TODO: The tailwind patch will not work because app.js is now minified
+	# service-providers.php patch will add the service providers in the correct order
+	if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter ]; then
+		$script_dir/acorn-apply-patch-directory "$script_dir/winter"
+	fi
 
-if [ -f $script_dir/acorn-add-websockets ]; then
-	$script_dir/acorn-add-websockets
+	if [ -f $script_dir/acorn-add-websockets ]; then
+		$script_dir/acorn-add-websockets
+	fi
 fi
 
 # To generate /storage/framework/packages.php
 php artisan package:discover
 
 # Migrate our new plugins / modules
+echo "${GREEN}INFO${NC}: Final artisan migrate"
 php artisan migrate
 if [ "$?" != 0 ]; then
 	echo "${RED}ERROR${NC}: Migration failed, exiting"

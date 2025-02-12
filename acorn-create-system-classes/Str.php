@@ -12,6 +12,7 @@ class Str
     protected static $singularExceptions = array(
         'gps' => 'gps',
         'job_batches' => 'job_batch',
+        'offices' => 'office', // Fix offices => offix!
     );
 
     // Copied and commented from Laravel

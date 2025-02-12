@@ -236,20 +236,27 @@ class Model {
         $modifiers = array();
 
         if ($this->isAcornEvent()) {
-            $modifiers = array(
-                'fieldKeyQualifier' => '[start]',
-                'fieldType'  => 'datepicker',
-                'columnType' => 'timetense',
-                'sqlSelect'  => "(select aacep.start from acorn_calendar_event_part aacep where aacep.event_id = $column->column_name order by aacep.start limit 1)",
-                'autoFKType' => 'Xto1', // Because these fields also appear on pivot tables, causing them to be XtoXSemi
-                'autoRelationCanFilter' => TRUE,
+            // This modifier is for when we set only the date,
+            // using Event::setStartAttribute()
+            $is1to1Include = (count($relations) == 1 && end($relations) instanceof Relation1to1);
+            if ($is1to1Include) {
+                // 1to1 nested include fields.yaml will happen
+            } else {
+                $modifiers = array(
+                    'fieldKeyQualifier' => '[start]',
+                    'fieldType'  => 'datepicker',
+                    'columnType' => 'timetense',
+                    'sqlSelect'  => "(select aacep.start from acorn_calendar_event_parts aacep where aacep.event_id = $column->column_name order by aacep.start limit 1)",
+                    'autoFKType' => 'Xto1', // Because these fields also appear on pivot tables, causing them to be XtoXSemi
+                    'autoRelationCanFilter' => TRUE,
 
-                // Filter settings
-                'canFilter'  => TRUE,
-                'filterType' => 'daterange',
-                'yearRange'  => 10,
-                'conditions' => "((select aacep.start from acorn_calendar_event_part aacep where aacep.event_id = $column->column_name order by start limit 1) between ':after' and ':before')",
-            );
+                    // Filter settings
+                    'canFilter'  => TRUE,
+                    'filterType' => 'daterange',
+                    'yearRange'  => 10,
+                    'conditions' => "((select aacep.start from acorn_calendar_event_parts aacep where aacep.event_id = $column->column_name order by start limit 1) between ':after' and ':before')",
+                );
+            }
         } else if ($this->isAcornUser()) {
             $modifiers = array(
                 'fieldType'  => 'text',
