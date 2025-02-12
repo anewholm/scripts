@@ -34,6 +34,7 @@ class Field {
     public $required     = TRUE;
     public $readOnly     = FALSE;
     public $newRow       = FALSE; // From column comment
+    public $noLabel      = FALSE; // From column comment
     public $contexts     = array();
     public $span         = 'storm';
     public $cssClasses;
@@ -311,7 +312,8 @@ class Field {
         }
 
         // Individual settings
-        if ($this->newRow) array_push($cssClasses, 'new-row');
+        if ($this->newRow)  array_push($cssClasses, 'new-row');
+        if ($this->noLabel) array_push($cssClasses, 'nolabel');
 
         return $cssClasses;
     }

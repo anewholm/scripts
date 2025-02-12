@@ -271,7 +271,8 @@ class DB {
                     and table_to_att.attnum   = (select unnest(constr.confkey))
                     and table_${toFrom}_schema.nspname = :schema
                     and table_${toFrom}_class.relname  = :table
-                    and table_${toFrom}_att.attname    = :column"
+                    and table_${toFrom}_att.attname    = :column
+                order by coalesce(substring(descr.description, 'order: ([0-9]+)')::int, 10000) asc"
         );
         $statement->bindParam(':schema', $column->table->schema);
         $statement->bindParam(':table',  $column->table->name);

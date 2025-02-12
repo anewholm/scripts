@@ -3,8 +3,28 @@
 require_once('ForeignKey.php');
 
 class Column {
-    protected const STANDARD_DATA_COLUMNS    = array('id', 'created_at_event_id', 'created_by_user_id', 'created_at', 'created_by', 'server_id', 'response');
-    protected const STANDARD_CONTENT_COLUMNS = array('name', 'description');
+    protected const STANDARD_DATA_COLUMNS = array(
+        'id',
+        // Normal created & updated timestamps
+        'created_at',
+        'updated_at',
+        // Calendar created & updated => event_id
+        'created_at_event_id',
+        'updated_at_event_id',
+        // DB auth created & updated => CURRENT_USER varchar
+        'created_by',
+        'updated_by',
+        // created & updated => user_id
+        'created_by_user_id',
+        'updated_by_user_id',
+        // Misc
+        'server_id',
+        'response'
+    );
+    protected const STANDARD_CONTENT_COLUMNS = array(
+        'name',
+        'description'
+    );
     public    const DATA_COLUMN_ONLY = TRUE;
     public    const INCLUDE_SCHEMA   = TRUE;
     public    const PLURAL   = TRUE;
@@ -81,6 +101,7 @@ class Column {
     // Arrays for css class
     public $cssClasses;   // css-classes: - hug-left
     public $newRow;
+    public $noLabel;      // css-classes: nolabel
     public $bootstraps;   // bootstrap: xs: 12 sm: 4
     public $popupClasses; // popup-classes: h
     public $containerAttributes;
@@ -141,18 +162,12 @@ class Column {
     {
         // TODO: This needs to be moved to the standardTargetModelFieldDefinitions()
         $definition = array();
-        switch ($name) {
-            case 'created_at_event_id':
-            case 'created_by_user_id':
-            case 'server_id':
-            case 'response':
-                $definition = array(
-                    'autoFKType' => 'Xto1',
-                    // fields
-                    'hidden'    => TRUE,
-                    // columns
-                    'invisible' => TRUE,
-                );
+        if ($this->isStandard(self::DATA_COLUMN_ONLY)) {
+            $definition = array(
+                'hidden'     => TRUE,   // fields
+                'invisible'  => TRUE,   // columns
+            );
+            if (!$this->isTheIdColumn()) $definition['autoFKType'] = 'Xto1'; // relations
         }
         return $definition;
     }

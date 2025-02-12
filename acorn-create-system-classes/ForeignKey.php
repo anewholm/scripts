@@ -29,6 +29,7 @@ class ForeignKey {
 
     // Comment
     public $comment;
+    public $order;  // Appearance in tab pools
     public $type;
     public $system; // Internal constraint only. Do not process
     public $todo;   // TODO: This column structure has not been analysed / enabled yet

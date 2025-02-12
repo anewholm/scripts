@@ -6,6 +6,8 @@ require_once('Column.php');
 class Table {
     public const FIRST_ONLY = TRUE;
     public const REQUIRE_ONLY_ONE = FALSE;
+    public const OMIT_SCHEMA_PUBLIC = TRUE;
+    public const INCLUDE_SCHEMA_PUBLIC = FALSE;
 
     // TODO: These should be in the WinterCMS framework abstraction
     protected static $knownAcornPlugins = array('User', 'Location', 'Messaging', 'Calendar');
@@ -206,8 +208,14 @@ class Table {
     // ----------------------------------------- Table basic details
     public function dbLangPath()
     {
-        $tableDotPathParts = explode('_', $this->fullyQualifiedName(FALSE));
-        $tableDotPath      = "$tableDotPathParts[0].$tableDotPathParts[1]." . implode('_', array_slice($tableDotPathParts, 2));
+        // Used for creating easy user language translations file and AJAX dot paths
+        // array(public.acorn, lojistiks, measurement, units)
+        $tableDotPathParts = explode('_', $this->fullyQualifiedName(self::INCLUDE_SCHEMA_PUBLIC));
+        // public.acorn.lojistiks.measurement_units
+        $tableDotPath      = $tableDotPathParts[0];
+        if (isset($tableDotPathParts[1])) $tableDotPath .= '.' . $tableDotPathParts[1];
+        if (isset($tableDotPathParts[2])) $tableDotPath .= '.' . implode('_', array_slice($tableDotPathParts, 2));
+        // tables.public.acorn.lojistiks.measurement.units
         return "tables.$tableDotPath";
     }
 
@@ -310,7 +318,7 @@ class Table {
         return $subName;
     }
 
-    public function fullyQualifiedName(bool $omitPublic = TRUE): string
+    public function fullyQualifiedName(bool $omitPublic = self::OMIT_SCHEMA_PUBLIC): string
     {
         $name = $this->name;
         if (!$omitPublic || $this->schema != 'public') $name = "$this->schema.$name";
@@ -347,7 +355,7 @@ class Table {
                 $subName = implode('_', array_slice($tableNameParts, 1));
             }
         } else if (count($tableNameParts) == 2 && $this->packageType == 'plugin') {
-            // e.g. acorn_calendar
+            // e.g. acorn_calendars
             $subName = $tableNameParts[1];
         } else {
             // 3 parts required!
@@ -468,7 +476,7 @@ class Table {
         if ($this->isFrameworkTable() || $this->isFrameworkModuleTable()) {
             // Winter framework or modules
         } else if (count($tableNameParts) >= 3 || $this->packageType == 'plugin') {
-            // e.g. acorn_calendar
+            // e.g. acorn_calendars
             $plugin = ucfirst($tableNameParts[1]);
         } else if (count($tableNameParts) == 2 && $this->isOurs()) {
             // It's our Acorn module
@@ -501,14 +509,16 @@ class Table {
                 $subName = implode('_', array_slice($tableNameParts, 1));
             }
         } else if (count($tableNameParts) == 2 && $this->packageType == 'plugin') {
-            // e.g. acorn_calendar
+            // e.g. acorn_calendars
             $subName = $tableNameParts[1];
         } else {
             // 3 parts required!
             $subName = $this->subName();
         }
         if (!$subName) throw new \Exception("Could not calculate model name for table [$this->name]");
-        $modelName = Str::studly(Str::singular($subName));
+        $singular  = Str::singular($subName);
+        $modelName = Str::studly($singular);
+        // print("$subName => $singular => $modelName\n");
 
         return $modelName;
     }
@@ -519,7 +529,7 @@ class Table {
         if ($this->isModule()) {
             $subName = implode('_', array_slice($tableNameParts, 1));
         } else if (count($tableNameParts) == 2 && $this->packageType == 'plugin') {
-            // e.g. acorn_calendar
+            // e.g. acorn_calendars
             $subName = $tableNameParts[1];
         } else {
             $subName = $this->subName();

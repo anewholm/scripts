@@ -142,8 +142,8 @@ class RelationXto1 extends Relation {
         // Do either of our Models indicate that the field canFilter?
         $relations = array($this);
         $fieldDefinitions = array();
-        $from->standardTargetModelFieldDefinitions($column, $relations, $fieldDefinitions);
-        $to->standardTargetModelFieldDefinitions(  $column, $relations, $fieldDefinitions);
+        $from->standardTargetModelFieldDefinitions($column, $relations, $fieldDefinitions); // &$fieldDefinitions pass-by-reference
+        $to->standardTargetModelFieldDefinitions(  $column, $relations, $fieldDefinitions); // &$fieldDefinitions pass-by-reference
         $this->canFilter = (isset($fieldDefinitions['canFilter']) ? $fieldDefinitions['canFilter'] : FALSE);
     }
 }
