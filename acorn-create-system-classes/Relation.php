@@ -10,6 +10,7 @@ class Relation {
     public $comment;
     public $status; // ok|exclude|broken
     public $type;   // explicit typing
+    public $delete; // Relation delete: true will cause reverse cascade deletion of associated object
     public $isFrom      = TRUE; // From this column, attached to it
     public $nameObject  = FALSE;
 

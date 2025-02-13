@@ -3,6 +3,7 @@
 class Framework
 {
     public const AND_FALSES = TRUE;
+    public const NOT_FALSES = FALSE;
     public const FIRST_MULTILINE = FALSE;
     public const ALL_MULTILINE = TRUE;
     public const STD_INDENT = 1;
@@ -500,7 +501,7 @@ FUNCTION
         return $string;
     }
 
-    protected function removeEmpty(array $array, bool $andFalses = FALSE): array
+    protected function removeEmpty(array $array, bool $andFalses = self::NOT_FALSES): array
     {
         $cleanedArray = array();
         foreach ($array as $name => $value) {

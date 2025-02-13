@@ -307,6 +307,15 @@ class Table {
         return $subName;
     }
 
+    public function associatedFunctionNameBase(): string
+    {
+        // fn_acorn_calendar
+        $subName = NULL;
+        $tableNameParts  = explode('_', $this->name);
+        $subName = implode('_', array_slice($tableNameParts, 0, 2));
+        return "fn_$subName";
+    }
+
     public function subName()
     {
         // Plural: user_groups | invoices
