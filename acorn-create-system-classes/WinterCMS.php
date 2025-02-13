@@ -349,6 +349,14 @@ class WinterCMS extends Framework
             exit(1);
         }
 
+        // Functions fn_acorn_*_seed_*()
+        $seederPath = "$pluginUpdatePath/seed.sql";
+        $functions  = $this->db->functions(strtolower($plugin->author), strtolower($plugin->name), 'seed');
+        foreach ($functions as $name => $details) {
+            // We suppress duplicate warnings as the function may have been specified in the table seeding above
+            $this->appendToFile($seederPath, "select $name();", 0, TRUE, FALSE);
+        }
+
         // Create PGSQL extensions and schemas if not present
         // TODO: Why? This is dangerous. Do it manually
         /*
@@ -551,12 +559,14 @@ class WinterCMS extends Framework
 
             // ---------------------------------------------------------------- Seeding
             // This moves seeding: directives in to updates\seed.sql
+            // and also appends any fn_acorn_*_seed_*() functions
+            $seederPath = "$pluginDirectoryPath/updates/seed.sql";
             if ($model->table->seeding) {
-                $seederPath = "$pluginDirectoryPath/updates/seed.sql";
                 $schema     = $model->table->schema;
                 $table      = $model->table->name;
                 $inserts    = array();
 
+                // Table comment seeding directive
                 print("  ${GREEN}SEEDING${NC} for [$table]\n");
                 foreach ($model->table->seeding as $row) {
                     $valuesSQL = '';
@@ -574,24 +584,27 @@ class WinterCMS extends Framework
                     array_push($inserts, $insert);
                     $this->appendToFile($seederPath, $insert);
                 }
+            }
 
-                // Run the seeding file IF there are no records in the table
-                // Because we are not doing a winter:down,up here, but we still want the records
-                if ($model->table->isEmpty()) {
-                    print("  Running seed.sql because the table is empty: [");
-                    $triggersDisabled = FALSE;
-                    try {
-                        $this->db->disableTriggers();
-                        $triggersDisabled = TRUE;
-                    } catch (\Exception $ex) {print("Failed to disable triggers");}
-                    foreach ($inserts as $insert) {
+            // Run the seeding file IF there are no records in the table
+            // Because we are not doing a winter:down,up here, but we still want the records
+            if ($model->table->isEmpty() && isset($this->FILES[$seederPath])) {
+                $seederSQL = $this->FILES[$seederPath];
+                print("  Running seed.sql because the table is empty: [");
+                $triggersDisabled = FALSE;
+                try {
+                    $this->db->disableTriggers();
+                    $triggersDisabled = TRUE;
+                } catch (\Exception $ex) {print("Failed to disable triggers");}
+                foreach (preg_split("/\n/", $seederSQL) as $sql) {
+                    if ($sql) {
                         print(".");
-                        $this->db->insert($insert);
+                        $this->db->insert($sql);
                     }
-                    if ($triggersDisabled) $this->db->enableTriggers();
-                    print("E");
-                    print("]\n");
                 }
+                if ($triggersDisabled) $this->db->enableTriggers();
+                print("E");
+                print("]\n");
             }
 
             // ----------------------------------------------------------------- Language
@@ -633,11 +646,22 @@ class WinterCMS extends Framework
             foreach ($model->relations1to1() as $name => &$relation) {
                 if (isset($relations[$name])) throw new \Exception("Conflicting relations with [$name] on [$model->name]");
                 $isLeaf           = ($relation instanceof RelationLeaf);
-                $relations[$name] = array($relation->to, 'key' => $relation->column->name, 'name' => $relation->nameObject, 'leaf' => $isLeaf, 'type' => $relation->type());
+                $relations[$name] = $this->removeEmpty(array($relation->to,
+                    'key'    => $relation->column->name,
+                    'name'   => $relation->nameObject,
+                    'type'   => $relation->type(),
+                    'leaf'   => $isLeaf,
+                    'delete' => $relation->delete,
+                ), Framework::AND_FALSES);
             }
             foreach ($model->relationsXto1() as $name => &$relation) {
                 if (isset($relations[$name])) throw new \Exception("Conflicting relations with [$name] on [$model->name]");
-                $relations[$name] = array($relation->to, 'key' => $relation->column->name, 'name' => $relation->nameObject, 'type' => $relation->type());
+                $relations[$name] = $this->removeEmpty(array($relation->to,
+                    'key'    => $relation->column->name,
+                    'name'   => $relation->nameObject,
+                    'type'   => $relation->type(),
+                    'delete' => $relation->delete,
+                ), Framework::AND_FALSES);
             }
             foreach ($model->relationsSelf() as $name => &$relation) {
                 if (isset($relations[$name]))    throw new \Exception("Conflicting relations with [$name] on [$model->name]");
@@ -670,7 +694,10 @@ class WinterCMS extends Framework
             $relations = array();
             foreach ($model->relations1fromX() as $name => &$relation) {
                 if (isset($relations[$name])) throw new \Exception("Conflicting relations with [$name] on [$model->name]");
-                $relations[$name] = array($relation->to, 'key' => $relation->column->name, 'type' => $relation->type());
+                $relations[$name] = array($relation->to,
+                    'key' => $relation->column->name,
+                    'type' => $relation->type()
+                );
             }
             foreach ($model->relationsXfromXSemi() as $name => &$relation) {
                 // For the pivot model only
@@ -693,25 +720,27 @@ class WinterCMS extends Framework
             $relations = array();
             foreach ($model->relationsXfromX() as $name => &$relation) {
                 if (isset($relations[$name])) throw new \Exception("Conflicting relations with [$name] on [$model->name]");
-                $relations[$name] = array(
+                $relations[$name] = $this->removeEmpty(array(
                     $relation->to,
                     'table'    => $relation->pivot->name,
                     'key'      => $relation->keyColumn->name,  // pivot.legalcase_id
                     'otherKey' => $relation->column->name,     // pivot.user_id
-                    'type'     => $relation->type()
-                );
+                    'type'     => $relation->type(),
+                    'delete'   => $relation->delete,
+                ), Framework::AND_FALSES);
             }
             foreach ($model->relationsXfromXSemi() as $name => &$relation) {
                 // This is a link to the primary through field
                 // For other through fields, the pivot model should be used, $hasMany[*_pivot], from above
                 if (isset($relations[$name])) throw new \Exception("Conflicting relations with [$name] on [$model->name]");
-                $relations[$name] = array(
+                $relations[$name] = $this->removeEmpty(array(
                     $relation->to,
                     'table'    => $relation->pivot->name,      // Semi-Pivot Model
                     'key'      => $relation->keyColumn->name,  // pivot.legalcase_id
                     'otherKey' => $relation->column->name,     // pivot.user_id
-                    'type'     => $relation->type()
-                );
+                    'type'     => $relation->type(),
+                    'delete'   => $relation->delete,
+                ), Framework::AND_FALSES);
             }
             $this->setPropertyInClassFile($modelFilePath, 'belongsToMany', $relations);
 
@@ -719,7 +748,11 @@ class WinterCMS extends Framework
             $relations = array();
             foreach ($model->relations1from1() as $name => &$relation) {
                 if (isset($relations[$name])) throw new \Exception("Conflicting relations with [$name] on [$model->name]");
-                $relations[$name] = array($relation->to, 'key' => $relation->column->name, 'type' => $relation->type());
+                $relations[$name] = $this->removeEmpty(array($relation->to,
+                    'key'    => $relation->column->name,
+                    'type'   => $relation->type(),
+                    'delete' => $relation->delete, // This can be done by a DELETE CASCADE FK
+                ), Framework::AND_FALSES);
             }
             $this->setPropertyInClassFile($modelFilePath, 'hasOne', $relations);
 

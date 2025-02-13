@@ -126,6 +126,14 @@ class Plugin {
         return "$this->author.$this->name";
     }
 
+    public function snakeName(): string
+    {
+        // acorn_finance
+        $authorLower = strtolower($this->author);
+        $nameLower   = strtolower($this->name);
+        return "${authorLower}_$nameLower";
+    }
+
     // ----------------------------------------- Semantic info
     public function otherPluginRelations(): array
     {
