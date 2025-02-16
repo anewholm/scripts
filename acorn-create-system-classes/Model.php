@@ -244,10 +244,11 @@ class Model {
             } else {
                 $modifiers = array(
                     'fieldKeyQualifier' => '[start]',
-                    'fieldType'  => 'datepicker',
-                    'columnType' => 'timetense',
-                    'sqlSelect'  => "(select aacep.start from acorn_calendar_event_parts aacep where aacep.event_id = $column->column_name order by aacep.start limit 1)",
-                    'autoFKType' => 'Xto1', // Because these fields also appear on pivot tables, causing them to be XtoXSemi
+                    'fieldType'     => 'datepicker',
+                    'columnType'    => 'partial',
+                    'columnPartial' => 'datetime',
+                    'sqlSelect'     => "(select aacep.start from acorn_calendar_event_parts aacep where aacep.event_id = $column->column_name order by aacep.start limit 1)",
+                    'autoFKType'    => 'Xto1', // Because these fields also appear on pivot tables, causing them to be XtoXSemi
                     'autoRelationCanFilter' => TRUE,
 
                     // Filter settings

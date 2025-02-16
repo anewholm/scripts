@@ -11,7 +11,8 @@ class View extends Table {
     public function check(): bool
     {
         // Checks
-        return TRUE;
+        $changes = FALSE;
+        return $changes;
     }
 
     public function loadForeignKeys() {}

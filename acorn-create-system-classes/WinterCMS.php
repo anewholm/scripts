@@ -176,6 +176,7 @@ class WinterCMS extends Framework
             'created_at_event' => 'Created At',
             'updated_at_event' => 'Updated At',
             'created_by_user'  => 'Created By',
+            'updated_by_user'  => 'Updated By',
             'created_at'   => 'Created At',
             'updated_at'   => 'Updated At',
             'created_by'   => 'Created By',
@@ -224,6 +225,7 @@ class WinterCMS extends Framework
             'created_at_event' => 'تم التسجيل في',
             'updated_at_event' => 'تم التحديث في',
             'created_by_user'  => 'Created By',
+            'updated_by_user'  => 'Updated By',
             'created_at'   => 'تم التسجيل في',
             'updated_at'   => 'تم التحديث في',
             'created_by'   => 'Created By',
@@ -272,6 +274,7 @@ class WinterCMS extends Framework
             'created_at_event' => 'Created At',
             'updated_at_event' => 'Updated At',
             'created_by_user'  => 'Created By',
+            'updated_by_user'  => 'Updated By',
             'created_at'  => 'Created At',
             'updated_at'  => 'Updated At',
             'created_by'  => 'Created By',
@@ -569,20 +572,30 @@ class WinterCMS extends Framework
                 // Table comment seeding directive
                 print("  ${GREEN}SEEDING${NC} for [$table]\n");
                 foreach ($model->table->seeding as $row) {
-                    $valuesSQL = '';
-                    foreach ($row as $value) {
+                    $names  = array();
+                    $values = array();
+                    foreach ($model->table->columns as &$column) {
+                        if (!count($row)) break;
+                        $value = array_shift($row);
+
                         // TODO: Creation of NOT NULL associated calendar events: EVENT_ID => $this->db->createCalendarEvent('SEEDER')
                         if      ($value === 'DEFAULT')   $valueSQL = 'DEFAULT';
-                        else if ($value === 'SERVER_ID') $valueSQL = $this->db->serverID(TRUE);
-                        else if ($value === 'EVENT_ID')  $valueSQL = $this->db->createCalendarEvent('SEEDER');
+                        else if ($value === 'NULL')      $valueSQL = 'NULL';
                         else if (substr($value, 0, 19) === 'fn_acorn_' && substr($value, -1) == ')') $valueSQL = $value;
                         else $valueSQL = var_export($value, TRUE);
-                        if ($valuesSQL) $valuesSQL .= ',';
-                        $valuesSQL .= $valueSQL;
+
+                        array_push($names, $column->name);
+                        array_push($values, $valueSQL);
                     }
-                    $insert = "insert into $schema.$table values($valuesSQL);";
-                    array_push($inserts, $insert);
-                    $this->appendToFile($seederPath, $insert);
+                    if ($model->table->hasColumn('created_by_user_id')) {
+                        array_push($names, 'created_by_user_id');
+                        array_push($values, 'fn_acorn_user_get_seed_user()');
+                    }
+                    $namesSQL  = implode(',', $names);
+                    $valuesSQL = implode(',', $values);
+                    $insertSQL = "insert into $schema.$table($namesSQL) values($valuesSQL);";
+                    array_push($inserts, $insertSQL);
+                    $this->appendToFile($seederPath, $insertSQL);
                 }
             }
 

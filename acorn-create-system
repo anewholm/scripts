@@ -66,14 +66,25 @@ if (!$framework) throw new \Exception("No framework found at [$cwd]");
 $framework->show();
 
 // ------------------------------------------- Read DB
-$nc     = new AcornNamingConvention();
-$db     = new DB($nc, $framework); // TODO: Also db->comment => properties heye
-$tables = array_merge($db->tables(), $db->views());
-foreach ($tables as &$table) {
-    $table->loadForeignKeys();
-    $table->loadActionFunctions();
-}
-//foreach ($tables as &$table) $table->show();
+$nc      = new AcornNamingConvention();
+$db      = new DB($nc, $framework); // TODO: Also db->comment => properties heye
+do {
+    $tables  = array_merge($db->tables(), $db->views());
+    foreach ($tables as &$table) {
+        $table->loadForeignKeys();
+        $table->loadActionFunctions();
+        $table->loadTriggers();
+    }
+
+    // Standard column list and fix checks
+    print("Running all schema checks...\n");
+    $changes = FALSE;
+    foreach ($tables as &$table) {
+        if ($table->check()) 
+            $changes = TRUE;
+    }
+    print($changes ? "RELOAD\n" : "OK\n");
+} while ($changes);
 
 // ------------------------------------------- Generate plugins
 $modules = Module::allFromTables($framework, $tables);

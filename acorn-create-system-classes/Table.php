@@ -2,6 +2,7 @@
 
 require_once('Str.php');
 require_once('Column.php');
+require_once('Trigger.php');
 
 class Table {
     public const FIRST_ONLY = TRUE;
@@ -20,8 +21,11 @@ class Table {
     public $schema;
     public $name;
     protected $order;
+    protected $owner;
+    static $generalOwner;
 
     public $comment;
+    public $parsedComment; // array
     public $packageType; // plugin|module
     public $pluginIcon;
     public $system; // Internal do not process
@@ -47,6 +51,7 @@ class Table {
 
     public $columns;
     public $actionFunctions;
+    public $triggers;
     public $printable;
 
     public $filters = array();
@@ -91,7 +96,8 @@ class Table {
         foreach ($properties as $name => $value) {
             if (property_exists($this, $name)) $this->$name = $value;
         }
-        foreach (\Spyc::YAMLLoadString($this->comment) as $name => $value) {
+        $this->parsedComment = \Spyc::YAMLLoadString($this->comment);
+        foreach ($this->parsedComment as $name => $value) {
             $nameCamel = Str::camel($name);
             if (!property_exists($this, $nameCamel)) self::blockingAlert("Property [$nameCamel] does not exist on [$this->name]");
             if (!isset($this->$nameCamel)) $this->$nameCamel = $value;
@@ -99,63 +105,260 @@ class Table {
 
         $this->columns = $db->tableColumns($this);
 
-        if ($this->shouldProcess()) $this->check();
-
         $qualifiedName = "$this->schema.$this->name";
         self::$tables[$qualifiedName] = $this;
     }
 
     public function check(): bool
     {
+        global $YELLOW, $RED, $NC;
+
+        // Will return TRUE if changes were made
+        // indicating that the DB schema should be re-read
+        $changes = FALSE;
+
         // Checks
         // We omit some of our own known plugins
         // because they do not conform yet to our naming requirements
-        if ($this->isOurs() && !$this->isKnownAcornPlugin()) {
-            $strPlural   = Str::plural($this->name);
-            $strSingular = Str::singular($this->name);
-            if ($this->isContentTable()) {
-                if (!$this->hasColumn('id', 'uuid', 'gen_random_uuid()')) {
-                    throw new \Exception("Content table [$this->name] has no id(uuid/gen_random_uuid()) column");
-                }
+        if ($this->shouldProcess()) {
+            if ($this->isOurs() && !$this->isKnownAcornPlugin() && !$this->isModule()) {
+                $strPlural   = Str::plural($this->name);
+                $strSingular = Str::singular($this->name);
+              
+                // We don't really know the ideal owner, so we just check it is consistent
+                if (!self::$generalOwner) {
+                    self::$generalOwner = $this->owner;
+                    print("Set general owner to [$YELLOW$this->owner$NC]\n");
+                } else if ($this->owner != self::$generalOwner)
+                    throw new \Exception("Table $this->name is owned by $this->owner, not " . self::$generalOwner);
 
-                /*
-                $columnCheck = 'name';
-                if (!$this->hasColumn($columnCheck)) {
-                    $error = "Content table [$this->name] has no [$columnCheck] column";
-                    print("$error\n");
-                    $gen = readline("Create a generated [$columnCheck] with clause [<clause>|n] (id) ?");
-                    if ($gen != 'n') {
-                        if (!$gen) $gen = 'id';
-                        $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'character varying(1024)', $gen);
-                        print("Added [$columnCheck] with clause [$gen]\n");
+                if ($this->isContentTable()) {
+                    if (!$this->hasColumn('id', 'uuid', 'gen_random_uuid()')) {
+                        // TODO: Offer to add it?
+                        throw new \Exception("Content table [$this->name] has no id(uuid/gen_random_uuid()) column");
+                    }
+
+                    // ------------------------ name
+                    $columnCheck = 'name';
+                    if (!$this->hasColumn($columnCheck) 
+                        && !$this->hasCustom1to1FK() 
+                        && !$this->hasCustomNameObjectFK()
+                        && !$this->hasPHPMethod('name')
+                    ) {
+                        $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] column, 1to1, name-object or name PHP method";
+                        print("${RED}WARNING$NC: $error\n");
+                        $gen = readline("Create a generated [$columnCheck] with clause [<clause>|n] (id) ?");
+                        if ($gen != 'n') {
+                            if (!$gen) $gen = 'id';
+                            $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'character varying(1024)', $gen);
+                            print("Added [$columnCheck] with clause [$gen]\n");
+                            $changes = TRUE;
+                        }
+                    }
+
+                    // ------------------------------------------------- created_at[_event_id]
+                    $columnCheck = 'created_at_event_id';
+                    if (!$this->hasColumn($columnCheck) && !$this->hasCustom1to1FK()) {
+                        $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] column";
+                        print("${RED}WARNING$NC: $error\n");
+                        $yn = readline("Create [$columnCheck] (y) ?");
+                        if ($yn != 'n') {
+                            $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'uuid');
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_calendar_events');
+                            print("Added [$columnCheck] with FK\n");
+                            $changes = TRUE;
+                        }
+                    }
+                    if ($this->hasColumn($columnCheck) && !$this->getColumnFK($columnCheck)) {
+                        $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] FK";
+                        print("${RED}WARNING$NC: $error\n");
+                        $yn = readline("Create [$columnCheck] FK (y) ?");
+                        if ($yn != 'n') {
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_calendar_events');
+                            print("Added [$columnCheck] FK\n");
+                            $changes = TRUE;
+                        }
+                    }
+                    $triggerCheck = 'fn_acorn_calendar_trigger_created_at_event';
+                    if ($this->hasColumn($columnCheck) && !$this->hasTrigger($triggerCheck)) {
+                        $error = "Content table [$YELLOW$this->name$NC] has [$YELLOW$columnCheck$NC] column but no trigger [$YELLOW$triggerCheck$NC]";
+                        print("${RED}WARNING$NC: $error\n");
+                        $yn = readline("Create [$triggerCheck] (y) ?");
+                        if ($yn != 'n') {
+                            $this->db->addTrigger($this->fullyQualifiedName(), $triggerCheck, 'BEFORE');
+                            print("Added [$triggerCheck]\n");
+                            $changes = TRUE;
+                        }
+                    }
+                    $columnCheck = 'created_at';
+                    if ($this->hasColumn($columnCheck)) {
+                        $error = "Content table [$YELLOW$this->name$NC] has a depreceated [$YELLOW$columnCheck$NC] column";
+                        print("${RED}WARNING$NC: $error\n");
+                        $yn = readline("Remove [$columnCheck] (y) ?");
+                        if ($yn != 'n') {
+                            $this->db->deleteColumn($this->fullyQualifiedName(), $columnCheck);
+                            print("Deleted [$columnCheck]\n");
+                            $changes = TRUE;
+                        }
+                    }
+                    
+                    // ------------------------------------------------- updated_at[_event_id]
+                    $columnCheck = 'updated_at_event_id';
+                    if (!$this->hasColumn($columnCheck) && !$this->hasCustom1to1FK()) {
+                        $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] column";
+                        print("${RED}WARNING$NC: $error\n");
+                        $yn = readline("Create [$columnCheck] (y) ?");
+                        if ($yn != 'n') {
+                            $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'uuid', NULL, Column::NULLABLE);
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_calendar_events');
+                            print("Added [$columnCheck] NULLABLE with FK\n");
+                            $changes = TRUE;
+                        }
+                    }
+                    if ($this->hasColumn($columnCheck) && !$this->getColumnFK($columnCheck)) {
+                        $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] FK";
+                        print("${RED}WARNING$NC: $error\n");
+                        $yn = readline("Create [$columnCheck] FK (y) ?");
+                        if ($yn != 'n') {
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_calendar_events');
+                            print("Added [$columnCheck] FK\n");
+                            $changes = TRUE;
+                        }
+                    }
+                    $columnCheck = 'updated_at';
+                    if ($this->hasColumn($columnCheck)) {
+                        $error = "Content table [$YELLOW$this->name$NC] has a depreceated [$YELLOW$columnCheck$NC] column";
+                        print("${RED}WARNING$NC: $error\n");
+                        $yn = readline("Remove [$columnCheck] (y) ?");
+                        if ($yn != 'n') {
+                            $this->db->deleteColumn($this->fullyQualifiedName(), $columnCheck);
+                            print("Deleted [$columnCheck]\n");
+                            $changes = TRUE;
+                        }
+                    }
+
+                    // ------------------------------------------------- created_by[_user_id]
+                    $columnCheck = 'created_by_user_id';
+                    if (!$this->hasColumn($columnCheck) && !$this->hasCustom1to1FK()) {
+                        $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] column";
+                        print("${RED}WARNING$NC: $error\n");
+                        $yn = readline("Create [$columnCheck] (y) ?");
+                        if ($yn != 'n') {
+                            $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'uuid', NULL);
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_user_users');
+                            print("Added [$columnCheck] NULLABLE with FK\n");
+                            $changes = TRUE;
+                        }
+                    }
+                    if ($this->hasColumn($columnCheck) && !$this->getColumnFK($columnCheck)) {
+                        $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] FK";
+                        print("${RED}WARNING$NC: $error\n");
+                        $yn = readline("Create [$columnCheck] FK (y) ?");
+                        if ($yn != 'n') {
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_user_users');
+                            print("Added [$columnCheck] FK\n");
+                            $changes = TRUE;
+                        }
+                    }
+                    $columnCheck = 'created_by';
+                    if ($this->hasColumn($columnCheck)) {
+                        $error = "Content table [$YELLOW$this->name$NC] has a depreceated [$YELLOW$columnCheck$NC] column";
+                        print("${RED}WARNING$NC: $error\n");
+                        $yn = readline("Remove [$columnCheck] (y) ?");
+                        if ($yn != 'n') {
+                            $this->db->deleteColumn($this->fullyQualifiedName(), $columnCheck);
+                            print("Deleted [$columnCheck]\n");
+                            $changes = TRUE;
+                        }
+                    }
+
+                    // ------------------------------------------------- updated_by[_user_id]
+                    $columnCheck = 'updated_by_user_id';
+                    if (!$this->hasColumn($columnCheck) && !$this->hasCustom1to1FK()) {
+                        $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] column";
+                        print("${RED}WARNING$NC: $error\n");
+                        $yn = readline("Create [$columnCheck] (y) ?");
+                        if ($yn != 'n') {
+                            $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'uuid', NULL, Column::NULLABLE);
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_user_users');
+                            print("Added [$columnCheck] NULLABLE with FK\n");
+                            $changes = TRUE;
+                        }
+                    }
+                    if ($this->hasColumn($columnCheck) && !$this->getColumnFK($columnCheck)) {
+                        $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] FK";
+                        print("${RED}WARNING$NC: $error\n");
+                        $yn = readline("Create [$columnCheck] FK (y) ?");
+                        if ($yn != 'n') {
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_user_users');
+                            print("Added [$columnCheck] FK\n");
+                            $changes = TRUE;
+                        }
+                    }
+                    $columnCheck = 'updated_by';
+                    if ($this->hasColumn($columnCheck)) {
+                        $error = "Content table [$YELLOW$this->name$NC] has a depreceated [$YELLOW$columnCheck$NC] column";
+                        print("${RED}WARNING$NC: $error\n");
+                        $yn = readline("Remove [$columnCheck] (y) ?");
+                        if ($yn != 'n') {
+                            $this->db->deleteColumn($this->fullyQualifiedName(), $columnCheck);
+                            print("Deleted [$columnCheck]\n");
+                            $changes = TRUE;
+                        }
+                    }
+
+                    // ------------------------------------------------- server_id
+                    $columnCheck = 'server_id';
+                    if (!$this->hasColumn($columnCheck) && !$this->hasCustom1to1FK()) {
+                        $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] column";
+                        print("${RED}WARNING$NC: $error\n");
+                        $yn = readline("Create [$columnCheck] (y) ?");
+                        if ($yn != 'n') {
+                            $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'uuid');
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_servers');
+                            print("Added [$columnCheck] NULLABLE with FK\n");
+                            $changes = TRUE;
+                        }
+                    }
+                    $triggerCheck = 'fn_acorn_server_id';
+                    if ($this->hasColumn($columnCheck) && !$this->hasTrigger($triggerCheck)) {
+                        $error = "Content table [$YELLOW$this->name$NC] has [$YELLOW$columnCheck$NC] column but no trigger [$YELLOW$triggerCheck$NC]";
+                        print("${RED}WARNING$NC: $error\n");
+                        $yn = readline("Create [$triggerCheck] (y) ?");
+                        if ($yn != 'n') {
+                            $this->db->addTrigger($this->fullyQualifiedName(), $triggerCheck, 'BEFORE', array('INSERT'));
+                            print("Added [$triggerCheck]\n");
+                            $changes = TRUE;
+                        }
+                    }
+                    if ($this->hasColumn($columnCheck) && !$this->getColumnFK($columnCheck)) {
+                        $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] FK";
+                        print("${RED}WARNING$NC: $error\n");
+                        $yn = readline("Create [$columnCheck] FK (y) ?");
+                        if ($yn != 'n') {
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_servers');
+                            print("Added [$columnCheck] FK\n");
+                            $changes = TRUE;
+                        }
+                    }
+                } else if ($this->isPivotTable()) {
+                    if ($this->hasColumn('id')) {
+                        throw new \Exception("Pivot table [$this->name] ($this->plural/$strPlural) ($this->singular/$strSingular) has id column");
+                    }
+                    if (count($this->customForeignIdColumns()) != 2) {
+                        $customForeignIdColumns = implode(', ', array_keys($this->customForeignIdColumns()));
+                        throw new \Exception("Pivot table [$this->name] does not have 2 custom foreign id columns [$customForeignIdColumns]");
                     }
                 }
 
-                $columnCheck = 'created_at_event_id';
-                if (!$this->hasColumn($columnCheck)) {
-                    $error = "Content table [$this->name] has no [$columnCheck] column";
-                    print("$error\n");
-                    $yn = readline("Create [$columnCheck] (y) ?");
-                    if ($yn != 'n') {
-                        $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'uuid');
-                        // TODO: $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'character varying(1024)');
-                        print("Added [$columnCheck]\n");
-                    }
-                }
-
-                // TODO: auto-add other standard columns and FKs
-                */
-            } else if ($this->isPivotTable()) {
-                if ($this->hasColumn('id')) {
-                    throw new \Exception("Pivot table [$this->name] ($this->plural/$strPlural) ($this->singular/$strSingular) has id column");
-                }
-                if (count($this->customForeignIdColumns()) != 2) {
-                    $customForeignIdColumns = implode(', ', array_keys($this->customForeignIdColumns()));
-                    throw new \Exception("Pivot table [$this->name] does not have 2 custom foreign id columns [$customForeignIdColumns]");
+                foreach ($this->columns as &$column) {
+                    if ($column->isForeignID() && count($column->foreignKeysFrom) == 0) 
+                        throw new \Exception("Custom Foreign ID column [$this->name.$column->name] has no FK");
                 }
             }
         }
-        return TRUE;
+
+        return $changes;
     }
 
     public function shouldProcess(): bool
@@ -175,6 +378,11 @@ class Table {
         $this->actionFunctions = $this->db->actionFunctionsForTable($this->name);
     }
 
+    public function loadTriggers()
+    {
+        $this->triggers = $this->db->triggers($this);
+    }
+
     public function db()
     {
         return $this->db;
@@ -183,6 +391,23 @@ class Table {
     public function isEmpty(): bool
     {
         return $this->db->isEmpty($this->name);
+    }
+
+    public function commentValue(string $dotPath)
+    {
+        // methods.name
+        $path  = explode(".", $dotPath);
+        $value = $this->parsedComment;
+        while ($value 
+            && is_array($value)
+            && ($step = array_shift($path))
+            && isset($value[$step])
+        ) {
+            $value = $value[$step];
+        }
+
+        // If there is path left, we did not arrive
+        return ($path ? NULL : $value);
     }
 
     // ----------------------------------------- Display
@@ -205,18 +430,20 @@ class Table {
         print("\n");
     }
 
-    // ----------------------------------------- Table basic details
-    public function dbLangPath()
+    // ------------------------------------------------ Table interrogation
+    public function isFrameworkTable(): bool
     {
-        // Used for creating easy user language translations file and AJAX dot paths
-        // array(public.acorn, lojistiks, measurement, units)
-        $tableDotPathParts = explode('_', $this->fullyQualifiedName(self::INCLUDE_SCHEMA_PUBLIC));
-        // public.acorn.lojistiks.measurement_units
-        $tableDotPath      = $tableDotPathParts[0];
-        if (isset($tableDotPathParts[1])) $tableDotPath .= '.' . $tableDotPathParts[1];
-        if (isset($tableDotPathParts[2])) $tableDotPath .= '.' . implode('_', array_slice($tableDotPathParts, 2));
-        // tables.public.acorn.lojistiks.measurement.units
-        return "tables.$tableDotPath";
+        return $this->db->isFrameworkTable($this->name);
+    }
+
+    public function isFrameworkModuleTable(): bool
+    {
+        return $this->db->isFrameworkModuleTable($this->name);
+    }
+
+    public function idColumn(): ?Column
+    {
+        return (isset($this->columns['id']) ? $this->columns['id'] : NULL);
     }
 
     public function hasIdColumn(): bool
@@ -240,6 +467,76 @@ class Table {
     public function hasColumnOfType(string $type): bool
     {
         return (bool) count($this->columnsOfType($type));
+    }
+
+    public function hasTrigger(string $function): bool
+    {
+        $has = FALSE;
+        foreach ($this->triggers as $trigger) {
+            if ($trigger->function == $function) {
+                $has = TRUE;
+                break;
+            }
+        }
+        return $has;
+    }
+
+    public function getColumnFK(string $columnName): ForeignKey|NULL
+    {
+        $fk = NULL;
+        if (isset($this->columns[$columnName])) {
+            $column = $this->columns[$columnName];
+            if (count($column->foreignKeysFrom)) $fk = end($column->foreignKeysFrom);
+        }
+
+        return $fk;
+    }
+
+    public function hasColumnDefault(string $columnName)
+    {
+        $default = NULL;
+        if (isset($this->columns[$columnName])) {
+            $default = $this->columns[$columnName]->column_default;
+        }
+
+        return $default;
+    }
+
+    public function hasCustom1to1FK(): bool
+    {
+        $has = FALSE;
+        foreach ($this->columns as $column) {
+            if ($column->isCustom()) {
+                foreach ($column->foreignKeysFrom as $fk) {
+                    if ($fk->type == '1to1') {
+                        $has = TRUE;
+                        break;
+                    }
+                }
+            }
+        }
+        return $has;
+    }
+
+    public function hasCustomNameObjectFK(): bool
+    {
+        $has = FALSE;
+        foreach ($this->columns as $column) {
+            if ($column->isCustom()) {
+                foreach ($column->foreignKeysFrom as $fk) {
+                    if ($fk->nameObject == TRUE) {
+                        $has = TRUE;
+                        break;
+                    }
+                }
+            }
+        }
+        return $has;
+    }
+
+    public function hasPHPMethod(string $method): bool
+    {
+        return (bool) $this->commentValue("methods.$method");
     }
 
     public function dateColumns(): array
@@ -272,6 +569,20 @@ class Table {
     public function hasSoftDelete(): bool
     {
         return $this->hasColumn('deleted_at', 'timestamp');
+    }
+
+    // ------------------------------------------------ Names
+    public function dbLangPath()
+    {
+        // Used for creating easy user language translations file and AJAX dot paths
+        // array(public.acorn, lojistiks, measurement, units)
+        $tableDotPathParts = explode('_', $this->fullyQualifiedName(self::INCLUDE_SCHEMA_PUBLIC));
+        // public.acorn.lojistiks.measurement_units
+        $tableDotPath      = $tableDotPathParts[0];
+        if (isset($tableDotPathParts[1])) $tableDotPath .= '.' . $tableDotPathParts[1];
+        if (isset($tableDotPathParts[2])) $tableDotPath .= '.' . implode('_', array_slice($tableDotPathParts, 2));
+        // tables.public.acorn.lojistiks.measurement.units
+        return "tables.$tableDotPath";
     }
 
     protected function nameSingular(): string
@@ -332,22 +643,6 @@ class Table {
         $name = $this->name;
         if (!$omitPublic || $this->schema != 'public') $name = "$this->schema.$name";
         return $name;
-    }
-
-    // ----------------------------------------- Table semantic information
-    public function isFrameworkTable(): bool
-    {
-        return $this->db->isFrameworkTable($this->name);
-    }
-
-    public function isFrameworkModuleTable(): bool
-    {
-        return $this->db->isFrameworkModuleTable($this->name);
-    }
-
-    public function idColumn(): ?Column
-    {
-        return (isset($this->columns['id']) ? $this->columns['id'] : NULL);
     }
 
     public function unqualifiedForeignKeyColumnBaseName(): string
