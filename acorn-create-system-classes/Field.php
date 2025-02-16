@@ -47,6 +47,7 @@ class Field {
     public $fieldComment;
     public $commentHtml  = TRUE;
     public $hierarchical;
+    public $optionsStaticMethod = 'dropdownOptions';
     public $fieldOptions;
     public $fieldOptionsModel;
     public $dependsOn = array();
@@ -104,6 +105,7 @@ class Field {
         $this->column    = $column;
         $this->relations = $relations;
 
+        // Overwrite all defaults
         foreach ($definition as $name => $value) {
             if ($name == '#') $name = 'yamlComment';
             if (!property_exists($this, $name)) throw new \Exception("Property [$name] with value [$value] does not exist on Field");
@@ -161,8 +163,9 @@ class Field {
             case 'timestamp without time zone':
             case 'date':
             case 'datetime':
-                $fieldDefinition['fieldType'] = 'datepicker';
-                $fieldDefinition['columnType'] = 'timetense';
+                $fieldDefinition['fieldType']     = 'datepicker';
+                $fieldDefinition['columnType']    = 'partial';
+                $fieldDefinition['columnPartial'] = 'datetime'; // 2 line with tooltip
                 break;
             case 'boolean':
             case 'bool':
@@ -174,7 +177,7 @@ class Field {
                 $fieldDefinition['length']     = 1;
                 break;
             case 'text':
-                $fieldDefinition['fieldType']     = 'textarea';
+                $fieldDefinition['fieldType']     = 'richeditor';
                 break;
             case 'money':
                 $tableName = $column->table->name;
@@ -283,7 +286,7 @@ class Field {
     {
         // Array cssClasses
         $cssClasses = ($this->cssClasses ?: array());
-        if (!is_array($cssClasses)) throw new \Exception("cssClasses [$this->cssClasses] must be an array on [$this]");
+        if (is_string($cssClasses)) $cssClasses = array($cssClasses);
 
         // Array bootstraps
         // bootstraps:
@@ -424,7 +427,8 @@ class ForeignIdField extends Field {
             // This is a multiple relation: Xto1, XtoX, etc.
             // We only override the default text setting
             // because, for example, created_at_event_id wants to show a datepicker
-            if (!isset($this->fieldType) || $this->fieldType == 'text') {
+            // TODO: This morph to a dropdown needs to be rationalised a bit
+            if (!isset($this->fieldType) || $this->fieldType == 'text' || $this->fieldType == 'radio' || $this->fieldType == 'dropdown') {
                 // ----------------------- Columns.yaml sortable relation
                 // We use relation, select and valueFrom because it can be column sorted and searched
                 // whereas 1to1 relation[value]: fields cannot
@@ -472,14 +476,15 @@ class ForeignIdField extends Field {
                 }
 
                 // ----------------------- Fields.yaml Dropdown
-                $this->cssClasses = array('popup-col-xs-6');
-                $this->bootstraps = array('xs' => 5);
+                if (!$this->cssClasses) $this->cssClasses = array('popup-col-xs-6');
+                if (!$this->bootstraps) $this->bootstraps = array('xs' => 5);
                 if ($this->relation1 instanceof RelationSelf) $this->hierarchical = TRUE;
-                $modelTo = &$this->relation1->to;
-                $this->optionsStaticMethod = 'dropdownOptions';
-                $this->nameFrom     = 'fully_qualified_name';
-                $this->fieldType    = 'dropdown';
-                $this->fieldOptions = $modelTo->staticCallClause($this->optionsStaticMethod);
+                if (!$this->nameFrom)   $this->nameFrom = 'fully_qualified_name';
+                if (!$this->fieldType || $this->fieldType == 'text') $this->fieldType = 'dropdown';
+            }
+
+            if ($this->relation1) {
+                if (!$this->fieldOptions) $this->fieldOptions = $this->relation1->to->staticCallClause($this->optionsStaticMethod);
             }
 
             $this->yamlComment = "$this->yamlComment, with $this->relation1";

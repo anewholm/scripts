@@ -26,9 +26,12 @@ class Column {
         'description'
     );
     public    const DATA_COLUMN_ONLY = TRUE;
+    public    const INCLUDE_CONTENT_COLUMNS = FALSE;
     public    const INCLUDE_SCHEMA   = TRUE;
     public    const PLURAL   = TRUE;
     public    const SINGULAR = FALSE;
+    public const NULLABLE = TRUE;
+    public const NOT_NULL = FALSE;
 
     // Objects
     public $table;
@@ -184,12 +187,6 @@ class Column {
         // So foreignKeysTo will point (to) to this table id, and from a foreign table
         $this->foreignKeysFrom = $this->db()->foreignKeysFrom($this); // from => to
         $this->foreignKeysTo   = $this->db()->foreignKeysTo($this);   // to <= from
-
-        // We omit some of our own known plugins
-        // because they do not conform yet to our naming requirements
-        if ($this->table->isOurs() && !$this->table->isKnownAcornPlugin()) {
-            if ($this->isForeignID() && count($this->foreignKeysFrom) == 0) throw new \Exception("Foreign ID column [$tableName.$this->name] has no FK");
-        }
     }
 
     protected function db()
@@ -263,7 +260,7 @@ class Column {
         return ($this->name == 'id');
     }
 
-    public function isStandard(bool $dataColumnOnly = FALSE): bool
+    public function isStandard(bool $dataColumnOnly = self::INCLUDE_CONTENT_COLUMNS): bool
     {
         return (array_search($this->name, self::STANDARD_DATA_COLUMNS) !== FALSE
             ||  (!$dataColumnOnly && array_search($this->name, self::STANDARD_CONTENT_COLUMNS) !== FALSE)

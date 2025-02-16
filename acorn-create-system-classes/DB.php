@@ -8,6 +8,7 @@ class DB {
     protected $framework;
     protected $database;
     protected $connection;
+    protected $comment;
 
     public function __construct(DatabaseNamingConvention &$nc, Framework &$framework)
     {
@@ -153,8 +154,10 @@ class DB {
         // TODO: oid for comment write-back
         $statement = $this->connection->prepare("select table_schema as schema, table_name as name, table_type as type,
                 substring(obj_description(concat(table_schema, '.', table_name)::regclass, 'pg_class'), 'order: ([0-9]+)')::int as order,
-                obj_description(concat(table_schema, '.', table_name)::regclass, 'pg_class') as comment
-            from information_schema.tables
+                obj_description(concat(table_schema, '.', table_name)::regclass, 'pg_class') as comment,
+                tableowner as owner
+            from information_schema.tables tbs
+            inner join pg_tables pgtbs on tbs.table_schema = pgtbs.schemaname and tbs.table_name = pgtbs.tablename
             where table_catalog = current_database()
                 and table_schema not like('pg_%') and not table_schema = 'information_schema'
                 and table_schema like(:schemaMatch)
@@ -297,16 +300,100 @@ class DB {
         return $this->foreignKeys($column, TRUE);
     }
 
-    // --------------------------------------- Actions
-    public function addColumn($table, $column, $type, $gen = NULL)
+    public function triggers(Table &$table, string $type = NULL): array
     {
-        $sql = 'ALTER TABLE IF EXISTS :table ADD COLUMN :column :type';
-        if ($gen) $sql .= ' GENERATED ALWAYS AS (:gen) STORED';
-        $this->connection->prepare($sql);
-        $statement->bindParam('table',  $table);
-        $statement->bindParam('column', $column);
-        $statement->bindParam('type',   $type);
-        if ($gen) $statement->bindParam('gen', $gen);
+        $results   = array();
+        $sql = "SELECT 
+                trigger_schema, trigger_name as name, 
+                action_timing, event_manipulation, 
+                event_object_schema, event_object_table, 
+                action_statement, replace(replace(action_statement, 'EXECUTE FUNCTION ', ''), '()', '') as function
+            FROM information_schema.triggers
+            WHERE event_object_schema = :schema
+            AND   event_object_table  = :table
+        ";
+        if ($type) $sql .= ' AND event_manipulation = :type';
+        $statement = $this->connection->prepare($sql);
+        $statement->bindParam(':schema', $table->schema);
+        $statement->bindParam(':table',  $table->name);
+        if ($type) $statement->bindParam(':type',   $type);
+        $statement->execute();
+
+        foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $tr = Trigger::fromRow($table, $row);
+            $results[$tr->fullyQualifiedName()] = $tr;
+        }
+
+        return $results;
+    }
+
+    // --------------------------------------- Actions
+    public function addColumn(string $table, string $column, string $type, string $gen = NULL, bool $nullable = Column::NOT_NULL)
+    {
+        global $YELLOW, $RED, $NC;
+
+        if (!$nullable) {
+            $sql     = "select count(*) from $table;";
+            $reponse = $this->connection->query($sql);
+            $results = $reponse->fetchAll(\PDO::FETCH_ASSOC);
+            if (count($results)) {
+                print("${RED}ERROR$NC: $table has rows, so adding a NOT NULL column will fail\n");
+                $yn = readline("Truncate cascade [$table] (y) ?");
+                if ($yn != 'n') {
+                    $sql     = "TRUNCATE $table CASCADE;";
+                    $reponse = $this->connection->query($sql);
+                }
+            }
+        }
+
+        $sql = "ALTER TABLE IF EXISTS $table ADD COLUMN $column $type";
+        if (!$nullable) $sql .= " NOT NULL";
+        if ($gen)       $sql .= " GENERATED ALWAYS AS ($gen) STORED";
+        $statement = $this->connection->prepare($sql);
+        $statement->execute();
+    }
+
+    public function setDefault(string $table, string $column, string $default, bool $quote = FALSE)
+    {
+        if ($quote) $default = "'$default'";
+        $sql = "ALTER TABLE IF EXISTS $table ALTER COLUMN $column SET DEFAULT $default";
+        $statement = $this->connection->prepare($sql);
+        $statement->execute();
+    }
+
+    public function deleteColumn(string $table, string $column)
+    {
+        $sql = "ALTER TABLE IF EXISTS $table DROP COLUMN $column";
+        $statement = $this->connection->prepare($sql);
+        $statement->execute();
+    }
+
+    public function addForeignKey(string $table, string $column, string $references_table, string $references_column = 'id')
+    {
+        $sql = "ALTER TABLE IF EXISTS $table
+            ADD CONSTRAINT $column FOREIGN KEY ($column)
+            REFERENCES $references_table ($references_column) MATCH SIMPLE
+            ON UPDATE NO ACTION
+            ON DELETE NO ACTION
+            NOT VALID;";
+        $statement = $this->connection->prepare($sql);
+        $statement->execute();
+
+        $sql = "CREATE INDEX IF NOT EXISTS fki_$column ON $table($column);";
+        $statement = $this->connection->prepare($sql);
+        $statement->execute();
+    }
+
+    public function addTrigger(string $table, string $function, string $action_timing = 'AFTER', array $event_manipulation = array('INSERT', 'UPDATE'))
+    {
+        $triggerName = preg_replace('/^fn_/', 'tr_', $function);
+        $event_manipulation_string = implode(' OR ', $event_manipulation);
+        $sql = "CREATE OR REPLACE TRIGGER $triggerName
+            $action_timing $event_manipulation_string 
+            ON $table
+            FOR EACH ROW
+            EXECUTE FUNCTION $function();";
+        $statement = $this->connection->prepare($sql);
         $statement->execute();
     }
 
@@ -314,7 +401,7 @@ class DB {
     {
         $indentString = str_repeat(' ', $indent * 2);
         $sql = file_get_contents($filePath);
-        if (!$sql) throw new Exception("SQL file [$filePath] is empty");
+        if (!$sql) throw new \Exception("SQL file [$filePath] is empty");
 
         foreach (explode(';', $sql) as $sqlCommand) {
             $sqlCommand = trim($sqlCommand);
