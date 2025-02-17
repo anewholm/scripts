@@ -597,27 +597,17 @@ class WinterCMS extends Framework
                     array_push($inserts, $insertSQL);
                     $this->appendToFile($seederPath, $insertSQL);
                 }
-            }
-
-            // Run the seeding file IF there are no records in the table
-            // Because we are not doing a winter:down,up here, but we still want the records
-            if ($model->table->isEmpty() && isset($this->FILES[$seederPath])) {
-                $seederSQL = $this->FILES[$seederPath];
-                print("  Running seed.sql because the table is empty: [");
-                $triggersDisabled = FALSE;
-                try {
-                    $this->db->disableTriggers();
-                    $triggersDisabled = TRUE;
-                } catch (\Exception $ex) {print("Failed to disable triggers");}
-                foreach (preg_split("/\n/", $seederSQL) as $sql) {
-                    if ($sql) {
+                
+                // Run the seeding IF there are no records in the table
+                // Because we are not doing a winter:down,up here, but we still want the records
+                if ($model->table->isEmpty() && count($inserts)) {
+                    print("  Running ${YELLOW}$table${NC} seed inserts because the table is empty: [");
+                    foreach ($inserts as $insert) {
                         print(".");
-                        $this->db->insert($sql);
+                        $this->db->insert($insert);
                     }
+                    print("]\n");
                 }
-                if ($triggersDisabled) $this->db->enableTriggers();
-                print("E");
-                print("]\n");
             }
 
             // ----------------------------------------------------------------- Language

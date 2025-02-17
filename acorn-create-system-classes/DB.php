@@ -85,6 +85,9 @@ class DB {
     }
 
     // --------------------------------------- Schema Queries
+    // PostGres supports ANSI information_schema and proprietry pg_* information
+    // https://www.postgresql.org/docs/current/functions-info.html
+    // https://www.postgresql.org/docs/current/functions-info.html#FUNCTIONS-INFO-COMMENT
     public function actionFunctionsForTable(string $table): array
     {
         $tableParts     = explode('_', $table); // acorn_justice_legalcases
@@ -100,7 +103,8 @@ class DB {
         $like .= ($qualifier1 ? "_$qualifier1" : '_%');
         $like .= ($qualifier2 ? "_$qualifier2" : '_%');
         $like .= '_%';
-        $statement = $this->connection->prepare("select proname as name, proargnames as parameters, proargtypes as types, oid, obj_description(oid) as comment
+        $statement = $this->connection->prepare("select 
+            proname as name, proargnames as parameters, proargtypes as types, oid, obj_description(oid) as comment
             from pg_proc
             where proname like(:like)
             ORDER BY proname");
@@ -111,10 +115,15 @@ class DB {
         $functions = array();
         foreach ($results as &$result) {
             $parameters = array();
-            $types      = explode(' ', substr($result->types, 1, -1));
+            $types      = explode(' ', $result->types);
             foreach (explode(',', substr($result->parameters, 1, -1)) as $i => $name) {
                 // TODO: Translate type oids
-                $parameters[$name] = $types[$i];
+                $typeOID = (int) $types[$i];
+                $typeName = 'unknown';
+                switch ($typeOID) {
+                    case 2950: $typeName = 'uuid';
+                }
+                $parameters[$name] = $typeName;
             }
             $functions[$result->name] = array(
                 'oid'        => $result->oid,
@@ -162,7 +171,9 @@ class DB {
                 and table_schema not like('pg_%') and not table_schema = 'information_schema'
                 and table_schema like(:schemaMatch)
                 and table_name   like(:tableMatch)
-            order by coalesce(substring(obj_description(concat(table_schema, '.', table_name)::regclass, 'pg_class'), 'order: ([0-9]+)')::int, 10000) asc"
+            order by 
+                coalesce(substring(obj_description(concat(table_schema, '.', table_name)::regclass, 'pg_class'), 'order: ([0-9]+)')::int, 10000) asc,
+                length(table_name) desc"
         );
         $statement->bindParam(':schemaMatch', $schemaMatch);
         $statement->bindParam(':tableMatch',  $tableMatch);
@@ -395,6 +406,14 @@ class DB {
             EXECUTE FUNCTION $function();";
         $statement = $this->connection->prepare($sql);
         $statement->execute();
+    }
+
+    public function setCommentValue(string $table, string $column, string $dotPath, mixed $value) {
+        // TODO: setCommentValue
+    }
+
+    public function appendCommentValue(string $table, string $column, string $dotPath, mixed $value) {
+        // TODO: appendCommentValue
     }
 
     public function runSQLFile(string $filePath, array $prepare = array(), int $indent = 4)
