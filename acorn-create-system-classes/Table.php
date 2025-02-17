@@ -132,6 +132,7 @@ class Table {
                 } else if ($this->owner != self::$generalOwner)
                     throw new \Exception("Table $this->name is owned by $this->owner, not " . self::$generalOwner);
 
+                // ------------------------------------ Content tables
                 if ($this->isContentTable()) {
                     if (!$this->hasColumn('id', 'uuid', 'gen_random_uuid()')) {
                         // TODO: Offer to add it?
@@ -156,7 +157,53 @@ class Table {
                         }
                     }
 
-                    // ------------------------------------------------- created_at[_event_id]
+                    // ------------------------ description (Notes)
+                    $columnCheck = 'description';
+                    if (!$this->hasColumn($columnCheck)
+                        && !$this->hasCustom1to1FK() 
+                        && !$this->hasCustomNameObjectFK()
+                        && !$this->hasPHPMethod('description')
+                    ) {
+                        $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] column";
+                        print("${RED}WARNING$NC: $error\n");
+                        $yn = readline("Create a [$columnCheck] (y) ?");
+                        if ($yn != 'n') {
+                            $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'text', NULL, Column::NULLABLE);
+                            print("Added [$columnCheck]\n");
+                            $changes = TRUE;
+                        }
+                    }
+                    if ($this->hasColumn($columnCheck) && FALSE) {
+                        $column = $this->columns[$columnCheck];
+                        if ($column->commentValue('tab-location') != 1) {
+                            $error = "Content table [$YELLOW$this->name$NC] column [$YELLOW$columnCheck$NC] is not at tab-location: 1";
+                            print("${RED}WARNING$NC: $error\n");
+                            $yn = readline("Adjust [$columnCheck] comment (y) ?");
+                            if ($yn != 'n') {
+                                $this->db->setCommentValue($this->fullyQualifiedName(), $columnCheck, 'tab-location', 1);
+                            }    
+                        }
+                        $tab = 'acorn::lang.models.general.description';
+                        if ($column->commentValue('tab') != $tab) {
+                            $error = "Content table [$YELLOW$this->name$NC] column [$YELLOW$columnCheck$NC] is not on a tab";
+                            print("${RED}WARNING$NC: $error\n");
+                            $yn = readline("Adjust [$columnCheck] comment (y) ?");
+                            if ($yn != 'n') {
+                                $this->db->setCommentValue($this->fullyQualifiedName(), $columnCheck, 'tab', $tab);
+                            }    
+                        }
+                        $cssClasses = $column->commentValue('css-classes', Column::ALWAYS_ARRAY);
+                        if (is_null($cssClasses) || !in_array('single-tab', $cssClasses)) {
+                            $error = "Content table [$YELLOW$this->name$NC] column [$YELLOW$columnCheck$NC] does not have single-tab class";
+                            print("${RED}WARNING$NC: $error\n");
+                            $yn = readline("Adjust [$columnCheck] comment (y) ?");
+                            if ($yn != 'n') {
+                                $this->db->appendCommentValue($this->fullyQualifiedName(), $columnCheck, 'css-classes', 'single-tab');
+                            }    
+                        }
+                    }
+
+                    // ----------------------- created_at[_event_id]
                     $columnCheck = 'created_at_event_id';
                     if (!$this->hasColumn($columnCheck) && !$this->hasCustom1to1FK()) {
                         $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] column";
@@ -202,7 +249,7 @@ class Table {
                         }
                     }
                     
-                    // ------------------------------------------------- updated_at[_event_id]
+                    // ----------------------- updated_at[_event_id]
                     $columnCheck = 'updated_at_event_id';
                     if (!$this->hasColumn($columnCheck) && !$this->hasCustom1to1FK()) {
                         $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] column";
@@ -237,7 +284,7 @@ class Table {
                         }
                     }
 
-                    // ------------------------------------------------- created_by[_user_id]
+                    // -------------------- created_by[_user_id]
                     $columnCheck = 'created_by_user_id';
                     if (!$this->hasColumn($columnCheck) && !$this->hasCustom1to1FK()) {
                         $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] column";
@@ -272,7 +319,7 @@ class Table {
                         }
                     }
 
-                    // ------------------------------------------------- updated_by[_user_id]
+                    // --------------------- updated_by[_user_id]
                     $columnCheck = 'updated_by_user_id';
                     if (!$this->hasColumn($columnCheck) && !$this->hasCustom1to1FK()) {
                         $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] column";
@@ -307,7 +354,7 @@ class Table {
                         }
                     }
 
-                    // ------------------------------------------------- server_id
+                    // ---------------------- server_id
                     $columnCheck = 'server_id';
                     if (!$this->hasColumn($columnCheck) && !$this->hasCustom1to1FK()) {
                         $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] column";
@@ -341,7 +388,9 @@ class Table {
                             $changes = TRUE;
                         }
                     }
-                } else if ($this->isPivotTable()) {
+                } 
+                // ------------------------------------ Pivot tables
+                else if ($this->isPivotTable()) {
                     if ($this->hasColumn('id')) {
                         throw new \Exception("Pivot table [$this->name] ($this->plural/$strPlural) ($this->singular/$strSingular) has id column");
                     }
@@ -390,10 +439,10 @@ class Table {
 
     public function isEmpty(): bool
     {
-        return $this->db->isEmpty($this->name);
+        return $this->db->isEmpty($this->fullyQualifiedName());
     }
 
-    public function commentValue(string $dotPath)
+    public function commentValue(string $dotPath, bool $alwaysArray = FALSE)
     {
         // methods.name
         $path  = explode(".", $dotPath);
@@ -407,7 +456,10 @@ class Table {
         }
 
         // If there is path left, we did not arrive
-        return ($path ? NULL : $value);
+        if ($path) $value = NULL;
+        else if ($alwaysArray && !is_array($value)) $value = array($value);
+
+        return $value;
     }
 
     // ----------------------------------------- Display

@@ -32,6 +32,7 @@ class Column {
     public    const SINGULAR = FALSE;
     public const NULLABLE = TRUE;
     public const NOT_NULL = FALSE;
+    public const ALWAYS_ARRAY = TRUE;
 
     // Objects
     public $table;
@@ -91,6 +92,7 @@ class Column {
     // --------------------- Column comment accepted values
     // These flow through to Field
     public $comment; // YAML comment
+    public $parsedComment; // array
     public $fieldComment; // HTML field comment
     public $system;  // Internal column, do not process
     public $todo;    // TODO: This column structure has not been analysed / enabled yet
@@ -104,6 +106,7 @@ class Column {
     // Arrays for css class
     public $cssClasses;   // css-classes: - hug-left
     public $newRow;
+    public $readOnly;
     public $noLabel;      // css-classes: nolabel
     public $bootstraps;   // bootstrap: xs: 12 sm: 4
     public $popupClasses; // popup-classes: h
@@ -150,7 +153,8 @@ class Column {
             if (property_exists($this, $name)) $this->$name = $value;
         }
 
-        foreach (\Spyc::YAMLLoadString($this->comment) as $name => $value) {
+        $this->parsedComment = \Spyc::YAMLLoadString($this->comment);
+        foreach ($this->parsedComment as $name => $value) {
             $nameCamel = Str::camel($name);
             if (!property_exists($this, $nameCamel)) self::blockingAlert("Property [$nameCamel] does not exist on [$this->table.$this->name]");
             if (!isset($this->$nameCamel)) $this->$nameCamel = $value;
@@ -227,6 +231,26 @@ class Column {
         $nameParts = explode('_', $this->name);
         if (count($nameParts) > 1 && end($nameParts) == 'id') array_pop($nameParts);
         return end($nameParts);
+    }
+
+    public function commentValue(string $dotPath, bool $alwaysArray = FALSE)
+    {
+        // methods.name
+        $path  = explode(".", $dotPath);
+        $value = $this->parsedComment;
+        while ($value 
+            && is_array($value)
+            && ($step = array_shift($path))
+            && isset($value[$step])
+        ) {
+            $value = $value[$step];
+        }
+
+        // If there is path left, we did not arrive
+        if ($path) $value = NULL;
+        else if ($alwaysArray && !is_array($value)) $value = array($value);
+
+        return $value;
     }
 
     // ----------------------------------------- Display

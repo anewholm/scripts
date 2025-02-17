@@ -1,5 +1,21 @@
 #!/bin/bash
 
+# Tested on:
+#   Ubuntu 22.04, 24.04
+#     Ubuntu Vr 	Ubuntu  Codename 	/etc/debian_version 	Debian Version
+#     24.04 LTS 	Noble   Numbat 	  trixie/sid 	          13
+#     23.10 	    Mantic  Minotaur 	trixie/sid 	          13
+#     23.04 	    Lunar   Lobster 	bookworm/sid 	        12
+#     22.10 	    Kinetic Kudu 	    bookworm/sid 	        12
+#     22.04 LTS 	Jammy   Jellyfish bookworm/sid 	        12
+#     21.10 	    Impish  Indri 	  bullseye/sid 	        11
+#     21.04 	    Hirsute Hippo 	  bullseye/sid 	        11
+#   Kali kali-rolling on Debian 12
+#     https://www.kali.org/releases/
+#     https://www.kali.org/docs/policy/kali-linux-relationship-with-debian/
+#     Kali 2024 is _based_ on Debian 12 (bookworm)
+#     Some Debian 11 (bullseye) packages are used, for example PGAdmin4
+
 RED="$(tput setaf 1)"
 GREEN="$(tput setaf 2)"
 YELLOW="$(tput setaf 3)"
@@ -7,7 +23,10 @@ NC="$(tput sgr0)"
 TICK="${GREEN}✓${NC}"
 CROSS="${RED}✘${NC}"
 
+distro=`lsb_release -a | grep "Distributor ID:" | cut -d ":" -f 2 | tr -d "\t"`
+echo "${YELLOW}Distribution${NC}: $distro"
 
+# ----------------------------------------- Functions
 check ()
 {
   if [ "$?" == "1" ]; then
@@ -16,17 +35,11 @@ check ()
   fi
 }
 
-add_hostname ()
-{
-  if ! grep -q $1 /etc/hosts; then
-    # Internal: 192.168.88.253
-    # External: 10.10.10.51
-    sudo bash -c 'echo "10.10.10.51   $1" >> /etc/hosts' # 192.168.0.200
-  fi
-}
-
-echo -e "GET http://google.com HTTP/1.0\n\n" | nc google.com 80 > /dev/null 2>&1
-check "No internet connection."
+# -------------------------------------------- APT Update
+if [ -n "$(which nc)" ]; then
+  echo -e "GET http://google.com HTTP/1.0\n\n" | nc google.com 80 > /dev/null 2>&1
+  check "No internet connection."
+fi
 
 echo "${YELLOW}Running apt-get update && sudo apt upgrade${NC}... "
 sudo apt-get update
@@ -34,6 +47,18 @@ check "Failed to update."
 # sudo apt-get -y upgrade
 echo "${GREEN}Done.${NC}"
 echo
+
+# -------------------------------------------- Prerequisites
+if [ -z "$(which add-apt-repository)" ]; then
+  # Probably a Kali distro that does not have Python add-apt-repository by default
+  # TODO: We might get Python version issues also
+  echo "Installing ${YELLOW}software-properties-common (add-apt-repository)${NC}... "
+  sudo apt-get install software-properties-common -y 2> /dev/null
+  check "Failed to download software-properties-common (add-apt-repository)."
+  echo "${GREEN}Done.${NC}"
+  echo
+fi
+
 
 gpg=`apt list --installed gpg 2> /dev/null | grep -E installed`
 if [ -z "$gpg" ]; then
@@ -44,6 +69,7 @@ if [ -z "$gpg" ]; then
   echo
 fi
 
+# -------------------------------------------- Main Installs
 apache2=`apt list --installed apache2 2> /dev/null | grep -E installed`
 if [ -z "$apache2" ]; then
   echo "Installing ${YELLOW}apache2${NC}... "
@@ -349,12 +375,25 @@ if [ -z "$(which locate)" ]; then
   echo
 fi
 
-if [ -f acorn-setup-security ]; then
-  ./acorn-setup-security
+# ----------------------------------------- External scripts
+if [ -f acorn-setup-security ] && [ "$distro" == 'Ubuntu' ]; then
+  read -p "Setup Ubuntu pro live-patch security? [Y] " yn
+  case $yn in
+    Y|y|"")
+      ./acorn-setup-security
+      break
+    ;;
+  esac
 fi
 
 if [ -f acorn-setup-olap ]; then
-  ./acorn-setup-olap
+  read -p "Setup OLAP reporting infrastructure with Tomcat9 & JSP? [Y] " yn
+  case $yn in
+    Y|y|"")
+      ./acorn-setup-olap
+      break
+    ;;
+  esac
 fi
 
 if [ -f acorn-mirror-doc-websites ]; then
