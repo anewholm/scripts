@@ -5,7 +5,7 @@
 
          // 'Illuminate\Html\HtmlServiceProvider', // Example
 
-+        Acorn\ServiceProvider::class,
++        AcornAssociated\ServiceProvider::class,
 +        DBAuth\ServiceProvider::class,
 +        Webklex\IMAP\Providers\LaravelServiceProvider::class,
          System\ServiceProvider::class,

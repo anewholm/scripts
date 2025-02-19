@@ -8,6 +8,6 @@ this
          'System',
          'Backend',
          'Cms',
-+        'Acorn',
++        'AcornAssociated',
      ],
 

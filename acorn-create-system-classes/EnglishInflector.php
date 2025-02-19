@@ -1,4 +1,4 @@
-<?php namespace Acorn\CreateSystem;
+<?php namespace AcornAssociated\CreateSystem;
 
 /*
  * This file is part of the Symfony package.

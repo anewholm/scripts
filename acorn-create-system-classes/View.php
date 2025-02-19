@@ -1,4 +1,4 @@
-<?php namespace Acorn\CreateSystem;
+<?php namespace AcornAssociated\CreateSystem;
 
 class View extends Table {
     public $tableType = 'report'; // Read-only

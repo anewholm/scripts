@@ -1,6 +1,6 @@
--- drop function fn_acorn_lojistiks_reset_sequences(_schema varchar(1024));
+-- drop function fn_acornassociated_lojistiks_reset_sequences(_schema varchar(1024));
 
-CREATE OR REPLACE FUNCTION fn_acorn_lojistiks_reset_sequences(schema_like varchar(1024), table_like varchar(1024))
+CREATE OR REPLACE FUNCTION fn_acornassociated_lojistiks_reset_sequences(schema_like varchar(1024), table_like varchar(1024))
   RETURNS void
   LANGUAGE plpgsql AS
 $BODY$
@@ -33,6 +33,6 @@ BEGIN
 END
 $BODY$;
 
-select fn_acorn_lojistiks_reset_sequences('public', 'acorn_%');
-select fn_acorn_lojistiks_reset_sequences('product', 'acorn_%');
+select fn_acornassociated_lojistiks_reset_sequences('public', 'acornassociated_%');
+select fn_acornassociated_lojistiks_reset_sequences('product', 'acornassociated_%');
 --SELECT concat(sequence_schema::text, '.', sequence_name::text) as sequence, currval(concat(sequence_schema::text, '.', sequence_name::text)::regclass) as currval FROM information_schema.sequences ORDER BY sequence_schema, sequence_name;

@@ -1,4 +1,4 @@
-<?php namespace Acorn\CreateSystem;
+<?php namespace AcornAssociated\CreateSystem;
 
 require_once('Table.php');
 require_once('View.php');
@@ -40,7 +40,7 @@ class DB {
     // --------------------------------------- General query interface
     public function serverID(bool $quote = FALSE): string
     {
-        $results = $this->select("select id from acorn_servers where hostname=:hostname", array(
+        $results = $this->select("select id from acornassociated_servers where hostname=:hostname", array(
             'hostname' => gethostname()
         ));
         $serverID = $results[0]->id;
@@ -90,7 +90,7 @@ class DB {
     // https://www.postgresql.org/docs/current/functions-info.html#FUNCTIONS-INFO-COMMENT
     public function actionFunctionsForTable(string $table): array
     {
-        $tableParts     = explode('_', $table); // acorn_justice_legalcases
+        $tableParts     = explode('_', $table); // acornassociated_justice_legalcases
         $tableQualifier = implode('_', array_slice($tableParts, 2)); // legalcases_*
         return (isset($tableParts[1]) ? $this->functions($tableParts[0], $tableParts[1], 'action', $tableQualifier) : array());
     }
