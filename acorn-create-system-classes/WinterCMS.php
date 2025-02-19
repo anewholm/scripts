@@ -115,7 +115,7 @@ class WinterCMS extends Framework
         // --------------------------------------------- Plugin.php misc
         // Alter the public function pluginDetails(): array function array return
         // and append some comments
-        $this->changeArrayReturnFunction($pluginFilePath, 'pluginDetails', 'author', 'Acorn');
+        $this->changeArrayReturnFunctionEntry($pluginFilePath, 'pluginDetails', 'author', 'Acorn');
         $this->removeFunction($pluginFilePath, 'registerNavigation');
         $this->replaceInFile( $pluginFilePath, '/Registers backend navigation items for this plugin./', 'Navigation in plugin.yaml.');
         $this->appendTofile(  $pluginFilePath, "\n// $createdBy");
@@ -310,6 +310,40 @@ class WinterCMS extends Framework
         if (isset($plugin->pluginNames['ku']))        $this->arrayFileSet("$langDirPath/ku/lang.php", 'plugin.name',        $plugin->pluginNames['ku'],        FALSE);
         if (isset($plugin->pluginDescriptions['ku'])) $this->arrayFileSet("$langDirPath/ku/lang.php", 'plugin.description', $plugin->pluginDescriptions['ku'], FALSE);
 
+        // --------------------------------------------- Permissions
+        // 'acorn.criminal.some_permission' => [
+        //     'tab' => 'acorn.criminal::lang.plugin.name',
+        //     'label' => 'acorn.criminal::lang.permissions.some_permission',
+        //     'roles' => [UserRole::CODE_DEVELOPER, UserRole::CODE_PUBLISHER],
+        // ],
+        $pluginPermissionsArray = array();
+        $translationDomain      = $plugin->translationDomain();
+        $dotName                = $plugin->dotName();
+        $permissions            = $plugin->permissions(); // Used in lang section below
+        if ($permissions) {
+            foreach ($permissions as $name => &$config) {
+                print("    Adding Permission: ${GREEN}$name${NC}\n");
+                $pluginPermissionConfig = array(
+                    'tab'   => "$translationDomain::lang.plugin.name",
+                    'label' => "$translationDomain::lang.permissions.$name",
+                );
+                $pluginPermissionsArray["$dotName.$name"] = $pluginPermissionConfig;
+                // Adorn the main config for the lang updates later
+                $config['plugin'] = $pluginPermissionConfig;
+            }
+            // Add these to the plugin.php
+            $this->setArrayReturnFunction($pluginFilePath, 'registerPermissions', $pluginPermissionsArray);
+
+            foreach ($permissions as $name => &$config) {
+                // Set all present labels
+                if (isset($config['plugin']['label']) && isset($config['labels'])) {
+                    foreach ($config['labels'] as $lang => $label) {
+                        $this->arrayFileSet("$langDirPath/$lang/lang.php", "permissions.$name", $label);
+                    }
+                }
+            }
+        }
+        
         // --------------------------------------------- Standard Migration Updates
         // TODO: Move SQL/updates => winterCms/updates
         $scriptsUpdatesPath = "$this->scriptDirPath/SQL/updates";
@@ -389,7 +423,7 @@ class WinterCMS extends Framework
         }
     }
 
-    protected function createMenus(Plugin &$plugin) {
+    public function createMenus(Plugin &$plugin) {
         global $GREEN, $YELLOW, $RED, $NC;
 
         $pluginDirectoryPath = $this->pluginDirectoryPath($plugin);
@@ -855,6 +889,8 @@ class WinterCMS extends Framework
                 'dependsOn'    => array_keys($field->dependsOn),
                 'nested'       => ($field->nested    ?: NULL),
                 'nestLevel'    => ($field->nestLevel ?: NULL),
+
+                'permissionSettings' => $field->permissionSettings,
 
                 'include'      => $field->include,
                 'includeModel' => $field->includeModel,

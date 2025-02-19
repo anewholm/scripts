@@ -519,17 +519,59 @@ FUNCTION
     protected function removeFunction(string $path, string $functionName, string $scope = 'public', int $indent = 1)
     {
         if (!$path) throw new \Exception("Function path is empty");
-        $indentString = str_repeat(' ', $indent*4);
         $this->replaceInFile($path, "/$scope function $functionName\(/", "$scope function ${functionName}_REMOVED(");
     }
 
-    protected function changeArrayReturnFunction(string $path, string $functionName, string $arrayDotPath, $newValue)
+    protected function setArrayReturnFunction(string $path, string $functionName, array $arrayReturn, int $indent = 1)
     {
-        // TODO: Support the function name searching support and dot path
-        if (!$path) throw new \Exception("ArrayReturnFunction path is empty");
-        if (strstr($arrayDotPath, '.') !== FALSE) throw new \Exception("Dot array replacement [$arrayDotPath] not supported yet");
-        $escapedValue = str_replace("'", "\\'", $newValue);
+        // For example: to replace the entire registerPermissions() function below
+        // TODO: Support } within the function body
+        //   public function registerPermissions(): array
+        //   {
+        //     return [
+        //         'acorn.finance.some_permission' => [
+        //             'tab' => 'acorn.finance::lang.plugin.name',
+        //             'label' => 'acorn.finance::lang.permissions.some_permission',
+        //             'roles' => [UserRole::CODE_DEVELOPER, UserRole::CODE_PUBLISHER],
+        //         ],
+        //     ];
+        //   }
+        // /.../s == multiline DOT_ALL: . matches newline, and [^...] also matches newlines
+        if (!$path)         throw new \Exception("File path is empty");
+        if (!$functionName) throw new \Exception("Function name is empty");
 
+        $indentString  = str_repeat(' ', $indent*4);
+        $indent2string = str_repeat(' ', $indent*8);
+        $arrayExport   = $this->varExport($arrayReturn, $indent+2);
+        $open   = '{';
+        $return = 'return';
+        $close  = '}';
+        $this->replaceInFile($path, 
+            "/function $functionName\(([^)]*)\)([^{])*\{[^}]*\}/s", 
+            "function $functionName(\\1)\\2\n$indentString$open\n$indent2string$return $arrayExport;\n$indentString$close"
+            
+        );
+    }
+
+    protected function changeArrayReturnFunctionEntry(string $path, string $functionName, string $arrayDotPath, $newValue)
+    {
+        // For example: to replace the 'author' value below
+        // TODO: Make a read array function so it can be programmatically altered
+        // TODO: Support dot path in the array
+        //   public function pluginDetails(): array
+        //   {
+        //     return [
+        //         'name'        => 'acorn.finance::lang.plugin.name',
+        //         'description' => 'acorn.finance::lang.plugin.description',
+        //         'author' => 'Acorn',
+        //         'icon'        => 'icon-leaf'
+        //     ];
+        //   }
+        if (!$path)         throw new \Exception("File path is empty");
+        if (!$functionName) throw new \Exception("Function name is empty");
+        if (strstr($arrayDotPath, '.') !== FALSE) throw new \Exception("Dot array replacement [$arrayDotPath] not supported yet");
+
+        $escapedValue = str_replace("'", "\\'", $newValue);
         $this->replaceInFile($path, "/'$arrayDotPath' *=>.*/", "'$arrayDotPath' => '$escapedValue',");
     }
 

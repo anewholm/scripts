@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Tested on:
+# Distro versions:
 #   Ubuntu 22.04, 24.04
 #     Ubuntu Vr 	Ubuntu  Codename 	/etc/debian_version 	Debian Version
 #     24.04 LTS 	Noble   Numbat 	  trixie/sid 	          13
@@ -23,75 +23,119 @@ NC="$(tput sgr0)"
 TICK="${GREEN}✓${NC}"
 CROSS="${RED}✘${NC}"
 
+# Host OS info
 distro=`lsb_release -a | grep "Distributor ID:" | cut -d ":" -f 2 | tr -d "\t"`
-echo "${YELLOW}Distribution${NC}: $distro"
+release=`lsb_release -a | grep "Release:" | cut -d ":" -f 2 | tr -d "\t"`
+echo "${YELLOW}Distribution${NC}: $distro, $release"
+
+outeruser=$USER
+if [ "$outeruser" == 'root' ]; then
+  echo "${RED}ERROR${NC}: Please do not run this script as ${RED}sudo${NC}. Because it cannot know your username"
+  exit
+fi
 
 # ----------------------------------------- Functions
 check ()
 {
   if [ "$?" == "1" ]; then
-   echo "${RED}ERROR${NC}: $1"
-   exit 1 
+    # Something failed, offer to continue / exit
+    printf "${RED}ERROR${NC}: "
+    read -p "$1. Continue [y|n]? (y) " yn
+    case $yn in
+      N|n)
+        exit
+        break
+      ;;
+    esac
   fi
 }
 
-# -------------------------------------------- APT Update
+# -------------------------------------------- Check Internet and APT Update
 if [ -n "$(which nc)" ]; then
   echo -e "GET http://google.com HTTP/1.0\n\n" | nc google.com 80 > /dev/null 2>&1
-  check "No internet connection."
+  check "No internet connection"
 fi
 
-echo "${YELLOW}Running apt-get update && sudo apt upgrade${NC}... "
+echo "Running apt-get ${YELLOW}update and upgrade${NC}... "
 sudo apt-get update
-check "Failed to update."
-# sudo apt-get -y upgrade
+check "Failed to update"
+sudo apt-get -y upgrade
+check "Failed to upgrade"
 echo "${GREEN}Done.${NC}"
 echo
 
 # -------------------------------------------- Prerequisites
+if [ -z "$(which curl)" ]; then
+  echo "Installing ${YELLOW}curl${NC}... "
+  sudo apt-get install curl -y 2> /dev/null
+  check "Failed to download curl"
+  echo "${GREEN}Done.${NC}"
+  echo
+fi
+
+if [ -z "$(which wget)" ]; then
+  echo "Installing ${YELLOW}wget${NC}... "
+  sudo apt-get install wget -y 2> /dev/null
+  check "Failed to download wget"
+  echo "${GREEN}Done.${NC}"
+  echo
+fi
+
+if [ -z "$(which gpg)" ]; then
+  echo "Installing ${YELLOW}gpg${NC}... "
+  sudo apt-get install gpg -y 2> /dev/null
+  check "Failed to download gpg"
+  echo "${GREEN}Done.${NC}"
+  echo
+fi
+
+if [ -z "$(which snap)" ]; then
+  echo "Installing ${YELLOW}snap${NC} package manager... "
+  sudo apt-get install snapd -y 2> /dev/null
+  check "Failed to download snapd"
+  echo "${GREEN}Done.${NC}"
+  echo
+fi
+
 if [ -z "$(which add-apt-repository)" ]; then
   # Probably a Kali distro that does not have Python add-apt-repository by default
   # TODO: We might get Python version issues also
-  echo "Installing ${YELLOW}software-properties-common (add-apt-repository)${NC}... "
+  echo "Installing ${YELLOW}software-properties-common${NC} (add-apt-repository)... "
   sudo apt-get install software-properties-common -y 2> /dev/null
-  check "Failed to download software-properties-common (add-apt-repository)."
+  check "Failed to download software-properties-common (add-apt-repository)"
   echo "${GREEN}Done.${NC}"
   echo
 fi
 
-
-gpg=`apt list --installed gpg 2> /dev/null | grep -E installed`
-if [ -z "$gpg" ]; then
-  echo "Installing ${YELLOW}gpg${NC}... "
-  sudo apt-get install gpg -y 2> /dev/null
-  check "Failed to download gpg."
-  echo "${GREEN}Done.${NC}"
-  echo
-fi
-
-# -------------------------------------------- Main Installs
-apache2=`apt list --installed apache2 2> /dev/null | grep -E installed`
-if [ -z "$apache2" ]; then
+# -------------------------------------------- Infrastructural Installs
+if [ -z "$(which apache2)" ]; then
   echo "Installing ${YELLOW}apache2${NC}... "
   sudo apt-get install apache2 -y 2> /dev/null
   sudo a2enmod rewrite 2> /dev/null
   sudo apt-get install libapache2-mod-fcgid -y 2> /dev/null
   sudo apt-get install libapache2-mod-php -y 2> /dev/null
-  check "Failed to download apache2."
+  check "Failed to download apache2"
   sudo a2enmod actions fcgid alias proxy_fcgi setenvif 2> /dev/null
   echo "Setting ServerName to localhost"
   sudo echo "ServerName localhost" >> /etc/apache2/apache2.conf
   sudo service apache2 restart
+fi
 
-  if [ -z "$(groups | grep www-data)" ]; then
-    sudo usermod -a -G www-data $USER
-    echo "${GREEN}INFO${NC}: You were added to the www-data group. This will not be effective until reboot."
-  fi
+if [ -z "$(groups | grep www-data)" ]; then
+  sudo usermod -a -G www-data $outeruser
+  echo "You (${GREEN}$outeruser${NC}) were added to the ${GREEN}www-data${NC} group. This will not be effective until reboot."
+  echo "${GREEN}INFO${NC}: Reboot your computer and then run this script again"
+  exit
+fi
+
+if [ -d /var/www ]; then
+  echo "Setting up your ${GREEN}/var/www${NC} directory for www-data group permissions."
   sudo chown -R www-data:www-data /var/www/
   sudo chmod g+wx /var/www/
   sudo chmod -R g+rw /var/www/
 
-  if [ -d ~/scripts ]; then
+  if [ -d ~/scripts ] && [ ! -d /var/www/scripts ]; then
+    echo "Linked your ${GREEN}scripts${NC} directory in to /var/www/."
     ln -s ~/scripts /var/www/scripts
   fi
 
@@ -99,6 +143,42 @@ if [ -z "$apache2" ]; then
   echo
 fi
 
+if [ -z "$(which php)" ]; then
+  echo "Installing latest ${YELLOW}php${NC}... "
+  sudo apt-get install php -y 2> /dev/null
+  check "Failed to download php"
+  echo "${GREEN}Done.${NC}"
+  echo
+fi
+# Always try all dependencies
+# Other libraries, for database, are installed later with the database software
+echo "Installing ${YELLOW}php${NC} libraries (for WinterCMS)... "
+sudo apt-get install php-curl php-mbstring phpunit php-zip php-gd php-xml php-json -y 2> /dev/null
+check "Failed to download php libraries"
+
+# Standard PHP is php8.3 or above, so lets load 8.1 also
+if [ -z "$(which php8.1)" ]; then
+  echo "Installing ${YELLOW}php8.1${NC}... "
+  echo "Adding ${YELLOW}ppa:ondrej/php${NC} PHP backport repository and apt key... "
+  sudo add-apt-repository ppa:ondrej/php 2> /dev/null
+
+  sudo apt-get install php8.1 -y 2> /dev/null
+  check "Failed to download php"
+  # Other libraries, for database, are installed later with the database software
+  sudo apt-get install php8.1-curl php8.1-mbstring php8.1-zip php8.1-gd php8.1-xml -y 2> /dev/null
+  check "Failed to download php libraries"
+
+  # Winter CMS current version requires <= 8.1
+  echo "Setting PHP to 8.1 back version"
+  whichPhp81=`which php8.1`
+  check "PHP 8.1 binary not found"
+  sudo update-alternatives --set php $whichPhp81
+  echo "${GREEN}Done.${NC}"
+  echo
+fi
+
+
+# -------------------------------------------- General Installs
 php_version=`php -v | head -n 1 | cut -d ' ' -f 2 | cut -d '.' -f 1,2`
 php_xdebug_ini="/etc/php/$php_version/mods-available/xdebug.ini"
 if [ ! -f "$php_xdebug_ini" ]; then
@@ -123,9 +203,8 @@ xdebug.start_with_request = yes
   echo "Now install PHP Debug in VS Code and create the standard run configuration for listening on localhost:9003"
 fi
 
-mysql=`apt list --installed mysql-server 2> /dev/null | grep -E installed`
-if [ -z "$mysql" ] && [ -z "$(which mysql)" ]; then
-  echo "Installing ${YELLOW}mysql${NC}... "
+if [ -z "$(which mysql)" ]; then
+  echo "Installing ${YELLOW}mysql-server${NC}... "
   sudo apt-get install mysql-server-8.0 mysql-client-8.0 -y 2> /dev/null
   sudo apt-get install php-mysql 2> /dev/null
   check "Failed to download mysql"
@@ -143,71 +222,19 @@ if [ -z "$mysql" ] && [ -z "$(which mysql)" ]; then
   echo "${GREEN}Done.${NC}"
   echo
 fi
-
-snap=`apt list --installed snapd 2> /dev/null | grep -E installed`
-if [ -z "$snap" ]; then
-  echo "Installing ${YELLOW}snap${NC}... "
-  sudo apt-get install snapd -y 2> /dev/null
-  check "Failed to download snapd."
-  echo "${GREEN}Done.${NC}"
-  echo
+sudo apt-get install php-mysql -y 2> /dev/null
+check "Failed to install php-mysql"
+if [ -n "$(which php8.1)" ]; then
+  sudo apt-get install php8.1-mysql -y 2> /dev/null
+  check "Failed to install php8.1-mysql"
 fi
 
 if [ -z "$(which mysql-workbench-community)" ]; then
   echo "Installing ${YELLOW}MySQL Workbench${NC}... "
   sudo snap install mysql-workbench-community 2> /dev/null
-  check "Failed to download MySQL Workbench."
+  check "Failed to download MySQL Workbench"
   echo "  Connecting AppArmour policy"
   sudo snap connect mysql-workbench-community:password-manager-service :password-manager-service
-  echo "${GREEN}Done.${NC}"
-  echo
-fi
-
-php=`apt list --installed php 2> /dev/null | grep -E installed`
-if [ -z "$php" ]; then
-  echo "Installing ${YELLOW}php${NC}... "
-  sudo apt-get install php -y 2> /dev/null
-  sudo apt-get install php-mysql php-curl php-mbstring phpunit php-zip php-gd php-xml php-json -y 2> /dev/null
-  sudo apt-get install php-pgsql -y 2> /dev/null
-  sudo add-apt-repository ppa:ondrej/php 2> /dev/null
-  check "Failed to download php."
-  echo "${GREEN}Done.${NC}"
-  echo
-fi
-
-# That was php8.4 or above, so lets load 8.1 also
-# sudo update-alternatives --config php
-php=`apt list --installed php8.1 2> /dev/null | grep -E installed`
-if [ -z "$php" ]; then
-  echo "Installing ${YELLOW}php8.1${NC}... "
-  sudo apt-get install php8.1 -y 2> /dev/null
-  sudo apt-get install php8.1-mysql php8.1-curl php8.1-mbstring php8.1-zip php8.1-gd php8.1-xml -y 2> /dev/null
-  sudo apt-get install php8.1-pgsql -y 2> /dev/null
-  check "Failed to download php."
-
-  # Winter CMS current version requires <= 8.1
-  echo "Setting PHP to 8.1 back version"
-  whichPhp81=`which php8.1`
-  check "PHP 8.1 binary not found"
-  sudo update-alternatives --set php $whichPhp81
-  echo "${GREEN}Done.${NC}"
-  echo
-fi
-
-curl=`apt list --installed curl 2> /dev/null | grep -E installed`
-if [ -z "$curl" ]; then
-  echo "Installing ${YELLOW}curl${NC}... "
-  sudo apt-get install curl -y 2> /dev/null
-  check "Failed to download curl."
-  echo "${GREEN}Done.${NC}"
-  echo
-fi
-
-wget=`apt list --installed wget 2> /dev/null | grep -E installed`
-if [ -z "$wget" ]; then
-  echo "Installing ${YELLOW}wget${NC}... "
-  sudo apt-get install wget -y 2> /dev/null
-  check "Failed to download wget."
   echo "${GREEN}Done.${NC}"
   echo
 fi
@@ -224,7 +251,6 @@ if [ -z "$apt_postgresql" ]; then
   sudo apt-get install -y postgresql-$postgresql_version
   check "Failed to download postgresql $postgresql_version"
 
-  outeruser=$USER
   user_exists=`sudo -u postgres psql postgres -tXAc "SELECT 1 FROM pg_roles WHERE rolname='$outeruser'"`
   if [ "$user_exists" != 1 ]; then
     echo "${GREEN}INFO${NC}: Creating PostGreSQL super-user ${YELLOW}$outeruser${NC}. PLease use password ${YELLOW}@corn.org${NC}:"
@@ -237,6 +263,12 @@ if [ -z "$apt_postgresql" ]; then
   echo "${GREEN}Done.${NC}"
   echo
 fi
+sudo apt-get install php-pgsql -y 2> /dev/null
+check "Failed to install php-pgsql"
+if [ -n "$(which php8.1)" ]; then
+  sudo apt-get install php8.1-pgsql -y 2> /dev/null
+  check "Failed to install php8.1-pgsql"
+fi
 
 # --------------------------------------------------------- Unistall PostGreSQL 14
 apt_postgresql_14=`apt list --installed postgresql-14 2> /dev/null | grep -E installed`
@@ -247,7 +279,7 @@ if [ -n "$apt_postgresql_14" ]; then
   read -p "Read that, then press [return]! " ret
 fi
 
-# --------------------------------------------------------- PostGreSQL extensions
+# PostGreSQL extensions
 if [ -d postgres/ ]; then
   # Source compilation pre-requisities
   sudo apt-get install -y postgresql-server-dev-$postgresql_version libcurl4-openssl-dev make g++ 2> /dev/null # For pgsql-http extensions
@@ -293,26 +325,28 @@ if [ ! -f /etc/init.d/pgagent ] && [ -f postgres/pgagent ]; then
   sudo ln -s /etc/init.d/pgagent /etc/rc6.d/K02pgagent
 fi
 
-pgadmin=`snap list pgadmin 2> /dev/null`
-if [ -z "$pgadmin" ]; then 
+if [ -z "$(which pgadmin4)" ]; then
   echo "Installing ${YELLOW}pgAdmin4${NC}... "
   snap install pgadmin4
   check "Failed to download pgAdmin4"
   echo "${GREEN}Done.${NC}"
   echo
 fi
+# On Kali it is possible that the pgadmin4 snap installed in to /snap/bin/
+# but it is not in the path
+if [ -z "$(which pgadmin4)" ] && [ -f /snap/bin/pgadmin4 ]; then
+  sudo ln -s /snap/bin/pgadmin4 /usr/bin/pgadmin4
+fi
 
-git=`apt list --installed git 2> /dev/null | grep -E installed`
-if [ -z "$git" ]; then
+if [ -z "$(which git)" ]; then
   echo "Installing ${YELLOW}git${NC}... "
   sudo apt-get install git -y 2> /dev/null
-  check "Failed to download git."
+  check "Failed to download git"
   echo "${GREEN}Done.${NC}"
   echo
 fi
 
-composer=`apt list --installed composer 2> /dev/null | grep -E installed`
-if [ -z "$composer" ] && [ -z "$(which composer)" ]; then
+if [ -z "$(which composer)" ]; then
   echo "Installing ${YELLOW}composer${NC}... "
   #hash="55ce33d7678c5a611085589f1f3ddf8b3c52d662cd01d4ba75c0ee0459970c2200a51f492d557530c71c15d8dba01eae"
   hash="dac665fdc30fdd8ec78b38b9800061b4150413ff2e3b6f88543c636f7cd84f6db9189d43a81e5503cda447da73c7e5b6"
@@ -321,7 +355,7 @@ if [ -z "$composer" ] && [ -z "$(which composer)" ]; then
   php composer-setup.php
   php -r "unlink('composer-setup.php');"
   sudo mv composer.phar /usr/local/bin/composer
-  check "Failed to download composer."
+  check "Failed to download composer"
   echo "${GREEN}Done.${NC}"
   echo
 fi
@@ -329,7 +363,7 @@ fi
 if [ -z "$(which code)" ]; then
   echo "Installing ${YELLOW}VS Code${NC}... "
   sudo snap install code --classic
-  check "Failed to download VS code."
+  check "Failed to download VS code"
   echo "${GREEN}Done.${NC}"
   echo
 fi
@@ -337,7 +371,7 @@ fi
 if [ -z "$(which signal-desktop)" ]; then
   echo "Installing ${YELLOW}Signal${NC}... "
   sudo snap install signal-desktop
-  check "Failed to download Signal."
+  check "Failed to download Signal"
   echo "${GREEN}Done.${NC}"
   echo
 fi
@@ -345,7 +379,7 @@ fi
 if [ -z "$(which ifconfig)" ]; then
   echo "Installing ${YELLOW}net-tools${NC}... "
   sudo apt -y install net-tools
-  check "Failed to download net-tools."
+  check "Failed to download net-tools"
   echo "${GREEN}Done.${NC}"
   echo
 fi
@@ -353,7 +387,7 @@ fi
 if [ -z "$(which nmap)" ]; then
   echo "Installing ${YELLOW}nmap${NC}... "
   sudo apt -y install nmap
-  check "Failed to download nmap."
+  check "Failed to download nmap"
   echo "${GREEN}Done.${NC}"
   echo
 fi
@@ -361,7 +395,7 @@ fi
 if [ -z "$(which vlc)" ]; then
   echo "Installing ${YELLOW}vlc${NC}... "
   sudo apt -y install vlc
-  check "Failed to download vlc."
+  check "Failed to download vlc"
   echo "${GREEN}Done.${NC}"
   echo
 fi
@@ -369,7 +403,7 @@ fi
 if [ -z "$(which locate)" ]; then
   echo "Installing ${YELLOW}locate${NC}... "
   sudo apt -y install locate
-  check "Failed to download locate."
+  check "Failed to download locate"
   sudo updatedb
   echo "${GREEN}Done.${NC}"
   echo

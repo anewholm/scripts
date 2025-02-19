@@ -10,6 +10,7 @@ class Field {
 
     public $comment;     // From column->comment
     public $name;        // => fieldName & columnName
+    public $order;
     public $yamlComment; // # field comment
     public $nested = FALSE;
     public $nestLevel = 0;
@@ -45,6 +46,7 @@ class Field {
     public $placeholder;
     public $debugComment;
     public $fieldComment;
+    public $permissionSettings;
     public $commentHtml  = TRUE;
     public $hierarchical;
     public $optionsStaticMethod = 'dropdownOptions';
@@ -319,6 +321,37 @@ class Field {
         if ($this->noLabel) array_push($cssClasses, 'nolabel');
 
         return $cssClasses;
+    }
+
+    public function permissions(): array
+    {
+        $permissions = array();
+
+        if ($this->permissionSettings) {
+            foreach ($this->permissionSettings as $permissionDirective => $config) {
+                // Copied from Trait MorphConfig
+                $typeParts = explode('=', $permissionDirective);
+                $negation  = FALSE;
+                if (count($typeParts) == 2) {
+                    if ($typeParts[0] == 'NOT') $negation = TRUE;
+                    $permissionDirective = $typeParts[1];
+                }
+                $contextParts = explode('@', $permissionDirective);
+                $permContext  = NULL;
+                if (count($contextParts) == 2) {
+                    $permContext         = $contextParts[1];
+                    $permissionDirective = $contextParts[0];
+                }
+                // End copy
+
+                // Dev setting so labels are not necessary
+                if (!isset($config['labels'])) $config['labels'] = array('en' => Str::title($permissionDirective));
+
+                $permissions[$permissionDirective] = $config;
+            }
+        }
+
+        return $permissions;
     }
 
     public function cssClass(): string

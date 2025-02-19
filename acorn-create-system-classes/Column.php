@@ -93,6 +93,7 @@ class Column {
     // These flow through to Field
     public $comment; // YAML comment
     public $parsedComment; // array
+    public $order;
     public $fieldComment; // HTML field comment
     public $system;  // Internal column, do not process
     public $todo;    // TODO: This column structure has not been analysed / enabled yet
@@ -111,6 +112,7 @@ class Column {
     public $bootstraps;   // bootstrap: xs: 12 sm: 4
     public $popupClasses; // popup-classes: h
     public $containerAttributes;
+    public $permissionSettings;
     // For columns
     public $columnType;
     public $sqlSelect;
