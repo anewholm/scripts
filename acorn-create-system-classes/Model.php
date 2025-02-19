@@ -57,10 +57,19 @@ class Model {
             $commentDef  = \Spyc::YAMLLoadString($definition['comment']);
             $enDevLabel  = Str::title(implode(' ', $nameParts));
             if (!isset($commentDef['labels']['en'])) $commentDef['labels']['en'] = $enDevLabel;
+            // Normalise names
+            foreach ($commentDef as $commentName => $commentValue) {
+                $camelName = Str::camel($commentName);
+                if ($commentName != $camelName) {
+                    $commentDef[$camelName] = $commentValue;
+                    unset($commentDef[$commentName]);
+                }
+            }
 
             $this->actionFunctions[$name] = array_merge(array(
-                'fnName'     => $fnName,
-                'parameters' => $definition['parameters'],
+                'fnDatabaseName' => $fnName,
+                'parameters'     => $definition['parameters'],
+                'returnType'     => $definition['returnType'],
             ), $commentDef);
         }
 
@@ -272,6 +281,18 @@ class Model {
         }
 
         $fieldDefinition = array_merge($fieldDefinition, $modifiers);
+    }
+
+    // ----------------------------------------- Permissions
+    public function permissions(): array
+    {
+        $permissions = array();
+
+        foreach ($this->fields() as &$field) {
+            $permissions = array_merge($permissions, $field->permissions());
+        }
+
+        return $permissions;
     }
 
     // ----------------------------------------- Relations

@@ -104,7 +104,7 @@ class DB {
         $like .= ($qualifier2 ? "_$qualifier2" : '_%');
         $like .= '_%';
         $statement = $this->connection->prepare("select 
-            proname as name, proargnames as parameters, proargtypes as types, oid, obj_description(oid) as comment
+            proname as name, proargnames as parameters, proargtypes as types, oid, obj_description(oid) as comment, prorettype as returntype
             from pg_proc
             where proname like(:like)
             ORDER BY proname");
@@ -116,6 +116,8 @@ class DB {
         foreach ($results as &$result) {
             $parameters = array();
             $types      = explode(' ', $result->types);
+            $returnType = 'unknown';
+
             foreach (explode(',', substr($result->parameters, 1, -1)) as $i => $name) {
                 // TODO: Translate type oids
                 $typeOID = (int) $types[$i];
@@ -125,10 +127,17 @@ class DB {
                 }
                 $parameters[$name] = $typeName;
             }
+            
+            switch ($result->returntype) {
+                case 2950: $returnType = 'uuid'; break;
+                case 2278: $returnType = 'void'; break;
+            }
+            
             $functions[$result->name] = array(
                 'oid'        => $result->oid,
                 'parameters' => $parameters,
                 'comment'    => $result->comment,
+                'returnType' => $returnType,
             );
         }
 

@@ -182,4 +182,16 @@ class Plugin {
     {
         return '\\' . $this->fullyQualifiedName();
     }
+
+    // ----------------------------------------- Permissions
+    public function permissions(): array
+    {
+        $permissions = array();
+
+        foreach ($this->models as &$model) {
+            $permissions = array_merge($permissions, $model->permissions());
+        }
+
+        return $permissions;
+    }
 }
