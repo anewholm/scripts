@@ -107,7 +107,7 @@ if [ -z "$(which git)" ]; then
 fi
 
 # -------------------------------------------- Main repo cloning
-git clone git@gitlab.acorn.org:$git_repo_group/$git_repo_name.git $install_dir/$git_repo_name
+git clone git@gitlab.acornassociated.org:$git_repo_group/$git_repo_name.git $install_dir/$git_repo_name
 if [ $? != 0 ]; then
 	echo "${RED}ERROR${NC}: Failed to clone ${YELLOW}$git_repo_group/$git_repo_name${NC}"
 	exit 1
