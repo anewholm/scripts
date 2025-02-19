@@ -1,4 +1,4 @@
-<?php namespace AcornAssociated\CreateSystem;
+<?php namespace Acorn\CreateSystem;
 
 require_once('ForeignKey.php');
 

@@ -1,6 +1,6 @@
-DROP FUNCTION IF EXISTS public.fn_acornassociated_lojistiks_new_replicated_row();
+DROP FUNCTION IF EXISTS public.fn_acorn_lojistiks_new_replicated_row();
 
-CREATE OR REPLACE FUNCTION public.fn_acornassociated_lojistiks_new_replicated_row()
+CREATE OR REPLACE FUNCTION public.fn_acorn_lojistiks_new_replicated_row()
     RETURNS trigger
     LANGUAGE 'plpgsql'
     COST 100
@@ -28,12 +28,12 @@ begin
 end;
 $BODY$;
 
-DROP TRIGGER IF EXISTS tr_acornassociated_lojistiks_electronic_products_new_replicated_row()
-CREATE OR REPLACE TRIGGER tr_acornassociated_lojistiks_electronic_products_new_replicated_row
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_electronic_products_new_replicated_row()
+CREATE OR REPLACE TRIGGER tr_acorn_lojistiks_electronic_products_new_replicated_row
     BEFORE INSERT
-    ON product.acornassociated_lojistiks_electronic_products
+    ON product.acorn_lojistiks_electronic_products
     FOR EACH ROW
-    EXECUTE FUNCTION public.fn_acornassociated_lojistiks_new_replicated_row();
+    EXECUTE FUNCTION public.fn_acorn_lojistiks_new_replicated_row();
 
 -- Trigger on replpica also
-ALTER TABLE IF EXISTS product.acornassociated_lojistiks_electronic_products ENABLE ALWAYS TRIGGER tr_acornassociated_lojistiks_electronic_products_new_replicated_row;
+ALTER TABLE IF EXISTS product.acorn_lojistiks_electronic_products ENABLE ALWAYS TRIGGER tr_acorn_lojistiks_electronic_products_new_replicated_row;
