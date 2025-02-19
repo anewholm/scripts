@@ -1,4 +1,4 @@
-<?php namespace Acorn\CreateSystem;
+<?php namespace AcornAssociated\CreateSystem;
 
 require_once('Model.php');
 require_once('Controller.php');
@@ -32,7 +32,7 @@ class Plugin {
                     print("${YELLOW}WARNING${NC}: Ignoring view [$table->name]\n");
                 } else {
                     // Modules have NULL plugin name
-                    $authorName = $table->authorName(); // Acorn
+                    $authorName = $table->authorName(); // AcornAssociated
                     $pluginName = $table->pluginName(); // Lojistiks
                     $pluginFullyQualifiedName = "$authorName\\$pluginName";
 
@@ -48,7 +48,7 @@ class Plugin {
         return self::$plugins;
     }
 
-    public static function &get(string $pluginName, string $authorName = 'Acorn'): Plugin
+    public static function &get(string $pluginName, string $authorName = 'AcornAssociated'): Plugin
     {
         $pluginFullyQualifiedName = "$authorName\\$pluginName";
         return self::$plugins[$pluginFullyQualifiedName];
@@ -57,7 +57,7 @@ class Plugin {
     protected function __construct(Framework &$framework, string $authorName, string $pluginName)
     {
         $this->framework = $framework;
-        $this->author    = $authorName; // Acorn
+        $this->author    = $authorName; // AcornAssociated
         $this->name      = $pluginName; // Lojistiks
 
         self::$plugins[$this->fullyQualifiedName()] = &$this;
@@ -114,7 +114,7 @@ class Plugin {
     // ----------------------------------------- Data
     public function dotName(): string
     {
-        // acorn.finance
+        // acornassociated.finance
         $authorLower = strtolower($this->author);
         $nameLower   = strtolower($this->name);
         return "$authorLower.$nameLower";
@@ -122,13 +122,13 @@ class Plugin {
 
     public function dotClassName(): string
     {
-        // Acorn.Finance
+        // AcornAssociated.Finance
         return "$this->author.$this->name";
     }
 
     public function snakeName(): string
     {
-        // acorn_finance
+        // acornassociated_finance
         $authorLower = strtolower($this->author);
         $nameLower   = strtolower($this->name);
         return "${authorLower}_$nameLower";
@@ -151,7 +151,7 @@ class Plugin {
 
     public function isOurs(string $which = NULL): bool
     {
-        return ($this->author == 'Acorn'
+        return ($this->author == 'AcornAssociated'
             && ($which == NULL || $this->name == $which)
         );
     }

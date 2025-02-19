@@ -1,4 +1,4 @@
-<?php namespace Acorn\CreateSystem;
+<?php namespace AcornAssociated\CreateSystem;
 
 class Trigger {
     protected $table;

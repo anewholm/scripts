@@ -1,4 +1,4 @@
-<?php namespace Acorn\CreateSystem;
+<?php namespace AcornAssociated\CreateSystem;
 
 class Framework
 {
@@ -529,9 +529,9 @@ FUNCTION
         //   public function registerPermissions(): array
         //   {
         //     return [
-        //         'acorn.finance.some_permission' => [
-        //             'tab' => 'acorn.finance::lang.plugin.name',
-        //             'label' => 'acorn.finance::lang.permissions.some_permission',
+        //         'acornassociated.finance.some_permission' => [
+        //             'tab' => 'acornassociated.finance::lang.plugin.name',
+        //             'label' => 'acornassociated.finance::lang.permissions.some_permission',
         //             'roles' => [UserRole::CODE_DEVELOPER, UserRole::CODE_PUBLISHER],
         //         ],
         //     ];
@@ -561,9 +561,9 @@ FUNCTION
         //   public function pluginDetails(): array
         //   {
         //     return [
-        //         'name'        => 'acorn.finance::lang.plugin.name',
-        //         'description' => 'acorn.finance::lang.plugin.description',
-        //         'author' => 'Acorn',
+        //         'name'        => 'acornassociated.finance::lang.plugin.name',
+        //         'description' => 'acornassociated.finance::lang.plugin.description',
+        //         'author' => 'Acorn Associated',
         //         'icon'        => 'icon-leaf'
         //     ];
         //   }

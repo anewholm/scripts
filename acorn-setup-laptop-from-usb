@@ -8,7 +8,7 @@ TICK="${GREEN}✓${NC}"
 CROSS="${RED}✘${NC}"
 ################################
 
-central_server=acorn.org
+central_server=acornassociated.org
 git_server=gitlab.$central_server
 git_ip_address='192.168.88.252'
 download_dir=~/Downloads
@@ -54,7 +54,7 @@ if [ ! -f ~/.ssh/id_rsa.pub ]; then
 fi
 echo "${GREEN}INFO${NC}: Pulic key:"
 cat ~/.ssh/id_rsa.pub
-echo "${GREEN}INFO${NC}: Add the user ${YELLOW}$git_user${NC} to ${YELLOW}https://$git_server${NC}, with the above ssh key and password ${YELLOW}@corn.org${NC}"
+echo "${GREEN}INFO${NC}: Add the user ${YELLOW}$git_user${NC} to ${YELLOW}https://$git_server${NC}, with the above ssh key and password ${YELLOW}@cornAssociated.org${NC}"
 echo "And give Reporter access to ${YELLOW}office/scripts${NC} and any repositories you wish to pull"
 read -p "Done? " yn
 
@@ -75,7 +75,7 @@ if [ ! -d ~/scripts/.git ]; then
         else
             echo "Writing SSH config for ${YELLOW}$git_server${NC} to use tor"
             echo "Host $git_server"  >> ~/.ssh/config
-            echo "  User sz"    >> ~/.ssh/config
+            echo "  User sanchez"    >> ~/.ssh/config
             echo "  ProxyCommand nc -X 5 -x localhost:9150 %h %p" >> ~/.ssh/config
             echo "  PreferredAuthentications publickey" >> ~/.ssh/config
         fi

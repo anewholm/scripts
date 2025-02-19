@@ -1,4 +1,4 @@
-<?php namespace Acorn\CreateSystem;
+<?php namespace AcornAssociated\CreateSystem;
 
 require_once('bootstrap/autoload.php');
 
@@ -29,7 +29,7 @@ class WinterCMS extends Framework
         $this->kernel = $this->app->make(\Illuminate\Contracts\Console\Kernel::class);
         $this->output = new \Symfony\Component\Console\Output\ConsoleOutput;
 
-        if (!file_exists("$cwd/modules/acorn/Model.php")) throw new \Exception("WinterCMS at [$cwd] does not have the required Acorn module");
+        if (!file_exists("$cwd/modules/acornassociated/Model.php")) throw new \Exception("WinterCMS at [$cwd] does not have the required AcornAssociated module");
 
         // ---------------------------- DB
         # Get DB connection parameters from Laravel
@@ -115,16 +115,16 @@ class WinterCMS extends Framework
         // --------------------------------------------- Plugin.php misc
         // Alter the public function pluginDetails(): array function array return
         // and append some comments
-        $this->changeArrayReturnFunctionEntry($pluginFilePath, 'pluginDetails', 'author', 'Acorn');
+        $this->changeArrayReturnFunctionEntry($pluginFilePath, 'pluginDetails', 'author', 'Acorn Associated');
         $this->removeFunction($pluginFilePath, 'registerNavigation');
         $this->replaceInFile( $pluginFilePath, '/Registers backend navigation items for this plugin./', 'Navigation in plugin.yaml.');
         $this->appendTofile(  $pluginFilePath, "\n// $createdBy");
 
         // Adding cross plugin dependencies
         $requirePlugins = array(
-            'Acorn.Calendar'  => TRUE,
-            'Acorn.Location'  => TRUE,
-            'Acorn.Messaging' => TRUE
+            'AcornAssociated.Calendar'  => TRUE,
+            'AcornAssociated.Location'  => TRUE,
+            'AcornAssociated.Messaging' => TRUE
         );
         foreach ($plugin->otherPluginRelations() as &$relation) {
             if (!$relation instanceof RelationFrom) {
@@ -311,9 +311,9 @@ class WinterCMS extends Framework
         if (isset($plugin->pluginDescriptions['ku'])) $this->arrayFileSet("$langDirPath/ku/lang.php", 'plugin.description', $plugin->pluginDescriptions['ku'], FALSE);
 
         // --------------------------------------------- Permissions
-        // 'acorn.criminal.some_permission' => [
-        //     'tab' => 'acorn.criminal::lang.plugin.name',
-        //     'label' => 'acorn.criminal::lang.permissions.some_permission',
+        // 'acornassociated.criminal.some_permission' => [
+        //     'tab' => 'acornassociated.criminal::lang.plugin.name',
+        //     'label' => 'acornassociated.criminal::lang.permissions.some_permission',
         //     'roles' => [UserRole::CODE_DEVELOPER, UserRole::CODE_PUBLISHER],
         // ],
         $pluginPermissionsArray = array();
@@ -386,7 +386,7 @@ class WinterCMS extends Framework
             exit(1);
         }
 
-        // Functions fn_acorn_*_seed_*()
+        // Functions fn_acornassociated_*_seed_*()
         $seederPath = "$pluginUpdatePath/seed.sql";
         $functions  = $this->db->functions(strtolower($plugin->author), strtolower($plugin->name), 'seed');
         foreach ($functions as $name => $details) {
@@ -461,7 +461,7 @@ class WinterCMS extends Framework
                                 $sideMenu["_splitter_$name"] = array(
                                     'label' => 'splitter',
                                     'url'   => 'splitter',
-                                    'icon'  => 'acorn-splitter',
+                                    'icon'  => 'acornassociated-splitter',
                                 );
                             }
 
@@ -541,8 +541,8 @@ class WinterCMS extends Framework
 
             $model->uses = array_merge($model->uses, array(
                 // Useful AA classes
-                "Acorn\\Models\\Server" => TRUE,
-                "Acorn\\Collection" => TRUE,
+                "AcornAssociated\\Models\\Server" => TRUE,
+                "AcornAssociated\\Collection" => TRUE,
                 // Useful
                 "BackendAuth" => TRUE,
                 '\\Backend\\Models\\User' => TRUE,
@@ -550,8 +550,8 @@ class WinterCMS extends Framework
                 'Exception' => TRUE,
                 'Flash' => TRUE,
             ));
-            print("  Inheriting from Acorn\\\\Model\n");
-            $this->replaceInFile($modelFilePath, '/^use Model;$/m', 'use Acorn\\Model;');
+            print("  Inheriting from AcornAssociated\\\\Model\n");
+            $this->replaceInFile($modelFilePath, '/^use Model;$/m', 'use AcornAssociated\\Model;');
 
             // Traits
             print("  Adding Trait Revisionable\n");
@@ -596,7 +596,7 @@ class WinterCMS extends Framework
 
             // ---------------------------------------------------------------- Seeding
             // This moves seeding: directives in to updates\seed.sql
-            // and also appends any fn_acorn_*_seed_*() functions
+            // and also appends any fn_acornassociated_*_seed_*() functions
             $seederPath = "$pluginDirectoryPath/updates/seed.sql";
             if ($model->table->seeding) {
                 $schema     = $model->table->schema;
@@ -615,7 +615,7 @@ class WinterCMS extends Framework
                         // TODO: Creation of NOT NULL associated calendar events: EVENT_ID => $this->db->createCalendarEvent('SEEDER')
                         if      ($value === 'DEFAULT')   $valueSQL = 'DEFAULT';
                         else if ($value === 'NULL')      $valueSQL = 'NULL';
-                        else if (substr($value, 0, 19) === 'fn_acorn_' && substr($value, -1) == ')') $valueSQL = $value;
+                        else if (substr($value, 0, 19) === 'fn_acornassociated_' && substr($value, -1) == ')') $valueSQL = $value;
                         else $valueSQL = var_export($value, TRUE);
 
                         array_push($names, $column->name);
@@ -623,7 +623,7 @@ class WinterCMS extends Framework
                     }
                     if ($model->table->hasColumn('created_by_user_id')) {
                         array_push($names, 'created_by_user_id');
-                        array_push($values, 'fn_acorn_user_get_seed_user()');
+                        array_push($values, 'fn_acornassociated_user_get_seed_user()');
                     }
                     $namesSQL  = implode(',', $names);
                     $valuesSQL = implode(',', $values);
@@ -1009,7 +1009,7 @@ class WinterCMS extends Framework
                 "\\\\$author\\\\Behaviors\\\\FormController",
                 "\\\\$author\\\\Behaviors\\\\ListController",
                 "Backend\\\\Behaviors\\\\RelationController", // Only here to prevent RelationController requirement error
-                "\\\\Acorn\\\\Behaviors\\\\RelationController",
+                "\\\\AcornAssociated\\\\Behaviors\\\\RelationController",
             ), Framework::OVERWRITE_EXISTING);
 
             // Explicit plural name injection
@@ -1283,12 +1283,12 @@ class WinterCMS extends Framework
     public function checkTranslationKey(string $key): bool
     {
         $keyParts      = explode('::', $key);
-        $domain        = $keyParts[0];                     // acorn.user | acorn
+        $domain        = $keyParts[0];                     // acornassociated.user | acornassociated
         if (count($keyParts) < 2) throw new \Exception("Translation key ''$domain' needs 2 dot parts");
         $localParts    = explode('.', $keyParts[1]);       // lang, models, general, id
         $localKey      = implode('.', array_slice($localParts, 1)); // models.general.id
-        $isModule      = (strstr($domain, '.') === FALSE); // acorn
-        $domainRelDir  = str_replace('.', '/', $domain);   // acorn/user | acorn
+        $isModule      = (strstr($domain, '.') === FALSE); // acornassociated
+        $domainRelDir  = str_replace('.', '/', $domain);   // acornassociated/user | acornassociated
         $domainDirPath = ($isModule ? "modules/$domainRelDir" : "plugins/$domainRelDir");
         $langFilePath  = realpath("$domainDirPath/lang/en/lang.php");
 

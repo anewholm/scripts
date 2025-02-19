@@ -13,7 +13,7 @@ if [ -z "$(which scp)" ]; then
 fi
 
 db=`basename $(pwd)`
-server="$db.acorn.org"
+server="$db.acornassociated.org"
 
 latest=`ls -t1 $db-*.sql | head -n 1`
 lx=`echo "$latest" | cut -d '-' -f 2 | cut -d '.' -f 1`
