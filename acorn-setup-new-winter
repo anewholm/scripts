@@ -7,7 +7,7 @@ NC="$(tput sgr0)"
 TICK="${GREEN}✓${NC}"
 CROSS="${RED}✘${NC}"
 
-# This script installs ALL Acorn Associated plugins and runs the system
+# This script installs ALL Acorn plugins and runs the system
 # It can be run from within an existing Laravel / Winter installation
 # or to install the entire framework from scratch
 run_dir=`pwd` # Bald
@@ -208,42 +208,42 @@ echo "${GREEN}INFO${NC}: composer require AA modules (from AA gitlab)"
 read -p "Install AA infrastructure (requires GitLab keys) [y|n]? (y) " yn
 if [ "$yn" == 'y' ]; then
 	cd modules
-	if [ ! -d acornassociated ]; then
-		git clone git@gitlab.acornassociated.org:office/acornassociated.git
+	if [ ! -d acorn ]; then
+		git clone git@gitlab.acorn.org:office/acorn.git
 		if [ "$?" != 0 ]; then
 			echo "${RED}ERROR${NC}: Failed to checkout first office repository. Probably you do not have permissions. Please resolve and start again."
 			exit 1
 		fi
 	fi
-	if [ ! -d dbauth ]; then git clone git@gitlab.acornassociated.org:office/dbauth.git;  fi
+	if [ ! -d dbauth ]; then git clone git@gitlab.acorn.org:office/dbauth.git;  fi
 	cd ..
 
 	cd plugins
-	mkdir -p acornassociated
-	cd acornassociated
+	mkdir -p acorn
+	cd acorn
 
 	if [ ! -d rtler ];     then
-		git clone git@gitlab.acornassociated.org:office/rtler.git
+		git clone git@gitlab.acorn.org:office/rtler.git
 		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to checkout first office repository. Probably you do not have permissions. Please resolve and start again."; exit 1; fi
 	fi
 	if [ ! -d backendlocalization ];  then
-		git clone git@gitlab.acornassociated.org:office/backendlocalization.git
+		git clone git@gitlab.acorn.org:office/backendlocalization.git
 		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 	fi
 	if [ ! -d user ];  then
-		git clone git@gitlab.acornassociated.org:office/user.git
+		git clone git@gitlab.acorn.org:office/user.git
 		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 	fi
 	if [ ! -d location ];  then
-		git clone git@gitlab.acornassociated.org:office/location.git;
+		git clone git@gitlab.acorn.org:office/location.git;
 		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 	fi
 	if [ ! -d messaging ]; then
-		git clone git@gitlab.acornassociated.org:office/messaging.git;
+		git clone git@gitlab.acorn.org:office/messaging.git;
 		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 	fi
 	if [ ! -d calendar ];  then
-		git clone git@gitlab.acornassociated.org:office/calendar.git;
+		git clone git@gitlab.acorn.org:office/calendar.git;
 		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 	fi
 	cd ../..
