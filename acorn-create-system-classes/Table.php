@@ -1,4 +1,4 @@
-<?php namespace AcornAssociated\CreateSystem;
+<?php namespace Acorn\CreateSystem;
 
 require_once('Str.php');
 require_once('Column.php');
@@ -11,7 +11,7 @@ class Table {
     public const INCLUDE_SCHEMA_PUBLIC = FALSE;
 
     // TODO: These should be in the WinterCMS framework abstraction
-    protected static $knownAcornAssociatedPlugins = array('User', 'Location', 'Messaging', 'Calendar');
+    protected static $knownAcornPlugins = array('User', 'Location', 'Messaging', 'Calendar');
     protected static $knownWinterPlugins = array('System', 'Backend');
 
     protected static $tables = array();
@@ -121,7 +121,7 @@ class Table {
         // We omit some of our own known plugins
         // because they do not conform yet to our naming requirements
         if ($this->shouldProcess()) {
-            if ($this->isOurs() && !$this->isKnownAcornAssociatedPlugin() && !$this->isModule()) {
+            if ($this->isOurs() && !$this->isKnownAcornPlugin() && !$this->isModule()) {
                 $strPlural   = Str::plural($this->name);
                 $strSingular = Str::singular($this->name);
               
@@ -183,7 +183,7 @@ class Table {
                                 $this->db->setCommentValue($this->fullyQualifiedName(), $columnCheck, 'tab-location', 1);
                             }    
                         }
-                        $tab = 'acornassociated::lang.models.general.description';
+                        $tab = 'acorn::lang.models.general.description';
                         if ($column->commentValue('tab') != $tab) {
                             $error = "Content table [$YELLOW$this->name$NC] column [$YELLOW$columnCheck$NC] is not on a tab";
                             print("${RED}WARNING$NC: $error\n");
@@ -211,7 +211,7 @@ class Table {
                         $yn = readline("Create [$columnCheck] (y) ?");
                         if ($yn != 'n') {
                             $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'uuid');
-                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acornassociated_calendar_events');
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_calendar_events');
                             print("Added [$columnCheck] with FK\n");
                             $changes = TRUE;
                         }
@@ -221,12 +221,12 @@ class Table {
                         print("${RED}WARNING$NC: $error\n");
                         $yn = readline("Create [$columnCheck] FK (y) ?");
                         if ($yn != 'n') {
-                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acornassociated_calendar_events');
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_calendar_events');
                             print("Added [$columnCheck] FK\n");
                             $changes = TRUE;
                         }
                     }
-                    $triggerCheck = 'fn_acornassociated_calendar_trigger_created_at_event';
+                    $triggerCheck = 'fn_acorn_calendar_trigger_created_at_event';
                     if ($this->hasColumn($columnCheck) && !$this->hasTrigger($triggerCheck)) {
                         $error = "Content table [$YELLOW$this->name$NC] has [$YELLOW$columnCheck$NC] column but no trigger [$YELLOW$triggerCheck$NC]";
                         print("${RED}WARNING$NC: $error\n");
@@ -257,7 +257,7 @@ class Table {
                         $yn = readline("Create [$columnCheck] (y) ?");
                         if ($yn != 'n') {
                             $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'uuid', NULL, Column::NULLABLE);
-                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acornassociated_calendar_events');
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_calendar_events');
                             print("Added [$columnCheck] NULLABLE with FK\n");
                             $changes = TRUE;
                         }
@@ -267,7 +267,7 @@ class Table {
                         print("${RED}WARNING$NC: $error\n");
                         $yn = readline("Create [$columnCheck] FK (y) ?");
                         if ($yn != 'n') {
-                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acornassociated_calendar_events');
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_calendar_events');
                             print("Added [$columnCheck] FK\n");
                             $changes = TRUE;
                         }
@@ -292,7 +292,7 @@ class Table {
                         $yn = readline("Create [$columnCheck] (y) ?");
                         if ($yn != 'n') {
                             $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'uuid', NULL);
-                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acornassociated_user_users');
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_user_users');
                             print("Added [$columnCheck] NULLABLE with FK\n");
                             $changes = TRUE;
                         }
@@ -302,7 +302,7 @@ class Table {
                         print("${RED}WARNING$NC: $error\n");
                         $yn = readline("Create [$columnCheck] FK (y) ?");
                         if ($yn != 'n') {
-                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acornassociated_user_users');
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_user_users');
                             print("Added [$columnCheck] FK\n");
                             $changes = TRUE;
                         }
@@ -327,7 +327,7 @@ class Table {
                         $yn = readline("Create [$columnCheck] (y) ?");
                         if ($yn != 'n') {
                             $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'uuid', NULL, Column::NULLABLE);
-                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acornassociated_user_users');
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_user_users');
                             print("Added [$columnCheck] NULLABLE with FK\n");
                             $changes = TRUE;
                         }
@@ -337,7 +337,7 @@ class Table {
                         print("${RED}WARNING$NC: $error\n");
                         $yn = readline("Create [$columnCheck] FK (y) ?");
                         if ($yn != 'n') {
-                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acornassociated_user_users');
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_user_users');
                             print("Added [$columnCheck] FK\n");
                             $changes = TRUE;
                         }
@@ -362,12 +362,12 @@ class Table {
                         $yn = readline("Create [$columnCheck] (y) ?");
                         if ($yn != 'n') {
                             $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'uuid');
-                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acornassociated_servers');
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_servers');
                             print("Added [$columnCheck] NULLABLE with FK\n");
                             $changes = TRUE;
                         }
                     }
-                    $triggerCheck = 'fn_acornassociated_server_id';
+                    $triggerCheck = 'fn_acorn_server_id';
                     if ($this->hasColumn($columnCheck) && !$this->hasTrigger($triggerCheck)) {
                         $error = "Content table [$YELLOW$this->name$NC] has [$YELLOW$columnCheck$NC] column but no trigger [$YELLOW$triggerCheck$NC]";
                         print("${RED}WARNING$NC: $error\n");
@@ -383,7 +383,7 @@ class Table {
                         print("${RED}WARNING$NC: $error\n");
                         $yn = readline("Create [$columnCheck] FK (y) ?");
                         if ($yn != 'n') {
-                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acornassociated_servers');
+                            $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_servers');
                             print("Added [$columnCheck] FK\n");
                             $changes = TRUE;
                         }
@@ -627,25 +627,25 @@ class Table {
     public function dbLangPath()
     {
         // Used for creating easy user language translations file and AJAX dot paths
-        // array(public.acornassociated, lojistiks, measurement, units)
+        // array(public.acorn, lojistiks, measurement, units)
         $tableDotPathParts = explode('_', $this->fullyQualifiedName(self::INCLUDE_SCHEMA_PUBLIC));
-        // public.acornassociated.lojistiks.measurement_units
+        // public.acorn.lojistiks.measurement_units
         $tableDotPath      = $tableDotPathParts[0];
         if (isset($tableDotPathParts[1])) $tableDotPath .= '.' . $tableDotPathParts[1];
         if (isset($tableDotPathParts[2])) $tableDotPath .= '.' . implode('_', array_slice($tableDotPathParts, 2));
-        // tables.public.acornassociated.lojistiks.measurement.units
+        // tables.public.acorn.lojistiks.measurement.units
         return "tables.$tableDotPath";
     }
 
     protected function nameSingular(): string
     {
-        // acornassociated_user_user_group | acornassociated_finance_invoice
+        // acorn_user_user_group | acorn_finance_invoice
         return ($this->singular ?: Str::singular($this->name));
     }
 
     protected function namePlural(): string
     {
-        // acornassociated_user_user_groups | acornassociated_finance_invoices
+        // acorn_user_user_groups | acorn_finance_invoices
         return ($this->plural ?: Str::plural($this->name));
     }
 
@@ -672,7 +672,7 @@ class Table {
 
     public function associatedFunctionNameBase(): string
     {
-        // fn_acornassociated_calendar
+        // fn_acorn_calendar
         $subName = NULL;
         $tableNameParts  = explode('_', $this->name);
         $subName = implode('_', array_slice($tableNameParts, 0, 2));
@@ -699,19 +699,19 @@ class Table {
 
     public function unqualifiedForeignKeyColumnBaseName(): string
     {
-        // Unqualified base name for acornassociated_user_user_groups is user_group
-        // Foreign column user_group_id => acornassociated_user_user_groups.id
-        // Qualified [payee_]user_group_id => acornassociated_user_user_groups.id
+        // Unqualified base name for acorn_user_user_groups is user_group
+        // Foreign column user_group_id => acorn_user_user_groups.id
+        // Qualified [payee_]user_group_id => acorn_user_user_groups.id
         $tableNameParts = explode('_', $this->name);
         if ($this->isModule()) {
             if ($this->isFrameworkTable()) {
                 $subName = $this->name;
             } else {
-                // AcornAssociated, System, Backend
+                // Acorn, System, Backend
                 $subName = implode('_', array_slice($tableNameParts, 1));
             }
         } else if (count($tableNameParts) == 2 && $this->packageType == 'plugin') {
-            // e.g. acornassociated_calendars
+            // e.g. acorn_calendars
             $subName = $tableNameParts[1];
         } else {
             // 3 parts required!
@@ -786,12 +786,12 @@ class Table {
     // ---------------------------------------------- Ownership, authors & plugins
     public function isOurs(): bool
     {
-        return ($this->authorName() == 'AcornAssociated');
+        return ($this->authorName() == 'Acorn');
     }
 
-    public function isKnownAcornAssociatedPlugin(): bool
+    public function isKnownAcornPlugin(): bool
     {
-        return (array_search($this->pluginName(), self::$knownAcornAssociatedPlugins) !== FALSE);
+        return (array_search($this->pluginName(), self::$knownAcornPlugins) !== FALSE);
     }
 
     public function authorName(): string
@@ -802,7 +802,7 @@ class Table {
         } else {
             $tableNameParts = explode('_', $this->name);
             $authorName     = ucfirst($tableNameParts[0]);
-            if ($authorName == 'Acornassociated') $authorName = 'AcornAssociated';
+            if ($authorName == 'Acorn') $authorName = 'Acorn';
         }
 
         return $authorName;
@@ -814,10 +814,10 @@ class Table {
         if ($this->isFrameworkTable()) {
             $moduleName = 'Winter';
         } else {
-            // AcornAssociated, System, Backend, Cms
+            // Acorn, System, Backend, Cms
             $tableNameParts = explode('_', $this->name);
             $moduleName      = ucfirst($tableNameParts[0]);
-            if ($moduleName == 'Acornassociated') $moduleName = 'AcornAssociated';
+            if ($moduleName == 'Acorn') $moduleName = 'Acorn';
         }
         return $moduleName;
     }
@@ -832,11 +832,11 @@ class Table {
         if ($this->isFrameworkTable() || $this->isFrameworkModuleTable()) {
             // Winter framework or modules
         } else if (count($tableNameParts) >= 3 || $this->packageType == 'plugin') {
-            // e.g. acornassociated_calendars
+            // e.g. acorn_calendars
             $plugin = ucfirst($tableNameParts[1]);
         } else if (count($tableNameParts) == 2 && $this->isOurs()) {
-            // It's our AcornAssociated module
-            // e.g. acornassociated_servers
+            // It's our Acorn module
+            // e.g. acorn_servers
         } else {
             throw new \Exception("Not sure how to classify [$this->name]");
         }
@@ -861,11 +861,11 @@ class Table {
             if ($this->isFrameworkTable()) {
                 $subName = $this->name;
             } else {
-                // AcornAssociated, System, Backend
+                // Acorn, System, Backend
                 $subName = implode('_', array_slice($tableNameParts, 1));
             }
         } else if (count($tableNameParts) == 2 && $this->packageType == 'plugin') {
-            // e.g. acornassociated_calendars
+            // e.g. acorn_calendars
             $subName = $tableNameParts[1];
         } else {
             // 3 parts required!
@@ -885,7 +885,7 @@ class Table {
         if ($this->isModule()) {
             $subName = implode('_', array_slice($tableNameParts, 1));
         } else if (count($tableNameParts) == 2 && $this->packageType == 'plugin') {
-            // e.g. acornassociated_calendars
+            // e.g. acorn_calendars
             $subName = $tableNameParts[1];
         } else {
             $subName = $this->subName();

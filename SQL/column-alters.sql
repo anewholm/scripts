@@ -8,7 +8,7 @@ execute (
   )::varchar, ';') 
   from information_schema.columns
   where data_type = 'timestamp with time zone'
-  and table_name like('acornassociated_%')
+  and table_name like('acorn_%')
   and is_updatable = 'YES'
 );
 end$$;
@@ -17,5 +17,5 @@ select *, table_schema, table_name, column_name, data_type,
   pg_catalog.col_description(concat(table_schema, '.', table_name)::regclass::oid, ordinal_position) as comment
 from information_schema.columns
 where data_type = 'timestamp with time zone'
-and table_name like('acornassociated_%')
+and table_name like('acorn_%')
 and is_updatable = 'YES'

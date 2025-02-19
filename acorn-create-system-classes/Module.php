@@ -1,4 +1,4 @@
-<?php namespace AcornAssociated\CreateSystem;
+<?php namespace Acorn\CreateSystem;
 
 require_once('Model.php');
 
@@ -65,7 +65,7 @@ class Module {
 
     public function dotClassName(): string
     {
-        // AcornAssociated
+        // Acorn
         return $this->author;
     }
 
@@ -90,7 +90,7 @@ class Module {
 
     public function isOurs(string $notUsed = NULL): bool
     {
-        return ($this->name == 'AcornAssociated');
+        return ($this->name == 'Acorn');
     }
 
     public function translationDomain(): string
