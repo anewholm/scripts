@@ -46,7 +46,8 @@ class Field {
     public $placeholder;
     public $debugComment;
     public $fieldComment;
-    public $permissionSettings;
+    public $permissions = array(); // Resultant Fields.yaml permissions: directive
+    public $permissionSettings;    // Database column Input settings
     public $commentHtml  = TRUE;
     public $hierarchical;
     public $optionsStaticMethod = 'dropdownOptions';
@@ -323,12 +324,22 @@ class Field {
         return $cssClasses;
     }
 
-    public function permissions(): array
+    public function allPermissionNames(): array
     {
+        // Assemble all field permission-settings directives names
+        // for Plugin registerPermissions()
+        // Permission names (keys) are fully-qualified
+        //   permission-settings:
+        //      NOT=legalcases__owner_user_group_id__update@update:
+        //         field:
+        //         readOnly: true
+        //         disabled: true
+        //         labels: 
+        //         en: Update owning Group
         $permissions = array();
 
         if ($this->permissionSettings) {
-            foreach ($this->permissionSettings as $permissionDirective => $config) {
+            foreach ($this->permissionSettings as $permissionDirective => &$config) {
                 // Copied from Trait MorphConfig
                 $typeParts = explode('=', $permissionDirective);
                 $negation  = FALSE;
@@ -344,10 +355,25 @@ class Field {
                 }
                 // End copy
 
-                // Dev setting so labels are not necessary
-                if (!isset($config['labels'])) $config['labels'] = array('en' => Str::title($permissionDirective));
+                // Permission keys _can_ be qualified in this scenario
+                // because they can reference permissions from other plugins
+                // however, we default to the same model plugin that the field in attached to
+                $qualifiedPermissionName = $permissionDirective;
+                $isQualifiedName = (strstr($qualifiedPermissionName, '.') !== FALSE);
+                if (!$isQualifiedName) {
+                    $pluginDotPath = $this->model->plugin->dotName();
+                    $qualifiedPermissionName = "$pluginDotPath.$qualifiedPermissionName";
+                }
 
-                $permissions[$permissionDirective] = $config;
+                // Dev setting so labels are not necessary
+                if (!isset($config['labels'])) {
+                    $permissionNameParts = explode('.', $qualifiedPermissionName);
+                    $permissionNameLast = end($permissionNameParts);
+                    $config['labels'] = array('en' => Str::title($permissionNameLast));
+                }
+
+                // Only fully Qualified permission names
+                $permissions[$qualifiedPermissionName] = $config;
             }
         }
 
@@ -508,6 +534,28 @@ class ForeignIdField extends Field {
                     }
                 }
 
+                // ------------------------ Assemble field.yaml permissions: YAML array
+                if ($this->relation1) {
+                    // Un-qualified permissions of target model
+                    //   permission-settings:
+                    //      trials__access:
+                    //         labels: 
+                    //         en: Create a Trial
+                    $targetModel = &$this->relation1->to;
+                    if ($targetModel->permissionSettings) {
+                        foreach ($targetModel->permissionSettings as $localPermissionName => $permissionConfig) {
+                            $isQualifiedName = (strstr($localPermissionName, '.') !== FALSE);
+                            if ($isQualifiedName) {
+                                throw new \Exception("Model [$targetModel->name] permission [$localPermissionName] cannot be qualified (it has a dot)");
+                            }
+
+                            // Add the required permission to the Fields.yaml permissions: directive
+                            // These must be local permission names
+                            array_push($this->permissions, $localPermissionName);
+                        }
+                    }
+                }
+
                 // ----------------------- Fields.yaml Dropdown
                 if (!$this->cssClasses) $this->cssClasses = array('popup-col-xs-6');
                 if (!$this->bootstraps) $this->bootstraps = array('xs' => 5);
@@ -613,11 +661,34 @@ class PseudoFromForeignIdField extends PseudoField {
         foreach ($this->relations as $name => &$relation) {
             if (   $relation instanceof Relation1from1 // includes RelationLeaf
                 || $relation instanceof RelationXfrom1
+                || $relation instanceof Relation1fromX
                 || $relation instanceof RelationXfromX
             ) {
                 if ($this->relation1) throw new \Exception("Multiple X/1from1/X relations on PseudoFromForeignIdField[$this->name]");
                 $this->relation1 = &$relation;
                 $this->oid       = $this->relation1->oid;
+            }
+        }
+
+        // ------------------------ Assemble field.yaml permissions: YAML array
+        if ($this->relation1) {
+            // Un-qualified permissions of target model
+            //   permission-settings:
+            //      trials__access:
+            //         labels: 
+            //         en: Create a Trial
+            $targetModel = &$this->relation1->to;
+            if ($targetModel->permissionSettings) {
+                foreach ($targetModel->permissionSettings as $localPermissionName => $permissionConfig) {
+                    $isQualifiedName = (strstr($localPermissionName, '.') !== FALSE);
+                    if ($isQualifiedName) {
+                        throw new \Exception("Model [$targetModel->name] permission [$localPermissionName] cannot be qualified (it has a dot)");
+                    }
+
+                    // Add the required permission to the Fields.yaml permissions: directive
+                    // These must be local permission names
+                    array_push($this->permissions, $localPermissionName);
+                }
             }
         }
     }

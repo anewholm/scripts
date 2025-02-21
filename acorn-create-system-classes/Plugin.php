@@ -184,12 +184,18 @@ class Plugin {
     }
 
     // ----------------------------------------- Permissions
-    public function permissions(): array
+    public function allPermissionNames(): array
     {
         $permissions = array();
 
         foreach ($this->models as &$model) {
-            $permissions = array_merge($permissions, $model->permissions());
+            $permissions = array_merge($permissions, $model->allPermissionNames());
+        }
+
+        // Check these permissions keys are fully qualified
+        foreach ($permissions as $fullyQualifiedKey => &$config) {
+            $isQualifiedName = (strstr($fullyQualifiedKey, '.') !== FALSE);
+            if (!$isQualifiedName) throw new \Exception("Permission [$fullyQualifiedKey] is not qualified");
         }
 
         return $permissions;
