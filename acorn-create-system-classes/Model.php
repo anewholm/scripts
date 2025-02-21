@@ -26,6 +26,7 @@ class Model {
     public $menuSplitter = FALSE;
     public $menuIndent   = 0;
     public $icon;
+    public $permissionSettings; // Database column Input settings
     // PHP model methods
     public $attributeFunctions = array();
     public $methods            = array();
@@ -284,12 +285,65 @@ class Model {
     }
 
     // ----------------------------------------- Permissions
-    public function permissions(): array
+    public function allPermissionNames(): array
     {
+        // Assemble all model & field permission-settings directives names
+        // for Plugin registerPermissions()
+        // Return permission names (keys) will be fully-qualified
+        //   permission-settings:
+        //      trials__access:
+        //         labels: 
+        //         en: Create a Trial
         $permissions = array();
 
+        if ($this->permissionSettings) {
+            foreach ($this->permissionSettings as $permissionDirective => &$config) {
+                // Copied from Trait MorphConfig
+                $typeParts = explode('=', $permissionDirective);
+                $negation  = FALSE;
+                if (count($typeParts) == 2) {
+                    if ($typeParts[0] == 'NOT') $negation = TRUE;
+                    $permissionDirective = $typeParts[1];
+                }
+                $contextParts = explode('@', $permissionDirective);
+                $permContext  = NULL;
+                if (count($contextParts) == 2) {
+                    $permContext         = $contextParts[1];
+                    $permissionDirective = $contextParts[0];
+                }
+                // End copy
+
+                // Permission keys _must_ be un-qualified in this scenario
+                // we prepend the same model plugin that the model is part of
+                $qualifiedPermissionName = $permissionDirective;
+                $isQualifiedName = (strstr($qualifiedPermissionName, '.') !== FALSE);
+                if ($isQualifiedName) {
+                    throw new \Exception("Model permission [$qualifiedPermissionName] cannot be qualified");
+                } else {
+                    $pluginDotPath = $this->plugin->dotName();
+                    $qualifiedPermissionName = "$pluginDotPath.$qualifiedPermissionName";
+                }
+
+                // Dev setting so labels are not necessary
+                if (!isset($config['labels'])) {
+                    $permissionNameParts = explode('.', $qualifiedPermissionName);
+                    $permissionNameLast = end($permissionNameParts);
+                    $config['labels'] = array('en' => Str::title($permissionNameLast));
+                }
+
+                $permissions[$qualifiedPermissionName] = $config;
+            }
+        }
+
+        // The field->allPermissionNames() keys are already fully-qualified
         foreach ($this->fields() as &$field) {
-            $permissions = array_merge($permissions, $field->permissions());
+            $permissions = array_merge($permissions, $field->allPermissionNames());
+        }
+
+        // Check these permissions keys are fully qualified
+        foreach ($permissions as $fullyQualifiedKey => &$config) {
+            $isQualifiedName = (strstr($fullyQualifiedKey, '.') !== FALSE);
+            if (!$isQualifiedName) throw new \Exception("Permission [$fullyQualifiedKey] is not qualified");
         }
 
         return $permissions;

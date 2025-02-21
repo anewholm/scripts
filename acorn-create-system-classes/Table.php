@@ -30,6 +30,7 @@ class Table {
     public $pluginIcon;
     public $system; // Internal do not process
     public $todo;   // TODO: This structure has not been analysed / enabled yet
+    public $permissionSettings;
 
     public $icon;
     public $tableType; // TODO: create a Derived class instead?

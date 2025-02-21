@@ -237,6 +237,27 @@ class Framework
         // Destructor will write cached arrays
     }
 
+    protected function arrayFileUnSet(string $path, string $dotPath, bool $throwIfNotSet = TRUE)
+    {
+        $array = &$this->arrayFileLoad($path);
+        $keys  = explode('.', $dotPath);
+        $name  = array_pop($keys);
+        $level = &$array;
+        foreach ($keys as $step) {
+            if (!isset($level[$step])) $level[$step] = array();
+            $level = &$level[$step];
+            if (!is_array($level)) throw new \Exception("Pre-level [$step] in [$dotPath] is not array when trying to unset [$name]");
+        }
+
+        if (isset($level[$name])) {
+            unset($level[$name]);
+        } else if ($throwIfNotSet) {
+            throw new \Exception("[$dotPath] not set in [$path]");
+        }
+
+        // Destructor will write cached arrays
+    }
+
     protected function langFileSet(string $path, string $dotPath, string|array $text, string $langName, object|NULL $dbObject, bool $throwIfAlreadySet = TRUE, string $comment = NULL)
     {
         if (!$langName) throw new \Exception("Lang name required when setting [$dotPath]");

@@ -52,7 +52,7 @@ check ()
 
 # -------------------------------------------- Check Internet and APT Update
 if [ -n "$(which nc)" ]; then
-  echo -e "GET http://google.com HTTP/1.0\n\n" | nc google.com 80 > /dev/null 2>&1
+  echo -e "GET http://google.com HTTP/1.0\n\n" | nc google.com 80 2>&1
   check "No internet connection"
 fi
 
@@ -67,7 +67,7 @@ echo
 # -------------------------------------------- Prerequisites
 if [ -z "$(which curl)" ]; then
   echo "Installing ${YELLOW}curl${NC}... "
-  sudo apt-get install curl -y 2> /dev/null
+  sudo apt-get install curl -y
   check "Failed to download curl"
   echo "${GREEN}Done.${NC}"
   echo
@@ -75,7 +75,7 @@ fi
 
 if [ -z "$(which wget)" ]; then
   echo "Installing ${YELLOW}wget${NC}... "
-  sudo apt-get install wget -y 2> /dev/null
+  sudo apt-get install wget -y
   check "Failed to download wget"
   echo "${GREEN}Done.${NC}"
   echo
@@ -83,7 +83,7 @@ fi
 
 if [ -z "$(which gpg)" ]; then
   echo "Installing ${YELLOW}gpg${NC}... "
-  sudo apt-get install gpg -y 2> /dev/null
+  sudo apt-get install gpg -y
   check "Failed to download gpg"
   echo "${GREEN}Done.${NC}"
   echo
@@ -91,7 +91,7 @@ fi
 
 if [ -z "$(which snap)" ]; then
   echo "Installing ${YELLOW}snap${NC} package manager... "
-  sudo apt-get install snapd -y 2> /dev/null
+  sudo apt-get install snapd -y
   check "Failed to download snapd"
   echo "${GREEN}Done.${NC}"
   echo
@@ -101,7 +101,7 @@ if [ -z "$(which add-apt-repository)" ]; then
   # Probably a Kali distro that does not have Python add-apt-repository by default
   # TODO: We might get Python version issues also
   echo "Installing ${YELLOW}software-properties-common${NC} (add-apt-repository)... "
-  sudo apt-get install software-properties-common -y 2> /dev/null
+  sudo apt-get install software-properties-common -y
   check "Failed to download software-properties-common (add-apt-repository)"
   echo "${GREEN}Done.${NC}"
   echo
@@ -110,12 +110,12 @@ fi
 # -------------------------------------------- Infrastructural Installs
 if [ -z "$(which apache2)" ]; then
   echo "Installing ${YELLOW}apache2${NC}... "
-  sudo apt-get install apache2 -y 2> /dev/null
-  sudo a2enmod rewrite 2> /dev/null
-  sudo apt-get install libapache2-mod-fcgid -y 2> /dev/null
-  sudo apt-get install libapache2-mod-php -y 2> /dev/null
+  sudo apt-get install apache2 -y
+  sudo a2enmod rewrite
+  sudo apt-get install libapache2-mod-fcgid -y
+  sudo apt-get install libapache2-mod-php -y
   check "Failed to download apache2"
-  sudo a2enmod actions fcgid alias proxy_fcgi setenvif 2> /dev/null
+  sudo a2enmod actions fcgid alias proxy_fcgi setenvif
   echo "Setting ServerName to localhost"
   sudo echo "ServerName localhost" >> /etc/apache2/apache2.conf
   sudo service apache2 restart
@@ -145,7 +145,7 @@ fi
 
 if [ -z "$(which php)" ]; then
   echo "Installing latest ${YELLOW}php${NC}... "
-  sudo apt-get install php -y 2> /dev/null
+  sudo apt-get install php -y
   check "Failed to download php"
   echo "${GREEN}Done.${NC}"
   echo
@@ -153,19 +153,19 @@ fi
 # Always try all dependencies
 # Other libraries, for database, are installed later with the database software
 echo "Installing ${YELLOW}php${NC} libraries (for WinterCMS)... "
-sudo apt-get install php-curl php-mbstring phpunit php-zip php-gd php-xml php-json -y 2> /dev/null
+sudo apt-get install php-curl php-mbstring phpunit php-zip php-gd php-xml php-json -y
 check "Failed to download php libraries"
 
 # Standard PHP is php8.3 or above, so lets load 8.1 also
 if [ -z "$(which php8.1)" ]; then
   echo "Installing ${YELLOW}php8.1${NC}... "
   echo "Adding ${YELLOW}ppa:ondrej/php${NC} PHP backport repository and apt key... "
-  sudo add-apt-repository ppa:ondrej/php 2> /dev/null
+  sudo add-apt-repository ppa:ondrej/php
 
-  sudo apt-get install php8.1 -y 2> /dev/null
+  sudo apt-get install php8.1 -y
   check "Failed to download php"
   # Other libraries, for database, are installed later with the database software
-  sudo apt-get install php8.1-curl php8.1-mbstring php8.1-zip php8.1-gd php8.1-xml -y 2> /dev/null
+  sudo apt-get install php8.1-curl php8.1-mbstring php8.1-zip php8.1-gd php8.1-xml -y
   check "Failed to download php libraries"
 
   # Winter CMS current version requires <= 8.1
@@ -187,8 +187,7 @@ if [ ! -f "$php_xdebug_ini" ]; then
   #sudo apt install php8.1-xdebug
   #sudo apt install php8.3-xdebug
   if [ ! -f "$php_xdebug_ini" ]; then
-   echo "${RED}ERROR${NC}: Failed to install PHP [$php_version] XDebug"
-   exit 1
+   check " Failed to install PHP [$php_version] XDebug"
   fi
 
   echo "xdebug.profiler_enable_trigger = 1
@@ -205,16 +204,16 @@ fi
 
 if [ -z "$(which mysql)" ]; then
   echo "Installing ${YELLOW}mysql-server${NC}... "
-  sudo apt-get install mysql-server-8.0 mysql-client-8.0 -y 2> /dev/null
-  sudo apt-get install php-mysql 2> /dev/null
+  sudo apt-get install mysql-server-8.0 mysql-client-8.0 -y
+  sudo apt-get install php-mysql
   check "Failed to download mysql"
   while true; do
     read -p "Create user root with password 'QueenPool1@'? [Y] " yn
     case $yn in
       Y|y|"")
-        mysql -e "create user root@% identified by 'QueenPool1@';" 2> /dev/null
-        mysql -e "grant all on *.* to root@% with grant option;" 2> /dev/null
-        mysql -e "flush privileges;" 2> /dev/null
+        mysql -e "create user root@% identified by 'QueenPool1@';"
+        mysql -e "grant all on *.* to root@% with grant option;"
+        mysql -e "flush privileges;"
         break
       ;;
     esac
@@ -222,16 +221,16 @@ if [ -z "$(which mysql)" ]; then
   echo "${GREEN}Done.${NC}"
   echo
 fi
-sudo apt-get install php-mysql -y 2> /dev/null
+sudo apt-get install php-mysql -y
 check "Failed to install php-mysql"
 if [ -n "$(which php8.1)" ]; then
-  sudo apt-get install php8.1-mysql -y 2> /dev/null
+  sudo apt-get install php8.1-mysql -y
   check "Failed to install php8.1-mysql"
 fi
 
 if [ -z "$(which mysql-workbench-community)" ]; then
   echo "Installing ${YELLOW}MySQL Workbench${NC}... "
-  sudo snap install mysql-workbench-community 2> /dev/null
+  sudo snap install mysql-workbench-community
   check "Failed to download MySQL Workbench"
   echo "  Connecting AppArmour policy"
   sudo snap connect mysql-workbench-community:password-manager-service :password-manager-service
@@ -241,11 +240,11 @@ fi
 
 # --------------------------------------------------------- Install PostGreSQL 16
 postgresql_version=16
-apt_postgresql=`apt list --installed postgresql-$postgresql_version 2> /dev/null | grep -E installed`
+apt_postgresql=`apt list --installed postgresql-$postgresql_version  | grep -E installed`
 if [ -z "$apt_postgresql" ]; then
   echo "${YELLOW}postgresql-$postgresql_version${NC} installing..."
   echo "Note: PostGreSQL version 16 has bi-directional replication"
-  sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' 2> /dev/null
+  sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
   wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
   sudo apt-get update
   sudo apt-get install -y postgresql-$postgresql_version
@@ -263,15 +262,15 @@ if [ -z "$apt_postgresql" ]; then
   echo "${GREEN}Done.${NC}"
   echo
 fi
-sudo apt-get install php-pgsql -y 2> /dev/null
+sudo apt-get install php-pgsql -y
 check "Failed to install php-pgsql"
 if [ -n "$(which php8.1)" ]; then
-  sudo apt-get install php8.1-pgsql -y 2> /dev/null
+  sudo apt-get install php8.1-pgsql -y
   check "Failed to install php8.1-pgsql"
 fi
 
 # --------------------------------------------------------- Unistall PostGreSQL 14
-apt_postgresql_14=`apt list --installed postgresql-14 2> /dev/null | grep -E installed`
+apt_postgresql_14=`apt list --installed postgresql-14  | grep -E installed`
 if [ -n "$apt_postgresql_14" ]; then
   # TODO: pg_upgradecluster
   echo "${YELLOW}WARNING${NC}: Installed PostGreSQL version 16, but did not un-install ${YELLOW}PostGreSQL version 16${NC}"
@@ -282,7 +281,7 @@ fi
 # PostGreSQL extensions
 if [ -d postgres/ ]; then
   # Source compilation pre-requisities
-  sudo apt-get install -y postgresql-server-dev-$postgresql_version libcurl4-openssl-dev make g++ 2> /dev/null # For pgsql-http extensions
+  sudo apt-get install -y postgresql-server-dev-$postgresql_version libcurl4-openssl-dev make g++  # For pgsql-http extensions
 
   # IMPORTANT: Installing on previous version:
   # Change the Makefile to point to the previous pg_config
@@ -340,7 +339,7 @@ fi
 
 if [ -z "$(which git)" ]; then
   echo "Installing ${YELLOW}git${NC}... "
-  sudo apt-get install git -y 2> /dev/null
+  sudo apt-get install git -y
   check "Failed to download git"
   echo "${GREEN}Done.${NC}"
   echo

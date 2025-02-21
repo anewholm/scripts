@@ -318,27 +318,44 @@ class WinterCMS extends Framework
         // ],
         $pluginPermissionsArray = array();
         $translationDomain      = $plugin->translationDomain();
-        $dotName                = $plugin->dotName();
-        $permissions            = $plugin->permissions(); // Used in lang section below
+        $pluginDotName          = $plugin->dotName();
+        $permissions            = $plugin->allPermissionNames(); // Used in lang section below
         if ($permissions) {
-            foreach ($permissions as $name => &$config) {
-                print("    Adding Permission: ${GREEN}$name${NC}\n");
-                $pluginPermissionConfig = array(
-                    'tab'   => "$translationDomain::lang.plugin.name",
-                    'label' => "$translationDomain::lang.permissions.$name",
-                );
-                $pluginPermissionsArray["$dotName.$name"] = $pluginPermissionConfig;
-                // Adorn the main config for the lang updates later
-                $config['plugin'] = $pluginPermissionConfig;
+            // Check these permissions keys are fully qualified
+            foreach ($permissions as $fullyQualifiedKey => &$config) {
+                $isQualifiedName = (strstr($fullyQualifiedKey, '.') !== FALSE);
+                if (!$isQualifiedName) throw new \Exception("Permission [$fullyQualifiedKey] is not qualified");
+            }
+
+            foreach ($permissions as $fullyQualifiedName => &$config) {
+                $permissionNameParts     = explode(".", $fullyQualifiedName);
+                $permissionPluginDotPath = implode(".", array_slice($permissionNameParts, 0, 2));
+                $permissionLocalName     = end($permissionNameParts);
+                if ($permissionPluginDotPath == $pluginDotName) {
+                    print("    Adding Permission: ${GREEN}$fullyQualifiedName${NC}\n");
+                    $pluginPermissionConfig = array(
+                        'tab'   => "$translationDomain::lang.plugin.name",
+                        'label' => "$translationDomain::lang.permissions.$permissionLocalName",
+                    );
+                    $pluginPermissionsArray[$permissionLocalName] = $pluginPermissionConfig;
+                    // Adorn the main config for the lang updates later
+                    $config['plugin'] = $pluginPermissionConfig;
+                }
             }
             // Add these to the plugin.php
             $this->setArrayReturnFunction($pluginFilePath, 'registerPermissions', $pluginPermissionsArray);
 
-            foreach ($permissions as $name => &$config) {
-                // Set all present labels
-                if (isset($config['plugin']['label']) && isset($config['labels'])) {
-                    foreach ($config['labels'] as $lang => $label) {
-                        $this->arrayFileSet("$langDirPath/$lang/lang.php", "permissions.$name", $label);
+            // lang.php
+            foreach ($permissions as $fullyQualifiedName => &$config) {
+                $permissionNameParts     = explode(".", $fullyQualifiedName);
+                $permissionPluginDotPath = implode(".", array_slice($permissionNameParts, 0, 2));
+                $permissionLocalName     = end($permissionNameParts);
+                if ($permissionPluginDotPath == $pluginDotName) {
+                    if (isset($config['plugin']['label']) && isset($config['labels'])) {
+                        foreach ($config['labels'] as $lang => $label) {
+                            $this->arrayFileSet("$langDirPath/$lang/lang.php", "permissions.$permissionLocalName", $label);
+                            $this->arrayFileUnSet("$langDirPath/$lang/lang.php", "permissions.some_permission", FALSE);
+                        }
                     }
                 }
             }
@@ -891,6 +908,7 @@ class WinterCMS extends Framework
                 'nestLevel'    => ($field->nestLevel ?: NULL),
 
                 'permissionSettings' => $field->permissionSettings,
+                'permissions'        => $field->permissions,
 
                 'include'      => $field->include,
                 'includeModel' => $field->includeModel,
