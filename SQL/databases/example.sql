@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 16.7 (Ubuntu 16.7-1.pgdg24.04+1)
--- Dumped by pg_dump version 16.7 (Ubuntu 16.7-1.pgdg24.04+1)
+-- Dumped from database version 16.8 (Ubuntu 16.8-1.pgdg24.04+1)
+-- Dumped by pg_dump version 16.8 (Ubuntu 16.8-1.pgdg24.04+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -147,6 +147,8 @@ declare
 	new_event_id uuid;
 begin
 	-- Calendar (system): acorn.justice::lang.plugin.activity_log
+	-- Type: indicates the Model
+	-- Status: indicates the action: create, update, delete, etc.
 	calendar_id   := 'f3bc49bc-eac7-11ef-9e4a-1740a039dada';
 	title         := initcap(replace(type, '_', ' '));
 	owner_user_id := user_id;
@@ -367,7 +369,7 @@ declare
 	soft_delete_optional boolean = false;
 
 	table_comment character varying(2048);
-	table_title character varying(1024);
+	type_name character varying(1024);
 	title character varying(1024);
 	event_time timestamp = now();
 	owner_user_id uuid;
@@ -376,6 +378,11 @@ declare
 	event_type_id uuid;
 	event_status_id uuid;
 begin
+	-- See also: fn_acorn_calendar_create_activity_log_event()
+	-- Calendar (system): acorn.justice::lang.plugin.activity_log
+	-- Type: indicates the Plugin & Model, e.g. "Criminal Trials"
+	-- Status: indicates the action: INSERT, UPDATE, DELETE, or other custom
+
 	-- This trigger function should only be used on final content tables
 	-- This is a generic trigger. Some fields are required, others optional
 	-- We use PG system catalogs because they are faster
@@ -385,8 +392,8 @@ begin
 	-- created_at_event_id
 	-- updated_at_event_id
 	owner_user_id := NEW.created_by_user_id; -- NOT NULL
-	table_title   := replace(replace(TG_TABLE_NAME, 'acorn_', ''), '_', ' ');
-	title         := TG_OP || ' ' || table_title;
+	type_name     := initcap(replace(replace(TG_TABLE_NAME, 'acorn_', ''), '_', ' '));
+	title         := initcap(TG_OP) || ' ' || type_name;
 
 	-- Optional fields
 	if exists(SELECT * FROM pg_attribute WHERE attrelid = TG_RELID AND attname = 'name') then name_optional := NEW.name; end if;
@@ -400,11 +407,13 @@ begin
 	calendar_id   := 'f3bc49bc-eac7-11ef-9e4a-1740a039dada';
 	
 	-- Type: lang TG_TABLE_SCHEMA.TG_TABLE_NAME, acorn.justice::lang.models.related_events.label
-	select into event_type_id id from acorn_calendar_event_types where activity_log_related_oid = TG_RELID;
+	select into event_type_id id from acorn_calendar_event_types 
+		where activity_log_related_oid = TG_RELID;
 	if event_type_id is null then
 		-- TODO: Colour?
 		-- TODO: acorn.?::lang.models.?.label
-		insert into public.acorn_calendar_event_types(name, activity_log_related_oid) values(table_title, TG_RELID) returning id into event_type_id;
+		insert into public.acorn_calendar_event_types(name, activity_log_related_oid) 
+			values(type_name, TG_RELID) returning id into event_type_id;
 	end if;
 
 	-- Scenarios
@@ -414,7 +423,8 @@ begin
 			if NEW.created_at_event_id is null then
 				-- Create event
 				event_status_id := '7b432540-eac8-11ef-a9bc-434841a9f67b'; -- INSERT
-				insert into public.acorn_calendar_events(calendar_id, owner_user_id) values(calendar_id, owner_user_id) returning id into new_event_id;
+				insert into public.acorn_calendar_events(calendar_id, owner_user_id) 
+					values(calendar_id, owner_user_id) returning id into new_event_id;
 				insert into public.acorn_calendar_event_parts(event_id, type_id, status_id, name, start, "end") 
 					values(new_event_id, event_type_id, event_status_id, title, event_time, event_time);
 				NEW.created_at_event_id = new_event_id;
@@ -432,7 +442,8 @@ begin
 			
 			if NEW.updated_at_event_id is null then
 				-- Update event
-				insert into public.acorn_calendar_events(calendar_id, owner_user_id) values(calendar_id, owner_user_id) returning id into new_event_id;
+				insert into public.acorn_calendar_events(calendar_id, owner_user_id) 
+					values(calendar_id, owner_user_id) returning id into new_event_id;
 				insert into public.acorn_calendar_event_parts(event_id, type_id, status_id, name, start, "end") 
 					values(new_event_id, event_type_id, event_status_id, title, event_time, event_time);
 				NEW.updated_at_event_id = new_event_id;
@@ -489,7 +500,8 @@ ALTER FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid
 --
 
 COMMENT ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) IS 'labels:
-  en: Create Warrant';
+  en: Create Warrant
+  ku: Fermanek çêbikin';
 
 
 --
@@ -514,7 +526,8 @@ ALTER FUNCTION public.fn_acorn_criminal_action_legalcase_related_events_can(prim
 --
 
 COMMENT ON FUNCTION public.fn_acorn_criminal_action_legalcase_related_events_can(primary_id uuid, user_id uuid) IS 'labels:
-  en: Cancel';
+  en: Cancel
+  ku: Bişûndekirin';
 
 
 --
@@ -572,6 +585,7 @@ ALTER FUNCTION public.fn_acorn_criminal_action_legalcases_transfer_case(model_id
 
 COMMENT ON FUNCTION public.fn_acorn_criminal_action_legalcases_transfer_case(model_id uuid, user_id uuid, owner_user_group_id uuid) IS 'labels:
   en: Transfer Case
+  ku: Derbaskirin Doza
 result-action: model-uuid-redirect
 condition: not id is null';
 
@@ -613,7 +627,7 @@ ALTER FUNCTION public.fn_acorn_justice_action_legalcases_close_case(model_id uui
 
 COMMENT ON FUNCTION public.fn_acorn_justice_action_legalcases_close_case(model_id uuid, user_id uuid) IS 'labels:
   en: Close Case
-  ku: Bigre Sicil
+  ku: Bigre Doza
 condition: closed_at_event_id is null';
 
 
@@ -625,6 +639,7 @@ CREATE FUNCTION public.fn_acorn_justice_action_legalcases_reopen_case(model_id u
     LANGUAGE plpgsql
     AS $$
 begin
+	-- TODO: Create an activity_log event for this
 	update public.acorn_justice_legalcases 
 		set closed_at_event_id = NULL
 		where id = model_id;
@@ -640,7 +655,7 @@ ALTER FUNCTION public.fn_acorn_justice_action_legalcases_reopen_case(model_id uu
 
 COMMENT ON FUNCTION public.fn_acorn_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid) IS 'labels:
   en: Re-open Case
-  ku: Vekrî Sicil
+  ku: Doza ji nû ve veke
 condition: not closed_at_event_id is null';
 
 
@@ -667,7 +682,7 @@ ALTER FUNCTION public.fn_acorn_justice_action_warrants_revoke(model_id uuid, p_u
 
 COMMENT ON FUNCTION public.fn_acorn_justice_action_warrants_revoke(model_id uuid, p_user_id uuid) IS 'labels:
   en: Revoke
-  ku: Bigre
+  ku: Dûrxistin
 condition: revoked_at_event_id is null';
 
 
@@ -1443,11 +1458,18 @@ COMMENT ON TABLE public.acorn_criminal_appeals IS 'icon: hand-paper
 labels: 
   en: Appeal
   ar: الاستئناف الجنائي
+  ku: Îtirazek
 labels-plural:
   en: Appeals
   ar: الاستئنافات الجنائية
+  ku: Îtirazen
 methods:
-  name: $this->load(''event''); return $this->event->start?->diffForHumans();';
+  name: $this->load(''event''); return $this->event->start?->diffForHumans();
+permission-settings:
+  appeals__access:
+    labels: 
+      en: Create an Appeal
+';
 
 
 --
@@ -1469,9 +1491,13 @@ ALTER TABLE public.acorn_criminal_crime_evidence OWNER TO justice;
 
 COMMENT ON TABLE public.acorn_criminal_crime_evidence IS 'order: 43
 labels:
+  en: Evidence
   ar: دليل الجريمة الجنائية
+  ku: Delîl
 labels-plural:
+  en: Evidence
   ar: أدلة الجريمة الجنائية
+  ku: Delîlên
 ';
 
 
@@ -1512,21 +1538,48 @@ ALTER TABLE public.acorn_criminal_crime_sentences OWNER TO justice;
 COMMENT ON TABLE public.acorn_criminal_crime_sentences IS 'icon: id-card
 order: 42
 labels:
+  en: Sentence
   ar: حكم الجريمة الجنائية
+  ku: Biryar
 labels-plural:
+  en: Sentences
   ar: أحكام الجرائم الجنائية
+  ku: Biryarên
 methods:
   name: return $this->sentence_type->name . '' ('' . $this->amount . '')'';';
+
+
+--
+-- Name: COLUMN acorn_criminal_crime_sentences.amount; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_crime_sentences.amount IS 'labels:
+  en: Amount
+  ku: Jimarî
+labels-plural:
+  en: Amounts
+  ku: Jimarîyên
+  ';
+
+
+--
+-- Name: COLUMN acorn_criminal_crime_sentences.suspended; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_crime_sentences.suspended IS 'labels:
+  en: Suspended
+  ku: Sekinandinê';
 
 
 --
 -- Name: COLUMN acorn_criminal_crime_sentences.description; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_criminal_crime_sentences.description IS 'field-comment: Use this field to add any extra notes that do not have fields in the interface yet. The system administrators will check this and expand the interface to accommodate your needs
-tab: acorn::lang.models.general.notes
+COMMENT ON COLUMN public.acorn_criminal_crime_sentences.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
+  ku: Têbînî
+tab: acorn::lang.models.general.notes
 tab-location: 1
 no-label: true
 bootstraps:
@@ -1563,24 +1616,45 @@ seeding:
   - [DEFAULT, ''terror'']
   - [DEFAULT, ''custodial'']
 labels:
+  en: Crime Type
+  ku: Cure Sûc
   ar: نوع الجريمة الجنائية
 labels-plural:
+  en: Crime Types
+  ku: Cureyên Sûc
   ar: أنواع الجرائم الجنائية
 ';
+
+
+--
+-- Name: COLUMN acorn_criminal_crime_types.name; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_crime_types.name IS 'labels:
+  en: Name
+  ku: Nav
+labels-plural:
+  en: Names
+  ku: Navên';
 
 
 --
 -- Name: COLUMN acorn_criminal_crime_types.description; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_criminal_crime_types.description IS 'field-comment: Use this field to add any extra notes that do not have fields in the interface yet. The system administrators will check this and expand the interface to accommodate your needs
-tab: acorn::lang.models.general.notes
+COMMENT ON COLUMN public.acorn_criminal_crime_types.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
 tab-location: 1
 no-label: true
 bootstraps:
-  xs: 12';
+  xs: 12
+tab: acorn::lang.models.general.notes
+';
 
 
 --
@@ -1610,8 +1684,12 @@ COMMENT ON TABLE public.acorn_criminal_crimes IS 'icon: allergies
 order: 41
 menuSplitter: yes
 labels:
+  en: Crime
+  ku: Nebaşî
   ar: الجريمة الجنائية
 labels-plural:
+  en: Crimes
+  ku: Nebaşîyên
   ar: الجرائم الجنائية
 seeding:
   - [DEFAULT, ''Theft'', ''176d4d98-ed25-11ef-8f3a-e7099c31e054'']
@@ -1619,17 +1697,33 @@ seeding:
 
 
 --
+-- Name: COLUMN acorn_criminal_crimes.name; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_crimes.name IS 'labels:
+  en: Name
+  ku: Nav
+labels-plural:
+  en: Names
+  ku: Navên';
+
+
+--
 -- Name: COLUMN acorn_criminal_crimes.description; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_criminal_crimes.description IS 'field-comment: Use this field to add any extra notes that do not have fields in the interface yet. The system administrators will check this and expand the interface to accommodate your needs
-tab: acorn::lang.models.general.notes
+COMMENT ON COLUMN public.acorn_criminal_crimes.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
 tab-location: 1
 no-label: true
 bootstraps:
-  xs: 12';
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -1657,8 +1751,12 @@ ALTER TABLE public.acorn_criminal_defendant_crimes OWNER TO justice;
 
 COMMENT ON TABLE public.acorn_criminal_defendant_crimes IS 'icon: id-card
 labels:
+  en: Crime
+  ku: Nebaşî
   ar: جرائم المتهمين الجنائية
 labels-plural:
+  en: Crimes
+  ku: Nebaşîyên
   ar: جرايمة المتهم الجنائية
 methods:
   name: return $this->crime->name;';
@@ -1668,14 +1766,18 @@ methods:
 -- Name: COLUMN acorn_criminal_defendant_crimes.description; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_criminal_defendant_crimes.description IS 'field-comment: Use this field to add any extra notes that do not have fields in the interface yet. The system administrators will check this and expand the interface to accommodate your needs
-tab: acorn::lang.models.general.notes
+COMMENT ON COLUMN public.acorn_criminal_defendant_crimes.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
 tab-location: 1
 no-label: true
 bootstraps:
-  xs: 12';
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -1701,7 +1803,13 @@ ALTER TABLE public.acorn_criminal_defendant_detentions OWNER TO justice;
 --
 
 COMMENT ON TABLE public.acorn_criminal_defendant_detentions IS 'methods:
-  name: return $this->transfer->location->name . '' ('' . $this->detention_reason?->name . '')'';';
+  name: return $this->transfer->location->name . '' ('' . $this->detention_reason?->name . '')'';
+labels:
+  en: Detention
+  ku: Girtî
+labels-plural:
+  en: Detentions
+  ku: Girtîyên';
 
 
 --
@@ -1725,21 +1833,31 @@ COMMENT ON COLUMN public.acorn_criminal_defendant_detentions.detention_method_id
 -- Name: COLUMN acorn_criminal_defendant_detentions.name; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_criminal_defendant_detentions.name IS 'hidden: true';
+COMMENT ON COLUMN public.acorn_criminal_defendant_detentions.name IS 'hidden: true
+labels:
+  en: Name
+  ku: Nav
+labels-plural:
+  en: Names
+  ku: Navên';
 
 
 --
 -- Name: COLUMN acorn_criminal_defendant_detentions.description; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_criminal_defendant_detentions.description IS 'field-comment: Use this field to add any extra notes that do not have fields in the interface yet. The system administrators will check this and expand the interface to accommodate your needs
-tab: acorn::lang.models.general.notes
+COMMENT ON COLUMN public.acorn_criminal_defendant_detentions.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
 tab-location: 1
 no-label: true
 bootstraps:
-  xs: 12';
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -1766,21 +1884,43 @@ ALTER TABLE public.acorn_criminal_detention_methods OWNER TO justice;
 
 COMMENT ON TABLE public.acorn_criminal_detention_methods IS 'seeding:
   - [DEFAULT, ''Arrest'']
-  - [DEFAULT, ''Request'']';
+  - [DEFAULT, ''Request'']
+labels:
+  en: Detention Method
+  ku: Rêbaza binçavkirinê
+labels-plural:
+  en: Detention Methods
+  ku: Rêbaza binçavkirinên';
+
+
+--
+-- Name: COLUMN acorn_criminal_detention_methods.name; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_detention_methods.name IS 'labels:
+  en: Name
+  ku: Nav
+labels-plural:
+  en: Names
+  ku: Navên';
 
 
 --
 -- Name: COLUMN acorn_criminal_detention_methods.description; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_criminal_detention_methods.description IS 'field-comment: Use this field to add any extra notes that do not have fields in the interface yet. The system administrators will check this and expand the interface to accommodate your needs
-tab: acorn::lang.models.general.notes
+COMMENT ON COLUMN public.acorn_criminal_detention_methods.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
 tab-location: 1
 no-label: true
 bootstraps:
-  xs: 12';
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -1807,21 +1947,43 @@ ALTER TABLE public.acorn_criminal_detention_reasons OWNER TO justice;
 
 COMMENT ON TABLE public.acorn_criminal_detention_reasons IS 'seeding:
   - [DEFAULT, ''Previous record'']
-  - [DEFAULT, ''In danger'']';
+  - [DEFAULT, ''In danger'']
+labels:
+  en: Detention Reason
+  ku: Sedema binçavkirinê
+labels-plural:
+  en: Detention Reasons
+  ku: Sedema binçavkirinên';
+
+
+--
+-- Name: COLUMN acorn_criminal_detention_reasons.name; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_detention_reasons.name IS 'labels:
+  en: Name
+  ku: Nav
+labels-plural:
+  en: Names
+  ku: Navên';
 
 
 --
 -- Name: COLUMN acorn_criminal_detention_reasons.description; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_criminal_detention_reasons.description IS 'field-comment: Use this field to add any extra notes that do not have fields in the interface yet. The system administrators will check this and expand the interface to accommodate your needs
-tab: acorn::lang.models.general.notes
+COMMENT ON COLUMN public.acorn_criminal_detention_reasons.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
 tab-location: 1
 no-label: true
 bootstraps:
-  xs: 12';
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -1851,8 +2013,12 @@ COMMENT ON TABLE public.acorn_criminal_legalcase_defendants IS 'icon: robot
 order: 6
 menu: false
 labels:
+  en: Defendant
+  ku: Gilîdar
   ar: المتهم في قضية جنائية
 labels-plural:
+  en: Defendants
+  ku: Gilîdarên
   ar: المتهمين في قضية جنائية
 ';
 
@@ -1861,14 +2027,18 @@ labels-plural:
 -- Name: COLUMN acorn_criminal_legalcase_defendants.description; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_criminal_legalcase_defendants.description IS 'field-comment: Use this field to add any extra notes that do not have fields in the interface yet. The system administrators will check this and expand the interface to accommodate your needs
-tab: acorn::lang.models.general.notes
+COMMENT ON COLUMN public.acorn_criminal_legalcase_defendants.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
 tab-location: 1
 no-label: true
 bootstraps:
-  xs: 12';
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -1900,24 +2070,44 @@ icon: object-group
 order: 3
 menu: false
 labels:
+  en: Evidence
+  ku: Delîl
   ar: دليل القضايا الجنائية
 labels-plural:
+  en: Evidence
+  ku: Delîlên
   ar: أدلة القضايا الجنائية
 ';
+
+
+--
+-- Name: COLUMN acorn_criminal_legalcase_evidence.name; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_legalcase_evidence.name IS 'labels:
+  en: Name
+  ku: Nav
+labels-plural:
+  en: Names
+  ku: Navên';
 
 
 --
 -- Name: COLUMN acorn_criminal_legalcase_evidence.description; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_criminal_legalcase_evidence.description IS 'field-comment: Use this field to add any extra notes that do not have fields in the interface yet. The system administrators will check this and expand the interface to accommodate your needs
-tab: acorn::lang.models.general.notes
+COMMENT ON COLUMN public.acorn_criminal_legalcase_evidence.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
 tab-location: 1
 no-label: true
 bootstraps:
-  xs: 12';
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -1947,8 +2137,12 @@ COMMENT ON TABLE public.acorn_criminal_legalcase_plaintiffs IS 'icon: address-bo
 order: 2
 menu: false
 labels:
+  en: Plaintiff
+  ku: Dozker
   ar: ضحية القضية الجنائية
 labels-plural:
+  en: Plaintiffs
+  ku: Dozkerên
   ar: ضحايا القضية الجنائية
 ';
 
@@ -1957,14 +2151,18 @@ labels-plural:
 -- Name: COLUMN acorn_criminal_legalcase_plaintiffs.description; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_criminal_legalcase_plaintiffs.description IS 'field-comment: Use this field to add any extra notes that do not have fields in the interface yet. The system administrators will check this and expand the interface to accommodate your needs
-tab: acorn::lang.models.general.notes
+COMMENT ON COLUMN public.acorn_criminal_legalcase_plaintiffs.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
 tab-location: 1
 no-label: true
 bootstraps:
-  xs: 12';
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -1993,8 +2191,12 @@ COMMENT ON TABLE public.acorn_criminal_legalcase_prosecutor IS 'icon: id-card
 order: 4
 menu: false
 labels:
+  en: Prosecutor
+  ku: Nûnerê gilîyê
   ar: المدعي العام للقضية الجنائية
 labels-plural:
+  en: Prosecutors
+  ku: Nûnerê gilîyên
   ar: المدعون العامون للقضايا الجنائية
 ';
 
@@ -2003,14 +2205,18 @@ labels-plural:
 -- Name: COLUMN acorn_criminal_legalcase_prosecutor.description; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_criminal_legalcase_prosecutor.description IS 'field-comment: Use this field to add any extra notes that do not have fields in the interface yet. The system administrators will check this and expand the interface to accommodate your needs
-tab: acorn::lang.models.general.notes
+COMMENT ON COLUMN public.acorn_criminal_legalcase_prosecutor.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
 tab-location: 1
 no-label: true
 bootstraps:
-  xs: 12';
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -2034,9 +2240,12 @@ ALTER TABLE public.acorn_criminal_legalcase_related_events OWNER TO justice;
 COMMENT ON TABLE public.acorn_criminal_legalcase_related_events IS 'icon: address-book
 order: 7
 labels:
-  en: Legalcase Events
+  en: Related Event
+  ku: Bûyera têkildar
   ar: الحدث المتعلقة بالقضاية الجنائية
 labels-plural:
+  en: Related Events
+  ku: Bûyera têkildarên
   ar: الأحداث المتعلقة بالقضايا الجنائية
 methods:
   name: $this->load(''event''); return $this->event->start?->diffForHumans();';
@@ -2069,8 +2278,40 @@ COMMENT ON TABLE public.acorn_criminal_legalcase_types IS 'seeding:
   - [DEFAULT, ''Civil'']
 labels:
   en: Type
+  ku: Cure
 labels-plural:
-  en: Types';
+  en: Types
+  ku: Cureyên';
+
+
+--
+-- Name: COLUMN acorn_criminal_legalcase_types.name; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_legalcase_types.name IS 'labels:
+  en: Name
+  ku: Nav
+labels-plural:
+  en: Names
+  ku: Navên';
+
+
+--
+-- Name: COLUMN acorn_criminal_legalcase_types.description; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_legalcase_types.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
+labels:
+  en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
+tab-location: 1
+no-label: true
+bootstraps:
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -2100,8 +2341,12 @@ COMMENT ON TABLE public.acorn_criminal_legalcase_witnesses IS 'icon: search
 order: 5
 menu: false
 labels:
+  en: Witness
+  ku: Şahîd
   ar: شاهد القضية الجنائية
 labels-plural:
+  en: Witnesses
+  ku: Şahidên
   ar: شهود القضية الجنائية
 ';
 
@@ -2110,14 +2355,18 @@ labels-plural:
 -- Name: COLUMN acorn_criminal_legalcase_witnesses.description; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_criminal_legalcase_witnesses.description IS 'field-comment: Use this field to add any extra notes that do not have fields in the interface yet. The system administrators will check this and expand the interface to accommodate your needs
-tab: acorn::lang.models.general.notes
+COMMENT ON COLUMN public.acorn_criminal_legalcase_witnesses.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
 tab-location: 1
 no-label: true
 bootstraps:
-  xs: 12';
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -2144,12 +2393,15 @@ plugin-icon: address-book
 order: 1
 labels:
   en: LegalCase
+  ku: Doza
   ar: القضية الجنائية
 labels-plural:
   en: LegalCases
+  ku: Dozên
   ar: القضايا الجنائية
 plugin-names:
   en: LegalCases
+  ku: Dozên
   ar: القضية الجنائية
 filters:
   owner_user_group: id in(select cl.id from acorn_criminal_legalcases cl inner join acorn_justice_legalcases  jl on jl.id = cl.legalcase_id where jl.owner_user_group_id in(:filtered))';
@@ -2216,8 +2468,12 @@ ALTER TABLE public.acorn_criminal_sentence_types OWNER TO justice;
 COMMENT ON TABLE public.acorn_criminal_sentence_types IS 'icon: hand-rock
 order: 43
 labels:
+  en: Sentence Type
+  ku: Cura Biryar
   ar: نوع الحكم الجنائي
 labels-plural:
+  en: Sentence Types
+  ku: Cureyên Biryar
   ar: أنواع الأحكام الجنائية
 seeding:
   - [DEFAULT, ''Custodial'']
@@ -2226,17 +2482,33 @@ seeding:
 
 
 --
+-- Name: COLUMN acorn_criminal_sentence_types.name; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_sentence_types.name IS 'labels:
+  en: Name
+  ku: Nav
+labels-plural:
+  en: Names
+  ku: Navên';
+
+
+--
 -- Name: COLUMN acorn_criminal_sentence_types.description; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_criminal_sentence_types.description IS 'field-comment: Use this field to add any extra notes that do not have fields in the interface yet. The system administrators will check this and expand the interface to accommodate your needs
-tab: acorn::lang.models.general.notes
+COMMENT ON COLUMN public.acorn_criminal_sentence_types.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
 tab-location: 1
 no-label: true
 bootstraps:
-  xs: 12';
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -2252,7 +2524,8 @@ CREATE TABLE public.acorn_criminal_session_recordings (
     name character varying(1024),
     updated_at_event_id uuid,
     updated_by_user_id uuid,
-    server_id uuid NOT NULL
+    server_id uuid NOT NULL,
+    audio_file path NOT NULL
 );
 
 
@@ -2266,8 +2539,12 @@ COMMENT ON TABLE public.acorn_criminal_session_recordings IS 'icon: map
 order: 25
 menu: false
 labels:
+  en: Session recording
+  ku: Tomar Deng
   ar: تسجيل الجلسة جنائية
 labels-plural:
+  en: Session recordings
+  ku: Tomarên Deng
   ar: تسجيلات الجلسة جنائية
 ';
 
@@ -2276,14 +2553,43 @@ labels-plural:
 -- Name: COLUMN acorn_criminal_session_recordings.description; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_criminal_session_recordings.description IS 'field-comment: Use this field to add any extra notes that do not have fields in the interface yet. The system administrators will check this and expand the interface to accommodate your needs
-tab: acorn::lang.models.general.notes
+COMMENT ON COLUMN public.acorn_criminal_session_recordings.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
 tab-location: 1
 no-label: true
 bootstraps:
-  xs: 12';
+  xs: 12
+tab: acorn::lang.models.general.notes';
+
+
+--
+-- Name: COLUMN acorn_criminal_session_recordings.name; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_session_recordings.name IS 'labels:
+  en: Name
+  ku: Nav
+labels-plural:
+  en: Names
+  ku: Navên';
+
+
+--
+-- Name: COLUMN acorn_criminal_session_recordings.audio_file; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_session_recordings.audio_file IS 'labels:
+  en: Audio file
+  ku: Pelê deng
+labels-plural:
+  en: Audio files
+  ku: Pelên deng
+';
 
 
 --
@@ -2314,8 +2620,12 @@ COMMENT ON TABLE public.acorn_criminal_trial_judges IS 'icon: thumbs-up
 order: 22
 menu: false
 labels:
+  en: Judge
+  ku: Dadwer
   ar: قاضي المحكمة الجنائية
 labels-plural:
+  en: Judges
+  ku: Dadweran
   ar: قضاة المحكمة الجنائية
 methods:
   name: return $this->user->name;';
@@ -2325,14 +2635,18 @@ methods:
 -- Name: COLUMN acorn_criminal_trial_judges.description; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_criminal_trial_judges.description IS 'field-comment: Use this field to add any extra notes that do not have fields in the interface yet. The system administrators will check this and expand the interface to accommodate your needs
-tab: acorn::lang.models.general.notes
+COMMENT ON COLUMN public.acorn_criminal_trial_judges.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
 tab-location: 1
 no-label: true
 bootstraps:
-  xs: 12';
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -2344,7 +2658,8 @@ CREATE TABLE public.acorn_criminal_trial_sessions (
     trial_id uuid NOT NULL,
     created_at_event_id uuid NOT NULL,
     created_by_user_id uuid NOT NULL,
-    event_id uuid NOT NULL
+    event_id uuid NOT NULL,
+    description text
 );
 
 
@@ -2357,11 +2672,33 @@ ALTER TABLE public.acorn_criminal_trial_sessions OWNER TO justice;
 COMMENT ON TABLE public.acorn_criminal_trial_sessions IS 'icon: meh
 order: 21
 labels:
+  en: Session
+  ku: Rûniştinî
   ar: جلسة المحكمة الجنائية
 labels-plural:
+  en: Sessions
+  ku: Rûniştinên
   ar: جلسات المحكمة الجنائية
 methods:
   name: return $this->created_at_event->start;';
+
+
+--
+-- Name: COLUMN acorn_criminal_trial_sessions.description; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_trial_sessions.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
+labels:
+  en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
+tab-location: 1
+no-label: true
+bootstraps:
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -2373,7 +2710,8 @@ CREATE TABLE public.acorn_criminal_trials (
     legalcase_id uuid NOT NULL,
     created_at_event_id uuid NOT NULL,
     created_by_user_id uuid NOT NULL,
-    event_id uuid NOT NULL
+    event_id uuid NOT NULL,
+    description text
 );
 
 
@@ -2387,11 +2725,38 @@ COMMENT ON TABLE public.acorn_criminal_trials IS 'icon: ankh
 order: 20
 menuSplitter: yes
 labels:
+  en: Trial
+  ku: Bazarî
   ar: المحكمة الجنائية
 labels-plural:
+  en: Trials
+  ku: Bazarên
   ar: المحاكم الجنائية
 methods:
-  name: $this->load(''event''); return $this->event->start?->diffForHumans();';
+  name: $this->load(''event''); return $this->event->start?->diffForHumans();
+permission-settings:
+  trials__access:
+    labels: 
+      en: Create a Trial
+';
+
+
+--
+-- Name: COLUMN acorn_criminal_trials.description; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_trials.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
+labels:
+  en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
+tab-location: 1
+no-label: true
+bootstraps:
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -2666,9 +3031,44 @@ ALTER TABLE public.acorn_justice_legalcase_categories OWNER TO justice;
 
 COMMENT ON TABLE public.acorn_justice_legalcase_categories IS 'icon: cat
 labels:
+  en: Category
+  ku: Kategorî
   ar: فئة القضية العدلية
 labels-plural:
+  en: Categories
+  ku: Kategorîyên
   ar: فئات القضية العدلية
+';
+
+
+--
+-- Name: COLUMN acorn_justice_legalcase_categories.name; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_legalcase_categories.name IS 'labels:
+  en: Name
+  ku: Nav
+labels-plural:
+  en: Names
+  ku: Navên';
+
+
+--
+-- Name: COLUMN acorn_justice_legalcase_categories.description; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_legalcase_categories.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
+labels:
+  en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
+tab-location: 1
+no-label: true
+bootstraps:
+  xs: 12
+tab: acorn::lang.models.general.notes
 ';
 
 
@@ -2759,10 +3159,15 @@ table-type: central
 icon: angry
 labels:
   en: Case
+  ku: Doza
   ar: قضية عدالة
 labels-plural:
+  en: Cases
+  ku: Dozên
   ar: قضاية عدالة
 plugin-names:
+  en: Cases
+  ku: Dozên
   ar: قضية عدالة
 order: 1
 plugin-icon: adjust
@@ -2773,9 +3178,12 @@ plugin-icon: adjust
 -- Name: COLUMN acorn_justice_legalcases.name; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_justice_legalcases.name IS 'labels: 
-  en: Identifier
+COMMENT ON COLUMN public.acorn_justice_legalcases.name IS 'labels:
+  en: Name
   ku: Nav
+labels-plural:
+  en: Names
+  ku: Navên
 order: 1
 permission-settings:
   NOT=legalcases__legalcase_name__update@update:
@@ -2783,7 +3191,8 @@ permission-settings:
       readOnly: true
       disabled: true
     labels: 
-      en: Update LegalCase identifier';
+      en: Update LegalCase name
+      ku: Navê Doza Hiqûqî nûve bikin';
 
 
 --
@@ -2821,11 +3230,18 @@ order: 8
 -- Name: COLUMN acorn_justice_legalcases.description; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_justice_legalcases.description IS 'tab-location: 1
-tab: acorn::lang.models.general.description
+COMMENT ON COLUMN public.acorn_justice_legalcases.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
-css-classes: single-tab';
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
+tab-location: 1
+no-label: true
+bootstraps:
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -2849,14 +3265,57 @@ CREATE TABLE public.acorn_justice_scanned_documents (
 ALTER TABLE public.acorn_justice_scanned_documents OWNER TO justice;
 
 --
+-- Name: TABLE acorn_justice_scanned_documents; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON TABLE public.acorn_justice_scanned_documents IS 'labels:
+  en: Scanned Document
+  ku: Belge Kopî
+labels-plural:
+  en: Scanned Documents
+  ku: Belgeyên Kopî';
+
+
+--
+-- Name: COLUMN acorn_justice_scanned_documents.name; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_scanned_documents.name IS 'labels:
+  en: Name
+  ku: Nav
+labels-plural:
+  en: Names
+  ku: Navên';
+
+
+--
+-- Name: COLUMN acorn_justice_scanned_documents.document; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_scanned_documents.document IS 'labels:
+  en: Document
+  ku: Belge
+labels-plural:
+  en: Documents
+  ku: Belgên';
+
+
+--
 -- Name: COLUMN acorn_justice_scanned_documents.description; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON COLUMN public.acorn_justice_scanned_documents.description IS 'tab-location: 1
-tab: acorn::lang.models.general.description
+COMMENT ON COLUMN public.acorn_justice_scanned_documents.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
-css-classes: single-tab';
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
+tab-location: 1
+no-label: true
+bootstraps:
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -2883,7 +3342,43 @@ ALTER TABLE public.acorn_justice_warrant_types OWNER TO justice;
 
 COMMENT ON TABLE public.acorn_justice_warrant_types IS 'seeding:
   - [DEFAULT, ''Arrest'']
-  - [DEFAULT, ''Search'']';
+  - [DEFAULT, ''Search'']
+labels:
+  en: Warrant Type
+  ku: Cure Fermana girtinê
+labels-plural:
+  en: Warrant Types
+  ku: Cureyên Fermana girtinê';
+
+
+--
+-- Name: COLUMN acorn_justice_warrant_types.name; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_warrant_types.name IS 'labels:
+  en: Name
+  ku: Nav
+labels-plural:
+  en: Names
+  ku: Navên';
+
+
+--
+-- Name: COLUMN acorn_justice_warrant_types.description; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_warrant_types.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
+labels:
+  en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
+tab-location: 1
+no-label: true
+bootstraps:
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -2913,7 +3408,31 @@ ALTER TABLE public.acorn_justice_warrants OWNER TO justice;
 
 COMMENT ON TABLE public.acorn_justice_warrants IS 'printable: true
 methods:
-  name: return $this->warrant_type->name;';
+  name: return $this->warrant_type->name;
+labels:
+  en: Warrant
+  ku: Fermana girtinê
+labels-plural:
+  en: Warrants
+  ku: Fermanan girtinê';
+
+
+--
+-- Name: COLUMN acorn_justice_warrants.description; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_warrants.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
+labels:
+  en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
+tab-location: 1
+no-label: true
+bootstraps:
+  xs: 12
+tab: acorn::lang.models.general.notes';
 
 
 --
@@ -6061,7 +6580,7 @@ COPY public.acorn_criminal_sentence_types (id, name, created_at_event_id, create
 -- Data for Name: acorn_criminal_session_recordings; Type: TABLE DATA; Schema: public; Owner: justice
 --
 
-COPY public.acorn_criminal_session_recordings (id, trial_session_id, created_at_event_id, created_by_user_id, description, name, updated_at_event_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_criminal_session_recordings (id, trial_session_id, created_at_event_id, created_by_user_id, description, name, updated_at_event_id, updated_by_user_id, server_id, audio_file) FROM stdin;
 \.
 
 
@@ -6077,7 +6596,7 @@ COPY public.acorn_criminal_trial_judges (id, trial_id, user_id, user_group_id, c
 -- Data for Name: acorn_criminal_trial_sessions; Type: TABLE DATA; Schema: public; Owner: justice
 --
 
-COPY public.acorn_criminal_trial_sessions (id, trial_id, created_at_event_id, created_by_user_id, event_id) FROM stdin;
+COPY public.acorn_criminal_trial_sessions (id, trial_id, created_at_event_id, created_by_user_id, event_id, description) FROM stdin;
 \.
 
 
@@ -6085,7 +6604,7 @@ COPY public.acorn_criminal_trial_sessions (id, trial_id, created_at_event_id, cr
 -- Data for Name: acorn_criminal_trials; Type: TABLE DATA; Schema: public; Owner: justice
 --
 
-COPY public.acorn_criminal_trials (id, legalcase_id, created_at_event_id, created_by_user_id, event_id) FROM stdin;
+COPY public.acorn_criminal_trials (id, legalcase_id, created_at_event_id, created_by_user_id, event_id, description) FROM stdin;
 \.
 
 
@@ -6746,6 +7265,7 @@ e5e95b8f-dffd-4ed5-9c17-c87f62bebd0d	Dîwana Dadgeriya Civakî li Til Temir	\N	\
 c5adb730-1968-400e-af3d-37c8d32d8433	Cêgratiya Giştî li Til Hemîsê	\N	\N	\N	\N	2a849d98-35b5-4d84-9890-89a02efd49c6	\N	\N	\N	\N	\N	\N	\N	\N
 9617afcd-11c8-481b-95ba-112f600eef3b	Cêgratiya Giştî li Çelaxa	\N	\N	\N	\N	2a849d98-35b5-4d84-9890-89a02efd49c6	\N	\N	\N	\N	\N	\N	\N	\N
 738b0e85-0214-42e4-88fa-b6649e2d0a47	Cêgratiya Giştî li Til Koçerê	\N	\N	\N	\N	2a849d98-35b5-4d84-9890-89a02efd49c6	\N	\N	\N	\N	\N	\N	\N	\N
+9e43ad93-4969-4655-9d8b-669ff0c8df9a	Weeeee	weeeee		2025-02-21 10:52:01	2025-02-21 10:52:01	\N	1	2	0	\N	\N		\N	\N
 \.
 
 
@@ -6870,15 +7390,15 @@ COPY public.backend_user_preferences (id, user_id, namespace, "group", item, val
 3	1	acorn_houseofpeace	legalcases	lists	{"visible":["legalcase_name","legalcase_closed_at_event","legalcase[justice_scanned_documents_legalcase]","legalcase[justice_legalcase_legalcase_category_legalcases]","houseofpeace_events_legalcase","_actions"],"order":["id","created_at_event","created_by_user","legalcase_name","legalcase_closed_at_event","legalcase[justice_scanned_documents_legalcase]","legalcase[justice_legalcase_identifiers_legalcase]","legalcase[justice_legalcase_legalcase_category_legalcases]","_qrcode","houseofpeace_events_legalcase","_actions"],"per_page":"20"}
 4	1	acorn_criminal	appeals	lists	{"visible":["created_at_event","event","name"],"order":["id","legalcase","created_at_event","created_by_user","event","name","_qrcode"],"per_page":"20"}
 8	1	acorn_user	usergroups	lists	{"visible":["name","type","type_colour","type_image","colour","code","users_count","created_at","auth_is_member"],"order":["id","name","type","type_colour","type_image","colour","image","parent_user_group","code","users_count","created_at","auth_is_member"],"per_page":20}
-5	1	backend	backend	preferences	{"locale":"en","fallback_locale":"en","timezone":"UTC","editor_font_size":"12","editor_word_wrap":"fluid","editor_code_folding":"manual","editor_tab_size":"4","editor_theme":"twilight","editor_show_invisibles":"0","editor_highlight_active_line":"1","editor_use_hard_tabs":"0","editor_show_gutter":"1","editor_auto_closing":"0","editor_autocompletion":"manual","editor_enable_snippets":"0","editor_display_indent_guides":"0","editor_show_print_margin":"0","dark_mode":"light","menu_location":"","icon_location":"","user_id":1}
 6	1	acorn_criminal	legalcases	lists-relationcriminallegalcaseprosecutorlegalcasesviewlist	{"visible":["name","surname","email","created_at","last_seen","groups","languages"],"order":["id","username","name","surname","email","created_at","last_seen","is_guest","created_ip_address","last_ip_address","groups","languages"],"per_page":false}
 7	1	acorn_calendar	months	calendars-instance	{"visible":["eventPart[location][name]","instance_end","eventPart[name]","name","eventPart[repeatWithFrequency()]","instance_start","eventPart[attendees()]","eventPart[isLocked()]","eventPart[alarm]","name"],"order":["id","date","event_part_id","eventPart[location][name]","instance_num","instance_end","eventPart[name]","name","eventPart[repeatWithFrequency()]","instance_start","eventPart[attendees()]","created_at","updated_at","eventPart[canWrite()]","eventPart[isLocked()]","eventPart[alarm]","name"],"per_page":null}
 11	1	acorn_user	languages	lists	{"visible":["id","name"],"order":["id","name"],"per_page":"20"}
 12	1	acorn_criminal	legalcases	lists-relationcriminallegalcasedefendantslegalcaseviewlist	{"visible":["user","created_at_event","criminal_defendant_detentions_legalcase_defendant","criminal_defendant_crimes_legalcase_defendant","_actions","updated_at_event","updated_by_user","server"],"order":["id","legalcase","user","created_at_event","created_by_user","criminal_defendant_detentions_legalcase_defendant","criminal_defendant_crimes_legalcase_defendant","_qrcode","_actions","description","updated_at_event","updated_by_user","server"],"per_page":"10"}
 10	1	acorn_criminal	legalcases	lists-relationcriminaltrialslegalcaseviewlist	{"visible":["legalcase","criminal_trial_judges_trial","criminal_trial_sessions_trial","_actions","calendar[name]","first_event_part[start]","first_event_part[repeat]","first_event_part[status][name]"],"order":["id","legalcase","created_at_event","created_by_user","criminal_trial_judges_trial","criminal_trial_sessions_trial","_qrcode","_actions","calendar[name]","first_event_part[type][name]","first_event_part[name]","first_event_part[start]","first_event_part[end]","first_event_part[alarm]","first_event_part[description]","first_event_part[repeat]","first_event_part[mask]","first_event_part[repeat_frequency]","first_event_part[mask_type]","first_event_part[parentEventPart][name]","first_event_part[until]","first_event_part[users]","first_event_part[groups]","first_event_part[status][name]","first_event_part[location][name]","owner_user_id","owner_user_group_id","permissions","created_at","updated_at"],"per_page":"10"}
+5	1	backend	backend	preferences	{"locale":"en","fallback_locale":"en","timezone":"Europe\\/Istanbul","editor_font_size":"12","editor_word_wrap":"fluid","editor_code_folding":"manual","editor_tab_size":"4","editor_theme":"twilight","editor_show_invisibles":"0","editor_highlight_active_line":"1","editor_use_hard_tabs":"0","editor_show_gutter":"1","editor_auto_closing":"0","editor_autocompletion":"manual","editor_enable_snippets":"0","editor_display_indent_guides":"0","editor_show_print_margin":"0","dark_mode":"light","menu_location":"","icon_location":"","user_id":1}
 2	1	backend	reportwidgets	dashboard	{"welcome":{"class":"Backend\\\\ReportWidgets\\\\Welcome","sortOrder":50,"configuration":{"ocWidgetWidth":7}},"systemStatus":{"class":"System\\\\ReportWidgets\\\\Status","sortOrder":60,"configuration":{"title":"System status","ocWidgetWidth":7,"ocWidgetNewRow":null}}}
-1	1	acorn_criminal	legalcases	lists	{"visible":["legalcase_name","legalcase[owner_user_group][name]","criminal_legalcase_prosecutor_legalcases","criminal_legalcase_evidence_legalcase","criminal_trials_legalcase","legalcase[justice_scanned_documents_legalcase][name]","criminal_legalcase_plaintiffs_legalcase","legalcase_created_at_event","legalcase_updated_at_event","legalcase_type","_actions"],"order":["id","_qrcode","legalcase_name","legalcase[owner_user_group][name]","criminal_legalcase_prosecutor_legalcases","criminal_appeals_legalcase","criminal_legalcase_defendants_legalcase","criminal_legalcase_related_events_legalcase","criminal_legalcase_witnesses_legalcase","criminal_legalcase_evidence_legalcase","criminal_trials_legalcase","server","legalcase_closed_at_event","legalcase[justice_scanned_documents_legalcase][name]","legalcase[justice_legalcase_identifiers_legalcase][name]","legalcase[justice_warrants_legalcase][name]","legalcase[justice_legalcase_legalcase_category_legalcases][name]","judge_committee_user_group","criminal_legalcase_plaintiffs_legalcase","legalcase_created_at_event","legalcase_created_by_user","legalcase_description","legalcase_updated_at_event","legalcase_type","legalcase_updated_by_user","_actions"],"per_page":"20"}
 13	1	acorn_criminal	legalcases	lists-relationcriminallegalcaserelatedeventslegalcaseviewlist	{"visible":["first_event_part[name]","first_event_part[start]","first_event_part[end]","first_event_part[alarm]","first_event_part[repeat]","first_event_part[repeat_frequency]","first_event_part[status][name]","first_event_part[location][name]","_actions"],"order":["legalcase","id","created_at","created_by_user","updated_at","owner_user_id","owner_user_group_id","permissions","_qrcode","calendar[name]","first_event_part[name]","first_event_part[type][name]","first_event_part[start]","first_event_part[end]","first_event_part[alarm]","first_event_part[description]","first_event_part[repeat]","first_event_part[mask]","first_event_part[repeat_frequency]","first_event_part[mask_type]","first_event_part[parentEventPart][name]","first_event_part[until]","first_event_part[status][name]","first_event_part[location][name]","_actions","first_event_part[users]","first_event_part[groups]"],"per_page":"10"}
+1	1	acorn_criminal	legalcases	lists	{"visible":["legalcase_name","legalcase[owner_user_group][name]","criminal_legalcase_prosecutor_legalcases","criminal_legalcase_evidence_legalcase","criminal_trials_legalcase","legalcase_closed_at_event","legalcase[justice_scanned_documents_legalcase][name]","criminal_legalcase_plaintiffs_legalcase","legalcase_created_at_event","legalcase_updated_at_event","legalcase_type","_actions"],"order":["id","_qrcode","legalcase_name","legalcase[owner_user_group][name]","criminal_legalcase_prosecutor_legalcases","criminal_appeals_legalcase","criminal_legalcase_defendants_legalcase","criminal_legalcase_related_events_legalcase","criminal_legalcase_witnesses_legalcase","criminal_legalcase_evidence_legalcase","criminal_trials_legalcase","server","legalcase_closed_at_event","legalcase[justice_scanned_documents_legalcase][name]","legalcase[justice_legalcase_identifiers_legalcase][name]","legalcase[justice_warrants_legalcase][name]","legalcase[justice_legalcase_legalcase_category_legalcases][name]","judge_committee_user_group","criminal_legalcase_plaintiffs_legalcase","legalcase_created_at_event","legalcase_created_by_user","legalcase_description","legalcase_updated_at_event","legalcase_type","legalcase_updated_by_user","_actions"],"per_page":"20"}
 \.
 
 
@@ -6908,7 +7428,7 @@ COPY public.backend_user_throttle (id, user_id, ip_address, attempts, last_attem
 
 COPY public.backend_users (id, first_name, last_name, login, email, password, activation_code, persist_code, reset_password_code, permissions, is_activated, role_id, activated_at, last_login, created_at, updated_at, deleted_at, is_superuser, metadata, acorn_url, acorn_user_user_id) FROM stdin;
 1	Admin	Person	admin	admin@example.com	$2y$10$A487JegVfo9RmI9gD89kiuU0RHuj2sNKSAvu4ZXkMwA42JWAnecoS	\N	$2y$10$ijrJ234KkGAkO4Unp6uoOenr3AClxCDZq1s6VVmqhkNw.DX.AeV.u	\N		t	2	\N	2025-02-18 09:35:32	2024-10-19 10:37:18	2025-02-18 09:35:32	\N	t	\N	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6
-2	Demo		demo	demo@example.com	$2y$10$qXppZYCFKO3PBwI2JUZ0mORjrR/eOhLIkCdKe2U5aPsAWys.sr.Qy		$2y$10$DAiTJ/6Nz/inGIpDIRi1POcb8BQNZU80ev64QTKJeoVXqV51JxQvq		{"cms.manage_content":-1,"cms.manage_assets":-1,"cms.manage_pages":-1,"cms.manage_layouts":-1,"cms.manage_partials":-1,"cms.manage_themes":-1,"cms.manage_theme_options":-1,"backend.access_dashboard":1,"backend.manage_default_dashboard":-1,"backend.manage_users":-1,"backend.impersonate_users":-1,"backend.manage_preferences":1,"backend.manage_editor":-1,"backend.manage_own_editor":-1,"backend.manage_branding":1,"media.manage_media":-1,"backend.allow_unsafe_markdown":-1,"system.manage_updates":-1,"system.access_logs":-1,"system.manage_mail_settings":-1,"system.manage_mail_templates":-1,"acorn.rtler.change_settings":1,"acorn.users.access_users":1,"acorn.users.access_groups":1,"acorn.users.access_settings":1,"acorn.users.impersonate_user":-1,"winter.location.access_settings":1,"winter.tailwindui.manage_own_appearance.dark_mode":1,"winter.tailwindui.manage_own_appearance.menu_location":1,"winter.tailwindui.manage_own_appearance.item_location":1,"winter.translate.manage_locales":1,"winter.translate.manage_messages":1,"acorn_location":1,"acorn_messaging":-1,"calendar_view":1,"change_the_past":1,"access_settings":1,"acorn.criminal.legalcases__legalcase_name__update":-1,"acorn.criminal.legalcases__owner_user_group_id__update":-1,"acorn.criminal.legalcases__legalcase_type_id__update":-1}	t	\N	\N	2025-02-18 08:47:10	\N	2025-02-19 06:46:25	\N	f			d57f552e-4ad2-4e9b-9055-d78bb377d1d6
+2	Demo		demo	demo@example.com	$2y$10$qXppZYCFKO3PBwI2JUZ0mORjrR/eOhLIkCdKe2U5aPsAWys.sr.Qy		$2y$10$DAiTJ/6Nz/inGIpDIRi1POcb8BQNZU80ev64QTKJeoVXqV51JxQvq		{"cms.manage_content":-1,"cms.manage_assets":-1,"cms.manage_pages":-1,"cms.manage_layouts":-1,"cms.manage_partials":-1,"cms.manage_themes":-1,"cms.manage_theme_options":-1,"backend.access_dashboard":1,"backend.manage_default_dashboard":-1,"backend.manage_users":-1,"backend.impersonate_users":-1,"backend.manage_preferences":1,"backend.manage_editor":-1,"backend.manage_own_editor":-1,"backend.manage_branding":1,"media.manage_media":-1,"backend.allow_unsafe_markdown":-1,"system.manage_updates":-1,"system.access_logs":-1,"system.manage_mail_settings":-1,"system.manage_mail_templates":-1,"acorn.rtler.change_settings":1,"acorn.users.access_users":1,"acorn.users.access_groups":1,"acorn.users.access_settings":1,"acorn.users.impersonate_user":-1,"winter.location.access_settings":1,"winter.tailwindui.manage_own_appearance.dark_mode":1,"winter.tailwindui.manage_own_appearance.menu_location":1,"winter.tailwindui.manage_own_appearance.item_location":1,"winter.translate.manage_locales":1,"winter.translate.manage_messages":1,"acorn_location":1,"acorn_messaging":-1,"calendar_view":1,"change_the_past":1,"access_settings":1,"legalcases__legalcase_name__update":-1,"legalcases__owner_user_group_id__update":-1,"legalcases__legalcase_type_id__update":-1,"trials__access":-1,"appeals__access":-1}	t	\N	\N	2025-02-18 08:47:10	\N	2025-02-21 09:58:48	\N	f			d57f552e-4ad2-4e9b-9055-d78bb377d1d6
 \.
 
 
@@ -9249,6 +9769,8 @@ COPY public.winter_translate_attributes (id, locale, model_id, model_type, attri
 707	ku	9e3fdfb0-aede-4e43-954b-43fb35151657	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
 708	ar	9e3fdfe0-8ebf-4990-bd29-df6f01382bea	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
 709	ku	9e3fdfe0-8ebf-4990-bd29-df6f01382bea	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
+710	ar	9e43ad93-4969-4655-9d8b-669ff0c8df9a	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
+711	ku	9e43ad93-4969-4655-9d8b-669ff0c8df9a	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
 \.
 
 
@@ -9388,7 +9910,7 @@ SELECT pg_catalog.setval('public.rainlab_location_states_id_seq', 720, true);
 -- Name: rainlab_translate_attributes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 709, true);
+SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 711, true);
 
 
 --
@@ -9416,7 +9938,7 @@ SELECT pg_catalog.setval('public.rainlab_translate_messages_id_seq', 1, false);
 -- Name: system_event_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.system_event_logs_id_seq', 11981, true);
+SELECT pg_catalog.setval('public.system_event_logs_id_seq', 11984, true);
 
 
 --
