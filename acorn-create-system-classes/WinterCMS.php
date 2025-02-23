@@ -192,8 +192,8 @@ class WinterCMS extends Framework
             'reports' => 'Reports',
 
             // In-built QR codes
-            '_qrcode'        => 'QR Code',
-            '_qrcode_scan'   => 'QR Code Scan',
+            'qrcode'        => 'QR Code',
+            'qrcode_scan'   => 'QR Code Scan',
             'find_by_qrcode' => 'Find by QR code',
 
             // Standard Buttons
@@ -241,8 +241,8 @@ class WinterCMS extends Framework
             'reports' => 'التقارير',
 
             // In-built QR codes
-            '_qrcode'        => 'رمز QR',
-            '_qrcode_scan'   => 'مسح الرمز',
+            'qrcode'        => 'رمز QR',
+            'qrcode_scan'   => 'مسح الرمز',
             'find_by_qrcode' => 'البحث بواسطة الرمز',
 
             // Standard Buttons
@@ -263,44 +263,44 @@ class WinterCMS extends Framework
 
         // Kurdish general
         $this->arrayFileSet("$langDirPath/ku/lang.php", 'models.general', array(
-            'id'     => 'ID',
-            'name'   => 'Name',
-            'short_name'  => 'Short name',
-            'description' => 'Description',
-            'type'   => 'Type',
-            'image'  => 'Image',
-            'select' => 'Select',
-            'select_existing' => 'Selected existing',
-            'created_at_event' => 'Created At',
-            'updated_at_event' => 'Updated At',
-            'created_by_user'  => 'Created By',
-            'updated_by_user'  => 'Updated By',
-            'created_at'  => 'Created At',
-            'updated_at'  => 'Updated At',
-            'created_by'  => 'Created By',
+            'id'     => 'Hejmara',
+            'name'   => 'Nav',
+            'short_name'  => 'Nave kin',
+            'description' => 'Têbînî',
+            'type'   => 'Cure',
+            'image'  => 'Wêne',
+            'select' => 'Hilbijêre',
+            'select_existing' => 'Vebijêrkek heyî hilbijêre',
+            'created_at_event' => 'Dîrokê afirandin',
+            'updated_at_event' => 'Dîrokê gûherrandin',
+            'created_by_user'  => 'Bikaranîvan afirandin',
+            'updated_by_user'  => 'Bikaranîvan gûherrandin',
+            'created_at'  => 'Dîrokê afirandin',
+            'updated_at'  => 'Dîrokê gûherrandin',
+            'created_by'  => 'Bikaranîvan afirandin',
 
             // Some fields
-            'quantity' => 'Quantity',
-            'distance' => 'Distance',
-            'parent'   => 'Parent',
+            'quantity' => 'Jimarî',
+            'distance' => 'Dûrî',
+            'parent'   => 'Pêşî',
 
             // Menus
-            'actions' => 'Actions',
-            'setup'   => 'Setup',
-            'reports' => 'Reports',
+            'actions' => 'Çalakîyên',
+            'setup'   => 'Veavakirin',
+            'reports' => 'Raporên',
 
             // In-built QR codes
-            '_qrcode'        => 'QR Code',
-            '_qrcode_scan'   => 'QR Code Scan',
-            'find_by_qrcode' => 'Find by QR code',
+            'qrcode'        => 'QR Koda',
+            'qrcode_scan'   => 'QR Koda Xwendin',
+            'find_by_qrcode' => 'Bi koda QR-ê bibînin',
 
             // Standard Buttons
-            'create'     => 'Create',
-            'new'        => 'New',
-            'add'        => 'Add',
-            'print'      => 'Print',
-            'save_and_print'    => 'Save and Print',
-            'correct_and_print' => 'Correct and Print',
+            'create'     => 'Afirandin',
+            'new'        => 'Nû',
+            'add'        => 'Lêzêdedike',
+            'print'      => 'Çap',
+            'save_and_print'    => 'Rizgardike û Çap',
+            'correct_and_print' => 'Lihevanîn û Çap',
 
             // System
             'response' => 'HTTP call response', // TODO: Rename "response" to "http_response"

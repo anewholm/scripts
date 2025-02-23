@@ -17,6 +17,10 @@ class Column {
         // created & updated => user_id
         'created_by_user_id',
         'updated_by_user_id',
+        // Pseudo
+        '_actions',
+        '_qrcode',
+        '_qrcode_scan',
         // Misc
         'server_id',
         'response'
