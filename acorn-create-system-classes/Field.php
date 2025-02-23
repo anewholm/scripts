@@ -400,7 +400,7 @@ class Field {
         return preg_replace('/^lang\./', '', $localTranslationKey);
     }
 
-    public function translationKey(): string
+    public function translationKey(string $name = NULL): string
     {
         /* Translation:
          *  TODO: Maybe this should be in WinterCMS?
@@ -412,7 +412,7 @@ class Field {
         $domain   = $this->model->plugin->translationDomain(); // acorn.finance
         $group    = 'models';
         $subgroup = $this->model->dirName(); // squished usergroup | invoice
-        $name     = $this->name; // amount | id | name
+        $name     = ($name ?: $this->name);  // amount | id | name
         if ($this->isStandard()) $subgroup = 'general';
 
         return "$domain::lang.$group.$subgroup.$name";
@@ -584,7 +584,7 @@ class ForeignIdField extends Field {
         return ($shouldEmbed ? $this->relation1->to : FALSE);
     }
 
-    public function translationKey(): string
+    public function translationKey(string $name = NULL): string
     {
         /* Translation:
          *  For foreign keys:           acorn.user::lang.models.usergroup.label (pointing TO the user plugin)
@@ -636,11 +636,12 @@ class PseudoField extends Field {
         return NULL;
     }
 
-    public function translationKey(): string
+    public function translationKey(string $name = NULL): string
     {
         // parent::translationKey() will return a local domain key
         // which will use explicit labels if there are any
-        return ($this->translationKey && !$this->labels ? $this->translationKey : parent::translationKey());
+        $realname = preg_replace('/^_/', '', $this->name);
+        return ($this->translationKey && !$this->labels ? $this->translationKey : parent::translationKey($realname));
     }
 }
 
@@ -656,6 +657,8 @@ class PseudoFromForeignIdField extends PseudoField {
 
     public function __construct(Model &$model, array $definition, array $relations = array())
     {
+        global $YELLOW, $GREEN, $RED, $NC;
+
         parent::__construct($model, $definition, $relations);
 
         foreach ($this->relations as $name => &$relation) {
@@ -687,8 +690,18 @@ class PseudoFromForeignIdField extends PseudoField {
 
                     // Add the required permission to the Fields.yaml permissions: directive
                     // These must be local permission names
+                    print("      Added permission ${GREEN}$localPermissionName${NC}\n");
                     array_push($this->permissions, $localPermissionName);
                 }
+            }
+        }
+
+        // ------------------------ Failover FK labels to foreign table labels-plural
+        if ($this->relation1 && !$this->labels && !$this->labelsPlural) {
+            $targetModel = &$this->relation1->to;
+            if ($targetModel->labelsPlural) {
+                print("      Failover permission for ${GREEN}$this->name${NC} => ${GREEN}$targetModel->name${NC}::labels-plural\n");
+                $this->labels = $targetModel->labelsPlural;
             }
         }
     }
