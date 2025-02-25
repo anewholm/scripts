@@ -133,13 +133,24 @@ CACHE_DRIVER='file'
 SESSION_DRIVER='file'
 QUEUE_CONNECTION='sync'
 
-# Basic AA SMTP setup. Set the username in your account
-MAIL_MAILER='smtp'
-MAIL_ENCRYPTION='tls'
-MAIL_HOST='smtp.stackmail.com'
-MAIL_PASSWORD=null
-MAIL_PORT=465
+# Default logging email setup
+MAIL_MAILER=log
+MAIL_LOG_CHANNEL=null
+MAIL_HOST=null
+MAIL_PORT=null
 MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS=noreply@example.com
+MAIL_FROM_NAME="${APP_NAME}"
+
+# Example SMTP setup. Set the username in your account
+# MAIL_MAILER='smtp'
+# MAIL_ENCRYPTION='tls'
+# MAIL_HOST='smtp.stackmail.com'
+# MAIL_PASSWORD=null
+# MAIL_PORT=465
+# MAIL_USERNAME=null
 
 ROUTES_CACHE=false
 ASSET_CACHE=false

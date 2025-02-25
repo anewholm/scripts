@@ -2387,15 +2387,6 @@ plugin-names:
   ar: القضية الجنائية
 filters:
   owner_user_group: id in(select cl.id from acorn_criminal_legalcases cl inner join acorn_justice_legalcases  jl on jl.id = cl.legalcase_id where jl.owner_user_group_id in(:filtered))
-permission-settings:
-  create_criminal:
-    labels: 
-      en: Create a Criminal case
-      ku: Doza Cezayê çêbikin
-  create_civil:
-    labels: 
-      en: Create a Civil case
-      ku: Doza Sivîl ava bikin
 ';
 
 
@@ -2427,16 +2418,36 @@ labels-plural:
 --
 
 COMMENT ON COLUMN public.acorn_criminal_legalcases.legalcase_type_id IS 'field-type: radio
+read-only: true
 bootstraps:
   xs: 4
 css-classes: 
   - inline-options
 permission-settings:
-  NOT=legalcases__legalcase_type_id__update@update:
+  legalcase_type__create_criminal_only:
     field:
-      readOnly: true
-      disabled: true
-      type: dropdown
+      field-type: dropdown
+      default: c7c11a48-f1d1-11ef-adb1-17df3598e69d
+    labels: 
+      en: Create Criminal LegalCases only
+      ku: Tenê Dozên Yasayî yên Cezayê biafirînin
+  legalcase_type__create_civil_only:
+    field:
+      field-type: dropdown
+      default: cecfc1a4-f1d1-11ef-82cf-0f7766f8c250
+    labels: 
+      en: Create Civil LegalCases only
+      ku: Tenê Dozên Yasayî yên Sivîl biafirînin
+  legalcase_type__create_any@create:
+    field:
+      read-only: false
+    labels: 
+      en: Create any LegalCase type
+      ku: Cûreyek Doza Yasayî biafirînin
+  legalcases__legalcase_type_id__update@update:
+    field:
+      read-only: false
+      field-type: radio
     labels: 
       en: Update LegalCase type
       ku: Cureyê Doza biguherînin
@@ -7110,6 +7121,7 @@ COPY public.acorn_user_throttle (id, user_id, ip_address, attempts, last_attempt
 9df3017a-e752-45a0-8a83-b311380f1c42	9d8a48dc-d519-44bf-a93b-76d09934f059	\N	0	\N	f	\N	f	\N
 9e221c68-427d-4b8f-90ea-e0d8711b5c4c	9e1d45eb-c9f6-4403-8fb9-27503e293a2c	\N	0	\N	f	\N	f	\N
 9e2c0c73-25db-42be-8995-6824bd31ee9a	9e197206-4838-45f3-8714-42a8f029ab5b	\N	0	\N	f	\N	f	\N
+9e4b5ca8-2777-4d83-aa99-f3f918228199	9e4b5ca2-3d58-423a-9355-3eb53462fce3	\N	0	\N	f	\N	f	\N
 \.
 
 
@@ -7118,12 +7130,12 @@ COPY public.acorn_user_throttle (id, user_id, ip_address, attempts, last_attempt
 --
 
 COPY public.acorn_user_user_group (user_id, user_group_id) FROM stdin;
-2bc29c8f-e9b0-4bd4-8aff-e691b084a255	9d6d2bbb-447a-411f-99e3-72d2c1707f90
 d57f552e-4ad2-4e9b-9055-d78bb377d1d6	b67909bf-af9c-44e6-9354-77b25f777aa7
 d57f552e-4ad2-4e9b-9055-d78bb377d1d6	ec893bb1-27da-43ac-a4b4-a8960bba3dde
 9d4a94b1-7932-4ec9-8e86-84a9265eff47	30d93c8e-ee66-44ea-8c73-fd0d032af319
 9e197206-4838-45f3-8714-42a8f029ab5b	30d93c8e-ee66-44ea-8c73-fd0d032af319
 9e197206-4838-45f3-8714-42a8f029ab5b	5ed0afd7-f025-43ef-82d7-a8229ca0d4af
+2bc29c8f-e9b0-4bd4-8aff-e691b084a255	9e43ad93-4969-4655-9d8b-669ff0c8df9a
 \.
 
 
@@ -7241,7 +7253,7 @@ e5e95b8f-dffd-4ed5-9c17-c87f62bebd0d	Dîwana Dadgeriya Civakî li Til Temir	\N	\
 c5adb730-1968-400e-af3d-37c8d32d8433	Cêgratiya Giştî li Til Hemîsê	\N	\N	\N	\N	2a849d98-35b5-4d84-9890-89a02efd49c6	\N	\N	\N	\N	\N	\N	\N	\N
 9617afcd-11c8-481b-95ba-112f600eef3b	Cêgratiya Giştî li Çelaxa	\N	\N	\N	\N	2a849d98-35b5-4d84-9890-89a02efd49c6	\N	\N	\N	\N	\N	\N	\N	\N
 738b0e85-0214-42e4-88fa-b6649e2d0a47	Cêgratiya Giştî li Til Koçerê	\N	\N	\N	\N	2a849d98-35b5-4d84-9890-89a02efd49c6	\N	\N	\N	\N	\N	\N	\N	\N
-9e43ad93-4969-4655-9d8b-669ff0c8df9a	Weeeee	weeeee		2025-02-21 10:52:01	2025-02-21 10:52:01	\N	1	2	0	\N	\N		\N	\N
+9e43ad93-4969-4655-9d8b-669ff0c8df9a	Weeeee	weeeee		2025-02-21 10:52:01	2025-02-25 12:55:26	\N	1	2	0	\N	#F1C40F	\N	\N	\N
 \.
 
 
@@ -7275,7 +7287,6 @@ COPY public.acorn_user_users (id, name, email, password, activation_code, persis
 9d4a94b1-7932-4ec9-8e86-84a9265eff47	p35		\N	\N	\N	\N	\N	f	\N	\N	2024-10-20 15:01:17	2024-11-09 12:08:08			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-20	2024-10-20	\N
 9d8d2abf-aa1c-4fd1-9153-a90273180632	gggg			\N	\N	\N	\N	f	\N	\N	2024-11-22 17:25:31	2024-11-22 17:25:31			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
 9d7c7e22-de3b-4ecc-9bce-782634fac5a5	hhhh			\N	\N	\N	\N	f	\N	\N	2024-11-14 10:29:37	2024-11-14 10:29:37			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-2bc29c8f-e9b0-4bd4-8aff-e691b084a255	DEMO user	demo@user.com	password	\N	\N	\N	\N	f	\N	\N	\N	2024-11-17 10:57:25	demo@user.com		\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 9d8a48dc-d519-44bf-a93b-76d09934f059	yay22			\N	\N	\N	\N	f	\N	\N	2024-11-21 07:02:14	2024-11-21 07:02:14			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
 9d7c791c-51ad-45ee-8f22-5bfa6a06139d	weeeeeeeeeee33			\N	\N	\N	\N	f	\N	\N	2024-11-14 10:15:34	2024-11-21 07:13:38			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
 9d8c5e5a-7572-4be9-a814-e3b7aeb72b28	hhhhhhhhhhhh			\N	\N	\N	\N	f	\N	\N	2024-11-22 07:53:59	2024-11-22 07:53:59			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
@@ -7294,6 +7305,8 @@ d57f552e-4ad2-4e9b-9055-d78bb377d1d6	admin		\N	\N	\N	\N	\N	f	\N	\N	\N	2024-11-26
 9e1d4ab4-e547-4551-b4c8-83b37d6ca06f	yy			\N	\N	\N	\N	f	\N	\N	2025-02-02 08:54:06	2025-02-02 08:54:06			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
 9e1d5088-228e-44bb-aac3-1a86d7524e28	j			\N	\N	\N	\N	f	\N	\N	2025-02-02 09:10:23	2025-02-02 09:10:23			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
 9d50b920-64ca-4e51-b8ad-bbc4e489e90c	2		\N	\N	\N	\N	\N	f	\N	\N	2024-10-23 16:18:08	2025-02-04 08:41:46			2025-02-04 08:41:46	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-23	2024-10-23	\N
+9e4b5ca2-3d58-423a-9355-3eb53462fce3	justice	justice@nowhere.com	\N	\N	\N	\N	\N	f	\N	\N	2025-02-25 06:32:18	2025-02-25 06:32:18	justice@nowhere.com		\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	436bb16e-3be1-4fe2-8786-ba018219d266	1	2025-02-25	2025-02-25	f
+2bc29c8f-e9b0-4bd4-8aff-e691b084a255	DEMO user	demo@user.com	password	\N	\N	\N	\N	f	\N	\N	\N	2025-02-25 10:27:23	demo@user.com		\N	\N	f	f	\N	\N	demo@user.com		imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal	demo@user.com		f	N	\N	\N	436bb16e-3be1-4fe2-8786-ba018219d266	1	\N	\N	\N
 \.
 
 
@@ -7345,6 +7358,9 @@ COPY public.backend_access_log (id, user_id, ip_address, created_at, updated_at)
 41	1	127.0.0.1	2025-02-08 09:08:12	2025-02-08 09:08:12
 42	2	127.0.0.1	2025-02-18 08:47:10	2025-02-18 08:47:10
 43	1	127.0.0.1	2025-02-18 09:35:32	2025-02-18 09:35:32
+44	1	127.0.0.1	2025-02-24 16:35:16	2025-02-24 16:35:16
+45	2	127.0.0.1	2025-02-25 08:23:09	2025-02-25 08:23:09
+46	2	127.0.0.1	2025-02-25 08:26:36	2025-02-25 08:26:36
 \.
 
 
@@ -7395,6 +7411,7 @@ COPY public.backend_user_roles (id, name, code, description, permissions, is_sys
 COPY public.backend_user_throttle (id, user_id, ip_address, attempts, last_attempt_at, is_suspended, suspended_at, is_banned, banned_at) FROM stdin;
 1	1	127.0.0.1	0	\N	f	\N	f	\N
 2	2	\N	0	\N	f	\N	f	\N
+3	7	\N	0	\N	f	\N	f	\N
 \.
 
 
@@ -7403,8 +7420,9 @@ COPY public.backend_user_throttle (id, user_id, ip_address, attempts, last_attem
 --
 
 COPY public.backend_users (id, first_name, last_name, login, email, password, activation_code, persist_code, reset_password_code, permissions, is_activated, role_id, activated_at, last_login, created_at, updated_at, deleted_at, is_superuser, metadata, acorn_url, acorn_user_user_id) FROM stdin;
-1	Admin	Person	admin	admin@example.com	$2y$10$A487JegVfo9RmI9gD89kiuU0RHuj2sNKSAvu4ZXkMwA42JWAnecoS	\N	$2y$10$ijrJ234KkGAkO4Unp6uoOenr3AClxCDZq1s6VVmqhkNw.DX.AeV.u	\N		t	2	\N	2025-02-18 09:35:32	2024-10-19 10:37:18	2025-02-18 09:35:32	\N	t	\N	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6
-2	Demo		demo	demo@example.com	$2y$10$qXppZYCFKO3PBwI2JUZ0mORjrR/eOhLIkCdKe2U5aPsAWys.sr.Qy		$2y$10$DAiTJ/6Nz/inGIpDIRi1POcb8BQNZU80ev64QTKJeoVXqV51JxQvq		{"cms.manage_content":-1,"cms.manage_assets":-1,"cms.manage_pages":-1,"cms.manage_layouts":-1,"cms.manage_partials":-1,"cms.manage_themes":-1,"cms.manage_theme_options":-1,"backend.access_dashboard":1,"backend.manage_default_dashboard":-1,"backend.manage_users":-1,"backend.impersonate_users":-1,"backend.manage_preferences":1,"backend.manage_editor":-1,"backend.manage_own_editor":-1,"backend.manage_branding":1,"media.manage_media":-1,"backend.allow_unsafe_markdown":-1,"system.manage_updates":-1,"system.access_logs":-1,"system.manage_mail_settings":-1,"system.manage_mail_templates":-1,"acorn.rtler.change_settings":1,"acorn.users.access_users":1,"acorn.users.access_groups":1,"acorn.users.access_settings":1,"acorn.users.impersonate_user":-1,"winter.location.access_settings":1,"winter.tailwindui.manage_own_appearance.dark_mode":1,"winter.tailwindui.manage_own_appearance.menu_location":1,"winter.tailwindui.manage_own_appearance.item_location":1,"winter.translate.manage_locales":1,"winter.translate.manage_messages":1,"acorn_location":1,"acorn_messaging":-1,"calendar_view":1,"change_the_past":1,"access_settings":1,"legalcases__legalcase_name__update":-1,"legalcases__owner_user_group_id__update":-1,"legalcases__legalcase_type_id__update":-1,"trials__access":-1,"appeals__access":-1}	t	\N	\N	2025-02-18 08:47:10	\N	2025-02-21 09:58:48	\N	f			d57f552e-4ad2-4e9b-9055-d78bb377d1d6
+1	Admin	Person	admin	admin@example.com	$2y$10$A487JegVfo9RmI9gD89kiuU0RHuj2sNKSAvu4ZXkMwA42JWAnecoS	\N	$2y$10$ijrJ234KkGAkO4Unp6uoOenr3AClxCDZq1s6VVmqhkNw.DX.AeV.u	\N		t	2	\N	2025-02-24 16:35:16	2024-10-19 10:37:18	2025-02-24 16:35:16	\N	t	\N	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6
+7			justice	justice@nowhere.com	$2y$10$H4YHv/Dyj4Od5i5RRMEbGOvbudWq4QFfSKk3hQvALelR.CXKE5NUa	\N	\N	\N		f	\N	\N	\N	2025-02-25 07:35:08	2025-02-25 07:35:08	\N	t	\N	\N	\N
+2	Demo		demo	demo@example.com	$2y$10$qXppZYCFKO3PBwI2JUZ0mORjrR/eOhLIkCdKe2U5aPsAWys.sr.Qy		$2y$10$DAiTJ/6Nz/inGIpDIRi1POcb8BQNZU80ev64QTKJeoVXqV51JxQvq		{"cms.manage_content":-1,"cms.manage_assets":-1,"cms.manage_pages":-1,"cms.manage_layouts":-1,"cms.manage_partials":-1,"cms.manage_themes":-1,"cms.manage_theme_options":-1,"backend.access_dashboard":1,"backend.manage_default_dashboard":-1,"backend.manage_users":-1,"backend.impersonate_users":-1,"backend.manage_preferences":1,"backend.manage_editor":-1,"backend.manage_own_editor":-1,"backend.manage_branding":1,"media.manage_media":-1,"backend.allow_unsafe_markdown":-1,"system.manage_updates":-1,"system.access_logs":-1,"system.manage_mail_settings":-1,"system.manage_mail_templates":-1,"acorn.rtler.change_settings":1,"acorn.users.access_users":1,"acorn.users.access_groups":1,"acorn.users.access_settings":1,"acorn.users.impersonate_user":-1,"winter.location.access_settings":1,"winter.tailwindui.manage_own_appearance.dark_mode":1,"winter.tailwindui.manage_own_appearance.menu_location":1,"winter.tailwindui.manage_own_appearance.item_location":1,"winter.translate.manage_locales":1,"winter.translate.manage_messages":1,"acorn_location":1,"acorn_messaging":-1,"calendar_view":1,"change_the_past":1,"access_settings":1,"legalcases__legalcase_name__update":-1,"legalcases__owner_user_group_id__update":-1,"legalcase_type__create_criminal_only":1,"legalcase_type__create_civil_only":-1,"legalcase_type__create_any":-1,"legalcases__legalcase_type_id__update":-1,"trials__access":-1,"appeals__access":-1}	t	\N	\N	2025-02-25 08:26:36	\N	2025-02-25 13:35:55	\N	f			2bc29c8f-e9b0-4bd4-8aff-e691b084a255
 \.
 
 
@@ -7414,6 +7432,7 @@ COPY public.backend_users (id, first_name, last_name, login, email, password, ac
 
 COPY public.backend_users_groups (user_id, user_group_id, deleted_at) FROM stdin;
 1	1	\N
+7	1	\N
 \.
 
 
@@ -7696,7 +7715,7 @@ COPY public.system_parameters (id, namespace, "group", item, value) FROM stdin;
 2	system	update	count	0
 4	system	core	build	"1.2.6"
 5	system	core	modified	true
-3	system	update	retry	1739954850
+3	system	update	retry	1740501318
 \.
 
 
@@ -8050,6 +8069,7 @@ COPY public.system_settings (id, item, value) FROM stdin;
 2	acorn_rtler	{"layout_mode":"never","editor_mode":"language","markdown_editor_mode":"language"}
 3	user_settings	{"require_activation":"0","activate_mode":"auto","use_throttle":"0","block_persistence":"0","allow_registration":"0","login_attribute":"email","remember_login":"always","use_register_throttle":"0","has_front_end":"0"}
 4	acorn_calendar_settings	{"days_before":"1 year","days_after":"1 year","default_event_time_from":"2024-11-12 09:00:00","default_event_time_to":"2024-11-12 10:00:00","default_time_zone":"AD","daylight_savings":"1"}
+5	system_mail_settings	{"send_mode":"log","sender_name":"intranet","sender_email":"noreply@example.com","sendmail_path":"\\/usr\\/sbin\\/sendmail -t -i","smtp_address":"","smtp_port":null,"smtp_user":null,"smtp_password":null,"smtp_authorization":"0"}
 \.
 
 
@@ -9792,7 +9812,7 @@ COPY public.winter_translate_messages (id, code, message_data, found, code_pre_2
 -- Name: backend_access_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.backend_access_log_id_seq', 43, true);
+SELECT pg_catalog.setval('public.backend_access_log_id_seq', 46, true);
 
 
 --
@@ -9820,14 +9840,14 @@ SELECT pg_catalog.setval('public.backend_user_roles_id_seq', 2, true);
 -- Name: backend_user_throttle_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.backend_user_throttle_id_seq', 2, true);
+SELECT pg_catalog.setval('public.backend_user_throttle_id_seq', 3, true);
 
 
 --
 -- Name: backend_users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.backend_users_id_seq', 1, true);
+SELECT pg_catalog.setval('public.backend_users_id_seq', 7, true);
 
 
 --
@@ -9925,7 +9945,7 @@ SELECT pg_catalog.setval('public.rainlab_translate_messages_id_seq', 1, false);
 -- Name: system_event_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.system_event_logs_id_seq', 11996, true);
+SELECT pg_catalog.setval('public.system_event_logs_id_seq', 12034, true);
 
 
 --
@@ -9995,7 +10015,7 @@ SELECT pg_catalog.setval('public.system_revisions_id_seq', 1, false);
 -- Name: system_settings_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.system_settings_id_seq', 4, true);
+SELECT pg_catalog.setval('public.system_settings_id_seq', 5, true);
 
 
 --
@@ -16714,10 +16734,3318 @@ ALTER TABLE ONLY public.acorn_lojistiks_warehouses
 
 
 --
+-- Name: acorn_criminal_legalcases IsInOwnerGroup; Type: POLICY; Schema: public; Owner: justice
+--
+
+CREATE POLICY "IsInOwnerGroup" ON public.acorn_criminal_legalcases FOR SELECT USING ((EXISTS ( SELECT jc.id
+   FROM ((public.acorn_justice_legalcases jc
+     JOIN public.acorn_user_user_group uug ON ((uug.user_group_id = jc.owner_user_group_id)))
+     JOIN public.backend_users bu ON ((uug.user_id = bu.acorn_user_user_id)))
+  WHERE ((jc.id = acorn_criminal_legalcases.legalcase_id) AND (('token_'::text || (bu.id)::text) = CURRENT_USER)))));
+
+
+--
+-- Name: acorn_criminal_legalcases IsSuperUser; Type: POLICY; Schema: public; Owner: justice
+--
+
+CREATE POLICY "IsSuperUser" ON public.acorn_criminal_legalcases FOR SELECT USING ((EXISTS ( SELECT u.id
+   FROM public.acorn_user_users u
+  WHERE (((u.name)::text = CURRENT_USER) AND u.is_superuser))));
+
+
+--
+-- Name: acorn_criminal_legalcases; Type: ROW SECURITY; Schema: public; Owner: justice
+--
+
+ALTER TABLE public.acorn_criminal_legalcases ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: SCHEMA product; Type: ACL; Schema: -; Owner: justice
+--
+
+GRANT ALL ON SCHEMA product TO demo;
+GRANT USAGE ON SCHEMA product TO PUBLIC;
+
+
+--
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: justice
 --
 
+REVOKE ALL ON SCHEMA public FROM justice;
 REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+GRANT ALL ON SCHEMA public TO justice WITH GRANT OPTION;
+GRANT ALL ON SCHEMA public TO admin;
+GRANT ALL ON SCHEMA public TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SCHEMA public TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SCHEMA public TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_in(cstring); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_in(cstring) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_in(cstring) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_in(cstring) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_in(cstring) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_out(public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_out(public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_out(public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_out(public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_out(public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_recv(internal); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_recv(internal) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_recv(internal) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_recv(internal) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_recv(internal) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_send(public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_send(public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_send(public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_send(public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_send(public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION bytea_to_text(data bytea); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube(double precision[]); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube(double precision[]) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(double precision[]) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(double precision[]) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube(double precision[]) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube(double precision); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube(double precision) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(double precision) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(double precision) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube(double precision) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube(double precision[], double precision[]); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube(double precision, double precision); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube(public.cube, double precision); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube(public.cube, double precision, double precision); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_cmp(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_contained(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_contains(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_coord(public.cube, integer); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_coord_llur(public.cube, integer); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_dim(public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_distance(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_enlarge(public.cube, double precision, integer); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_eq(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_ge(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_gt(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_inter(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_is_point(public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_le(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_ll_coord(public.cube, integer); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_lt(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_ne(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_overlap(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_size(public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_size(public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_size(public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_size(public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_size(public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_subset(public.cube, integer[]); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_union(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION cube_ur_coord(public.cube, integer); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION distance_chebyshev(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION distance_taxicab(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION earth(); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.earth() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.earth() TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.earth() TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.earth() TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION earth_box(public.earth, double precision); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION earth_distance(public.earth, public.earth); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_calendar_create_activity_log_event(type character varying, user_id uuid); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_calendar_create_activity_log_event(type character varying, user_id uuid) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_activity_log_event(type character varying, user_id uuid) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_activity_log_event(type character varying, user_id uuid) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_activity_log_event(type character varying, user_id uuid) TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_activity_log_event(type character varying, user_id uuid) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_calendar_events_generate_event_instances(); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_calendar_is_date(s character varying, d timestamp with time zone); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp with time zone) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp with time zone) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp with time zone) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp with time zone) TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp with time zone) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_calendar_seed(); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_calendar_seed() FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_calendar_trigger_created_at_event(); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_calendar_trigger_created_at_event() FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_created_at_event() TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_created_at_event() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_created_at_event() TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_created_at_event() TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_criminal_action_legalcase_related_events_can(primary_id uuid, user_id uuid); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_related_events_can(primary_id uuid, user_id uuid) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_related_events_can(primary_id uuid, user_id uuid) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_related_events_can(primary_id uuid, user_id uuid) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_related_events_can(primary_id uuid, user_id uuid) TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_related_events_can(primary_id uuid, user_id uuid) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_criminal_action_legalcases_transfer_case(model_id uuid, user_id uuid, owner_user_group_id uuid); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_criminal_action_legalcases_transfer_case(model_id uuid, user_id uuid, owner_user_group_id uuid) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcases_transfer_case(model_id uuid, user_id uuid, owner_user_group_id uuid) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcases_transfer_case(model_id uuid, user_id uuid, owner_user_group_id uuid) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcases_transfer_case(model_id uuid, user_id uuid, owner_user_group_id uuid) TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcases_transfer_case(model_id uuid, user_id uuid, owner_user_group_id uuid) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_first(anyelement, anyelement); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_justice_action_legalcases_close_case(model_id uuid, user_id uuid); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_justice_action_legalcases_close_case(model_id uuid, user_id uuid) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_action_legalcases_close_case(model_id uuid, user_id uuid) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_action_legalcases_close_case(model_id uuid, user_id uuid) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_action_legalcases_close_case(model_id uuid, user_id uuid) TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_action_legalcases_close_case(model_id uuid, user_id uuid) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid) TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_justice_action_warrants_revoke(model_id uuid, p_user_id uuid); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_justice_action_warrants_revoke(model_id uuid, p_user_id uuid) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_action_warrants_revoke(model_id uuid, p_user_id uuid) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_action_warrants_revoke(model_id uuid, p_user_id uuid) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_action_warrants_revoke(model_id uuid, p_user_id uuid) TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_action_warrants_revoke(model_id uuid, p_user_id uuid) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_justice_seed_calendar(); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_justice_seed_calendar() FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_seed_calendar() TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_seed_calendar() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_seed_calendar() TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_seed_calendar() TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_justice_seed_groups(); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_justice_seed_groups() FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_seed_groups() TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_seed_groups() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_seed_groups() TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_seed_groups() TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_last(anyelement, anyelement); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_lojistiks_distance(source_location_id uuid, destination_location_id uuid); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_lojistiks_distance(source_location_id uuid, destination_location_id uuid) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_lojistiks_distance(source_location_id uuid, destination_location_id uuid) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_lojistiks_distance(source_location_id uuid, destination_location_id uuid) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_lojistiks_distance(source_location_id uuid, destination_location_id uuid) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_lojistiks_is_date(s character varying, d timestamp with time zone); Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_lojistiks_is_date(s character varying, d timestamp with time zone) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_lojistiks_is_date(s character varying, d timestamp with time zone) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_lojistiks_is_date(s character varying, d timestamp with time zone) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_lojistiks_is_date(s character varying, d timestamp with time zone) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_new_replicated_row(); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_new_replicated_row() FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_reset_sequences(schema_like character varying, table_like character varying); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_server_id(); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_server_id() FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_table_counts(_schema character varying); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_truncate_database(schema_like character varying, table_like character varying); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_user_get_seed_user(); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_user_get_seed_user() FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION g_cube_consistent(internal, public.cube, smallint, oid, internal); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION g_cube_distance(internal, public.cube, smallint, oid, internal); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION g_cube_penalty(internal, internal, internal); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION g_cube_picksplit(internal, internal); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION g_cube_same(public.cube, public.cube, internal); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION g_cube_union(internal, internal); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION gc_to_sec(double precision); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION geo_distance(point, point); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.geo_distance(point, point) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.geo_distance(point, point) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.geo_distance(point, point) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.geo_distance(point, point) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION hostname(); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.hostname() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.hostname() TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.hostname() TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.hostname() TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION http(request public.http_request); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.http(request public.http_request) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http(request public.http_request) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http(request public.http_request) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.http(request public.http_request) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION http_delete(uri character varying); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION http_delete(uri character varying, content character varying, content_type character varying); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION http_get(uri character varying); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.http_get(uri character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_get(uri character varying) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_get(uri character varying) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.http_get(uri character varying) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION http_get(uri character varying, data jsonb); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION http_head(uri character varying); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.http_head(uri character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_head(uri character varying) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_head(uri character varying) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.http_head(uri character varying) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION http_header(field character varying, value character varying); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION http_list_curlopt(); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.http_list_curlopt() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_list_curlopt() TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_list_curlopt() TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.http_list_curlopt() TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION http_patch(uri character varying, content character varying, content_type character varying); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION http_post(uri character varying, data jsonb); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION http_post(uri character varying, content character varying, content_type character varying); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION http_put(uri character varying, content character varying, content_type character varying); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION http_reset_curlopt(); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.http_reset_curlopt() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_reset_curlopt() TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_reset_curlopt() TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.http_reset_curlopt() TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION http_set_curlopt(curlopt character varying, value character varying); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION latitude(public.earth); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.latitude(public.earth) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.latitude(public.earth) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.latitude(public.earth) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.latitude(public.earth) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION ll_to_earth(double precision, double precision); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION longitude(public.earth); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.longitude(public.earth) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.longitude(public.earth) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.longitude(public.earth) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.longitude(public.earth) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION sec_to_gc(double precision); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION text_to_bytea(data text); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION urlencode(string bytea); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.urlencode(string bytea) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.urlencode(string bytea) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.urlencode(string bytea) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.urlencode(string bytea) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION urlencode(data jsonb); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION urlencode(string character varying); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.urlencode(string character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.urlencode(string character varying) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.urlencode(string character varying) TO justice WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.urlencode(string character varying) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION agg_acorn_first(anyelement); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.agg_acorn_first(anyelement) FROM justice;
+GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION agg_acorn_last(anyelement); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.agg_acorn_last(anyelement) FROM justice;
+GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_computer_products; Type: ACL; Schema: product; Owner: justice
+--
+
+GRANT ALL ON TABLE product.acorn_lojistiks_computer_products TO demo;
+GRANT SELECT ON TABLE product.acorn_lojistiks_computer_products TO PUBLIC;
+
+
+--
+-- Name: TABLE acorn_lojistiks_electronic_products; Type: ACL; Schema: product; Owner: justice
+--
+
+GRANT ALL ON TABLE product.acorn_lojistiks_electronic_products TO demo;
+GRANT SELECT ON TABLE product.acorn_lojistiks_electronic_products TO PUBLIC;
+
+
+--
+-- Name: TABLE acorn_calendar_calendars; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_calendar_calendars FROM justice;
+GRANT ALL ON TABLE public.acorn_calendar_calendars TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_calendars TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_calendars TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_calendar_calendars TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_calendar_event_part_user; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_calendar_event_part_user FROM justice;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_calendar_event_part_user_group; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_calendar_event_part_user_group FROM justice;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_calendar_event_parts; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_calendar_event_parts FROM justice;
+GRANT ALL ON TABLE public.acorn_calendar_event_parts TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_parts TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_parts TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_calendar_event_parts TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_calendar_event_statuses; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_calendar_event_statuses FROM justice;
+GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_calendar_event_types; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_calendar_event_types FROM justice;
+GRANT ALL ON TABLE public.acorn_calendar_event_types TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_types TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_types TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_calendar_event_types TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_calendar_events; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_calendar_events FROM justice;
+GRANT ALL ON TABLE public.acorn_calendar_events TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_events TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_events TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_calendar_events TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_calendar_instances; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_calendar_instances FROM justice;
+GRANT ALL ON TABLE public.acorn_calendar_instances TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_instances TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_instances TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_calendar_instances TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_appeals; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_appeals FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_appeals TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_appeals TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_appeals TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_appeals TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_crime_evidence; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_crime_evidence FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_crime_evidence TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_crime_evidence TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_crime_evidence TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_crime_evidence TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_crime_sentences; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_crime_sentences FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_crime_sentences TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_crime_sentences TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_crime_sentences TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_crime_sentences TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_crime_types; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_crime_types FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_crime_types TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_crime_types TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_crime_types TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_crime_types TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_crimes; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_crimes FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_crimes TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_crimes TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_crimes TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_crimes TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_defendant_crimes; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_defendant_crimes FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_defendant_crimes TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_defendant_crimes TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_defendant_crimes TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_defendant_crimes TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_defendant_detentions; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_defendant_detentions FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_defendant_detentions TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_defendant_detentions TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_defendant_detentions TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_defendant_detentions TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_detention_methods; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_detention_methods FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_detention_methods TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_detention_methods TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_detention_methods TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_detention_methods TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_detention_reasons; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_detention_reasons FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_detention_reasons TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_detention_reasons TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_detention_reasons TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_detention_reasons TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_legalcase_defendants; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_legalcase_defendants FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_defendants TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_defendants TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_defendants TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_defendants TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_legalcase_evidence; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_legalcase_evidence FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_evidence TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_evidence TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_evidence TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_evidence TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_legalcase_plaintiffs; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_legalcase_plaintiffs FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_plaintiffs TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_plaintiffs TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_plaintiffs TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_plaintiffs TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_legalcase_prosecutor; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_legalcase_prosecutor FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_prosecutor TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_prosecutor TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_prosecutor TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_prosecutor TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_legalcase_related_events; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_legalcase_related_events FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_related_events TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_related_events TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_related_events TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_related_events TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_legalcase_types; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_legalcase_types FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_types TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_types TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_types TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_types TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_legalcase_witnesses; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_legalcase_witnesses FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_witnesses TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_witnesses TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_witnesses TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_legalcase_witnesses TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_legalcases; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_legalcases FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_legalcases TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_legalcases TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_legalcases TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_legalcases TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_sentence_types; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_sentence_types FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_sentence_types TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_sentence_types TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_sentence_types TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_sentence_types TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_session_recordings; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_session_recordings FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_session_recordings TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_session_recordings TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_session_recordings TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_session_recordings TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_trial_judges; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_trial_judges FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_trial_judges TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_trial_judges TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_trial_judges TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_trial_judges TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_trial_sessions; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_trial_sessions FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_trial_sessions TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_trial_sessions TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_trial_sessions TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_trial_sessions TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_criminal_trials; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_trials FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_trials TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_trials TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_trials TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_criminal_trials TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_finance_currencies; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_finance_currencies FROM justice;
+GRANT ALL ON TABLE public.acorn_finance_currencies TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_finance_currencies TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_finance_currencies TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_finance_currencies TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_finance_invoices; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_finance_invoices FROM justice;
+GRANT ALL ON TABLE public.acorn_finance_invoices TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_finance_invoices TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_finance_invoices TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_finance_invoices TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_finance_payments; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_finance_payments FROM justice;
+GRANT ALL ON TABLE public.acorn_finance_payments TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_finance_payments TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_finance_payments TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_finance_payments TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_finance_purchases; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_finance_purchases FROM justice;
+GRANT ALL ON TABLE public.acorn_finance_purchases TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_finance_purchases TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_finance_purchases TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_finance_purchases TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_finance_receipts; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_finance_receipts FROM justice;
+GRANT ALL ON TABLE public.acorn_finance_receipts TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_finance_receipts TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_finance_receipts TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_finance_receipts TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_justice_legalcase_categories; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_justice_legalcase_categories FROM justice;
+GRANT ALL ON TABLE public.acorn_justice_legalcase_categories TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_legalcase_categories TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_legalcase_categories TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_justice_legalcase_categories TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_justice_legalcase_legalcase_category; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_justice_legalcase_legalcase_category FROM justice;
+GRANT ALL ON TABLE public.acorn_justice_legalcase_legalcase_category TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_legalcase_legalcase_category TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_legalcase_legalcase_category TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_justice_legalcase_legalcase_category TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_justice_legalcases; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_justice_legalcases FROM justice;
+GRANT ALL ON TABLE public.acorn_justice_legalcases TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_legalcases TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_legalcases TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_justice_legalcases TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_justice_scanned_documents; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_justice_scanned_documents FROM justice;
+GRANT ALL ON TABLE public.acorn_justice_scanned_documents TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_scanned_documents TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_scanned_documents TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_justice_scanned_documents TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_justice_warrant_types; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_justice_warrant_types FROM justice;
+GRANT ALL ON TABLE public.acorn_justice_warrant_types TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_warrant_types TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_warrant_types TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_justice_warrant_types TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_justice_warrants; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_justice_warrants FROM justice;
+GRANT ALL ON TABLE public.acorn_justice_warrants TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_warrants TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_warrants TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_justice_warrants TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_location_addresses; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_location_addresses FROM justice;
+GRANT ALL ON TABLE public.acorn_location_addresses TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_addresses TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_addresses TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_location_addresses TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_location_area_types; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_location_area_types FROM justice;
+GRANT ALL ON TABLE public.acorn_location_area_types TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_area_types TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_area_types TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_location_area_types TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_location_areas; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_location_areas FROM justice;
+GRANT ALL ON TABLE public.acorn_location_areas TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_areas TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_areas TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_location_areas TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_location_gps; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_location_gps FROM justice;
+GRANT ALL ON TABLE public.acorn_location_gps TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_gps TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_gps TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_location_gps TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_location_locations; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_location_locations FROM justice;
+GRANT ALL ON TABLE public.acorn_location_locations TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_locations TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_locations TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_location_locations TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_location_lookup; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_location_lookup FROM justice;
+GRANT ALL ON TABLE public.acorn_location_lookup TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_lookup TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_lookup TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_location_lookup TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_location_types; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_location_types FROM justice;
+GRANT ALL ON TABLE public.acorn_location_types TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_types TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_types TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_location_types TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_brands; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_brands FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_brands TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_brands TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_brands TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_brands TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_containers; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_containers FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_containers TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_containers TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_containers TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_containers TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_drivers; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_drivers FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_drivers TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_drivers TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_drivers TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_drivers TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_employees; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_employees FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_employees TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_employees TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_employees TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_employees TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_measurement_units; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_measurement_units FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_measurement_units TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_measurement_units TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_measurement_units TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_measurement_units TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_offices; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_offices FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_offices TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_offices TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_offices TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_offices TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_people; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_people FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_people TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_people TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_people TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_people TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_product_attributes; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_product_attributes FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_attributes TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_attributes TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_attributes TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_attributes TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_product_categories; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_product_categories FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_categories TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_categories TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_categories TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_categories TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_product_category_types; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_product_category_types FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_category_types TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_category_types TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_category_types TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_category_types TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_product_instance_transfer; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_product_instance_transfer FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_instance_transfer TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_instance_transfer TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_instance_transfer TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_instance_transfer TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_product_instances; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_product_instances FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_instances TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_instances TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_instances TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_instances TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_product_product_category; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_product_product_category FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_product_category TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_product_category TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_product_category TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_product_category TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_product_products; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_product_products FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_products TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_products TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_products TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_product_products TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_products; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_products FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_products TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_products TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_products TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_products TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_products_product_category; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_products_product_category FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_products_product_category TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_products_product_category TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_products_product_category TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_products_product_category TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_suppliers; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_suppliers FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_suppliers TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_suppliers TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_suppliers TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_suppliers TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_transfer_container_product_instance; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_transfer_container_product_instance FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfer_container_product_instance TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfer_container_product_instance TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfer_container_product_instance TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfer_container_product_instance TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_transfer_containers; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_transfer_containers FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfer_containers TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfer_containers TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfer_containers TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfer_containers TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_transfer_invoice; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_transfer_invoice FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfer_invoice TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfer_invoice TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfer_invoice TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfer_invoice TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_transfer_purchase; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_transfer_purchase FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfer_purchase TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfer_purchase TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfer_purchase TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfer_purchase TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_transfers; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_transfers FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfers TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfers TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfers TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_transfers TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_vehicle_types; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_vehicle_types FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_vehicle_types TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_vehicle_types TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_vehicle_types TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_vehicle_types TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_vehicles; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_vehicles FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_vehicles TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_vehicles TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_vehicles TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_vehicles TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_lojistiks_warehouses; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_lojistiks_warehouses FROM justice;
+GRANT ALL ON TABLE public.acorn_lojistiks_warehouses TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_warehouses TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_lojistiks_warehouses TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_lojistiks_warehouses TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_messaging_action; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_messaging_action FROM justice;
+GRANT ALL ON TABLE public.acorn_messaging_action TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_action TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_action TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_messaging_action TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_messaging_label; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_messaging_label FROM justice;
+GRANT ALL ON TABLE public.acorn_messaging_label TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_label TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_label TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_messaging_label TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_messaging_message; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_messaging_message FROM justice;
+GRANT ALL ON TABLE public.acorn_messaging_message TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_messaging_message TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_messaging_message_instance; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_messaging_message_instance FROM justice;
+GRANT ALL ON TABLE public.acorn_messaging_message_instance TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message_instance TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message_instance TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_messaging_message_instance TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_messaging_message_message; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_messaging_message_message FROM justice;
+GRANT ALL ON TABLE public.acorn_messaging_message_message TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message_message TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message_message TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_messaging_message_message TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_messaging_message_user; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_messaging_message_user FROM justice;
+GRANT ALL ON TABLE public.acorn_messaging_message_user TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message_user TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message_user TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_messaging_message_user TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_messaging_message_user_group; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_messaging_message_user_group FROM justice;
+GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_messaging_status; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_messaging_status FROM justice;
+GRANT ALL ON TABLE public.acorn_messaging_status TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_status TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_status TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_messaging_status TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_messaging_user_message_status; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_messaging_user_message_status FROM justice;
+GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_servers; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_servers FROM justice;
+GRANT ALL ON TABLE public.acorn_servers TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_servers TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_servers TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_servers TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_user_language_user; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_user_language_user FROM justice;
+GRANT ALL ON TABLE public.acorn_user_language_user TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_language_user TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_language_user TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_user_language_user TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_user_languages; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_user_languages FROM justice;
+GRANT ALL ON TABLE public.acorn_user_languages TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_languages TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_languages TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_user_languages TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_user_mail_blockers; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_user_mail_blockers FROM justice;
+GRANT ALL ON TABLE public.acorn_user_mail_blockers TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_mail_blockers TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_mail_blockers TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_user_mail_blockers TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_user_roles; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_user_roles FROM justice;
+GRANT ALL ON TABLE public.acorn_user_roles TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_roles TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_roles TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_user_roles TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_user_throttle; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_user_throttle FROM justice;
+GRANT ALL ON TABLE public.acorn_user_throttle TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_throttle TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_throttle TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_user_throttle TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_user_user_group; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_user_user_group FROM justice;
+GRANT ALL ON TABLE public.acorn_user_user_group TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_user_user_group TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_user_user_group_types; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_user_user_group_types FROM justice;
+GRANT ALL ON TABLE public.acorn_user_user_group_types TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group_types TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group_types TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_user_user_group_types TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_user_user_group_version_usages; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_user_user_group_version_usages FROM justice;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_user_user_group_version_user; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_user_user_group_version_user FROM justice;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_user TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_user TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_user TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_user TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_user_user_group_versions; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_user_user_group_versions FROM justice;
+GRANT ALL ON TABLE public.acorn_user_user_group_versions TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group_versions TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group_versions TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_user_user_group_versions TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_user_user_groups; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_user_user_groups FROM justice;
+GRANT ALL ON TABLE public.acorn_user_user_groups TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_groups TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_groups TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_user_user_groups TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_user_users; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_user_users FROM justice;
+GRANT ALL ON TABLE public.acorn_user_users TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_users TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_users TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.acorn_user_users TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE backend_access_log; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.backend_access_log FROM justice;
+GRANT ALL ON TABLE public.backend_access_log TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_access_log TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_access_log TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.backend_access_log TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE backend_access_log_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.backend_access_log_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE backend_user_groups; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.backend_user_groups FROM justice;
+GRANT ALL ON TABLE public.backend_user_groups TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_user_groups TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_user_groups TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.backend_user_groups TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE backend_user_groups_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.backend_user_groups_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE backend_user_preferences; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.backend_user_preferences FROM justice;
+GRANT ALL ON TABLE public.backend_user_preferences TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_user_preferences TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_user_preferences TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.backend_user_preferences TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE backend_user_preferences_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.backend_user_preferences_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE backend_user_roles; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.backend_user_roles FROM justice;
+GRANT ALL ON TABLE public.backend_user_roles TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_user_roles TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_user_roles TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.backend_user_roles TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE backend_user_roles_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.backend_user_roles_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE backend_user_throttle; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.backend_user_throttle FROM justice;
+GRANT ALL ON TABLE public.backend_user_throttle TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_user_throttle TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_user_throttle TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.backend_user_throttle TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE backend_user_throttle_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.backend_user_throttle_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE backend_users; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.backend_users FROM justice;
+GRANT ALL ON TABLE public.backend_users TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_users TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_users TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.backend_users TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE backend_users_groups; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.backend_users_groups FROM justice;
+GRANT ALL ON TABLE public.backend_users_groups TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_users_groups TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_users_groups TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.backend_users_groups TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE backend_users_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.backend_users_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.backend_users_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_users_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_users_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.backend_users_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE cache; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.cache FROM justice;
+GRANT ALL ON TABLE public.cache TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.cache TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.cache TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.cache TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE cms_theme_data; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.cms_theme_data FROM justice;
+GRANT ALL ON TABLE public.cms_theme_data TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.cms_theme_data TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.cms_theme_data TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.cms_theme_data TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE cms_theme_data_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.cms_theme_data_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE cms_theme_logs; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.cms_theme_logs FROM justice;
+GRANT ALL ON TABLE public.cms_theme_logs TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.cms_theme_logs TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.cms_theme_logs TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.cms_theme_logs TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE cms_theme_logs_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.cms_theme_logs_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE cms_theme_templates; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.cms_theme_templates FROM justice;
+GRANT ALL ON TABLE public.cms_theme_templates TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.cms_theme_templates TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.cms_theme_templates TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.cms_theme_templates TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE cms_theme_templates_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.cms_theme_templates_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE deferred_bindings; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.deferred_bindings FROM justice;
+GRANT ALL ON TABLE public.deferred_bindings TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.deferred_bindings TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.deferred_bindings TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.deferred_bindings TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE deferred_bindings_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.deferred_bindings_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE failed_jobs; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.failed_jobs FROM justice;
+GRANT ALL ON TABLE public.failed_jobs TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.failed_jobs TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.failed_jobs TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.failed_jobs TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE failed_jobs_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.failed_jobs_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE job_batches; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.job_batches FROM justice;
+GRANT ALL ON TABLE public.job_batches TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.job_batches TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.job_batches TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.job_batches TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE jobs; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.jobs FROM justice;
+GRANT ALL ON TABLE public.jobs TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.jobs TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.jobs TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.jobs TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE jobs_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.jobs_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.jobs_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.jobs_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.jobs_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.jobs_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE migrations; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.migrations FROM justice;
+GRANT ALL ON TABLE public.migrations TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.migrations TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.migrations TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.migrations TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE migrations_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.migrations_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.migrations_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.migrations_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.migrations_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.migrations_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE winter_location_countries; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.winter_location_countries FROM justice;
+GRANT ALL ON TABLE public.winter_location_countries TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_location_countries TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_location_countries TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.winter_location_countries TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE rainlab_location_countries_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.rainlab_location_countries_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE winter_location_states; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.winter_location_states FROM justice;
+GRANT ALL ON TABLE public.winter_location_states TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_location_states TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_location_states TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.winter_location_states TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE rainlab_location_states_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.rainlab_location_states_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE winter_translate_attributes; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.winter_translate_attributes FROM justice;
+GRANT ALL ON TABLE public.winter_translate_attributes TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_translate_attributes TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_translate_attributes TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.winter_translate_attributes TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE rainlab_translate_attributes_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE winter_translate_indexes; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.winter_translate_indexes FROM justice;
+GRANT ALL ON TABLE public.winter_translate_indexes TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_translate_indexes TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_translate_indexes TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.winter_translate_indexes TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE rainlab_translate_indexes_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE winter_translate_locales; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.winter_translate_locales FROM justice;
+GRANT ALL ON TABLE public.winter_translate_locales TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_translate_locales TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_translate_locales TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.winter_translate_locales TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE rainlab_translate_locales_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.rainlab_translate_locales_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE winter_translate_messages; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.winter_translate_messages FROM justice;
+GRANT ALL ON TABLE public.winter_translate_messages TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_translate_messages TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_translate_messages TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.winter_translate_messages TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE rainlab_translate_messages_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.rainlab_translate_messages_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE sessions; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.sessions FROM justice;
+GRANT ALL ON TABLE public.sessions TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.sessions TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.sessions TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.sessions TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE system_event_logs; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.system_event_logs FROM justice;
+GRANT ALL ON TABLE public.system_event_logs TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_event_logs TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_event_logs TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.system_event_logs TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE system_event_logs_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.system_event_logs_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE system_files; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.system_files FROM justice;
+GRANT ALL ON TABLE public.system_files TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_files TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_files TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.system_files TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE system_files_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.system_files_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.system_files_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_files_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_files_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.system_files_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE system_mail_layouts; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.system_mail_layouts FROM justice;
+GRANT ALL ON TABLE public.system_mail_layouts TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_mail_layouts TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_mail_layouts TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.system_mail_layouts TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE system_mail_layouts_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.system_mail_layouts_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE system_mail_partials; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.system_mail_partials FROM justice;
+GRANT ALL ON TABLE public.system_mail_partials TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_mail_partials TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_mail_partials TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.system_mail_partials TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE system_mail_partials_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.system_mail_partials_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE system_mail_templates; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.system_mail_templates FROM justice;
+GRANT ALL ON TABLE public.system_mail_templates TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_mail_templates TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_mail_templates TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.system_mail_templates TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE system_mail_templates_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.system_mail_templates_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE system_parameters; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.system_parameters FROM justice;
+GRANT ALL ON TABLE public.system_parameters TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_parameters TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_parameters TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.system_parameters TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE system_parameters_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.system_parameters_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE system_plugin_history; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.system_plugin_history FROM justice;
+GRANT ALL ON TABLE public.system_plugin_history TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_plugin_history TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_plugin_history TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.system_plugin_history TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE system_plugin_history_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.system_plugin_history_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE system_plugin_versions; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.system_plugin_versions FROM justice;
+GRANT ALL ON TABLE public.system_plugin_versions TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_plugin_versions TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_plugin_versions TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.system_plugin_versions TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE system_plugin_versions_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.system_plugin_versions_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE system_request_logs; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.system_request_logs FROM justice;
+GRANT ALL ON TABLE public.system_request_logs TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_request_logs TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_request_logs TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.system_request_logs TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE system_request_logs_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.system_request_logs_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE system_revisions; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.system_revisions FROM justice;
+GRANT ALL ON TABLE public.system_revisions TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_revisions TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_revisions TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.system_revisions TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE system_revisions_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.system_revisions_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE system_settings; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.system_settings FROM justice;
+GRANT ALL ON TABLE public.system_settings TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_settings TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_settings TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON TABLE public.system_settings TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: SEQUENCE system_settings_id_seq; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON SEQUENCE public.system_settings_id_seq FROM justice;
+GRANT ALL ON SEQUENCE public.system_settings_id_seq TO justice WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_settings_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_settings_id_seq TO demo WITH GRANT OPTION;
+SET SESSION AUTHORIZATION demo;
+GRANT ALL ON SEQUENCE public.system_settings_id_seq TO token_2;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: product; Owner: sz
+--
+
+ALTER DEFAULT PRIVILEGES FOR ROLE sz IN SCHEMA product GRANT ALL ON TABLES TO sz;
 
 
 --
