@@ -21,6 +21,7 @@ class Column {
         '_actions',
         '_qrcode',
         '_qrcode_scan',
+        'state_indicator',
         // Misc
         'server_id',
         'response'
@@ -97,7 +98,9 @@ class Column {
     // These flow through to Field
     public $comment; // YAML comment
     public $parsedComment; // array
+    public $fieldOptions;  // array
     public $order;
+    public $default;
     public $fieldComment; // HTML field comment
     public $system;  // Internal column, do not process
     public $todo;    // TODO: This column structure has not been analysed / enabled yet
@@ -105,6 +108,7 @@ class Column {
     public $env;     // Only show the column if an env VAR is TRUE
     // For fields
     public $fieldType;
+    public $partial;
     public $rules = array();
     public $span;
     public $hidden;
@@ -128,6 +132,7 @@ class Column {
     // Translation arrays
     public $labels;
     public $labelsPlural;
+    public $extraTranslations; // array
 
     public static function fromRow(Table &$table, array $row)
     {
@@ -181,6 +186,8 @@ class Column {
                 'invisible'  => TRUE,   // columns
             );
             if (!$this->isTheIdColumn()) $definition['autoFKType'] = 'Xto1'; // relations
+            if ($this->column_name == 'state_indicator') 
+                $definition['columnType'] = 'partial'; 
         }
         return $definition;
     }

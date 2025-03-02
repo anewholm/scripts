@@ -227,7 +227,7 @@ class Table {
                             $changes = TRUE;
                         }
                     }
-                    $triggerCheck = 'fn_acorn_calendar_trigger_created_at_event';
+                    $triggerCheck = 'fn_acorn_calendar_trigger_activity_event';
                     if ($this->hasColumn($columnCheck) && !$this->hasTrigger($triggerCheck)) {
                         $error = "Content table [$YELLOW$this->name$NC] has [$YELLOW$columnCheck$NC] column but no trigger [$YELLOW$triggerCheck$NC]";
                         print("${RED}WARNING$NC: $error\n");
