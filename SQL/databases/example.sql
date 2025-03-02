@@ -132,40 +132,66 @@ end;
 ALTER FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) OWNER TO justice;
 
 --
--- Name: fn_acorn_calendar_create_activity_log_event(character varying, uuid); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_calendar_create_activity_log_event(uuid, uuid, uuid, character varying); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acorn_calendar_create_activity_log_event(type character varying, user_id uuid) RETURNS uuid
+CREATE FUNCTION public.fn_acorn_calendar_create_activity_log_event(owner_user_id uuid, type_id uuid, status_id uuid, name character varying) RETURNS uuid
     LANGUAGE plpgsql
     AS $$
 declare 
-	owner_user_id uuid;
-	title character varying(1024);
 	calendar_id uuid;
-	event_type_id uuid;
-	event_status_id uuid;
-	new_event_id uuid;
 begin
 	-- Calendar (system): acorn.justice::lang.plugin.activity_log
 	-- Type: indicates the Model
 	-- Status: indicates the action: create, update, delete, etc.
 	calendar_id   := 'f3bc49bc-eac7-11ef-9e4a-1740a039dada';
-	title         := initcap(replace(type, '_', ' '));
-	owner_user_id := user_id;
+	if not exists(select * from acorn_calendar_calendars where "id" = 'f3bc49bc-eac7-11ef-9e4a-1740a039dada'::uuid) then
+		-- Just in case database seeding is happening before calendar seeding, or the system types have been deleted
+		perform public.fn_acorn_calendar_seed();
+	end if;
+	
+	return public.fn_acorn_calendar_create_event(calendar_id, owner_user_id, type_id, status_id, name);
+end;
+$$;
 
-	select into event_status_id id from public.acorn_calendar_event_statuses limit 1;
-	insert into public.acorn_calendar_event_types(name, colour, style) values('Create', '#091386', 'color:#fff') returning id into event_type_id;
 
-	insert into public.acorn_calendar_events(calendar_id, owner_user_id) values(calendar_id, owner_user_id) returning id into new_event_id;
+ALTER FUNCTION public.fn_acorn_calendar_create_activity_log_event(owner_user_id uuid, type_id uuid, status_id uuid, name character varying) OWNER TO justice;
+
+--
+-- Name: fn_acorn_calendar_create_event(uuid, uuid, uuid, uuid, character varying); Type: FUNCTION; Schema: public; Owner: justice
+--
+
+CREATE FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) RETURNS uuid
+    LANGUAGE plpgsql
+    AS $$
+begin
+	return public.fn_acorn_calendar_create_event(calendar_id, owner_user_id, type_id, status_id, name, now()::timestamp without time zone, now()::timestamp without time zone);
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) OWNER TO justice;
+
+--
+-- Name: fn_acorn_calendar_create_event(uuid, uuid, uuid, uuid, character varying, timestamp without time zone, timestamp without time zone); Type: FUNCTION; Schema: public; Owner: justice
+--
+
+CREATE FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) RETURNS uuid
+    LANGUAGE plpgsql
+    AS $$
+declare 
+	new_event_id uuid;
+begin
+	insert into public.acorn_calendar_events(calendar_id, owner_user_id) 
+		values(calendar_id, owner_user_id) returning id into new_event_id;
 	insert into public.acorn_calendar_event_parts(event_id, type_id, status_id, name, start, "end") 
-		values(new_event_id, event_type_id, event_status_id, concat(title, ' ', 'Create'), now(), now());
-
+		values(new_event_id, event_type_id, event_status_id, name, date_from, date_to);
 	return new_event_id;
 end;
 $$;
 
 
-ALTER FUNCTION public.fn_acorn_calendar_create_activity_log_event(type character varying, user_id uuid) OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) OWNER TO justice;
 
 --
 -- Name: fn_acorn_calendar_events_generate_event_instances(); Type: FUNCTION; Schema: public; Owner: justice
@@ -310,6 +336,41 @@ end;
 ALTER FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp with time zone) OWNER TO justice;
 
 --
+-- Name: fn_acorn_calendar_lazy_create_event(character varying, uuid, character varying, character varying, character varying); Type: FUNCTION; Schema: public; Owner: justice
+--
+
+CREATE FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) RETURNS uuid
+    LANGUAGE plpgsql
+    AS $$
+declare
+	event_calendar_id uuid;
+	event_type_id uuid;
+	event_status_id  uuid;
+begin
+	-- Lazy creates
+	select into event_calendar_id id from acorn_calendar_calendars where name = calendar_name;
+	if event_calendar_id is null then
+		insert into acorn_calendar_calendars(name) values(calendar_name) returning id into event_calendar_id;
+	end if;
+
+	select into event_type_id id from acorn_calendar_event_types where name = type_name;
+	if event_type_id is null then
+		insert into acorn_calendar_event_types(name, calendar_id) values(type_name, event_calendar_id) returning id into event_type_id;
+	end if;
+
+	select into event_status_id id from acorn_calendar_event_statuses where name = status_name;
+	if event_status_id is null then
+		insert into acorn_calendar_event_statuses(name, calendar_id) values(status_name, event_calendar_id) returning id into event_status_id;
+	end if;
+
+	return public.fn_acorn_calendar_create_event(event_calendar_id, owner_user_id, event_type_id, event_status_id, event_name);
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) OWNER TO justice;
+
+--
 -- Name: fn_acorn_calendar_seed(); Type: FUNCTION; Schema: public; Owner: justice
 --
 
@@ -317,10 +378,14 @@ CREATE FUNCTION public.fn_acorn_calendar_seed() RETURNS void
     LANGUAGE plpgsql
     AS $$
 begin
-            -- Default calendar, with hardcoded id
+            -- Default calendars, with hardcoded ids
             if not exists(select * from acorn_calendar_calendars where "id" = 'ceea8856-e4c8-11ef-8719-5f58c97885a2'::uuid) then
                 insert into acorn_calendar_calendars(id, "name", "system") 
                     values('ceea8856-e4c8-11ef-8719-5f58c97885a2'::uuid, 'Default', true);
+            end if;
+            if not exists(select * from acorn_calendar_calendars where "id" = 'f3bc49bc-eac7-11ef-9e4a-1740a039dada'::uuid) then
+                insert into acorn_calendar_calendars(id, "name", "system") 
+                    values('f3bc49bc-eac7-11ef-9e4a-1740a039dada'::uuid, 'Activity Log', true);
             end if;
 
             -- System Statuses. Cannot be deleted
@@ -343,6 +408,7 @@ begin
             end if;
 
             -- System Types. Cannot be deleted
+            -- Types for each table in the activity log are lazy created
             if not exists(select * from acorn_calendar_event_types where "id" = '2f766546-e4c9-11ef-be8c-1f2daa98a10f'::uuid) then
                 insert into acorn_calendar_event_types(id, "name", "system", "colour", "style") 
                     values('2f766546-e4c9-11ef-be8c-1f2daa98a10f'::uuid, 'Normal', TRUE, '#091386', 'color:#fff');
@@ -351,6 +417,25 @@ begin
                 insert into acorn_calendar_event_types("name", "system", "colour", "style") 
                     values('Meeting', TRUE, '#C0392B', 'color:#fff');
             end if;
+
+            -- Activity log statuses: TG_OP / Soft DELETE
+            if not exists(select * from acorn_calendar_event_statuses where "id" = '7b432540-eac8-11ef-a9bc-434841a9f67b'::uuid) then
+                insert into acorn_calendar_event_statuses(id, "name", "system", "style") 
+                    values('7b432540-eac8-11ef-a9bc-434841a9f67b'::uuid, 'acorn.calendar::lang.models.general.insert', TRUE, 'color:#fff');
+            end if;
+            if not exists(select * from acorn_calendar_event_statuses where "id" = '7c18bb7e-eac8-11ef-b4f2-ffae3296f461'::uuid) then
+                insert into acorn_calendar_event_statuses(id, "name", "system", "style") 
+                    values('7c18bb7e-eac8-11ef-b4f2-ffae3296f461'::uuid, 'acorn.calendar::lang.models.general.update', TRUE, 'color:#fff');
+            end if;
+            -- Soft DELETE (Actually an UPDATE TG_OP)
+            if not exists(select * from acorn_calendar_event_statuses where "id" = '7ceca4c0-eac8-11ef-b685-f7f3f278f676'::uuid) then
+                insert into acorn_calendar_event_statuses(id, "name", "system", "style") 
+                    values('7ceca4c0-eac8-11ef-b685-f7f3f278f676'::uuid, 'acorn.calendar::lang.models.general.soft_delete', TRUE, 'color:#fff');
+            end if;
+            if not exists(select * from acorn_calendar_event_statuses where "id" = 'f9690600-eac9-11ef-8002-5b2cbe0c12c0'::uuid) then
+                insert into acorn_calendar_event_statuses(id, "name", "system", "style") 
+                    values('f9690600-eac9-11ef-8002-5b2cbe0c12c0'::uuid, 'acorn.calendar::lang.models.general.soft_undelete', TRUE, 'color:#fff');
+            end if;
 end;
 $$;
 
@@ -358,25 +443,22 @@ $$;
 ALTER FUNCTION public.fn_acorn_calendar_seed() OWNER TO justice;
 
 --
--- Name: fn_acorn_calendar_trigger_created_at_event(); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_calendar_trigger_activity_event(); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acorn_calendar_trigger_created_at_event() RETURNS trigger
+CREATE FUNCTION public.fn_acorn_calendar_trigger_activity_event() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 declare 
 	name_optional character varying(2048);
 	soft_delete_optional boolean = false;
-
 	table_comment character varying(2048);
 	type_name character varying(1024);
 	title character varying(1024);
-	event_time timestamp = now();
 	owner_user_id uuid;
-	calendar_id uuid;
-	new_event_id uuid;
 	event_type_id uuid;
 	event_status_id uuid;
+	activity_log_calendar_id uuid = 'f3bc49bc-eac7-11ef-9e4a-1740a039dada';
 begin
 	-- See also: fn_acorn_calendar_create_activity_log_event()
 	-- Calendar (system): acorn.justice::lang.plugin.activity_log
@@ -387,6 +469,11 @@ begin
 	-- This is a generic trigger. Some fields are required, others optional
 	-- We use PG system catalogs because they are faster
 	-- TODO: Process name-object linkage
+
+	if not exists(select * from acorn_calendar_calendars where "id" = 'f3bc49bc-eac7-11ef-9e4a-1740a039dada'::uuid) then
+		-- Just in case database seeding is happening before calendar seeding, or the system types have been deleted
+		perform public.fn_acorn_calendar_seed();
+	end if;
 	
 	-- Required fields
 	-- created_at_event_id
@@ -403,17 +490,14 @@ begin
 	-- TODO: Allow control from the table comment over event creation
 	table_comment := obj_description(concat(TG_TABLE_SCHEMA, '.', TG_TABLE_NAME)::regclass, 'pg_class');
 
-	-- Calendar (system): acorn.justice::lang.plugin.activity_log
-	calendar_id   := 'f3bc49bc-eac7-11ef-9e4a-1740a039dada';
-	
 	-- Type: lang TG_TABLE_SCHEMA.TG_TABLE_NAME, acorn.justice::lang.models.related_events.label
 	select into event_type_id id from acorn_calendar_event_types 
 		where activity_log_related_oid = TG_RELID;
 	if event_type_id is null then
 		-- TODO: Colour?
 		-- TODO: acorn.?::lang.models.?.label
-		insert into public.acorn_calendar_event_types(name, activity_log_related_oid) 
-			values(type_name, TG_RELID) returning id into event_type_id;
+		insert into public.acorn_calendar_event_types(name, activity_log_related_oid, calendar_id) 
+			values(type_name, TG_RELID, activity_log_calendar_id) returning id into event_type_id;
 	end if;
 
 	-- Scenarios
@@ -422,12 +506,8 @@ begin
 			-- Just in case the framework has specified it
 			if NEW.created_at_event_id is null then
 				-- Create event
-				event_status_id := '7b432540-eac8-11ef-a9bc-434841a9f67b'; -- INSERT
-				insert into public.acorn_calendar_events(calendar_id, owner_user_id) 
-					values(calendar_id, owner_user_id) returning id into new_event_id;
-				insert into public.acorn_calendar_event_parts(event_id, type_id, status_id, name, start, "end") 
-					values(new_event_id, event_type_id, event_status_id, title, event_time, event_time);
-				NEW.created_at_event_id = new_event_id;
+				event_status_id         := '7b432540-eac8-11ef-a9bc-434841a9f67b'; -- INSERT
+				NEW.created_at_event_id := public.fn_acorn_calendar_create_activity_log_event(owner_user_id, event_type_id, event_status_id, title);
 			end if;
 		when TG_OP = 'UPDATE' then 
 			event_status_id := '7c18bb7e-eac8-11ef-b4f2-ffae3296f461'; -- UPDATE
@@ -440,20 +520,16 @@ begin
 				end if;
 			end if;
 			
+			-- Update event
 			if NEW.updated_at_event_id is null then
-				-- Update event
-				insert into public.acorn_calendar_events(calendar_id, owner_user_id) 
-					values(calendar_id, owner_user_id) returning id into new_event_id;
-				insert into public.acorn_calendar_event_parts(event_id, type_id, status_id, name, start, "end") 
-					values(new_event_id, event_type_id, event_status_id, title, event_time, event_time);
-				NEW.updated_at_event_id = new_event_id;
+				-- Create the initial Update event for this item
+				NEW.created_at_event_id := public.fn_acorn_calendar_create_activity_log_event(owner_user_id, event_type_id, event_status_id, title);
 			else
-				update public.acorn_calendar_event_parts set 
-					"start"   = event_time, 
-					"end"     = event_time,
-					status_id = event_status_id,
-					"name"    = title
-					where event_id = NEW.updated_at_event_id;
+				-- Add a new event part to the same updated event
+				insert into public.acorn_calendar_event_parts(event_id, type_id, status_id, name, start, "end")
+					select event_id, type_id, status_id, name, now(), now() 
+					from public.acorn_calendar_event_parts 
+					where event_id = NEW.updated_at_event_id limit 1;
 			end if;
 	end case;
 
@@ -462,44 +538,47 @@ end;
 $$;
 
 
-ALTER FUNCTION public.fn_acorn_calendar_trigger_created_at_event() OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_calendar_trigger_activity_event() OWNER TO justice;
 
 --
 -- Name: fn_acorn_criminal_action_legalcase_defendants_cw(uuid, uuid); Type: FUNCTION; Schema: public; Owner: justice
 --
 
-CREATE FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) RETURNS void
+CREATE FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(model_id uuid, user_id uuid) RETURNS void
     LANGUAGE plpgsql
     AS $$
 declare
 	justice_legalcase_id uuid;
 	warrant_type_id uuid;
+	owner_user_id uuid;
 begin
+	owner_user_id := user_id;
+	
 	-- Create Warrant
 	select into justice_legalcase_id cl.legalcase_id 
 		from public.acorn_criminal_legalcases cl
 		inner join public.acorn_criminal_legalcase_defendants ld on cl.id = ld.legalcase_id
-		where ld.id = p_id;
+		where ld.id = model_id;
 	select into warrant_type_id id from public.acorn_justice_warrant_types limit 1;
 	
 	insert into public.acorn_justice_warrants(user_id, created_by_user_id, warrant_type_id, legalcase_id)
-		select user_id,
-			p_user_id,
+		select ld.user_id,
+			owner_user_id,
 			warrant_type_id,
 			justice_legalcase_id
-		from public.acorn_criminal_legalcase_defendants
-		where id = p_id;
+		from public.acorn_criminal_legalcase_defendants ld
+		where id = model_id;
 end;
 $$;
 
 
-ALTER FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(model_id uuid, user_id uuid) OWNER TO justice;
 
 --
--- Name: FUNCTION fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid); Type: COMMENT; Schema: public; Owner: justice
+-- Name: FUNCTION fn_acorn_criminal_action_legalcase_defendants_cw(model_id uuid, user_id uuid); Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) IS 'labels:
+COMMENT ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(model_id uuid, user_id uuid) IS 'labels:
   en: Create Warrant
   ku: Fermanek çêbikin';
 
@@ -612,8 +691,11 @@ CREATE FUNCTION public.fn_acorn_justice_action_legalcases_close_case(model_id uu
     LANGUAGE plpgsql
     AS $$
 begin
+	-- An Activity log UPDATE event will also be created
+	-- automatically by fn_acorn_calendar_trigger_activity_event()
+	-- Here, we update the Legal calendar
 	update public.acorn_justice_legalcases 
-		set closed_at_event_id = public.fn_acorn_calendar_create_activity_log_event('close_case', user_id)
+		set closed_at_event_id = public.fn_acorn_calendar_lazy_create_event('Legal', user_id, 'LegalCase', 'Close', name)
 		where id = model_id;
 end;
 $$;
@@ -657,6 +739,34 @@ COMMENT ON FUNCTION public.fn_acorn_justice_action_legalcases_reopen_case(model_
   en: Re-open Case
   ku: Doza ji nû ve veke
 condition: not closed_at_event_id is null';
+
+
+--
+-- Name: fn_acorn_justice_action_warrants_request_notary(uuid, uuid); Type: FUNCTION; Schema: public; Owner: justice
+--
+
+CREATE FUNCTION public.fn_acorn_justice_action_warrants_request_notary(model_id uuid, user_id uuid) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+declare
+	new_notary_request_id uuid;
+begin
+	insert into acorn_notary_requests(created_by_user_id) values(user_id) returning id into new_notary_request_id;
+	update acorn_justice_warrants set notary_request_id = new_notary_request_id where id = model_id;
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_justice_action_warrants_request_notary(model_id uuid, user_id uuid) OWNER TO justice;
+
+--
+-- Name: FUNCTION fn_acorn_justice_action_warrants_request_notary(model_id uuid, user_id uuid); Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON FUNCTION public.fn_acorn_justice_action_warrants_request_notary(model_id uuid, user_id uuid) IS 'labels:
+  en: Request Notary
+  ku: Diwan bipirsin
+condition: notary_request_id is null';
 
 
 --
@@ -912,6 +1022,31 @@ $$;
 ALTER FUNCTION public.fn_acorn_justice_seed_groups() OWNER TO justice;
 
 --
+-- Name: fn_acorn_justice_warrants_state_indicator(record); Type: FUNCTION; Schema: public; Owner: justice
+--
+
+CREATE FUNCTION public.fn_acorn_justice_warrants_state_indicator(warrant record) RETURNS character varying[]
+    LANGUAGE plpgsql
+    AS $$
+declare
+	state_indicator character varying[];
+begin
+	-- BEFORE update or insert
+	-- Set the state_indicator for the row
+	case
+		when warrant.notary_request_id is null then state_indicator = '{notary_required, invalid}'; 
+		when (select validated_by_notary_user_id from acorn_notary_requests where id = warrant.notary_request_id) is null then state_indicator = '{notary_awaiting, waiting}'; 
+		else state_indicator = '{notary_validated, valid}';
+	end case;
+	
+	return state_indicator;
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_justice_warrants_state_indicator(warrant record) OWNER TO justice;
+
+--
 -- Name: fn_acorn_last(anyelement, anyelement); Type: FUNCTION; Schema: public; Owner: justice
 --
 
@@ -1010,6 +1145,35 @@ $$;
 
 
 ALTER FUNCTION public.fn_acorn_new_replicated_row() OWNER TO justice;
+
+--
+-- Name: fn_acorn_notary_trigger_validate(); Type: FUNCTION; Schema: public; Owner: justice
+--
+
+CREATE FUNCTION public.fn_acorn_notary_trigger_validate() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+declare
+	new_event_id uuid;
+begin
+	-- If the request is being validated
+	-- Auto-fill out the validation datetime
+	if OLD.validated_by_notary_user_id is null and not NEW.validated_by_notary_user_id is NULL then
+		if not OLD.validated_at_event_id is null then
+			-- What to do in this case? Update or delete or error?
+		end if;
+
+		NEW.validated_at_event_id = public.fn_acorn_calendar_lazy_create_event(
+			'Legal', NEW.validated_by_notary_user_id, 'NotaryRequest', 'Validate', coalesce(NEW.name, '')
+		);
+	end if;
+	
+	return NEW;
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_notary_trigger_validate() OWNER TO justice;
 
 --
 -- Name: fn_acorn_reset_sequences(character varying, character varying); Type: FUNCTION; Schema: public; Owner: justice
@@ -1328,7 +1492,8 @@ CREATE TABLE public.acorn_calendar_event_statuses (
     style character varying(255),
     created_at timestamp(0) without time zone,
     updated_at timestamp(0) without time zone,
-    system boolean DEFAULT false NOT NULL
+    system boolean DEFAULT false NOT NULL,
+    calendar_id uuid
 );
 
 
@@ -1350,12 +1515,13 @@ CREATE TABLE public.acorn_calendar_event_types (
     name character varying(2048) NOT NULL,
     description text,
     whole_day boolean DEFAULT false NOT NULL,
-    colour character varying(16),
+    colour character varying(16) DEFAULT '#333'::character varying,
     style character varying(2048),
     created_at timestamp(0) without time zone DEFAULT '2024-10-19 13:37:23.11728'::timestamp without time zone NOT NULL,
     updated_at timestamp(0) without time zone,
     system boolean DEFAULT false NOT NULL,
-    activity_log_related_oid integer
+    activity_log_related_oid integer,
+    calendar_id uuid
 );
 
 
@@ -1439,11 +1605,11 @@ COMMENT ON TABLE public.acorn_criminal_appeals IS 'icon: hand-paper
 labels: 
   en: Appeal
   ar: الاستئناف الجنائي
-  ku: Îtirazek
+  ku: Temîz
 labels-plural:
   en: Appeals
   ar: الاستئنافات الجنائية
-  ku: Îtirazen
+  ku: Temîzan
 methods:
   name: $this->load(''event''); return $this->event->start?->diffForHumans();
 permission-settings:
@@ -1981,7 +2147,9 @@ CREATE TABLE public.acorn_criminal_legalcase_defendants (
     description text,
     updated_at_event_id uuid,
     updated_by_user_id uuid,
-    server_id uuid NOT NULL
+    server_id uuid NOT NULL,
+    lawyer_user_id uuid,
+    verdict character(1)
 );
 
 
@@ -1996,11 +2164,11 @@ order: 6
 menu: false
 labels:
   en: Defendant
-  ku: Gilîdar
+  ku: LeDozdar
   ar: المتهم في قضية جنائية
 labels-plural:
   en: Defendants
-  ku: Gilîdarên
+  ku: LeDozdaran
   ar: المتهمين في قضية جنائية
 ';
 
@@ -2021,6 +2189,32 @@ no-label: true
 bootstraps:
   xs: 12
 tab: acorn::lang.models.general.notes';
+
+
+--
+-- Name: COLUMN acorn_criminal_legalcase_defendants.lawyer_user_id; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_legalcase_defendants.lawyer_user_id IS 'labels:
+  en: Lawyer
+  ku: Parezir
+labels-plural:
+  en: Lawyers
+  ku: Pareziran';
+
+
+--
+-- Name: COLUMN acorn_criminal_legalcase_defendants.verdict; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_legalcase_defendants.verdict IS 'field-type: radio
+field-options:
+  G: 
+    en: guilty
+    ku: sucdar
+  I: 
+    en: innocent
+    ku: bêsuc';
 
 
 --
@@ -2105,7 +2299,8 @@ CREATE TABLE public.acorn_criminal_legalcase_plaintiffs (
     description text,
     updated_at_event_id uuid,
     updated_by_user_id uuid,
-    server_id uuid NOT NULL
+    server_id uuid NOT NULL,
+    lawyer_user_id uuid
 );
 
 
@@ -2120,11 +2315,11 @@ order: 2
 menu: false
 labels:
   en: Plaintiff
-  ku: Dozker
+  ku: Dozdar
   ar: ضحية القضية الجنائية
 labels-plural:
   en: Plaintiffs
-  ku: Dozkerên
+  ku: Dozdaran
   ar: ضحايا القضية الجنائية
 ';
 
@@ -2145,6 +2340,18 @@ no-label: true
 bootstraps:
   xs: 12
 tab: acorn::lang.models.general.notes';
+
+
+--
+-- Name: COLUMN acorn_criminal_legalcase_plaintiffs.lawyer_user_id; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_legalcase_plaintiffs.lawyer_user_id IS 'labels:
+  en: Lawyer
+  ku: Parezir
+labels-plural:
+  en: Lawyers
+  ku: Pareziran';
 
 
 --
@@ -2174,11 +2381,11 @@ order: 4
 menu: false
 labels:
   en: Prosecutor
-  ku: Nûnerê gilîyê
+  ku: Dozger
   ar: المدعي العام للقضية الجنائية
 labels-plural:
   en: Prosecutors
-  ku: Nûnerê gilîyên
+  ku: Dozgerên
   ar: المدعون العامون للقضايا الجنائية
 ';
 
@@ -2382,7 +2589,7 @@ labels-plural:
   ku: Dozên
   ar: القضايا الجنائية
 plugin-names:
-  en: LegalCases
+  en: Legal Cases
   ku: Dozên
   ar: القضية الجنائية
 filters:
@@ -2406,10 +2613,10 @@ COMMENT ON COLUMN public.acorn_criminal_legalcases.judge_committee_user_group_id
 order: 11
 labels:
   en: Judge Committee
-  ku: Komîteya Dadwer
+  ku: Komîteya Dadweran
 labels-plural:
   en: Judge Committies
-  ku: Komîteyan Dadwer
+  ku: Komîteyan Dadweran
   ';
 
 
@@ -2737,11 +2944,11 @@ order: 20
 menuSplitter: yes
 labels:
   en: Trial
-  ku: Bazarî
+  ku: Dadgehkirin
   ar: المحكمة الجنائية
 labels-plural:
   en: Trials
-  ku: Bazarên
+  ku: Dadgehkirinên
   ar: المحاكم الجنائية
 methods:
   name: $this->load(''event''); return $this->event->start?->diffForHumans();
@@ -3140,15 +3347,15 @@ table-type: central
 icon: angry
 labels:
   en: Case
-  ku: Doza
+  ku: Doz
   ar: قضية عدالة
 labels-plural:
   en: Cases
-  ku: Dozên
+  ku: Dozan
   ar: قضاية عدالة
 plugin-names:
-  en: Cases
-  ku: Dozên
+  en: Justice System
+  ku: Dadmendî
   ar: قضية عدالة
 order: 1
 plugin-icon: adjust
@@ -3201,6 +3408,8 @@ labels-plural:
   ku: Rêxistinan Xwedî
 bootstraps:
   xs: 4
+column-type: partial
+partial: owner
 permission-settings:
   NOT=legalcases__owner_user_group_id__update@update:
     field:
@@ -3382,7 +3591,9 @@ CREATE TABLE public.acorn_justice_warrants (
     description text,
     updated_at_event_id uuid,
     updated_by_user_id uuid,
-    server_id uuid NOT NULL
+    server_id uuid NOT NULL,
+    state_indicator character varying(2048)[],
+    notary_request_id uuid
 );
 
 
@@ -3392,9 +3603,8 @@ ALTER TABLE public.acorn_justice_warrants OWNER TO justice;
 -- Name: TABLE acorn_justice_warrants; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acorn_justice_warrants IS 'printable: true
-methods:
-  name: return $this->warrant_type->name;
+COMMENT ON TABLE public.acorn_justice_warrants IS 'methods:
+  name: return $this->warrant_type?->name;
 labels:
   en: Warrant
   ku: Fermana girtinê
@@ -3428,6 +3638,20 @@ no-label: true
 bootstraps:
   xs: 12
 tab: acorn::lang.models.general.notes';
+
+
+--
+-- Name: COLUMN acorn_justice_warrants.state_indicator; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_warrants.state_indicator IS 'sqlSelect: (select fn_acorn_justice_warrants_state_indicator(acorn_justice_warrants))
+extra-translations:
+  notary_required:
+    en: Notary required
+    ku: Diwan lazimî
+  notary_awaiting:
+    en: Awaiting Notary
+    ku: Diwan bisekane';
 
 
 --
@@ -4307,6 +4531,57 @@ ALTER TABLE public.acorn_messaging_user_message_status OWNER TO justice;
 --
 
 COMMENT ON TABLE public.acorn_messaging_user_message_status IS 'table-type: content';
+
+
+--
+-- Name: acorn_notary_requests; Type: TABLE; Schema: public; Owner: justice
+--
+
+CREATE TABLE public.acorn_notary_requests (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    description text,
+    validated_by_notary_user_id uuid,
+    validated_at_event_id uuid,
+    name character varying(1024) GENERATED ALWAYS AS ((id)::text) STORED,
+    created_at_event_id uuid NOT NULL,
+    updated_at_event_id uuid,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.acorn_notary_requests OWNER TO justice;
+
+--
+-- Name: TABLE acorn_notary_requests; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON TABLE public.acorn_notary_requests IS 'printable: true
+plugin-names:
+  en: Notary
+  ku: Dîwan
+labels:
+  en: Request
+  ku: Pirs
+labels-plural:
+  en: Requests
+  ku: Pirsên
+  ';
+
+
+--
+-- Name: COLUMN acorn_notary_requests.validated_at_event_id; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_notary_requests.validated_at_event_id IS 'hidden: true';
+
+
+--
+-- Name: COLUMN acorn_notary_requests.name; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_notary_requests.name IS 'hidden: true';
 
 
 --
@@ -6020,159 +6295,9 @@ COPY product.acorn_lojistiks_electronic_products (id, product_id, server_id, cre
 --
 
 COPY public.acorn_calendar_calendars (id, name, description, sync_file, sync_format, created_at, updated_at, owner_user_id, owner_user_group_id, permissions, system) FROM stdin;
-436bb16e-3be1-4fe2-8786-ba018219d266	Default	\N	\N	0	2024-10-19 13:37:23	\N	\N	\N	1	f
-9a0600eb-0033-4ef9-9b32-8d91903ac9ae	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-a92cf50f-7e6e-4a00-b1bd-1848a58a0251	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-6faa432c-e3b5-11ef-ac7d-af7a8110175c	Entity create and update events	\N	\N	0	2024-10-19 13:37:23	\N	\N	\N	1	f
-9e23cac5-64df-4857-ab56-f1f47aff47a0	Legalcase	\N	\N	0	2025-02-05 14:27:09	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6	\N	1	f
-9e23caeb-3503-4fad-b2dd-560534ca0564	LegalcaseEvidence	\N	\N	0	2025-02-05 14:27:34	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6	\N	1	f
-0db9a50e-d24f-49bb-93a5-1740c6ab4b4a	Legalcase Category	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-9e2418f9-6d31-4d54-bdb8-a11b1a26b278	ScannedDocument	\N	\N	0	2025-02-05 18:05:50	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6	\N	1	f
-9e242335-4cbf-4f35-b878-54140557b031	Crime	\N	\N	0	2025-02-05 18:34:27	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6	\N	1	f
-9e242396-0152-42df-bf65-958c72afdf1d	LegalcaseDefendant	\N	\N	0	2025-02-05 18:35:30	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6	\N	1	f
-9e2423a2-1473-4892-8cfa-d8df52ebb7c7	DefendantCrime	\N	\N	0	2025-02-05 18:35:38	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6	\N	1	f
-869b83cd-178e-409a-a9c6-328e4481dae7	Create Warrant	\N	\N	0	2024-10-19 13:37:23	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6	\N	1	f
-32075cfa-40d1-4bc6-b8f2-14d3f9177b1e	Legalcase Prosecutor	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-10afa2b1-0e4d-48d5-815f-3c374dbbccb6	Legalcase Prosecutor	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-6bbb67c6-76f1-44ea-9160-cb05f9e1cdab	Legalcase Prosecutor	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
 ceea8856-e4c8-11ef-8719-5f58c97885a2	Default	\N	\N	0	2024-10-19 13:37:23	\N	\N	\N	1	t
-9e279359-2186-4e64-b81f-14cf227b6834	CrimeType	\N	\N	0	2025-02-07 11:35:30	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6	\N	1	f
-798eaf60-f210-4847-adbb-11090b57c20c	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-77f31f32-c218-40a5-aa0a-db198fffa151	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-9e338220-afa3-4a32-9064-7891597314cc	Trial	\N	\N	0	2025-02-13 09:57:17	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6	\N	1	f
-9e33822d-ec49-4011-ad70-80d005634516	LegalcasePlaintiff	\N	\N	0	2025-02-13 09:57:25	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6	\N	1	f
-3cedce66-d0ce-4aa1-a5f8-cb144ac32614	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-c7348d4f-731f-4aaa-8b4e-a3fa3ea1bb8e	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-1090c88a-d7b0-4103-a0f7-67e9e9466659	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-6890e33a-a35d-43d4-8a0b-25108aba2125	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-f360a98f-377d-40d4-8151-75637625c262	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-674db9d8-6edf-43d5-8623-3f2f0281b458	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-56151d2f-87ff-49c7-a098-18745def5863	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-e195d923-2434-476c-a7e0-3a8519c8fbec	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-3931f04a-5f9c-4136-86dc-fac6d43a701e	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-9ee71f4d-a490-45ae-a938-0bd49b90f8d6	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-629f6d76-0f86-415a-a5a4-48a138e4ddc8	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-cd83b4a4-901c-44bb-87f0-e00d49966dc1	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-2d80f4f0-7834-4213-8a5b-9849bf3ae9ac	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-fe78bd00-ead8-4f3d-8e99-5d452454494e	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-96f55ea7-8c04-4a28-bbc7-207f544003c7	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-61c25cfb-ae3a-4890-b9de-e2c42de5a4a7	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-040f8e66-5e47-418f-b271-368541787639	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-5d3196cf-0fb3-4909-8bea-4f4c4a976c6c	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-366bf8c2-f009-44a1-882d-bfcff37de693	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-a534e082-1a68-472b-bb7f-2c76e072d22e	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-f791ed09-5ef5-4582-ac75-f9e08cba2e6a	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-40761699-1806-4234-89bd-cdf14717aff9	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-f9ecb922-cf88-413a-84fe-f0bd217bbf72	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-43d27df0-6bb9-43ce-8947-43870dea4550	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-9a2f7361-0a71-4808-bde7-f35eb170b68b	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-b6a9872e-5396-4da5-8d12-63961a3d3147	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-15010a55-d9a7-4bc3-8202-4236f9b067fd	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-59849f1f-374d-449c-8ccb-87808d724437	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-2c00048b-9571-4392-b08e-84269fe59be0	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-3673a4ca-19e9-47e1-b8e3-1208abc37b84	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-e5fda23f-ee50-49c6-9927-a7fdd9bd7d62	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-42a376e2-019a-413f-908d-94d9525a0394	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-90604c74-0dc6-4b9e-867b-61c98ad7b36f	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-6b567914-e3cb-4ef1-957a-d2df8e398122	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-3b351c5f-712a-4d2f-9e3f-beea3009222b	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-e890d26a-a477-4409-bd24-00e5b132b43e	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-b888e8ee-c6a5-4e0d-bf38-a04eb8f5e2c4	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-bb10b29b-9910-409e-a92f-69b8e544c006	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-a0f5dbaa-4f85-458a-87f6-8b6a2369e7e5	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-f9b95be0-5328-4008-88cd-ea8bb3a9db4e	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-fe730b86-0cc7-42e6-98b1-5321163f001a	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-9bdacead-5d04-4bce-9395-7fe532a25b26	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-d494c51e-a71c-416b-baa0-e8b9eff3f9b8	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-7cfb1d9c-66e3-44f5-9dd7-8067cfbb16a0	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-cff486f2-1774-4067-b7c0-824aad711d8b	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-4f07e583-bb25-419b-b19f-e9684d01246f	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-0262df51-b8d6-49c5-84e9-0b312da4e6a4	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-901d79ee-d53d-489d-b2d7-d6257c161c03	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-7852ed38-f072-4ade-919c-e9176c6d61ce	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-ed10155e-aba0-4967-a803-f4e58c7ccd37	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-f3bc49bc-eac7-11ef-9e4a-1740a039dada	Activity log	\N	\N	0	2024-10-19 13:37:23	\N	\N	\N	1	f
-00227f53-5c07-4f1c-a2cd-34a1be42e6d4	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-320ddf9c-e6d8-493d-852b-006815e10590	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-23e2fb27-3a34-41b9-96e9-40e4cb757879	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-fa782d57-0e76-4da1-9591-7b7297f67702	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-daa92132-2f3f-46e3-a8b1-4580b08630f6	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-15f1df74-aed5-4bfc-acfa-b093b2581bfe	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-90455d8a-7dfc-477d-a3cb-8598a64915b0	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-9892e6d2-24bf-457e-98dc-42c07a87ef36	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-626e0104-f86c-4af7-bff6-7f1b5d18d757	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-8ad77957-40c3-45fa-8c16-e10a5921349e	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-73967297-5f5a-4a93-8cc0-7ad1084caf04	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-24c6a921-641c-4951-898e-a0aa0d0993b0	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-8674a41b-d8cd-43c2-a79d-e1040e93d111	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-5b6be8a5-17a6-4874-8079-2076068eb9c0	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-bfc8d177-8e6e-46d6-8e95-5446ef400b42	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-200cf327-0071-4c6e-9bb1-7067201715ef	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-9ab13570-a3d1-4ad4-9812-a0de9fe7342e	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-32ce47ec-2057-4d94-bc81-42e07476be3f	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-bf462bc2-e8d0-4dbc-8073-b96aa601bee1	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-65fd1885-5d8b-4a2a-845e-40807bd3d174	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-7db17a65-1e97-4cff-bf99-e6675b07b5f5	Legalcase Category	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-3ecb7cd1-6872-4e3b-9d0f-7c045bb68e18	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-c7aa60b3-56e7-4934-804e-d9d5db8b3ecd	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-05267fc4-d8dc-4aca-aa4e-fcc8479cafb8	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-6ac30d28-7467-40c4-bd38-21baceb0745e	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-7c4c335b-c4d7-407f-9acc-f1bbcec44d54	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-091154a6-7a3d-43c0-935f-7b8519a32f23	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-ee49be31-d948-453d-b1cd-8b662646b2e2	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-3f21d539-fb06-473c-b7cd-4ba711368844	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-fea70966-3c9e-4340-8f33-ddc6fcdab1d4	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-faef8dc1-aefd-418d-808c-eb00697c0586	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-4656684f-2e4b-4545-8974-6b92e71fbb91	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-cff10a2d-397f-4a65-ba0f-b77ca71f9a91	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-d1b3401a-5bb9-4e5a-b67f-0b030e773131	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-15e2438b-b1ad-473a-bad7-83c98e1bc0b0	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-faec14dd-5c35-4455-b035-287e1395a1eb	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-7fbc3b73-0918-4d58-b8bf-4f6245019560	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-53642915-4a7e-48b1-9a33-af28ac073565	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-ec4bb70e-bf22-40a1-9f21-b1b15f650e58	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-5261a4fc-38a0-4351-93bf-20d342c3449d	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-7b999975-83e8-4441-b130-5f81e69d3cd0	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-a1070399-b0fb-4049-8426-4a5c8a00fe53	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-35c6be74-1424-480f-a8f5-40df9b95bbc9	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-56486fcd-601a-41eb-91c8-ccbca739f55f	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-ff16acb8-2bdf-426e-a63e-a03dcb481c29	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-ae567e9f-3507-4386-94c7-8527893753d0	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-4392069f-7798-4cf2-abdc-91795268723a	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-8f38c45f-66d1-489f-a2eb-c4b9261a9cdc	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-7341e65d-7633-474e-ae90-aa4ddff78014	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-d6295bcf-2444-4bb7-9037-eb65f34aa4c5	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-6fdf4bc3-8f4d-4878-8284-99d7e6472b57	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-e7aa5fe1-1960-48cc-84c0-1b2e0319a9d8	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-1aa7cc6a-5105-4995-ba16-069d6af7b3cb	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-6cd0e316-ef23-40b9-8c5d-681c94c102b4	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-2a46659a-7380-40c9-a595-2b476f3de942	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-ec35c32e-d1e9-4203-b1e0-04622283b62a	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-b97a225d-e409-41fd-8fe9-3cab9f9800de	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-367aea46-8ffd-49d2-b670-d857bb633ee2	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-3a89567a-5d20-47ba-9093-a1e8d07fa71e	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-d8eff82e-761c-41ab-aeb6-bd19213e71a7	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-d4b713ac-713b-48fd-8df8-b3516c9e525d	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-573541b3-91ff-4b4d-a847-6129dd79de2a	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-6909da16-e70c-43e7-89a6-a9fee22cd178	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-6822526c-889b-4104-aa33-dfe65745bb0c	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-22c50aa2-2e72-4793-804e-ed60e59aaa1d	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-36cd0e95-8c0e-4886-ba15-72edba5af3af	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-7213b9c8-2464-40f1-af8d-fe61013b68f1	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-7826ef11-4c7b-478e-b6f0-b020d8b34483	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-290bdb8e-71d7-447d-9519-c8d510acf93c	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-8a831eb3-4aa2-4307-a774-1deeb149c4c1	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-b1e59e05-0ff7-4826-9f08-7fd6f24907f3	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-021e2c36-a1ce-4020-aa4a-5408f53ecdaa	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-a24662fa-7f6c-4e7a-89aa-13c5e8a16542	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-ceca2c4a-6ca9-4f7a-bab3-2c23c0947503	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-757a7b9d-d952-4569-b433-be1169034b8f	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-164231d1-9cd4-4daf-b267-87c1082075f3	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-8d98b4e4-ee3d-4cb8-8b46-33db893d2575	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-0b997364-4781-4ed6-b4bd-80b95b95ae31	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-c19cb39e-1ab1-4b7f-b88e-b3166d4b563f	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-ce5f810c-a7e3-4c93-acc7-6765af58c9fc	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
-d9d30d37-a52b-4828-8909-e5785194cbcb	Crime Type	\N	\N	0	2024-10-19 13:37:23	\N	9d4aa2bc-d139-4fb7-8764-c847acf8a62f	\N	1	f
+f3bc49bc-eac7-11ef-9e4a-1740a039dada	Activity Log	\N	\N	0	2024-10-19 13:37:23	\N	\N	\N	1	t
+ec4360f9-11cc-4cb8-b1fc-f274f220da5f	Legal	\N	\N	0	2024-10-19 13:37:23	\N	\N	\N	1	f
 \.
 
 
@@ -6204,19 +6329,16 @@ COPY public.acorn_calendar_event_parts (id, event_id, name, description, start, 
 -- Data for Name: acorn_calendar_event_statuses; Type: TABLE DATA; Schema: public; Owner: justice
 --
 
-COPY public.acorn_calendar_event_statuses (id, name, description, style, created_at, updated_at, system) FROM stdin;
-3b6dfc60-d05a-4800-81b5-5ffd8ff4ba0c	Normal	\N	\N	\N	\N	t
-4607a77c-3525-486a-bb25-2c2a8521b7e3	Tentative	\N	opacity:0.7;	\N	\N	t
-14833f77-5802-429b-bbb7-4567df6e79d4	Conflict	\N	border:1px solid red;background-color:#fff;color:#000;font-weight:bold;	\N	\N	t
-c4c3a3d0-e3b5-11ef-98b6-83c560e3d98a	created	\N	color:#050	\N	\N	f
-cb75aa34-e3b5-11ef-abf2-a7e3fb05f16a	updated	\N	color:#005	\N	\N	f
-9e255bf7-063b-42e4-a4c3-40c7d15051af	Test	\N		2025-02-06 09:08:58	\N	f
-27446472-e4c9-11ef-bde0-9b663c96a619	Normal	\N	\N	\N	\N	t
-fb2392de-e62e-11ef-b202-5fe79ff1071f	Cancelled	\N	text-decoration:line-through;border:1px dotted #fff;	\N	\N	t
-7b432540-eac8-11ef-a9bc-434841a9f67b	acorn.calendar::lang.models.general.insert	\N	color:#fff	\N	\N	t
-7c18bb7e-eac8-11ef-b4f2-ffae3296f461	acorn.calendar::lang.models.general.update	\N	color:#fff	\N	\N	t
-7ceca4c0-eac8-11ef-b685-f7f3f278f676	acorn.calendar::lang.models.general.soft_delete	\N	color:#fff	\N	\N	t
-f9690600-eac9-11ef-8002-5b2cbe0c12c0	acorn.calendar::lang.models.general.soft_undelete	\N	color:#fff	\N	\N	t
+COPY public.acorn_calendar_event_statuses (id, name, description, style, created_at, updated_at, system, calendar_id) FROM stdin;
+27446472-e4c9-11ef-bde0-9b663c96a619	Normal	\N	\N	\N	\N	t	\N
+fb2392de-e62e-11ef-b202-5fe79ff1071f	Cancelled	\N	text-decoration:line-through;border:1px dotted #fff;	\N	\N	t	\N
+00fa4a3c-4403-4347-b885-e0d61e6ea8aa	Tentative	\N	opacity:0.7;	\N	\N	t	\N
+57211fdb-dc93-4cff-a205-695e4e9ddbc7	Conflict	\N	border:1px solid red;background-color:#fff;color:#000;font-weight:bold;	\N	\N	t	\N
+7b432540-eac8-11ef-a9bc-434841a9f67b	acorn.calendar::lang.models.general.insert	\N	color:#fff	\N	\N	t	\N
+7c18bb7e-eac8-11ef-b4f2-ffae3296f461	acorn.calendar::lang.models.general.update	\N	color:#fff	\N	\N	t	\N
+7ceca4c0-eac8-11ef-b685-f7f3f278f676	acorn.calendar::lang.models.general.soft_delete	\N	color:#fff	\N	\N	t	\N
+f9690600-eac9-11ef-8002-5b2cbe0c12c0	acorn.calendar::lang.models.general.soft_undelete	\N	color:#fff	\N	\N	t	\N
+5134c9db-a5b0-40ee-95f0-1e9b39331548	Validate	\N	\N	\N	\N	f	ec4360f9-11cc-4cb8-b1fc-f274f220da5f
 \.
 
 
@@ -6224,190 +6346,21 @@ f9690600-eac9-11ef-8002-5b2cbe0c12c0	acorn.calendar::lang.models.general.soft_un
 -- Data for Name: acorn_calendar_event_types; Type: TABLE DATA; Schema: public; Owner: justice
 --
 
-COPY public.acorn_calendar_event_types (id, name, description, whole_day, colour, style, created_at, updated_at, system, activity_log_related_oid) FROM stdin;
-739c0ad9-d281-4d26-bdf6-7422f8683e5d	Normal	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	t	\N
-97483930-3ad6-4207-af3f-c115976478d3	Meeting	\N	f	#C0392B	color:#fff	2024-10-19 13:37:23	\N	t	\N
-3df0aed7-8d9e-43dd-9e92-f6ee3c7377ee	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-bb4fe086-5813-48f9-a391-68053ed465f3	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-7754c714-e3b5-11ef-84f2-2bd5b1a61b38	acorn_criminal_legalcase_related_events	\N	f	#dfdfdf		2024-10-19 13:37:23	\N	f	\N
-bf1129a0-900f-4788-a6ac-d9bd8df84f7e	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-d2d3a194-6957-4d05-9a25-7af0a7444ad7	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-3fa3a751-f8d9-4b0b-80db-aa72d0366560	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-08da122f-3be7-4d3f-bda8-b4dede2316fd	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-436c0ca6-6a51-4812-83ad-d26e12a80218	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-9e255e16-9917-4e1e-9735-9bc828b1a255	rrr	\N	f	\N		2025-02-06 09:14:55	\N	f	\N
-2f766546-e4c9-11ef-be8c-1f2daa98a10f	Normal	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	t	\N
-0904667f-e5f1-4f25-a074-78123db3d23d	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-e19a4e05-1496-440b-8e94-69a235a67165	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-0772fca5-fd99-44b5-9d59-85a823556a3c	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-8630d12f-52ee-42be-aeeb-d7eace4220e9	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-0675808f-ef44-4673-b903-a9571df7013f	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-b5e24df5-c678-42c7-9862-8c3d57fc94fe	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-e32e5b2f-fa92-4647-8f0a-85ec25e4bbb2	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-fba8b093-acc5-4724-830c-f1776cb4c544	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-f37c318b-3dc2-4baf-8f01-5f987b06dfce	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-15eb2c08-3f1d-49ff-8e39-dedb5b37ce1c	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-f85a92be-bd69-4433-b0de-e3833519bd01	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-c567b4bd-2c05-46dd-816f-0db709494150	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-1de768af-50d2-4545-8e45-e64359d30c41	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-b907a161-395a-4c50-a317-3ba2b0c08316	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-63c2d928-7425-4900-acda-cd3483a5f0e2	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-3c941544-95a6-47f2-930d-3416f6bc0713	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-03feaeda-a352-45f7-9579-112bf730f1ce	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-b6ac94c3-16e4-4b26-9b5e-e9083f80efd0	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-28f09005-0527-4e95-bb52-6493d4e4128b	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-586e4b3f-46e2-4f0f-84bc-222adb759fca	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-482610e2-24ad-4584-8f81-4557964d1946	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-e75753ae-b0bd-4d55-859a-71b775e2b4d0	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-68b46732-6d47-4ad9-aaca-ee800cc43273	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-6918e14b-1d36-4049-9870-f09ab4a79412	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-0f79cd88-151d-46dd-9772-4f0c207c54be	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-f014cdf8-2503-4f97-893d-fcac3ba6ef64	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-289df4a9-4fca-41d6-83b3-7f817c7310d2	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-c10a85b7-f01c-4c2b-860b-004af7e66cc9	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-07c5fa09-db4f-46c1-8eaf-84cf00a65a96	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-b41175b4-596b-4d5c-8221-f0e10c183778	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-6babc5f0-9eed-4022-8d68-f0e4c27b7531	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-d6af2fd7-e31c-43f3-9ee6-7395530cf41d	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-018989f5-bfb0-47b9-ab1a-7c4c83372a28	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-0955cf9a-45ee-443b-8b0f-e834fa17b841	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-a5b5a468-c02d-4170-bf2c-bdaea308b8f4	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-34476e6e-a8b3-4712-b13e-f6ea3c1ee5ab	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-d81ac8a4-dd91-4699-bbde-0f7a9a2b5fa6	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-39de5954-e1e3-43d8-898c-f3fd6e59ec51	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-5d2ba9f3-1da5-4fd8-bd59-8ac43ef6f556	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-3cae4039-ae7a-41c0-81fe-d6b91a906603	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-5fab2be9-35e9-4d11-bd51-bbf5ba815e68	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-abd65b6e-fb0d-4833-9748-7da9a3224f1e	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-b98ee7d5-48dc-4a69-9137-47febea2c714	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-6870c255-94cf-42a1-9442-49f4c31cc6de	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-3a0d1f8e-e02f-4e59-932a-643b53a90bf6	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-43946f2a-6a41-4706-a4b1-b1e084be0dac	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-df4bb316-b3aa-44cd-8ec3-265fc8c48f6d	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-8506d1aa-bec2-4389-b064-758ac001a629	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-fc9f7702-eedb-4b83-aad1-eb5b5caeedc3	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-9f4c7f4c-db8e-415a-b4ad-7b549386b2e5	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-0aaa768c-ce2f-4078-88da-48dfbb9405d3	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-45ce2031-f53b-4b2c-942b-ab68f5810c09	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-7b432540-eac8-11ef-a9bc-434841a9f67b	INSERT	\N	f	#00390B	color:#fff	2024-10-19 13:37:23	\N	t	\N
-7c18bb7e-eac8-11ef-b4f2-ffae3296f461	UPDATE	\N	f	#C0392B	color:#fff	2024-10-19 13:37:23	\N	t	\N
-7ceca4c0-eac8-11ef-b685-f7f3f278f676	DELETE	\N	f	#Ca0020	color:#fff	2024-10-19 13:37:23	\N	t	\N
-f9690600-eac9-11ef-8002-5b2cbe0c12c0	Soft un-DELETE	\N	f	#Ca0020	color:#fff	2024-10-19 13:37:23	\N	t	\N
-09d3bd7e-20c1-4a38-a855-9d1965699b7c	justice legalcases	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22794
-af48f08a-80f5-4616-ade3-cfe0ff960295	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-ae61d7f4-217a-4465-bd49-787538595a69	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-86f5ffa1-1155-4274-a05b-ceaf753f960c	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-b91f80a4-7155-41c3-8535-5f50c8a6b5d6	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-da922ec9-a7b4-4d8c-8eaf-1ccb15b7e871	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-1a040915-a2d1-4395-9dff-d62321f3c41a	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-5f6a6285-efd0-4b50-ad3b-ed1e421b02f7	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-77dd2b12-25b4-414d-a9dc-d572143991db	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-c757854a-d05f-4192-a3ae-72ba43a88629	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-059f6d1f-7dcc-45f3-992b-e145e6ad78d5	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-a3d6e0fd-5fab-4996-99b8-2e064afc460c	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-dbdcfb20-e6d7-4ff8-8fc5-4af718a32ed8	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-188ed96e-4908-4915-b021-19bc887fe767	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-789c1b42-5de1-401a-9cc0-944668e9d517	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-8480e5e5-7014-4a55-9cbc-11b0915ea485	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-42c47fd8-9d62-421e-aefb-3e9462f58658	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-0ca08299-c29e-4715-b0c9-d57d40cd4a55	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-98676434-0fe4-435a-b9e4-b272778776e8	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-a8d909b4-97c3-4f8e-813a-c93de61b6594	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-762c3796-bb20-43bc-a6b4-ebd6370d1364	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-2e83e431-c593-48d7-9efd-d71c09824192	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-263528da-86f0-40df-a98d-5bf68464b7b4	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-e1e76439-1f85-48c1-87a6-a3e0b7ac643f	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-66aec278-8509-4632-a1ec-4663360fca54	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-6612df84-f627-4beb-ae45-ae5e44fe1256	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-d3116d84-4df2-4600-a3a2-a35182365413	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-cb71d50c-41ea-4e69-8e37-cffb90eddd55	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-8aa720d5-0d58-4e70-bf6d-e22cfb9ccdf1	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-5fa3aa02-662c-4add-aa56-f2c169981e4c	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-03584176-f3d1-438d-8e16-eed854dbaaf9	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-7311f4da-32cc-46df-849e-e427a06673e9	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-6b82a12c-f163-4388-970b-e956518c6baa	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-d98e2dea-893e-42ac-b150-080663e14f75	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-55924d22-8d1c-4d90-8bac-c89c5ac69030	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-bb9c19bd-fb19-47e6-ae1b-36494fd97c27	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-b7931716-405d-4d91-a0f2-25526e36b8df	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-2e0d10f1-9fa1-48b4-9c51-33b1716a0ec7	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-43b700fc-e292-4f7f-9cea-e98adb16ecb4	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-c7fc2a3c-0bf5-4ec6-b8fc-3bd3da070449	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-62c31f0b-e208-4478-bd7b-f57d4d8baecd	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-5679e24e-2f42-41ba-ac00-000499e8562c	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-50bde220-e942-4f7d-91ca-49f41e018b2a	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-c92fabbd-d6ca-4e4a-a845-ea133af0a522	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-22473b98-44eb-4338-a7dc-04faf1b3df6c	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-845eba27-aa70-4dbc-9fdc-02061da1e5f5	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-d00430d6-929c-4c87-99b6-1b260c9e9e26	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-b6ff94ff-6d54-48b0-afa5-040b84aea634	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-ccb8b49e-dbeb-4a23-a18a-928fb5ad9e8a	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-ba289897-998a-4d3d-9387-f7e4b72bed0f	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-46c4ecdc-7c13-4b48-b035-7675c4197c0e	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-9a15f071-de17-493e-857d-4a1fbdfb8312	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-660c44a1-3d2c-433a-ac3c-f6f5bf3cbc35	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-7f8017ec-c513-437e-9a89-21cf01a0aecb	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-17b2c5fc-de4e-4723-94d7-e822b0fa03e8	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-43ff3045-20fe-4a7f-8445-25ebdb15746e	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-eca213a5-6e8d-4c6c-895b-a7536bdec9ae	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-c5d47514-43b4-42c4-8fd0-c7546919a4e7	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-e9fec54c-e630-4238-ae11-53934b1af319	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-a8353837-5218-49fc-af19-47b413d79d9c	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-1197d1a2-7a8f-42ef-ba09-23fe06a1d66b	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-1c7650be-8a5b-4354-be77-d0088b875a51	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-30785ec6-f4c7-4d14-bca3-54ed1c96bdf0	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-d776f561-6b3b-4c51-bee7-20c0ac00a101	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-81a1cc3d-6578-4e88-9442-c1591e0f3473	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-690addb2-04ba-454c-8442-d0153cde9c20	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-3b26800c-50de-4883-ad24-5d70f0b4bb5f	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-7559a3c6-a92d-4785-96ba-069ddbc11fa3	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-e6f094fc-d095-42c0-b27e-dc6d7018ede3	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-8e8e592c-6214-4727-b01c-18e4349b7b5a	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-d03b40ed-250f-4dee-b877-901c0d4bc887	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-9461a505-9963-439f-952b-3742e90a8a4b	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-0e0fc3a9-ec60-4f74-8fab-c463e9e2be49	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-76c0edd1-acd6-4c5d-95a1-711873bdb490	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-93bc5b0a-6172-46ae-ac36-9f198ce891af	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-9692b62f-3154-4643-9404-aa96e8cad7db	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-3bea2cb8-44db-4132-9a9d-6da6702f034b	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-2a792b6b-7bcd-4dc5-946b-73ae68f2a7fe	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-535afe53-2498-4b80-b2cb-ec6cdfb10b58	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-9740bb5d-7203-4dae-bdf7-17fd00507d8d	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-137f0049-c7d6-4e6e-b9d8-316ae58e31c0	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-c40a888f-b6c1-447d-97d0-807b763a7bf2	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-15c9eaa6-b1d0-4c5e-b53c-fedb5b57947c	criminal crime types	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22636
-2a1b0e79-161a-4d32-a552-516bb29e11e1	criminal legalcase types	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	52218
-4c3bed8a-0433-4fce-bdd0-6971a583b773	lojistiks measurement units	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22890
-f59fc590-93a8-45e4-9a00-35c3ebf0303a	lojistiks vehicle types	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22992
-55c34a6f-d5c1-4f2c-b507-5705d1aa3530	lojistiks brands	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22866
-3a4f0d0e-0011-4ebb-b175-0307c3ff1249	criminal legalcase defendants	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22673
-8a82318e-6640-4a2b-9dec-ed5e44236361	criminal crimes	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22644
-76b0e47f-9357-4066-98ff-5881098cfdfc	criminal sentence types	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22705
-80e62009-dcbc-4308-80e7-fc641953c2de	criminal detention methods	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22661
-3584d268-8b3e-46c0-a514-986739a15d27	criminal detention reasons	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22667
-143af584-a987-43a5-83b6-b1e6792f7a91	justice warrant types	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22806
-493a3d93-f9c1-4f4a-b047-39f0ee9a8d52	finance currencies	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22727
-7671912f-1f12-452b-aba9-30d8a09b56fb	criminal defendant crimes	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22650
-e6155bd3-6eca-474e-8e70-4e5eecff09e6	lojistiks transfers	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22985
-e96eb5cc-af3d-41db-92a1-58772e9bb84a	criminal crime sentences	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22631
-34862c6f-b5b7-4a3d-b392-d20b6999c27e	criminal trials	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22723
-31996f45-7d44-4443-ac7e-e3d70db13bab	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-aa62c09e-c71c-431c-ac8b-b89e082e8c5d	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-172b7a25-4e4e-4aba-a4ae-b4be2da81f80	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-017b4bc7-137b-45b3-b3bc-79046d86f8d7	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-86239ac9-fffb-4672-b565-13435e644dfe	justice warrants	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22812
-34f250b5-4a31-4ed5-a8b4-b617f7459b6b	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-e73db9c4-25d9-45eb-9112-7abc29490bd9	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-d9fea4df-521a-439e-959e-6ae21c7fcc08	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-1401dd93-3df8-4610-92e8-46ca7fd29a51	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-56961985-75df-453c-8d19-4672de435460	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-46af8e6e-37c6-4dca-a2d0-b4634644d9b5	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-b950ed8b-3f3d-4f26-9f3e-8697f096d1b5	criminal legalcase plaintiffs	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22683
-978f6832-ff2a-4a6c-bbb7-5db012becebe	criminal legalcase witnesses	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22697
-09c2d991-8af0-48c7-86f8-9f71a367549f	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-bc516489-72d4-4884-a9d3-0919b44c228e	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
-5ec59f21-a669-4def-8da9-1b57127ec853	criminal legalcase prosecutor	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22687
-fee0b06d-4af0-4a05-ba58-f6b93376fd7a	Create	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	f	\N
+COPY public.acorn_calendar_event_types (id, name, description, whole_day, colour, style, created_at, updated_at, system, activity_log_related_oid, calendar_id) FROM stdin;
+2f766546-e4c9-11ef-be8c-1f2daa98a10f	Normal	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	t	\N	\N
+31754fae-ba9e-4aff-b538-b665422ad4b3	Meeting	\N	f	#C0392B	color:#fff	2024-10-19 13:37:23	\N	t	\N	\N
+20fe78d8-89ae-4fb6-af0b-60d74b750b7c	Criminal Crime Types	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22636	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+2ddb051a-eee9-4593-9cc8-388f1b6f77f6	Criminal Sentence Types	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22705	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+2e076a8c-72dd-4075-a5e0-72b0caeadb2a	Criminal Legalcase Types	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	52218	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+5a938465-f57a-49ed-a014-eb075aaab841	Criminal Detention Reasons	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22667	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+5b178909-04e5-4541-8bc6-edadb4d42145	Criminal Detention Methods	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22661	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+e454682c-406b-4326-b8fe-c917acb54d91	Criminal Crimes	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22644	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+84422eec-539a-45fe-aa97-e2542c95cebc	Justice Legalcases	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22794	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+ceafc66c-fea2-46f1-9a1c-94727b04c23c	Criminal Legalcase Defendants	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22673	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+55b41f84-d8c8-471f-94be-c7c052e80209	Justice Warrants	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22812	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+1f8c7822-eeff-4224-9fac-9ced71ec601b	Justice Warrant Types	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22806	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+112200db-595f-4a0f-896c-0cae51e45ec3	Notary Requests	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	72909	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+f3cfacba-d1ae-465d-95c9-eeb2a17e666f	NotaryRequest	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	\N	ec4360f9-11cc-4cb8-b1fc-f274f220da5f
 \.
 
 
@@ -6503,7 +6456,7 @@ COPY public.acorn_criminal_detention_reasons (id, name, description, created_at_
 -- Data for Name: acorn_criminal_legalcase_defendants; Type: TABLE DATA; Schema: public; Owner: justice
 --
 
-COPY public.acorn_criminal_legalcase_defendants (id, legalcase_id, user_id, created_at_event_id, created_by_user_id, description, updated_at_event_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_criminal_legalcase_defendants (id, legalcase_id, user_id, created_at_event_id, created_by_user_id, description, updated_at_event_id, updated_by_user_id, server_id, lawyer_user_id, verdict) FROM stdin;
 \.
 
 
@@ -6519,7 +6472,7 @@ COPY public.acorn_criminal_legalcase_evidence (id, legalcase_id, name, created_a
 -- Data for Name: acorn_criminal_legalcase_plaintiffs; Type: TABLE DATA; Schema: public; Owner: justice
 --
 
-COPY public.acorn_criminal_legalcase_plaintiffs (id, legalcase_id, user_id, created_at_event_id, created_by_user_id, description, updated_at_event_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_criminal_legalcase_plaintiffs (id, legalcase_id, user_id, created_at_event_id, created_by_user_id, description, updated_at_event_id, updated_by_user_id, server_id, lawyer_user_id) FROM stdin;
 \.
 
 
@@ -6687,7 +6640,7 @@ COPY public.acorn_justice_warrant_types (id, name, description, created_at_event
 -- Data for Name: acorn_justice_warrants; Type: TABLE DATA; Schema: public; Owner: justice
 --
 
-COPY public.acorn_justice_warrants (id, created_at_event_id, created_by_user_id, user_id, warrant_type_id, legalcase_id, revoked_at_event_id, description, updated_at_event_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_justice_warrants (id, created_at_event_id, created_by_user_id, user_id, warrant_type_id, legalcase_id, revoked_at_event_id, description, updated_at_event_id, updated_by_user_id, server_id, state_indicator, notary_request_id) FROM stdin;
 \.
 
 
@@ -7050,6 +7003,14 @@ COPY public.acorn_messaging_user_message_status (user_id, message_id, status_id,
 
 
 --
+-- Data for Name: acorn_notary_requests; Type: TABLE DATA; Schema: public; Owner: justice
+--
+
+COPY public.acorn_notary_requests (id, description, validated_by_notary_user_id, validated_at_event_id, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+\.
+
+
+--
 -- Data for Name: acorn_servers; Type: TABLE DATA; Schema: public; Owner: justice
 --
 
@@ -7361,6 +7322,9 @@ COPY public.backend_access_log (id, user_id, ip_address, created_at, updated_at)
 44	1	127.0.0.1	2025-02-24 16:35:16	2025-02-24 16:35:16
 45	2	127.0.0.1	2025-02-25 08:23:09	2025-02-25 08:23:09
 46	2	127.0.0.1	2025-02-25 08:26:36	2025-02-25 08:26:36
+47	1	127.0.0.1	2025-02-27 12:45:20	2025-02-27 12:45:20
+48	1	127.0.0.1	2025-02-27 12:47:04	2025-02-27 12:47:04
+49	1	127.0.0.1	2025-02-27 12:49:50	2025-02-27 12:49:50
 \.
 
 
@@ -7383,12 +7347,13 @@ COPY public.backend_user_preferences (id, user_id, namespace, "group", item, val
 4	1	acorn_criminal	appeals	lists	{"visible":["created_at_event","event","name"],"order":["id","legalcase","created_at_event","created_by_user","event","name","_qrcode"],"per_page":"20"}
 8	1	acorn_user	usergroups	lists	{"visible":["name","type","type_colour","type_image","colour","code","users_count","created_at","auth_is_member"],"order":["id","name","type","type_colour","type_image","colour","image","parent_user_group","code","users_count","created_at","auth_is_member"],"per_page":20}
 6	1	acorn_criminal	legalcases	lists-relationcriminallegalcaseprosecutorlegalcasesviewlist	{"visible":["name","surname","email","created_at","last_seen","groups","languages"],"order":["id","username","name","surname","email","created_at","last_seen","is_guest","created_ip_address","last_ip_address","groups","languages"],"per_page":false}
-11	1	acorn_user	languages	lists	{"visible":["id","name"],"order":["id","name"],"per_page":"20"}
 12	1	acorn_criminal	legalcases	lists-relationcriminallegalcasedefendantslegalcaseviewlist	{"visible":["user","created_at_event","criminal_defendant_detentions_legalcase_defendant","criminal_defendant_crimes_legalcase_defendant","_actions","updated_at_event","updated_by_user","server"],"order":["id","legalcase","user","created_at_event","created_by_user","criminal_defendant_detentions_legalcase_defendant","criminal_defendant_crimes_legalcase_defendant","_qrcode","_actions","description","updated_at_event","updated_by_user","server"],"per_page":"10"}
 10	1	acorn_criminal	legalcases	lists-relationcriminaltrialslegalcaseviewlist	{"visible":["legalcase","criminal_trial_judges_trial","criminal_trial_sessions_trial","_actions","calendar[name]","first_event_part[start]","first_event_part[repeat]","first_event_part[status][name]"],"order":["id","legalcase","created_at_event","created_by_user","criminal_trial_judges_trial","criminal_trial_sessions_trial","_qrcode","_actions","calendar[name]","first_event_part[type][name]","first_event_part[name]","first_event_part[start]","first_event_part[end]","first_event_part[alarm]","first_event_part[description]","first_event_part[repeat]","first_event_part[mask]","first_event_part[repeat_frequency]","first_event_part[mask_type]","first_event_part[parentEventPart][name]","first_event_part[until]","first_event_part[users]","first_event_part[groups]","first_event_part[status][name]","first_event_part[location][name]","owner_user_id","owner_user_group_id","permissions","created_at","updated_at"],"per_page":"10"}
 2	1	backend	reportwidgets	dashboard	{"welcome":{"class":"Backend\\\\ReportWidgets\\\\Welcome","sortOrder":50,"configuration":{"ocWidgetWidth":7}},"systemStatus":{"class":"System\\\\ReportWidgets\\\\Status","sortOrder":60,"configuration":{"title":"System status","ocWidgetWidth":7,"ocWidgetNewRow":null}}}
 5	1	backend	backend	preferences	{"locale":"ku","fallback_locale":"en","timezone":"Europe\\/Istanbul","editor_font_size":"12","editor_word_wrap":"fluid","editor_code_folding":"manual","editor_tab_size":"4","editor_theme":"twilight","editor_show_invisibles":"0","editor_highlight_active_line":"1","editor_use_hard_tabs":"0","editor_show_gutter":"1","editor_auto_closing":"0","editor_autocompletion":"manual","editor_enable_snippets":"0","editor_display_indent_guides":"0","editor_show_print_margin":"0","dark_mode":"light","menu_location":"","icon_location":"","user_id":1}
 7	1	acorn_calendar	months	calendars-instance	{"visible":["eventPart[location][name]","instance_start","instance_end","eventPart[name]","name","eventPart[repeatWithFrequency()]","eventPart[attendees()]","eventPart[isLocked()]","eventPart[alarm]","name"],"order":["id","date","event_part_id","eventPart[location][name]","instance_num","instance_start","instance_end","eventPart[name]","name","eventPart[repeatWithFrequency()]","eventPart[attendees()]","created_at","updated_at","eventPart[canWrite()]","eventPart[isLocked()]","eventPart[alarm]","name"],"per_page":null}
+11	1	acorn_user	languages	lists	{"visible":["name"],"order":["id","name"],"per_page":"20"}
+14	1	acorn_criminal	legalcases	lists-relationlegalcasejusticewarrantslegalcaseviewlist	{"visible":["user","warrant_type","revoked_at_event","description","state_indicator","_actions"],"order":["id","created_at_event","created_by_user","user","warrant_type","legalcase","revoked_at_event","description","updated_at_event","updated_by_user","server","state_indicator","notary_request","_qrcode","_actions"],"per_page":"10"}
 13	1	acorn_criminal	legalcases	lists-relationcriminallegalcaserelatedeventslegalcaseviewlist	{"visible":["first_event_part[name]","first_event_part[start]","first_event_part[end]","first_event_part[alarm]","first_event_part[repeat]","first_event_part[repeat_frequency]","first_event_part[status][name]","first_event_part[location][name]","_actions"],"order":["legalcase","id","created_at","created_by_user","updated_at","owner_user_id","owner_user_group_id","permissions","_qrcode","calendar[name]","first_event_part[name]","first_event_part[type][name]","first_event_part[start]","first_event_part[end]","first_event_part[alarm]","first_event_part[description]","first_event_part[repeat]","first_event_part[mask]","first_event_part[repeat_frequency]","first_event_part[mask_type]","first_event_part[parentEventPart][name]","first_event_part[until]","first_event_part[status][name]","first_event_part[location][name]","_actions","first_event_part[users]","first_event_part[groups]"],"per_page":"10"}
 1	1	acorn_criminal	legalcases	lists	{"visible":["legalcase_name","legalcase[owner_user_group][name]","criminal_legalcase_prosecutor_legalcases","criminal_legalcase_evidence_legalcase","criminal_trials_legalcase","legalcase_closed_at_event","legalcase[justice_scanned_documents_legalcase][name]","criminal_legalcase_plaintiffs_legalcase","legalcase_created_at_event","legalcase_updated_at_event","legalcase_type","_actions"],"order":["id","_qrcode","legalcase_name","legalcase[owner_user_group][name]","criminal_legalcase_prosecutor_legalcases","criminal_appeals_legalcase","criminal_legalcase_defendants_legalcase","criminal_legalcase_related_events_legalcase","criminal_legalcase_witnesses_legalcase","criminal_legalcase_evidence_legalcase","criminal_trials_legalcase","server","legalcase_closed_at_event","legalcase[justice_scanned_documents_legalcase][name]","legalcase[justice_legalcase_identifiers_legalcase][name]","legalcase[justice_warrants_legalcase][name]","legalcase[justice_legalcase_legalcase_category_legalcases][name]","judge_committee_user_group","criminal_legalcase_plaintiffs_legalcase","legalcase_created_at_event","legalcase_created_by_user","legalcase_description","legalcase_updated_at_event","legalcase_type","legalcase_updated_by_user","_actions"],"per_page":"20"}
 \.
@@ -7420,9 +7385,9 @@ COPY public.backend_user_throttle (id, user_id, ip_address, attempts, last_attem
 --
 
 COPY public.backend_users (id, first_name, last_name, login, email, password, activation_code, persist_code, reset_password_code, permissions, is_activated, role_id, activated_at, last_login, created_at, updated_at, deleted_at, is_superuser, metadata, acorn_url, acorn_user_user_id) FROM stdin;
-1	Admin	Person	admin	admin@example.com	$2y$10$A487JegVfo9RmI9gD89kiuU0RHuj2sNKSAvu4ZXkMwA42JWAnecoS	\N	$2y$10$ijrJ234KkGAkO4Unp6uoOenr3AClxCDZq1s6VVmqhkNw.DX.AeV.u	\N		t	2	\N	2025-02-24 16:35:16	2024-10-19 10:37:18	2025-02-24 16:35:16	\N	t	\N	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6
+1	Admin	Person	admin	admin@example.com	$2y$10$A487JegVfo9RmI9gD89kiuU0RHuj2sNKSAvu4ZXkMwA42JWAnecoS	\N	$2y$10$ijrJ234KkGAkO4Unp6uoOenr3AClxCDZq1s6VVmqhkNw.DX.AeV.u	\N		t	2	\N	2025-02-27 12:49:50	2024-10-19 10:37:18	2025-02-27 12:49:50	\N	t	\N	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6
 7			justice	justice@nowhere.com	$2y$10$H4YHv/Dyj4Od5i5RRMEbGOvbudWq4QFfSKk3hQvALelR.CXKE5NUa	\N	\N	\N		f	\N	\N	\N	2025-02-25 07:35:08	2025-02-25 07:35:08	\N	t	\N	\N	\N
-2	Demo		demo	demo@example.com	$2y$10$qXppZYCFKO3PBwI2JUZ0mORjrR/eOhLIkCdKe2U5aPsAWys.sr.Qy		$2y$10$DAiTJ/6Nz/inGIpDIRi1POcb8BQNZU80ev64QTKJeoVXqV51JxQvq		{"cms.manage_content":-1,"cms.manage_assets":-1,"cms.manage_pages":-1,"cms.manage_layouts":-1,"cms.manage_partials":-1,"cms.manage_themes":-1,"cms.manage_theme_options":-1,"backend.access_dashboard":1,"backend.manage_default_dashboard":-1,"backend.manage_users":-1,"backend.impersonate_users":-1,"backend.manage_preferences":1,"backend.manage_editor":-1,"backend.manage_own_editor":-1,"backend.manage_branding":1,"media.manage_media":-1,"backend.allow_unsafe_markdown":-1,"system.manage_updates":-1,"system.access_logs":-1,"system.manage_mail_settings":-1,"system.manage_mail_templates":-1,"acorn.rtler.change_settings":1,"acorn.users.access_users":1,"acorn.users.access_groups":1,"acorn.users.access_settings":1,"acorn.users.impersonate_user":-1,"winter.location.access_settings":1,"winter.tailwindui.manage_own_appearance.dark_mode":1,"winter.tailwindui.manage_own_appearance.menu_location":1,"winter.tailwindui.manage_own_appearance.item_location":1,"winter.translate.manage_locales":1,"winter.translate.manage_messages":1,"acorn_location":1,"acorn_messaging":-1,"calendar_view":1,"change_the_past":1,"access_settings":1,"legalcases__legalcase_name__update":-1,"legalcases__owner_user_group_id__update":-1,"legalcase_type__create_criminal_only":1,"legalcase_type__create_civil_only":-1,"legalcase_type__create_any":-1,"legalcases__legalcase_type_id__update":-1,"trials__access":-1,"appeals__access":-1}	t	\N	\N	2025-02-25 08:26:36	\N	2025-02-25 13:35:55	\N	f			2bc29c8f-e9b0-4bd4-8aff-e691b084a255
+2	Demo		demo	demo@example.com	$2y$10$qXppZYCFKO3PBwI2JUZ0mORjrR/eOhLIkCdKe2U5aPsAWys.sr.Qy		$2y$10$DAiTJ/6Nz/inGIpDIRi1POcb8BQNZU80ev64QTKJeoVXqV51JxQvq		{"cms.manage_content":-1,"cms.manage_assets":-1,"cms.manage_pages":-1,"cms.manage_layouts":-1,"cms.manage_partials":-1,"cms.manage_themes":-1,"cms.manage_theme_options":-1,"backend.access_dashboard":1,"backend.manage_default_dashboard":-1,"backend.manage_users":-1,"backend.impersonate_users":-1,"backend.manage_preferences":1,"backend.manage_editor":-1,"backend.manage_own_editor":-1,"backend.manage_branding":1,"media.manage_media":-1,"backend.allow_unsafe_markdown":-1,"system.manage_updates":-1,"system.access_logs":-1,"system.manage_mail_settings":-1,"system.manage_mail_templates":-1,"acorn.rtler.change_settings":1,"acorn.users.access_users":1,"acorn.users.access_groups":1,"acorn.users.access_settings":1,"acorn.users.impersonate_user":-1,"winter.location.access_settings":1,"winter.tailwindui.manage_own_appearance.dark_mode":1,"winter.tailwindui.manage_own_appearance.menu_location":1,"winter.tailwindui.manage_own_appearance.item_location":1,"winter.translate.manage_locales":1,"winter.translate.manage_messages":1,"acorn_location":1,"acorn_messaging":-1,"calendar_view":1,"change_the_past":1,"access_settings":1,"legalcases__legalcase_name__update":-1,"legalcases__owner_user_group_id__update":-1,"legalcase_type__create_criminal_only":1,"legalcase_type__create_civil_only":-1,"legalcase_type__create_any":-1,"legalcases__legalcase_type_id__update":-1,"trials__access":-1,"appeals__access":-1}	t	\N	\N	2025-02-25 08:26:36	\N	2025-02-26 11:25:41	\N	f			2bc29c8f-e9b0-4bd4-8aff-e691b084a255
 \.
 
 
@@ -7715,7 +7680,7 @@ COPY public.system_parameters (id, namespace, "group", item, value) FROM stdin;
 2	system	update	count	0
 4	system	core	build	"1.2.6"
 5	system	core	modified	true
-3	system	update	retry	1740501318
+3	system	update	retry	1740746826
 \.
 
 
@@ -8041,6 +8006,7 @@ COPY public.system_plugin_versions (id, code, version, created_at, is_disabled, 
 5	Winter.TailwindUI	1.0.1	2024-10-19 10:37:19	f	f	f
 15	Acorn.Lojistiks	1.0.0	2024-12-05 09:55:56	f	f	f
 17	Acorn.Finance	1.0.0	2024-12-05 09:57:18	f	f	t
+18	Acorn.Notary	1.0.0	2025-02-27 12:45:08	f	f	f
 \.
 
 
@@ -8070,6 +8036,7 @@ COPY public.system_settings (id, item, value) FROM stdin;
 3	user_settings	{"require_activation":"0","activate_mode":"auto","use_throttle":"0","block_persistence":"0","allow_registration":"0","login_attribute":"email","remember_login":"always","use_register_throttle":"0","has_front_end":"0"}
 4	acorn_calendar_settings	{"days_before":"1 year","days_after":"1 year","default_event_time_from":"2024-11-12 09:00:00","default_event_time_to":"2024-11-12 10:00:00","default_time_zone":"AD","daylight_savings":"1"}
 5	system_mail_settings	{"send_mode":"log","sender_name":"intranet","sender_email":"noreply@example.com","sendmail_path":"\\/usr\\/sbin\\/sendmail -t -i","smtp_address":"","smtp_port":null,"smtp_user":null,"smtp_password":null,"smtp_authorization":"0"}
+6	acorn_interface_settings	{"multi_max_items":null,"enable_websockets":"0"}
 \.
 
 
@@ -9778,6 +9745,16 @@ COPY public.winter_translate_attributes (id, locale, model_id, model_type, attri
 719	ku	9e479903-b8e5-4c5d-8b3c-381e59c1328d	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
 720	ar	9e479927-78c1-4a46-8313-98b8bcfe726f	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
 721	ku	9e479927-78c1-4a46-8313-98b8bcfe726f	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
+722	ar	9e4fc8d0-5dfa-4886-a0c4-ba00adc7f6da	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
+723	ku	9e4fc8d0-5dfa-4886-a0c4-ba00adc7f6da	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
+724	ar	9e4feff4-2cdf-45ba-af38-2d357b2bc9cc	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
+725	ku	9e4feff4-2cdf-45ba-af38-2d357b2bc9cc	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
+726	ar	9e4ff01f-c38b-410a-8009-6e7a8d8b5558	Acorn\\Notary\\Models\\Request	{"description":""}
+727	ku	9e4ff01f-c38b-410a-8009-6e7a8d8b5558	Acorn\\Notary\\Models\\Request	{"description":""}
+728	ar	ff8d1163-61b6-4614-9fc3-a5a2d7944cca	Acorn\\Justice\\Models\\Warrant	{"description":""}
+729	ku	ff8d1163-61b6-4614-9fc3-a5a2d7944cca	Acorn\\Justice\\Models\\Warrant	{"description":""}
+732	ar	e09ac636-1a74-4a73-b735-e4126493621f	Acorn\\Notary\\Models\\Request	{"description":""}
+733	ku	e09ac636-1a74-4a73-b735-e4126493621f	Acorn\\Notary\\Models\\Request	{"description":""}
 \.
 
 
@@ -9812,7 +9789,7 @@ COPY public.winter_translate_messages (id, code, message_data, found, code_pre_2
 -- Name: backend_access_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.backend_access_log_id_seq', 46, true);
+SELECT pg_catalog.setval('public.backend_access_log_id_seq', 49, true);
 
 
 --
@@ -9826,7 +9803,7 @@ SELECT pg_catalog.setval('public.backend_user_groups_id_seq', 1, true);
 -- Name: backend_user_preferences_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.backend_user_preferences_id_seq', 13, true);
+SELECT pg_catalog.setval('public.backend_user_preferences_id_seq', 14, true);
 
 
 --
@@ -9917,7 +9894,7 @@ SELECT pg_catalog.setval('public.rainlab_location_states_id_seq', 720, true);
 -- Name: rainlab_translate_attributes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 721, true);
+SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 733, true);
 
 
 --
@@ -9945,7 +9922,7 @@ SELECT pg_catalog.setval('public.rainlab_translate_messages_id_seq', 1, false);
 -- Name: system_event_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.system_event_logs_id_seq', 12034, true);
+SELECT pg_catalog.setval('public.system_event_logs_id_seq', 12067, true);
 
 
 --
@@ -9994,7 +9971,7 @@ SELECT pg_catalog.setval('public.system_plugin_history_id_seq', 292, true);
 -- Name: system_plugin_versions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.system_plugin_versions_id_seq', 17, true);
+SELECT pg_catalog.setval('public.system_plugin_versions_id_seq', 18, true);
 
 
 --
@@ -10015,7 +9992,7 @@ SELECT pg_catalog.setval('public.system_revisions_id_seq', 1, false);
 -- Name: system_settings_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.system_settings_id_seq', 5, true);
+SELECT pg_catalog.setval('public.system_settings_id_seq', 6, true);
 
 
 --
@@ -10456,6 +10433,14 @@ ALTER TABLE ONLY public.acorn_messaging_status
 
 ALTER TABLE ONLY public.acorn_messaging_user_message_status
     ADD CONSTRAINT acorn_messaging_user_message_status_pkey PRIMARY KEY (message_id, status_id);
+
+
+--
+-- Name: acorn_notary_requests acorn_notary_requests_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_notary_requests
+    ADD CONSTRAINT acorn_notary_requests_pkey PRIMARY KEY (id);
 
 
 --
@@ -11075,6 +11060,14 @@ ALTER TABLE ONLY public.acorn_lojistiks_vehicles
 
 
 --
+-- Name: acorn_criminal_legalcase_defendants verdict; Type: CHECK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE public.acorn_criminal_legalcase_defendants
+    ADD CONSTRAINT verdict CHECK (((verdict = 'G'::bpchar) OR (verdict = 'I'::bpchar))) NOT VALID;
+
+
+--
 -- Name: dr_acorn_lojistiks_computer_products_replica_identity; Type: INDEX; Schema: product; Owner: justice
 --
 
@@ -11662,6 +11655,13 @@ CREATE INDEX fki_arrived_at_event_id ON public.acorn_lojistiks_transfers USING b
 
 
 --
+-- Name: fki_calendar_id; Type: INDEX; Schema: public; Owner: justice
+--
+
+CREATE INDEX fki_calendar_id ON public.acorn_calendar_event_types USING btree (calendar_id);
+
+
+--
 -- Name: fki_closed_at_event_id; Type: INDEX; Schema: public; Owner: justice
 --
 
@@ -11788,6 +11788,13 @@ CREATE INDEX fki_last_transfer_location_id ON public.acorn_lojistiks_people USIN
 
 
 --
+-- Name: fki_lawyer_user_id; Type: INDEX; Schema: public; Owner: justice
+--
+
+CREATE INDEX fki_lawyer_user_id ON public.acorn_criminal_legalcase_defendants USING btree (lawyer_user_id);
+
+
+--
 -- Name: fki_legalcase_category_id; Type: INDEX; Schema: public; Owner: justice
 --
 
@@ -11827,6 +11834,13 @@ CREATE INDEX fki_location_id ON public.acorn_lojistiks_offices USING btree (loca
 --
 
 CREATE INDEX fki_method_id ON public.acorn_criminal_defendant_detentions USING btree (detention_method_id);
+
+
+--
+-- Name: fki_notary_request_id; Type: INDEX; Schema: public; Owner: justice
+--
+
+CREATE INDEX fki_notary_request_id ON public.acorn_justice_warrants USING btree (notary_request_id);
 
 
 --
@@ -11974,6 +11988,20 @@ CREATE INDEX fki_user_group_version_id ON public.acorn_user_user_group_version_u
 --
 
 CREATE INDEX fki_user_id ON public.acorn_finance_purchases USING btree (payer_user_id);
+
+
+--
+-- Name: fki_validated_at_event_id; Type: INDEX; Schema: public; Owner: justice
+--
+
+CREATE INDEX fki_validated_at_event_id ON public.acorn_notary_requests USING btree (validated_at_event_id);
+
+
+--
+-- Name: fki_validated_by_user_id; Type: INDEX; Schema: public; Owner: justice
+--
+
+CREATE INDEX fki_validated_by_user_id ON public.acorn_notary_requests USING btree (validated_by_notary_user_id);
 
 
 --
@@ -12211,14 +12239,14 @@ CREATE INDEX winter_translate_messages_code_pre_2_1_0_index ON public.winter_tra
 -- Name: acorn_lojistiks_computer_products tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: product; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON product.acorn_lojistiks_computer_products FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON product.acorn_lojistiks_computer_products FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_electronic_products tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: product; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON product.acorn_lojistiks_electronic_products FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON product.acorn_lojistiks_electronic_products FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
@@ -12261,332 +12289,339 @@ CREATE TRIGGER tr_acorn_calendar_events_generate_event_instances AFTER INSERT OR
 
 
 --
+-- Name: acorn_notary_requests tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: justice
+--
+
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_notary_requests FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
+
+
+--
 -- Name: acorn_criminal_appeals tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_appeals FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_appeals FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_criminal_crime_sentences tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_crime_sentences FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_crime_sentences FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_criminal_crimes tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_crimes FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_crimes FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_criminal_defendant_crimes tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_defendant_crimes FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_defendant_crimes FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_criminal_detention_methods tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_detention_methods FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_detention_methods FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_criminal_detention_reasons tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_detention_reasons FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_detention_reasons FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_criminal_legalcase_defendants tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_legalcase_defendants FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_legalcase_defendants FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_criminal_legalcase_evidence tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_legalcase_evidence FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_legalcase_evidence FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_criminal_legalcase_plaintiffs tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_legalcase_plaintiffs FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_legalcase_plaintiffs FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_criminal_legalcase_types tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_legalcase_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_legalcase_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_criminal_legalcase_witnesses tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_legalcase_witnesses FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_legalcase_witnesses FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_criminal_sentence_types tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_sentence_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_sentence_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_criminal_session_recordings tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_session_recordings FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_session_recordings FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_criminal_trial_judges tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_trial_judges FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_trial_judges FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_criminal_trial_sessions tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_trial_sessions FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_trial_sessions FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_criminal_trials tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_trials FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_trials FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_finance_currencies tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_finance_currencies FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_finance_currencies FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_finance_invoices tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_finance_invoices FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_finance_invoices FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_finance_payments tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_finance_payments FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_finance_payments FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_finance_purchases tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_finance_purchases FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_finance_purchases FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_finance_receipts tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_finance_receipts FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_finance_receipts FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_justice_legalcase_categories tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_justice_legalcase_categories FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_justice_legalcase_categories FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_justice_scanned_documents tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_justice_scanned_documents FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_justice_scanned_documents FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_justice_warrant_types tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_justice_warrant_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_justice_warrant_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_justice_warrants tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_justice_warrants FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_justice_warrants FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_brands tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_brands FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_brands FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_containers tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_containers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_containers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_drivers tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_drivers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_drivers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_employees tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_employees FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_employees FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_measurement_units tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_measurement_units FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_measurement_units FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_offices tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_offices FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_offices FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_people tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_people FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_people FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_product_attributes tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_product_attributes FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_product_attributes FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_product_categories tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_product_categories FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_product_categories FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_product_category_types tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_product_category_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_product_category_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_product_instances tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_product_instances FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_product_instances FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_product_products tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_product_products FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_product_products FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_products tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_products FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_products FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_suppliers tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_suppliers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_suppliers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_transfers tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_transfers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_transfers FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_vehicle_types tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_vehicle_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_vehicle_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_vehicles tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_vehicles FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_vehicles FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_lojistiks_warehouses tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_warehouses FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_lojistiks_warehouses FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_criminal_crime_types tr_acorn_criminal_crime_types; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_criminal_crime_types BEFORE INSERT OR UPDATE ON public.acorn_criminal_crime_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_criminal_crime_types BEFORE INSERT OR UPDATE ON public.acorn_criminal_crime_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_criminal_legalcase_prosecutor tr_acorn_criminal_legalcase_prosecutor; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_criminal_legalcase_prosecutor BEFORE INSERT OR UPDATE ON public.acorn_criminal_legalcase_prosecutor FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_criminal_legalcase_prosecutor BEFORE INSERT OR UPDATE ON public.acorn_criminal_legalcase_prosecutor FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_justice_legalcases tr_acorn_justice_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_justice_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_justice_legalcases FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_justice_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_justice_legalcases FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
 -- Name: acorn_justice_legalcase_legalcase_category tr_acorn_justice_legalcase_legalcase_category; Type: TRIGGER; Schema: public; Owner: justice
 --
 
-CREATE TRIGGER tr_acorn_justice_legalcase_legalcase_category BEFORE INSERT OR UPDATE ON public.acorn_justice_legalcase_legalcase_category FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_created_at_event();
+CREATE TRIGGER tr_acorn_justice_legalcase_legalcase_category BEFORE INSERT OR UPDATE ON public.acorn_justice_legalcase_legalcase_category FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
@@ -13047,6 +13082,13 @@ CREATE TRIGGER tr_acorn_lojistiks_warehouses_server_id BEFORE INSERT ON public.a
 
 
 --
+-- Name: acorn_notary_requests tr_acorn_notary_trigger_validate; Type: TRIGGER; Schema: public; Owner: justice
+--
+
+CREATE TRIGGER tr_acorn_notary_trigger_validate BEFORE UPDATE ON public.acorn_notary_requests FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_notary_trigger_validate();
+
+
+--
 -- Name: acorn_criminal_crime_sentences tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: justice
 --
 
@@ -13219,6 +13261,13 @@ CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_justice_warrant_
 --
 
 CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_justice_warrants FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
+
+
+--
+-- Name: acorn_notary_requests tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: justice
+--
+
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_notary_requests FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
@@ -13586,6 +13635,22 @@ ALTER TABLE ONLY public.acorn_lojistiks_products
 
 ALTER TABLE ONLY public.acorn_lojistiks_brands
     ADD CONSTRAINT brands_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_calendar_event_types calendar_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_calendar_event_types
+    ADD CONSTRAINT calendar_id FOREIGN KEY (calendar_id) REFERENCES public.acorn_calendar_calendars(id) NOT VALID;
+
+
+--
+-- Name: acorn_calendar_event_statuses calendar_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_calendar_event_statuses
+    ADD CONSTRAINT calendar_id FOREIGN KEY (calendar_id) REFERENCES public.acorn_calendar_calendars(id) NOT VALID;
 
 
 --
@@ -14044,6 +14109,14 @@ ALTER TABLE ONLY public.acorn_lojistiks_product_product_category
 
 
 --
+-- Name: acorn_notary_requests created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_notary_requests
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
 -- Name: acorn_lojistiks_product_instance_transfer created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -14288,6 +14361,14 @@ ALTER TABLE ONLY public.acorn_justice_warrant_types
 --
 
 ALTER TABLE ONLY public.acorn_finance_receipts
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_notary_requests created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_notary_requests
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -14555,6 +14636,22 @@ ALTER TABLE ONLY public.acorn_lojistiks_people
 
 ALTER TABLE ONLY public.acorn_lojistiks_people
     ADD CONSTRAINT last_transfer_location_id FOREIGN KEY (last_transfer_location_id) REFERENCES public.acorn_location_locations(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_defendants lawyer_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_defendants
+    ADD CONSTRAINT lawyer_user_id FOREIGN KEY (lawyer_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_plaintiffs lawyer_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
+    ADD CONSTRAINT lawyer_user_id FOREIGN KEY (lawyer_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
@@ -14878,6 +14975,14 @@ ALTER TABLE ONLY public.acorn_lojistiks_measurement_units
 
 ALTER TABLE ONLY public.acorn_criminal_defendant_detentions
     ADD CONSTRAINT method_id FOREIGN KEY (detention_method_id) REFERENCES public.acorn_criminal_detention_methods(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_warrants notary_request_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_warrants
+    ADD CONSTRAINT notary_request_id FOREIGN KEY (notary_request_id) REFERENCES public.acorn_notary_requests(id) NOT VALID;
 
 
 --
@@ -15679,6 +15784,14 @@ ALTER TABLE ONLY public.acorn_lojistiks_product_product_category
 
 
 --
+-- Name: acorn_notary_requests server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_notary_requests
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
 -- Name: acorn_lojistiks_product_products sub_product_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -16188,6 +16301,14 @@ ALTER TABLE ONLY public.acorn_lojistiks_containers
 
 
 --
+-- Name: acorn_notary_requests updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_notary_requests
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
 -- Name: acorn_justice_legalcases updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -16516,6 +16637,14 @@ ALTER TABLE ONLY public.acorn_lojistiks_drivers
 
 
 --
+-- Name: acorn_notary_requests updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_notary_requests
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
 -- Name: acorn_location_locations user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -16683,6 +16812,22 @@ ALTER TABLE ONLY public.acorn_user_user_group_version_user
 
 ALTER TABLE ONLY public.acorn_lojistiks_employees
     ADD CONSTRAINT user_role_id FOREIGN KEY (user_role_id) REFERENCES public.acorn_user_roles(id) NOT VALID;
+
+
+--
+-- Name: acorn_notary_requests validated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_notary_requests
+    ADD CONSTRAINT validated_at_event_id FOREIGN KEY (validated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_notary_requests validated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_notary_requests
+    ADD CONSTRAINT validated_by_user_id FOREIGN KEY (validated_by_notary_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
@@ -17252,16 +17397,30 @@ RESET SESSION AUTHORIZATION;
 
 
 --
--- Name: FUNCTION fn_acorn_calendar_create_activity_log_event(type character varying, user_id uuid); Type: ACL; Schema: public; Owner: justice
+-- Name: FUNCTION fn_acorn_calendar_create_activity_log_event(owner_user_id uuid, type_id uuid, status_id uuid, name character varying); Type: ACL; Schema: public; Owner: justice
 --
 
-REVOKE ALL ON FUNCTION public.fn_acorn_calendar_create_activity_log_event(type character varying, user_id uuid) FROM justice;
-GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_activity_log_event(type character varying, user_id uuid) TO justice WITH GRANT OPTION;
-GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_activity_log_event(type character varying, user_id uuid) TO token_1 WITH GRANT OPTION;
-GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_activity_log_event(type character varying, user_id uuid) TO demo WITH GRANT OPTION;
-SET SESSION AUTHORIZATION demo;
-GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_activity_log_event(type character varying, user_id uuid) TO token_2;
-RESET SESSION AUTHORIZATION;
+REVOKE ALL ON FUNCTION public.fn_acorn_calendar_create_activity_log_event(owner_user_id uuid, type_id uuid, status_id uuid, name character varying) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_activity_log_event(owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_activity_log_event(owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_activity_log_event(owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_activity_log_event(owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO token_2;
+
+
+--
+-- Name: FUNCTION fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying); Type: ACL; Schema: public; Owner: justice
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone); Type: ACL; Schema: public; Owner: justice
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -17303,6 +17462,14 @@ RESET SESSION AUTHORIZATION;
 
 
 --
+-- Name: FUNCTION fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying); Type: ACL; Schema: public; Owner: justice
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO token_1 WITH GRANT OPTION;
+
+
+--
 -- Name: FUNCTION fn_acorn_calendar_seed(); Type: ACL; Schema: public; Owner: justice
 --
 
@@ -17313,32 +17480,32 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO demo WITH GRANT OPTION;
 SET SESSION AUTHORIZATION demo;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO token_2;
 RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO token_2;
 
 
 --
--- Name: FUNCTION fn_acorn_calendar_trigger_created_at_event(); Type: ACL; Schema: public; Owner: justice
+-- Name: FUNCTION fn_acorn_calendar_trigger_activity_event(); Type: ACL; Schema: public; Owner: justice
 --
 
-REVOKE ALL ON FUNCTION public.fn_acorn_calendar_trigger_created_at_event() FROM justice;
-GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_created_at_event() TO justice WITH GRANT OPTION;
-GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_created_at_event() TO token_1 WITH GRANT OPTION;
-GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_created_at_event() TO demo WITH GRANT OPTION;
+REVOKE ALL ON FUNCTION public.fn_acorn_calendar_trigger_activity_event() FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_activity_event() TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_activity_event() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_activity_event() TO demo WITH GRANT OPTION;
 SET SESSION AUTHORIZATION demo;
-GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_created_at_event() TO token_2;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_activity_event() TO token_2;
 RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_activity_event() TO token_2;
 
 
 --
--- Name: FUNCTION fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid); Type: ACL; Schema: public; Owner: justice
+-- Name: FUNCTION fn_acorn_criminal_action_legalcase_defendants_cw(model_id uuid, user_id uuid); Type: ACL; Schema: public; Owner: justice
 --
 
-REVOKE ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) FROM justice;
-GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) TO justice WITH GRANT OPTION;
-GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) TO token_1 WITH GRANT OPTION;
-GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) TO demo WITH GRANT OPTION;
-SET SESSION AUTHORIZATION demo;
-GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(p_id uuid, p_user_id uuid) TO token_2;
-RESET SESSION AUTHORIZATION;
+REVOKE ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(model_id uuid, user_id uuid) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(model_id uuid, user_id uuid) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(model_id uuid, user_id uuid) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(model_id uuid, user_id uuid) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cw(model_id uuid, user_id uuid) TO token_2;
 
 
 --
@@ -17391,6 +17558,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_justice_action_legalcases_close_case(model
 SET SESSION AUTHORIZATION demo;
 GRANT ALL ON FUNCTION public.fn_acorn_justice_action_legalcases_close_case(model_id uuid, user_id uuid) TO token_2;
 RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_action_legalcases_close_case(model_id uuid, user_id uuid) TO token_2;
 
 
 --
@@ -17443,6 +17611,17 @@ GRANT ALL ON FUNCTION public.fn_acorn_justice_seed_groups() TO demo WITH GRANT O
 SET SESSION AUTHORIZATION demo;
 GRANT ALL ON FUNCTION public.fn_acorn_justice_seed_groups() TO token_2;
 RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_justice_warrants_state_indicator(warrant record); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_justice_warrants_state_indicator(warrant record) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_warrants_state_indicator(warrant record) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_warrants_state_indicator(warrant record) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_warrants_state_indicator(warrant record) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_warrants_state_indicator(warrant record) TO token_2;
 
 
 --
@@ -19038,6 +19217,13 @@ GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO demo WITH GRANT
 SET SESSION AUTHORIZATION demo;
 GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO token_2;
 RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_notary_requests; Type: ACL; Schema: public; Owner: justice
+--
+
+GRANT ALL ON TABLE public.acorn_notary_requests TO token_1 WITH GRANT OPTION;
 
 
 --

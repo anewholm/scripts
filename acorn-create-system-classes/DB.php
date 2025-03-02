@@ -356,7 +356,7 @@ class DB {
             $sql     = "select count(*) from $table;";
             $reponse = $this->connection->query($sql);
             $results = $reponse->fetchAll(\PDO::FETCH_ASSOC);
-            if (count($results)) {
+            if ($results[0]->count) {
                 print("${RED}ERROR$NC: $table has rows, so adding a NOT NULL column will fail\n");
                 $yn = readline("Truncate cascade [$table] (y) ?");
                 if ($yn != 'n') {

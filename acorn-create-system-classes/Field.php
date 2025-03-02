@@ -17,6 +17,7 @@ class Field {
     // Translation arrays
     public $labels;
     public $labelsPlural;
+    public $extraTranslations; // array
 
     // fieldName & columnName
     // fields.yaml <name>: and columns.yaml <name>: can be different
@@ -29,6 +30,7 @@ class Field {
     public $fieldKey;
     public $fieldKeyQualifier; // Should always be added on to the fields.yaml name
     public $fieldType;
+    public $default;
     public $length;
     public $hidden       = FALSE; // Set during __construct
     public $disabled     = FALSE;

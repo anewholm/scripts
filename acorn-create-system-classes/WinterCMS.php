@@ -22,6 +22,8 @@ class WinterCMS extends Framework
 
     public function __construct(string $cwd, string $scriptDirPath)
     {
+        global $GREEN, $YELLOW, $RED, $NC;
+
         parent::__construct($cwd, $scriptDirPath);
 
         // WinterCMS CLI boot
@@ -43,6 +45,13 @@ class WinterCMS extends Framework
         $this->username   = $this->DB_USERNAME;
         $this->password   = $this->DB_PASSWORD;
 
+        // ---------------------------- DBAUTH
+        if ($this->username == '<DBAUTH>') {
+            print("${YELLOW}NOTE${NC}: DBAuth module detected, using winter user instead\n");
+            $this->username   = 'winter';
+            $this->password   = 'QueenPool1@';
+        }
+
         // ---------------------------- Icons
         $this->iconFile    = "$cwd/modules/backend/formwidgets/iconpicker/meta/libraries.yaml";
         $this->iconCurrent = 7;
@@ -60,7 +69,7 @@ class WinterCMS extends Framework
     protected function environment(): array
     {
         $env = file_get_contents("$this->cwd/.env");
-        if (!$env) throw new \Exception("WinterCMS .env file not found or empty at [$cwd]");
+        if (!$env) throw new \Exception("WinterCMS .env file not found or empty at [$this->cwd]");
         return explode("\n", $env);
     }
 
@@ -192,9 +201,10 @@ class WinterCMS extends Framework
             'reports' => 'Reports',
 
             // In-built QR codes
-            'qrcode'        => 'QR Code',
-            'qrcode_scan'   => 'QR Code Scan',
-            'find_by_qrcode' => 'Find by QR code',
+            'qrcode'          => 'QR Code',
+            'qrcode_scan'     => 'QR Code Scan',
+            'find_by_qrcode'  => 'Find by QR code',
+            'state_indicator' => 'Status',
 
             // Standard Buttons
             'create'     => 'Create',
@@ -244,6 +254,7 @@ class WinterCMS extends Framework
             'qrcode'        => 'رمز QR',
             'qrcode_scan'   => 'مسح الرمز',
             'find_by_qrcode' => 'البحث بواسطة الرمز',
+            'state_indicator' => 'Status',
 
             // Standard Buttons
             'create'     => 'نشاء ماركة جديدة',
@@ -293,6 +304,7 @@ class WinterCMS extends Framework
             'qrcode'        => 'QR Koda',
             'qrcode_scan'   => 'QR Koda Xwendin',
             'find_by_qrcode' => 'Bi koda QR-ê bibînin',
+            'state_indicator' => 'Status',
 
             // Standard Buttons
             'create'     => 'Afirandin',
@@ -653,10 +665,12 @@ class WinterCMS extends Framework
                 // Because we are not doing a winter:down,up here, but we still want the records
                 if ($model->table->isEmpty() && count($inserts)) {
                     print("  Running ${YELLOW}$table${NC} seed inserts because the table is empty: [");
+                    // We do not $this->db->disableTriggers(), because we want the created_at_event_id
                     foreach ($inserts as $insert) {
                         print(".");
                         $this->db->insert($insert);
                     }
+                    // $this->db->enableTriggers();
                     print("]\n");
                 }
             }
@@ -977,7 +991,7 @@ class WinterCMS extends Framework
         // ---------------------------------------- Lang
         $langDirPath   = "$pluginDirectoryPath/lang";
         $langEnPath    = "$pluginDirectoryPath/lang/en/lang.php";
-        $modelLangName = $model->langSectionName();
+        $modelKey      = $model->localTranslationKey();
         foreach ($model->fields() as $name => &$field) {
             $localTranslationKey = $field->localTranslationKey();
             if ($field->isLocalTranslationKey() && !$field->isStandard() && !$this->arrayFileValueExists($langEnPath, $localTranslationKey)) {
@@ -990,6 +1004,18 @@ class WinterCMS extends Framework
                 // Leave the interface to show the keys, if the translation has not been added
                 if ($field->labels) {
                     foreach ($field->labels as $langName => &$translation) {
+                        $langFilePath = "$langDirPath/$langName/lang.php";
+                        if (!file_exists($langFilePath)) throw new \Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
+                        $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
+                    }
+                }
+            }
+
+            if ($field->extraTranslations) {
+                foreach ($field->extraTranslations as $code => $labels) {
+                    print("      Add ${YELLOW}$code${NC} to ${YELLOW}lang/*${NC} for ${YELLOW}$name${NC}\n");
+                    $localTranslationKey = "$modelKey.$code";
+                    foreach ($labels as $langName => &$translation) {
                         $langFilePath = "$langDirPath/$langName/lang.php";
                         if (!file_exists($langFilePath)) throw new \Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
                         $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);

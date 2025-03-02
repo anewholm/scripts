@@ -1327,6 +1327,27 @@ HTML;
         return $fields;
     }
 
+    public function localTranslationKey(): string
+    {
+        $group    = 'models';
+        $subgroup = $this->dirName(); // squished usergroup | invoice
+        return "$group.$subgroup";
+    }
+
+    public function translationDomain(): string
+    {
+        /* Translation:
+         *  For foreign keys:           acorn.user::lang.models.usergroup.label (pointing TO the user plugin)
+         *  For explicit translations:  acorn.finance::lang.models.invoice.user_group: Payee Group
+         *  For qualified foreign keys: acorn.finance::lang.models.invoice.payee_user_group (payee_ makes it qualified)
+         * is_qualified: Does the field name, [user_group]_id, have the same name as the table it points to, acorn_user_[user_group]s?
+         * if not, then it is qualified, and we need a local translation
+         */
+        $domain = $this->plugin->translationDomain(); // acorn.user
+        $localTranslationKey = $this->localTranslationKey();
+        return "$domain::lang.$localTranslationKey";
+    }
+
     public function translationKey(bool $plural = self::SINGULAR): string
     {
         /* Translation:
@@ -1336,11 +1357,9 @@ HTML;
          * is_qualified: Does the field name, [user_group]_id, have the same name as the table it points to, acorn_user_[user_group]s?
          * if not, then it is qualified, and we need a local translation
          */
-        $domain   = $this->plugin->translationDomain(); // acorn.user
-        $group    = 'models';
-        $subgroup = $this->dirName(); // squished usergroup | invoice
+        $domain   = $this->translationDomain(); // acorn.user::lang.models.user
         $name     = ($plural ? 'label_plural' : 'label');
 
-        return "$domain::lang.$group.$subgroup.$name";
+        return "$domain.$name";
     }
 }
