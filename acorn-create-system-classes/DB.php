@@ -25,6 +25,8 @@ class DB {
         }
 
         $framework->db = &$this;
+
+        $this->setup();
     }
 
     public function isFrameworkTable(string &$tablename): bool
@@ -82,6 +84,23 @@ class DB {
     public function insert($sql, $namedParameters = array()): array
     {
         return $this->select($sql, $namedParameters);
+    }
+
+    // --------------------------------------- Database setup
+    public function setup()
+    {
+        $this->setPHPIntervalStyle();
+    }
+
+    public function setPHPIntervalStyle()
+    {
+        $this->set('IntervalStyle', 'iso_8601');
+    }
+
+    public function set($parameter, $value)
+    {
+        $statement = $this->connection->prepare("ALTER DATABASE $this->database SET \"$parameter\" TO '$value';");
+        $statement->execute();
     }
 
     // --------------------------------------- Schema Queries
@@ -355,7 +374,7 @@ class DB {
         if (!$nullable) {
             $sql     = "select count(*) from $table;";
             $reponse = $this->connection->query($sql);
-            $results = $reponse->fetchAll(\PDO::FETCH_ASSOC);
+            $results = $reponse->fetchAll(\PDO::FETCH_OBJ);
             if ($results[0]->count) {
                 print("${RED}ERROR$NC: $table has rows, so adding a NOT NULL column will fail\n");
                 $yn = readline("Truncate cascade [$table] (y) ?");

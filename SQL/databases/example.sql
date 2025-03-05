@@ -209,7 +209,7 @@ $$;
 ALTER FUNCTION public.fn_acorn_calendar_events_generate_event_instances() OWNER TO justice;
 
 --
--- Name: fn_acorn_calendar_generate_event_instances(record, record); Type: FUNCTION; Schema: public; Owner: sz
+-- Name: fn_acorn_calendar_generate_event_instances(record, record); Type: FUNCTION; Schema: public; Owner: justice
 --
 
 CREATE FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) RETURNS record
@@ -309,7 +309,7 @@ end;
 $$;
 
 
-ALTER FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) OWNER TO sz;
+ALTER FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) OWNER TO justice;
 
 --
 -- Name: fn_acorn_calendar_is_date(character varying, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: justice
@@ -539,6 +539,49 @@ $$;
 
 
 ALTER FUNCTION public.fn_acorn_calendar_trigger_activity_event() OWNER TO justice;
+
+--
+-- Name: fn_acorn_criminal_action_legalcase_defendants_cs(uuid, uuid); Type: FUNCTION; Schema: public; Owner: justice
+--
+
+CREATE FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cs(model_id uuid, user_id uuid) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+declare
+	justice_legalcase_id uuid;
+	summon_type_id uuid;
+	owner_user_id uuid;
+begin
+	owner_user_id := user_id;
+	
+	-- Create Warrant
+	select into justice_legalcase_id cl.legalcase_id 
+		from public.acorn_criminal_legalcases cl
+		inner join public.acorn_criminal_legalcase_defendants ld on cl.id = ld.legalcase_id
+		where ld.id = model_id;
+	select into summon_type_id id from public.acorn_justice_summon_types limit 1;
+	
+	insert into public.acorn_justice_summons(user_id, created_by_user_id, summon_type_id, legalcase_id)
+		select ld.user_id,
+			owner_user_id,
+			summon_type_id,
+			justice_legalcase_id
+		from public.acorn_criminal_legalcase_defendants ld
+		where id = model_id;
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cs(model_id uuid, user_id uuid) OWNER TO justice;
+
+--
+-- Name: FUNCTION fn_acorn_criminal_action_legalcase_defendants_cs(model_id uuid, user_id uuid); Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cs(model_id uuid, user_id uuid) IS 'labels:
+  en: Create Summons
+  ku: Gazîkirin çêbikin';
+
 
 --
 -- Name: fn_acorn_criminal_action_legalcase_defendants_cw(uuid, uuid); Type: FUNCTION; Schema: public; Owner: justice
@@ -1940,7 +1983,8 @@ CREATE TABLE public.acorn_criminal_defendant_detentions (
     actual_release_transfer_id uuid,
     legalcase_defendant_id uuid,
     name character varying(1024) GENERATED ALWAYS AS (id) STORED,
-    description text
+    description text,
+    allowed_notes_total interval
 );
 
 
@@ -1952,6 +1996,8 @@ ALTER TABLE public.acorn_criminal_defendant_detentions OWNER TO justice;
 
 COMMENT ON TABLE public.acorn_criminal_defendant_detentions IS 'methods:
   name: return $this->transfer->location->name . '' ('' . $this->detention_reason?->name . '')'';
+attribute-functions:
+  allowed-notes-total: return new CarbonInterval($value);
 labels:
   en: Detention
   ku: Girtî
@@ -1982,6 +2028,7 @@ COMMENT ON COLUMN public.acorn_criminal_defendant_detentions.detention_method_id
 --
 
 COMMENT ON COLUMN public.acorn_criminal_defendant_detentions.name IS 'hidden: true
+invisible: true
 labels:
   en: Name
   ku: Nav
@@ -2006,6 +2053,13 @@ no-label: true
 bootstraps:
   xs: 12
 tab: acorn::lang.models.general.notes';
+
+
+--
+-- Name: COLUMN acorn_criminal_defendant_detentions.allowed_notes_total; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_defendant_detentions.allowed_notes_total IS 'sql-select: (select sum("period") from acorn_criminal_detention_periods dps inner join acorn_justice_periods jp on dps.period_id = jp.id where dps.defendant_detention_id = acorn_criminal_defendant_detentions.id)';
 
 
 --
@@ -2058,6 +2112,70 @@ labels-plural:
 --
 
 COMMENT ON COLUMN public.acorn_criminal_detention_methods.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
+labels:
+  en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
+tab-location: 1
+no-label: true
+bootstraps:
+  xs: 12
+tab: acorn::lang.models.general.notes';
+
+
+--
+-- Name: acorn_criminal_detention_periods; Type: TABLE; Schema: public; Owner: justice
+--
+
+CREATE TABLE public.acorn_criminal_detention_periods (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    defendant_detention_id uuid NOT NULL,
+    name character varying(1024) GENERATED ALWAYS AS (id) STORED,
+    description text,
+    period_id uuid NOT NULL,
+    created_at_event_id uuid NOT NULL,
+    updated_at_event_id uuid,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.acorn_criminal_detention_periods OWNER TO justice;
+
+--
+-- Name: TABLE acorn_criminal_detention_periods; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON TABLE public.acorn_criminal_detention_periods IS 'labels:
+  en: Allowed period note
+labels-plural:
+  en: Allowed period notes
+methods:
+  name: return $this->period->name;';
+
+
+--
+-- Name: COLUMN acorn_criminal_detention_periods.name; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_detention_periods.name IS 'hidden: true
+invisible: true
+labels:
+  en: Name
+  ku: Nav
+labels-plural:
+  en: Names
+  ku: Navên';
+
+
+--
+-- Name: COLUMN acorn_criminal_detention_periods.description; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_detention_periods.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
   ku: Têbînî
@@ -2210,11 +2328,11 @@ labels-plural:
 COMMENT ON COLUMN public.acorn_criminal_legalcase_defendants.verdict IS 'field-type: radio
 field-options:
   G: 
-    en: guilty
-    ku: sucdar
+    en: Guilty
+    ku: Sucdar
   I: 
-    en: innocent
-    ku: bêsuc';
+    en: Innocent
+    ku: Bêsuc';
 
 
 --
@@ -2617,7 +2735,9 @@ labels:
 labels-plural:
   en: Judge Committies
   ku: Komîteyan Dadweran
-  ';
+column-type: partial
+partial: owner
+';
 
 
 --
@@ -2965,6 +3085,56 @@ permission-settings:
 --
 
 COMMENT ON COLUMN public.acorn_criminal_trials.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
+labels:
+  en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
+tab-location: 1
+no-label: true
+bootstraps:
+  xs: 12
+tab: acorn::lang.models.general.notes';
+
+
+--
+-- Name: acorn_criminal_witness_statement; Type: TABLE; Schema: public; Owner: justice
+--
+
+CREATE TABLE public.acorn_criminal_witness_statement (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    legalcase_witness_id uuid NOT NULL,
+    statement_id uuid NOT NULL,
+    description text,
+    created_at_event_id uuid NOT NULL,
+    created_by_user_id uuid DEFAULT public.fn_acorn_user_get_seed_user() NOT NULL,
+    updated_at_event_id uuid,
+    updated_by_user_id uuid
+);
+
+
+ALTER TABLE public.acorn_criminal_witness_statement OWNER TO justice;
+
+--
+-- Name: TABLE acorn_criminal_witness_statement; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON TABLE public.acorn_criminal_witness_statement IS 'order: 5
+labels:
+  en: Witness statement
+  ku: Îfade şahid
+labels-plural:
+  en: Witness statements
+  ku: Îfaden şahid
+';
+
+
+--
+-- Name: COLUMN acorn_criminal_witness_statement.description; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_criminal_witness_statement.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
 labels:
   en: Notes
   ku: Têbînî
@@ -3440,6 +3610,48 @@ tab: acorn::lang.models.general.notes';
 
 
 --
+-- Name: acorn_justice_periods; Type: TABLE; Schema: public; Owner: justice
+--
+
+CREATE TABLE public.acorn_justice_periods (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(1024) GENERATED ALWAYS AS (period) STORED,
+    description text,
+    period interval NOT NULL,
+    created_at_event_id uuid NOT NULL,
+    updated_at_event_id uuid,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.acorn_justice_periods OWNER TO justice;
+
+--
+-- Name: TABLE acorn_justice_periods; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON TABLE public.acorn_justice_periods IS 'labels:
+  en: Period
+labels-plural:
+  en: Periods
+seeding:
+  - [DEFAULT,DEFAULT,,24 hours]
+  - [DEFAULT,DEFAULT,,7 days]
+attribute-functions:
+  period: return new CarbonInterval($value);';
+
+
+--
+-- Name: COLUMN acorn_justice_periods.name; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_periods.name IS 'hidden: true
+invisible: true';
+
+
+--
 -- Name: acorn_justice_scanned_documents; Type: TABLE; Schema: public; Owner: justice
 --
 
@@ -3511,6 +3723,212 @@ no-label: true
 bootstraps:
   xs: 12
 tab: acorn::lang.models.general.notes';
+
+
+--
+-- Name: acorn_justice_statements; Type: TABLE; Schema: public; Owner: justice
+--
+
+CREATE TABLE public.acorn_justice_statements (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    created_at_event_id uuid,
+    created_by_user_id uuid,
+    user_id uuid NOT NULL,
+    legalcase_id uuid NOT NULL,
+    name character varying(2048),
+    description text,
+    statement text,
+    updated_at_event_id uuid,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.acorn_justice_statements OWNER TO justice;
+
+--
+-- Name: TABLE acorn_justice_statements; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON TABLE public.acorn_justice_statements IS 'labels:
+  en: Statement
+  ku: Îfade
+labels-plural:
+  en: Statements
+  ku: Îfaden';
+
+
+--
+-- Name: COLUMN acorn_justice_statements.description; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_statements.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
+labels:
+  en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
+tab-location: 1
+no-label: true
+bootstraps:
+  xs: 12
+tab: acorn::lang.models.general.notes';
+
+
+--
+-- Name: COLUMN acorn_justice_statements.statement; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_statements.statement IS 'invisible: true';
+
+
+--
+-- Name: acorn_justice_summon_types; Type: TABLE; Schema: public; Owner: justice
+--
+
+CREATE TABLE public.acorn_justice_summon_types (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(1024) NOT NULL,
+    description text,
+    created_at_event_id uuid NOT NULL,
+    updated_at_event_id uuid,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.acorn_justice_summon_types OWNER TO justice;
+
+--
+-- Name: TABLE acorn_justice_summon_types; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON TABLE public.acorn_justice_summon_types IS 'seeding:
+  - [DEFAULT, ''Normal'']
+labels:
+  en: Summon Type
+  ku: Cure Fermana girtinê
+labels-plural:
+  en: Summon Types
+  ku: Cureyên Fermana girtinê';
+
+
+--
+-- Name: COLUMN acorn_justice_summon_types.name; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_summon_types.name IS 'labels:
+  en: Name
+  ku: Nav
+labels-plural:
+  en: Names
+  ku: Navên';
+
+
+--
+-- Name: COLUMN acorn_justice_summon_types.description; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_summon_types.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
+labels:
+  en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
+tab-location: 1
+no-label: true
+bootstraps:
+  xs: 12
+tab: acorn::lang.models.general.notes';
+
+
+--
+-- Name: acorn_justice_summons; Type: TABLE; Schema: public; Owner: justice
+--
+
+CREATE TABLE public.acorn_justice_summons (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    created_at_event_id uuid,
+    created_by_user_id uuid,
+    user_id uuid NOT NULL,
+    summon_type_id uuid,
+    legalcase_id uuid NOT NULL,
+    revoked_at_event_id uuid,
+    description text,
+    updated_at_event_id uuid,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL,
+    state_indicator character varying(2048)[],
+    notary_request_id uuid
+);
+
+
+ALTER TABLE public.acorn_justice_summons OWNER TO justice;
+
+--
+-- Name: TABLE acorn_justice_summons; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON TABLE public.acorn_justice_summons IS 'methods:
+  name: return $this->summon_type?->name;
+labels:
+  en: Summons
+  ku: Gazîkirin
+labels-plural:
+  en: Summons
+  ku: Gazîkirinan';
+
+
+--
+-- Name: COLUMN acorn_justice_summons.revoked_at_event_id; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_summons.revoked_at_event_id IS 'labels:
+  en: Revoked at
+  ku: Vekişandin';
+
+
+--
+-- Name: COLUMN acorn_justice_summons.description; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_summons.description IS 'field-comment: Vê zeviyê bikar bînin da ku hûn notên din ên ku hêj di navberê de zeviyên wan tune ne zêde bikin. Rêvebirên pergalê dê vê yekê kontrol bikin û pêvekê berfireh bikin da ku hewcedariyên we bicîh bînin
+labels:
+  en: Notes
+  ku: Têbînî
+labels-plural:
+  en: Notes
+  ku: Têbînî
+tab-location: 1
+no-label: true
+bootstraps:
+  xs: 12
+tab: acorn::lang.models.general.notes';
+
+
+--
+-- Name: COLUMN acorn_justice_summons.state_indicator; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_summons.state_indicator IS 'sqlSelect: (select fn_acorn_justice_summons_state_indicator(acorn_justice_summons))
+extra-translations:
+  notary_required:
+    en: Notary required
+    ku: Diwan lazimî
+  notary_awaiting:
+    en: Awaiting Notary
+    ku: Diwan bisekane';
+
+
+--
+-- Name: COLUMN acorn_justice_summons.notary_request_id; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_summons.notary_request_id IS 'hidden: true
+invisible: true';
 
 
 --
@@ -3603,7 +4021,13 @@ ALTER TABLE public.acorn_justice_warrants OWNER TO justice;
 -- Name: TABLE acorn_justice_warrants; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON TABLE public.acorn_justice_warrants IS 'methods:
+COMMENT ON TABLE public.acorn_justice_warrants IS 'printable:
+  permissions:
+    notary:
+      labels:
+        en: Notary
+        ku: Diwan
+methods:
   name: return $this->warrant_type?->name;
 labels:
   en: Warrant
@@ -3651,7 +4075,18 @@ extra-translations:
     ku: Diwan lazimî
   notary_awaiting:
     en: Awaiting Notary
-    ku: Diwan bisekane';
+    ku: Diwan bisekane
+  notary_validated:
+    en: Notary validated
+    ku: Diwan kabulkir';
+
+
+--
+-- Name: COLUMN acorn_justice_warrants.notary_request_id; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON COLUMN public.acorn_justice_warrants.notary_request_id IS 'hidden: true
+invisible: true';
 
 
 --
@@ -6361,6 +6796,17 @@ ceafc66c-fea2-46f1-9a1c-94727b04c23c	Criminal Legalcase Defendants	\N	f	#333	\N	
 1f8c7822-eeff-4224-9fac-9ced71ec601b	Justice Warrant Types	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22806	f3bc49bc-eac7-11ef-9e4a-1740a039dada
 112200db-595f-4a0f-896c-0cae51e45ec3	Notary Requests	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	72909	f3bc49bc-eac7-11ef-9e4a-1740a039dada
 f3cfacba-d1ae-465d-95c9-eeb2a17e666f	NotaryRequest	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	\N	ec4360f9-11cc-4cb8-b1fc-f274f220da5f
+a19e753c-4065-4d5f-86f0-f9f4808df0b8	Justice Summon Types	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	73371	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+659cbdc7-5ae7-4c20-b5dd-dfd6137c7016	Justice Summons	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	73406	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+b6551199-16cd-484b-8680-6c5f36b52782	Justice Statements	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	73471	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+6fab1f3f-09c5-4838-8c8c-fd9b75e3b8ca	Criminal Legalcase Witnesses	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22697	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+76c3a8ca-9a82-477a-a740-61b9ddbf1bb5	Criminal Witness Statement	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	73516	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+1cbd0284-e902-4c6b-a0b3-f3a8d984f2f3	Justice Legalcase Categories	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22777	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+ea2060dc-a693-4b0b-bb25-f4c8fdeab585	Justice Legalcase Legalcase Category	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22789	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+4e41bdea-b869-4a57-977e-7d3bdee1972f	Justice Periods	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	73616	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+4bf19246-e53f-4d08-bc1f-bfbe1200212c	Lojistiks Transfers	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22985	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+bf2a1cda-1c5d-489e-bc88-e7b510f206af	Criminal Detention Periods	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	73601	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+dbe4954c-4e71-4d2b-843b-990604a4275b	Criminal Defendant Crimes	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22650	f3bc49bc-eac7-11ef-9e4a-1740a039dada
 \.
 
 
@@ -6432,7 +6878,7 @@ COPY public.acorn_criminal_defendant_crimes (id, legalcase_defendant_id, crime_i
 -- Data for Name: acorn_criminal_defendant_detentions; Type: TABLE DATA; Schema: public; Owner: justice
 --
 
-COPY public.acorn_criminal_defendant_detentions (id, transfer_id, detention_reason_id, detention_method_id, actual_release_transfer_id, legalcase_defendant_id, description) FROM stdin;
+COPY public.acorn_criminal_defendant_detentions (id, transfer_id, detention_reason_id, detention_method_id, actual_release_transfer_id, legalcase_defendant_id, description, allowed_notes_total) FROM stdin;
 \.
 
 
@@ -6441,6 +6887,14 @@ COPY public.acorn_criminal_defendant_detentions (id, transfer_id, detention_reas
 --
 
 COPY public.acorn_criminal_detention_methods (id, name, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: acorn_criminal_detention_periods; Type: TABLE DATA; Schema: public; Owner: justice
+--
+
+COPY public.acorn_criminal_detention_periods (id, defendant_detention_id, description, period_id, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
 \.
 
 
@@ -6557,6 +7011,14 @@ COPY public.acorn_criminal_trials (id, legalcase_id, created_at_event_id, create
 
 
 --
+-- Data for Name: acorn_criminal_witness_statement; Type: TABLE DATA; Schema: public; Owner: justice
+--
+
+COPY public.acorn_criminal_witness_statement (id, legalcase_witness_id, statement_id, description, created_at_event_id, created_by_user_id, updated_at_event_id, updated_by_user_id) FROM stdin;
+\.
+
+
+--
 -- Data for Name: acorn_finance_currencies; Type: TABLE DATA; Schema: public; Owner: justice
 --
 
@@ -6621,10 +7083,42 @@ COPY public.acorn_justice_legalcases (id, created_at_event_id, created_by_user_i
 
 
 --
+-- Data for Name: acorn_justice_periods; Type: TABLE DATA; Schema: public; Owner: justice
+--
+
+COPY public.acorn_justice_periods (id, description, period, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+\.
+
+
+--
 -- Data for Name: acorn_justice_scanned_documents; Type: TABLE DATA; Schema: public; Owner: justice
 --
 
 COPY public.acorn_justice_scanned_documents (id, name, document, created_by_user_id, created_at_event_id, legalcase_id, description, updated_at_event_id, updated_by_user_id, server_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: acorn_justice_statements; Type: TABLE DATA; Schema: public; Owner: justice
+--
+
+COPY public.acorn_justice_statements (id, created_at_event_id, created_by_user_id, user_id, legalcase_id, name, description, statement, updated_at_event_id, updated_by_user_id, server_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: acorn_justice_summon_types; Type: TABLE DATA; Schema: public; Owner: justice
+--
+
+COPY public.acorn_justice_summon_types (id, name, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: acorn_justice_summons; Type: TABLE DATA; Schema: public; Owner: justice
+--
+
+COPY public.acorn_justice_summons (id, created_at_event_id, created_by_user_id, user_id, summon_type_id, legalcase_id, revoked_at_event_id, description, updated_at_event_id, updated_by_user_id, server_id, state_indicator, notary_request_id) FROM stdin;
 \.
 
 
@@ -7347,7 +7841,7 @@ COPY public.backend_user_preferences (id, user_id, namespace, "group", item, val
 4	1	acorn_criminal	appeals	lists	{"visible":["created_at_event","event","name"],"order":["id","legalcase","created_at_event","created_by_user","event","name","_qrcode"],"per_page":"20"}
 8	1	acorn_user	usergroups	lists	{"visible":["name","type","type_colour","type_image","colour","code","users_count","created_at","auth_is_member"],"order":["id","name","type","type_colour","type_image","colour","image","parent_user_group","code","users_count","created_at","auth_is_member"],"per_page":20}
 6	1	acorn_criminal	legalcases	lists-relationcriminallegalcaseprosecutorlegalcasesviewlist	{"visible":["name","surname","email","created_at","last_seen","groups","languages"],"order":["id","username","name","surname","email","created_at","last_seen","is_guest","created_ip_address","last_ip_address","groups","languages"],"per_page":false}
-12	1	acorn_criminal	legalcases	lists-relationcriminallegalcasedefendantslegalcaseviewlist	{"visible":["user","created_at_event","criminal_defendant_detentions_legalcase_defendant","criminal_defendant_crimes_legalcase_defendant","_actions","updated_at_event","updated_by_user","server"],"order":["id","legalcase","user","created_at_event","created_by_user","criminal_defendant_detentions_legalcase_defendant","criminal_defendant_crimes_legalcase_defendant","_qrcode","_actions","description","updated_at_event","updated_by_user","server"],"per_page":"10"}
+12	1	acorn_criminal	legalcases	lists-relationcriminallegalcasedefendantslegalcaseviewlist	{"visible":["user","created_at_event","criminal_defendant_detentions_legalcase_defendant","criminal_defendant_crimes_legalcase_defendant","_actions","updated_at_event","updated_by_user","server","verdict"],"order":["id","legalcase","user","created_at_event","created_by_user","criminal_defendant_detentions_legalcase_defendant","criminal_defendant_crimes_legalcase_defendant","_qrcode","_actions","description","updated_at_event","updated_by_user","server","lawyer_user","verdict"],"per_page":"10"}
 10	1	acorn_criminal	legalcases	lists-relationcriminaltrialslegalcaseviewlist	{"visible":["legalcase","criminal_trial_judges_trial","criminal_trial_sessions_trial","_actions","calendar[name]","first_event_part[start]","first_event_part[repeat]","first_event_part[status][name]"],"order":["id","legalcase","created_at_event","created_by_user","criminal_trial_judges_trial","criminal_trial_sessions_trial","_qrcode","_actions","calendar[name]","first_event_part[type][name]","first_event_part[name]","first_event_part[start]","first_event_part[end]","first_event_part[alarm]","first_event_part[description]","first_event_part[repeat]","first_event_part[mask]","first_event_part[repeat_frequency]","first_event_part[mask_type]","first_event_part[parentEventPart][name]","first_event_part[until]","first_event_part[users]","first_event_part[groups]","first_event_part[status][name]","first_event_part[location][name]","owner_user_id","owner_user_group_id","permissions","created_at","updated_at"],"per_page":"10"}
 2	1	backend	reportwidgets	dashboard	{"welcome":{"class":"Backend\\\\ReportWidgets\\\\Welcome","sortOrder":50,"configuration":{"ocWidgetWidth":7}},"systemStatus":{"class":"System\\\\ReportWidgets\\\\Status","sortOrder":60,"configuration":{"title":"System status","ocWidgetWidth":7,"ocWidgetNewRow":null}}}
 5	1	backend	backend	preferences	{"locale":"ku","fallback_locale":"en","timezone":"Europe\\/Istanbul","editor_font_size":"12","editor_word_wrap":"fluid","editor_code_folding":"manual","editor_tab_size":"4","editor_theme":"twilight","editor_show_invisibles":"0","editor_highlight_active_line":"1","editor_use_hard_tabs":"0","editor_show_gutter":"1","editor_auto_closing":"0","editor_autocompletion":"manual","editor_enable_snippets":"0","editor_display_indent_guides":"0","editor_show_print_margin":"0","dark_mode":"light","menu_location":"","icon_location":"","user_id":1}
@@ -7355,7 +7849,9 @@ COPY public.backend_user_preferences (id, user_id, namespace, "group", item, val
 11	1	acorn_user	languages	lists	{"visible":["name"],"order":["id","name"],"per_page":"20"}
 14	1	acorn_criminal	legalcases	lists-relationlegalcasejusticewarrantslegalcaseviewlist	{"visible":["user","warrant_type","revoked_at_event","description","state_indicator","_actions"],"order":["id","created_at_event","created_by_user","user","warrant_type","legalcase","revoked_at_event","description","updated_at_event","updated_by_user","server","state_indicator","notary_request","_qrcode","_actions"],"per_page":"10"}
 13	1	acorn_criminal	legalcases	lists-relationcriminallegalcaserelatedeventslegalcaseviewlist	{"visible":["first_event_part[name]","first_event_part[start]","first_event_part[end]","first_event_part[alarm]","first_event_part[repeat]","first_event_part[repeat_frequency]","first_event_part[status][name]","first_event_part[location][name]","_actions"],"order":["legalcase","id","created_at","created_by_user","updated_at","owner_user_id","owner_user_group_id","permissions","_qrcode","calendar[name]","first_event_part[name]","first_event_part[type][name]","first_event_part[start]","first_event_part[end]","first_event_part[alarm]","first_event_part[description]","first_event_part[repeat]","first_event_part[mask]","first_event_part[repeat_frequency]","first_event_part[mask_type]","first_event_part[parentEventPart][name]","first_event_part[until]","first_event_part[status][name]","first_event_part[location][name]","_actions","first_event_part[users]","first_event_part[groups]"],"per_page":"10"}
-1	1	acorn_criminal	legalcases	lists	{"visible":["legalcase_name","legalcase[owner_user_group][name]","criminal_legalcase_prosecutor_legalcases","criminal_legalcase_evidence_legalcase","criminal_trials_legalcase","legalcase_closed_at_event","legalcase[justice_scanned_documents_legalcase][name]","criminal_legalcase_plaintiffs_legalcase","legalcase_created_at_event","legalcase_updated_at_event","legalcase_type","_actions"],"order":["id","_qrcode","legalcase_name","legalcase[owner_user_group][name]","criminal_legalcase_prosecutor_legalcases","criminal_appeals_legalcase","criminal_legalcase_defendants_legalcase","criminal_legalcase_related_events_legalcase","criminal_legalcase_witnesses_legalcase","criminal_legalcase_evidence_legalcase","criminal_trials_legalcase","server","legalcase_closed_at_event","legalcase[justice_scanned_documents_legalcase][name]","legalcase[justice_legalcase_identifiers_legalcase][name]","legalcase[justice_warrants_legalcase][name]","legalcase[justice_legalcase_legalcase_category_legalcases][name]","judge_committee_user_group","criminal_legalcase_plaintiffs_legalcase","legalcase_created_at_event","legalcase_created_by_user","legalcase_description","legalcase_updated_at_event","legalcase_type","legalcase_updated_by_user","_actions"],"per_page":"20"}
+16	2	acorn_criminal	legalcases	lists-relationlegalcasejusticewarrantslegalcaseviewlist	{"visible":["user","warrant_type","legalcase","revoked_at_event","description","state_indicator","_actions"],"order":["id","created_at_event","created_by_user","user","warrant_type","legalcase","revoked_at_event","description","updated_at_event","updated_by_user","server","state_indicator","notary_request","_qrcode","_actions"],"per_page":"10"}
+1	1	acorn_criminal	legalcases	lists	{"visible":["legalcase_name","legalcase[owner_user_group][name]","criminal_legalcase_prosecutor_legalcases","criminal_legalcase_evidence_legalcase","criminal_trials_legalcase","legalcase_closed_at_event","legalcase[justice_scanned_documents_legalcase][name]","legalcase[justice_legalcase_legalcase_category_legalcases][name]","criminal_legalcase_plaintiffs_legalcase","legalcase_type","_actions"],"order":["id","_qrcode","legalcase_name","legalcase[owner_user_group][name]","criminal_legalcase_prosecutor_legalcases","criminal_appeals_legalcase","criminal_legalcase_defendants_legalcase","criminal_legalcase_related_events_legalcase","criminal_legalcase_witnesses_legalcase","criminal_legalcase_evidence_legalcase","criminal_trials_legalcase","server","legalcase_closed_at_event","legalcase[justice_scanned_documents_legalcase][name]","legalcase[justice_warrants_legalcase][name]","legalcase[justice_legalcase_legalcase_category_legalcases][name]","judge_committee_user_group","criminal_legalcase_plaintiffs_legalcase","legalcase_created_at_event","legalcase_created_by_user","legalcase_description","legalcase_updated_at_event","legalcase_type","legalcase_updated_by_user","_actions","legalcase[justice_summons_legalcase][name]","legalcase[justice_statements_legalcase][name]"],"per_page":"20"}
+15	2	acorn_criminal	legalcases	lists-relationcriminallegalcasewitnesseslegalcaseviewlist	{"visible":["user","legalcase","description","criminal_witness_statement_legalcase_witnesses","_actions"],"order":["id","user","legalcase","created_at_event","created_by_user","description","updated_at_event","updated_by_user","server","criminal_witness_statement_legalcase_witnesses","_qrcode","_actions"],"per_page":"10"}
 \.
 
 
@@ -7387,7 +7883,7 @@ COPY public.backend_user_throttle (id, user_id, ip_address, attempts, last_attem
 COPY public.backend_users (id, first_name, last_name, login, email, password, activation_code, persist_code, reset_password_code, permissions, is_activated, role_id, activated_at, last_login, created_at, updated_at, deleted_at, is_superuser, metadata, acorn_url, acorn_user_user_id) FROM stdin;
 1	Admin	Person	admin	admin@example.com	$2y$10$A487JegVfo9RmI9gD89kiuU0RHuj2sNKSAvu4ZXkMwA42JWAnecoS	\N	$2y$10$ijrJ234KkGAkO4Unp6uoOenr3AClxCDZq1s6VVmqhkNw.DX.AeV.u	\N		t	2	\N	2025-02-27 12:49:50	2024-10-19 10:37:18	2025-02-27 12:49:50	\N	t	\N	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6
 7			justice	justice@nowhere.com	$2y$10$H4YHv/Dyj4Od5i5RRMEbGOvbudWq4QFfSKk3hQvALelR.CXKE5NUa	\N	\N	\N		f	\N	\N	\N	2025-02-25 07:35:08	2025-02-25 07:35:08	\N	t	\N	\N	\N
-2	Demo		demo	demo@example.com	$2y$10$qXppZYCFKO3PBwI2JUZ0mORjrR/eOhLIkCdKe2U5aPsAWys.sr.Qy		$2y$10$DAiTJ/6Nz/inGIpDIRi1POcb8BQNZU80ev64QTKJeoVXqV51JxQvq		{"cms.manage_content":-1,"cms.manage_assets":-1,"cms.manage_pages":-1,"cms.manage_layouts":-1,"cms.manage_partials":-1,"cms.manage_themes":-1,"cms.manage_theme_options":-1,"backend.access_dashboard":1,"backend.manage_default_dashboard":-1,"backend.manage_users":-1,"backend.impersonate_users":-1,"backend.manage_preferences":1,"backend.manage_editor":-1,"backend.manage_own_editor":-1,"backend.manage_branding":1,"media.manage_media":-1,"backend.allow_unsafe_markdown":-1,"system.manage_updates":-1,"system.access_logs":-1,"system.manage_mail_settings":-1,"system.manage_mail_templates":-1,"acorn.rtler.change_settings":1,"acorn.users.access_users":1,"acorn.users.access_groups":1,"acorn.users.access_settings":1,"acorn.users.impersonate_user":-1,"winter.location.access_settings":1,"winter.tailwindui.manage_own_appearance.dark_mode":1,"winter.tailwindui.manage_own_appearance.menu_location":1,"winter.tailwindui.manage_own_appearance.item_location":1,"winter.translate.manage_locales":1,"winter.translate.manage_messages":1,"acorn_location":1,"acorn_messaging":-1,"calendar_view":1,"change_the_past":1,"access_settings":1,"legalcases__legalcase_name__update":-1,"legalcases__owner_user_group_id__update":-1,"legalcase_type__create_criminal_only":1,"legalcase_type__create_civil_only":-1,"legalcase_type__create_any":-1,"legalcases__legalcase_type_id__update":-1,"trials__access":-1,"appeals__access":-1}	t	\N	\N	2025-02-25 08:26:36	\N	2025-02-26 11:25:41	\N	f			2bc29c8f-e9b0-4bd4-8aff-e691b084a255
+2	Demo		demo	demo@example.com	$2y$10$qXppZYCFKO3PBwI2JUZ0mORjrR/eOhLIkCdKe2U5aPsAWys.sr.Qy		$2y$10$DAiTJ/6Nz/inGIpDIRi1POcb8BQNZU80ev64QTKJeoVXqV51JxQvq		{"cms.manage_content":-1,"cms.manage_assets":-1,"cms.manage_pages":-1,"cms.manage_layouts":-1,"cms.manage_partials":-1,"cms.manage_themes":-1,"cms.manage_theme_options":-1,"backend.access_dashboard":1,"backend.manage_default_dashboard":-1,"backend.manage_users":-1,"backend.impersonate_users":-1,"backend.manage_preferences":1,"backend.manage_editor":-1,"backend.manage_own_editor":-1,"backend.manage_branding":1,"media.manage_media":-1,"backend.allow_unsafe_markdown":-1,"system.manage_updates":-1,"system.access_logs":-1,"system.manage_mail_settings":-1,"system.manage_mail_templates":-1,"acorn.rtler.change_settings":1,"acorn.users.access_users":1,"acorn.users.access_groups":1,"acorn.users.access_settings":1,"acorn.users.impersonate_user":-1,"winter.location.access_settings":1,"winter.tailwindui.manage_own_appearance.dark_mode":1,"winter.tailwindui.manage_own_appearance.menu_location":1,"winter.tailwindui.manage_own_appearance.item_location":1,"winter.translate.manage_locales":1,"winter.translate.manage_messages":1,"acorn_location":1,"acorn_messaging":-1,"calendar_view":1,"change_the_past":1,"access_settings":1,"legalcases__legalcase_name__update":-1,"legalcases__owner_user_group_id__update":-1,"notary":1,"legalcase_type__create_criminal_only":1,"legalcase_type__create_civil_only":-1,"legalcase_type__create_any":-1,"legalcases__legalcase_type_id__update":-1,"trials__access":-1,"appeals__access":-1}	t	\N	\N	2025-02-25 08:26:36	\N	2025-03-03 11:40:47	\N	f			2bc29c8f-e9b0-4bd4-8aff-e691b084a255
 \.
 
 
@@ -7457,6 +7953,9 @@ COPY public.deferred_bindings (id, master_type, master_field, slave_type, slave_
 79	Acorn\\Criminal\\Models\\LegalcaseEvidence	criminal_crime_evidence_legalcase_evidences	Acorn\\Criminal\\Models\\DefendantCrime	9e2bc3de-c248-414a-ae83-9be0e4d704f6	VXyis208P4u1KNVA9Tqt3HlBrSNL7Xufe1XKEHFk	t	2025-02-09 13:34:29	2025-02-09 13:34:29	\N
 84	Acorn\\Criminal\\Models\\Legalcase	criminal_legalcase_plaintiffs_legalcase	Acorn\\Criminal\\Models\\LegalcasePlaintiff	9e3fdfb0-aede-4e43-954b-43fb35151657	QmrL3mnq99VvNXXAki8yyN4umO6fixANHWBnM3uM	t	2025-02-19 13:28:50	2025-02-19 13:28:50	\N
 87	Acorn\\Criminal\\Models\\Legalcase	criminal_legalcase_plaintiffs_legalcase	Acorn\\Criminal\\Models\\LegalcasePlaintiff	9e479927-78c1-4a46-8313-98b8bcfe726f	9iDcVc5V1lCFehETq9nsUqs8esDraOU2Hybvk9Gn	t	2025-02-23 09:38:13	2025-02-23 09:38:13	\N
+88	Acorn\\Criminal\\Models\\LegalcaseWitness	criminal_witness_statement_legalcase_witnesses	Acorn\\Justice\\Models\\Statement	9e57c722-72b7-4682-adb2-aab820eb8be6	TX3THOr96rX9YcfjjfTduI0QT2gCe0jBa80voJrH	t	2025-03-03 10:40:02	2025-03-03 10:40:02	\N
+89	Acorn\\Criminal\\Models\\DefendantDetention	criminal_detention_periods_defendant_detention	Acorn\\Criminal\\Models\\DetentionPeriod	9e5bbd61-53ae-49c6-b2e5-e17ddef6072d	sNwa9OVl3OYTjIzVbqdubf5bUWQEbL6h3sPWDxPA	t	2025-03-05 09:56:04	2025-03-05 09:56:04	\N
+90	Acorn\\Criminal\\Models\\LegalcaseDefendant	criminal_defendant_detentions_legalcase_defendant	Acorn\\Criminal\\Models\\DefendantDetention	9e5bbd67-c259-4a2d-86a6-f99040234657	sNwa9OVl3OYTjIzVbqdubf5bUWQEbL6h3sPWDxPA	t	2025-03-05 09:56:09	2025-03-05 09:56:09	\N
 \.
 
 
@@ -9755,6 +10254,38 @@ COPY public.winter_translate_attributes (id, locale, model_id, model_type, attri
 729	ku	ff8d1163-61b6-4614-9fc3-a5a2d7944cca	Acorn\\Justice\\Models\\Warrant	{"description":""}
 732	ar	e09ac636-1a74-4a73-b735-e4126493621f	Acorn\\Notary\\Models\\Request	{"description":""}
 733	ku	e09ac636-1a74-4a73-b735-e4126493621f	Acorn\\Notary\\Models\\Request	{"description":""}
+734	ar	9e5780b5-2a7e-4b5b-9c73-cf9885751b5e	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
+735	ku	9e5780b5-2a7e-4b5b-9c73-cf9885751b5e	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
+736	ar	2d4faca9-108e-4663-b75d-85496bba421d	Acorn\\Notary\\Models\\Request	{"description":""}
+737	ku	2d4faca9-108e-4663-b75d-85496bba421d	Acorn\\Notary\\Models\\Request	{"description":""}
+738	ar	9e57c722-72b7-4682-adb2-aab820eb8be6	Acorn\\Justice\\Models\\Statement	{"name":"","description":""}
+739	ku	9e57c722-72b7-4682-adb2-aab820eb8be6	Acorn\\Justice\\Models\\Statement	{"name":"","description":""}
+740	ar	9e57c734-c99d-4bcb-ba71-67d405d1c9cb	Acorn\\Criminal\\Models\\LegalcaseWitness	{"description":""}
+741	ku	9e57c734-c99d-4bcb-ba71-67d405d1c9cb	Acorn\\Criminal\\Models\\LegalcaseWitness	{"description":""}
+742	ar	9e57ce20-67ae-473a-91a2-59af9fd2cd74	Acorn\\Justice\\Models\\Statement	{"name":"","description":""}
+743	ku	9e57ce20-67ae-473a-91a2-59af9fd2cd74	Acorn\\Justice\\Models\\Statement	{"name":"","description":""}
+744	ar	9e597616-1e43-4a84-b7eb-90e3f5a6263f	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
+745	ku	9e597616-1e43-4a84-b7eb-90e3f5a6263f	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
+746	ar	9e5ba379-9ce3-43b6-a985-05b30c8b12b1	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
+747	ku	9e5ba379-9ce3-43b6-a985-05b30c8b12b1	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
+748	ar	9e5ba38d-d0d0-483e-adb9-5410b1c51a06	Acorn\\Criminal\\Models\\DetentionPeriod	{"description":""}
+749	ku	9e5ba38d-d0d0-483e-adb9-5410b1c51a06	Acorn\\Criminal\\Models\\DetentionPeriod	{"description":""}
+750	ar	9e5ba3a2-b00d-41ff-9f8c-12f1538a455e	Acorn\\Criminal\\Models\\DetentionPeriod	{"description":""}
+751	ku	9e5ba3a2-b00d-41ff-9f8c-12f1538a455e	Acorn\\Criminal\\Models\\DetentionPeriod	{"description":""}
+752	ar	9e5bbd40-a9c7-42b5-a934-0cf95009b796	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
+753	ku	9e5bbd40-a9c7-42b5-a934-0cf95009b796	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
+754	ar	9e5bbd61-53ae-49c6-b2e5-e17ddef6072d	Acorn\\Criminal\\Models\\DetentionPeriod	{"description":""}
+755	ku	9e5bbd61-53ae-49c6-b2e5-e17ddef6072d	Acorn\\Criminal\\Models\\DetentionPeriod	{"description":""}
+756	ar	9e5bbd67-c259-4a2d-86a6-f99040234657	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
+757	ku	9e5bbd67-c259-4a2d-86a6-f99040234657	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
+758	ar	9e5bbd79-4b55-486b-b383-35bf5a0e5bca	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
+759	ku	9e5bbd79-4b55-486b-b383-35bf5a0e5bca	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
+760	ar	9e5bbdce-1ee4-4487-b626-ad0a244e1f90	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
+761	ku	9e5bbdce-1ee4-4487-b626-ad0a244e1f90	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
+762	ar	9e5bbdfb-f5bc-46c3-b060-7ab77d454dd7	Acorn\\Criminal\\Models\\DetentionPeriod	{"description":""}
+763	ku	9e5bbdfb-f5bc-46c3-b060-7ab77d454dd7	Acorn\\Criminal\\Models\\DetentionPeriod	{"description":""}
+764	ar	9e5c5f85-5ef3-49f1-8b28-90a872eb4a31	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
+765	ku	9e5c5f85-5ef3-49f1-8b28-90a872eb4a31	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
 \.
 
 
@@ -9803,7 +10334,7 @@ SELECT pg_catalog.setval('public.backend_user_groups_id_seq', 1, true);
 -- Name: backend_user_preferences_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.backend_user_preferences_id_seq', 14, true);
+SELECT pg_catalog.setval('public.backend_user_preferences_id_seq', 16, true);
 
 
 --
@@ -9852,7 +10383,7 @@ SELECT pg_catalog.setval('public.cms_theme_templates_id_seq', 1, false);
 -- Name: deferred_bindings_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.deferred_bindings_id_seq', 87, true);
+SELECT pg_catalog.setval('public.deferred_bindings_id_seq', 90, true);
 
 
 --
@@ -9894,7 +10425,7 @@ SELECT pg_catalog.setval('public.rainlab_location_states_id_seq', 720, true);
 -- Name: rainlab_translate_attributes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 733, true);
+SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 765, true);
 
 
 --
@@ -9922,7 +10453,7 @@ SELECT pg_catalog.setval('public.rainlab_translate_messages_id_seq', 1, false);
 -- Name: system_event_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.system_event_logs_id_seq', 12067, true);
+SELECT pg_catalog.setval('public.system_event_logs_id_seq', 12103, true);
 
 
 --
@@ -10116,6 +10647,14 @@ ALTER TABLE ONLY public.acorn_criminal_detention_methods
 
 
 --
+-- Name: acorn_criminal_detention_periods acorn_criminal_detention_periods_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_periods
+    ADD CONSTRAINT acorn_criminal_detention_periods_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: acorn_criminal_detention_reasons acorn_criminal_detention_reasons_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -10177,6 +10716,14 @@ ALTER TABLE ONLY public.acorn_criminal_trial_sessions
 
 ALTER TABLE ONLY public.acorn_criminal_trials
     ADD CONSTRAINT acorn_criminal_trials_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: acorn_criminal_witness_statement acorn_criminal_witness_statement_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_witness_statement
+    ADD CONSTRAINT acorn_criminal_witness_statement_pkey PRIMARY KEY (id);
 
 
 --
@@ -10308,11 +10855,43 @@ ALTER TABLE ONLY public.acorn_criminal_legalcase_witnesses
 
 
 --
+-- Name: acorn_justice_periods acorn_justice_periods_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_periods
+    ADD CONSTRAINT acorn_justice_periods_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: acorn_justice_scanned_documents acorn_justice_scanned_documents_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_justice_scanned_documents
     ADD CONSTRAINT acorn_justice_scanned_documents_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: acorn_justice_statements acorn_justice_statements_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_statements
+    ADD CONSTRAINT acorn_justice_statements_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: acorn_justice_summon_types acorn_justice_summon_types_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summon_types
+    ADD CONSTRAINT acorn_justice_summon_types_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: acorn_justice_summons acorn_justice_summons_pkey; Type: CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summons
+    ADD CONSTRAINT acorn_justice_summons_pkey PRIMARY KEY (id);
 
 
 --
@@ -11718,6 +12297,20 @@ CREATE INDEX fki_defendant_crime_id ON public.acorn_criminal_crime_evidence USIN
 
 
 --
+-- Name: fki_defendant_detention_id; Type: INDEX; Schema: public; Owner: justice
+--
+
+CREATE INDEX fki_defendant_detention_id ON public.acorn_criminal_detention_periods USING btree (defendant_detention_id);
+
+
+--
+-- Name: fki_defendant_detention_id2; Type: INDEX; Schema: public; Owner: justice
+--
+
+CREATE INDEX fki_defendant_detention_id2 ON public.acorn_criminal_detention_periods USING btree (defendant_detention_id);
+
+
+--
 -- Name: fki_event_id; Type: INDEX; Schema: public; Owner: justice
 --
 
@@ -11823,6 +12416,13 @@ CREATE INDEX fki_legalcase_type_id ON public.acorn_criminal_legalcases USING btr
 
 
 --
+-- Name: fki_legalcase_witness_id; Type: INDEX; Schema: public; Owner: justice
+--
+
+CREATE INDEX fki_legalcase_witness_id ON public.acorn_criminal_witness_statement USING btree (legalcase_witness_id);
+
+
+--
 -- Name: fki_location_id; Type: INDEX; Schema: public; Owner: justice
 --
 
@@ -11879,6 +12479,13 @@ CREATE INDEX fki_payee_user_id ON public.acorn_finance_invoices USING btree (pay
 
 
 --
+-- Name: fki_period_id; Type: INDEX; Schema: public; Owner: justice
+--
+
+CREATE INDEX fki_period_id ON public.acorn_criminal_detention_periods USING btree (period_id);
+
+
+--
 -- Name: fki_purchase_id; Type: INDEX; Schema: public; Owner: justice
 --
 
@@ -11925,6 +12532,20 @@ CREATE INDEX fki_sentence_type_id ON public.acorn_criminal_crime_sentences USING
 --
 
 CREATE INDEX fki_server_id ON public.acorn_criminal_legalcases USING btree (server_id);
+
+
+--
+-- Name: fki_summons_notary_request_id; Type: INDEX; Schema: public; Owner: justice
+--
+
+CREATE INDEX fki_summons_notary_request_id ON public.acorn_justice_summons USING btree (notary_request_id);
+
+
+--
+-- Name: fki_summons_revoked_at_event_id; Type: INDEX; Schema: public; Owner: justice
+--
+
+CREATE INDEX fki_summons_revoked_at_event_id ON public.acorn_justice_summons USING btree (revoked_at_event_id);
 
 
 --
@@ -12289,6 +12910,20 @@ CREATE TRIGGER tr_acorn_calendar_events_generate_event_instances AFTER INSERT OR
 
 
 --
+-- Name: acorn_criminal_detention_periods tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: justice
+--
+
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_criminal_detention_periods FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
+
+
+--
+-- Name: acorn_justice_periods tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: justice
+--
+
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_justice_periods FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
+
+
+--
 -- Name: acorn_notary_requests tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
@@ -12457,6 +13092,27 @@ CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDAT
 
 
 --
+-- Name: acorn_justice_statements tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
+--
+
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_justice_statements FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
+
+
+--
+-- Name: acorn_justice_summon_types tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
+--
+
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_justice_summon_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
+
+
+--
+-- Name: acorn_justice_summons tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
+--
+
+CREATE TRIGGER tr_acorn_calendar_trigger_created_at_event BEFORE INSERT OR UPDATE ON public.acorn_justice_summons FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
+
+
+--
 -- Name: acorn_justice_warrant_types tr_acorn_calendar_trigger_created_at_event; Type: TRIGGER; Schema: public; Owner: justice
 --
 
@@ -12608,6 +13264,13 @@ CREATE TRIGGER tr_acorn_criminal_crime_types BEFORE INSERT OR UPDATE ON public.a
 --
 
 CREATE TRIGGER tr_acorn_criminal_legalcase_prosecutor BEFORE INSERT OR UPDATE ON public.acorn_criminal_legalcase_prosecutor FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
+
+
+--
+-- Name: acorn_criminal_witness_statement tr_acorn_criminal_witness_statement; Type: TRIGGER; Schema: public; Owner: justice
+--
+
+CREATE TRIGGER tr_acorn_criminal_witness_statement BEFORE INSERT OR UPDATE ON public.acorn_criminal_witness_statement FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
@@ -13124,6 +13787,13 @@ CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_criminal_detenti
 
 
 --
+-- Name: acorn_criminal_detention_periods tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: justice
+--
+
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_criminal_detention_periods FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
+
+
+--
 -- Name: acorn_criminal_detention_reasons tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: justice
 --
 
@@ -13243,10 +13913,38 @@ CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_justice_legalcas
 
 
 --
+-- Name: acorn_justice_periods tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: justice
+--
+
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_justice_periods FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
+
+
+--
 -- Name: acorn_justice_scanned_documents tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: justice
 --
 
 CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_justice_scanned_documents FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
+
+
+--
+-- Name: acorn_justice_statements tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: justice
+--
+
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_justice_statements FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
+
+
+--
+-- Name: acorn_justice_summon_types tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: justice
+--
+
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_justice_summon_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
+
+
+--
+-- Name: acorn_justice_summons tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: justice
+--
+
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_justice_summons FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
@@ -14117,6 +14815,54 @@ ALTER TABLE ONLY public.acorn_notary_requests
 
 
 --
+-- Name: acorn_justice_summon_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summon_types
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_justice_summons created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summons
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_justice_statements created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_statements
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_criminal_witness_statement created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_witness_statement
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_criminal_detention_periods created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_periods
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_periods created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_periods
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
 -- Name: acorn_lojistiks_product_instance_transfer created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -14373,6 +15119,54 @@ ALTER TABLE ONLY public.acorn_notary_requests
 
 
 --
+-- Name: acorn_justice_summon_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summon_types
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_justice_summons created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summons
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_justice_statements created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_statements
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_criminal_witness_statement created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_witness_statement
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_criminal_detention_periods created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_periods
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_periods created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_periods
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
 -- Name: acorn_criminal_defendant_crimes crime_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -14459,6 +15253,22 @@ ALTER TABLE ONLY public.acorn_criminal_crime_sentences
 COMMENT ON CONSTRAINT defendant_crime_id ON public.acorn_criminal_crime_sentences IS 'labels-plural:
   en: Sentences
 ';
+
+
+--
+-- Name: acorn_criminal_detention_periods defendant_detention_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_periods
+    ADD CONSTRAINT defendant_detention_id FOREIGN KEY (defendant_detention_id) REFERENCES public.acorn_criminal_defendant_detentions(id);
+
+
+--
+-- Name: CONSTRAINT defendant_detention_id ON acorn_criminal_detention_periods; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON CONSTRAINT defendant_detention_id ON public.acorn_criminal_detention_periods IS 'multi:
+  sum: period[period]';
 
 
 --
@@ -14877,11 +15687,51 @@ COMMENT ON CONSTRAINT legalcase_id ON public.acorn_criminal_legalcase_related_ev
 
 
 --
+-- Name: acorn_justice_summons legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summons
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_justice_legalcases(id);
+
+
+--
+-- Name: CONSTRAINT legalcase_id ON acorn_justice_summons; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_justice_summons IS 'tab-location: 2
+type: Xto1';
+
+
+--
+-- Name: acorn_justice_statements legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_statements
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_justice_legalcases(id);
+
+
+--
+-- Name: CONSTRAINT legalcase_id ON acorn_justice_statements; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_justice_statements IS 'tab-location: 2
+type: Xto1';
+
+
+--
 -- Name: acorn_criminal_legalcases legalcase_type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_criminal_legalcases
     ADD CONSTRAINT legalcase_type_id FOREIGN KEY (legalcase_type_id) REFERENCES public.acorn_criminal_legalcase_types(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_witness_statement legalcase_witness_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_witness_statement
+    ADD CONSTRAINT legalcase_witness_id FOREIGN KEY (legalcase_witness_id) REFERENCES public.acorn_criminal_legalcase_witnesses(id) NOT VALID;
 
 
 --
@@ -14983,6 +15833,42 @@ ALTER TABLE ONLY public.acorn_criminal_defendant_detentions
 
 ALTER TABLE ONLY public.acorn_justice_warrants
     ADD CONSTRAINT notary_request_id FOREIGN KEY (notary_request_id) REFERENCES public.acorn_notary_requests(id) NOT VALID;
+
+
+--
+-- Name: CONSTRAINT notary_request_id ON acorn_justice_warrants; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON CONSTRAINT notary_request_id ON public.acorn_justice_warrants IS 'read-only: true
+cssClasses: 
+  - hide-empty 
+  - single-tab
+labels:
+  en: Document
+labels-plural:
+  en: Documents';
+
+
+--
+-- Name: acorn_justice_summons notary_request_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summons
+    ADD CONSTRAINT notary_request_id FOREIGN KEY (notary_request_id) REFERENCES public.acorn_notary_requests(id);
+
+
+--
+-- Name: CONSTRAINT notary_request_id ON acorn_justice_summons; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON CONSTRAINT notary_request_id ON public.acorn_justice_summons IS 'read-only: true
+cssClasses: 
+  - hide-empty 
+  - single-tab
+labels:
+  en: Document
+labels-plural:
+  en: Documents';
 
 
 --
@@ -15119,6 +16005,14 @@ ALTER TABLE ONLY public.acorn_finance_invoices
 
 ALTER TABLE ONLY public.acorn_lojistiks_people
     ADD CONSTRAINT people_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_detention_periods period_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_periods
+    ADD CONSTRAINT period_id FOREIGN KEY (period_id) REFERENCES public.acorn_justice_periods(id) NOT VALID;
 
 
 --
@@ -15325,6 +16219,14 @@ ALTER TABLE ONLY public.acorn_criminal_defendant_detentions
 
 ALTER TABLE ONLY public.acorn_justice_warrants
     ADD CONSTRAINT revoked_at_event_id FOREIGN KEY (revoked_at_event_id) REFERENCES public.acorn_calendar_events(id) ON DELETE SET NULL NOT VALID;
+
+
+--
+-- Name: acorn_justice_summons revoked_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summons
+    ADD CONSTRAINT revoked_at_event_id FOREIGN KEY (revoked_at_event_id) REFERENCES public.acorn_calendar_events(id) ON DELETE SET NULL;
 
 
 --
@@ -15792,6 +16694,54 @@ ALTER TABLE ONLY public.acorn_notary_requests
 
 
 --
+-- Name: acorn_justice_summon_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summon_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_justice_summons server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summons
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_justice_statements server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_statements
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_criminal_detention_periods server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_periods
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_periods server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_periods
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_witness_statement statement_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_witness_statement
+    ADD CONSTRAINT statement_id FOREIGN KEY (statement_id) REFERENCES public.acorn_justice_statements(id);
+
+
+--
 -- Name: acorn_lojistiks_product_products sub_product_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -15939,6 +16889,14 @@ ALTER TABLE ONLY public.acorn_user_user_groups
 
 ALTER TABLE ONLY public.acorn_justice_warrants
     ADD CONSTRAINT type_id FOREIGN KEY (warrant_type_id) REFERENCES public.acorn_justice_warrant_types(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_summons type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summons
+    ADD CONSTRAINT type_id FOREIGN KEY (summon_type_id) REFERENCES public.acorn_justice_summon_types(id);
 
 
 --
@@ -16309,6 +17267,54 @@ ALTER TABLE ONLY public.acorn_notary_requests
 
 
 --
+-- Name: acorn_justice_summon_types updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summon_types
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_justice_summons updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summons
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_justice_statements updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_statements
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_criminal_witness_statement updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_witness_statement
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_criminal_detention_periods updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_periods
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_periods updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_periods
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
 -- Name: acorn_justice_legalcases updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -16645,6 +17651,54 @@ ALTER TABLE ONLY public.acorn_notary_requests
 
 
 --
+-- Name: acorn_justice_summon_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summon_types
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_justice_summons updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summons
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_justice_statements updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_statements
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_criminal_witness_statement updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_witness_statement
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_criminal_detention_periods updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_periods
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_periods updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_periods
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
 -- Name: acorn_location_locations user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -16804,6 +17858,22 @@ ALTER TABLE ONLY public.acorn_justice_warrants
 
 ALTER TABLE ONLY public.acorn_user_user_group_version_user
     ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_summons user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summons
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_justice_statements user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_statements
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
@@ -17437,12 +18507,13 @@ RESET SESSION AUTHORIZATION;
 
 
 --
--- Name: FUNCTION fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record); Type: ACL; Schema: public; Owner: sz
+-- Name: FUNCTION fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record); Type: ACL; Schema: public; Owner: justice
 --
 
+REVOKE ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO justice WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO demo WITH GRANT OPTION;
-GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO justice WITH GRANT OPTION;
 SET SESSION AUTHORIZATION demo;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO token_2;
 RESET SESSION AUTHORIZATION;
@@ -17495,6 +18566,17 @@ SET SESSION AUTHORIZATION demo;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_activity_event() TO token_2;
 RESET SESSION AUTHORIZATION;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_activity_event() TO token_2;
+
+
+--
+-- Name: FUNCTION fn_acorn_criminal_action_legalcase_defendants_cs(model_id uuid, user_id uuid); Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cs(model_id uuid, user_id uuid) FROM justice;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cs(model_id uuid, user_id uuid) TO justice WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cs(model_id uuid, user_id uuid) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cs(model_id uuid, user_id uuid) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_criminal_action_legalcase_defendants_cs(model_id uuid, user_id uuid) TO token_2;
 
 
 --
@@ -17572,6 +18654,13 @@ GRANT ALL ON FUNCTION public.fn_acorn_justice_action_legalcases_reopen_case(mode
 SET SESSION AUTHORIZATION demo;
 GRANT ALL ON FUNCTION public.fn_acorn_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid) TO token_2;
 RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_justice_action_warrants_request_notary(model_id uuid, user_id uuid); Type: ACL; Schema: public; Owner: justice
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_justice_action_warrants_request_notary(model_id uuid, user_id uuid) TO demo WITH GRANT OPTION;
 
 
 --
@@ -17672,6 +18761,13 @@ GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO demo WITH GRANT OP
 SET SESSION AUTHORIZATION demo;
 GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO token_2;
 RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_notary_trigger_validate(); Type: ACL; Schema: public; Owner: justice
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_notary_trigger_validate() TO demo WITH GRANT OPTION;
 
 
 --
@@ -18362,6 +19458,17 @@ RESET SESSION AUTHORIZATION;
 
 
 --
+-- Name: TABLE acorn_criminal_detention_periods; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_detention_periods FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_detention_periods TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_detention_periods TO demo WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_detention_periods TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_detention_periods TO token_2;
+
+
+--
 -- Name: TABLE acorn_criminal_detention_reasons; Type: ACL; Schema: public; Owner: justice
 --
 
@@ -18544,6 +19651,17 @@ RESET SESSION AUTHORIZATION;
 
 
 --
+-- Name: TABLE acorn_criminal_witness_statement; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_criminal_witness_statement FROM justice;
+GRANT ALL ON TABLE public.acorn_criminal_witness_statement TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_witness_statement TO demo WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_witness_statement TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_criminal_witness_statement TO token_2;
+
+
+--
 -- Name: TABLE acorn_finance_currencies; Type: ACL; Schema: public; Owner: justice
 --
 
@@ -18648,6 +19766,17 @@ RESET SESSION AUTHORIZATION;
 
 
 --
+-- Name: TABLE acorn_justice_periods; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_justice_periods FROM justice;
+GRANT ALL ON TABLE public.acorn_justice_periods TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_periods TO demo WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_periods TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_periods TO token_2;
+
+
+--
 -- Name: TABLE acorn_justice_scanned_documents; Type: ACL; Schema: public; Owner: justice
 --
 
@@ -18658,6 +19787,39 @@ GRANT ALL ON TABLE public.acorn_justice_scanned_documents TO demo WITH GRANT OPT
 SET SESSION AUTHORIZATION demo;
 GRANT ALL ON TABLE public.acorn_justice_scanned_documents TO token_2;
 RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE acorn_justice_statements; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_justice_statements FROM justice;
+GRANT ALL ON TABLE public.acorn_justice_statements TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_statements TO demo WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_statements TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_statements TO token_2;
+
+
+--
+-- Name: TABLE acorn_justice_summon_types; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_justice_summon_types FROM justice;
+GRANT ALL ON TABLE public.acorn_justice_summon_types TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_summon_types TO demo WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_summon_types TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_summon_types TO token_2;
+
+
+--
+-- Name: TABLE acorn_justice_summons; Type: ACL; Schema: public; Owner: justice
+--
+
+REVOKE ALL ON TABLE public.acorn_justice_summons FROM justice;
+GRANT ALL ON TABLE public.acorn_justice_summons TO justice WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_summons TO demo WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_summons TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_justice_summons TO token_2;
 
 
 --
@@ -18684,6 +19846,7 @@ GRANT ALL ON TABLE public.acorn_justice_warrants TO demo WITH GRANT OPTION;
 SET SESSION AUTHORIZATION demo;
 GRANT ALL ON TABLE public.acorn_justice_warrants TO token_2;
 RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_justice_warrants TO PUBLIC;
 
 
 --
@@ -19224,6 +20387,8 @@ RESET SESSION AUTHORIZATION;
 --
 
 GRANT ALL ON TABLE public.acorn_notary_requests TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_notary_requests TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_notary_requests TO demo WITH GRANT OPTION;
 
 
 --
@@ -20225,13 +21390,6 @@ GRANT ALL ON SEQUENCE public.system_settings_id_seq TO demo WITH GRANT OPTION;
 SET SESSION AUTHORIZATION demo;
 GRANT ALL ON SEQUENCE public.system_settings_id_seq TO token_2;
 RESET SESSION AUTHORIZATION;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: product; Owner: sz
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE sz IN SCHEMA product GRANT ALL ON TABLES TO sz;
 
 
 --

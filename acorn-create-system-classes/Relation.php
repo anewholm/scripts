@@ -9,11 +9,13 @@ class Relation {
 
     public $comment;
     public $status; // ok|exclude|broken
+    public $multi;  // _multi.php config
     public $type;   // explicit typing
     public $delete; // Relation delete: true will cause reverse cascade deletion of associated object
     public $isFrom      = TRUE; // From this column, attached to it
     public $nameObject  = FALSE;
-
+    public $readOnly;
+    public $cssClasses;
     public $placeholder = 'backend::lang.form.select';
     public $newRow;
     public $bootstraps;
@@ -55,6 +57,23 @@ class Relation {
         $qualifier = $this->qualifier();
         $qualifierString = ($qualifier ? " ($qualifier)" : '');
         return "$this->foreignKey$qualifierString";
+    }
+
+    public function cssClass(array|string $defaultCssClasses = NULL, bool $useRelationManager = TRUE): string
+    {
+        $cssClassesReturn = NULL;
+
+        if ($this->cssClasses) {
+            $cssClassesReturn = (is_array($this->cssClasses) ? $this->cssClasses : array($this->cssClasses));
+        } else if (is_array($defaultCssClasses)) {
+            $cssClassesReturn = $defaultCssClasses;
+        } else {
+            $cssClassesReturn = array('single-tab');
+            if (is_string($defaultCssClasses)) array_push($cssClassesReturn, $defaultCssClasses);
+        }
+        if (!$useRelationManager) array_push($cssClassesReturn, 'selected-only');
+
+        return implode(' ', $cssClassesReturn);
     }
 
     public function direction()

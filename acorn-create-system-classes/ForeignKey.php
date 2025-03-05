@@ -31,12 +31,15 @@ class ForeignKey {
     public $comment;
     public $order;  // Appearance in tab pools
     public $type;
+    public $multi;  // _multi.php config
     public $delete; // Relation delete: true will cause reverse cascade deletion of associated object
     public $system; // Internal constraint only. Do not process
     public $todo;   // TODO: This column structure has not been analysed / enabled yet
     public $status; // ok|exclude|broken
     public $include;
     public $nameObject;
+    public $readOnly;
+    public $cssClasses;
     public $newRow;
     public $bootstraps;
     public $tabLocation; // primary|secondary|tertiary

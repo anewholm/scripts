@@ -73,6 +73,7 @@ class Field {
     // Custom AA directives that indicate the field is an dynamic include form
     public $phpAttributeCalculation;
     public $include;
+    public $multi;
     public $includeModel;
     public $includePath;
     public $includeContext;
@@ -171,6 +172,9 @@ class Field {
                 $fieldDefinition['fieldType']     = 'datepicker';
                 $fieldDefinition['columnType']    = 'partial';
                 $fieldDefinition['columnPartial'] = 'datetime'; // 2 line with tooltip
+                break;
+            case 'interval':
+                // TODO: Currently intervals are just presented as text
                 break;
             case 'boolean':
             case 'bool':

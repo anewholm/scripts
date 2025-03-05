@@ -578,6 +578,8 @@ class WinterCMS extends Framework
                 '\\Backend\\Models\\UserGroup' => TRUE,
                 'Exception' => TRUE,
                 'Flash' => TRUE,
+                'Carbon\\Carbon' => TRUE,
+                'Carbon\\CarbonInterval' => TRUE,
             ));
             print("  Inheriting from Acorn\\\\Model\n");
             $this->replaceInFile($modelFilePath, '/^use Model;$/m', 'use Acorn\\Model;');
@@ -841,7 +843,7 @@ class WinterCMS extends Framework
             // get<Something>Attribute()s
             foreach ($model->attributeFunctions as $name => &$body) {
                 $namePascal = Str::studly($name);
-                $funcName   = "get${namePascal}Attribute"; // Encapsulation...
+                $funcName   = "get${namePascal}Attribute(\$value)"; // Encapsulation...
                 print("  Injecting public ${YELLOW}$funcName${NC}() into [$model->name]\n");
                 $this->addMethod($modelFilePath, $funcName, $body);
             }
@@ -856,7 +858,7 @@ class WinterCMS extends Framework
                 $this->addStaticMethod($modelFilePath, $funcName, $body);
             }
             if ($model->printable) {
-                $this->setPropertyInClassFile($modelFilePath, 'printable', TRUE, Framework::NEW_PROPERTY);
+                $this->setPropertyInClassFile($modelFilePath, 'printable', $model->printable, Framework::NEW_PROPERTY);
             }
 
             // ----------------------------------------------------------------- Columns commenting in header
@@ -877,6 +879,7 @@ class WinterCMS extends Framework
         $modelDirPath        = "$pluginDirectoryPath/models/$modelDirName";
         $fieldsPath          = "$modelDirPath/fields.yaml";
         $createdBy           = $this->createdByString();
+        $extraTranslations   = array();
 
         print("  Check/create [$fieldsPath], add fields:\n");
         if (!is_dir($modelDirPath)) mkdir($modelDirPath, TRUE);
@@ -892,6 +895,24 @@ class WinterCMS extends Framework
                 if      ($field->tabLocation == 2) $dotPath = "secondaryTabs.$dotPath";
                 else if ($field->tabLocation == 3) $dotPath = "tertiaryTabs.$dotPath";
                 else if ($field->tab)              $dotPath = "tabs.$dotPath";
+            }
+            if (is_array($field->fieldOptions)) {
+                // options: can be in the format of translated codes:
+                // options:
+                //   G:
+                //     en: guilty
+                //     ku: suc
+                foreach ($field->fieldOptions as $code => $labels) {
+                    if (!is_numeric($code) 
+                        && is_array($labels)
+                    ) {
+                        // If we are using single letter codes, then try to use the english label instead
+                        $localTranslationKey = (strlen($code) == 1 && isset($labels['en']) ? strtolower($labels['en']) : $code);
+                        // Add these codes to extraTranslations
+                        $extraTranslations[$localTranslationKey] = $labels;
+                        $field->fieldOptions[$code] = $field->translationKey($localTranslationKey);
+                    }
+                }
             }
             $labelKey = $field->translationKey();
             $fieldTab = ($field->tab === 'INHERIT' ? $labelKey : $field->tab); // Can be NULL
@@ -1021,6 +1042,15 @@ class WinterCMS extends Framework
                         $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
                     }
                 }
+            }
+        }
+        foreach ($extraTranslations as $code => $labels) {
+            print("      Add ${YELLOW}$code${NC} to ${YELLOW}lang/*${NC}\n");
+            $localTranslationKey = "$modelKey.$code";
+            foreach ($labels as $langName => &$translation) {
+                $langFilePath = "$langDirPath/$langName/lang.php";
+                if (!file_exists($langFilePath)) throw new \Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
+                $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
             }
         }
     }
@@ -1224,6 +1254,7 @@ class WinterCMS extends Framework
                     'select'     => $field->sqlSelect,
                     'nested'     => ($field->nested    ?: NULL),
                     'nestLevel'  => ($field->nestLevel ?: NULL),
+                    'multi'      => $field->multi,             // Relation _multi.php directives
 
                     // TODO: Columns should also include Xto1 relations
                     'include'        => $field->include,
