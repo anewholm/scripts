@@ -335,6 +335,25 @@ class Model {
             }
         }
 
+        // Printable can have permissions (and a condition)
+        if ($this->printable 
+            && is_array($this->printable)
+            && isset($this->printable['permissions'])
+        ) {
+            $printPermissions = (is_array($this->printable['permissions']) ? $this->printable['permissions'] : array($this->printable['permissions']));
+            foreach ($printPermissions as $permissionDirective => $config) {
+                // Permission keys _must_ be un-qualified in this scenario
+                // we prepend the same model plugin that the model is part of
+                $qualifiedPermissionName = $permissionDirective;
+                $isQualifiedName = (strstr($qualifiedPermissionName, '.') !== FALSE);
+                if (!$isQualifiedName) {
+                    $pluginDotPath = $this->plugin->dotName();
+                    $qualifiedPermissionName = "$pluginDotPath.$qualifiedPermissionName";
+                }
+                $permissions[$qualifiedPermissionName] = $config;
+            }
+        }
+        
         // The field->allPermissionNames() keys are already fully-qualified
         foreach ($this->fields() as &$field) {
             $permissions = array_merge($permissions, $field->allPermissionNames());
@@ -775,7 +794,7 @@ class Model {
                 'labels'       => $relation->labelsPlural,
                 'fieldType'    => ($useRelationManager ? 'relationmanager' : 'relation'),
                 'nameFrom'     => $nameFrom,
-                'cssClasses'   => array('single-tab', 'single-tab-self', ($useRelationManager ? '' : 'selected-only')),
+                'cssClasses'   => $relation->cssClass('single-tab-self', $useRelationManager),
                 'tabLocation'  => $relation->tabLocation,
                 'debugComment' => "Tab multi-select for $relation on $plugin->name.$this->name",
                 'commentHtml'  => TRUE,
@@ -784,6 +803,8 @@ class Model {
                 'icon'         => $relation->to->icon,
                 'tab'          => $tab,
                 'dependsOn'    => array('_paste' => TRUE),
+                'readOnly'     => $relation->readOnly,
+                'multi'        => $relation->multi,
                 // TODO: Select and Add ButtonFields
                 // TODO: Create button popup
 
@@ -854,7 +875,7 @@ class Model {
                 'labels'       => $relation->labelsPlural, // Overrides translationKey to force a local key
                 'fieldType'    => ($useRelationManager ? 'relationmanager' : 'relation'),
                 'nameFrom'     => $nameFrom,
-                'cssClasses'   => array('single-tab', 'single-tab-1fromX', ($useRelationManager ? '' : 'selected-only')),
+                'cssClasses'   => $relation->cssClass('single-tab-1fromX', $useRelationManager),
                 'bootstraps'   => $relation->bootstraps,
                 'dependsOn'    => $dependsOn,
                 'buttons'      => $buttons,
@@ -866,6 +887,8 @@ class Model {
                 'commentHtml'  => TRUE,
                 'relatedModel' => $relation->to->fullyQualifiedName(),
                 'canFilter'    => FALSE, // These are linked only to the content table
+                'readOnly'     => $relation->readOnly,
+                'multi'        => $relation->multi,
                 'tab'          => 'INHERIT',
 
                 // List
@@ -983,7 +1006,7 @@ class Model {
                 'fieldType'      => ($useRelationManager ? 'relationmanager' : 'relation'),
                 'recordsPerPage' => FALSE, // TODO: Currently does not work for XtoXSemi
                 'nameFrom'       => $nameFrom,
-                'cssClasses'     => array('single-tab', 'single-tab-1fromX', ($useRelationManager ? '' : 'selected-only')),
+                'cssClasses'     => $relation->cssClass('single-tab-1fromX', $useRelationManager),
                 'bootstraps'     => $relation->bootstraps,
                 'buttons'        => $buttons,
                 'rlButtons'      => $rlButtons,
@@ -995,7 +1018,9 @@ class Model {
                 'commentHtml'    => TRUE,
                 'relatedModel'   => $relation->to->fullyQualifiedName(),
                 'canFilter'      => TRUE,
+                'readOnly'       => $relation->readOnly,
                 'tab'            => 'INHERIT',
+                'multi'          => $relation->multi,
                 'dependsOn'      => $dependsOn,
 
                 // List
@@ -1104,7 +1129,7 @@ class Model {
                 'fieldType'      => ($useRelationManager ? 'relationmanager' : 'relation'),
                 'recordsPerPage' => FALSE, // TODO: Currently does not work for XtoXSemi
                 'nameFrom'       => $nameFrom,
-                'cssClasses'     => array('single-tab', 'single-tab-XfromX', ($useRelationManager ? '' : 'selected-only')),
+                'cssClasses'     => $relation->cssClass('single-tab-XfromX', $useRelationManager),
                 'bootstraps'     => $relation->bootstraps,
                 'placeholder'    => $relation->placeholder,
                 'buttons'        => $buttons,
@@ -1116,7 +1141,9 @@ class Model {
                 'commentHtml'    => TRUE,
                 'relatedModel'   => $relation->to->fullyQualifiedName(),
                 'canFilter'      => TRUE,
+                'readOnly'       => $relation->readOnly,
                 'tab'            => $tab,
+                'multi'          => $relation->multi,
                 'dependsOn'      => $dependsOn,
 
                 // List
