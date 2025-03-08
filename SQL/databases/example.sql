@@ -7819,6 +7819,8 @@ COPY public.backend_access_log (id, user_id, ip_address, created_at, updated_at)
 47	1	127.0.0.1	2025-02-27 12:45:20	2025-02-27 12:45:20
 48	1	127.0.0.1	2025-02-27 12:47:04	2025-02-27 12:47:04
 49	1	127.0.0.1	2025-02-27 12:49:50	2025-02-27 12:49:50
+50	1	127.0.0.1	2025-03-08 08:52:44	2025-03-08 08:52:44
+51	1	127.0.0.1	2025-03-08 09:10:00	2025-03-08 09:10:00
 \.
 
 
@@ -7881,9 +7883,9 @@ COPY public.backend_user_throttle (id, user_id, ip_address, attempts, last_attem
 --
 
 COPY public.backend_users (id, first_name, last_name, login, email, password, activation_code, persist_code, reset_password_code, permissions, is_activated, role_id, activated_at, last_login, created_at, updated_at, deleted_at, is_superuser, metadata, acorn_url, acorn_user_user_id) FROM stdin;
-1	Admin	Person	admin	admin@example.com	$2y$10$A487JegVfo9RmI9gD89kiuU0RHuj2sNKSAvu4ZXkMwA42JWAnecoS	\N	$2y$10$ijrJ234KkGAkO4Unp6uoOenr3AClxCDZq1s6VVmqhkNw.DX.AeV.u	\N		t	2	\N	2025-02-27 12:49:50	2024-10-19 10:37:18	2025-02-27 12:49:50	\N	t	\N	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6
+1	Admin	Person	admin	admin@example.com	$2y$10$A487JegVfo9RmI9gD89kiuU0RHuj2sNKSAvu4ZXkMwA42JWAnecoS	\N	$2y$10$ijrJ234KkGAkO4Unp6uoOenr3AClxCDZq1s6VVmqhkNw.DX.AeV.u	\N		t	2	\N	2025-03-08 09:10:00	2024-10-19 10:37:18	2025-03-08 09:10:00	\N	t	\N	\N	d57f552e-4ad2-4e9b-9055-d78bb377d1d6
 7			justice	justice@nowhere.com	$2y$10$H4YHv/Dyj4Od5i5RRMEbGOvbudWq4QFfSKk3hQvALelR.CXKE5NUa	\N	\N	\N		f	\N	\N	\N	2025-02-25 07:35:08	2025-02-25 07:35:08	\N	t	\N	\N	\N
-2	Demo		demo	demo@example.com	$2y$10$qXppZYCFKO3PBwI2JUZ0mORjrR/eOhLIkCdKe2U5aPsAWys.sr.Qy		$2y$10$DAiTJ/6Nz/inGIpDIRi1POcb8BQNZU80ev64QTKJeoVXqV51JxQvq		{"cms.manage_content":-1,"cms.manage_assets":-1,"cms.manage_pages":-1,"cms.manage_layouts":-1,"cms.manage_partials":-1,"cms.manage_themes":-1,"cms.manage_theme_options":-1,"backend.access_dashboard":1,"backend.manage_default_dashboard":-1,"backend.manage_users":-1,"backend.impersonate_users":-1,"backend.manage_preferences":1,"backend.manage_editor":-1,"backend.manage_own_editor":-1,"backend.manage_branding":1,"media.manage_media":-1,"backend.allow_unsafe_markdown":-1,"system.manage_updates":-1,"system.access_logs":-1,"system.manage_mail_settings":-1,"system.manage_mail_templates":-1,"acorn.rtler.change_settings":1,"acorn.users.access_users":1,"acorn.users.access_groups":1,"acorn.users.access_settings":1,"acorn.users.impersonate_user":-1,"winter.location.access_settings":1,"winter.tailwindui.manage_own_appearance.dark_mode":1,"winter.tailwindui.manage_own_appearance.menu_location":1,"winter.tailwindui.manage_own_appearance.item_location":1,"winter.translate.manage_locales":1,"winter.translate.manage_messages":1,"acorn_location":1,"acorn_messaging":-1,"calendar_view":1,"change_the_past":1,"access_settings":1,"legalcases__legalcase_name__update":-1,"legalcases__owner_user_group_id__update":-1,"notary":1,"legalcase_type__create_criminal_only":1,"legalcase_type__create_civil_only":-1,"legalcase_type__create_any":-1,"legalcases__legalcase_type_id__update":-1,"trials__access":-1,"appeals__access":-1}	t	\N	\N	2025-02-25 08:26:36	\N	2025-03-03 11:40:47	\N	f			2bc29c8f-e9b0-4bd4-8aff-e691b084a255
+2	Demo		demo	demo@example.com	$2y$10$qXppZYCFKO3PBwI2JUZ0mORjrR/eOhLIkCdKe2U5aPsAWys.sr.Qy		\N		{"cms.manage_content":-1,"cms.manage_assets":-1,"cms.manage_pages":-1,"cms.manage_layouts":-1,"cms.manage_partials":-1,"cms.manage_themes":-1,"cms.manage_theme_options":-1,"backend.access_dashboard":1,"backend.manage_default_dashboard":-1,"backend.manage_users":-1,"backend.impersonate_users":-1,"backend.manage_preferences":1,"backend.manage_editor":-1,"backend.manage_own_editor":-1,"backend.manage_branding":1,"media.manage_media":-1,"backend.allow_unsafe_markdown":-1,"system.manage_updates":-1,"system.access_logs":-1,"system.manage_mail_settings":-1,"system.manage_mail_templates":-1,"acorn.rtler.change_settings":1,"acorn.users.access_users":1,"acorn.users.access_groups":1,"acorn.users.access_settings":1,"acorn.users.impersonate_user":-1,"winter.location.access_settings":1,"winter.tailwindui.manage_own_appearance.dark_mode":1,"winter.tailwindui.manage_own_appearance.menu_location":1,"winter.tailwindui.manage_own_appearance.item_location":1,"winter.translate.manage_locales":1,"winter.translate.manage_messages":1,"acorn_location":1,"acorn_messaging":-1,"calendar_view":1,"change_the_past":1,"access_settings":1,"legalcases__legalcase_name__update":-1,"legalcases__owner_user_group_id__update":-1,"notary":1,"legalcase_type__create_criminal_only":1,"legalcase_type__create_civil_only":-1,"legalcase_type__create_any":-1,"legalcases__legalcase_type_id__update":-1,"trials__access":-1,"appeals__access":-1}	t	\N	\N	2025-02-25 08:26:36	\N	2025-03-08 08:52:38	\N	f			2bc29c8f-e9b0-4bd4-8aff-e691b084a255
 \.
 
 
@@ -7956,6 +7958,7 @@ COPY public.deferred_bindings (id, master_type, master_field, slave_type, slave_
 88	Acorn\\Criminal\\Models\\LegalcaseWitness	criminal_witness_statement_legalcase_witnesses	Acorn\\Justice\\Models\\Statement	9e57c722-72b7-4682-adb2-aab820eb8be6	TX3THOr96rX9YcfjjfTduI0QT2gCe0jBa80voJrH	t	2025-03-03 10:40:02	2025-03-03 10:40:02	\N
 89	Acorn\\Criminal\\Models\\DefendantDetention	criminal_detention_periods_defendant_detention	Acorn\\Criminal\\Models\\DetentionPeriod	9e5bbd61-53ae-49c6-b2e5-e17ddef6072d	sNwa9OVl3OYTjIzVbqdubf5bUWQEbL6h3sPWDxPA	t	2025-03-05 09:56:04	2025-03-05 09:56:04	\N
 90	Acorn\\Criminal\\Models\\LegalcaseDefendant	criminal_defendant_detentions_legalcase_defendant	Acorn\\Criminal\\Models\\DefendantDetention	9e5bbd67-c259-4a2d-86a6-f99040234657	sNwa9OVl3OYTjIzVbqdubf5bUWQEbL6h3sPWDxPA	t	2025-03-05 09:56:09	2025-03-05 09:56:09	\N
+91	Acorn\\Justice\\Models\\Legalcase	justice_legalcase_legalcase_category_legalcases	Acorn\\Justice\\Models\\LegalcaseCategory	9e619671-38cb-4964-97b9-f76cd3fa6d33	DcOYL3qj6kIs7hkBvvyMjAUeFt8lIrbwyTOFgoGg	t	2025-03-08 07:42:10	2025-03-08 07:42:10	\N
 \.
 
 
@@ -8179,7 +8182,7 @@ COPY public.system_parameters (id, namespace, "group", item, value) FROM stdin;
 2	system	update	count	0
 4	system	core	build	"1.2.6"
 5	system	core	modified	true
-3	system	update	retry	1740746826
+3	system	update	retry	1741510321
 \.
 
 
@@ -10286,6 +10289,8 @@ COPY public.winter_translate_attributes (id, locale, model_id, model_type, attri
 763	ku	9e5bbdfb-f5bc-46c3-b060-7ab77d454dd7	Acorn\\Criminal\\Models\\DetentionPeriod	{"description":""}
 764	ar	9e5c5f85-5ef3-49f1-8b28-90a872eb4a31	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
 765	ku	9e5c5f85-5ef3-49f1-8b28-90a872eb4a31	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
+766	ar	9e619671-38cb-4964-97b9-f76cd3fa6d33	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
+767	ku	9e619671-38cb-4964-97b9-f76cd3fa6d33	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
 \.
 
 
@@ -10320,7 +10325,7 @@ COPY public.winter_translate_messages (id, code, message_data, found, code_pre_2
 -- Name: backend_access_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.backend_access_log_id_seq', 49, true);
+SELECT pg_catalog.setval('public.backend_access_log_id_seq', 51, true);
 
 
 --
@@ -10383,7 +10388,7 @@ SELECT pg_catalog.setval('public.cms_theme_templates_id_seq', 1, false);
 -- Name: deferred_bindings_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.deferred_bindings_id_seq', 90, true);
+SELECT pg_catalog.setval('public.deferred_bindings_id_seq', 91, true);
 
 
 --
@@ -10425,7 +10430,7 @@ SELECT pg_catalog.setval('public.rainlab_location_states_id_seq', 720, true);
 -- Name: rainlab_translate_attributes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 765, true);
+SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 767, true);
 
 
 --
@@ -10453,7 +10458,7 @@ SELECT pg_catalog.setval('public.rainlab_translate_messages_id_seq', 1, false);
 -- Name: system_event_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.system_event_logs_id_seq', 12103, true);
+SELECT pg_catalog.setval('public.system_event_logs_id_seq', 12107, true);
 
 
 --
@@ -18661,6 +18666,7 @@ RESET SESSION AUTHORIZATION;
 --
 
 GRANT ALL ON FUNCTION public.fn_acorn_justice_action_warrants_request_notary(model_id uuid, user_id uuid) TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_action_warrants_request_notary(model_id uuid, user_id uuid) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -18768,6 +18774,7 @@ RESET SESSION AUTHORIZATION;
 --
 
 GRANT ALL ON FUNCTION public.fn_acorn_notary_trigger_validate() TO demo WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_notary_trigger_validate() TO token_1 WITH GRANT OPTION;
 
 
 --
