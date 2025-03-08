@@ -119,6 +119,16 @@ class WinterCMS extends Framework
         if (!file_exists($readmePath)) {
             $this->setFileContents($readmePath, "# $plugin->name");
             $this->appendToFile($readmePath, $createdBy);
+
+            $this->appendToFile($readmePath, "# Tables");
+            foreach ($plugin->models as $name => $model) {
+                $table = $model->table->name;
+                $this->appendToFile($readmePath, "## $model->name ($table)");
+                foreach ($model->fields() as $name => $field) {
+                    $column = $field->column?->column_name;
+                    $this->appendToFile($readmePath, "* $field->name ($column)", 0, TRUE, FALSE);
+                }
+            }
         }
 
         // --------------------------------------------- Plugin.php misc
@@ -153,7 +163,6 @@ class WinterCMS extends Framework
         // --------------------------------------------- Lang files
         $langDirPath = "$pluginDirectoryPath/lang";
         $langEnPath  = "$langDirPath/en/lang.php";
-        $this->arrayFileSet($langEnPath, 'plugin.description', $createdBy, FALSE);
 
         // Standard langs
         if (!is_dir("$langDirPath/ku/")) mkdir("$langDirPath/ku/", 0775, TRUE);
@@ -168,6 +177,7 @@ class WinterCMS extends Framework
                     print("  ${GREEN}LANG${NC}: Created ${YELLOW}$langName${NC} language file\n");
                     copy($langEnPath, $langFilePath);
                 }
+                $this->arrayFileSet($langFilePath, 'plugin.description', $createdBy, FALSE);
             }
         }
 
