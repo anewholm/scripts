@@ -1,0 +1,25 @@
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+outeruser=$USER
+
+# TODO: Check and change admin password
+sudo -u postgres alteruser? -P admin
+# TODO: Check and remove demo and createsystem user(s)
+sudo -u postgres dropuser demo
+sudo -u postgres dropuser createsystem
+sudo -u postgres dropuser artisan
+
+
+# TODO:
+# Remove ARTISAN_AUTO_LOGIN
+# Switch PHP to production
+# Switch Apache to production
+# Disable xdebug
+# Run all Laravel <plugin>-production CLI commands
