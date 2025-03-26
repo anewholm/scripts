@@ -729,7 +729,7 @@ class Table {
         $relationName = strtolower($this->isModule() ? $this->moduleName() : $this->pluginName());
         if (!$relationName) throw new \Exception("Table [$this->name] has no plugin-name during relation name construction");
         $subName      = $this->subName();
-        if ($subName) $relationName = "${relationName}_$subName";
+        if ($subName) $relationName = "{$relationName}_$subName";
         return $relationName;
     }
 

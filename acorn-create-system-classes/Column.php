@@ -101,6 +101,7 @@ class Column {
     public $fieldOptions;  // array
     public $order;
     public $default;
+    public $required;
     public $fieldComment; // HTML field comment
     public $system;  // Internal column, do not process
     public $todo;    // TODO: This column structure has not been analysed / enabled yet
@@ -339,7 +340,7 @@ class Column {
         if ($this->isTheIdColumn()) throw new \Exception("From relation name not possible for ID columns");
         $tableRelationName = $this->table->relationName(); // civil_legalcases
         $relationName      = $this->relationName($plural); // legalcase[s]
-        return "${tableRelationName}_$relationName";
+        return "{$tableRelationName}_$relationName";
     }
 
     public function fullyQualifiedName(bool $includeSchema = self::INCLUDE_SCHEMA): string

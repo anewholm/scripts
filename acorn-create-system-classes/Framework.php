@@ -441,7 +441,7 @@ class Framework
         $indentString = str_repeat(' ', $indent*4);
         $traitsString = '';
         foreach ($traits as $name => $include) {
-            if ($include) $traitsString .= "${indentString}use $name;\n";
+            if ($include) $traitsString .= "{$indentString}use $name;\n";
         }
         $this->replaceInFile($path, '/^{$/m', "{\n$traitsString\n");
     }
@@ -540,7 +540,7 @@ FUNCTION
     protected function removeFunction(string $path, string $functionName, string $scope = 'public', int $indent = 1)
     {
         if (!$path) throw new \Exception("Function path is empty");
-        $this->replaceInFile($path, "/$scope function $functionName\(/", "$scope function ${functionName}_REMOVED(");
+        $this->replaceInFile($path, "/$scope function $functionName\(/", "$scope function {$functionName}_REMOVED(");
     }
 
     protected function setArrayReturnFunction(string $path, string $functionName, array $arrayReturn, int $indent = 1)

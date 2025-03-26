@@ -12,8 +12,11 @@ CROSS="${RED}✘${NC}"
 input=$1
 
 if [ "$1" == "help" ] || [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
-	echo "Usage: acorn-setup-hostname <hostname>"
-	echo
+	echo "Usage: acorn-setup-hostname [hostname]"
+	echo "Normally:"
+	echo "  * Install this script in /var/www/scripts"
+	echo "  * navigate to the /var/www/<DOCUMENT_ROOT> of the website and run:"
+	echo "  * $ ../scripts/acorn-setup-hostname"
 	echo "hostname: Host Name. By default ${GREEN}the current directory${NC}."
 	exit 0
 fi

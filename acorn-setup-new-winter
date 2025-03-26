@@ -19,8 +19,13 @@ install_grp=www-data
 name=$1
 password=$2
 db_port=$3
+outeruser=$USER
 
 # -------------------------------------------- Sanitise inputs
+if [ "$(id -u)" == "0" ]; then
+	echo "${RED}ERROR${NC}: Do not run this script as root"
+	exit 1
+fi
 if [ ! -f $script_dir/acorn-setup-database ]; then
 	echo "${RED}ERROR${NC}: acorn-setup-database required"
 	exit 1
@@ -75,8 +80,8 @@ sudo apt install -y php php-curl php-xml php-gd php-json php-mbstring php-mysql 
 # sudo apt install -y php-ctype php-fileinfo
 
 if [ -z "$(groups | grep $install_grp)" ]; then
-	echo "${RED}ERROR${NC}: $USER was not in the Apache2 web-server group $install_grp, so you have been added to it now. Please log out and in again from your laptop and then run this $0 script again"
-	sudo usermod -a -G $install_grp $USER
+	echo "${RED}ERROR${NC}: $outeruser was not in the Apache2 web-server group $install_grp, so you have been added to it now. Please log out and in again from your laptop and then run this $0 script again"
+	sudo usermod -a -G $install_grp $outeruser
 	exit 1
 fi
 
@@ -292,7 +297,7 @@ fi
 # -------------------------------------------- Admin
 if [ -d ../scripts ]; then
 	echo "${GREEN}INFO${NC}: Linking ${YELLOW}acorn-*${NC} scripts"
-	for script in ../scripts/acorn-git-* ../scripts/acorn-create-system.php ../scripts/acorn-winter-down-up ../scripts/acorn-winter-update-sqls; do
+	for script in ../scripts/acorn-git-* ../scripts/acorn-create-system ../scripts/acorn-winter-down-up ../scripts/acorn-winter-update-sqls; do
 		script_name=`basename "$script"`
 		if [ ! -f "$script_name" ]; then ln -s "$script" .; fi
 	done
@@ -316,11 +321,31 @@ echo "${YELLOW}WARNING${NC}: DBAuth was installed but not enabled. This is becau
 read -p "Enable now? [Y/n] " yn
 case $yn in
 	[Yy]* )
+		# Set <DBAUTH> in .env
 		sed -i 's/^DB_USERNAME=.*/DB_USERNAME=<DBAUTH>/' .env
 		sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=<DBAUTH>/' .env
 		echo "${GREEN}INFO${NC}: DBAuth enabled."
+
+		echo "${GREEN}INFO${NC}: ARTISAN_AUTO_LOGIN & artisan user."
+		echo "ARTISAN_AUTO_LOGIN=1" >> .env
+		./artisan user:create-user -c -s artisan QueenPool1@
+
+		echo "${GREEN}INFO${NC}: createsystem user."
+		if [ -f acorn-create-system ]; then
+			echo "${GREEN}INFO${NC}: Create ${YELLOW}create-system${NC}/${YELLOW}QueenPool1@${NC} superuser"
+			./artisan user:create-user -c -s createsystem QueenPool1@
+		fi
 		;;
 esac
+
+# Create some AA & backend users with default setup
+# These creates will trigger DBAuth if it is enabled
+./artisan user:create-user -c -d -s admin QueenPool1@
+./artisan user:create-user -c -d -s $outeruser QueenPool1@
+./artisan user:create-user -c -d demo password
+
+# Set the default backend timezone to +03:00
+./artisan acorn:set-config cms.backendTimezone Europe/Istanbul
 
 # -------------------------------------------- Security
 # Note that our demons auto-run now

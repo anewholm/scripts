@@ -180,7 +180,7 @@ class DB {
 
     public function tablesBy(string $author = NULL, string $plugin = NULL): array
     {
-        $tableMatch = ($author ? "${author}_" : '') . ($plugin ? "${plugin}_" : '') . '%';
+        $tableMatch = ($author ? "{$author}_" : '') . ($plugin ? "{$plugin}_" : '') . '%';
         return $this->tables($tableMatch);
     }
 
@@ -311,9 +311,9 @@ class DB {
                 where constr.contype = 'f'
                     and table_from_att.attnum = (select unnest(constr.conkey))
                     and table_to_att.attnum   = (select unnest(constr.confkey))
-                    and table_${toFrom}_schema.nspname = :schema
-                    and table_${toFrom}_class.relname  = :table
-                    and table_${toFrom}_att.attname    = :column
+                    and table_{$toFrom}_schema.nspname = :schema
+                    and table_{$toFrom}_class.relname  = :table
+                    and table_{$toFrom}_att.attname    = :column
                 order by coalesce(substring(descr.description, 'order: ([0-9]+)')::int, 10000) asc"
         );
         $statement->bindParam(':schema', $column->table->schema);
