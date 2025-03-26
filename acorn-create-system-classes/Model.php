@@ -209,12 +209,12 @@ class Model {
         foreach ($this->relations() as &$relation) {
             $classParts = explode('\\', get_class($relation));
             $class      = end($classParts);
-            if ($previousClass != $class) print("${indentString}  $class:\n");
+            if ($previousClass != $class) print("{$indentString}  $class:\n");
             $relation->show($indent+2);
             $previousClass = $class;
         }
 
-        print("${indentString}  Fields:\n");
+        print("{$indentString}  Fields:\n");
         foreach ($this->fields() as &$field) {
             $field->show($indent+2);
         }
@@ -649,7 +649,7 @@ class Model {
                 $nestedFieldName = '';
                 foreach ($relation1to1Path as $fieldObj) {
                     if ($fieldObj instanceof Field) $fieldObj = $fieldObj->name;
-                    $nestedFieldName .= "${fieldObj}_";
+                    $nestedFieldName .= "{$fieldObj}_";
                 }
                 $nestedFieldName .= $localFieldName;
             } else {
@@ -664,7 +664,7 @@ class Model {
                     if ($fieldObj instanceof Field) $fieldObj = $fieldObj->name;
                     $path .= "[$fieldObj]";
                 }
-                $nestedFieldName = "$firstFieldObj->name${path}[$localFieldName]";    // office[location][address][name]
+                $nestedFieldName = "$firstFieldObj->name{$path}[$localFieldName]";    // office[location][address][name]
                 if ($valueFrom) $nestedFieldName .= "[$valueFrom]";
             }
         }
@@ -1060,7 +1060,7 @@ class Model {
 
             // TODO: Translatable "create new" comment
             $dataFieldName = "_lc_$name";
-            //$comment     = "create new <a href='#' class='popup-add' data-field-name='$dataFieldName' data-handler='onPopupRoute' data-request-data=\"route:'${table_from_controller//\\/\\\\}@create',fieldName:'$dataFieldName'\" data-control='popup' tabindex='-1'>${table_from_name_singular//_/-}</a>"
+            //$comment     = "create new <a href='#' class='popup-add' data-field-name='$dataFieldName' data-handler='onPopupRoute' data-request-data=\"route:'{$table_from_controller//\\/\\\\}@create',fieldName:'$dataFieldName'\" data-control='popup' tabindex='-1'>{$table_from_name_singular//_/-}</a>"
             $dependsOn[$dataFieldName] = TRUE;
 
             $buttons = array();
@@ -1264,7 +1264,7 @@ HTML;
                     // RELATION_MODE: relation1_relation2_name: + relation:
                     $fieldObj->searchable = TRUE;
                     $fieldObj->sortable   = TRUE;
-                    $fieldObj->canFilter  = FALSE;
+                    $fieldObj->useRelationCondition = TRUE;
                     $nestedColumnKey      = $this->nestedFieldName($localFieldName, $relation1to1Path, self::RELATION_MODE);
                     $fieldObj->relation   = $singleNestParent->name;
 

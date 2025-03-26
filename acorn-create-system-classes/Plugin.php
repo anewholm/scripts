@@ -131,7 +131,7 @@ class Plugin {
         // acorn_finance
         $authorLower = strtolower($this->author);
         $nameLower   = strtolower($this->name);
-        return "${authorLower}_$nameLower";
+        return "{$authorLower}_$nameLower";
     }
 
     // ----------------------------------------- Semantic info

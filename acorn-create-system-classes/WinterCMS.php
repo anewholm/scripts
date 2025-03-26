@@ -48,7 +48,7 @@ class WinterCMS extends Framework
         // ---------------------------- DBAUTH
         if ($this->username == '<DBAUTH>') {
             print("${YELLOW}NOTE${NC}: DBAuth module detected, using winter user instead\n");
-            $this->username   = 'winter';
+            $this->username   = 'createsystem';
             $this->password   = 'QueenPool1@';
         }
 
@@ -781,7 +781,7 @@ class WinterCMS extends Framework
             }
             foreach ($model->relationsXfromXSemi() as $name => &$relation) {
                 // For the pivot model only
-                $name = "${name}_pivot";
+                $name = "{$name}_pivot";
                 if (isset($relations[$name])) throw new \Exception("Conflicting relations with [$name] on [$model->name]");
                 $relations[$name] = array(
                     $relation->pivotModel,
@@ -853,7 +853,7 @@ class WinterCMS extends Framework
             // get<Something>Attribute()s
             foreach ($model->attributeFunctions as $name => &$body) {
                 $namePascal = Str::studly($name);
-                $funcName   = "get${namePascal}Attribute(\$value)"; // Encapsulation...
+                $funcName   = "get{$namePascal}Attribute(\$value)"; // Encapsulation...
                 print("  Injecting public ${YELLOW}$funcName${NC}() into [$model->name]\n");
                 $this->addMethod($modelFilePath, $funcName, $body);
             }
@@ -1121,7 +1121,7 @@ class WinterCMS extends Framework
                     );
 
                     if (count($field->relations)) {
-                        foreach ($field->relations as $name => &$relation) {
+                        foreach ($field->relations as $relationName => &$relation) {
                             // RelationXfromX
                             // RelationXfrom1 does not
                             // Date based fields should have a datarange type filter
@@ -1140,18 +1140,25 @@ class WinterCMS extends Framework
                                     $pivotTableName   = $pivotTable->name;
 
                                     // TODO: Write these in to the Model Relations, not here
-                                    if (!isset($filterDefinition['conditions']) || is_null($filterDefinition['conditions']))
-                                        $filterDefinition['conditions'] = "id in(select $pivotTableName.$keyColumn->name from $pivotTableName where $pivotTableName.$otherColumn->name in(:filtered))";
+                                    if ($field->useRelationCondition) {
+                                        // Probably because it is neseted
+                                        // TODO: This is actually the _un-nested_ relation
+                                        if (!$field->fieldKey) throw new \Exception("Field [$name] has no fieldKey for relationCondition");
+                                        $filterDefinition['relationCondition'] = $field->fieldKey;
+                                    } else {
+                                        if (!isset($filterDefinition['conditions']) || is_null($filterDefinition['conditions']))
+                                            $filterDefinition['conditions'] = "id in(select $pivotTableName.$keyColumn->name from $pivotTableName where $pivotTableName.$otherColumn->name in(:filtered))";
+                                    }
                                 } else if ($relation instanceof RelationXto1) {
                                     // Event and User canFilter foreign key fields come here
                                     // conditions already defined
                                 }
 
                                 $filterDefinition = $this->removeEmpty($filterDefinition, TRUE);
-                                $this->yamlFileSet($configFilterPath, "scopes.$name", $filterDefinition);
+                                $this->yamlFileSet($configFilterPath, "scopes.$relationName", $filterDefinition);
                             } else {
                                 $relationClass = preg_replace('/.*\\\\/', '', get_class($relation));
-                                $this->yamlFileSet($configFilterPath, "# ${name}[$relation] ($relationClass)", 'relation !canFilter');
+                                $this->yamlFileSet($configFilterPath, "# {$relationName}[$relation] ($relationClass)", 'relation !canFilter');
                             }
                         }
                     } else {
@@ -1163,7 +1170,7 @@ class WinterCMS extends Framework
                     }
                 } else {
                     $fieldClass = preg_replace('/.*\\\\/', '', get_class($field));
-                    $this->yamlFileSet($configFilterPath, "# ${name} ($fieldClass)", 'field !canFilter');
+                    $this->yamlFileSet($configFilterPath, "# {$name} ($fieldClass)", 'field !canFilter');
                 }
             }
         }

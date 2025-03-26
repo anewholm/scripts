@@ -97,6 +97,7 @@ class Field {
 
     // Filter config_filter.yaml
     public $canFilter = FALSE;
+    public $useRelationCondition = FALSE; // Custom filtering system for deep relations
     public $filterType;
     public $yearRange;
     public $conditions;
