@@ -133,34 +133,30 @@ if [ "$1" == "pgsql" ]; then
 		fi
 	fi
 
+	has_db=`sudo -i -u postgres psql --port=$db_port -lqt | cut -d \| -f 1 | grep -w $db_name`
+	has_user=`sudo -i -u postgres psql -c "\\du" | cut -d \| -f 1 | tail -n+4 | grep -w $db_username`
 	yn=y
-	if sudo -i -u postgres psql --port=$db_port -lqt | cut -d \| -f 1 | grep -wq $db_name; then
+	if [ -n "$has_db" ]; then
 		read -p "${YELLOW}WARNING${NC}: DB [$db_name] already exists. Re-create DB stuff [Y/n]? " yn
-	else
-		echo "DB [$db_name] does not exist yet. Creating..."
 	fi
 
 	case $yn in
 		[Yy]* )
-			if sudo -i -u postgres psql --port=$db_port -lqt | cut -d \| -f 1 | grep -wq $db_name; then
-					sudo -i -u postgres dropdb   --port=$db_port $db_name
-					sudo -i -u postgres dropuser --port=$db_port $db_name
-			fi
+			# Drops, in order
+			if [ -n "$has_db" ];   then sudo -i -u postgres dropdb   --port=$db_port --if-exists --force $db_name; fi
+			if [ -n "$has_user" ]; then sudo -i -u postgres dropuser --port=$db_port --if-exists $db_username; fi
+
+			# User
 			sudo -i -u postgres psql --port=$db_port -c "CREATE USER $db_username WITH SUPERUSER CREATEROLE PASSWORD '$db_password';"
-			if [ "$?" == "1" ]; then
-					echo "${RED}ERROR${NC}: Failed to create user $db_username with password [$db_password]"
-					exit;
-			fi
+			if [ "$?" == "1" ]; then echo "${RED}ERROR${NC}: Failed to create user $db_username with password [$db_password]"; exit 1; fi
+			echo "${GREEN}INFO${NC}: created user [${GREEN}$db_username${NC}] with password [${GREEN}$db_password${NC}]";
+
+			# DB
 			sudo -i -u postgres psql --port=$db_port -c "CREATE DATABASE $db_name OWNER $db_username;"
-			if [ "$?" == "1" ]; then
-					echo "${RED}ERROR${NC}: Failed to create database [$db_name]"
-					exit;
-			fi
+			if [ "$?" == "1" ]; then echo "${RED}ERROR${NC}: Failed to create database [$db_name]"; exit 1; fi
 			echo "${GREEN}INFO${NC}: created database [${GREEN}$db_name${NC}] with user [${GREEN}$db_username${NC}] password [${GREEN}$db_password${NC}]";
 			;;
-		[Nn]* )
-			;;
-		* ) echo "eh?"
+		* )
 			;;
 	esac
 fi
