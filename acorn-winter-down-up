@@ -15,7 +15,10 @@ DB_PORT=`grep DB_PORT $env | tr -d "'" | cut -d '=' -f 2`
 DB_DATABASE=`grep DB_DATABASE $env | tr -d "'" | cut -d '=' -f 2`
 DB_USERNAME=`grep DB_USERNAME $env | tr -d "'" | cut -d '=' -f 2`
 DB_PASSWORD=`grep DB_PASSWORD $env | tr -d "'" | cut -d '=' -f 2`
-echo "Dump Database: ${YELLOW}$DB_CONNECTION@$DB_HOST:$DB_PORT${NC}, db ${YELLOW}$DB_USERNAME${NC}@${YELLOW}$DB_DATABASE${NC}"
+using_dbAuth=
+if [ "$DB_USERNAME" == '<DBAUTH>' ]; then DB_USERNAME='artisan'; using_dbAuth='(DBAUTH mode)'; fi
+if [ "$DB_PASSWORD" == '<DBAUTH>' ]; then DB_PASSWORD='QueenPool1@'; fi
+echo "Dump Database: ${YELLOW}$DB_CONNECTION@$DB_HOST:$DB_PORT${NC}, db ${GREEN}$using_dbAuth${NC} ${YELLOW}$DB_USERNAME${NC}@${YELLOW}$DB_DATABASE${NC}"
 
 echo "permissions => www-data"
 sudo chown -R www-data:www-data .; sudo chmod -R g+rw .

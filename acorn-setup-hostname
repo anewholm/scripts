@@ -119,7 +119,7 @@ if [ -f .env.example ] && [ ! -f .env ]; then
 fi
 if [ -f .env ]; then
   echo "${GREEN}INFO${NC}: Detected Laravel"
-	sed -i "s|APP_URL=.*|APP_URL=\"$hostname\"|" .env
+	sed -i "s|APP_URL=.*|APP_URL=\"http://$hostname\"|" .env
 	echo "Updated the Laravel .env file in this directory to use the hostname [$hostname]"
 fi
 
