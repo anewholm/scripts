@@ -852,7 +852,7 @@ begin
 	-- TODO: Hardcoded system Calendars, Types and Statuses 
 	-- for the acorn_calendar_database_event_instances view
 	if not exists(select * from public.acorn_calendar_calendars where id='6faa432c-e3b5-11ef-ac7d-af7a8110175c') then
-		insert into public.acorn_calendar(id, name) 
+		insert into public.acorn_calendar_calendars(id, name) 
 			values('6faa432c-e3b5-11ef-ac7d-af7a8110175c', 'Entity create and update events');
 	end if;
 	if not exists(select * from public.acorn_calendar_event_statuses where id='c4c3a3d0-e3b5-11ef-98b6-83c560e3d98a') then
@@ -1342,15 +1342,21 @@ ALTER FUNCTION public.fn_acorn_truncate_database(schema_like character varying, 
 CREATE FUNCTION public.fn_acorn_user_get_seed_user() RETURNS uuid
     LANGUAGE plpgsql
     AS $$
+declare
+	user_id uuid;
 begin
-	-- We select the first user in the system
-	-- Intentional EXCEPTION if there is not one
-	return (select uu.id 
-		--from public.backend_users bu
-		--inner join public.acorn_user_users uu on bu.acorn_user_user_id = uu.id
-		--where bu.is_superuser
-		from public.acorn_user_users uu
-		limit 1);
+            -- Lazy create the seeder user
+            select into user_id uu.id 
+                from public.acorn_user_users uu
+                where name = 'seeder' and is_system_user limit 1;
+            if user_id is null then
+                insert into public.acorn_user_users(name, is_system_user)
+                    values('seeder', true) 
+                    returning id into user_id;
+            end if;
+            
+            
+            return user_id;
 end;
 $$;
 
@@ -6734,6 +6740,7 @@ COPY public.acorn_calendar_calendars (id, name, description, sync_file, sync_for
 ceea8856-e4c8-11ef-8719-5f58c97885a2	Default	\N	\N	0	2024-10-19 13:37:23	\N	\N	\N	1	t
 f3bc49bc-eac7-11ef-9e4a-1740a039dada	Activity Log	\N	\N	0	2024-10-19 13:37:23	\N	\N	\N	1	t
 ec4360f9-11cc-4cb8-b1fc-f274f220da5f	Legal	\N	\N	0	2024-10-19 13:37:23	\N	\N	\N	1	f
+6faa432c-e3b5-11ef-ac7d-af7a8110175c	Entity create and update events	\N	\N	0	2024-10-19 13:37:23	\N	\N	\N	1	f
 \.
 
 
@@ -6775,6 +6782,8 @@ fb2392de-e62e-11ef-b202-5fe79ff1071f	Cancelled	\N	text-decoration:line-through;b
 7ceca4c0-eac8-11ef-b685-f7f3f278f676	acorn.calendar::lang.models.general.soft_delete	\N	color:#fff	\N	\N	t	\N
 f9690600-eac9-11ef-8002-5b2cbe0c12c0	acorn.calendar::lang.models.general.soft_undelete	\N	color:#fff	\N	\N	t	\N
 5134c9db-a5b0-40ee-95f0-1e9b39331548	Validate	\N	\N	\N	\N	f	ec4360f9-11cc-4cb8-b1fc-f274f220da5f
+c4c3a3d0-e3b5-11ef-98b6-83c560e3d98a	Created	\N	color:#050	\N	\N	f	\N
+cb75aa34-e3b5-11ef-abf2-a7e3fb05f16a	Updated	\N	color:#005	\N	\N	f	\N
 \.
 
 
@@ -6809,6 +6818,11 @@ ea2060dc-a693-4b0b-bb25-f4c8fdeab585	Justice Legalcase Legalcase Category	\N	f	#
 bf2a1cda-1c5d-489e-bc88-e7b510f206af	Criminal Detention Periods	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	73601	f3bc49bc-eac7-11ef-9e4a-1740a039dada
 dbe4954c-4e71-4d2b-843b-990604a4275b	Criminal Defendant Crimes	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22650	f3bc49bc-eac7-11ef-9e4a-1740a039dada
 848e1e49-85c2-4e43-b054-2864a2973f59	Justice Scanned Documents	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22800	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+7754c714-e3b5-11ef-84f2-2bd5b1a61b38	Criminal Legalcase Related Events	\N	f	#dfdfdf		2024-10-19 13:37:23	\N	f	\N	\N
+f6477b0f-8bc3-4325-91ee-2e2f7c51b8a6	Finance Currencies	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22727	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+7b09199a-bb59-47e2-bb68-11aab8ecb8dd	Lojistiks Measurement Units	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22890	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+7b425bba-91d3-451e-a0be-e83bbd4ee1ab	Lojistiks Vehicle Types	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22992	f3bc49bc-eac7-11ef-9e4a-1740a039dada
+0565f4c0-efbd-4f48-ac12-5e059364babc	Lojistiks Brands	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22866	f3bc49bc-eac7-11ef-9e4a-1740a039dada
 \.
 
 
@@ -7714,7 +7728,8 @@ e5e95b8f-dffd-4ed5-9c17-c87f62bebd0d	Dîwana Dadgeriya Civakî li Til Temir	\N	\
 c5adb730-1968-400e-af3d-37c8d32d8433	Cêgratiya Giştî li Til Hemîsê	\N	\N	\N	\N	2a849d98-35b5-4d84-9890-89a02efd49c6	\N	\N	\N	\N	\N	\N	\N	\N	\N
 9617afcd-11c8-481b-95ba-112f600eef3b	Cêgratiya Giştî li Çelaxa	\N	\N	\N	\N	2a849d98-35b5-4d84-9890-89a02efd49c6	\N	\N	\N	\N	\N	\N	\N	\N	\N
 738b0e85-0214-42e4-88fa-b6649e2d0a47	Cêgratiya Giştî li Til Koçerê	\N	\N	\N	\N	2a849d98-35b5-4d84-9890-89a02efd49c6	\N	\N	\N	\N	\N	\N	\N	\N	\N
-9e43ad93-4969-4655-9d8b-669ff0c8df9a	Weeeee	weeeee		2025-02-21 10:52:01	2025-03-23 08:17:10	\N	1	2	0	\N	#F1C40F		\N	\N	e5aa0d61-8c70-4c74-99e6-4312ea063912
+9e43ad93-4969-4655-9d8b-669ff0c8df9a	Weeeee	weeeee		2025-02-21 10:52:01	2025-03-29 14:08:47	\N	1	2	0	\N	#F1C40F		\N	\N	e5aa0d61-8c70-4c74-99e6-4312ea063912
+9e8c601e-7443-4d95-ad90-5a249056fe6e	test	test		2025-03-29 14:10:52	2025-03-29 14:10:52	\N	1	2	0	9d6d277e-0cbd-4a8c-8483-04fadefd0a06	\N		\N	\N	9e7fc6ee-2c81-4eb6-b010-f4333ad0f6a2
 \.
 
 
@@ -7771,6 +7786,10 @@ d57f552e-4ad2-4e9b-9055-d78bb377d1d6	admin		\N	\N	\N	\N	\N	f	\N	\N	\N	2024-11-26
 9e808f04-ad37-453e-83c3-70ec6521a495	Admin	admin@nowhere	$2y$10$MMN7bZiRcj2QVN.5BjRnruYtDiKsxLQiJ6Vyr7Od2Oo5vWbr59fN6	\N	\N	\N	\N	f	\N	\N	2025-03-23 17:12:04	2025-03-23 17:12:04	admin	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
 9e80984a-f90d-4907-b35e-d2a6188ac8f1	Test	test@nowhere	$2y$10$T31Ym6zyCFUQwcebv6Cu0e4PNeKtGm3dr1KKySUy6Xhh68.qi.fOe	\N	\N	\N	\N	f	\N	\N	2025-03-23 17:38:00	2025-03-23 17:38:00	test	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
 9e82808b-c561-4a41-b2b8-4e08dfe78800	Demo	demo@nowhere.org	$2y$10$R7R0ZpYVwF2wY5ntQAxXi.beoGXPHUFodm/2OHupxiXF0MJJ4GbFW	\N	\N	\N	\N	f	\N	\N	2025-03-24 16:23:15	2025-03-24 16:23:15	demo	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
+a1a43a0b-8d21-4b0f-ba0d-123d6b754ce4	seeder	\N	\N	\N	\N	\N	\N	f	\N	\N	\N	\N	\N	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
+d9067fce-ee60-4912-aadf-c6c4c92a89ed	seeder	\N	\N	\N	\N	\N	\N	f	\N	\N	\N	\N	\N	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
+892ffcc7-7538-4910-b851-b6ca349b045d	seeder	\N	\N	\N	\N	\N	\N	f	\N	\N	\N	\N	\N	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
+385f0adc-940c-4424-9575-45e947e32b4b	seeder	\N	\N	\N	\N	\N	\N	f	\N	\N	\N	\N	\N	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t
 \.
 
 
@@ -7839,6 +7858,10 @@ COPY public.backend_access_log (id, user_id, ip_address, created_at, updated_at)
 58	1	127.0.0.1	2025-03-23 17:42:47	2025-03-23 17:42:47
 59	8	127.0.0.1	2025-03-23 17:47:05	2025-03-23 17:47:05
 60	1	127.0.0.1	2025-03-24 16:30:22	2025-03-24 16:30:22
+61	1	127.0.0.1	2025-03-28 12:45:25	2025-03-28 12:45:25
+62	1	127.0.0.1	2025-03-28 12:52:50	2025-03-28 12:52:50
+63	1	127.0.0.1	2025-03-28 12:56:31	2025-03-28 12:56:31
+64	1	127.0.0.1	2025-03-29 14:04:40	2025-03-29 14:04:40
 \.
 
 
@@ -7862,11 +7885,11 @@ COPY public.backend_user_preferences (id, user_id, namespace, "group", item, val
 6	1	acorn_criminal	legalcases	lists-relationcriminallegalcaseprosecutorlegalcasesviewlist	{"visible":["name","surname","email","created_at","last_seen","groups","languages"],"order":["id","username","name","surname","email","created_at","last_seen","is_guest","created_ip_address","last_ip_address","groups","languages"],"per_page":false}
 12	1	acorn_criminal	legalcases	lists-relationcriminallegalcasedefendantslegalcaseviewlist	{"visible":["user","created_at_event","criminal_defendant_detentions_legalcase_defendant","criminal_defendant_crimes_legalcase_defendant","_actions","updated_at_event","updated_by_user","lawyer_user","verdict"],"order":["id","legalcase","user","created_at_event","created_by_user","criminal_defendant_detentions_legalcase_defendant","criminal_defendant_crimes_legalcase_defendant","_qrcode","_actions","description","updated_at_event","updated_by_user","server","lawyer_user","verdict"],"per_page":"10"}
 10	1	acorn_criminal	legalcases	lists-relationcriminaltrialslegalcaseviewlist	{"visible":["legalcase","criminal_trial_judges_trial","criminal_trial_sessions_trial","_actions","calendar[name]","first_event_part[start]","first_event_part[repeat]","first_event_part[status][name]"],"order":["id","legalcase","created_at_event","created_by_user","criminal_trial_judges_trial","criminal_trial_sessions_trial","_qrcode","_actions","calendar[name]","first_event_part[type][name]","first_event_part[name]","first_event_part[start]","first_event_part[end]","first_event_part[alarm]","first_event_part[description]","first_event_part[repeat]","first_event_part[mask]","first_event_part[repeat_frequency]","first_event_part[mask_type]","first_event_part[parentEventPart][name]","first_event_part[until]","first_event_part[users]","first_event_part[groups]","first_event_part[status][name]","first_event_part[location][name]","owner_user_id","owner_user_group_id","permissions","created_at","updated_at"],"per_page":"10"}
+5	1	backend	backend	preferences	{"locale":"en","fallback_locale":"en","timezone":"Europe\\/Istanbul","editor_font_size":"12","editor_word_wrap":"fluid","editor_code_folding":"manual","editor_tab_size":"4","editor_theme":"twilight","editor_show_invisibles":"0","editor_highlight_active_line":"1","editor_use_hard_tabs":"0","editor_show_gutter":"1","editor_auto_closing":"0","editor_autocompletion":"manual","editor_enable_snippets":"0","editor_display_indent_guides":"0","editor_show_print_margin":"0","dark_mode":"light","menu_location":"top","icon_location":"inline","user_id":1}
 2	1	backend	reportwidgets	dashboard	{"welcome":{"class":"Backend\\\\ReportWidgets\\\\Welcome","sortOrder":50,"configuration":{"ocWidgetWidth":7}},"systemStatus":{"class":"System\\\\ReportWidgets\\\\Status","sortOrder":60,"configuration":{"title":"System status","ocWidgetWidth":7,"ocWidgetNewRow":null}}}
 8	1	acorn_user	usergroups	lists	{"visible":["name","type","type_colour","type_image","colour","code","users_count","created_at","auth_is_member","location"],"order":["id","name","type","type_colour","type_image","colour","image","parent_user_group","code","users_count","created_at","auth_is_member","location"],"per_page":20}
 7	1	acorn_calendar	months	calendars-instance	{"visible":["eventPart[location][name]","instance_start","instance_end","eventPart[name]","name","eventPart[repeatWithFrequency()]","eventPart[attendees()]","eventPart[isLocked()]","eventPart[alarm]","name"],"order":["id","date","event_part_id","eventPart[location][name]","instance_num","instance_start","instance_end","eventPart[name]","name","eventPart[repeatWithFrequency()]","eventPart[attendees()]","created_at","updated_at","eventPart[canWrite()]","eventPart[isLocked()]","eventPart[alarm]","name"],"per_page":null}
 11	1	acorn_user	languages	lists	{"visible":["name"],"order":["id","name"],"per_page":"20"}
-5	1	backend	backend	preferences	{"locale":"ku","fallback_locale":"en","timezone":"Europe\\/Istanbul","editor_font_size":"12","editor_word_wrap":"fluid","editor_code_folding":"manual","editor_tab_size":"4","editor_theme":"twilight","editor_show_invisibles":"0","editor_highlight_active_line":"1","editor_use_hard_tabs":"0","editor_show_gutter":"1","editor_auto_closing":"0","editor_autocompletion":"manual","editor_enable_snippets":"0","editor_display_indent_guides":"0","editor_show_print_margin":"0","dark_mode":"light","menu_location":"top","icon_location":"inline","user_id":1}
 14	1	acorn_criminal	legalcases	lists-relationlegalcasejusticewarrantslegalcaseviewlist	{"visible":["user","warrant_type","revoked_at_event","description","state_indicator","_actions"],"order":["id","created_at_event","created_by_user","user","warrant_type","legalcase","revoked_at_event","description","updated_at_event","updated_by_user","server","state_indicator","notary_request","_qrcode","_actions"],"per_page":"10"}
 18	8	backend	backend	preferences	{"locale":"ar","fallback_locale":"es","timezone":"Europe\\/Istanbul","editor_font_size":"12","editor_word_wrap":"fluid","editor_code_folding":"manual","editor_tab_size":"4","editor_theme":"twilight","editor_show_invisibles":"0","editor_highlight_active_line":"1","editor_use_hard_tabs":"0","editor_show_gutter":"1","editor_auto_closing":"0","editor_autocompletion":"manual","editor_enable_snippets":"0","editor_display_indent_guides":"0","editor_show_print_margin":"0","dark_mode":"light","menu_location":"topi","icon_location":"tiler","user_id":8}
 13	1	acorn_criminal	legalcases	lists-relationcriminallegalcaserelatedeventslegalcaseviewlist	{"visible":["first_event_part[name]","first_event_part[start]","first_event_part[end]","first_event_part[alarm]","first_event_part[repeat]","first_event_part[repeat_frequency]","first_event_part[status][name]","first_event_part[location][name]","_actions"],"order":["legalcase","id","created_at","created_by_user","updated_at","owner_user_id","owner_user_group_id","permissions","_qrcode","calendar[name]","first_event_part[name]","first_event_part[type][name]","first_event_part[start]","first_event_part[end]","first_event_part[alarm]","first_event_part[description]","first_event_part[repeat]","first_event_part[mask]","first_event_part[repeat_frequency]","first_event_part[mask_type]","first_event_part[parentEventPart][name]","first_event_part[until]","first_event_part[status][name]","first_event_part[location][name]","_actions","first_event_part[users]","first_event_part[groups]"],"per_page":"10"}
@@ -7874,6 +7897,7 @@ COPY public.backend_user_preferences (id, user_id, namespace, "group", item, val
 15	2	acorn_criminal	legalcases	lists-relationcriminallegalcasewitnesseslegalcaseviewlist	{"visible":["user","legalcase","description","criminal_witness_statement_legalcase_witnesses","_actions"],"order":["id","user","legalcase","created_at_event","created_by_user","description","updated_at_event","updated_by_user","server","criminal_witness_statement_legalcase_witnesses","_qrcode","_actions"],"per_page":"10"}
 17	1	acorn_location	locations	lists	{"visible":["name","image","type[colour]","type[fully_qualified_name]","address[fully_qualified_name]","address[area][fully_qualified_name]","city","zip","country_code","vicinity"],"order":["id","name","image","type[colour]","type[fully_qualified_name]","address[fully_qualified_name]","address[area][fully_qualified_name]","address[gps][latitude]","address[gps][longitude]","city","zip","country_code","state_code","vicinity"],"per_page":"20"}
 1	1	acorn_criminal	legalcases	lists	{"visible":["legalcase_name","legalcase[owner_user_group][name]","criminal_legalcase_prosecutor_legalcases","criminal_legalcase_evidence_legalcase","criminal_trials_legalcase","legalcase_closed_at_event","legalcase[justice_scanned_documents_legalcase][name]","legalcase[justice_legalcase_legalcase_category_legalcases][name]","criminal_legalcase_plaintiffs_legalcase","legalcase_created_at_event","legalcase_type","_actions"],"order":["id","_qrcode","legalcase_name","legalcase[owner_user_group][name]","criminal_legalcase_prosecutor_legalcases","criminal_appeals_legalcase","criminal_legalcase_defendants_legalcase","criminal_legalcase_related_events_legalcase","criminal_legalcase_witnesses_legalcase","criminal_legalcase_evidence_legalcase","criminal_trials_legalcase","server","legalcase_closed_at_event","legalcase[justice_scanned_documents_legalcase][name]","legalcase[justice_warrants_legalcase][name]","legalcase[justice_legalcase_legalcase_category_legalcases][name]","judge_committee_user_group","criminal_legalcase_plaintiffs_legalcase","legalcase_created_at_event","legalcase_created_by_user","legalcase_description","legalcase_updated_at_event","legalcase_type","legalcase_updated_by_user","_actions","legalcase[justice_summons_legalcase][name]","legalcase[justice_statements_legalcase][name]"],"per_page":"20"}
+24	1	acorn_criminal	legalcases	lists-relationcriminaldefendantcrimeslegalcasedefendantviewlist	{"visible":["crime","description","criminal_crime_sentences_defendant_crime","criminal_crime_evidence_defendant_crimes","_actions"],"order":["id","legalcase_defendant","crime","created_at_event","created_by_user","description","updated_at_event","updated_by_user","server","criminal_crime_sentences_defendant_crime","criminal_crime_evidence_defendant_crimes","_qrcode","_actions"],"per_page":"10"}
 19	2	backend	backend	preferences	{"locale":"ku","fallback_locale":"en","timezone":"Europe\\/Istanbul","icon_location":"inline","menu_location":"top"}
 \.
 
@@ -7905,10 +7929,10 @@ COPY public.backend_user_throttle (id, user_id, ip_address, attempts, last_attem
 --
 
 COPY public.backend_users (id, first_name, last_name, login, email, password, activation_code, persist_code, reset_password_code, permissions, is_activated, role_id, activated_at, last_login, created_at, updated_at, deleted_at, is_superuser, metadata, acorn_url, acorn_user_user_id) FROM stdin;
-1	Admin	Person	admin	admin@example.com	$2y$10$A487JegVfo9RmI9gD89kiuU0RHuj2sNKSAvu4ZXkMwA42JWAnecoS	\N	$2y$10$84EKulF6YSh.yragWLf.qeOKIJMYyeJOvNNDPnZpk.WXn.yMiTA2q	\N		t	2	\N	2025-03-24 16:30:22	2024-10-19 10:37:18	2025-03-24 16:30:22	\N	t	\N	\N	9e808f04-ad37-453e-83c3-70ec6521a495
+1	Admin	Person	admin	admin@example.com	$2y$10$A487JegVfo9RmI9gD89kiuU0RHuj2sNKSAvu4ZXkMwA42JWAnecoS	\N	$2y$10$84EKulF6YSh.yragWLf.qeOKIJMYyeJOvNNDPnZpk.WXn.yMiTA2q	\N		t	2	\N	2025-03-29 14:04:40	2024-10-19 10:37:18	2025-03-29 14:04:40	\N	t	\N	\N	9e808f04-ad37-453e-83c3-70ec6521a495
 7			justice	justice@nowhere.com	$2y$10$H4YHv/Dyj4Od5i5RRMEbGOvbudWq4QFfSKk3hQvALelR.CXKE5NUa	\N	\N	\N		f	\N	\N	\N	2025-02-25 07:35:08	2025-02-25 07:35:08	\N	t	\N	\N	\N
+8			test	test@b.com	$2y$10$vygcmKdVLO1r2WzFmm21jOT9dbbRB2R0azZj5/hs46KX2p7nj0UTe	\N	\N	\N	{"reporting":1}	f	1	\N	2025-03-23 17:47:05	2025-03-23 17:27:35	2025-03-27 08:54:06	\N	f	\N	\N	\N
 2	Demo		demo	demo@example.com	$2y$10$qXppZYCFKO3PBwI2JUZ0mORjrR/eOhLIkCdKe2U5aPsAWys.sr.Qy		\N		{"cms.manage_content":-1,"cms.manage_assets":-1,"cms.manage_pages":-1,"cms.manage_layouts":-1,"cms.manage_partials":-1,"cms.manage_themes":-1,"cms.manage_theme_options":-1,"backend.access_dashboard":1,"backend.manage_default_dashboard":-1,"backend.manage_users":-1,"backend.impersonate_users":-1,"backend.manage_preferences":1,"backend.manage_editor":-1,"backend.manage_own_editor":-1,"backend.manage_branding":1,"media.manage_media":-1,"backend.allow_unsafe_markdown":-1,"system.manage_updates":-1,"system.access_logs":-1,"system.manage_mail_settings":-1,"system.manage_mail_templates":-1,"acorn.rtler.change_settings":1,"acorn.users.access_users":1,"acorn.users.access_groups":1,"acorn.users.access_settings":1,"acorn.users.impersonate_user":-1,"winter.location.access_settings":1,"winter.tailwindui.manage_own_appearance.dark_mode":1,"winter.tailwindui.manage_own_appearance.menu_location":1,"winter.tailwindui.manage_own_appearance.item_location":1,"winter.translate.manage_locales":1,"winter.translate.manage_messages":1,"acorn_location":1,"acorn_messaging":-1,"calendar_view":1,"change_the_past":1,"access_settings":1,"legalcases__legalcase_name__update":-1,"legalcases__owner_user_group_id__update":-1,"notary":1,"legalcase_type__create_criminal_only":1,"legalcase_type__create_civil_only":-1,"legalcase_type__create_any":-1,"legalcases__legalcase_type_id__update":-1,"trials__access":-1,"appeals__access":-1}	t	\N	\N	2025-02-25 08:26:36	\N	2025-03-24 16:23:15	\N	f			9e82808b-c561-4a41-b2b8-4e08dfe78800
-8			test	test@b.com	$2y$10$vygcmKdVLO1r2WzFmm21jOT9dbbRB2R0azZj5/hs46KX2p7nj0UTe	\N	\N	\N		f	1	\N	2025-03-23 17:47:05	2025-03-23 17:27:35	2025-03-24 16:30:17	\N	t	\N	\N	\N
 \.
 
 
@@ -7960,30 +7984,6 @@ COPY public.cms_theme_templates (id, source, path, content, file_size, updated_a
 --
 
 COPY public.deferred_bindings (id, master_type, master_field, slave_type, slave_id, session_key, is_bind, created_at, updated_at, pivot_data) FROM stdin;
-1	Acorn\\Justice\\Models\\ScannedDocument	image	System\\Models\\File	1	Lcjktw19QO77feE3VHn1DVg7UCA4yW4vxm87iEz0	t	2024-10-20 18:06:08	2024-10-20 18:06:08	\N
-60	Acorn\\Criminal\\Models\\LegalcaseDefendant	criminal_defendant_crimes_legalcase_defendant	Acorn\\Criminal\\Models\\DefendantCrime	9da0814a-858c-4db6-a642-dbd207749636	k3jWwTJdd9fceM80c0xMv4RJffuIH57eIp0vQep9	t	2024-12-02 08:08:14	2024-12-02 08:08:14	\N
-61	Acorn\\Criminal\\Models\\LegalcaseDefendant	criminal_defendant_crimes_legalcase_defendant	Acorn\\Criminal\\Models\\DefendantCrime	9da081f1-d7b5-4a04-af31-79d5e3d923dd	qdEunt1t72KpVd4HxfU1ZJl8mK9rzs9uj9EwcrFM	t	2024-12-02 08:10:04	2024-12-02 08:10:04	\N
-62	Acorn\\Criminal\\Models\\DefendantCrime	criminal_crime_sentences_defendant_crime	Acorn\\Criminal\\Models\\CrimeSentence	9da4789e-c6c4-4faa-8d1d-a686216fe476	WhVLdG3m8ywkiCq5P5OKwbfE6li3D7hZ10XtXFel	t	2024-12-04 07:27:18	2024-12-04 07:27:18	\N
-64	Acorn\\Lojistiks\\Models\\ProductInstance	image	System\\Models\\File	82	TY6QFZ0XP3JvPJDXQMQlsXATVInykwzExvcxC1fM	t	2024-12-27 09:07:10	2024-12-27 09:07:10	\N
-20	Acorn\\Justice\\Models\\ScannedDocument	image	System\\Models\\File	25	lbRIRUSl1aKRLPJLXK5DcD8gnL7oFhQSJICAWeYF	t	2024-10-27 16:29:28	2024-10-27 16:29:28	\N
-21	Acorn\\Justice\\Models\\ScannedDocument	document	System\\Models\\File	26	GEDlfJslMe9EzHAqkbdO4ZancRuFHFuXZWlfwM1h	t	2024-10-27 16:31:47	2024-10-27 16:31:47	\N
-29	Acorn\\Criminal\\Models\\Legalcase	criminal_legalcase_prosecutor_legalcases	Acorn\\User\\Models\\User	9d50b904-7777-4afc-90fc-c8f07d73f5c7	evHprewR3HJsSceuMA1Z8bE6EM7LpsyPKk7eJkkQ	t	2024-11-06 19:40:24	2024-11-06 19:40:24	\N
-30	Acorn\\Criminal\\Models\\Legalcase	criminal_legalcase_prosecutor_legalcases	Acorn\\User\\Models\\User	9d626095-4ac7-42ee-a9df-020710ba9b36	evHprewR3HJsSceuMA1Z8bE6EM7LpsyPKk7eJkkQ	t	2024-11-06 19:40:24	2024-11-06 19:40:24	\N
-57	Acorn\\Justice\\Models\\Legalcase	legalcase_justice_scanned_documents_legalcase	Acorn\\Justice\\Models\\ScannedDocument	9d8d3b6e-1131-402f-9955-b7317b4beb4b	jIJn2YU6YdN2gV8W9wSXkmFs60LSXNC03WNMkn8B	t	2024-11-22 18:12:10	2024-11-22 18:12:10	\N
-68	Acorn\\Criminal\\Models\\LegalcaseDefendant	criminal_defendant_detentions_legalcase_defendant	Acorn\\Criminal\\Models\\DefendantDetention	9e0d37bf-13b6-4a8b-b3a8-12025372c510	s2eJXFOXJBwy5vKjvIzzAJFqUOsnC7PDsuYImfpo	t	2025-01-25 09:07:50	2025-01-25 09:07:50	\N
-69	Acorn\\Justice\\Models\\LegalcaseCategory	children	Acorn\\Justice\\Models\\LegalcaseCategory	9e138105-d410-4cad-be90-2f5d9a01b0f3	4ocFSCqqPvPjlDw7nceNztCHGgbkwcZPuYTYqObV	t	2025-01-28 12:07:42	2025-01-28 12:07:42	\N
-71	Acorn\\Criminal\\Models\\DefendantCrime	criminal_crime_sentences_defendant_crime	Acorn\\Criminal\\Models\\CrimeSentence	9e214b95-dbd2-4dd2-90e8-e3a89516bd32	9c5KshEoiBVEnHU17cj2fAIC5M99HwO3iVxQckBP	t	2025-02-04 08:39:52	2025-02-04 08:39:52	\N
-72	Acorn\\Criminal\\Models\\LegalcaseEvidence	criminal_crime_evidence_legalcase_evidences	Acorn\\Criminal\\Models\\DefendantCrime	9da08032-8574-4b0f-91e2-3d04f87a48b6	FORS2U2TTKSl7HehyxysdR3ybOG4PHbR3KFXe6TX	t	2025-02-04 08:44:32	2025-02-04 08:44:32	\N
-76	Acorn\\Justice\\Models\\ScannedDocument	document	System\\Models\\File	90	qr8Dy4xWJLfL0ly6qL63CY0mmX4nGV7ichqEJ7ht	t	2025-02-05 14:26:53	2025-02-05 14:26:53	\N
-78	Acorn\\Criminal\\Models\\DefendantCrime	criminal_crime_evidence_defendant_crimes	Acorn\\Criminal\\Models\\LegalcaseEvidence	9e2423d2-2541-43fb-999f-68ebf0c8c71f	tdSgwhl8TAlSJ8Cc88dpqz9QmJjBS9iKHmbshrmj	t	2025-02-05 18:36:09	2025-02-05 18:36:09	\N
-79	Acorn\\Criminal\\Models\\LegalcaseEvidence	criminal_crime_evidence_legalcase_evidences	Acorn\\Criminal\\Models\\DefendantCrime	9e2bc3de-c248-414a-ae83-9be0e4d704f6	VXyis208P4u1KNVA9Tqt3HlBrSNL7Xufe1XKEHFk	t	2025-02-09 13:34:29	2025-02-09 13:34:29	\N
-84	Acorn\\Criminal\\Models\\Legalcase	criminal_legalcase_plaintiffs_legalcase	Acorn\\Criminal\\Models\\LegalcasePlaintiff	9e3fdfb0-aede-4e43-954b-43fb35151657	QmrL3mnq99VvNXXAki8yyN4umO6fixANHWBnM3uM	t	2025-02-19 13:28:50	2025-02-19 13:28:50	\N
-87	Acorn\\Criminal\\Models\\Legalcase	criminal_legalcase_plaintiffs_legalcase	Acorn\\Criminal\\Models\\LegalcasePlaintiff	9e479927-78c1-4a46-8313-98b8bcfe726f	9iDcVc5V1lCFehETq9nsUqs8esDraOU2Hybvk9Gn	t	2025-02-23 09:38:13	2025-02-23 09:38:13	\N
-88	Acorn\\Criminal\\Models\\LegalcaseWitness	criminal_witness_statement_legalcase_witnesses	Acorn\\Justice\\Models\\Statement	9e57c722-72b7-4682-adb2-aab820eb8be6	TX3THOr96rX9YcfjjfTduI0QT2gCe0jBa80voJrH	t	2025-03-03 10:40:02	2025-03-03 10:40:02	\N
-89	Acorn\\Criminal\\Models\\DefendantDetention	criminal_detention_periods_defendant_detention	Acorn\\Criminal\\Models\\DetentionPeriod	9e5bbd61-53ae-49c6-b2e5-e17ddef6072d	sNwa9OVl3OYTjIzVbqdubf5bUWQEbL6h3sPWDxPA	t	2025-03-05 09:56:04	2025-03-05 09:56:04	\N
-90	Acorn\\Criminal\\Models\\LegalcaseDefendant	criminal_defendant_detentions_legalcase_defendant	Acorn\\Criminal\\Models\\DefendantDetention	9e5bbd67-c259-4a2d-86a6-f99040234657	sNwa9OVl3OYTjIzVbqdubf5bUWQEbL6h3sPWDxPA	t	2025-03-05 09:56:09	2025-03-05 09:56:09	\N
-91	Acorn\\Justice\\Models\\Legalcase	justice_legalcase_legalcase_category_legalcases	Acorn\\Justice\\Models\\LegalcaseCategory	9e619671-38cb-4964-97b9-f76cd3fa6d33	DcOYL3qj6kIs7hkBvvyMjAUeFt8lIrbwyTOFgoGg	t	2025-03-08 07:42:10	2025-03-08 07:42:10	\N
-95	Acorn\\Justice\\Models\\ScannedDocument	document	System\\Models\\File	96	rjBm1ELPZM8tiNEcAqEAvlmY94nPdh3vY3Q99t8M	t	2025-03-23 10:48:49	2025-03-23 10:48:49	\N
 \.
 
 
@@ -8210,7 +8210,7 @@ COPY public.system_parameters (id, namespace, "group", item, value) FROM stdin;
 2	system	update	count	0
 4	system	core	build	"1.2.6"
 5	system	core	modified	true
-3	system	update	retry	1742924095
+3	system	update	retry	1743340377
 \.
 
 
@@ -8534,9 +8534,9 @@ COPY public.system_plugin_versions (id, code, version, created_at, is_disabled, 
 11	Acorn.Justice	4.0.0	2024-10-19 10:37:23	f	f	f
 4	Winter.Location	2.0.2	2024-10-19 10:37:19	f	f	f
 5	Winter.TailwindUI	1.0.1	2024-10-19 10:37:19	f	f	f
-15	Acorn.Lojistiks	1.0.0	2024-12-05 09:55:56	f	f	f
 17	Acorn.Finance	1.0.0	2024-12-05 09:57:18	f	f	t
 18	Acorn.Notary	1.0.0	2025-02-27 12:45:08	f	f	f
+15	Acorn.Lojistiks	1.0.0	2024-12-05 09:55:56	f	f	t
 \.
 
 
@@ -10344,6 +10344,8 @@ COPY public.winter_translate_attributes (id, locale, model_id, model_type, attri
 789	ku	9e80082e-c6cd-43c6-8b8a-cebb2d40332d	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
 790	ar	9e80087f-8036-4180-b3d0-12871a8b158a	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
 791	ku	9e80087f-8036-4180-b3d0-12871a8b158a	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
+792	ar	9e8c601e-7443-4d95-ad90-5a249056fe6e	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
+793	ku	9e8c601e-7443-4d95-ad90-5a249056fe6e	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
 \.
 
 
@@ -10378,7 +10380,7 @@ COPY public.winter_translate_messages (id, code, message_data, found, code_pre_2
 -- Name: backend_access_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.backend_access_log_id_seq', 60, true);
+SELECT pg_catalog.setval('public.backend_access_log_id_seq', 64, true);
 
 
 --
@@ -10392,7 +10394,7 @@ SELECT pg_catalog.setval('public.backend_user_groups_id_seq', 1, true);
 -- Name: backend_user_preferences_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.backend_user_preferences_id_seq', 23, true);
+SELECT pg_catalog.setval('public.backend_user_preferences_id_seq', 24, true);
 
 
 --
@@ -10483,7 +10485,7 @@ SELECT pg_catalog.setval('public.rainlab_location_states_id_seq', 720, true);
 -- Name: rainlab_translate_attributes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 791, true);
+SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 793, true);
 
 
 --
@@ -10511,7 +10513,7 @@ SELECT pg_catalog.setval('public.rainlab_translate_messages_id_seq', 1, false);
 -- Name: system_event_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.system_event_logs_id_seq', 12300, true);
+SELECT pg_catalog.setval('public.system_event_logs_id_seq', 12350, true);
 
 
 --
@@ -18864,6 +18866,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_justice_seed_calendar() TO token_2;
 RESET SESSION AUTHORIZATION;
 GRANT ALL ON FUNCTION public.fn_acorn_justice_seed_calendar() TO test WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_justice_seed_calendar() TO token_8 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_justice_seed_calendar() TO token_2;
 
 
 --
@@ -19035,6 +19038,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO token_2;
 RESET SESSION AUTHORIZATION;
 GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO test WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO token_8 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO token_2;
 
 
 --

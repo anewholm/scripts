@@ -1,1 +1,134 @@
-/var/www/scripts/acorn-winter-update-sqls
+#!/bin/bash
+
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
+NC="$(tput sgr0)"
+TICK="${GREEN}✓${NC}"
+CROSS="${RED}✘${NC}"
+
+run_dir=`pwd` # Bald
+script_dir=`dirname $(realpath $0)`
+script=`basename $0`
+
+autoy="$1"
+
+outfile=up.sql
+
+# -------------------------------------------- .env parse
+# Get DB connection parameters from Laravel
+# NOTE: This script can be run from several places:
+#   /var/www/<website> to update all SQL dumps
+#   ~/plugins/acorn/<plugin>/updates to update a specific SQL dump
+env='.env'
+if [ -f $env ] && [ -d plugins ]; then
+  # Batch run on whole website
+  echo "This is a root run of all repos updates..."
+  for plugin in plugins/acorn/*/; do
+    if [ -f "$plugin/updates/$script" ]; then
+      echo; echo;
+      if [ "$autoy" == 'y' ]; then
+        yn='y'
+        echo "${GREEN}------------------------------------------- RUNING${NC} ${YELLOW}$plugin/updates/$script${NC}"
+      else
+        read -p "${GREEN}RUN${NC} ${YELLOW}$plugin/updates/$script${NC} (y|n)? [n] " yn
+      fi
+      if [ "$yn" == 'y' ]; then
+        cd "$plugin/updates/"
+        ./$script
+        cd -
+      fi
+    fi
+  done
+  exit 0
+fi
+
+# Specific run
+env="../../../../.env"
+if [ ! -f $env ]; then
+  echo "${RED}ERROR${NC}: .env not found in document root"
+  exit 0
+fi
+
+DB_CONNECTION=`grep DB_CONNECTION $env | tr -d "'" | cut -d '=' -f 2`
+DB_HOST=`grep DB_HOST $env | tr -d "'" | cut -d '=' -f 2`
+DB_PORT=`grep DB_PORT $env | tr -d "'" | cut -d '=' -f 2`
+DB_DATABASE=`grep DB_DATABASE $env | tr -d "'" | cut -d '=' -f 2`
+DB_USERNAME=`grep DB_USERNAME $env | tr -d "'" | cut -d '=' -f 2`
+DB_PASSWORD=`grep DB_PASSWORD $env | tr -d "'" | cut -d '=' -f 2`
+echo "Dump Database: ${YELLOW}$DB_DATABASE${NC} with ${YELLOW}$DB_USERNAME${NC}/${YELLOW}$DB_PASSWORD${NC}"
+if [ "$DB_CONNECTION" != 'pgsql' ] || [ "$DB_HOST" != "127.0.0.1" ]; then
+  echo "${RED}$DB_CONNECTION@$DB_HOST:$DB_PORT${NC} is not local. Aborted"
+  exit 1
+fi
+
+# -------------------------------------------- Plugin parse
+dir=`pwd`
+plugin_dir=`dirname $dir`
+plugin_name=`basename $plugin_dir`
+author_dir=`dirname $plugin_dir`
+author_name=`basename $author_dir`
+schema="*"
+author_plugin="${author_name}_${plugin_name}"
+table_space="$schema.${author_plugin}_*"
+function_space="[^ ]*$author_plugin[a-z0-9_]+\([a-z0-9, ]*\)"
+echo "Author: ${YELLOW}$author_name${NC}, Plugin: ${YELLOW}$plugin_name${NC}, Tablespace: ${YELLOW}$table_space${NC}"
+if [ "$author_name" != 'acorn' ]; then
+  echo "${RED}$author_name${NC} is not ours. Aborted"
+  exit 1
+fi
+
+if [ -f $outfile ]; then rm $outfile; fi
+pg_dump -Fc -s $DB_DATABASE > dump.sql
+
+# -------------------------------------------- Up Functions
+echo
+echo "${GREEN}Functions${NC} dump => ${YELLOW}$outfile${NC}"
+IFS=$'\n' # Avoid spaces in argument lists
+functions=`pg_restore -l dump.sql | grep -oE "^[0-9;]+ [0-9;]+ [0-9;]+ FUNCTION [a-z]+ $function_space" | cut -d ' ' -f 6,7,8,9,10,11,12`
+for f in $functions; do
+  echo "-- MANUAL FUNCTION DUMP $f" >> $outfile
+  echo $f
+  cat dump.sql | pg_restore --clean --if-exists --no-owner --no-privileges --format=c --function="$f" -f - >> $outfile
+done
+IFS=$' '
+
+# -------------------------------------------- Up Aggregates
+echo
+echo "${GREEN}Aggregates${NC} dump => ${YELLOW}$outfile${NC}"
+IFS=$'\n' # Avoid spaces in argument lists
+functions=`pg_restore -l dump.sql | grep -oE "^[0-9;]+ [0-9;]+ [0-9;]+ AGGREGATE [a-z]+ $function_space" | cut -d ' ' -f 6,7,8,9,10,11,12`
+for f in $functions; do
+  echo "-- MANUAL AGGREGATE DUMP $f" >> $outfile
+  echo $f
+  cat dump.sql | pg_restore --clean --if-exists --no-owner --no-privileges --format=c --function="$f" -f - >> $outfile
+done
+IFS=$' '
+
+# -------------------------------------------- Up main
+# Tables, Sequences and views
+#--username=$DB_USERNAME --password=$DB_PASSWORD \
+#--host=$DB_HOST --port=$DB_PORT \
+echo
+echo "${GREEN}Main${NC} DB dump => ${YELLOW}$outfile${NC}"
+pg_dump --schema-only --table="$table_space" --clean --if-exists --no-owner --no-privileges --inserts --no-security-labels --no-subscriptions \
+   $DB_DATABASE -f - >> $outfile
+
+# If we created new schemas then we need to reset
+echo "SET search_path TO public;" >> $outfile
+
+# -------------------------------------------- Show views
+echo "Views included:"
+grep -i "CREATE VIEW " $outfile | cut -d ' ' -f 3
+trigger_count=`grep -i "CREATE TRIGGER " $outfile | wc -l`
+echo "$trigger_count triggers"
+
+# -------------------------------------------- Down
+echo
+echo "${GREEN}Drops${NC} in to => ${YELLOW}down.sql${NC}"
+if [ -f down.sql ]; then rm down.sql; fi
+grep -E "^ALTER TABLE IF EXISTS ONLY .* DROP CONSTRAINT .*" $outfile >> down.sql
+grep -E "^DROP .*" $outfile >> down.sql
+
+rm dump.sql
+echo "Done."

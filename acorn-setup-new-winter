@@ -76,7 +76,7 @@ if [ -z "$(which psql)" ]; then
 	sudo apt install -y postgresql postgresql-contrib
 fi
 # Copied from Winter installation guide
-sudo apt install -y php php-curl php-xml php-gd php-json php-mbstring php-mysql php-sqlite3 php-zip
+# sudo apt install -y php php-curl php-xml php-gd php-json php-mbstring php-mysql php-sqlite3 php-zip
 # sudo apt install -y php-ctype php-fileinfo
 
 if [ -z "$(groups | grep $install_grp)" ]; then
@@ -89,9 +89,9 @@ fi
 if [ ! -d $install_dir ]; then
 	echo "${YELLOW}WARNING${NC}: $install_dir was not found, creating..."
 	sudo mkdir -p $install_dir
+	sudo chown $install_grp:$install_grp .; sudo chmod g+rw .
 fi
 cd $install_dir
-sudo chown $install_grp:$install_grp .; sudo chmod g+rw .
 
 # -------------------------------------------- Website Installation
 if [ -d $name ]; then
@@ -110,13 +110,13 @@ if [ -d $name ]; then
 	fi
 	cd $name
 else
-	echo "${GREEN}INFO${NC}: Installing Winter into directory $(pwd)/${YELLOW}$name${NC}"
+	echo "${GREEN}INFO${NC}: Installing latest Winter into directory $(pwd)/${YELLOW}$name${NC}"
+	echo "  Note that Winter:1.2.6=>7 has incompatible changes for Trait HasRelations"
 	# https://getcomposer.org/doc/03-cli.md#create-project
 	# We have our own install procedures below, so we disable the standard scripts
 	composer create-project wintercms/winter $name --no-scripts
 	cd $name
-	sudo chown -R $install_grp:$install_grp .; sudo chmod -R g+rw .
-	sudo chmod +x artisan
+	chmod +x artisan
 
 	linecount_env=0
 	if [ -f .env ]; then linecount_env=`wc -l .env | cut -d " " -f 1`; fi
@@ -167,8 +167,11 @@ DATABASE_TEMPLATES=false
 
 	# This will also update the Laravel .env file to use the created database
 	$script_dir/acorn-setup-database pgsql $name
+	if [ "$?" != "0" ]; then exit 1; fi
+
 	# This will also update the Laravel .env file to use the hostname (.laptop)
 	sudo $script_dir/acorn-setup-hostname $name
+	if [ "$?" != "0" ]; then exit 1; fi
 fi
 hostname=$name.laptop
 
@@ -176,7 +179,7 @@ hostname=$name.laptop
 # We could also use ./artisan winter:install --no-interaction
 echo "${GREEN}INFO${NC}: composer install"
 composer install
-echo "${GREEN}INFO${NC}: artisan migrate"
+echo "${GREEN}INFO${NC}: Initial winter system artisan migrate"
 php artisan migrate
 if [ "$?" != 0 ]; then
 	echo "${RED}ERROR${NC}: Migration failed, exiting"
@@ -221,17 +224,31 @@ fi
 
 # -------------------------------------------- Install AA modules and plugins
 echo "${GREEN}INFO${NC}: composer require AA modules (from AA gitlab)"
-read -p "Install AA infrastructure (requires GitLab keys) [y|n]? (y) " yn
+local_acorn=/var/www/plugins/acorn
+yn=y
+# read -p "Install AA infrastructure (requires GitLab keys or local copy) [y|n]? (y) " yn
 if [ "$yn" == 'y' ]; then
 	cd modules
 	if [ ! -d acorn ]; then
-		git clone git@gitlab.acorn.org:office/acorn.git
-		if [ "$?" != 0 ]; then
-			echo "${RED}ERROR${NC}: Failed to checkout first office repository. Probably you do not have permissions. Please resolve and start again."
-			exit 1
+		if [ -d $local_acorn/acorn ]; then 
+			arealpath=`realpath $local_acorn/acorn`
+			cp -rL $local_acorn/acorn .
+			echo "${GREEN}INFO${NC}: Copied local copy of acorn repository (${YELLOW}$arealpath${NC})"
+		else 
+			git clone git@gitlab.acorn.org:office/acorn.git
+			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to checkout first office repository. Probably you do not have permissions. Please resolve and start again."; exit 1; fi
 		fi
 	fi
-	if [ ! -d dbauth ]; then git clone git@gitlab.acorn.org:office/dbauth.git;  fi
+	if [ ! -d dbauth ]; then 
+		if [ -d $local_acorn/dbauth ]; then 
+			arealpath=`realpath $local_acorn/dbauth`
+			cp -rL $local_acorn/dbauth .
+			echo "${GREEN}INFO${NC}: Copied local copy of dbauth repository (${YELLOW}$arealpath${NC})"
+		else 
+			git clone git@gitlab.acorn.org:office/dbauth.git
+			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+		fi
+	fi
 	cd ..
 
 	cd plugins
@@ -239,28 +256,74 @@ if [ "$yn" == 'y' ]; then
 	cd acorn
 
 	if [ ! -d rtler ];     then
-		git clone git@gitlab.acorn.org:office/rtler.git
-		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to checkout first office repository. Probably you do not have permissions. Please resolve and start again."; exit 1; fi
+		if [ -d $local_acorn/rtler ]; then 
+			arealpath=`realpath $local_acorn/rtler`
+			cp -rL $local_acorn/rtler .
+			echo "${GREEN}INFO${NC}: Copied local copy of rtler repository (${YELLOW}$arealpath${NC})"
+		else 
+			git clone git@gitlab.acorn.org:office/rtler.git
+			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to checkout first office repository. Probably you do not have permissions. Please resolve and start again."; exit 1; fi
+		fi
 	fi
 	if [ ! -d backendlocalization ];  then
-		git clone git@gitlab.acorn.org:office/backendlocalization.git
-		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+		if [ -d $local_acorn/backendlocalization ]; then 
+			arealpath=`realpath $local_acorn/backendlocalization`
+			cp -rL $local_acorn/backendlocalization .
+			echo "${GREEN}INFO${NC}: Copied local copy of backendlocalization repository (${YELLOW}$arealpath${NC})"
+		else 
+			git clone git@gitlab.acorn.org:office/backendlocalization.git
+			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+		fi
 	fi
 	if [ ! -d user ];  then
-		git clone git@gitlab.acorn.org:office/user.git
-		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+		if [ -d $local_acorn/user ]; then 
+			arealpath=`realpath $local_acorn/user`
+			cp -rL $local_acorn/user .
+			echo "${GREEN}INFO${NC}: Copied local copy of user repository (${YELLOW}$arealpath${NC})"
+		else 
+			git clone git@gitlab.acorn.org:office/user.git
+			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+		fi
 	fi
 	if [ ! -d location ];  then
-		git clone git@gitlab.acorn.org:office/location.git;
-		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+		if [ -d $local_acorn/location ]; then 
+			arealpath=`realpath $local_acorn/location`
+			cp -rL $local_acorn/location .
+			echo "${GREEN}INFO${NC}: Copied local copy of location repository (${YELLOW}$arealpath${NC})"
+		else 
+			git clone git@gitlab.acorn.org:office/location.git;
+			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+		fi
 	fi
 	if [ ! -d messaging ]; then
-		git clone git@gitlab.acorn.org:office/messaging.git;
-		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+		if [ -d $local_acorn/messaging ]; then 
+			arealpath=`realpath $local_acorn/messaging`
+			cp -rL $local_acorn/messaging .
+			echo "${GREEN}INFO${NC}: Copied local copy of messaging repository (${YELLOW}$arealpath${NC})"
+		else 
+			git clone git@gitlab.acorn.org:office/messaging.git;
+			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+		fi
 	fi
 	if [ ! -d calendar ];  then
-		git clone git@gitlab.acorn.org:office/calendar.git;
-		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+		if [ -d $local_acorn/calendar ]; then 
+			arealpath=`realpath $local_acorn/calendar`
+			cp -rL $local_acorn/calendar .
+			echo "${GREEN}INFO${NC}: Copied local copy of calendar repository (${YELLOW}$arealpath${NC})"
+		else 
+			git clone git@gitlab.acorn.org:office/calendar.git;
+			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+		fi
+	fi
+	if [ ! -d reporting ];  then
+		if [ -d $local_acorn/reporting ]; then 
+			arealpath=`realpath $local_acorn/reporting`
+			cp -rL $local_acorn/reporting .
+			echo "${GREEN}INFO${NC}: Copied local copy of reporting repository (${YELLOW}$arealpath${NC})"
+		else 
+			git clone git@gitlab.acorn.org:office/reporting.git;
+			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+		fi
 	fi
 	cd ../..
 	# TODO: Generate /storage/framework/classes.php because we have installed via git, not composer
@@ -321,16 +384,21 @@ echo "${YELLOW}WARNING${NC}: DBAuth was installed but not enabled. This is becau
 read -p "Enable now? [Y/n] " yn
 case $yn in
 	[Yy]* )
-		# Set <DBAUTH> in .env
+		# FIRST: Create the artisan superuser with current login credentials
+		echo "${GREEN}INFO${NC}: Create ${YELLOW}artisan${NC}/${YELLOW}QueenPool1@${NC} superuser"
+		./artisan user:create-user -c -s artisan QueenPool1@
+
+		# Switch to <DBAUTH> in .env
 		sed -i 's/^DB_USERNAME=.*/DB_USERNAME=<DBAUTH>/' .env
 		sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=<DBAUTH>/' .env
 		echo "${GREEN}INFO${NC}: DBAuth enabled."
 
+		# ARTISAN_AUTO_LOGIN will hardcoded use the above artisan superuser from now on
 		echo "${GREEN}INFO${NC}: ARTISAN_AUTO_LOGIN & artisan user."
 		echo "ARTISAN_AUTO_LOGIN=1" >> .env
-		./artisan user:create-user -c -s artisan QueenPool1@
 
-		echo "${GREEN}INFO${NC}: createsystem user."
+		# create-system will now also need its own hardcoded user
+		# acorn-create-system is linked above, so it will be present
 		if [ -f acorn-create-system ]; then
 			echo "${GREEN}INFO${NC}: Create ${YELLOW}create-system${NC}/${YELLOW}QueenPool1@${NC} superuser"
 			./artisan user:create-user -c -s createsystem QueenPool1@
@@ -340,12 +408,26 @@ esac
 
 # Create some AA & backend users with default setup
 # These creates will trigger DBAuth if it is enabled
-./artisan user:create-user -c -d -s admin QueenPool1@
-./artisan user:create-user -c -d -s $outeruser QueenPool1@
-./artisan user:create-user -c -d demo password
+php artisan user:create-user -c -s seeder QueenPool1@ # The lazy created backend seeder should already be present
+php artisan user:create-user -c -d -s admin password  # Backend Admin should already be present
+php artisan user:create-user -c -d -s $outeruser QueenPool1@
+php artisan user:create-user -c -d demo password
 
-# Set the default backend timezone to +03:00
-./artisan acorn:set-config cms.backendTimezone Europe/Istanbul
+# Set the default backend timezone to server timezone
+timezone_name=`cat /etc/timezone`
+if [ -n "$timezone_name" ]; then 
+	echo "${GREEN}INFO${NC}: Setting timezone to server timezone ${YELLOW}$timezone_name${NC}"
+else
+	timezone_name=Europe/Istanbul
+	echo "${YELLOW}WARNING${NC}: ${YELLOW}/etc/timezone${NC} was empty. Setting timezone to ${RED}default${NC} timezone [${YELLOW}$timezone_name${NC}]"
+fi
+php artisan acorn:set-config cms.backendTimezone $timezone_name
+
+# Usually the Lojistiks plugin is just infrastructure
+# TODO: Deployment conofiguration files for spinning up servers. One day :D
+if [ -d plugins/acorn/lojistiks ]; then
+	php artisan acorn:config-plugin Acorn.Lojistiks infrastructure true
+fi
 
 # -------------------------------------------- Security
 # Note that our demons auto-run now
