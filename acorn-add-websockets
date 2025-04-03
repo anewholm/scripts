@@ -48,8 +48,8 @@ if [ ! -d vendor/beyondcode/laravel-websockets ]; then composer -W require beyon
 # --------------------------------------------- Files & Patches
 # TODO: Allow acorn-apply-patch-directory to pass in parameters
 echo "${GREEN}INFO${NC}: Installing websockets system for ${YELLOW}$website${NC}, hostname: ${YELLOW}$hostname${NC} on port ${YELLOW}$port${NC}"
-if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter/websockets ]; then
-	$script_dir/acorn-apply-patch-directory "$script_dir/winter/websockets"
+if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter/patches-websockets ]; then
+	$script_dir/acorn-apply-patch-directory "$script_dir/winter/patches-websockets"
 fi
 
 # ------------------------------------------------ Migrations

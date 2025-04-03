@@ -10513,7 +10513,7 @@ SELECT pg_catalog.setval('public.rainlab_translate_messages_id_seq', 1, false);
 -- Name: system_event_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
 --
 
-SELECT pg_catalog.setval('public.system_event_logs_id_seq', 12350, true);
+SELECT pg_catalog.setval('public.system_event_logs_id_seq', 12351, true);
 
 
 --

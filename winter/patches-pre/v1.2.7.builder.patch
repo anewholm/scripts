@@ -1,0 +1,11 @@
+--- vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php  2025-01-31 13:09:38.000000000 +0300
++++ vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php  2025-03-31 14:05:57.943090273 +0300
+@@ -2938,6 +2938,8 @@
+                     : $this->pluckFromObjectColumn($queryResult, $column, $key);
+     }
+ 
++    public function lists($column, $key = null) {return $this->pluck($column, $key)->all();}
++
+     /**
+      * Strip off the table name or alias from a column identifier.
+      *

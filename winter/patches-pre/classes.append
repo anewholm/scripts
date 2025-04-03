@@ -1,3 +1,5 @@
+#!append storage/framework/classes.php
+#!search return
 <?php return array (
   'System\\Traits\\SecurityController' => 'modules/system/traits/SecurityController.php',
   'DBAuth\\ServiceProvider' => 'modules/dbauth/ServiceProvider.php',
@@ -9,7 +11,6 @@
   'Winter\\Demo\\Plugin' => 'plugins/winter/demo/Plugin.php',
   'Winter\\Builder\\Plugin' => 'plugins/winter/builder/Plugin.php',
   'Acorn\\Messaging\\Plugin' => 'plugins/acorn/messaging/Plugin.php',
-  'Acorn\\Aauser\\Plugin' => 'plugins/acorn/aauser/Plugin.php',
   'Acorn\\Location\\Plugin' => 'plugins/acorn/location/Plugin.php',
   'Acorn\\Calendar\\Plugin' => 'plugins/acorn/calendar/Plugin.php',
   'System\\Traits\\LazyOwnerAlias' => 'modules/system/traits/LazyOwnerAlias.php',

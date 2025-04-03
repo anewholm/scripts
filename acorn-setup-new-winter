@@ -21,6 +21,9 @@ password=$2
 db_port=$3
 outeruser=$USER
 
+# --no-scripts
+no_scripts=
+
 # -------------------------------------------- Sanitise inputs
 if [ "$(id -u)" == "0" ]; then
 	echo "${RED}ERROR${NC}: Do not run this script as root"
@@ -162,6 +165,7 @@ ASSET_CACHE=false
 LINK_POLICY='detect'
 ENABLE_CSRF=true
 DATABASE_TEMPLATES=false
+RESTRICT_BASE_DIR=false # We have sym-linked plugins
 " >> .env
 	fi
 
@@ -174,6 +178,8 @@ DATABASE_TEMPLATES=false
 	if [ "$?" != "0" ]; then exit 1; fi
 fi
 hostname=$name.laptop
+winter_version=`composer show winter/storm | grep ^versions | cut -d ':' -f 2 | cut -d v -f 2`
+echo "${GREEN}INFO${NC}: Winter v${YELLOW}$winter_version${NC} detected"
 
 # Initial installation
 # We could also use ./artisan winter:install --no-interaction
@@ -188,46 +194,55 @@ fi
 php artisan key:generate
 
 # -------------------------------------------- Install 3rd party modules
-echo "${GREEN}INFO${NC}: composer require 3rd party vendor modules"
+echo "${GREEN}INFO${NC}: composer require $no_scripts 3rd party vendor modules"
 # IMAP & SMTP
-if [ ! -d vendor/webklex/php-imap ];     then composer require webklex/php-imap;     fi
-if [ ! -d vendor/webklex/laravel-imap ]; then composer require webklex/laravel-imap; fi
+if [ ! -d vendor/webklex/php-imap ];     then composer require $no_scripts webklex/php-imap;     fi
+if [ ! -d vendor/webklex/laravel-imap ]; then composer require $no_scripts webklex/laravel-imap; fi
 sed -i "s|MAIL_HOST=\".*\"|MAIL_HOST=\"smtp.stackmail.com\"|" .env
 sed -i "s|MAIL_PORT=\".*\"|MAIL_PORT=465|" .env
 
 # QR Codes are supported in core now
-if [ ! -d vendor/simplesoftwareio/simple-qrcode ]; then composer require simplesoftwareio/simple-qrcode; fi
+if [ ! -d vendor/simplesoftwareio/simple-qrcode ]; then composer require $no_scripts simplesoftwareio/simple-qrcode; fi
 
 # Copy Kurdish system and backend lang.php files in to place
 cp -r $script_dir/winter/system/lang/ku modules/system/lang
 if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install system module ku\lang.php"; exit 1; fi
 cp -r $script_dir/winter/backend/lang/ku modules/system/lang
 if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install backend module ku\lang.php"; exit 1; fi
-composer require winter/wn-translate-plugin
+composer require $no_scripts winter/wn-translate-plugin
 if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-composer require winter/wn-location-plugin
+composer require $no_scripts winter/wn-location-plugin
 if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-composer require winter/wn-tailwindui-plugin # Menus
+composer require $no_scripts winter/wn-tailwindui-plugin # Menus
 if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-composer require staudenmeir/eloquent-has-many-deep # New Deep relations
+composer require $no_scripts staudenmeir/eloquent-has-many-deep # New Deep relations
 if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 
 # We use acorn-create-system usually, so no builder
-# composer require winter/wn-builder-plugin
+# composer require $no_scripts winter/wn-builder-plugin
 # if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 
-# Temporary hack until we work out how to auto generate the classes.php
-if [ -f $script_dir/winter/classes.php ]; then
-	echo "${YELLOW}WARNING${NC}: Temporary hack to generate ~/storage/framework/classes.php"
-	cp $script_dir/winter/classes.php storage/framework/;
+# -------------------------------------------- Patches
+echo "${GREEN}INFO${NC}: Pre-Patches for Winter v${YELLOW}$winter_version${NC}"
+# TODO: The tailwind patch will not work because app.js is now minified
+if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter/patches-pre ]; then
+	$script_dir/acorn-apply-patch-directory "$script_dir/winter/patches-pre"
 fi
 
 # -------------------------------------------- Install AA modules and plugins
-echo "${GREEN}INFO${NC}: composer require AA modules (from AA gitlab)"
+echo "${GREEN}INFO${NC}: composer require $no_scripts AA modules (from AA gitlab)"
 local_acorn=/var/www/plugins/acorn
-yn=y
-# read -p "Install AA infrastructure (requires GitLab keys or local copy) [y|n]? (y) " yn
-if [ "$yn" == 'y' ]; then
+for repo_path in $local_acorn/*/; do
+	repo_name=`basename "$repo_path"`
+	repo_fqn="acorn/$repo_name"
+	
+	echo "${GREEN}INFO${NC}: Installing ${YELLOW}$repo_fqn${NC}"
+	git config --global --add safe.directory "${repo_path%/}"
+	composer config repositories.$repo_name path "$repo_path"
+	composer require $no_scripts "$repo_fqn @dev"
+done
+
+if [ "$yn" == 'y.not' ]; then
 	cd modules
 	if [ ! -d acorn ]; then
 		if [ -d $local_acorn/acorn ]; then 
@@ -326,28 +341,28 @@ if [ "$yn" == 'y' ]; then
 		fi
 	fi
 	cd ../..
+
 	# TODO: Generate /storage/framework/classes.php because we have installed via git, not composer
 	# php artisan package:discover or maybe
 	# php artisan plugin:refresh location
 	# php artisan plugin:refresh messaging
 	# php artisan plugin:refresh calendar
-	# TODO: The hack way above which copies a pre-written classes.php works for now...
 
-	# patches
-	echo "${GREEN}INFO${NC}: Patches"
-	# TODO: The tailwind patch will not work because app.js is now minified
-	# service-providers.php patch will add the service providers in the correct order
-	if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter ]; then
-		$script_dir/acorn-apply-patch-directory "$script_dir/winter"
-	fi
+	# if [ -f $script_dir/acorn-add-websockets ]; then
+	#	$script_dir/acorn-add-websockets
+	# fi
+fi
 
-	if [ -f $script_dir/acorn-add-websockets ]; then
-		$script_dir/acorn-add-websockets
-	fi
+# -------------------------------------------- Patches
+# service-providers.php patch will add the service providers in the correct order
+echo "${GREEN}INFO${NC}: Post-Patches for Winter v${YELLOW}$winter_version${NC}"
+if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter/patches-post ]; then
+	$script_dir/acorn-apply-patch-directory "$script_dir/winter/patches-post"
 fi
 
 # To generate /storage/framework/packages.php
-php artisan package:discover
+# echo "${GREEN}INFO${NC}: Package discover"
+# php artisan package:discover
 
 # Migrate our new plugins / modules
 echo "${GREEN}INFO${NC}: Final artisan migrate"

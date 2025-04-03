@@ -211,9 +211,11 @@ if [ -z "$(which mysql)" ]; then
     read -p "Create user root with password 'QueenPool1@'? [Y] " yn
     case $yn in
       Y|y|"")
-        mysql -e "create user root@% identified by 'QueenPool1@';"
-        mysql -e "grant all on *.* to root@% with grant option;"
-        mysql -e "flush privileges;"
+        sudo mysql -e "create user 'root'@'localhost' identified by 'QueenPool1@';"
+        sudo mysql -e "grant all on *.* to 'root'@'localhost' with grant option;"
+        sudo mysql -e "create user 'sz'@'localhost' identified with auth_socket by 'QueenPool1@';"
+        sudo mysql -e "grant all on *.* to 'sz'@'localhost' with grant option;"
+        sudo mysql -e "flush privileges;"
         break
       ;;
     esac
