@@ -19,6 +19,7 @@ sudo -u postgres dropuser artisan
 
 # TODO:
 # Remove ARTISAN_AUTO_LOGIN
+# Remove RESTRICT_BASE_DIR=false
 # Switch PHP to production
 # Switch Apache to production
 # Disable xdebug
