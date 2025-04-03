@@ -50,6 +50,11 @@ if [ -z "$(which php)" ]; then
 	sudo apt install -y php php-pgsql
 fi
 
+if [ -z "$(which jq)" ]; then
+	echo "${GREEN}INFO${NC}: Installing jq JSON parser"
+	sudo apt install jq
+fi
+
 if [ -z "$(which apache2ctl)" ]; then
 	echo "${GREEN}INFO${NC}: Installing Apache"
 	sudo apt install -y apache2
@@ -222,7 +227,7 @@ if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 
 # composer require $no_scripts winter/wn-builder-plugin
 # if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 
-# -------------------------------------------- Patches
+# -------------------------------------------- Patches (pre-AA)
 echo "${GREEN}INFO${NC}: Pre-Patches for Winter v${YELLOW}$winter_version${NC}"
 # TODO: The tailwind patch will not work because app.js is now minified
 if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter/patches-pre ]; then
@@ -232,137 +237,49 @@ fi
 # -------------------------------------------- Install AA modules and plugins
 echo "${GREEN}INFO${NC}: composer require $no_scripts AA modules (from AA gitlab)"
 local_acorn=/var/www/plugins/acorn
+gitlab_acorn=gitlab.acorn.org
+gitlab_group=office
+
+install_strategy=local-composer # local-composer, gitlab, local-copy
 for repo_path in $local_acorn/*/; do
+	repo_path=${repo_path%/} # Strip trailing slash
 	repo_name=`basename "$repo_path"`
 	repo_fqn="acorn/$repo_name"
+	repo_type=`jq -r .type "$repo_path/composer.json"`
+	target_path=plugins/acorn
+	if [ "$repo_type" == 'winter-module' ]; then target_path=modules; fi
 	
-	echo "${GREEN}INFO${NC}: Installing ${YELLOW}$repo_fqn${NC}"
-	git config --global --add safe.directory "${repo_path%/}"
-	composer config repositories.$repo_name path "$repo_path"
-	composer require $no_scripts "$repo_fqn @dev"
+	echo "${GREEN}INFO${NC}: Installing $install_strategy ${YELLOW}$repo_fqn${NC} $repo_type($target_path)"
+	git config --global --add safe.directory "$repo_path"
+	mkdir -p "$target_path"
+
+	if [ $install_strategy == 'local-composer' ]; then
+		# This will sym link it
+		# into the appropriate directory based on the composer.json type
+		composer config repositories.$repo_name path "$repo_path/"
+		composer require $no_scripts "$repo_fqn @dev"
+		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to require local $gitlab_group/$repo_name repository."; exit 1; fi
+	elif [ $install_strategy == 'gitlab' ]; then
+		git clone git@$gitlab_acorn:$gitlab_group/$repo_name.git "$target_path"
+		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to checkout $gitlab_group/$repo_name repository. Probably you do not have permissions. Please resolve and start again."; exit 1; fi
+	elif [ $install_strategy == 'local-copy' ]; then
+		# This will copy -L
+		cp -rL "$repo_path" "$target_path"
+		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to copy repository."; exit 1; fi
+	fi
 done
 
-if [ "$yn" == 'y.not' ]; then
-	cd modules
-	if [ ! -d acorn ]; then
-		if [ -d $local_acorn/acorn ]; then 
-			arealpath=`realpath $local_acorn/acorn`
-			cp -rL $local_acorn/acorn .
-			echo "${GREEN}INFO${NC}: Copied local copy of acorn repository (${YELLOW}$arealpath${NC})"
-		else 
-			git clone git@gitlab.acorn.org:office/acorn.git
-			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to checkout first office repository. Probably you do not have permissions. Please resolve and start again."; exit 1; fi
-		fi
-	fi
-	if [ ! -d dbauth ]; then 
-		if [ -d $local_acorn/dbauth ]; then 
-			arealpath=`realpath $local_acorn/dbauth`
-			cp -rL $local_acorn/dbauth .
-			echo "${GREEN}INFO${NC}: Copied local copy of dbauth repository (${YELLOW}$arealpath${NC})"
-		else 
-			git clone git@gitlab.acorn.org:office/dbauth.git
-			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-		fi
-	fi
-	cd ..
+# TODO: Support websockets
+# if [ -f $script_dir/acorn-add-websockets ]; then
+#	$script_dir/acorn-add-websockets
+# fi
 
-	cd plugins
-	mkdir -p acorn
-	cd acorn
-
-	if [ ! -d rtler ];     then
-		if [ -d $local_acorn/rtler ]; then 
-			arealpath=`realpath $local_acorn/rtler`
-			cp -rL $local_acorn/rtler .
-			echo "${GREEN}INFO${NC}: Copied local copy of rtler repository (${YELLOW}$arealpath${NC})"
-		else 
-			git clone git@gitlab.acorn.org:office/rtler.git
-			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to checkout first office repository. Probably you do not have permissions. Please resolve and start again."; exit 1; fi
-		fi
-	fi
-	if [ ! -d backendlocalization ];  then
-		if [ -d $local_acorn/backendlocalization ]; then 
-			arealpath=`realpath $local_acorn/backendlocalization`
-			cp -rL $local_acorn/backendlocalization .
-			echo "${GREEN}INFO${NC}: Copied local copy of backendlocalization repository (${YELLOW}$arealpath${NC})"
-		else 
-			git clone git@gitlab.acorn.org:office/backendlocalization.git
-			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-		fi
-	fi
-	if [ ! -d user ];  then
-		if [ -d $local_acorn/user ]; then 
-			arealpath=`realpath $local_acorn/user`
-			cp -rL $local_acorn/user .
-			echo "${GREEN}INFO${NC}: Copied local copy of user repository (${YELLOW}$arealpath${NC})"
-		else 
-			git clone git@gitlab.acorn.org:office/user.git
-			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-		fi
-	fi
-	if [ ! -d location ];  then
-		if [ -d $local_acorn/location ]; then 
-			arealpath=`realpath $local_acorn/location`
-			cp -rL $local_acorn/location .
-			echo "${GREEN}INFO${NC}: Copied local copy of location repository (${YELLOW}$arealpath${NC})"
-		else 
-			git clone git@gitlab.acorn.org:office/location.git;
-			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-		fi
-	fi
-	if [ ! -d messaging ]; then
-		if [ -d $local_acorn/messaging ]; then 
-			arealpath=`realpath $local_acorn/messaging`
-			cp -rL $local_acorn/messaging .
-			echo "${GREEN}INFO${NC}: Copied local copy of messaging repository (${YELLOW}$arealpath${NC})"
-		else 
-			git clone git@gitlab.acorn.org:office/messaging.git;
-			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-		fi
-	fi
-	if [ ! -d calendar ];  then
-		if [ -d $local_acorn/calendar ]; then 
-			arealpath=`realpath $local_acorn/calendar`
-			cp -rL $local_acorn/calendar .
-			echo "${GREEN}INFO${NC}: Copied local copy of calendar repository (${YELLOW}$arealpath${NC})"
-		else 
-			git clone git@gitlab.acorn.org:office/calendar.git;
-			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-		fi
-	fi
-	if [ ! -d reporting ];  then
-		if [ -d $local_acorn/reporting ]; then 
-			arealpath=`realpath $local_acorn/reporting`
-			cp -rL $local_acorn/reporting .
-			echo "${GREEN}INFO${NC}: Copied local copy of reporting repository (${YELLOW}$arealpath${NC})"
-		else 
-			git clone git@gitlab.acorn.org:office/reporting.git;
-			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-		fi
-	fi
-	cd ../..
-
-	# TODO: Generate /storage/framework/classes.php because we have installed via git, not composer
-	# php artisan package:discover or maybe
-	# php artisan plugin:refresh location
-	# php artisan plugin:refresh messaging
-	# php artisan plugin:refresh calendar
-
-	# if [ -f $script_dir/acorn-add-websockets ]; then
-	#	$script_dir/acorn-add-websockets
-	# fi
-fi
-
-# -------------------------------------------- Patches
+# -------------------------------------------- Patches (post-AA)
 # service-providers.php patch will add the service providers in the correct order
 echo "${GREEN}INFO${NC}: Post-Patches for Winter v${YELLOW}$winter_version${NC}"
 if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter/patches-post ]; then
 	$script_dir/acorn-apply-patch-directory "$script_dir/winter/patches-post"
 fi
-
-# To generate /storage/framework/packages.php
-# echo "${GREEN}INFO${NC}: Package discover"
-# php artisan package:discover
 
 # Migrate our new plugins / modules
 echo "${GREEN}INFO${NC}: Final artisan migrate"
@@ -437,6 +354,7 @@ else
 	echo "${YELLOW}WARNING${NC}: ${YELLOW}/etc/timezone${NC} was empty. Setting timezone to ${RED}default${NC} timezone [${YELLOW}$timezone_name${NC}]"
 fi
 php artisan acorn:set-config cms.backendTimezone $timezone_name
+php artisan support:kurdish
 
 # Usually the Lojistiks plugin is just infrastructure
 # TODO: Deployment conofiguration files for spinning up servers. One day :D
