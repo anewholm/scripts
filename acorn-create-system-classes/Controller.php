@@ -1,4 +1,4 @@
-<?php namespace AcornAssociated\CreateSystem;
+<?php namespace Acorn\CreateSystem;
 
 class Controller {
     protected static $controllers = array();

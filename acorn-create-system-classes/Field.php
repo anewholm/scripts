@@ -1,4 +1,4 @@
-<?php namespace AcornAssociated\CreateSystem;
+<?php namespace Acorn\CreateSystem;
 
 class Field {
     public const NO_COLUMN = NULL;
@@ -225,7 +225,7 @@ class Field {
         }
 
         // Chance for the relation destination Model to dictate field types
-        // For example: FK to AcornAssociated\Calendar\Models\Event
+        // For example: FK to Acorn\Calendar\Models\Event
         // could suggest a datepicker type
         if (count($relations) == 1) end($relations)->to->standardTargetModelFieldDefinitions($column, $relations, $fieldDefinition);
 
@@ -262,7 +262,7 @@ class Field {
         $indentString = str_repeat(' ', $indent * 2);
         print("$indentString$YELLOW$this$NC\n");
 
-        if ($this->model->table->isOurs() && !$this->model->table->isKnownAcornAssociatedPlugin()) {
+        if ($this->model->table->isOurs() && !$this->model->table->isKnownAcornPlugin()) {
             $translationKey = $this->translationKey();
             print("$indentString  label: $translationKey\n");
         }
@@ -419,12 +419,12 @@ class Field {
     {
         /* Translation:
          *  TODO: Maybe this should be in WinterCMS?
-         *  For plugin table fields:    acornassociated.finance::lang.models.invoice.amount
-         *  For explicit translations:  acornassociated.finance::lang.models.invoice.user_group (translation: comment directive)
-         *  For plugin standard fields: acornassociated.finance::lang.models.general.id | name | created_*
+         *  For plugin table fields:    acorn.finance::lang.models.invoice.amount
+         *  For explicit translations:  acorn.finance::lang.models.invoice.user_group (translation: comment directive)
+         *  For plugin standard fields: acorn.finance::lang.models.general.id | name | created_*
          * Construction: $translation_domain::lang.$translation_group.$translation_subgroup.$translation_name
          */
-        $domain   = $this->model->plugin->translationDomain(); // acornassociated.finance
+        $domain   = $this->model->plugin->translationDomain(); // acorn.finance
         $group    = 'models';
         $subgroup = $this->model->dirName(); // squished usergroup | invoice
         $name     = ($name ?: $this->name);  // amount | id | name
@@ -477,7 +477,7 @@ class ForeignIdField extends Field {
         // We omit some of our own known plugins
         // because they do not conform yet to our naming requirements
         // And all system plugins which do not have correct FK setup!
-        if ($this->model->table->isOurs() && !$this->model->table->isKnownAcornAssociatedPlugin()) {
+        if ($this->model->table->isOurs() && !$this->model->table->isKnownAcornPlugin()) {
             // All foreign ids, e.g. legalcase_id, MUST have only 1 Xto1 or 1to1 FK
             if (!count($this->relations)) {
                 $foreignKeysFromCount = count($column->foreignKeysFrom);
@@ -542,7 +542,7 @@ class ForeignIdField extends Field {
                         $controllerUrl = $controller->absoluteBackendUrl();
                         $title         = $this->relation1->to->name;
                         if (is_null($this->fieldComment)) $this->fieldComment = '';
-                        $this->fieldComment .= "<span class='view-add-models'>acornassociated::lang.helpblock.view_add <a tabindex='-1' href='$controllerUrl'>$title</a></span>";
+                        $this->fieldComment .= "<span class='view-add-models'>acorn::lang.helpblock.view_add <a tabindex='-1' href='$controllerUrl'>$title</a></span>";
                         $this->fieldComment .= "<a tabindex='-1' target='_blank' href='$controllerUrl' class='goto-form-group-selection'></a>";
                         // TODO: This is actually for annotating checkbox lists, not selects, but it does nothing if it is a dropdown
                         // $goto = $controllerUrl;
@@ -593,7 +593,7 @@ class ForeignIdField extends Field {
     public function embedRelation1Model(): Model|bool
     {
         $shouldEmbed = ($this->model->table->isOurs()
-            && !$this->model->table->isKnownAcornAssociatedPlugin()
+            && !$this->model->table->isKnownAcornPlugin()
             && $this->relation1 instanceof Relation1to1 // Includes RelationLeaf
         );
         return ($shouldEmbed ? $this->relation1->to : FALSE);
@@ -602,10 +602,10 @@ class ForeignIdField extends Field {
     public function translationKey(string $name = NULL): string
     {
         /* Translation:
-         *  For foreign keys:           acornassociated.user::lang.models.usergroup.label (pointing TO the user plugin)
-         *  For explicit translations:  acornassociated.finance::lang.models.invoice.user_group: Payee Group
-         *  For qualified foreign keys: acornassociated.finance::lang.models.invoice.payee_user_group (payee_ makes it qualified)
-         * is_qualified: Does the field name, [user_group]_id, have the same name as the table it points to, acornassociated_user_[user_group]s?
+         *  For foreign keys:           acorn.user::lang.models.usergroup.label (pointing TO the user plugin)
+         *  For explicit translations:  acorn.finance::lang.models.invoice.user_group: Payee Group
+         *  For qualified foreign keys: acorn.finance::lang.models.invoice.payee_user_group (payee_ makes it qualified)
+         * is_qualified: Does the field name, [user_group]_id, have the same name as the table it points to, acorn_user_[user_group]s?
          * if not, then it is qualified, and we need a local translation
          */
         $qualifier               = $this->relation1->qualifier();
@@ -615,8 +615,8 @@ class ForeignIdField extends Field {
             $key = parent::translationKey();
         } else {
             // Point to foreign label
-            // acornassociated.user::lang.models.usergroup.label
-            // acornassociated::lang.models.server.label
+            // acorn.user::lang.models.usergroup.label
+            // acorn::lang.models.server.label
             $key = $this->relation1->to->translationKey();
         }
 

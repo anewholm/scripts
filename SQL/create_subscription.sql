@@ -1,17 +1,17 @@
 -- https://postgrespro.com/docs/postgresql/16/sql-altersubscription
-select fn_acornassociated_lojistiks_truncate_database('product');
-select fn_acornassociated_lojistiks_truncate_database('public');
-select fn_acornassociated_lojistiks_reset_sequences('public');
-select fn_acornassociated_lojistiks_reset_sequences('product');
+select fn_acorn_lojistiks_truncate_database('product');
+select fn_acorn_lojistiks_truncate_database('public');
+select fn_acorn_lojistiks_reset_sequences('public');
+select fn_acorn_lojistiks_reset_sequences('product');
 -- TODO: programmatic sub/pub naming
--- select concat('sub_acornassociated_', current_database(), '_all_tables_', hostname());
+-- select concat('sub_acorn_', current_database(), '_all_tables_', hostname());
 
---ALTER SUBSCRIPTION sub_acornassociated_lojistiks_all_tables REFRESH PUBLICATION WITH (COPY_DATA=false);
-DROP SUBSCRIPTION IF EXISTS sub_acornassociated_lojistiks_all_tables;
+--ALTER SUBSCRIPTION sub_acorn_lojistiks_all_tables REFRESH PUBLICATION WITH (COPY_DATA=false);
+DROP SUBSCRIPTION IF EXISTS sub_acorn_lojistiks_all_tables;
 
-CREATE SUBSCRIPTION sub_acornassociated_lojistiks_all_tables
-  CONNECTION 'host=192.168.88.252 port=5433 dbname=acornlojistiks user=sanchez password=xxxxxx sslmode=disable'
-  PUBLICATION pub_acornassociated_lojistiks_all_tables
+CREATE SUBSCRIPTION sub_acorn_lojistiks_all_tables
+  CONNECTION 'host=192.168.88.252 port=5433 dbname=acornlojistiks user=sz password=xxxxxx sslmode=disable'
+  PUBLICATION pub_acorn_lojistiks_all_tables
   WITH (
 		-- Custom
 		-- By default, PG waits for the WAL log to fill (16MB) before updating subscribers
@@ -19,7 +19,7 @@ CREATE SUBSCRIPTION sub_acornassociated_lojistiks_all_tables
 		streaming = 'True',
     	-- Replication slots provide an automated way to ensure that the primary does not remove WAL segments until they have been received by all standbys, and that the primary does not remove rows which could cause a recovery conflict even when the standby is disconnected.
 		create_slot = true,
-		slot_name = 'sub_acornassociated_lojistiks_all_tables_laptop',
+		slot_name = 'sub_acorn_lojistiks_all_tables_laptop',
 		-- Binary requires exact column data type matching, whereas non-binary, for example, allows integer to be mapped to bigint
 		binary = false,
 
@@ -38,7 +38,7 @@ CREATE SUBSCRIPTION sub_acornassociated_lojistiks_all_tables
 	);
 
 -- Reset sequences AFTER full COPY_DATA
-select fn_acornassociated_lojistiks_reset_sequences('public');
-select fn_acornassociated_lojistiks_reset_sequences('product');
+select fn_acorn_lojistiks_reset_sequences('public');
+select fn_acorn_lojistiks_reset_sequences('product');
 
-select * from fn_acornassociated_lojistiks_table_counts('public') where "table" like('acorn%brands');
+select * from fn_acorn_lojistiks_table_counts('public') where "table" like('acorn%brands');

@@ -1,4 +1,4 @@
-<?php namespace AcornAssociated\CreateSystem;
+<?php namespace Acorn\CreateSystem;
 
 require_once('Relation.php');
 require_once('Field.php');
@@ -118,19 +118,19 @@ class Model {
         return $this->table->isOurs();
     }
 
-    public function isAcornAssociatedEvent(): bool
+    public function isAcornEvent(): bool
     {
-        return ($this->fullyQualifiedName() == 'AcornAssociated\\Calendar\\Models\\Event');
+        return ($this->fullyQualifiedName() == 'Acorn\\Calendar\\Models\\Event');
     }
 
-    public function isAcornAssociatedUser(): bool
+    public function isAcornUser(): bool
     {
-        return ($this->fullyQualifiedName() == 'AcornAssociated\\User\\Models\\User');
+        return ($this->fullyQualifiedName() == 'Acorn\\User\\Models\\User');
     }
 
-    public function isKnownAcornAssociatedPlugin(): bool
+    public function isKnownAcornPlugin(): bool
     {
-        return $this->table->isKnownAcornAssociatedPlugin();
+        return $this->table->isKnownAcornPlugin();
     }
 
     public function isSelfReferencingHierarchy(): bool
@@ -261,7 +261,7 @@ class Model {
         // TODO: This needs to be rationalised with Column->standardFieldDefinitions()
         $modifiers = array();
 
-        if ($this->isAcornAssociatedEvent()) {
+        if ($this->isAcornEvent()) {
             // This modifier is for when we set only the date,
             // using Event::setStartAttribute()
             $is1to1Include = (count($relations) == 1 && end($relations) instanceof Relation1to1);
@@ -273,7 +273,7 @@ class Model {
                     'fieldType'     => 'datepicker',
                     'columnType'    => 'partial',
                     'columnPartial' => 'datetime',
-                    'sqlSelect'     => "(select aacep.start from acornassociated_calendar_event_parts aacep where aacep.event_id = $column->column_name order by aacep.start limit 1)",
+                    'sqlSelect'     => "(select aacep.start from acorn_calendar_event_parts aacep where aacep.event_id = $column->column_name order by aacep.start limit 1)",
                     'autoFKType'    => 'Xto1', // Because these fields also appear on pivot tables, causing them to be XtoXSemi
                     'autoRelationCanFilter' => TRUE,
 
@@ -281,14 +281,14 @@ class Model {
                     'canFilter'  => TRUE,
                     'filterType' => 'daterange',
                     'yearRange'  => 10,
-                    'conditions' => "((select aacep.start from acornassociated_calendar_event_parts aacep where aacep.event_id = $column->column_name order by start limit 1) between ':after' and ':before')",
+                    'conditions' => "((select aacep.start from acorn_calendar_event_parts aacep where aacep.event_id = $column->column_name order by start limit 1) between ':after' and ':before')",
                 );
             }
-        } else if ($this->isAcornAssociatedUser()) {
+        } else if ($this->isAcornUser()) {
             $modifiers = array(
                 'fieldType'  => 'text',
                 'columnType' => 'text',
-                'sqlSelect'  => "(select aauu.name from acornassociated_user_users aauu where aauu.id = $column->column_name)",
+                'sqlSelect'  => "(select aauu.name from acorn_user_users aauu where aauu.id = $column->column_name)",
                 'autoFKType' => 'Xto1', // Because these fields also appear on pivot tables, causing them to be XtoXSemi
                 'autoRelationCanFilter' => TRUE,
 
@@ -547,7 +547,7 @@ class Model {
         }
 
         /*
-        if ($this->table == 'acornassociated_user_users') {
+        if ($this->table == 'acorn_user_users') {
             var_dump(array_keys($relations));
             exit(9);
         }
@@ -1287,7 +1287,7 @@ HTML;
                     // Special case #1: Our Event fields
                     // TODO: This should probably be set already in the main fields area: Field::standardFieldSettings() or whatever
                     // select: and relation:
-                    if ($topLevelNest && $fieldObj instanceof ForeignIdField && $fieldObj->relation1 && $fieldObj->relation1->to->isAcornAssociatedEvent()) {
+                    if ($topLevelNest && $fieldObj instanceof ForeignIdField && $fieldObj->relation1 && $fieldObj->relation1->to->isAcornEvent()) {
                         // Returns a DateTime object: aacep.start
                         $fieldObj->debugComment .= ' Single level embedded Event.';
                         $fieldObj->valueFrom     = NULL;
@@ -1295,7 +1295,7 @@ HTML;
 
                     // Special case #2: Our User fields
                     // select: and relation:
-                    else if ($topLevelNest && $fieldObj instanceof ForeignIdField && $fieldObj->relation1 && $fieldObj->relation1->to->isAcornAssociatedUser()) {
+                    else if ($topLevelNest && $fieldObj instanceof ForeignIdField && $fieldObj->relation1 && $fieldObj->relation1->to->isAcornUser()) {
                         // Returns the User name
                         $fieldObj->debugComment .= ' Single level embedded User.';
                         $fieldObj->valueFrom     = NULL;
@@ -1380,13 +1380,13 @@ HTML;
     public function translationDomain(): string
     {
         /* Translation:
-         *  For foreign keys:           acornassociated.user::lang.models.usergroup.label (pointing TO the user plugin)
-         *  For explicit translations:  acornassociated.finance::lang.models.invoice.user_group: Payee Group
-         *  For qualified foreign keys: acornassociated.finance::lang.models.invoice.payee_user_group (payee_ makes it qualified)
-         * is_qualified: Does the field name, [user_group]_id, have the same name as the table it points to, acornassociated_user_[user_group]s?
+         *  For foreign keys:           acorn.user::lang.models.usergroup.label (pointing TO the user plugin)
+         *  For explicit translations:  acorn.finance::lang.models.invoice.user_group: Payee Group
+         *  For qualified foreign keys: acorn.finance::lang.models.invoice.payee_user_group (payee_ makes it qualified)
+         * is_qualified: Does the field name, [user_group]_id, have the same name as the table it points to, acorn_user_[user_group]s?
          * if not, then it is qualified, and we need a local translation
          */
-        $domain = $this->plugin->translationDomain(); // acornassociated.user
+        $domain = $this->plugin->translationDomain(); // acorn.user
         $localTranslationKey = $this->localTranslationKey();
         return "$domain::lang.$localTranslationKey";
     }
@@ -1394,13 +1394,13 @@ HTML;
     public function translationKey(bool $plural = self::SINGULAR): string
     {
         /* Translation:
-         *  For foreign keys:           acornassociated.user::lang.models.usergroup.label (pointing TO the user plugin)
-         *  For explicit translations:  acornassociated.finance::lang.models.invoice.user_group: Payee Group
-         *  For qualified foreign keys: acornassociated.finance::lang.models.invoice.payee_user_group (payee_ makes it qualified)
-         * is_qualified: Does the field name, [user_group]_id, have the same name as the table it points to, acornassociated_user_[user_group]s?
+         *  For foreign keys:           acorn.user::lang.models.usergroup.label (pointing TO the user plugin)
+         *  For explicit translations:  acorn.finance::lang.models.invoice.user_group: Payee Group
+         *  For qualified foreign keys: acorn.finance::lang.models.invoice.payee_user_group (payee_ makes it qualified)
+         * is_qualified: Does the field name, [user_group]_id, have the same name as the table it points to, acorn_user_[user_group]s?
          * if not, then it is qualified, and we need a local translation
          */
-        $domain   = $this->translationDomain(); // acornassociated.user::lang.models.user
+        $domain   = $this->translationDomain(); // acorn.user::lang.models.user
         $name     = ($plural ? 'label_plural' : 'label');
 
         return "$domain.$name";
