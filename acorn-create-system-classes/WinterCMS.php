@@ -1,4 +1,4 @@
-<?php namespace Acorn\CreateSystem;
+<?php namespace AcornAssociated\CreateSystem;
 
 require_once('bootstrap/autoload.php');
 
@@ -31,7 +31,7 @@ class WinterCMS extends Framework
         $this->kernel = $this->app->make(\Illuminate\Contracts\Console\Kernel::class);
         $this->output = new \Symfony\Component\Console\Output\ConsoleOutput;
 
-        if (!file_exists("$cwd/modules/acorn/Model.php")) throw new \Exception("WinterCMS at [$cwd] does not have the required Acorn module");
+        if (!file_exists("$cwd/modules/acornassociated/Model.php")) throw new \Exception("WinterCMS at [$cwd] does not have the required AcornAssociated module");
 
         // ---------------------------- DB
         # Get DB connection parameters from Laravel
@@ -47,7 +47,7 @@ class WinterCMS extends Framework
 
         // ---------------------------- DBAUTH
         if ($this->username == '<DBAUTH>') {
-            print("${YELLOW}NOTE${NC}: DBAuth module detected, using winter user instead\n");
+            print("{$YELLOW}NOTE{$NC}: DBAuth module detected, using winter user instead\n");
             $this->username   = 'createsystem';
             $this->password   = 'QueenPool1@';
         }
@@ -113,20 +113,39 @@ class WinterCMS extends Framework
         $createdBy           = $this->createdByString();
 
         $this->runWinterCommand('create:plugin', $plugin->dotClassName());
+        // Immediately stamp it as create-system so that fields() 
+        // include: 1to1 recognises it as native
+        $this->appendTofile(  $pluginFilePath, "\n// $createdBy");
 
         // --------------------------------------------- Created bys, authors & README.md
+        // TODO: Move README up to Framework level
         $readmePath = "$pluginDirectoryPath/README.md";
         if (!file_exists($readmePath)) {
             $this->setFileContents($readmePath, "# $plugin->name");
             $this->appendToFile($readmePath, $createdBy);
 
-            $this->appendToFile($readmePath, "# Tables");
+            $this->appendToFile($readmePath, "# Models (table)");
             foreach ($plugin->models as $name => $model) {
-                $table = $model->table->name;
-                $this->appendToFile($readmePath, "## $model->name ($table)");
+                $table = $model->table;
+                $this->appendToFile($readmePath, "## $model->name ($table->name)");
+                if ($table->comment) $this->appendToFile($readmePath, "\n```\n$table->comment\n```\n",  0, TRUE, FALSE);
+                $this->appendToFile($readmePath, "* **Plural**:   " . $table->namePlural(),    1, TRUE, FALSE);
+                $this->appendToFile($readmePath, "* **Singular**: " . $table->nameSingular(),  1, TRUE, FALSE);
+                $this->appendToFile($readmePath, "* **Type**:     " . $table->type(), 1, TRUE, FALSE);
+
+                $this->appendToFile($readmePath, "### Fields (column)", 0, TRUE, FALSE);
                 foreach ($model->fields() as $name => $field) {
-                    $column = $field->column?->column_name;
-                    $this->appendToFile($readmePath, "* $field->name ($column)", 0, TRUE, FALSE);
+                    if ($column = $field->column?->column_name) {
+                        $this->appendToFile($readmePath, "* $field->name ($column)", 0, TRUE, FALSE);
+                    } else {
+                        $this->appendToFile($readmePath, "* _{$field->name}_", 0, TRUE, FALSE);
+                    }
+                }
+
+                $this->appendToFile($readmePath, "### Relations (foreign key)", 0, TRUE, FALSE);
+                foreach ($model->relations() as $name => $relation) {
+                    $foreignKey = $relation->foreignKey;
+                    $this->appendToFile($readmePath, "* $relation ($foreignKey->name)", 0, TRUE, FALSE);
                 }
             }
         }
@@ -134,16 +153,15 @@ class WinterCMS extends Framework
         // --------------------------------------------- Plugin.php misc
         // Alter the public function pluginDetails(): array function array return
         // and append some comments
-        $this->changeArrayReturnFunctionEntry($pluginFilePath, 'pluginDetails', 'author', 'Acorn');
+        $this->changeArrayReturnFunctionEntry($pluginFilePath, 'pluginDetails', 'author', 'Acorn Associated');
         $this->removeFunction($pluginFilePath, 'registerNavigation');
         $this->replaceInFile( $pluginFilePath, '/Registers backend navigation items for this plugin./', 'Navigation in plugin.yaml.');
-        $this->appendTofile(  $pluginFilePath, "\n// $createdBy");
 
         // Adding cross plugin dependencies
         $requirePlugins = array(
-            'Acorn.Calendar'  => TRUE,
-            'Acorn.Location'  => TRUE,
-            'Acorn.Messaging' => TRUE
+            'AcornAssociated.Calendar'  => TRUE,
+            'AcornAssociated.Location'  => TRUE,
+            'AcornAssociated.Messaging' => TRUE
         );
         foreach ($plugin->otherPluginRelations() as &$relation) {
             if (!$relation instanceof RelationFrom) {
@@ -152,7 +170,7 @@ class WinterCMS extends Framework
                 if ($otherPlugin instanceof Plugin) {
                     $fqn         = $otherPlugin->dotClassName();
                     if (!isset($requirePlugins[$fqn])) {
-                        print("      Adding Plugin \$require ${YELLOW}$fqn${NC}\n");
+                        print("      Adding Plugin \$require {$YELLOW}$fqn{$NC}\n");
                         $requirePlugins[$fqn] = TRUE;
                     }
                 }
@@ -172,9 +190,9 @@ class WinterCMS extends Framework
                 $langFilePath = "$langDirPath/$langName/lang.php";
 
                 if (file_exists($langFilePath)) {
-                    if ($langName != 'en') print("  ${RED}LANG${NC}: ${YELLOW}$langName${NC} language file already exists\n");
+                    if ($langName != 'en') print("  {$RED}LANG{$NC}: {$YELLOW}$langName{$NC} language file already exists\n");
                 } else {
-                    print("  ${GREEN}LANG${NC}: Created ${YELLOW}$langName${NC} language file\n");
+                    print("  {$GREEN}LANG{$NC}: Created {$YELLOW}$langName{$NC} language file\n");
                     copy($langEnPath, $langFilePath);
                 }
                 $this->arrayFileSet($langFilePath, 'plugin.description', $createdBy, FALSE);
@@ -333,9 +351,9 @@ class WinterCMS extends Framework
         if (isset($plugin->pluginDescriptions['ku'])) $this->arrayFileSet("$langDirPath/ku/lang.php", 'plugin.description', $plugin->pluginDescriptions['ku'], FALSE);
 
         // --------------------------------------------- Permissions
-        // 'acorn.criminal.some_permission' => [
-        //     'tab' => 'acorn.criminal::lang.plugin.name',
-        //     'label' => 'acorn.criminal::lang.permissions.some_permission',
+        // 'acornassociated.criminal.some_permission' => [
+        //     'tab' => 'acornassociated.criminal::lang.plugin.name',
+        //     'label' => 'acornassociated.criminal::lang.permissions.some_permission',
         //     'roles' => [UserRole::CODE_DEVELOPER, UserRole::CODE_PUBLISHER],
         // ],
         $pluginPermissionsArray = array();
@@ -354,7 +372,7 @@ class WinterCMS extends Framework
                 $permissionPluginDotPath = implode(".", array_slice($permissionNameParts, 0, 2));
                 $permissionLocalName     = end($permissionNameParts);
                 if ($permissionPluginDotPath == $pluginDotName) {
-                    print("    Adding Permission: ${GREEN}$fullyQualifiedName${NC}\n");
+                    print("    Adding Permission: {$GREEN}$fullyQualifiedName{$NC}\n");
                     $pluginPermissionConfig = array(
                         'tab'   => "$translationDomain::lang.plugin.name",
                         'label' => "$translationDomain::lang.permissions.$permissionLocalName",
@@ -388,13 +406,13 @@ class WinterCMS extends Framework
         $scriptsUpdatesPath = "$this->scriptDirPath/SQL/updates";
         $pluginUpdatePath   = "$pluginDirectoryPath/updates";
         if (!is_dir($scriptsUpdatesPath)) {
-            print("  ${RED}WARNING${NC}: No ${YELLOW}$scriptsUpdatesPath{NC} found to populate the plugin /updates/. Creating...\n");
+            print("  {$RED}WARNING{$NC}: No {$YELLOW}$scriptsUpdatesPath{NC} found to populate the plugin /updates/. Creating...\n");
             mkdir($scriptsUpdatesPath, TRUE);
         }
 
-        print("  Syncing ${GREEN}$pluginUpdatePath${NC}\n");
+        print("  Syncing {$GREEN}$pluginUpdatePath{$NC}\n");
         if (!is_dir($pluginUpdatePath)) {
-            echo "  Made ${YELLOW}$pluginUpdatePath${NC}\n";
+            echo "  Made {$YELLOW}$pluginUpdatePath{$NC}\n";
             mkdir($pluginUpdatePath, 0775, TRUE);
         }
         foreach (scandir($scriptsUpdatesPath) as $file) {
@@ -402,9 +420,9 @@ class WinterCMS extends Framework
                 $scriptsFilePath = realpath("$scriptsUpdatesPath/$file");
                 $updatesFilePath = "$pluginUpdatePath/$file";
                 if (file_exists($updatesFilePath)) {
-                    print("    Ommitting ${RED}$file${NC}\n");
+                    print("    Ommitting {$RED}$file{$NC}\n");
                 } else {
-                    print("    Copied ${YELLOW}$file${NC} => updates/\n");
+                    print("    Copied {$YELLOW}$file{$NC} => updates/\n");
                     copy($scriptsFilePath, $updatesFilePath);
                     // ReWrite <Plugin> in the namespace(s) for copied files
                     $this->replaceInFile($updatesFilePath, '/<Plugin>/', $plugin->name, FALSE);
@@ -418,14 +436,14 @@ class WinterCMS extends Framework
         // --------------------------------------------- Update commands
         // Re-create up & down.sql
         if (file_exists("$pluginUpdatePath/acorn-winter-update-sqls")) {
-            print("  Run ${GREEN}acorn-winter-update-sqls${NC}\n");
+            print("  Run {$GREEN}acorn-winter-update-sqls{$NC}\n");
             $this->runBashScript("$pluginUpdatePath/acorn-winter-update-sqls", TRUE);
         } else {
-            print("${RED}ERROR${NC}: No ${YELLOW}acorn-winter-update-sqls${NC} available\n");
+            print("{$RED}ERROR{$NC}: No {$YELLOW}acorn-winter-update-sqls{$NC} available\n");
             exit(1);
         }
 
-        // Functions fn_acorn_*_seed_*()
+        // Functions fn_acornassociated_*_seed_*()
         $seederPath = "$pluginUpdatePath/seed.sql";
         $functions  = $this->db->functions(strtolower($plugin->author), strtolower($plugin->name), 'seed');
         foreach ($functions as $name => $details) {
@@ -437,7 +455,7 @@ class WinterCMS extends Framework
         // TODO: Why? This is dangerous. Do it manually
         /*
         if (file_exists("$pluginUpdatePath/pre-up.sql")) {
-            print("  Run ${GREEN}pre-up.sql${NC} (functions, schemas, extensions)\n");
+            print("  Run {$GREEN}pre-up.sql{$NC} (functions, schemas, extensions)\n");
             $this->db->runSQLFile("$pluginUpdatePath/pre-up.sql");
         }
         */
@@ -452,9 +470,9 @@ class WinterCMS extends Framework
             array('plugin' => $dotClassName)
         );
         if (count($registrations)) {
-            print("  Plugin ${GREEN}$dotClassName${NC} is already registered in $pluginTable\n");
+            print("  Plugin {$GREEN}$dotClassName{$NC} is already registered in $pluginTable\n");
         } else {
-            print("  Plugin ${GREEN}$dotClassName${NC} registered in $pluginTable\n");
+            print("  Plugin {$GREEN}$dotClassName{$NC} registered in $pluginTable\n");
             $this->db->insert("INSERT into $pluginTable(code, version, created_at)
                 values(:plugin, '1.0.0', now())",
                 array('plugin' => $dotClassName)
@@ -493,14 +511,14 @@ class WinterCMS extends Framework
                                 if (substr($icon, 0, 5) != 'icon-') $icon = "icon-$icon";
                             } else {
                                 $icon = $this->getNextIcon();
-                                print("    Auto-selected controller icon ${YELLOW}$icon${NC}\n");
+                                print("    Auto-selected controller icon {$YELLOW}$icon{$NC}\n");
                             }
 
                             if ($controller->menuSplitter) {
                                 $sideMenu["_splitter_$name"] = array(
                                     'label' => 'splitter',
                                     'url'   => 'splitter',
-                                    'icon'  => 'acorn-splitter',
+                                    'icon'  => 'acornassociated-splitter',
                                 );
                             }
 
@@ -521,7 +539,7 @@ class WinterCMS extends Framework
                     if (substr($icon, 0, 5) != 'icon-') $icon = "icon-$icon";
                 } else {
                     $icon = $this->getNextIcon();
-                    print("  Auto-selected plugin icon ${YELLOW}$icon${NC}\n");
+                    print("  Auto-selected plugin icon {$YELLOW}$icon{$NC}\n");
                 }
                 $navigationDefinition = array(
                     "$pluginMenuName-setup" => array(
@@ -550,7 +568,7 @@ class WinterCMS extends Framework
 
         if (file_exists($modelFilePath) && $overwrite) unlink($modelFilePath);
         if (file_exists($modelFilePath)) {
-            print("  ${RED}WARNING${NC}: Model file [$modelFilePath] already exists. Leaving.\n");
+            print("  {$RED}WARNING{$NC}: Model file [$modelFilePath] already exists. Leaving.\n");
         } else {
             $this->runWinterCommand('create:model', $model->plugin->dotClassName(), $model->name);
 
@@ -580,8 +598,8 @@ class WinterCMS extends Framework
 
             $model->uses = array_merge($model->uses, array(
                 // Useful AA classes
-                "Acorn\\Models\\Server" => TRUE,
-                "Acorn\\Collection" => TRUE,
+                "AcornAssociated\\Models\\Server" => TRUE,
+                "AcornAssociated\\Collection" => TRUE,
                 // Useful
                 "BackendAuth" => TRUE,
                 '\\Backend\\Models\\User' => TRUE,
@@ -591,8 +609,9 @@ class WinterCMS extends Framework
                 'Carbon\\Carbon' => TRUE,
                 'Carbon\\CarbonInterval' => TRUE,
             ));
-            print("  Inheriting from Acorn\\\\Model\n");
-            $this->replaceInFile($modelFilePath, '/^use Model;$/m', 'use Acorn\\Model;');
+            print("  Inheriting from AcornAssociated\\\\Model\n");
+            // WinterCMS v1.2.7 changed to Winter\Storm\Database\Model
+            $this->replaceInFile($modelFilePath, '/^use (Winter\\\Storm\\\Database\\\Model|Model);$/m', 'use AcornAssociated\\Model;');
 
             // Traits
             print("  Adding Trait Revisionable\n");
@@ -610,6 +629,8 @@ class WinterCMS extends Framework
                 print("  Adding Trait HasUuids\n");
                 $model->traits['\\Illuminate\\Database\\Eloquent\\Concerns\\HasUuids'] = TRUE;
             }
+            if ($model->isSelfReferencingHierarchy()) 
+                $model->traits['\\Winter\\Storm\\Database\\Traits\\NestedTree'] = TRUE;
 
             $this->writeFileUses(   $modelFilePath, $model->uses);
             $this->writeClassTraits($modelFilePath, $model->traits);
@@ -635,9 +656,42 @@ class WinterCMS extends Framework
             }
             $this->setPropertyInClassFile($modelFilePath, 'actionFunctions', $model->actionFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
 
+            // ---------------------------------------------------------------- Global Scope
+            // This table restricts ALL related Models to the current selection
+            // Relations (Foreign Keys) should be marked as global_scope=<from|to> 
+            // to chain to this scope
+            if ($model->globalScope) {
+                // TODO: $_SESSION[$name] selector
+                $scopeName  = "{$model->name}Scope";
+                $modelFQN   = $model->fullyQualifiedName();
+                $scopeFQN   = "$modelFQN\\$scopeName";
+                $path       = "$modelDirPath/$scopeName.php";
+
+                $this->appendToFile($path, <<<PHP
+<?php
+// Auto-generated by Create-System
+namespace $modelFQN;
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use AcornAssociated\Scopes\GlobalChainScope;
+
+class $scopeName extends GlobalChainScope
+{
+    public function apply(Builder \$builder, Model \$model) {
+        self::applySession(\$builder, \$model);
+    }
+}
+PHP
+                );
+
+                // Instruct this class to use this Scope directly
+                $this->setPropertyInClassFile($modelFilePath, 'globalScope', $scopeFQN, FALSE, 'public static');
+            }
+
             // ---------------------------------------------------------------- Seeding
             // This moves seeding: directives in to updates\seed.sql
-            // and also appends any fn_acorn_*_seed_*() functions
+            // and also appends any fn_acornassociated_*_seed_*() functions
             $seederPath = "$pluginDirectoryPath/updates/seed.sql";
             if ($model->table->seeding) {
                 $schema     = $model->table->schema;
@@ -645,7 +699,7 @@ class WinterCMS extends Framework
                 $inserts    = array();
 
                 // Table comment seeding directive
-                print("  ${GREEN}SEEDING${NC} for [$table]\n");
+                print("  {$GREEN}SEEDING{$NC} for [$table]\n");
                 foreach ($model->table->seeding as $row) {
                     $names  = array();
                     $values = array();
@@ -656,7 +710,7 @@ class WinterCMS extends Framework
                         // TODO: Creation of NOT NULL associated calendar events: EVENT_ID => $this->db->createCalendarEvent('SEEDER')
                         if      ($value === 'DEFAULT')   $valueSQL = 'DEFAULT';
                         else if ($value === 'NULL')      $valueSQL = 'NULL';
-                        else if (substr($value, 0, 19) === 'fn_acorn_' && substr($value, -1) == ')') $valueSQL = $value;
+                        else if (substr($value, 0, 19) === 'fn_acornassociated_' && substr($value, -1) == ')') $valueSQL = $value;
                         else $valueSQL = var_export($value, TRUE);
 
                         array_push($names, $column->name);
@@ -664,9 +718,9 @@ class WinterCMS extends Framework
                     }
                     if ($model->table->hasColumn('created_by_user_id')) {
                         array_push($names, 'created_by_user_id');
-                        array_push($values, 'fn_acorn_user_get_seed_user()');
+                        array_push($values, 'fn_acornassociated_user_get_seed_user()');
                     }
-                    $namesSQL  = implode(',', $names);
+                    $namesSQL  = '"' . implode('","', $names) . '"';
                     $valuesSQL = implode(',', $values);
                     $insertSQL = "insert into $schema.$table($namesSQL) values($valuesSQL);";
                     array_push($inserts, $insertSQL);
@@ -676,7 +730,7 @@ class WinterCMS extends Framework
                 // Run the seeding IF there are no records in the table
                 // Because we are not doing a winter:down,up here, but we still want the records
                 if ($model->table->isEmpty() && count($inserts)) {
-                    print("  Running ${YELLOW}$table${NC} seed inserts because the table is empty: [");
+                    print("  Running {$YELLOW}$table{$NC} seed inserts because the table is empty: [");
                     // We do not $this->db->disableTriggers(), because we want the created_at_event_id
                     foreach ($inserts as $insert) {
                         print(".");
@@ -705,7 +759,7 @@ class WinterCMS extends Framework
                 $langFilePath = "$langDirPath/$langName/lang.php";
                 if (!in_array($langName, array('.','..')) && file_exists($langFilePath)) {
                     if (isset($model->labels[$langName])) {
-                        print("  Added ${YELLOW}$modelSectionName${NC} into ${YELLOW}$langName${NC} lang file\n");
+                        print("  Added {$YELLOW}$modelSectionName{$NC} into {$YELLOW}$langName{$NC} lang file\n");
                         $label       = &$model->labels[$langName];
                         $labelPlural = (isset($model->labelsPlural[$langName]) ? $model->labelsPlural[$langName] : $label);
                         $throwIfAlreadySet = ($langName != 'en');
@@ -714,7 +768,7 @@ class WinterCMS extends Framework
                             'label_plural' => $labelPlural
                         ), $langName, $model->dbObject(), $throwIfAlreadySet);
                     } else {
-                        if (!env('APP_DEBUG')) print("  ${RED}ERROR${NC}: No ${YELLOW}$langName${NC} translation label for ${YELLOW}$modelSectionName${NC}\n");
+                        if (!env('APP_DEBUG')) print("  {$RED}ERROR{$NC}: No {$YELLOW}$langName{$NC} translation label for {$YELLOW}$modelSectionName{$NC}\n");
                     }
                 }
             }
@@ -731,15 +785,18 @@ class WinterCMS extends Framework
                     'name'   => $relation->nameObject,
                     'type'   => $relation->type(),
                     'leaf'   => $isLeaf,
+                    'global_scope' => ($relation->globalScope == 'to'),
                     'delete' => $relation->delete,
                 ), Framework::AND_FALSES);
             }
             foreach ($model->relationsXto1() as $name => &$relation) {
-                if (isset($relations[$name])) throw new \Exception("Conflicting relations with [$name] on [$model->name]");
+                if (isset($relations[$name])) 
+                    throw new \Exception("Conflicting relations with [$name] on [$model->name]");
                 $relations[$name] = $this->removeEmpty(array($relation->to,
                     'key'    => $relation->column->name,
                     'name'   => $relation->nameObject,
                     'type'   => $relation->type(),
+                    'global_scope' => ($relation->globalScope == 'to'),
                     'delete' => $relation->delete,
                 ), Framework::AND_FALSES);
             }
@@ -774,21 +831,23 @@ class WinterCMS extends Framework
             $relations = array();
             foreach ($model->relations1fromX() as $name => &$relation) {
                 if (isset($relations[$name])) throw new \Exception("Conflicting relations with [$name] on [$model->name]");
-                $relations[$name] = array($relation->to,
+                $relations[$name] = $this->removeEmpty(array($relation->to,
                     'key' => $relation->column->name,
+                    'global_scope' => ($relation->globalScope == 'from'),
                     'type' => $relation->type()
-                );
+                ), Framework::AND_FALSES);
             }
             foreach ($model->relationsXfromXSemi() as $name => &$relation) {
                 // For the pivot model only
                 $name = "{$name}_pivot";
                 if (isset($relations[$name])) throw new \Exception("Conflicting relations with [$name] on [$model->name]");
-                $relations[$name] = array(
+                $relations[$name] = $this->removeEmpty(array(
                     $relation->pivotModel,
                     'key'      => $relation->keyColumn->name,  // pivot.legalcase_id
                     'otherKey' => $relation->column->name,     // pivot.user_id
+                    'global_scope' => ($relation->globalScope == 'from'),
                     'type'     => $relation->type()
-                );
+                ), Framework::AND_FALSES);
             }
             foreach ($model->relationsSelf() as $name => &$relation) {
                 if (isset($relations['children'])) throw new \Exception("Only one children relation allowed on [$model->name]");
@@ -806,6 +865,7 @@ class WinterCMS extends Framework
                     'key'      => $relation->keyColumn->name,  // pivot.legalcase_id
                     'otherKey' => $relation->column->name,     // pivot.user_id
                     'type'     => $relation->type(),
+                    'global_scope' => ($relation->globalScope == 'from'),
                     'delete'   => $relation->delete,
                 ), Framework::AND_FALSES);
             }
@@ -819,6 +879,7 @@ class WinterCMS extends Framework
                     'key'      => $relation->keyColumn->name,  // pivot.legalcase_id
                     'otherKey' => $relation->column->name,     // pivot.user_id
                     'type'     => $relation->type(),
+                    'global_scope' => ($relation->globalScope == 'from'),
                     'delete'   => $relation->delete,
                 ), Framework::AND_FALSES);
             }
@@ -831,6 +892,7 @@ class WinterCMS extends Framework
                 $relations[$name] = $this->removeEmpty(array($relation->to,
                     'key'    => $relation->column->name,
                     'type'   => $relation->type(),
+                    'global_scope' => ($relation->globalScope == 'from'),
                     'delete' => $relation->delete, // This can be done by a DELETE CASCADE FK
                 ), Framework::AND_FALSES);
             }
@@ -854,17 +916,17 @@ class WinterCMS extends Framework
             foreach ($model->attributeFunctions as $name => &$body) {
                 $namePascal = Str::studly($name);
                 $funcName   = "get{$namePascal}Attribute(\$value)"; // Encapsulation...
-                print("  Injecting public ${YELLOW}$funcName${NC}() into [$model->name]\n");
+                print("  Injecting public {$YELLOW}$funcName{$NC}() into [$model->name]\n");
                 $this->addMethod($modelFilePath, $funcName, $body);
             }
             // methods()
             foreach ($model->methods as $funcName => &$body) {
-                print("  Injecting public function ${YELLOW}$funcName${NC} into [$model->name]\n");
+                print("  Injecting public function {$YELLOW}$funcName{$NC} into [$model->name]\n");
                 $this->addMethod($modelFilePath, $funcName, $body);
             }
             // static methods()
             foreach ($model->staticMethods as $funcName => &$body) {
-                print("  Injecting public function ${YELLOW}$funcName${NC}() into [$model->name]\n");
+                print("  Injecting public function {$YELLOW}$funcName{$NC}() into [$model->name]\n");
                 $this->addStaticMethod($modelFilePath, $funcName, $body);
             }
             if ($model->printable) {
@@ -899,7 +961,7 @@ class WinterCMS extends Framework
         $indent = 1;
         $this->yamlFileUnSet($fieldsPath, 'fields.id');
         foreach ($model->fields() as $name => &$field) {
-            print("      Add ${YELLOW}$name${NC}($field->fieldType/$field->columnType): to ${YELLOW}fields.yaml${NC}\n");
+            print("      Add {$YELLOW}$name{$NC}($field->fieldType/$field->columnType): to {$YELLOW}fields.yaml{$NC}\n");
             $dotPath = "fields.$field->fieldKey$field->fieldKeyQualifier";
             if (!$field->include) {
                 if      ($field->tabLocation == 2) $dotPath = "secondaryTabs.$dotPath";
@@ -933,6 +995,7 @@ class WinterCMS extends Framework
                 'path'      => $field->partial,
                 'hidden'    => $field->hidden,
                 'required'  => $field->required,
+                'default'   => $field->default,
                 'disabled'  => $field->disabled,
                 'readOnly'  => $field->readOnly,
                 'span'      => $field->span,
@@ -961,7 +1024,7 @@ class WinterCMS extends Framework
                 'includeContext' => $field->includeContext,
             );
             if ($field->fieldConfig) $fieldDefinition = array_merge($fieldDefinition, $field->fieldConfig);
-            $fieldDefinition = $this->removeEmpty($fieldDefinition, TRUE); // Remove FALSE
+            $fieldDefinition = $this->removeEmpty($fieldDefinition, self::AND_FALSES); // Remove FALSE
             if ($field->goto) $fieldDefinition['containerAttributes'] = array('goto-form-group-selection' => $field->goto);
             $this->yamlFileSet($fieldsPath, $dotPath, $fieldDefinition);
 
@@ -1026,7 +1089,7 @@ class WinterCMS extends Framework
         foreach ($model->fields() as $name => &$field) {
             $localTranslationKey = $field->localTranslationKey();
             if ($field->isLocalTranslationKey() && !$field->isStandard() && !$this->arrayFileValueExists($langEnPath, $localTranslationKey)) {
-                print("      Add ${YELLOW}$localTranslationKey${NC} to ${YELLOW}lang/*${NC} for ${YELLOW}$name${NC}\n");
+                print("      Add {$YELLOW}$localTranslationKey{$NC} to {$YELLOW}lang/*{$NC} for {$YELLOW}$name{$NC}\n");
                 // At least set the english label programmatically
                 // during development, and translation file generation
                 if (!$field->labels || !isset($field->labels['en']))
@@ -1044,7 +1107,7 @@ class WinterCMS extends Framework
 
             if ($field->extraTranslations) {
                 foreach ($field->extraTranslations as $code => $labels) {
-                    print("      Add ${YELLOW}$code${NC} to ${YELLOW}lang/*${NC} for ${YELLOW}$name${NC}\n");
+                    print("      Add {$YELLOW}$code{$NC} to {$YELLOW}lang/*{$NC} for {$YELLOW}$name{$NC}\n");
                     $localTranslationKey = "$modelKey.$code";
                     foreach ($labels as $langName => &$translation) {
                         $langFilePath = "$langDirPath/$langName/lang.php";
@@ -1055,7 +1118,7 @@ class WinterCMS extends Framework
             }
         }
         foreach ($extraTranslations as $code => $labels) {
-            print("      Add ${YELLOW}$code${NC} to ${YELLOW}lang/*${NC}\n");
+            print("      Add {$YELLOW}$code{$NC} to {$YELLOW}lang/*{$NC}\n");
             $localTranslationKey = "$modelKey.$code";
             foreach ($labels as $langName => &$translation) {
                 $langFilePath = "$langDirPath/$langName/lang.php";
@@ -1079,13 +1142,13 @@ class WinterCMS extends Framework
 
         if (file_exists($controllerFilePath) && $overwrite) unlink($controllerFilePath);
         if (file_exists($controllerFilePath)) {
-            print("  ${RED}WARNING${NC}: Controller file [$controllerFilePath] already exists. Leaving.\n");
+            print("  {$RED}WARNING{$NC}: Controller file [$controllerFilePath] already exists. Leaving.\n");
         } else {
             $this->runWinterCommand('create:controller', $controller->model->plugin->dotClassName(), $controller->name);
 
             // Inheritance
             $author = $controller->author();
-            print("  Inheriting ${YELLOW}$controller->name${NC} from $author\n");
+            print("  Inheriting {$YELLOW}$controller->name{$NC} from $author\n");
             $this->replaceInFile($controllerFilePath, '/^use Backend\\\\Classes\\\\Controller;$/m', "use $author\\\\Controller;");
 
             // Implements
@@ -1093,13 +1156,16 @@ class WinterCMS extends Framework
                 "\\\\$author\\\\Behaviors\\\\FormController",
                 "\\\\$author\\\\Behaviors\\\\ListController",
                 "Backend\\\\Behaviors\\\\RelationController", // Only here to prevent RelationController requirement error
-                "\\\\Acorn\\\\Behaviors\\\\RelationController",
+                "\\\\AcornAssociated\\\\Behaviors\\\\RelationController",
             ), Framework::OVERWRITE_EXISTING);
 
             // Explicit plural name injection
             // Otherwise PathsHelper will get confused when making URLs and things
             $plural = $controller->model->table->plural;
             if ($plural) $this->setPropertyInClassFile($controllerFilePath, 'namePlural', $plural, Framework::NEW_PROPERTY);
+
+            if ($controller->model->isSelfReferencingHierarchy()) 
+                $this->appendToFile("$controllerDirPath/config_list.yaml", "showTree: true");
 
             // -------------------------------- Filters
             $indent = 0;
@@ -1217,13 +1283,13 @@ class WinterCMS extends Framework
         }
         $layout = ($maxTabLocation >= 3 ? 'form-with-sidebar' : 'form');
         $this->setPropertyInClassFile($controllerFilePath, 'bodyClass', 'compact-container', FALSE);
-        print("    Tab max ${YELLOW}$maxTabLocation${NC} template: ${YELLOW}$layout${NC}\n");
+        print("    Tab max {$YELLOW}$maxTabLocation{$NC} template: {$YELLOW}$layout{$NC}\n");
 
         $interfaceVariantsDirPath = "$this->scriptDirPath/acorn-create-system-classes/frameworks/winter/controllers/$layout";
         foreach (scandir($interfaceVariantsDirPath) as $controllerFile) {
             $controllerFilePath = "$interfaceVariantsDirPath/$controllerFile";
             if (!in_array($controllerFile, array(".",".."))) {
-                print("    Copied ${YELLOW}$layout/$controllerFile${NC} => $controllerDirPath/\n");
+                print("    Copied {$YELLOW}$layout/$controllerFile{$NC} => $controllerDirPath/\n");
                 copy($controllerFilePath, "$controllerDirPath/$controllerFile");
             }
         }
@@ -1256,7 +1322,7 @@ class WinterCMS extends Framework
                 if ($field->sqlSelect && $field->valueFrom)              throw new \Exception("select: and valueFrom: are mutually exclusive on [$field->name]");
                 if ($field->relation  && strstr($field->columnKey, '[')) throw new \Exception("relation: and nesting are mutually exclusive on [$field->name]");
 
-                print("      Add ${YELLOW}$name${NC}($field->fieldType/$field->columnType): to ${YELLOW}columns.yaml${NC}\n");
+                print("      Add {$YELLOW}$name{$NC}($field->fieldType/$field->columnType): to {$YELLOW}columns.yaml{$NC}\n");
                 $columnDefinition = array(
                     '#'          => $field->yamlComment,
                     '# Debug:'   => $field->debugComment,
@@ -1375,12 +1441,12 @@ class WinterCMS extends Framework
     public function checkTranslationKey(string $key): bool
     {
         $keyParts      = explode('::', $key);
-        $domain        = $keyParts[0];                     // acorn.user | acorn
+        $domain        = $keyParts[0];                     // acornassociated.user | acornassociated
         if (count($keyParts) < 2) throw new \Exception("Translation key ''$domain' needs 2 dot parts");
         $localParts    = explode('.', $keyParts[1]);       // lang, models, general, id
         $localKey      = implode('.', array_slice($localParts, 1)); // models.general.id
-        $isModule      = (strstr($domain, '.') === FALSE); // acorn
-        $domainRelDir  = str_replace('.', '/', $domain);   // acorn/user | acorn
+        $isModule      = (strstr($domain, '.') === FALSE); // acornassociated
+        $domainRelDir  = str_replace('.', '/', $domain);   // acornassociated/user | acornassociated
         $domainDirPath = ($isModule ? "modules/$domainRelDir" : "plugins/$domainRelDir");
         $langFilePath  = realpath("$domainDirPath/lang/en/lang.php");
 

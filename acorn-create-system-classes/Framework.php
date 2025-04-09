@@ -1,4 +1,4 @@
-<?php namespace Acorn\CreateSystem;
+<?php namespace AcornAssociated\CreateSystem;
 
 class Framework
 {
@@ -150,14 +150,12 @@ class Framework
     {
         $createdBy = NULL;
         $path      = $this->pluginFile($plugin);
-        if (file_exists($path)) {
-            // We do not want to cache in FILES and thus overwrite the Plugin files
-            $contents = file_get_contents($path);
-
-            if (preg_match("#^// Created By (.*) (.*)$#m", $contents, $matches)) {
-                $createdBy = $matches[1];
-                $version   = $matches[2];
-            }
+        // We do not want to cache in FILES and thus overwrite the Plugin files
+        // but we do want the LIVE version in case it is this plugin that is being created
+        $contents  = $this->fileLoad($path, self::NO_CACHE);
+        if (preg_match("#^// Created By (.*) (.*)$#m", $contents, $matches)) {
+            $createdBy = $matches[1];
+            $version   = $matches[2];
         }
 
         return $createdBy;
@@ -177,7 +175,7 @@ class Framework
         $createdBy = $this->whoCreatedBy($plugin);
 
         $indentString = str_repeat(' ', $indent * 2);
-        print("$indentString$plugin->name ${YELLOW}$exists${NC} $hasGit ${GREEN}$createdBy${NC}");
+        print("$indentString$plugin->name {$YELLOW}$exists{$NC} $hasGit {$GREEN}$createdBy{$NC}");
     }
 
     // ----------------------------------------- DB
@@ -194,6 +192,8 @@ class Framework
     // ----------------------------------------- Array files
     protected function &arrayFileLoad(string $path, bool $cache = self::CACHE): array
     {
+        // TODO: We should still check the cache, even if we don't store it
+        // because something else may be writing to this file
         if (!$path) throw new \Exception("ARRAY_FILE path is empty");
         $content = (file_exists($path) ? include($path) : array());
         if ($cache) {
@@ -324,6 +324,8 @@ class Framework
     // ----------------------------------------- YAML
     protected function &yamlFileLoad(string $path, bool $cache = self::CACHE): array
     {
+        // TODO: We should still check the cache, even if we don't store it
+        // because something else may be writing to this file
         if (!$path) throw new \Exception("YAML path is empty");
         $content = (file_exists($path) ? \Spyc::YAMLLoad($path) : array());
         if ($cache) {
@@ -382,23 +384,38 @@ class Framework
     }
 
     // ----------------------------------------- File
-    protected function appendToFile(string $path, string $newContent, int $indent = 0, bool $newline = TRUE, bool $throwIfContentExists = TRUE)
+    public function &fileLoad(string $path, bool $cache = self::CACHE): string
     {
         if (!$path) throw new \Exception("FILES path is empty");
-        $newlineCharacter = ($newline ? "\n" : '');
-        if (!isset($this->FILES[$path])) $this->FILES[$path] = (file_exists($path) ? file_get_contents($path) : '');
-        $contents  = &$this->FILES[$path];
+        
+        if ($cache) {
+            if (!isset($this->FILES[$path])) 
+                $this->FILES[$path] = (file_exists($path) ? file_get_contents($path) : '');
+            return $this->FILES[$path];
+        } else {
+            // We still check the cache, even if we don't store it
+            // because something else may be writing to this file
+            if (isset($this->FILES[$path])) return $this->FILES[$path];
+            else {
+                $content = (file_exists($path) ? file_get_contents($path) : '');
+                return $content;
+            }
+        }
+    }
 
+    protected function appendToFile(string $path, string $newContent, int $indent = 0, bool $newline = TRUE, bool $throwIfContentExists = TRUE, bool $cache = self::CACHE)
+    {
+        $contents = &$this->fileLoad($path, $cache);
+        
         if ($throwIfContentExists && strstr($contents, $newContent)) throw new \Exception("[$newContent] already found in [$path]");
-
+        
+        $newlineCharacter = ($newline ? "\n" : '');
         $contents .= "$newContent$newlineCharacter";
     }
 
-    protected function replaceInFile(string $path, string $regex, string $replacement = '', bool $throwIfNotFound = TRUE)
+    protected function replaceInFile(string $path, string $regex, string $replacement = '', bool $throwIfNotFound = TRUE, bool $cache = self::CACHE)
     {
-        if (!$path) throw new \Exception("FILES path is empty");
-        if (!isset($this->FILES[$path])) $this->FILES[$path] = file_get_contents($path);
-        $contents = &$this->FILES[$path];
+        $contents = &$this->fileLoad($path, $cache);
 
         if ($throwIfNotFound) {
             $matched = preg_match($regex, $contents);
@@ -550,9 +567,9 @@ FUNCTION
         //   public function registerPermissions(): array
         //   {
         //     return [
-        //         'acorn.finance.some_permission' => [
-        //             'tab' => 'acorn.finance::lang.plugin.name',
-        //             'label' => 'acorn.finance::lang.permissions.some_permission',
+        //         'acornassociated.finance.some_permission' => [
+        //             'tab' => 'acornassociated.finance::lang.plugin.name',
+        //             'label' => 'acornassociated.finance::lang.permissions.some_permission',
         //             'roles' => [UserRole::CODE_DEVELOPER, UserRole::CODE_PUBLISHER],
         //         ],
         //     ];
@@ -582,9 +599,9 @@ FUNCTION
         //   public function pluginDetails(): array
         //   {
         //     return [
-        //         'name'        => 'acorn.finance::lang.plugin.name',
-        //         'description' => 'acorn.finance::lang.plugin.description',
-        //         'author' => 'Acorn',
+        //         'name'        => 'acornassociated.finance::lang.plugin.name',
+        //         'description' => 'acornassociated.finance::lang.plugin.description',
+        //         'author' => 'Acorn Associated',
         //         'icon'        => 'icon-leaf'
         //     ];
         //   }
@@ -603,7 +620,7 @@ FUNCTION
 
         if ($this->pluginExists($plugin)) {
             $pluginDirectoryPath = $this->pluginDirectoryPath($plugin);
-            print("${GREEN}REMOVING${NC} existing plugin sub-directories and files from [$pluginDirectoryPath]...\n");
+            print("{$GREEN}REMOVING{$NC} existing plugin sub-directories and files from [$pluginDirectoryPath]...\n");
             $this->removeDir($pluginDirectoryPath, FALSE, FALSE);
         }
 

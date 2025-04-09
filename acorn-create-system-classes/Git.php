@@ -1,8 +1,8 @@
-<?php namespace Acorn\CreateSystem;
+<?php namespace AcornAssociated\CreateSystem;
 
 class Git
 {
-    protected $centralServer = 'acorn.org';
+    protected $centralServer = 'acornassociated.org';
     protected $gitServer     = "gitlab.$this->central_server";
     protected $gitGroup      = "office";
 }

@@ -1,0 +1,41 @@
+--- Model.php   2025-04-07 09:31:07.953062956 +0300
++++ Model-new.php       2025-04-07 09:30:39.151062077 +0300
+@@ -352,23 +352,23 @@
+     // TODO: VERSION: Winter 1.2.6=>7 changes the relationTypes format:
+     // https://stackoverflow.com/questions/39034442/preprocessing-like-if-defined-in-php
+     protected static $relationTypes = [
+-        'hasOne',
+-        'hasMany',
+-        'belongsTo',
+-        'belongsToMany',
+-        'morphTo',
+-        'morphOne',
+-        'morphMany',
+-        'morphToMany',
+-        'morphedByMany',
+-        'attachOne',
+-        'attachMany',
+-        'hasOneThrough',
+-        'hasManyThrough',
++        'hasOne' => HasOne::class,
++        'hasMany' => HasMany::class,
++        'belongsTo' => BelongsTo::class,
++        'belongsToMany' => BelongsToMany::class,
++        'morphTo' => MorphTo::class,
++        'morphOne' => MorphOne::class,
++        'morphMany' => MorphMany::class,
++        'morphToMany' => MorphToMany::class,
++        'morphedByMany' => MorphToMany::class,
++        'attachOne' => AttachOne::class,
++        'attachMany' => AttachMany::class,
++        'hasOneThrough' => HasOneThrough::class,
++        'hasManyThrough' => HasManyThrough::class,
+         // Ours added
+-        'hasManyDeep',
++        'hasManyDeep' => HasManyDeep::class,
+     ];
+-    
++
+     // TODO: VERSION: Winter 1.2.6=>7 change of function signature: 
+     // https://stackoverflow.com/questions/39034442/preprocessing-like-if-defined-in-php
+     //   $addConstraints and Relation return type hint added?

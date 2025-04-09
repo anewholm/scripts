@@ -1,4 +1,4 @@
-<?php namespace Acorn\CreateSystem;
+<?php namespace AcornAssociated\CreateSystem;
 
 class ForeignKey {
     protected $column;
@@ -46,6 +46,7 @@ class ForeignKey {
     // Translation arrays
     public $labels;
     public $labelsPlural;
+    public $globalScope; // Chaining from|to
 
     public static function fromRow(Column &$column, bool $to, array $row)
     {

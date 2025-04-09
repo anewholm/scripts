@@ -1,5 +1,5 @@
--- DROP FUNCTION IF EXISTS public.fn_acorn_lojistiks_add_websockets_triggers(character varying, character varying);
-CREATE OR REPLACE FUNCTION public.fn_acorn_lojistiks_add_websockets_triggers(
+-- DROP FUNCTION IF EXISTS public.fn_acornassociated_lojistiks_add_websockets_triggers(character varying, character varying);
+CREATE OR REPLACE FUNCTION public.fn_acornassociated_lojistiks_add_websockets_triggers(
 	schema character varying, table_prefix character varying)
     RETURNS void 
     LANGUAGE 'plpgsql'
@@ -8,7 +8,7 @@ CREATE OR REPLACE FUNCTION public.fn_acorn_lojistiks_add_websockets_triggers(
 AS $BODY$
 BEGIN
 	-- SELECT * FROM information_schema.tables;
-	-- This assumes that fn_acorn_lojistiks_new_replicated_row() exists
+	-- This assumes that fn_acornassociated_lojistiks_new_replicated_row() exists
 	-- Trigger on replpica also: ENABLE ALWAYS
   	execute (
 			SELECT string_agg(concat(
@@ -17,7 +17,7 @@ BEGIN
 				    BEFORE INSERT
 				    ON ', table_schema, '.', table_name, '
 				    FOR EACH ROW
-				    EXECUTE FUNCTION public.fn_acorn_lojistiks_new_replicated_row();',
+				    EXECUTE FUNCTION public.fn_acornassociated_lojistiks_new_replicated_row();',
 				'ALTER TABLE IF EXISTS ', table_schema, '.', table_name, ' ENABLE ALWAYS TRIGGER tr_', table_name, '_new_replicated_row;'
 			), ' ') 
 			FROM information_schema.tables 
@@ -29,7 +29,7 @@ BEGIN
 END
 $BODY$;
 
-ALTER FUNCTION public.fn_acorn_lojistiks_add_websockets_triggers(character varying, character varying)
+ALTER FUNCTION public.fn_acornassociated_lojistiks_add_websockets_triggers(character varying, character varying)
     OWNER TO acornlojistiks;
 
-select fn_acorn_lojistiks_add_websockets_triggers('%', 'acorn_%')
+select fn_acornassociated_lojistiks_add_websockets_triggers('%', 'acornassociated_%')

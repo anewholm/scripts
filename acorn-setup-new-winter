@@ -7,7 +7,7 @@ NC="$(tput sgr0)"
 TICK="${GREEN}✓${NC}"
 CROSS="${RED}✘${NC}"
 
-# This script installs ALL Acorn plugins and runs the system
+# This script installs ALL Acorn Associated plugins and runs the system
 # It can be run from within an existing Laravel / Winter installation
 # or to install the entire framework from scratch
 run_dir=`pwd` # Bald
@@ -102,35 +102,47 @@ fi
 cd $install_dir
 
 # -------------------------------------------- Website Installation
+if [ -d $name ] && [ -z "$(ls $name)" ]; then
+	echo "${YELLOW}WARNING${NC}: Directory [${YELLOW}$name${NC}] existed, but was empty. Removing and continuing with installation..."
+	rmdir "$name"
+	if [ "$?" != "0" ]; then exit 1; fi
+fi
+
 if [ -d $name ]; then
-	if [ -z "$(ls $name)" ]; then
-		echo "${YELLOW}WARNING${NC}: Directory [$name] already exists. Entering..."
-	else
-		read -p "${YELLOW}WARNING${NC}: Directory [$name] exists and is not empty. Continue? [Y/n] " yn
-		case $yn in
-			[Yy]* )
-				;;
-			* )
-				echo "ok, exciting process. please resolve manually"
-				exit 1;
-				;;
-		esac
-	fi
-	cd $name
+	read -p "${YELLOW}WARNING${NC}: Directory [$name] exists still. Remove it by force? [Y|n] (n) " yn
+	case $yn in
+		[Yy]* )
+			sudo rm -rf "$name"
+			if [ "$?" != "0" ]; then exit 1; fi
+			;;
+		* )
+			echo "ok, exciting process. please resolve manually"
+			exit 1;
+			;;
+	esac
+fi
+
+if [ -d winter_template ]; then
+	echo "${GREEN}INFO${NC}: Copying local Winter template into directory $(pwd)/${YELLOW}$name${NC}"
+	echo "Mainting symlinked plugins and modules"
+	cp -r winter_template "$name"
+	if [ "$?" != "0" ]; then exit 1; fi
 else
 	echo "${GREEN}INFO${NC}: Installing latest Winter into directory $(pwd)/${YELLOW}$name${NC}"
 	echo "  Note that Winter:1.2.6=>7 has incompatible changes for Trait HasRelations"
 	# https://getcomposer.org/doc/03-cli.md#create-project
 	# We have our own install procedures below, so we disable the standard scripts
 	composer create-project wintercms/winter $name --no-scripts
-	cd $name
-	chmod +x artisan
+	if [ "$?" != "0" ]; then exit 1; fi
+fi
+cd "$name"
+chmod +x artisan
 
-	linecount_env=0
-	if [ -f .env ]; then linecount_env=`wc -l .env | cut -d " " -f 1`; fi
-	if [ $linecount_env -le 2 ]; then
-		echo "${YELLOW}WARNING${NC}: Auto-populating> 2 the .env file"
-		echo "APP_NAME=intranet
+linecount_env=0
+if [ -f .env ]; then linecount_env=`wc -l .env | cut -d " " -f 1`; fi
+if [ $linecount_env -le 2 ]; then
+	echo "${YELLOW}WARNING${NC}: Auto-populating> 2 the .env file"
+	echo "APP_NAME=intranet
 APP_DEBUG=true
 APP_URL='http://$hostname'
 
@@ -172,16 +184,16 @@ ENABLE_CSRF=true
 DATABASE_TEMPLATES=false
 RESTRICT_BASE_DIR=false # We have sym-linked plugins
 " >> .env
-	fi
-
-	# This will also update the Laravel .env file to use the created database
-	$script_dir/acorn-setup-database pgsql $name
-	if [ "$?" != "0" ]; then exit 1; fi
-
-	# This will also update the Laravel .env file to use the hostname (.laptop)
-	sudo $script_dir/acorn-setup-hostname $name
-	if [ "$?" != "0" ]; then exit 1; fi
 fi
+
+# This will also update the Laravel .env file to use the created database
+$script_dir/acorn-setup-database pgsql $name
+if [ "$?" != "0" ]; then exit 1; fi
+
+# This will also update the Laravel .env file to use the hostname (.laptop)
+sudo $script_dir/acorn-setup-hostname $name
+if [ "$?" != "0" ]; then exit 1; fi
+
 hostname=$name.laptop
 winter_version=`composer show winter/storm | grep ^versions | cut -d ':' -f 2 | cut -d v -f 2`
 echo "${GREEN}INFO${NC}: Winter v${YELLOW}$winter_version${NC} detected"
@@ -231,22 +243,22 @@ if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 
 echo "${GREEN}INFO${NC}: Pre-Patches for Winter v${YELLOW}$winter_version${NC}"
 # TODO: The tailwind patch will not work because app.js is now minified
 if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter/patches-pre ]; then
-	$script_dir/acorn-apply-patch-directory "$script_dir/winter/patches-pre"
+	$script_dir/acorn-apply-patch-directory "$script_dir/winter/patches-pre" $winter_version
 fi
 
 # -------------------------------------------- Install AA modules and plugins
 echo "${GREEN}INFO${NC}: composer require $no_scripts AA modules (from AA gitlab)"
-local_acorn=/var/www/plugins/acorn
-gitlab_acorn=gitlab.acorn.org
+local_acornassociated=/var/www/plugins/acornassociated
+gitlab_acornassociated=gitlab.acornassociated.org
 gitlab_group=office
 
 install_strategy=local-composer # local-composer, gitlab, local-copy
-for repo_path in $local_acorn/*/; do
+for repo_path in $local_acornassociated/*/; do
 	repo_path=${repo_path%/} # Strip trailing slash
 	repo_name=`basename "$repo_path"`
-	repo_fqn="acorn/$repo_name"
+	repo_fqn="acornassociated/$repo_name"
 	repo_type=`jq -r .type "$repo_path/composer.json"`
-	target_path=plugins/acorn
+	target_path=plugins/acornassociated
 	if [ "$repo_type" == 'winter-module' ]; then target_path=modules; fi
 	
 	echo "${GREEN}INFO${NC}: Installing $install_strategy ${YELLOW}$repo_fqn${NC} $repo_type($target_path)"
@@ -260,7 +272,7 @@ for repo_path in $local_acorn/*/; do
 		composer require $no_scripts "$repo_fqn @dev"
 		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to require local $gitlab_group/$repo_name repository."; exit 1; fi
 	elif [ $install_strategy == 'gitlab' ]; then
-		git clone git@$gitlab_acorn:$gitlab_group/$repo_name.git "$target_path"
+		git clone git@$gitlab_acornassociated:$gitlab_group/$repo_name.git "$target_path"
 		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to checkout $gitlab_group/$repo_name repository. Probably you do not have permissions. Please resolve and start again."; exit 1; fi
 	elif [ $install_strategy == 'local-copy' ]; then
 		# This will copy -L
@@ -278,7 +290,7 @@ done
 # service-providers.php patch will add the service providers in the correct order
 echo "${GREEN}INFO${NC}: Post-Patches for Winter v${YELLOW}$winter_version${NC}"
 if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter/patches-post ]; then
-	$script_dir/acorn-apply-patch-directory "$script_dir/winter/patches-post"
+	$script_dir/acorn-apply-patch-directory "$script_dir/winter/patches-post" $winter_version
 fi
 
 # Migrate our new plugins / modules
@@ -358,8 +370,8 @@ php artisan support:kurdish
 
 # Usually the Lojistiks plugin is just infrastructure
 # TODO: Deployment conofiguration files for spinning up servers. One day :D
-if [ -d plugins/acorn/lojistiks ]; then
-	php artisan acorn:config-plugin Acorn.Lojistiks infrastructure true
+if [ -d plugins/acornassociated/lojistiks ]; then
+	php artisan acorn:config-plugin AcornAssociated.Lojistiks infrastructure true
 fi
 
 # -------------------------------------------- Security

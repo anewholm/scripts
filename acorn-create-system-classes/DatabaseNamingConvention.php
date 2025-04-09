@@ -1,4 +1,4 @@
-<?php namespace Acorn\CreateSystem;
+<?php namespace AcornAssociated\CreateSystem;
 
 class DatabaseNamingConvention {
     // TODO: All schema structure definitions be placed here
@@ -22,6 +22,6 @@ class DatabaseNamingConvention {
     }
 }
 
-class AcornNamingConvention extends DatabaseNamingConvention
+class AcornAssociatedNamingConvention extends DatabaseNamingConvention
 {
 }

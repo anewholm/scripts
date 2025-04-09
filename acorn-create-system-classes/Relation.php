@@ -1,4 +1,4 @@
-<?php namespace Acorn\CreateSystem;
+<?php namespace AcornAssociated\CreateSystem;
 
 class Relation {
     public $oid;
@@ -23,6 +23,7 @@ class Relation {
 
     // Filter config_filter.yaml
     public $canFilter = FALSE;
+    public $globalScope; // Chaining from|to
 
     // Translation arrays
     public $labels;
@@ -97,31 +98,46 @@ class Relation {
 
     public function qualifier(): string
     {
-        // Foreign ID Fields are qualified if they have a custom prefix before the to table name
-        // [payee_]user_group_id => user_group (acorn_user_user_groups)
+        // Foreign ID Fields can be qualified if they have a custom prefix before the to table name
+        // [payee_]user_group_id => user_group (acornassociated_user_user_groups)
         // This changes the translation domain construction
         // Without ID
         // payee_user_group
         $fieldName = $this->column->nameWithoutId();
         // From table name
-        // acorn_user_user_groups => user_group | invoice
+        // acornassociated_user_user_groups => user_group | invoice
         $otherModel = ($this->isFrom ? $this->to : $this->from);
         $baseName   = $otherModel->table->unqualifiedForeignKeyColumnBaseName();
 
+        if ($error = $this->checkQualifier($fieldName, $otherModel, $baseName))
+            throw new \Exception($error);
+
+        // payee
+        return trim(str_replace($baseName, '', $fieldName), '_');
+    }
+
+    protected function checkQualifier($fieldName, $otherModel, $baseName): string|NULL
+    {
+        // Foreign ID Fields can be qualified if they have a custom prefix before the to table name
+        // [payee_]user_group_id => user_group (acornassociated_user_user_groups)
+        // This changes the translation domain construction
+        // Without ID
+        // payee_user_group
+        $error = NULL;
+        
         // We omit some of our own known plugins
         // because they do not conform yet to our naming requirements
         // TODO: If pointing to a Module, like AA...
         if (strstr($fieldName, $baseName) === FALSE
             && $otherModel->isOurs()
-            && !$otherModel->isKnownAcornPlugin()
+            && !$otherModel->isKnownAcornAssociatedPlugin()
         ) {
             $thisModel = ($this->isFrom ? $this->from : $this->to);
             $tableName = $thisModel->table->name;
-            throw new \Exception("Foreign table base name [$baseName] not found in foreign column field name [$fieldName] on [$tableName]");
+            $error     = "Foreign table base name [$baseName] not found in foreign column field name [$fieldName] on [$tableName]";
         }
-
-        // payee
-        return trim(str_replace($baseName, '', $fieldName), '_');
+        
+        return $error;
     }
 }
 
@@ -147,6 +163,18 @@ class RelationSelf extends Relation1fromX {
     public function direction()
     {
         return 'O';
+    }
+
+    protected function checkQualifier($fieldName, $otherModel, $baseName): string|NULL
+    {
+        // Self referencing parent_id is allowed to not have the base table name in the field name
+        $error = NULL;
+        if ($fieldName == 'parent') {
+            // parent_id is ok, parent_hierarchy_id is also allowed
+        } else {
+            $error = parent::checkQualifier($fieldName, $otherModel, $baseName);
+        }
+        return $error;
     }
 }
 
@@ -203,7 +231,7 @@ class RelationXfromX extends RelationFrom {
     public function __construct(
         Model  &$from,          // Legalcase
         Model  &$to,            // User
-        Table  &$pivot,         // acorn_criminal_legalcase_category
+        Table  &$pivot,         // acornassociated_criminal_legalcase_category
         Column &$keyColumn,     // pivot.legalcase_id
         Column &$throughColumn, // pivot.user_id
         ForeignKey &$foreignKey

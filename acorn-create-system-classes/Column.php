@@ -1,4 +1,4 @@
-<?php namespace Acorn\CreateSystem;
+<?php namespace AcornAssociated\CreateSystem;
 
 require_once('ForeignKey.php');
 
@@ -29,6 +29,12 @@ class Column {
     protected const STANDARD_CONTENT_COLUMNS = array(
         'name',
         'description'
+    );
+    protected const STANDARD_SYSTEM_COLUMNS = array(
+        // NestedTree
+        'nest_left',
+        'nest_right',
+        'nest_depth'
     );
     public    const DATA_COLUMN_ONLY = TRUE;
     public    const INCLUDE_CONTENT_COLUMNS = FALSE;
@@ -181,6 +187,7 @@ class Column {
     {
         // TODO: This needs to be moved to the standardTargetModelFieldDefinitions()
         $definition = array();
+        
         if ($this->isStandard(self::DATA_COLUMN_ONLY)) {
             $definition = array(
                 'hidden'     => TRUE,   // fields
@@ -190,6 +197,12 @@ class Column {
             if ($this->column_name == 'state_indicator') 
                 $definition['columnType'] = 'partial'; 
         }
+        else if ($this->isSystem()) {
+            $definition = array(
+                'system'     => TRUE,   // Do not process at all
+            );
+        }
+
         return $definition;
     }
 
@@ -303,6 +316,11 @@ class Column {
         return (array_search($this->name, self::STANDARD_DATA_COLUMNS) !== FALSE
             ||  (!$dataColumnOnly && array_search($this->name, self::STANDARD_CONTENT_COLUMNS) !== FALSE)
         );
+    }
+
+    public function isSystem(): bool
+    {
+        return (array_search($this->name, self::STANDARD_SYSTEM_COLUMNS) !== FALSE);
     }
 
     public function isCustom(): bool
