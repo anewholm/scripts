@@ -1,6 +1,6 @@
--- DROP FUNCTION IF EXISTS public.fn_acorn_lojistiks_replication_update_seq();
+-- DROP FUNCTION IF EXISTS public.fn_acornassociated_lojistiks_replication_update_seq();
 
-CREATE OR REPLACE FUNCTION public.fn_acorn_lojistiks_replication_update_seq()
+CREATE OR REPLACE FUNCTION public.fn_acornassociated_lojistiks_replication_update_seq()
     RETURNS trigger
     LANGUAGE 'plpgsql'
     COST 100
@@ -27,12 +27,12 @@ begin
 end;
 $BODY$;
 
--- DROP TRIGGER tr_acorn_lojistiks_replication_update_seq;
-CREATE OR REPLACE TRIGGER tr_acorn_lojistiks_replication_update_brands_seq
+-- DROP TRIGGER tr_acornassociated_lojistiks_replication_update_seq;
+CREATE OR REPLACE TRIGGER tr_acornassociated_lojistiks_replication_update_brands_seq
     AFTER INSERT
-    ON public.acorn_lojistiks_brands
+    ON public.acornassociated_lojistiks_brands
     FOR EACH ROW
-    EXECUTE FUNCTION public.fn_acorn_lojistiks_replication_update_seq();
+    EXECUTE FUNCTION public.fn_acornassociated_lojistiks_replication_update_seq();
 
 -- Trigger on replpica only
-ALTER TABLE IF EXISTS public.acorn_lojistiks_brands ENABLE REPLICA TRIGGER tr_acorn_lojistiks_replication_update_brands_seq;
+ALTER TABLE IF EXISTS public.acornassociated_lojistiks_brands ENABLE REPLICA TRIGGER tr_acornassociated_lojistiks_replication_update_brands_seq;

@@ -5,9 +5,9 @@
          "merge-plugin": {
              "include": [
 -                "plugins/myauthor/*/composer.json"
-+                "modules/acorn/composer.json",
++                "modules/acornassociated/composer.json",
 +                "modules/dbauth/composer.json",
-+                "plugins/acorn/*/composer.json"
++                "plugins/acornassociated/*/composer.json"
              ],
              "recurse": true,
              "replace": false,
