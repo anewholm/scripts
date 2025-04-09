@@ -82,16 +82,16 @@ COMMENT ON EXTENSION http IS 'HTTP client for PostgreSQL, allows web page retrie
 
 
 --
--- Name: fn_acornassociated_add_websockets_triggers(character varying, character varying); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_add_websockets_triggers(character varying, character varying); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_add_websockets_triggers(schema character varying, table_prefix character varying) RETURNS void
+CREATE FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) RETURNS void
     LANGUAGE plpgsql
     AS $$
             
             begin
         -- SELECT * FROM information_schema.tables;
-        -- This assumes that fn_acornassociated_new_replicated_row() exists
+        -- This assumes that fn_acorn_new_replicated_row() exists
         -- Trigger on replpica also: ENABLE ALWAYS
         execute (
           SELECT string_agg(concat(
@@ -100,7 +100,7 @@ CREATE FUNCTION public.fn_acornassociated_add_websockets_triggers(schema charact
                 BEFORE INSERT
                 ON ', table_schema, '.', table_name, '
                 FOR EACH ROW
-                EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();',
+                EXECUTE FUNCTION public.fn_acorn_new_replicated_row();',
             'ALTER TABLE IF EXISTS ', table_schema, '.', table_name, ' ENABLE ALWAYS TRIGGER tr_', table_name, '_new_replicated_row;'
           ), ' ')
           FROM information_schema.tables
@@ -113,93 +113,93 @@ end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_add_websockets_triggers(schema character varying, table_prefix character varying) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) OWNER TO university;
 
 --
--- Name: fn_acornassociated_calendar_create_activity_log_event(uuid, uuid, uuid, character varying); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_calendar_create_activity_log_event(uuid, uuid, uuid, character varying); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_calendar_create_activity_log_event(owner_user_id uuid, type_id uuid, status_id uuid, name character varying) RETURNS uuid
+CREATE FUNCTION public.fn_acorn_calendar_create_activity_log_event(owner_user_id uuid, type_id uuid, status_id uuid, name character varying) RETURNS uuid
     LANGUAGE plpgsql
     AS $$
             declare
 calendar_id uuid;
             begin
-            -- Calendar (system): acornassociated.justice::lang.plugin.activity_log
+            -- Calendar (system): acorn.justice::lang.plugin.activity_log
             -- Type: indicates the Model
             -- Status: indicates the action: create, update, delete, etc.
             calendar_id   := 'f3bc49bc-eac7-11ef-9e4a-1740a039dada';
-            if not exists(select * from acornassociated_calendar_calendars where "id" = 'f3bc49bc-eac7-11ef-9e4a-1740a039dada'::uuid) then
+            if not exists(select * from acorn_calendar_calendars where "id" = 'f3bc49bc-eac7-11ef-9e4a-1740a039dada'::uuid) then
                 -- Just in case database seeding is happening before calendar seeding, or the system types have been deleted
-                perform public.fn_acornassociated_calendar_seed();
+                perform public.fn_acorn_calendar_seed();
             end if;
 	
-            return public.fn_acornassociated_calendar_create_event(calendar_id, owner_user_id, type_id, status_id, name);
+            return public.fn_acorn_calendar_create_event(calendar_id, owner_user_id, type_id, status_id, name);
 end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_calendar_create_activity_log_event(owner_user_id uuid, type_id uuid, status_id uuid, name character varying) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_calendar_create_activity_log_event(owner_user_id uuid, type_id uuid, status_id uuid, name character varying) OWNER TO university;
 
 --
--- Name: fn_acornassociated_calendar_create_event(uuid, uuid, uuid, uuid, character varying); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_calendar_create_event(uuid, uuid, uuid, uuid, character varying); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) RETURNS uuid
+CREATE FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) RETURNS uuid
     LANGUAGE plpgsql
     AS $$
             
             begin
-            return public.fn_acornassociated_calendar_create_event(calendar_id, owner_user_id, type_id, status_id, name, now()::timestamp without time zone, now()::timestamp without time zone);
+            return public.fn_acorn_calendar_create_event(calendar_id, owner_user_id, type_id, status_id, name, now()::timestamp without time zone, now()::timestamp without time zone);
 end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) OWNER TO university;
 
 --
--- Name: fn_acornassociated_calendar_create_event(uuid, uuid, uuid, uuid, character varying, timestamp without time zone, timestamp without time zone); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_calendar_create_event(uuid, uuid, uuid, uuid, character varying, timestamp without time zone, timestamp without time zone); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) RETURNS uuid
+CREATE FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) RETURNS uuid
     LANGUAGE plpgsql
     AS $$
             declare
 
                 new_event_id uuid;
             begin
-            insert into public.acornassociated_calendar_events(calendar_id, owner_user_id) 
+            insert into public.acorn_calendar_events(calendar_id, owner_user_id) 
                 values(calendar_id, owner_user_id) returning id into new_event_id;
-            insert into public.acornassociated_calendar_event_parts(event_id, type_id, status_id, name, start, "end") 
+            insert into public.acorn_calendar_event_parts(event_id, type_id, status_id, name, start, "end") 
                 values(new_event_id, event_type_id, event_status_id, name, date_from, date_to);
             return new_event_id;
 end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) OWNER TO university;
 
 --
--- Name: fn_acornassociated_calendar_events_generate_event_instances(); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_calendar_events_generate_event_instances(); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_calendar_events_generate_event_instances() RETURNS trigger
+CREATE FUNCTION public.fn_acorn_calendar_events_generate_event_instances() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
             
             begin
-            return public.fn_acornassociated_calendar_generate_event_instances(NEW, OLD);
+            return public.fn_acorn_calendar_generate_event_instances(NEW, OLD);
 end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_calendar_events_generate_event_instances() OWNER TO university;
+ALTER FUNCTION public.fn_acorn_calendar_events_generate_event_instances() OWNER TO university;
 
 --
--- Name: fn_acornassociated_calendar_generate_event_instances(record, record); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_calendar_generate_event_instances(record, record); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_calendar_generate_event_instances(new_event_part record, old_event_part record) RETURNS record
+CREATE FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) RETURNS record
     LANGUAGE plpgsql
     AS $$
             declare
@@ -229,10 +229,10 @@ date_start date;
                 then
                     -- Settings
                     select coalesce((select substring("value" from '"days_before":"([^"]+)"')
-                        from system_settings where item = 'acornassociated_calendar_settings'), '1 year')
+                        from system_settings where item = 'acorn_calendar_settings'), '1 year')
                         into days_before;
                     select coalesce((select substring("value" from '"days_after":"([^"]+)"')
-                        from system_settings where item = 'acornassociated_calendar_settings'), '2 years')
+                        from system_settings where item = 'acorn_calendar_settings'), '2 years')
                         into days_after;
                     select extract('epoch' from days_before + days_after)/3600/24.0
                         into days_count;
@@ -240,10 +240,10 @@ date_start date;
                         into date_start;
 
                     -- For updates (id cannot change)
-                    delete from acornassociated_calendar_instances where event_part_id = new_event_part.id;
+                    delete from acorn_calendar_instances where event_part_id = new_event_part.id;
 
                     -- For inserts
-                    insert into acornassociated_calendar_instances("date", event_part_id, instance_start, instance_end, instance_num)
+                    insert into acorn_calendar_instances("date", event_part_id, instance_start, instance_end, instance_num)
                     select date_start + interval '1' day * gs as "date", ev.*
                     from generate_series(0, days_count) as gs
                     inner join (
@@ -271,7 +271,7 @@ date_start date;
                             new_event_part."end" + new_event_part.repeat_frequency * new_event_part."repeat" * gs.gs   as "instance_end",
                             gs.gs as instance_num
                         from generate_series(0, days_count) as gs
-                        inner join acornassociated_calendar_instances pcc on new_event_part.parent_event_part_id = pcc.event_part_id
+                        inner join acorn_calendar_instances pcc on new_event_part.parent_event_part_id = pcc.event_part_id
                             and (pcc.date, pcc.date + 1)
                             overlaps (new_event_part."start" + new_event_part.repeat_frequency * new_event_part."repeat" * gs.gs, new_event_part."end" + new_event_part.repeat_frequency * new_event_part."repeat" * gs.gs)
                         where not new_event_part.repeat is null
@@ -284,7 +284,7 @@ date_start date;
 
                     -- Recursively update child event parts
                     -- TODO: This could infinetly cycle
-                    update acornassociated_calendar_event_parts set id = id
+                    update acorn_calendar_event_parts set id = id
                         where parent_event_part_id = new_event_part.id
                         and not id = new_event_part.id;
                 end if;
@@ -294,13 +294,13 @@ end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_calendar_generate_event_instances(new_event_part record, old_event_part record) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) OWNER TO university;
 
 --
--- Name: fn_acornassociated_calendar_is_date(character varying, timestamp without time zone); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_calendar_is_date(character varying, timestamp without time zone); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_calendar_is_date(s character varying, d timestamp without time zone) RETURNS timestamp without time zone
+CREATE FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) RETURNS timestamp without time zone
     LANGUAGE plpgsql
     AS $$
             
@@ -318,13 +318,13 @@ end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_calendar_is_date(s character varying, d timestamp without time zone) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) OWNER TO university;
 
 --
--- Name: fn_acornassociated_calendar_lazy_create_event(character varying, uuid, character varying, character varying, character varying); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_calendar_lazy_create_event(character varying, uuid, character varying, character varying, character varying); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) RETURNS uuid
+CREATE FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) RETURNS uuid
     LANGUAGE plpgsql
     AS $$
             declare
@@ -333,106 +333,106 @@ event_type_id uuid;
 event_status_id  uuid;
             begin
             -- Lazy creates
-            select into event_calendar_id id from acornassociated_calendar_calendars where name = calendar_name;
+            select into event_calendar_id id from acorn_calendar_calendars where name = calendar_name;
             if event_calendar_id is null then
-                insert into acornassociated_calendar_calendars(name) values(calendar_name) returning id into event_calendar_id;
+                insert into acorn_calendar_calendars(name) values(calendar_name) returning id into event_calendar_id;
             end if;
         
-            select into event_type_id id from acornassociated_calendar_event_types where name = type_name;
+            select into event_type_id id from acorn_calendar_event_types where name = type_name;
             if event_type_id is null then
-                insert into acornassociated_calendar_event_types(name, calendar_id) values(type_name, event_calendar_id) returning id into event_type_id;
+                insert into acorn_calendar_event_types(name, calendar_id) values(type_name, event_calendar_id) returning id into event_type_id;
             end if;
         
-            select into event_status_id id from acornassociated_calendar_event_statuses where name = status_name;
+            select into event_status_id id from acorn_calendar_event_statuses where name = status_name;
             if event_status_id is null then
-                insert into acornassociated_calendar_event_statuses(name, calendar_id) values(status_name, event_calendar_id) returning id into event_status_id;
+                insert into acorn_calendar_event_statuses(name, calendar_id) values(status_name, event_calendar_id) returning id into event_status_id;
             end if;
         
-            return public.fn_acornassociated_calendar_create_event(event_calendar_id, owner_user_id, event_type_id, event_status_id, event_name);
+            return public.fn_acorn_calendar_create_event(event_calendar_id, owner_user_id, event_type_id, event_status_id, event_name);
 end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) OWNER TO university;
 
 --
--- Name: fn_acornassociated_calendar_seed(); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_calendar_seed(); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_calendar_seed() RETURNS void
+CREATE FUNCTION public.fn_acorn_calendar_seed() RETURNS void
     LANGUAGE plpgsql
     AS $$
             
             begin
             -- Default calendars, with hardcoded ids
-            if not exists(select * from acornassociated_calendar_calendars where "id" = 'ceea8856-e4c8-11ef-8719-5f58c97885a2'::uuid) then
-                insert into acornassociated_calendar_calendars(id, "name", "system") 
+            if not exists(select * from acorn_calendar_calendars where "id" = 'ceea8856-e4c8-11ef-8719-5f58c97885a2'::uuid) then
+                insert into acorn_calendar_calendars(id, "name", "system") 
                     values('ceea8856-e4c8-11ef-8719-5f58c97885a2'::uuid, 'Default', true);
             end if;
-            if not exists(select * from acornassociated_calendar_calendars where "id" = 'f3bc49bc-eac7-11ef-9e4a-1740a039dada'::uuid) then
-                insert into acornassociated_calendar_calendars(id, "name", "system") 
+            if not exists(select * from acorn_calendar_calendars where "id" = 'f3bc49bc-eac7-11ef-9e4a-1740a039dada'::uuid) then
+                insert into acorn_calendar_calendars(id, "name", "system") 
                     values('f3bc49bc-eac7-11ef-9e4a-1740a039dada'::uuid, 'Activity Log', true);
             end if;
 
             -- System Statuses. Cannot be deleted
-            if not exists(select * from acornassociated_calendar_event_statuses where "id" = '27446472-e4c9-11ef-bde0-9b663c96a619'::uuid) then
-                insert into acornassociated_calendar_event_statuses(id, "name", "system") 
+            if not exists(select * from acorn_calendar_event_statuses where "id" = '27446472-e4c9-11ef-bde0-9b663c96a619'::uuid) then
+                insert into acorn_calendar_event_statuses(id, "name", "system") 
                     values('27446472-e4c9-11ef-bde0-9b663c96a619'::uuid, 'Normal', TRUE);
             end if;
-            if not exists(select * from acornassociated_calendar_event_statuses where "id" = 'fb2392de-e62e-11ef-b202-5fe79ff1071f') then
-                insert into acornassociated_calendar_event_statuses(id, "name", "system", "style") 
+            if not exists(select * from acorn_calendar_event_statuses where "id" = 'fb2392de-e62e-11ef-b202-5fe79ff1071f') then
+                insert into acorn_calendar_event_statuses(id, "name", "system", "style") 
                     values('fb2392de-e62e-11ef-b202-5fe79ff1071f', 'Cancelled', TRUE, 'text-decoration:line-through;border:1px dotted #fff;');
             end if;
-            if not exists(select * from acornassociated_calendar_event_statuses where "name" = 'Tentative') then
-                insert into acornassociated_calendar_event_statuses("name", "system", "style") 
+            if not exists(select * from acorn_calendar_event_statuses where "name" = 'Tentative') then
+                insert into acorn_calendar_event_statuses("name", "system", "style") 
                     values('Tentative', TRUE, 'opacity:0.7;');
             end if;
             -- TODO: Does status "Conflict" make sense? Because maybe only 1 instance will conflict
-            if not exists(select * from acornassociated_calendar_event_statuses where "name" = 'Conflict') then
-                insert into acornassociated_calendar_event_statuses("name", "system", "style") 
+            if not exists(select * from acorn_calendar_event_statuses where "name" = 'Conflict') then
+                insert into acorn_calendar_event_statuses("name", "system", "style") 
                     values('Conflict', TRUE, 'border:1px solid red;background-color:#fff;color:#000;font-weight:bold;');
             end if;
 
             -- System Types. Cannot be deleted
             -- Types for each table in the activity log are lazy created
-            if not exists(select * from acornassociated_calendar_event_types where "id" = '2f766546-e4c9-11ef-be8c-1f2daa98a10f'::uuid) then
-                insert into acornassociated_calendar_event_types(id, "name", "system", "colour", "style") 
+            if not exists(select * from acorn_calendar_event_types where "id" = '2f766546-e4c9-11ef-be8c-1f2daa98a10f'::uuid) then
+                insert into acorn_calendar_event_types(id, "name", "system", "colour", "style") 
                     values('2f766546-e4c9-11ef-be8c-1f2daa98a10f'::uuid, 'Normal', TRUE, '#091386', 'color:#fff');
             end if;
-            if not exists(select * from acornassociated_calendar_event_types where "name" = 'Meeting') then
-                insert into acornassociated_calendar_event_types("name", "system", "colour", "style") 
+            if not exists(select * from acorn_calendar_event_types where "name" = 'Meeting') then
+                insert into acorn_calendar_event_types("name", "system", "colour", "style") 
                     values('Meeting', TRUE, '#C0392B', 'color:#fff');
             end if;
 
             -- Activity log statuses: TG_OP / Soft DELETE
-            if not exists(select * from acornassociated_calendar_event_statuses where "id" = '7b432540-eac8-11ef-a9bc-434841a9f67b'::uuid) then
-                insert into acornassociated_calendar_event_statuses(id, "name", "system", "style") 
-                    values('7b432540-eac8-11ef-a9bc-434841a9f67b'::uuid, 'acornassociated.calendar::lang.models.general.insert', TRUE, 'color:#fff');
+            if not exists(select * from acorn_calendar_event_statuses where "id" = '7b432540-eac8-11ef-a9bc-434841a9f67b'::uuid) then
+                insert into acorn_calendar_event_statuses(id, "name", "system", "style") 
+                    values('7b432540-eac8-11ef-a9bc-434841a9f67b'::uuid, 'acorn.calendar::lang.models.general.insert', TRUE, 'color:#fff');
             end if;
-            if not exists(select * from acornassociated_calendar_event_statuses where "id" = '7c18bb7e-eac8-11ef-b4f2-ffae3296f461'::uuid) then
-                insert into acornassociated_calendar_event_statuses(id, "name", "system", "style") 
-                    values('7c18bb7e-eac8-11ef-b4f2-ffae3296f461'::uuid, 'acornassociated.calendar::lang.models.general.update', TRUE, 'color:#fff');
+            if not exists(select * from acorn_calendar_event_statuses where "id" = '7c18bb7e-eac8-11ef-b4f2-ffae3296f461'::uuid) then
+                insert into acorn_calendar_event_statuses(id, "name", "system", "style") 
+                    values('7c18bb7e-eac8-11ef-b4f2-ffae3296f461'::uuid, 'acorn.calendar::lang.models.general.update', TRUE, 'color:#fff');
             end if;
             -- Soft DELETE (Actually an UPDATE TG_OP)
-            if not exists(select * from acornassociated_calendar_event_statuses where "id" = '7ceca4c0-eac8-11ef-b685-f7f3f278f676'::uuid) then
-                insert into acornassociated_calendar_event_statuses(id, "name", "system", "style") 
-                    values('7ceca4c0-eac8-11ef-b685-f7f3f278f676'::uuid, 'acornassociated.calendar::lang.models.general.soft_delete', TRUE, 'color:#fff');
+            if not exists(select * from acorn_calendar_event_statuses where "id" = '7ceca4c0-eac8-11ef-b685-f7f3f278f676'::uuid) then
+                insert into acorn_calendar_event_statuses(id, "name", "system", "style") 
+                    values('7ceca4c0-eac8-11ef-b685-f7f3f278f676'::uuid, 'acorn.calendar::lang.models.general.soft_delete', TRUE, 'color:#fff');
             end if;
-            if not exists(select * from acornassociated_calendar_event_statuses where "id" = 'f9690600-eac9-11ef-8002-5b2cbe0c12c0'::uuid) then
-                insert into acornassociated_calendar_event_statuses(id, "name", "system", "style") 
-                    values('f9690600-eac9-11ef-8002-5b2cbe0c12c0'::uuid, 'acornassociated.calendar::lang.models.general.soft_undelete', TRUE, 'color:#fff');
+            if not exists(select * from acorn_calendar_event_statuses where "id" = 'f9690600-eac9-11ef-8002-5b2cbe0c12c0'::uuid) then
+                insert into acorn_calendar_event_statuses(id, "name", "system", "style") 
+                    values('f9690600-eac9-11ef-8002-5b2cbe0c12c0'::uuid, 'acorn.calendar::lang.models.general.soft_undelete', TRUE, 'color:#fff');
             end if;
 end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_calendar_seed() OWNER TO university;
+ALTER FUNCTION public.fn_acorn_calendar_seed() OWNER TO university;
 
 --
--- Name: fn_acornassociated_calendar_trigger_activity_event(); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_calendar_trigger_activity_event(); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_calendar_trigger_activity_event() RETURNS trigger
+CREATE FUNCTION public.fn_acorn_calendar_trigger_activity_event() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
             declare
@@ -446,8 +446,8 @@ event_type_id uuid;
 event_status_id uuid;
 activity_log_calendar_id uuid = 'f3bc49bc-eac7-11ef-9e4a-1740a039dada';
             begin
-            -- See also: fn_acornassociated_calendar_create_activity_log_event()
-            -- Calendar (system): acornassociated.justice::lang.plugin.activity_log
+            -- See also: fn_acorn_calendar_create_activity_log_event()
+            -- Calendar (system): acorn.justice::lang.plugin.activity_log
             -- Type: indicates the Plugin & Model, e.g. "Criminal Trials"
             -- Status: indicates the action: INSERT, UPDATE, DELETE, or other custom
 
@@ -456,16 +456,16 @@ activity_log_calendar_id uuid = 'f3bc49bc-eac7-11ef-9e4a-1740a039dada';
             -- We use PG system catalogs because they are faster
             -- TODO: Process name-object linkage
             
-            if not exists(select * from acornassociated_calendar_calendars where "id" = 'f3bc49bc-eac7-11ef-9e4a-1740a039dada'::uuid) then
+            if not exists(select * from acorn_calendar_calendars where "id" = 'f3bc49bc-eac7-11ef-9e4a-1740a039dada'::uuid) then
                 -- Just in case database seeding is happening before calendar seeding, or the system types have been deleted
-                perform public.fn_acornassociated_calendar_seed();
+                perform public.fn_acorn_calendar_seed();
             end if;
             
             -- Required fields
             -- created_at_event_id
             -- updated_at_event_id
             owner_user_id := NEW.created_by_user_id; -- NOT NULL
-            type_name     := initcap(replace(replace(TG_TABLE_NAME, 'acornassociated_', ''), '_', ' '));
+            type_name     := initcap(replace(replace(TG_TABLE_NAME, 'acorn_', ''), '_', ' '));
             title         := initcap(TG_OP) || ' ' || type_name;
 
             -- Optional fields
@@ -476,13 +476,13 @@ activity_log_calendar_id uuid = 'f3bc49bc-eac7-11ef-9e4a-1740a039dada';
             -- TODO: Allow control from the table comment over event creation
             table_comment := obj_description(concat(TG_TABLE_SCHEMA, '.', TG_TABLE_NAME)::regclass, 'pg_class');
 
-            -- Type: lang TG_TABLE_SCHEMA.TG_TABLE_NAME, acornassociated.justice::lang.models.related_events.label
-            select into event_type_id id from acornassociated_calendar_event_types 
+            -- Type: lang TG_TABLE_SCHEMA.TG_TABLE_NAME, acorn.justice::lang.models.related_events.label
+            select into event_type_id id from acorn_calendar_event_types 
                 where activity_log_related_oid = TG_RELID;
             if event_type_id is null then
                 -- TODO: Colour?
-                -- TODO: acornassociated.?::lang.models.?.label
-                insert into public.acornassociated_calendar_event_types(name, activity_log_related_oid, calendar_id) 
+                -- TODO: acorn.?::lang.models.?.label
+                insert into public.acorn_calendar_event_types(name, activity_log_related_oid, calendar_id) 
                     values(type_name, TG_RELID, activity_log_calendar_id) returning id into event_type_id;
             end if;
 
@@ -493,7 +493,7 @@ activity_log_calendar_id uuid = 'f3bc49bc-eac7-11ef-9e4a-1740a039dada';
                     if NEW.created_at_event_id is null then
                         -- Create event
                         event_status_id         := '7b432540-eac8-11ef-a9bc-434841a9f67b'; -- INSERT
-                        NEW.created_at_event_id := public.fn_acornassociated_calendar_create_activity_log_event(owner_user_id, event_type_id, event_status_id, title);
+                        NEW.created_at_event_id := public.fn_acorn_calendar_create_activity_log_event(owner_user_id, event_type_id, event_status_id, title);
                     end if;
                 when TG_OP = 'UPDATE' then 
                     event_status_id := '7c18bb7e-eac8-11ef-b4f2-ffae3296f461'; -- UPDATE
@@ -509,12 +509,12 @@ activity_log_calendar_id uuid = 'f3bc49bc-eac7-11ef-9e4a-1740a039dada';
                     -- Update event
                     if NEW.updated_at_event_id is null then
                         -- Create the initial Update event for this item
-                        NEW.created_at_event_id := public.fn_acornassociated_calendar_create_activity_log_event(owner_user_id, event_type_id, event_status_id, title);
+                        NEW.created_at_event_id := public.fn_acorn_calendar_create_activity_log_event(owner_user_id, event_type_id, event_status_id, title);
                     else
                         -- Add a new event part to the same updated event
-                        insert into public.acornassociated_calendar_event_parts(event_id, type_id, status_id, name, start, "end")
+                        insert into public.acorn_calendar_event_parts(event_id, type_id, status_id, name, start, "end")
                             select event_id, type_id, status_id, name, now(), now() 
-                            from public.acornassociated_calendar_event_parts 
+                            from public.acorn_calendar_event_parts 
                             where event_id = NEW.updated_at_event_id limit 1;
                     end if;
             end case;
@@ -524,13 +524,13 @@ end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_calendar_trigger_activity_event() OWNER TO university;
+ALTER FUNCTION public.fn_acorn_calendar_trigger_activity_event() OWNER TO university;
 
 --
--- Name: fn_acornassociated_eval(character varying, record); Type: FUNCTION; Schema: public; Owner: sanchez
+-- Name: fn_acorn_eval(character varying, record); Type: FUNCTION; Schema: public; Owner: sz
 --
 
-CREATE FUNCTION public.fn_acornassociated_eval(sql_expression character varying, et record) RETURNS integer
+CREATE FUNCTION public.fn_acorn_eval(sql_expression character varying, et record) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 declare
@@ -542,13 +542,13 @@ end;
 $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_eval(sql_expression character varying, et record) OWNER TO sanchez;
+ALTER FUNCTION public.fn_acorn_eval(sql_expression character varying, et record) OWNER TO sz;
 
 --
--- Name: fn_acornassociated_first(anyelement, anyelement); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_first(anyelement, anyelement); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_first(anyelement, anyelement) RETURNS anyelement
+CREATE FUNCTION public.fn_acorn_first(anyelement, anyelement) RETURNS anyelement
     LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
     AS $_$
             
@@ -556,13 +556,13 @@ CREATE FUNCTION public.fn_acornassociated_first(anyelement, anyelement) RETURNS 
             $_$;
 
 
-ALTER FUNCTION public.fn_acornassociated_first(anyelement, anyelement) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_first(anyelement, anyelement) OWNER TO university;
 
 --
--- Name: fn_acornassociated_last(anyelement, anyelement); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_last(anyelement, anyelement); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_last(anyelement, anyelement) RETURNS anyelement
+CREATE FUNCTION public.fn_acorn_last(anyelement, anyelement) RETURNS anyelement
     LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
     AS $_$
             
@@ -570,13 +570,13 @@ CREATE FUNCTION public.fn_acornassociated_last(anyelement, anyelement) RETURNS a
             $_$;
 
 
-ALTER FUNCTION public.fn_acornassociated_last(anyelement, anyelement) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_last(anyelement, anyelement) OWNER TO university;
 
 --
--- Name: fn_acornassociated_new_replicated_row(); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_new_replicated_row(); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_new_replicated_row() RETURNS trigger
+CREATE FUNCTION public.fn_acorn_new_replicated_row() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
             declare
@@ -588,7 +588,7 @@ url varchar(2048);
 res public.http_response;
             begin
             -- https://www.postgresql.org/docs/current/plpgsql-trigger.html
-            select "domain" into server_domain from acornassociated_servers where hostname = hostname();
+            select "domain" into server_domain from acorn_servers where hostname = hostname();
             if server_domain is null then
               new.response = 'No domain specified';
             else
@@ -606,13 +606,13 @@ end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_new_replicated_row() OWNER TO university;
+ALTER FUNCTION public.fn_acorn_new_replicated_row() OWNER TO university;
 
 --
--- Name: fn_acornassociated_reset_sequences(character varying, character varying); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_reset_sequences(character varying, character varying); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_reset_sequences(schema_like character varying, table_like character varying) RETURNS void
+CREATE FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) RETURNS void
     LANGUAGE plpgsql
     AS $$
             declare
@@ -645,22 +645,22 @@ end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_reset_sequences(schema_like character varying, table_like character varying) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) OWNER TO university;
 
 --
--- Name: fn_acornassociated_server_id(); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_server_id(); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_server_id() RETURNS trigger
+CREATE FUNCTION public.fn_acorn_server_id() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
             declare
 pid uuid;
             begin
         if new.server_id is null then
-          select "id" into pid from acornassociated_servers where hostname = hostname();
+          select "id" into pid from acorn_servers where hostname = hostname();
           if pid is null then
-            insert into acornassociated_servers(hostname) values(hostname()) returning id into pid;
+            insert into acorn_servers(hostname) values(hostname()) returning id into pid;
           end if;
           new.server_id = pid;
         end if;
@@ -669,13 +669,13 @@ end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_server_id() OWNER TO university;
+ALTER FUNCTION public.fn_acorn_server_id() OWNER TO university;
 
 --
--- Name: fn_acornassociated_table_counts(character varying); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_table_counts(character varying); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_table_counts(_schema character varying) RETURNS TABLE("table" text, count bigint)
+CREATE FUNCTION public.fn_acorn_table_counts(_schema character varying) RETURNS TABLE("table" text, count bigint)
     LANGUAGE plpgsql
     AS $$
             
@@ -699,13 +699,13 @@ end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_table_counts(_schema character varying) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_table_counts(_schema character varying) OWNER TO university;
 
 --
--- Name: fn_acornassociated_truncate_database(character varying, character varying); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_truncate_database(character varying, character varying); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_truncate_database(schema_like character varying, table_like character varying) RETURNS void
+CREATE FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) RETURNS void
     LANGUAGE plpgsql
     AS $$
             declare
@@ -725,13 +725,13 @@ end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_truncate_database(schema_like character varying, table_like character varying) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) OWNER TO university;
 
 --
--- Name: fn_acornassociated_user_get_seed_user(); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_user_get_seed_user(); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acornassociated_user_get_seed_user() RETURNS uuid
+CREATE FUNCTION public.fn_acorn_user_get_seed_user() RETURNS uuid
     LANGUAGE plpgsql
     AS $$
             declare
@@ -739,10 +739,10 @@ user_id uuid;
             begin
             -- Lazy create the seeder user
             select into user_id uu.id 
-                from public.acornassociated_user_users uu
+                from public.acorn_user_users uu
                 where name = 'seeder' and is_system_user limit 1;
             if user_id is null then
-                insert into public.acornassociated_user_users(name, is_system_user)
+                insert into public.acorn_user_users(name, is_system_user)
                     values('seeder', true) 
                     returning id into user_id;
             end if;
@@ -753,43 +753,43 @@ end;
             $$;
 
 
-ALTER FUNCTION public.fn_acornassociated_user_get_seed_user() OWNER TO university;
+ALTER FUNCTION public.fn_acorn_user_get_seed_user() OWNER TO university;
 
 --
--- Name: agg_acornassociated_first(anyelement); Type: AGGREGATE; Schema: public; Owner: university
+-- Name: agg_acorn_first(anyelement); Type: AGGREGATE; Schema: public; Owner: university
 --
 
-CREATE AGGREGATE public.agg_acornassociated_first(anyelement) (
-    SFUNC = public.fn_acornassociated_first,
+CREATE AGGREGATE public.agg_acorn_first(anyelement) (
+    SFUNC = public.fn_acorn_first,
     STYPE = anyelement,
     PARALLEL = safe
 );
 
 
-ALTER AGGREGATE public.agg_acornassociated_first(anyelement) OWNER TO university;
+ALTER AGGREGATE public.agg_acorn_first(anyelement) OWNER TO university;
 
 --
--- Name: agg_acornassociated_last(anyelement); Type: AGGREGATE; Schema: public; Owner: university
+-- Name: agg_acorn_last(anyelement); Type: AGGREGATE; Schema: public; Owner: university
 --
 
-CREATE AGGREGATE public.agg_acornassociated_last(anyelement) (
-    SFUNC = public.fn_acornassociated_last,
+CREATE AGGREGATE public.agg_acorn_last(anyelement) (
+    SFUNC = public.fn_acorn_last,
     STYPE = anyelement,
     PARALLEL = safe
 );
 
 
-ALTER AGGREGATE public.agg_acornassociated_last(anyelement) OWNER TO university;
+ALTER AGGREGATE public.agg_acorn_last(anyelement) OWNER TO university;
 
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- Name: acornassociated_calendar_calendars; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_calendar_calendars; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_calendar_calendars (
+CREATE TABLE public.acorn_calendar_calendars (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     description text,
@@ -804,21 +804,21 @@ CREATE TABLE public.acornassociated_calendar_calendars (
 );
 
 
-ALTER TABLE public.acornassociated_calendar_calendars OWNER TO university;
+ALTER TABLE public.acorn_calendar_calendars OWNER TO university;
 
 --
--- Name: TABLE acornassociated_calendar_calendars; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_calendar_calendars; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_calendar_calendars IS 'package-type: plugin
+COMMENT ON TABLE public.acorn_calendar_calendars IS 'package-type: plugin
 table-type: content';
 
 
 --
--- Name: acornassociated_calendar_event_part_user; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_calendar_event_part_user; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_calendar_event_part_user (
+CREATE TABLE public.acorn_calendar_event_part_user (
     event_part_id uuid NOT NULL,
     user_id uuid NOT NULL,
     role_id uuid NOT NULL,
@@ -827,32 +827,32 @@ CREATE TABLE public.acornassociated_calendar_event_part_user (
 );
 
 
-ALTER TABLE public.acornassociated_calendar_event_part_user OWNER TO university;
+ALTER TABLE public.acorn_calendar_event_part_user OWNER TO university;
 
 --
--- Name: TABLE acornassociated_calendar_event_part_user; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_calendar_event_part_user; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_calendar_event_part_user IS 'table-type: content';
+COMMENT ON TABLE public.acorn_calendar_event_part_user IS 'table-type: content';
 
 
 --
--- Name: acornassociated_calendar_event_part_user_group; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_calendar_event_part_user_group; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_calendar_event_part_user_group (
+CREATE TABLE public.acorn_calendar_event_part_user_group (
     event_part_id uuid NOT NULL,
     user_group_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_calendar_event_part_user_group OWNER TO university;
+ALTER TABLE public.acorn_calendar_event_part_user_group OWNER TO university;
 
 --
--- Name: acornassociated_calendar_event_parts; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_calendar_event_parts; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_calendar_event_parts (
+CREATE TABLE public.acorn_calendar_event_parts (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     event_id uuid NOT NULL,
     name character varying(1024) NOT NULL,
@@ -876,20 +876,20 @@ CREATE TABLE public.acornassociated_calendar_event_parts (
 );
 
 
-ALTER TABLE public.acornassociated_calendar_event_parts OWNER TO university;
+ALTER TABLE public.acorn_calendar_event_parts OWNER TO university;
 
 --
--- Name: TABLE acornassociated_calendar_event_parts; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_calendar_event_parts; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_calendar_event_parts IS 'table-type: content';
+COMMENT ON TABLE public.acorn_calendar_event_parts IS 'table-type: content';
 
 
 --
--- Name: acornassociated_calendar_event_statuses; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_calendar_event_statuses; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_calendar_event_statuses (
+CREATE TABLE public.acorn_calendar_event_statuses (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255) NOT NULL,
     description text,
@@ -901,20 +901,20 @@ CREATE TABLE public.acornassociated_calendar_event_statuses (
 );
 
 
-ALTER TABLE public.acornassociated_calendar_event_statuses OWNER TO university;
+ALTER TABLE public.acorn_calendar_event_statuses OWNER TO university;
 
 --
--- Name: TABLE acornassociated_calendar_event_statuses; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_calendar_event_statuses; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_calendar_event_statuses IS 'table-type: content';
+COMMENT ON TABLE public.acorn_calendar_event_statuses IS 'table-type: content';
 
 
 --
--- Name: acornassociated_calendar_event_types; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_calendar_event_types; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_calendar_event_types (
+CREATE TABLE public.acorn_calendar_event_types (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(2048) NOT NULL,
     description text,
@@ -929,20 +929,20 @@ CREATE TABLE public.acornassociated_calendar_event_types (
 );
 
 
-ALTER TABLE public.acornassociated_calendar_event_types OWNER TO university;
+ALTER TABLE public.acorn_calendar_event_types OWNER TO university;
 
 --
--- Name: TABLE acornassociated_calendar_event_types; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_calendar_event_types; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_calendar_event_types IS 'table-type: content';
+COMMENT ON TABLE public.acorn_calendar_event_types IS 'table-type: content';
 
 
 --
--- Name: acornassociated_calendar_events; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_calendar_events; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_calendar_events (
+CREATE TABLE public.acorn_calendar_events (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     calendar_id uuid NOT NULL,
     external_url character varying(2048),
@@ -954,20 +954,20 @@ CREATE TABLE public.acornassociated_calendar_events (
 );
 
 
-ALTER TABLE public.acornassociated_calendar_events OWNER TO university;
+ALTER TABLE public.acorn_calendar_events OWNER TO university;
 
 --
--- Name: TABLE acornassociated_calendar_events; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_calendar_events; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_calendar_events IS 'table-type: content';
+COMMENT ON TABLE public.acorn_calendar_events IS 'table-type: content';
 
 
 --
--- Name: acornassociated_calendar_instances; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_calendar_instances; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_calendar_instances (
+CREATE TABLE public.acorn_calendar_instances (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     date date NOT NULL,
     event_part_id uuid NOT NULL,
@@ -977,20 +977,20 @@ CREATE TABLE public.acornassociated_calendar_instances (
 );
 
 
-ALTER TABLE public.acornassociated_calendar_instances OWNER TO university;
+ALTER TABLE public.acorn_calendar_instances OWNER TO university;
 
 --
--- Name: TABLE acornassociated_calendar_instances; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_calendar_instances; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_calendar_instances IS 'table-type: content';
+COMMENT ON TABLE public.acorn_calendar_instances IS 'table-type: content';
 
 
 --
--- Name: acornassociated_exam_exam_materials; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_exam_exam_materials; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_exam_exam_materials (
+CREATE TABLE public.acorn_exam_exam_materials (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     exam_id uuid NOT NULL,
     material_id uuid NOT NULL,
@@ -1005,22 +1005,22 @@ CREATE TABLE public.acornassociated_exam_exam_materials (
 );
 
 
-ALTER TABLE public.acornassociated_exam_exam_materials OWNER TO university;
+ALTER TABLE public.acorn_exam_exam_materials OWNER TO university;
 
 --
--- Name: TABLE acornassociated_exam_exam_materials; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_exam_exam_materials; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_exam_exam_materials IS 'menu: false
+COMMENT ON TABLE public.acorn_exam_exam_materials IS 'menu: false
 methods:
   name: return $this->exam->name . ''::'' . $this->material->name;';
 
 
 --
--- Name: acornassociated_exam_exams; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_exam_exams; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_exam_exams (
+CREATE TABLE public.acorn_exam_exams (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) DEFAULT 'exam'::character varying NOT NULL,
     description text,
@@ -1034,20 +1034,20 @@ CREATE TABLE public.acornassociated_exam_exams (
 );
 
 
-ALTER TABLE public.acornassociated_exam_exams OWNER TO university;
+ALTER TABLE public.acorn_exam_exams OWNER TO university;
 
 --
--- Name: TABLE acornassociated_exam_exams; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_exam_exams; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_exam_exams IS 'order: 10';
+COMMENT ON TABLE public.acorn_exam_exams IS 'order: 10';
 
 
 --
--- Name: acornassociated_exam_material_types; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_exam_material_types; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_exam_material_types (
+CREATE TABLE public.acorn_exam_material_types (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) DEFAULT 'test'::character varying NOT NULL,
     description text,
@@ -1059,13 +1059,13 @@ CREATE TABLE public.acornassociated_exam_material_types (
 );
 
 
-ALTER TABLE public.acornassociated_exam_material_types OWNER TO university;
+ALTER TABLE public.acorn_exam_material_types OWNER TO university;
 
 --
--- Name: TABLE acornassociated_exam_material_types; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_exam_material_types; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_exam_material_types IS 'order: 20
+COMMENT ON TABLE public.acorn_exam_material_types IS 'order: 20
 seeding:
   - [''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''Material'']
   - [DEFAULT, ''Interview'']
@@ -1073,10 +1073,10 @@ seeding:
 
 
 --
--- Name: acornassociated_exam_materials; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_exam_materials; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_exam_materials (
+CREATE TABLE public.acorn_exam_materials (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     description text,
@@ -1089,23 +1089,23 @@ CREATE TABLE public.acornassociated_exam_materials (
 );
 
 
-ALTER TABLE public.acornassociated_exam_materials OWNER TO university;
+ALTER TABLE public.acorn_exam_materials OWNER TO university;
 
 --
--- Name: TABLE acornassociated_exam_materials; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_exam_materials; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_exam_materials IS 'order: 30
+COMMENT ON TABLE public.acorn_exam_materials IS 'order: 30
 seeding:
   - [DEFAULT, ''Math'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
   - [DEFAULT, ''English'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']';
 
 
 --
--- Name: acornassociated_exam_scores; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_exam_scores; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_exam_scores (
+CREATE TABLE public.acorn_exam_scores (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     exam_material_id uuid NOT NULL,
     score integer NOT NULL,
@@ -1118,21 +1118,21 @@ CREATE TABLE public.acornassociated_exam_scores (
 );
 
 
-ALTER TABLE public.acornassociated_exam_scores OWNER TO university;
+ALTER TABLE public.acorn_exam_scores OWNER TO university;
 
 --
--- Name: TABLE acornassociated_exam_scores; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_exam_scores; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_exam_scores IS 'methods:
+COMMENT ON TABLE public.acorn_exam_scores IS 'methods:
   name: return $this->exam_material->material->name;';
 
 
 --
--- Name: acornassociated_exam_types; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_exam_types; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_exam_types (
+CREATE TABLE public.acorn_exam_types (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) DEFAULT 'exam'::character varying NOT NULL,
     result_algorithm character varying(1024) DEFAULT 'sum(:materials)'::character varying NOT NULL,
@@ -1145,13 +1145,13 @@ CREATE TABLE public.acornassociated_exam_types (
 );
 
 
-ALTER TABLE public.acornassociated_exam_types OWNER TO university;
+ALTER TABLE public.acorn_exam_types OWNER TO university;
 
 --
--- Name: TABLE acornassociated_exam_types; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_exam_types; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_exam_types IS 'order: 30
+COMMENT ON TABLE public.acorn_exam_types IS 'order: 30
 menu-splitter: true
 seeding:
   - [DEFAULT, ''normal'', ''sum(:materials)'']
@@ -1159,10 +1159,10 @@ seeding:
 
 
 --
--- Name: acornassociated_location_addresses; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_location_addresses; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_location_addresses (
+CREATE TABLE public.acorn_location_addresses (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     number character varying(1024),
@@ -1178,13 +1178,13 @@ CREATE TABLE public.acornassociated_location_addresses (
 );
 
 
-ALTER TABLE public.acornassociated_location_addresses OWNER TO university;
+ALTER TABLE public.acorn_location_addresses OWNER TO university;
 
 --
--- Name: acornassociated_location_area_types; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_location_area_types; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_location_area_types (
+CREATE TABLE public.acorn_location_area_types (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     description text,
@@ -1195,13 +1195,13 @@ CREATE TABLE public.acornassociated_location_area_types (
 );
 
 
-ALTER TABLE public.acornassociated_location_area_types OWNER TO university;
+ALTER TABLE public.acorn_location_area_types OWNER TO university;
 
 --
--- Name: acornassociated_location_areas; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_location_areas; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_location_areas (
+CREATE TABLE public.acorn_location_areas (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     description text,
@@ -1217,13 +1217,13 @@ CREATE TABLE public.acornassociated_location_areas (
 );
 
 
-ALTER TABLE public.acornassociated_location_areas OWNER TO university;
+ALTER TABLE public.acorn_location_areas OWNER TO university;
 
 --
--- Name: acornassociated_location_gps; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_location_gps; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_location_gps (
+CREATE TABLE public.acorn_location_gps (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     longitude double precision,
     latitude double precision,
@@ -1234,13 +1234,13 @@ CREATE TABLE public.acornassociated_location_gps (
 );
 
 
-ALTER TABLE public.acornassociated_location_gps OWNER TO university;
+ALTER TABLE public.acorn_location_gps OWNER TO university;
 
 --
--- Name: acornassociated_location_locations; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_location_locations; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_location_locations (
+CREATE TABLE public.acorn_location_locations (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     address_id uuid NOT NULL,
     name character varying(2048) NOT NULL,
@@ -1254,13 +1254,13 @@ CREATE TABLE public.acornassociated_location_locations (
 );
 
 
-ALTER TABLE public.acornassociated_location_locations OWNER TO university;
+ALTER TABLE public.acorn_location_locations OWNER TO university;
 
 --
--- Name: acornassociated_location_lookup; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_location_lookup; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_location_lookup (
+CREATE TABLE public.acorn_location_lookup (
     id uuid NOT NULL,
     address character varying(1024) NOT NULL,
     city character varying(1024) NOT NULL,
@@ -1274,13 +1274,13 @@ CREATE TABLE public.acornassociated_location_lookup (
 );
 
 
-ALTER TABLE public.acornassociated_location_lookup OWNER TO university;
+ALTER TABLE public.acorn_location_lookup OWNER TO university;
 
 --
--- Name: acornassociated_location_types; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_location_types; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_location_types (
+CREATE TABLE public.acorn_location_types (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     description text,
@@ -1294,13 +1294,13 @@ CREATE TABLE public.acornassociated_location_types (
 );
 
 
-ALTER TABLE public.acornassociated_location_types OWNER TO university;
+ALTER TABLE public.acorn_location_types OWNER TO university;
 
 --
--- Name: acornassociated_messaging_action; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_messaging_action; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_messaging_action (
+CREATE TABLE public.acorn_messaging_action (
     message_id uuid NOT NULL,
     action character varying(1024) NOT NULL,
     settings text NOT NULL,
@@ -1310,13 +1310,13 @@ CREATE TABLE public.acornassociated_messaging_action (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_action OWNER TO university;
+ALTER TABLE public.acorn_messaging_action OWNER TO university;
 
 --
--- Name: acornassociated_messaging_label; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_messaging_label; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_messaging_label (
+CREATE TABLE public.acorn_messaging_label (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255) NOT NULL,
     description character varying(255),
@@ -1325,13 +1325,13 @@ CREATE TABLE public.acornassociated_messaging_label (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_label OWNER TO university;
+ALTER TABLE public.acorn_messaging_label OWNER TO university;
 
 --
--- Name: acornassociated_messaging_message; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_messaging_message; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_messaging_message (
+CREATE TABLE public.acorn_messaging_message (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_from_id uuid NOT NULL,
     subject character varying(2048) NOT NULL,
@@ -1345,20 +1345,20 @@ CREATE TABLE public.acornassociated_messaging_message (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_message OWNER TO university;
+ALTER TABLE public.acorn_messaging_message OWNER TO university;
 
 --
--- Name: TABLE acornassociated_messaging_message; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_messaging_message; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_messaging_message IS 'table-type: content';
+COMMENT ON TABLE public.acorn_messaging_message IS 'table-type: content';
 
 
 --
--- Name: acornassociated_messaging_message_instance; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_messaging_message_instance; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_messaging_message_instance (
+CREATE TABLE public.acorn_messaging_message_instance (
     message_id uuid NOT NULL,
     instance_id uuid NOT NULL,
     created_at timestamp(0) without time zone DEFAULT '2025-04-03 08:43:15.373287'::timestamp without time zone NOT NULL,
@@ -1366,13 +1366,13 @@ CREATE TABLE public.acornassociated_messaging_message_instance (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_message_instance OWNER TO university;
+ALTER TABLE public.acorn_messaging_message_instance OWNER TO university;
 
 --
--- Name: acornassociated_messaging_message_message; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_messaging_message_message; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_messaging_message_message (
+CREATE TABLE public.acorn_messaging_message_message (
     message1_id uuid NOT NULL,
     message2_id uuid NOT NULL,
     relationship integer NOT NULL,
@@ -1381,13 +1381,13 @@ CREATE TABLE public.acornassociated_messaging_message_message (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_message_message OWNER TO university;
+ALTER TABLE public.acorn_messaging_message_message OWNER TO university;
 
 --
--- Name: acornassociated_messaging_message_user; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_messaging_message_user; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_messaging_message_user (
+CREATE TABLE public.acorn_messaging_message_user (
     message_id uuid NOT NULL,
     user_id uuid NOT NULL,
     created_at timestamp(0) without time zone,
@@ -1395,13 +1395,13 @@ CREATE TABLE public.acornassociated_messaging_message_user (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_message_user OWNER TO university;
+ALTER TABLE public.acorn_messaging_message_user OWNER TO university;
 
 --
--- Name: acornassociated_messaging_message_user_group; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_messaging_message_user_group; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_messaging_message_user_group (
+CREATE TABLE public.acorn_messaging_message_user_group (
     message_id uuid NOT NULL,
     user_group_id uuid NOT NULL,
     created_at timestamp(0) without time zone,
@@ -1409,13 +1409,13 @@ CREATE TABLE public.acornassociated_messaging_message_user_group (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_message_user_group OWNER TO university;
+ALTER TABLE public.acorn_messaging_message_user_group OWNER TO university;
 
 --
--- Name: acornassociated_messaging_status; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_messaging_status; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_messaging_status (
+CREATE TABLE public.acorn_messaging_status (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255) NOT NULL,
     description character varying(255),
@@ -1424,20 +1424,20 @@ CREATE TABLE public.acornassociated_messaging_status (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_status OWNER TO university;
+ALTER TABLE public.acorn_messaging_status OWNER TO university;
 
 --
--- Name: TABLE acornassociated_messaging_status; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_messaging_status; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_messaging_status IS 'table-type: content';
+COMMENT ON TABLE public.acorn_messaging_status IS 'table-type: content';
 
 
 --
--- Name: acornassociated_messaging_user_message_status; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_messaging_user_message_status; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_messaging_user_message_status (
+CREATE TABLE public.acorn_messaging_user_message_status (
     user_id uuid NOT NULL,
     message_id uuid NOT NULL,
     status_id uuid NOT NULL,
@@ -1447,20 +1447,20 @@ CREATE TABLE public.acornassociated_messaging_user_message_status (
 );
 
 
-ALTER TABLE public.acornassociated_messaging_user_message_status OWNER TO university;
+ALTER TABLE public.acorn_messaging_user_message_status OWNER TO university;
 
 --
--- Name: TABLE acornassociated_messaging_user_message_status; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_messaging_user_message_status; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_messaging_user_message_status IS 'table-type: content';
+COMMENT ON TABLE public.acorn_messaging_user_message_status IS 'table-type: content';
 
 
 --
--- Name: acornassociated_reporting_reports; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_reporting_reports; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_reporting_reports (
+CREATE TABLE public.acorn_reporting_reports (
     id integer NOT NULL,
     settings text NOT NULL,
     created_at timestamp(0) without time zone,
@@ -1468,13 +1468,13 @@ CREATE TABLE public.acornassociated_reporting_reports (
 );
 
 
-ALTER TABLE public.acornassociated_reporting_reports OWNER TO university;
+ALTER TABLE public.acorn_reporting_reports OWNER TO university;
 
 --
--- Name: acornassociated_reporting_reports_id_seq; Type: SEQUENCE; Schema: public; Owner: university
+-- Name: acorn_reporting_reports_id_seq; Type: SEQUENCE; Schema: public; Owner: university
 --
 
-CREATE SEQUENCE public.acornassociated_reporting_reports_id_seq
+CREATE SEQUENCE public.acorn_reporting_reports_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -1483,20 +1483,20 @@ CREATE SEQUENCE public.acornassociated_reporting_reports_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.acornassociated_reporting_reports_id_seq OWNER TO university;
+ALTER SEQUENCE public.acorn_reporting_reports_id_seq OWNER TO university;
 
 --
--- Name: acornassociated_reporting_reports_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: university
+-- Name: acorn_reporting_reports_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: university
 --
 
-ALTER SEQUENCE public.acornassociated_reporting_reports_id_seq OWNED BY public.acornassociated_reporting_reports.id;
+ALTER SEQUENCE public.acorn_reporting_reports_id_seq OWNED BY public.acorn_reporting_reports.id;
 
 
 --
--- Name: acornassociated_servers; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_servers; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_servers (
+CREATE TABLE public.acorn_servers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     hostname character varying(1024) DEFAULT 'hostname()'::character varying NOT NULL,
     domain character varying(1024),
@@ -1507,70 +1507,70 @@ CREATE TABLE public.acornassociated_servers (
 );
 
 
-ALTER TABLE public.acornassociated_servers OWNER TO university;
+ALTER TABLE public.acorn_servers OWNER TO university;
 
 --
--- Name: acornassociated_university_courses; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_university_courses; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_university_courses (
+CREATE TABLE public.acorn_university_courses (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     entity_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_university_courses OWNER TO university;
+ALTER TABLE public.acorn_university_courses OWNER TO university;
 
 --
--- Name: TABLE acornassociated_university_courses; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_university_courses; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_university_courses IS 'order: 60';
+COMMENT ON TABLE public.acorn_university_courses IS 'order: 60';
 
 
 --
--- Name: acornassociated_university_departments; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_university_departments; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_university_departments (
+CREATE TABLE public.acorn_university_departments (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     entity_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_university_departments OWNER TO university;
+ALTER TABLE public.acorn_university_departments OWNER TO university;
 
 --
--- Name: TABLE acornassociated_university_departments; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_university_departments; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_university_departments IS 'order: 50';
+COMMENT ON TABLE public.acorn_university_departments IS 'order: 50';
 
 
 --
--- Name: acornassociated_university_education_authorities; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_university_education_authorities; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_university_education_authorities (
+CREATE TABLE public.acorn_university_education_authorities (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     entity_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_university_education_authorities OWNER TO university;
+ALTER TABLE public.acorn_university_education_authorities OWNER TO university;
 
 --
--- Name: TABLE acornassociated_university_education_authorities; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_university_education_authorities; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_university_education_authorities IS 'order: 10';
+COMMENT ON TABLE public.acorn_university_education_authorities IS 'order: 10';
 
 
 --
--- Name: acornassociated_university_entities; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_university_entities; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_university_entities (
+CREATE TABLE public.acorn_university_entities (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(2048) NOT NULL,
     description text,
@@ -1583,39 +1583,39 @@ CREATE TABLE public.acornassociated_university_entities (
 );
 
 
-ALTER TABLE public.acornassociated_university_entities OWNER TO university;
+ALTER TABLE public.acorn_university_entities OWNER TO university;
 
 --
--- Name: TABLE acornassociated_university_entities; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_university_entities; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_university_entities IS 'menu: false';
+COMMENT ON TABLE public.acorn_university_entities IS 'menu: false';
 
 
 --
--- Name: acornassociated_university_faculties; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_university_faculties; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_university_faculties (
+CREATE TABLE public.acorn_university_faculties (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     entity_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_university_faculties OWNER TO university;
+ALTER TABLE public.acorn_university_faculties OWNER TO university;
 
 --
--- Name: TABLE acornassociated_university_faculties; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_university_faculties; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_university_faculties IS 'order: 40';
+COMMENT ON TABLE public.acorn_university_faculties IS 'order: 40';
 
 
 --
--- Name: acornassociated_university_hierarchies; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_university_hierarchies; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_university_hierarchies (
+CREATE TABLE public.acorn_university_hierarchies (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     entity_id uuid NOT NULL,
     year_id uuid NOT NULL,
@@ -1631,62 +1631,62 @@ CREATE TABLE public.acornassociated_university_hierarchies (
 );
 
 
-ALTER TABLE public.acornassociated_university_hierarchies OWNER TO university;
+ALTER TABLE public.acorn_university_hierarchies OWNER TO university;
 
 --
--- Name: TABLE acornassociated_university_hierarchies; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_university_hierarchies; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_university_hierarchies IS 'order: 100
+COMMENT ON TABLE public.acorn_university_hierarchies IS 'order: 100
 menu-splitter: true
 methods:
   name: "return (is_string($this->entity) ? $this->entity . '' ('' . $this->year . '')'' : $this->entity->name . '' ('' . $this->year->name . '')'');"';
 
 
 --
--- Name: acornassociated_university_schools; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_university_schools; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_university_schools (
+CREATE TABLE public.acorn_university_schools (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     entity_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_university_schools OWNER TO university;
+ALTER TABLE public.acorn_university_schools OWNER TO university;
 
 --
--- Name: TABLE acornassociated_university_schools; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_university_schools; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_university_schools IS 'order: 30';
+COMMENT ON TABLE public.acorn_university_schools IS 'order: 30';
 
 
 --
--- Name: acornassociated_university_universities; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_university_universities; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_university_universities (
+CREATE TABLE public.acorn_university_universities (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     entity_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_university_universities OWNER TO university;
+ALTER TABLE public.acorn_university_universities OWNER TO university;
 
 --
--- Name: TABLE acornassociated_university_universities; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_university_universities; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_university_universities IS 'plugin-icon: book
+COMMENT ON TABLE public.acorn_university_universities IS 'plugin-icon: book
 order: 20';
 
 
 --
--- Name: acornassociated_university_years; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_university_years; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_university_years (
+CREATE TABLE public.acorn_university_years (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name integer NOT NULL,
     start timestamp without time zone NOT NULL,
@@ -1701,13 +1701,13 @@ CREATE TABLE public.acornassociated_university_years (
 );
 
 
-ALTER TABLE public.acornassociated_university_years OWNER TO university;
+ALTER TABLE public.acorn_university_years OWNER TO university;
 
 --
--- Name: TABLE acornassociated_university_years; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_university_years; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acornassociated_university_years IS 'global-scope: true
+COMMENT ON TABLE public.acorn_university_years IS 'global-scope: true
 order: 110
 seeding:
   - [DEFAULT, 2024, 01/01/2024, 30/12/2024, false]
@@ -1715,34 +1715,34 @@ seeding:
 
 
 --
--- Name: acornassociated_user_language_user; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_user_language_user; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_user_language_user (
+CREATE TABLE public.acorn_user_language_user (
     user_id uuid NOT NULL,
     language_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_user_language_user OWNER TO university;
+ALTER TABLE public.acorn_user_language_user OWNER TO university;
 
 --
--- Name: acornassociated_user_languages; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_user_languages; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_user_languages (
+CREATE TABLE public.acorn_user_languages (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_user_languages OWNER TO university;
+ALTER TABLE public.acorn_user_languages OWNER TO university;
 
 --
--- Name: acornassociated_user_mail_blockers; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_user_mail_blockers; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_user_mail_blockers (
+CREATE TABLE public.acorn_user_mail_blockers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     email character varying(255),
     template character varying(255),
@@ -1752,13 +1752,13 @@ CREATE TABLE public.acornassociated_user_mail_blockers (
 );
 
 
-ALTER TABLE public.acornassociated_user_mail_blockers OWNER TO university;
+ALTER TABLE public.acorn_user_mail_blockers OWNER TO university;
 
 --
--- Name: acornassociated_user_roles; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_user_roles; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_user_roles (
+CREATE TABLE public.acorn_user_roles (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255),
     permissions text,
@@ -1767,13 +1767,13 @@ CREATE TABLE public.acornassociated_user_roles (
 );
 
 
-ALTER TABLE public.acornassociated_user_roles OWNER TO university;
+ALTER TABLE public.acorn_user_roles OWNER TO university;
 
 --
--- Name: acornassociated_user_throttle; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_user_throttle; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_user_throttle (
+CREATE TABLE public.acorn_user_throttle (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_id uuid,
     ip_address character varying(255),
@@ -1786,25 +1786,25 @@ CREATE TABLE public.acornassociated_user_throttle (
 );
 
 
-ALTER TABLE public.acornassociated_user_throttle OWNER TO university;
+ALTER TABLE public.acorn_user_throttle OWNER TO university;
 
 --
--- Name: acornassociated_user_user_group; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_user_user_group; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_user_user_group (
+CREATE TABLE public.acorn_user_user_group (
     user_id uuid NOT NULL,
     user_group_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acornassociated_user_user_group OWNER TO university;
+ALTER TABLE public.acorn_user_user_group OWNER TO university;
 
 --
--- Name: acornassociated_user_user_group_types; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_user_user_group_types; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_user_user_group_types (
+CREATE TABLE public.acorn_user_user_group_types (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255),
     description character varying(255),
@@ -1815,25 +1815,25 @@ CREATE TABLE public.acornassociated_user_user_group_types (
 );
 
 
-ALTER TABLE public.acornassociated_user_user_group_types OWNER TO university;
+ALTER TABLE public.acorn_user_user_group_types OWNER TO university;
 
 --
--- Name: acornassociated_user_user_group_version_usages; Type: VIEW; Schema: public; Owner: university
+-- Name: acorn_user_user_group_version_usages; Type: VIEW; Schema: public; Owner: university
 --
 
-CREATE VIEW public.acornassociated_user_user_group_version_usages AS
+CREATE VIEW public.acorn_user_user_group_version_usages AS
  SELECT NULL::uuid AS user_group_version_id,
     NULL::character varying(1024) AS "table",
     NULL::uuid AS id;
 
 
-ALTER VIEW public.acornassociated_user_user_group_version_usages OWNER TO university;
+ALTER VIEW public.acorn_user_user_group_version_usages OWNER TO university;
 
 --
--- Name: acornassociated_user_user_groups; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_user_user_groups; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_user_user_groups (
+CREATE TABLE public.acorn_user_user_groups (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255) NOT NULL,
     code character varying(255),
@@ -1851,13 +1851,13 @@ CREATE TABLE public.acornassociated_user_user_groups (
 );
 
 
-ALTER TABLE public.acornassociated_user_user_groups OWNER TO university;
+ALTER TABLE public.acorn_user_user_groups OWNER TO university;
 
 --
--- Name: acornassociated_user_users; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_user_users; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acornassociated_user_users (
+CREATE TABLE public.acorn_user_users (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255),
     email character varying(255),
@@ -1880,32 +1880,32 @@ CREATE TABLE public.acornassociated_user_users (
     is_superuser boolean DEFAULT false NOT NULL,
     created_ip_address character varying(255),
     last_ip_address character varying(255),
-    acornassociated_imap_username character varying(255),
-    acornassociated_imap_password character varying(255),
-    acornassociated_imap_server character varying(255),
-    acornassociated_imap_port integer,
-    acornassociated_imap_protocol character varying(255),
-    acornassociated_imap_encryption character varying(255),
-    acornassociated_imap_authentication character varying(255),
-    acornassociated_imap_validate_cert boolean,
-    acornassociated_smtp_server character varying(255),
-    acornassociated_smtp_port character varying(255),
-    acornassociated_smtp_encryption character varying(255),
-    acornassociated_smtp_authentication character varying(255),
-    acornassociated_smtp_username character varying(255),
-    acornassociated_smtp_password character varying(255),
-    acornassociated_messaging_sounds boolean,
-    acornassociated_messaging_email_notifications character(1),
-    acornassociated_messaging_autocreated boolean,
-    acornassociated_imap_last_fetch timestamp(0) without time zone,
-    acornassociated_default_calendar uuid,
-    acornassociated_start_of_week integer,
-    acornassociated_default_event_time_from date,
-    acornassociated_default_event_time_to date
+    acorn_imap_username character varying(255),
+    acorn_imap_password character varying(255),
+    acorn_imap_server character varying(255),
+    acorn_imap_port integer,
+    acorn_imap_protocol character varying(255),
+    acorn_imap_encryption character varying(255),
+    acorn_imap_authentication character varying(255),
+    acorn_imap_validate_cert boolean,
+    acorn_smtp_server character varying(255),
+    acorn_smtp_port character varying(255),
+    acorn_smtp_encryption character varying(255),
+    acorn_smtp_authentication character varying(255),
+    acorn_smtp_username character varying(255),
+    acorn_smtp_password character varying(255),
+    acorn_messaging_sounds boolean,
+    acorn_messaging_email_notifications character(1),
+    acorn_messaging_autocreated boolean,
+    acorn_imap_last_fetch timestamp(0) without time zone,
+    acorn_default_calendar uuid,
+    acorn_start_of_week integer,
+    acorn_default_event_time_from date,
+    acorn_default_event_time_to date
 );
 
 
-ALTER TABLE public.acornassociated_user_users OWNER TO university;
+ALTER TABLE public.acorn_user_users OWNER TO university;
 
 --
 -- Name: backend_access_log; Type: TABLE; Schema: public; Owner: university
@@ -2126,8 +2126,8 @@ CREATE TABLE public.backend_users (
     deleted_at timestamp(0) without time zone,
     is_superuser boolean DEFAULT false NOT NULL,
     metadata text,
-    acornassociated_url character varying(2048),
-    acornassociated_user_user_id uuid
+    acorn_url character varying(2048),
+    acorn_user_user_id uuid
 );
 
 
@@ -3007,7 +3007,7 @@ CREATE TABLE public.system_plugin_versions (
     created_at timestamp(0) without time zone,
     is_disabled boolean DEFAULT false NOT NULL,
     is_frozen boolean DEFAULT false NOT NULL,
-    acornassociated_infrastructure boolean DEFAULT false NOT NULL
+    acorn_infrastructure boolean DEFAULT false NOT NULL
 );
 
 
@@ -3152,10 +3152,10 @@ ALTER SEQUENCE public.system_settings_id_seq OWNED BY public.system_settings.id;
 
 
 --
--- Name: acornassociated_reporting_reports id; Type: DEFAULT; Schema: public; Owner: university
+-- Name: acorn_reporting_reports id; Type: DEFAULT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_reporting_reports ALTER COLUMN id SET DEFAULT nextval('public.acornassociated_reporting_reports_id_seq'::regclass);
+ALTER TABLE ONLY public.acorn_reporting_reports ALTER COLUMN id SET DEFAULT nextval('public.acorn_reporting_reports_id_seq'::regclass);
 
 
 --
@@ -3369,60 +3369,60 @@ ALTER TABLE ONLY public.winter_translate_messages ALTER COLUMN id SET DEFAULT ne
 
 
 --
--- Data for Name: acornassociated_calendar_calendars; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_calendar_calendars; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_calendar_calendars (id, name, description, system, sync_file, sync_format, created_at, updated_at, owner_user_id, owner_user_group_id, permissions) FROM stdin;
+COPY public.acorn_calendar_calendars (id, name, description, system, sync_file, sync_format, created_at, updated_at, owner_user_id, owner_user_group_id, permissions) FROM stdin;
 ceea8856-e4c8-11ef-8719-5f58c97885a2	Default	\N	t	\N	0	2025-04-03 08:43:15	\N	\N	\N	1
 f3bc49bc-eac7-11ef-9e4a-1740a039dada	Activity Log	\N	t	\N	0	2025-04-03 08:43:15	\N	\N	\N	1
 \.
 
 
 --
--- Data for Name: acornassociated_calendar_event_part_user; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_calendar_event_part_user; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_calendar_event_part_user (event_part_id, user_id, role_id, created_at, updated_at) FROM stdin;
+COPY public.acorn_calendar_event_part_user (event_part_id, user_id, role_id, created_at, updated_at) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_calendar_event_part_user_group; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_calendar_event_part_user_group; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_calendar_event_part_user_group (event_part_id, user_group_id) FROM stdin;
+COPY public.acorn_calendar_event_part_user_group (event_part_id, user_group_id) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_calendar_event_parts; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_calendar_event_parts; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_calendar_event_parts (id, event_id, name, description, start, "end", until, mask, mask_type, type_id, status_id, repeat_frequency, parent_event_part_id, location_id, locked_by_user_id, created_at, updated_at, repeat, alarm, instances_deleted) FROM stdin;
+COPY public.acorn_calendar_event_parts (id, event_id, name, description, start, "end", until, mask, mask_type, type_id, status_id, repeat_frequency, parent_event_part_id, location_id, locked_by_user_id, created_at, updated_at, repeat, alarm, instances_deleted) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_calendar_event_statuses; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_calendar_event_statuses; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_calendar_event_statuses (id, name, description, style, system, calendar_id, created_at, updated_at) FROM stdin;
+COPY public.acorn_calendar_event_statuses (id, name, description, style, system, calendar_id, created_at, updated_at) FROM stdin;
 27446472-e4c9-11ef-bde0-9b663c96a619	Normal	\N	\N	t	\N	\N	\N
 fb2392de-e62e-11ef-b202-5fe79ff1071f	Cancelled	\N	text-decoration:line-through;border:1px dotted #fff;	t	\N	\N	\N
 9c914367-bb6e-4b4c-b60d-d2de11ba0d67	Tentative	\N	opacity:0.7;	t	\N	\N	\N
 0d846325-d836-4f5e-a723-5e4878e76fe9	Conflict	\N	border:1px solid red;background-color:#fff;color:#000;font-weight:bold;	t	\N	\N	\N
-7b432540-eac8-11ef-a9bc-434841a9f67b	acornassociated.calendar::lang.models.general.insert	\N	color:#fff	t	\N	\N	\N
-7c18bb7e-eac8-11ef-b4f2-ffae3296f461	acornassociated.calendar::lang.models.general.update	\N	color:#fff	t	\N	\N	\N
-7ceca4c0-eac8-11ef-b685-f7f3f278f676	acornassociated.calendar::lang.models.general.soft_delete	\N	color:#fff	t	\N	\N	\N
-f9690600-eac9-11ef-8002-5b2cbe0c12c0	acornassociated.calendar::lang.models.general.soft_undelete	\N	color:#fff	t	\N	\N	\N
+7b432540-eac8-11ef-a9bc-434841a9f67b	acorn.calendar::lang.models.general.insert	\N	color:#fff	t	\N	\N	\N
+7c18bb7e-eac8-11ef-b4f2-ffae3296f461	acorn.calendar::lang.models.general.update	\N	color:#fff	t	\N	\N	\N
+7ceca4c0-eac8-11ef-b685-f7f3f278f676	acorn.calendar::lang.models.general.soft_delete	\N	color:#fff	t	\N	\N	\N
+f9690600-eac9-11ef-8002-5b2cbe0c12c0	acorn.calendar::lang.models.general.soft_undelete	\N	color:#fff	t	\N	\N	\N
 \.
 
 
 --
--- Data for Name: acornassociated_calendar_event_types; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_calendar_event_types; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_calendar_event_types (id, name, description, whole_day, colour, style, system, activity_log_related_oid, calendar_id, created_at, updated_at) FROM stdin;
+COPY public.acorn_calendar_event_types (id, name, description, whole_day, colour, style, system, activity_log_related_oid, calendar_id, created_at, updated_at) FROM stdin;
 2f766546-e4c9-11ef-be8c-1f2daa98a10f	Normal	\N	f	#091386	color:#fff	t	\N	\N	2025-04-03 08:43:15	\N
 90675595-d8e9-45f0-b5b4-6e4dea848d50	Meeting	\N	f	#C0392B	color:#fff	t	\N	\N	2025-04-03 08:43:15	\N
 6867d1bc-bcc0-40fa-a78f-e02762e33dd6	University Entities	\N	f	#333	\N	f	127565	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
@@ -3438,83 +3438,83 @@ e90d2e25-a11e-46bc-8c0f-c2e441737d4b	Exam Results	\N	f	#333	\N	f	130360	f3bc49bc
 
 
 --
--- Data for Name: acornassociated_calendar_events; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_calendar_events; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_calendar_events (id, calendar_id, external_url, created_at, updated_at, owner_user_id, owner_user_group_id, permissions) FROM stdin;
+COPY public.acorn_calendar_events (id, calendar_id, external_url, created_at, updated_at, owner_user_id, owner_user_group_id, permissions) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_calendar_instances; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_calendar_instances; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_calendar_instances (id, date, event_part_id, instance_num, instance_start, instance_end) FROM stdin;
+COPY public.acorn_calendar_instances (id, date, event_part_id, instance_num, instance_start, instance_end) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_exam_exam_materials; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_exam_exam_materials; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_exam_exam_materials (id, exam_id, material_id, required, minimum, maximum, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_exam_exam_materials (id, exam_id, material_id, required, minimum, maximum, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_exam_exams; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_exam_exams; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_exam_exams (id, name, description, type_id, course_id, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_exam_exams (id, name, description, type_id, course_id, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_exam_material_types; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_exam_material_types; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_exam_material_types (id, name, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_exam_material_types (id, name, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_exam_materials; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_exam_materials; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_exam_materials (id, name, description, material_type_id, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_exam_materials (id, name, description, material_type_id, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_exam_scores; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_exam_scores; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_exam_scores (id, exam_material_id, score, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id, user_id) FROM stdin;
+COPY public.acorn_exam_scores (id, exam_material_id, score, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id, user_id) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_exam_types; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_exam_types; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_exam_types (id, name, result_algorithm, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_exam_types (id, name, result_algorithm, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_location_addresses; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_location_addresses; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_location_addresses (id, name, number, image, description, area_id, gps_id, server_id, created_by_user_id, created_at, response, lookup_id) FROM stdin;
+COPY public.acorn_location_addresses (id, name, number, image, description, area_id, gps_id, server_id, created_by_user_id, created_at, response, lookup_id) FROM stdin;
 9e95fe34-42dd-4787-bf5d-11a20cb08d9b			\N	\N	11e62964-3046-4ea3-aa58-9a409322fe60	9e95fe34-362a-4077-8b7b-1156903f41f6	cf9c9fa5-349c-4b42-a4af-ffac2a7c98bc	\N	2025-04-03 09:55:21.497978	No domain specified	\N
 \.
 
 
 --
--- Data for Name: acornassociated_location_area_types; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_location_area_types; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_location_area_types (id, name, description, server_id, created_at, created_by_user_id, response) FROM stdin;
+COPY public.acorn_location_area_types (id, name, description, server_id, created_at, created_by_user_id, response) FROM stdin;
 9543b0ea-f4ed-4d01-867c-b8ae8c538f99	Country	\N	cf9c9fa5-349c-4b42-a4af-ffac2a7c98bc	2025-04-03 08:43:13.735603	\N	No domain specified
 705acf46-9875-428a-b5ee-557b3bbccf4b	Canton	\N	cf9c9fa5-349c-4b42-a4af-ffac2a7c98bc	2025-04-03 08:43:13.735603	\N	No domain specified
 77dab170-e9e8-43c1-a957-71fc0ce17d78	City	\N	cf9c9fa5-349c-4b42-a4af-ffac2a7c98bc	2025-04-03 08:43:13.735603	\N	No domain specified
@@ -3525,10 +3525,10 @@ ef15d7d0-eef2-4904-a596-c1b7270a50bf	Town	\N	cf9c9fa5-349c-4b42-a4af-ffac2a7c98b
 
 
 --
--- Data for Name: acornassociated_location_areas; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_location_areas; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_location_areas (id, name, description, area_type_id, parent_area_id, gps_id, server_id, version, is_current_version, created_at, created_by_user_id, response) FROM stdin;
+COPY public.acorn_location_areas (id, name, description, area_type_id, parent_area_id, gps_id, server_id, version, is_current_version, created_at, created_by_user_id, response) FROM stdin;
 52e3448d-dc20-441d-a424-501df1853843	Syria	\N	9543b0ea-f4ed-4d01-867c-b8ae8c538f99	\N	\N	cf9c9fa5-349c-4b42-a4af-ffac2a7c98bc	1	t	2025-04-03 08:43:13.735603	\N	No domain specified
 c290c871-bd35-4205-a839-da7ac29a080d	Cezîra	\N	705acf46-9875-428a-b5ee-557b3bbccf4b	52e3448d-dc20-441d-a424-501df1853843	\N	cf9c9fa5-349c-4b42-a4af-ffac2a7c98bc	1	t	2025-04-03 08:43:13.735603	\N	No domain specified
 11e62964-3046-4ea3-aa58-9a409322fe60	Qamişlo	\N	77dab170-e9e8-43c1-a957-71fc0ce17d78	c290c871-bd35-4205-a839-da7ac29a080d	ab7e8e74-65e2-46dd-b43e-d1260fb35f41	cf9c9fa5-349c-4b42-a4af-ffac2a7c98bc	1	t	2025-04-03 08:43:13.735603	\N	No domain specified
@@ -3537,10 +3537,10 @@ c2059e44-095a-470a-a1fd-05a53f26966b	Al Hêseke	\N	77dab170-e9e8-43c1-a957-71fc0
 
 
 --
--- Data for Name: acornassociated_location_gps; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_location_gps; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_location_gps (id, longitude, latitude, server_id, created_at, created_by_user_id, response) FROM stdin;
+COPY public.acorn_location_gps (id, longitude, latitude, server_id, created_at, created_by_user_id, response) FROM stdin;
 ab7e8e74-65e2-46dd-b43e-d1260fb35f41	37.0343936	41.2146239	cf9c9fa5-349c-4b42-a4af-ffac2a7c98bc	2025-04-03 08:43:13.735603	\N	No domain specified
 b2e6dc49-acb5-4afe-9e10-484a7729e02d	36.5166478	40.7416334	cf9c9fa5-349c-4b42-a4af-ffac2a7c98bc	2025-04-03 08:43:13.735603	\N	No domain specified
 9e95fe34-362a-4077-8b7b-1156903f41f6	\N	\N	cf9c9fa5-349c-4b42-a4af-ffac2a7c98bc	2025-04-03 09:55:21.497978	\N	No domain specified
@@ -3548,27 +3548,27 @@ b2e6dc49-acb5-4afe-9e10-484a7729e02d	36.5166478	40.7416334	cf9c9fa5-349c-4b42-a4
 
 
 --
--- Data for Name: acornassociated_location_locations; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_location_locations; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_location_locations (id, address_id, name, description, image, server_id, created_at, created_by_user_id, response, type_id) FROM stdin;
+COPY public.acorn_location_locations (id, address_id, name, description, image, server_id, created_at, created_by_user_id, response, type_id) FROM stdin;
 9e95fe34-4596-4431-865c-a5a8d2a638c4	9e95fe34-42dd-4787-bf5d-11a20cb08d9b	Court buildings	\N		cf9c9fa5-349c-4b42-a4af-ffac2a7c98bc	2025-04-03 09:55:21.497978	\N	No domain specified	\N
 \.
 
 
 --
--- Data for Name: acornassociated_location_lookup; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_location_lookup; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_location_lookup (id, address, city, zip, country_code, state_code, latitude, longitude, vicinity, created_at) FROM stdin;
+COPY public.acorn_location_lookup (id, address, city, zip, country_code, state_code, latitude, longitude, vicinity, created_at) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_location_types; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_location_types; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_location_types (id, name, description, parent_type_id, server_id, created_at, created_by_user_id, response, colour, image) FROM stdin;
+COPY public.acorn_location_types (id, name, description, parent_type_id, server_id, created_at, created_by_user_id, response, colour, image) FROM stdin;
 669565d6-4a61-4ee4-b0c7-c515cda939fe	Office	\N	\N	cf9c9fa5-349c-4b42-a4af-ffac2a7c98bc	2025-04-03 08:43:13.735603	\N	No domain specified	\N	\N
 62bcfe95-0ce1-4410-8557-e69a79f9bff9	Warehouse	\N	\N	cf9c9fa5-349c-4b42-a4af-ffac2a7c98bc	2025-04-03 08:43:13.735603	\N	No domain specified	\N	\N
 4d0ef489-11b2-4631-a588-d499c86d5ac5	Supplier	\N	\N	cf9c9fa5-349c-4b42-a4af-ffac2a7c98bc	2025-04-03 08:43:13.735603	\N	No domain specified	\N	\N
@@ -3576,66 +3576,66 @@ COPY public.acornassociated_location_types (id, name, description, parent_type_i
 
 
 --
--- Data for Name: acornassociated_messaging_action; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_messaging_action; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_messaging_action (message_id, action, settings, status, created_at, updated_at) FROM stdin;
+COPY public.acorn_messaging_action (message_id, action, settings, status, created_at, updated_at) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_messaging_label; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_messaging_label; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_messaging_label (id, name, description, created_at, updated_at) FROM stdin;
+COPY public.acorn_messaging_label (id, name, description, created_at, updated_at) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_messaging_message; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_messaging_message; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_messaging_message (id, user_from_id, subject, body, labels, "externalID", source, mime_type, created_at, updated_at) FROM stdin;
+COPY public.acorn_messaging_message (id, user_from_id, subject, body, labels, "externalID", source, mime_type, created_at, updated_at) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_messaging_message_instance; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_messaging_message_instance; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_messaging_message_instance (message_id, instance_id, created_at, updated_at) FROM stdin;
+COPY public.acorn_messaging_message_instance (message_id, instance_id, created_at, updated_at) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_messaging_message_message; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_messaging_message_message; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_messaging_message_message (message1_id, message2_id, relationship, created_at, updated_at) FROM stdin;
+COPY public.acorn_messaging_message_message (message1_id, message2_id, relationship, created_at, updated_at) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_messaging_message_user; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_messaging_message_user; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_messaging_message_user (message_id, user_id, created_at, updated_at) FROM stdin;
+COPY public.acorn_messaging_message_user (message_id, user_id, created_at, updated_at) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_messaging_message_user_group; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_messaging_message_user_group; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_messaging_message_user_group (message_id, user_group_id, created_at, updated_at) FROM stdin;
+COPY public.acorn_messaging_message_user_group (message_id, user_group_id, created_at, updated_at) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_messaging_status; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_messaging_status; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_messaging_status (id, name, description, created_at, updated_at) FROM stdin;
+COPY public.acorn_messaging_status (id, name, description, created_at, updated_at) FROM stdin;
 b22ad830-c533-45b3-a785-bcd560a61a26	Arrived	For external messages only, like email.	\N	\N
 a92b4430-24dc-41ac-8483-aff392aab116	Seen	In a list	\N	\N
 47b7bed3-8216-4e3b-83f9-d5e708e82979	Read	In full view, or if not truncated in a list	\N	\N
@@ -3645,164 +3645,164 @@ ff3b282d-6941-4aee-8d8a-db1b8bcee14e	Hidden	User Action	\N	\N
 
 
 --
--- Data for Name: acornassociated_messaging_user_message_status; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_messaging_user_message_status; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_messaging_user_message_status (user_id, message_id, status_id, value, created_at, updated_at) FROM stdin;
+COPY public.acorn_messaging_user_message_status (user_id, message_id, status_id, value, created_at, updated_at) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_reporting_reports; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_reporting_reports; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_reporting_reports (id, settings, created_at, updated_at) FROM stdin;
+COPY public.acorn_reporting_reports (id, settings, created_at, updated_at) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_servers; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_servers; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_servers (id, hostname, domain, response, created_at, location_id) FROM stdin;
+COPY public.acorn_servers (id, hostname, domain, response, created_at, location_id) FROM stdin;
 cf9c9fa5-349c-4b42-a4af-ffac2a7c98bc	laptop	\N	\N	2025-04-03 08:42:57	\N
 \.
 
 
 --
--- Data for Name: acornassociated_university_courses; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_university_courses; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_university_courses (id, entity_id) FROM stdin;
+COPY public.acorn_university_courses (id, entity_id) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_university_departments; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_university_departments; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_university_departments (id, entity_id) FROM stdin;
+COPY public.acorn_university_departments (id, entity_id) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_university_education_authorities; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_university_education_authorities; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_university_education_authorities (id, entity_id) FROM stdin;
+COPY public.acorn_university_education_authorities (id, entity_id) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_university_entities; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_university_entities; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_university_entities (id, name, description, women_only, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_university_entities (id, name, description, women_only, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_university_faculties; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_university_faculties; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_university_faculties (id, entity_id) FROM stdin;
+COPY public.acorn_university_faculties (id, entity_id) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_university_hierarchies; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_university_hierarchies; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_university_hierarchies (id, entity_id, year_id, parent_id, server_id, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, nest_left, nest_right, nest_depth) FROM stdin;
+COPY public.acorn_university_hierarchies (id, entity_id, year_id, parent_id, server_id, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, nest_left, nest_right, nest_depth) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_university_schools; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_university_schools; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_university_schools (id, entity_id) FROM stdin;
+COPY public.acorn_university_schools (id, entity_id) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_university_universities; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_university_universities; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_university_universities (id, entity_id) FROM stdin;
+COPY public.acorn_university_universities (id, entity_id) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_university_years; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_university_years; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_university_years (id, name, start, "end", current, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_university_years (id, name, start, "end", current, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_user_language_user; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_user_language_user; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_user_language_user (user_id, language_id) FROM stdin;
+COPY public.acorn_user_language_user (user_id, language_id) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_user_languages; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_user_languages; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_user_languages (id, name) FROM stdin;
+COPY public.acorn_user_languages (id, name) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_user_mail_blockers; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_user_mail_blockers; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_user_mail_blockers (id, email, template, user_id, created_at, updated_at) FROM stdin;
+COPY public.acorn_user_mail_blockers (id, email, template, user_id, created_at, updated_at) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_user_roles; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_user_roles; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_user_roles (id, name, permissions, created_at, updated_at) FROM stdin;
+COPY public.acorn_user_roles (id, name, permissions, created_at, updated_at) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_user_throttle; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_user_throttle; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_user_throttle (id, user_id, ip_address, attempts, last_attempt_at, is_suspended, suspended_at, is_banned, banned_at) FROM stdin;
+COPY public.acorn_user_throttle (id, user_id, ip_address, attempts, last_attempt_at, is_suspended, suspended_at, is_banned, banned_at) FROM stdin;
 9ea0e068-32b3-4f4e-b4ac-6f2c0101019a	9e95e47b-46dc-492d-8ffa-1954bc3f1611	\N	0	\N	f	\N	f	\N
 \.
 
 
 --
--- Data for Name: acornassociated_user_user_group; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_user_user_group; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_user_user_group (user_id, user_group_id) FROM stdin;
+COPY public.acorn_user_user_group (user_id, user_group_id) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_user_user_group_types; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_user_user_group_types; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_user_user_group_types (id, name, description, colour, image, created_at, updated_at) FROM stdin;
+COPY public.acorn_user_user_group_types (id, name, description, colour, image, created_at, updated_at) FROM stdin;
 \.
 
 
 --
--- Data for Name: acornassociated_user_user_groups; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_user_user_groups; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_user_user_groups (id, name, code, description, created_at, updated_at, parent_user_group_id, nest_left, nest_right, nest_depth, image, colour, type_id, location_id) FROM stdin;
+COPY public.acorn_user_user_groups (id, name, code, description, created_at, updated_at, parent_user_group_id, nest_left, nest_right, nest_depth, image, colour, type_id, location_id) FROM stdin;
 9e95e450-97ee-40a8-a55e-4eb76beaf9ae	Guest	guest	Default group for guest users.	2025-04-03 07:42:58	2025-04-03 07:42:58	\N	1	2	0	\N	\N	\N	\N
 9e95e450-a158-42c4-a1ea-fddb46b67e7e	Registered	registered	Default group for registered users.	2025-04-03 07:42:58	2025-04-07 07:26:58	\N	3	6	0	\N	\N	\N	\N
 9e95fdfa-b625-41d9-8f01-15d71f6b7552	weeee	weeee		2025-04-03 08:54:43	2025-04-07 07:26:58	9e95e450-a158-42c4-a1ea-fddb46b67e7e	4	5	1		\N	\N	9e95fe34-4596-4431-865c-a5a8d2a638c4
@@ -3810,15 +3810,15 @@ COPY public.acornassociated_user_user_groups (id, name, code, description, creat
 
 
 --
--- Data for Name: acornassociated_user_users; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_user_users; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acornassociated_user_users (id, name, email, password, activation_code, persist_code, reset_password_code, permissions, is_activated, is_system_user, activated_at, last_login, created_at, updated_at, username, surname, deleted_at, last_seen, is_guest, is_superuser, created_ip_address, last_ip_address, acornassociated_imap_username, acornassociated_imap_password, acornassociated_imap_server, acornassociated_imap_port, acornassociated_imap_protocol, acornassociated_imap_encryption, acornassociated_imap_authentication, acornassociated_imap_validate_cert, acornassociated_smtp_server, acornassociated_smtp_port, acornassociated_smtp_encryption, acornassociated_smtp_authentication, acornassociated_smtp_username, acornassociated_smtp_password, acornassociated_messaging_sounds, acornassociated_messaging_email_notifications, acornassociated_messaging_autocreated, acornassociated_imap_last_fetch, acornassociated_default_calendar, acornassociated_start_of_week, acornassociated_default_event_time_from, acornassociated_default_event_time_to) FROM stdin;
+COPY public.acorn_user_users (id, name, email, password, activation_code, persist_code, reset_password_code, permissions, is_activated, is_system_user, activated_at, last_login, created_at, updated_at, username, surname, deleted_at, last_seen, is_guest, is_superuser, created_ip_address, last_ip_address, acorn_imap_username, acorn_imap_password, acorn_imap_server, acorn_imap_port, acorn_imap_protocol, acorn_imap_encryption, acorn_imap_authentication, acorn_imap_validate_cert, acorn_smtp_server, acorn_smtp_port, acorn_smtp_encryption, acorn_smtp_authentication, acorn_smtp_username, acorn_smtp_password, acorn_messaging_sounds, acorn_messaging_email_notifications, acorn_messaging_autocreated, acorn_imap_last_fetch, acorn_default_calendar, acorn_start_of_week, acorn_default_event_time_from, acorn_default_event_time_to) FROM stdin;
 9e95e475-919e-472a-b1e3-65d83adee981	Artisan	artisan@nowhere.org	$2y$10$04rS6CabSidfoSyFEwaOGeuv0SvRfwEySaQuyPFH0Szw2UnO5FoIS	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:22	2025-04-03 07:43:22	artisan	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 9e95e477-1d74-4314-8ae8-4dbb605cb027	Createsystem	createsystem@nowhere.org	$2y$10$xELVx7Ue7aLR2ffoLahdz.8nQsrCJu3uVZq3b2DRd4OV/zWPGBcWC	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:23	2025-04-03 07:43:23	createsystem	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 9e95e478-70c6-49a6-a82c-47f3639fc748	Seeder	seeder@nowhere.org	$2y$10$jnVJoLvkr0UMQ59RN6oZc.bFWyB0oVcteNUQ80N0EcAjv2xbAprpG	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:24	2025-04-03 07:43:24	seeder	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 9e95e479-9690-4091-a730-aecdf51f9258	Admin	admin@nowhere.org	$2y$10$CYphtl51Fbdv2TZcNZdtrezTwWNw0qeGfSc6oiuYEpE/pOK4gupYy	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:24	2025-04-03 07:43:24	admin	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-9e95e47b-46dc-492d-8ffa-1954bc3f1611	Sanchez	sanchez@nowhere.org	$2y$10$lta6VXUFah18WoaE0L6/2eNtXxV1pJ14tG4juSxDF5QOlGq6C86zu	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:26	2025-04-03 07:43:26	sanchez	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+9e95e47b-46dc-492d-8ffa-1954bc3f1611	sz	sz@nowhere.org	$2y$10$lta6VXUFah18WoaE0L6/2eNtXxV1pJ14tG4juSxDF5QOlGq6C86zu	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:26	2025-04-03 07:43:26	sz	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 9e95e47c-db72-48ec-8c0c-908592ebf59c	Demo	demo@nowhere.org	$2y$10$fXtS/tknV8gTiWiKWD4NEuYaGRQ.aMaTKLjYUlko6bkH7V2JZq7Oa	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:27	2025-04-03 07:43:27	demo	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 a11d6172-6565-4195-a62e-038358aa9fa9	seeder	\N	\N	\N	\N	\N	\N	f	t	\N	\N	\N	\N	\N	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 \.
@@ -3879,11 +3879,11 @@ COPY public.backend_user_throttle (id, user_id, ip_address, attempts, last_attem
 -- Data for Name: backend_users; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.backend_users (id, first_name, last_name, login, email, password, activation_code, persist_code, reset_password_code, permissions, is_activated, role_id, activated_at, last_login, created_at, updated_at, deleted_at, is_superuser, metadata, acornassociated_url, acornassociated_user_user_id) FROM stdin;
+COPY public.backend_users (id, first_name, last_name, login, email, password, activation_code, persist_code, reset_password_code, permissions, is_activated, role_id, activated_at, last_login, created_at, updated_at, deleted_at, is_superuser, metadata, acorn_url, acorn_user_user_id) FROM stdin;
 2	\N	\N	artisan	artisan@nowhere.org	$2y$10$ChjYqkUapNB3KsaekjQJGu1zgrgW7O.ru9QdlngpWvtrHSMUFvGnC	\N	\N	\N	\N	f	\N	\N	\N	2025-04-03 07:43:21	2025-04-03 07:43:22	\N	f	\N	\N	9e95e475-919e-472a-b1e3-65d83adee981
 3	\N	\N	createsystem	createsystem@nowhere.org	$2y$10$ZqIy57H.7gf1NW8KyJ0ykOKXnn/AtOJO3IZEZFVk6bcVX7fQFODi6	\N	\N	\N	\N	f	\N	\N	\N	2025-04-03 07:43:23	2025-04-03 07:43:23	\N	f	\N	\N	9e95e477-1d74-4314-8ae8-4dbb605cb027
 4	\N	\N	seeder	seeder@nowhere.org	$2y$10$HJ1ZIEc4od1rqY9awLMeeulTb91fIOuQup1MnLtVkaqR2o6.etILu	\N	\N	\N	\N	f	\N	\N	\N	2025-04-03 07:43:23	2025-04-03 07:43:24	\N	f	\N	\N	9e95e478-70c6-49a6-a82c-47f3639fc748
-5	\N	\N	sanchez	sanchez@nowhere.org	$2y$10$r5Zck2dEs35hFYhepIOFeOKrp3CfQ5u.vlTew04YgIaumzY8uq1Uu	\N	\N	\N	\N	f	\N	\N	\N	2025-04-03 07:43:25	2025-04-03 07:43:26	\N	f	\N	\N	9e95e47b-46dc-492d-8ffa-1954bc3f1611
+5	\N	\N	sz	sz@nowhere.org	$2y$10$r5Zck2dEs35hFYhepIOFeOKrp3CfQ5u.vlTew04YgIaumzY8uq1Uu	\N	\N	\N	\N	f	\N	\N	\N	2025-04-03 07:43:25	2025-04-03 07:43:26	\N	f	\N	\N	9e95e47b-46dc-492d-8ffa-1954bc3f1611
 6	\N	\N	demo	demo@nowhere.org	$2y$10$iDWeqZhd1b/q.naIRMthX.wNkPXpdqVCP3FwLOSIyxlnJmKevMney	\N	\N	\N	\N	f	\N	\N	\N	2025-04-03 07:43:26	2025-04-03 07:43:27	\N	f	\N	\N	9e95e47c-db72-48ec-8c0c-908592ebf59c
 1	Admin	Person	admin	admin@example.com	$2y$10$WE.zLZTDg7WGnQphFr431.dSBCDebgw/QbRNYzhnhI7OuliWyv8/C	\N	$2y$10$IV0RC1KM6rbmD.DtR.9PjeK7e2irMLAtesTME1d.ID3C0IbLDPQre	\N		t	2	\N	2025-04-08 13:36:45	2025-04-03 07:39:25	2025-04-08 13:36:45	\N	t	\N	\N	9e95e479-9690-4091-a730-aecdf51f9258
 \.
@@ -3935,8 +3935,8 @@ COPY public.cms_theme_templates (id, source, path, content, file_size, updated_a
 --
 
 COPY public.deferred_bindings (id, master_type, master_field, slave_type, slave_id, session_key, is_bind, created_at, updated_at, pivot_data) FROM stdin;
-1	AcornAssociated\\Exam\\Models\\Exam	exam_exam_material_exams	AcornAssociated\\Exam\\Models\\Material	5d92a794-e582-41af-9c63-076c3c5ec7ad	czDZYDTSfY1jczSDQWtT1o8aSpfw6nPikpRvIONN	t	2025-04-08 17:44:10	2025-04-08 17:44:10	\N
-2	AcornAssociated\\Exam\\Models\\Exam	exam_exam_material_exams	AcornAssociated\\Exam\\Models\\Material	4ceccaec-a157-4e28-8aa4-e8be31a461e1	czDZYDTSfY1jczSDQWtT1o8aSpfw6nPikpRvIONN	t	2025-04-08 17:44:10	2025-04-08 17:44:10	\N
+1	Acorn\\Exam\\Models\\Exam	exam_exam_material_exams	Acorn\\Exam\\Models\\Material	5d92a794-e582-41af-9c63-076c3c5ec7ad	czDZYDTSfY1jczSDQWtT1o8aSpfw6nPikpRvIONN	t	2025-04-08 17:44:10	2025-04-08 17:44:10	\N
+2	Acorn\\Exam\\Models\\Exam	exam_exam_material_exams	Acorn\\Exam\\Models\\Material	4ceccaec-a157-4e28-8aa4-e8be31a461e1	czDZYDTSfY1jczSDQWtT1o8aSpfw6nPikpRvIONN	t	2025-04-08 17:44:10	2025-04-08 17:44:10	\N
 \.
 
 
@@ -4092,92 +4092,92 @@ COPY public.system_parameters (id, namespace, "group", item, value) FROM stdin;
 
 COPY public.system_plugin_history (id, code, type, version, detail, created_at) FROM stdin;
 1	Winter.Demo	comment	1.0.1	First version of Demo	2025-04-03 07:39:25
-2	AcornAssociated.User	script	1.0.1	v1.0.1/create_users_table.php	2025-04-03 07:42:57
-3	AcornAssociated.User	script	1.0.1	v1.0.1/create_throttle_table.php	2025-04-03 07:42:57
-4	AcornAssociated.User	comment	1.0.1	Initialize plugin.	2025-04-03 07:42:57
-5	AcornAssociated.User	comment	1.0.2	Seed tables.	2025-04-03 07:42:57
-6	AcornAssociated.User	comment	1.0.3	Translated hard-coded text to language strings.	2025-04-03 07:42:57
-7	AcornAssociated.User	comment	1.0.4	Improvements to user-interface for Location manager.	2025-04-03 07:42:57
-8	AcornAssociated.User	comment	1.0.5	Added contact details for users.	2025-04-03 07:42:57
-9	AcornAssociated.User	script	1.0.6	v1.0.6/create_mail_blockers_table.php	2025-04-03 07:42:57
-10	AcornAssociated.User	comment	1.0.6	Added Mail Blocker utility so users can block specific mail templates.	2025-04-03 07:42:57
-11	AcornAssociated.User	comment	1.0.7	Add back-end Settings page.	2025-04-03 07:42:57
-12	AcornAssociated.User	comment	1.0.8	Updated the Settings page.	2025-04-03 07:42:57
-13	AcornAssociated.User	comment	1.0.9	Adds new welcome mail message for users and administrators.	2025-04-03 07:42:57
-14	AcornAssociated.User	comment	1.0.10	Adds administrator-only activation mode.	2025-04-03 07:42:57
-15	AcornAssociated.User	script	1.0.11	v1.0.11/users_add_login_column.php	2025-04-03 07:42:57
-16	AcornAssociated.User	comment	1.0.11	Users now have an optional login field that defaults to the email field.	2025-04-03 07:42:57
-17	AcornAssociated.User	script	1.0.12	v1.0.12/users_rename_login_to_username.php	2025-04-03 07:42:57
-18	AcornAssociated.User	comment	1.0.12	Create a dedicated setting for choosing the login mode.	2025-04-03 07:42:57
-19	AcornAssociated.User	comment	1.0.13	Minor fix to the Account sign in logic.	2025-04-03 07:42:57
-20	AcornAssociated.User	comment	1.0.14	Minor improvements to the code.	2025-04-03 07:42:57
-21	AcornAssociated.User	script	1.0.15	v1.0.15/users_add_surname.php	2025-04-03 07:42:57
-22	AcornAssociated.User	comment	1.0.15	Adds last name column to users table (surname).	2025-04-03 07:42:57
-23	AcornAssociated.User	comment	1.0.16	Require permissions for settings page too.	2025-04-03 07:42:57
-24	AcornAssociated.User	comment	1.1.0	!!! Profile fields and Locations have been removed.	2025-04-03 07:42:57
-25	AcornAssociated.User	script	1.1.1	v1.1.1/create_user_groups_table.php	2025-04-03 07:42:57
-26	AcornAssociated.User	script	1.1.1	v1.1.1/seed_user_groups_table.php	2025-04-03 07:42:58
-27	AcornAssociated.User	comment	1.1.1	Users can now be added to groups.	2025-04-03 07:42:58
-28	AcornAssociated.User	comment	1.1.2	A raw URL can now be passed as the redirect property in the Account component.	2025-04-03 07:42:58
-29	AcornAssociated.User	comment	1.1.3	Adds a super user flag to the users table, reserved for future use.	2025-04-03 07:42:58
-30	AcornAssociated.User	comment	1.1.4	User list can be filtered by the group they belong to.	2025-04-03 07:42:58
-31	AcornAssociated.User	comment	1.1.5	Adds a new permission to hide the User settings menu item.	2025-04-03 07:42:58
-32	AcornAssociated.User	script	1.2.0	v1.2.0/users_add_deleted_at.php	2025-04-03 07:42:58
-33	AcornAssociated.User	comment	1.2.0	Users can now deactivate their own accounts.	2025-04-03 07:42:58
-34	AcornAssociated.User	comment	1.2.1	New feature for checking if a user is recently active/online.	2025-04-03 07:42:58
-35	AcornAssociated.User	comment	1.2.2	Add bulk action button to user list.	2025-04-03 07:42:58
-36	AcornAssociated.User	comment	1.2.3	Included some descriptive paragraphs in the Reset Password component markup.	2025-04-03 07:42:58
-37	AcornAssociated.User	comment	1.2.4	Added a checkbox for blocking all mail sent to the user.	2025-04-03 07:42:58
-38	AcornAssociated.User	script	1.2.5	v1.2.5/update_timestamp_nullable.php	2025-04-03 07:42:58
-39	AcornAssociated.User	comment	1.2.5	Database maintenance. Updated all timestamp columns to be nullable.	2025-04-03 07:42:58
-40	AcornAssociated.User	script	1.2.6	v1.2.6/users_add_last_seen.php	2025-04-03 07:42:58
-41	AcornAssociated.User	comment	1.2.6	Add a dedicated last seen column for users.	2025-04-03 07:42:58
-42	AcornAssociated.User	comment	1.2.7	Minor fix to user timestamp attributes.	2025-04-03 07:42:58
-43	AcornAssociated.User	comment	1.2.8	Add date range filter to users list. Introduced a logout event.	2025-04-03 07:42:58
-44	AcornAssociated.User	comment	1.2.9	Add invitation mail for new accounts created in the back-end.	2025-04-03 07:42:58
-45	AcornAssociated.User	script	1.3.0	v1.3.0/users_add_guest_flag.php	2025-04-03 07:42:58
-46	AcornAssociated.User	script	1.3.0	v1.3.0/users_add_superuser_flag.php	2025-04-03 07:42:58
-47	AcornAssociated.User	comment	1.3.0	Introduced guest user accounts.	2025-04-03 07:42:58
-48	AcornAssociated.User	comment	1.3.1	User notification variables can now be extended.	2025-04-03 07:42:58
-49	AcornAssociated.User	comment	1.3.2	Minor fix to the Auth::register method.	2025-04-03 07:42:58
-50	AcornAssociated.User	comment	1.3.3	Allow prevention of concurrent user sessions via the user settings.	2025-04-03 07:42:58
-51	AcornAssociated.User	comment	1.3.4	Added force secure protocol property to the account component.	2025-04-03 07:42:58
-52	AcornAssociated.User	comment	1.4.0	!!! The Notifications tab in User settings has been removed.	2025-04-03 07:42:58
-53	AcornAssociated.User	comment	1.4.1	Added support for user impersonation.	2025-04-03 07:42:58
-54	AcornAssociated.User	comment	1.4.2	Fixes security bug in Password Reset component.	2025-04-03 07:42:58
-55	AcornAssociated.User	comment	1.4.3	Fixes session handling for AJAX requests.	2025-04-03 07:42:58
-56	AcornAssociated.User	comment	1.4.4	Fixes bug where impersonation touches the last seen timestamp.	2025-04-03 07:42:58
-57	AcornAssociated.User	comment	1.4.5	Added token fallback process to Account / Reset Password components when parameter is missing.	2025-04-03 07:42:58
-58	AcornAssociated.User	comment	1.4.6	Fixes Auth::register method signature mismatch with core Winter CMS Auth library	2025-04-03 07:42:58
-59	AcornAssociated.User	comment	1.4.7	Fixes redirect bug in Account component / Update translations and separate user and group management.	2025-04-03 07:42:58
-60	AcornAssociated.User	comment	1.4.8	Fixes a bug where calling MailBlocker::removeBlock could remove all mail blocks for the user.	2025-04-03 07:42:58
-61	AcornAssociated.User	comment	1.5.0	!!! Required password length is now a minimum of 8 characters. Previous passwords will not be affected until the next password change.	2025-04-03 07:42:58
-62	AcornAssociated.User	script	1.5.1	v1.5.1/users_add_ip_address.php	2025-04-03 07:42:58
-63	AcornAssociated.User	comment	1.5.1	User IP addresses are now logged. Introduce registration throttle.	2025-04-03 07:42:58
-64	AcornAssociated.User	comment	1.5.2	Whitespace from usernames is now trimmed, allowed for username to be added to Reset Password mail templates.	2025-04-03 07:42:58
-65	AcornAssociated.User	comment	1.5.3	Fixes a bug in the user update functionality if password is not changed. Added highlighting for banned users in user list.	2025-04-03 07:42:58
-66	AcornAssociated.User	comment	1.5.4	Multiple translation improvements. Added view events to extend user preview and user listing toolbars.	2025-04-03 07:42:58
-67	AcornAssociated.User	script	2.0.0	v2.0.0/rename_tables.php	2025-04-03 07:42:58
-68	AcornAssociated.User	comment	2.0.0	Rebrand to AcornAssociated.User	2025-04-03 07:42:58
-69	AcornAssociated.User	comment	2.0.0	Update Russian language	2025-04-03 07:42:58
-70	AcornAssociated.User	script	2.0.1	v2.0.1/rename_indexes.php	2025-04-03 07:42:59
-71	AcornAssociated.User	comment	2.0.1	Rebrand table indexes	2025-04-03 07:42:59
-72	AcornAssociated.User	comment	2.1.0	Enforce password length rules on sign in. Compatibility fixes.	2025-04-03 07:42:59
-73	AcornAssociated.User	comment	2.2.0	Add avatar removal. Password resets will activate users if User activation mode is enabled.	2025-04-03 07:42:59
-74	AcornAssociated.User	comment	2.2.1	Fixes a bug introduced by the adoption of symfony/mime required since Laravel 7.x where sending an email to a blocked email address would not be prevented.	2025-04-03 07:42:59
-75	AcornAssociated.User	comment	2.2.2	Improved French translation, updated plugin icons, fixed migrations for Laravel 9	2025-04-03 07:42:59
-76	AcornAssociated.User	script	3.0.0	v3.0.0/create_user_roles_table.php	2025-04-03 07:42:59
-77	AcornAssociated.User	script	3.0.0	v3.0.0/add_backend_user_column.php	2025-04-03 07:42:59
-78	AcornAssociated.User	script	3.0.0	v3.0.0/create_user_languages.php	2025-04-03 07:42:59
-79	AcornAssociated.User	script	3.0.0	v3.0.0/create_user_group_types_table.php	2025-04-03 07:42:59
-80	AcornAssociated.User	comment	3.0.0	User Roles	2025-04-03 07:42:59
-81	AcornAssociated.User	comment	3.0.0	Add Backend User column	2025-04-03 07:42:59
-82	AcornAssociated.User	comment	3.0.0	Create user languages XtoX	2025-04-03 07:42:59
-83	AcornAssociated.User	comment	3.0.0	Create User Group Types	2025-04-03 07:42:59
-84	AcornAssociated.User	script	3.0.2	v3.0.2/create_usage_view.php	2025-04-03 07:42:59
-85	AcornAssociated.User	script	3.0.2	v3.0.2/create_functions.php	2025-04-03 07:42:59
-86	AcornAssociated.User	comment	3.0.2	Create Usage view	2025-04-03 07:42:59
-87	AcornAssociated.User	comment	3.0.2	Create Functions	2025-04-03 07:42:59
+2	Acorn.User	script	1.0.1	v1.0.1/create_users_table.php	2025-04-03 07:42:57
+3	Acorn.User	script	1.0.1	v1.0.1/create_throttle_table.php	2025-04-03 07:42:57
+4	Acorn.User	comment	1.0.1	Initialize plugin.	2025-04-03 07:42:57
+5	Acorn.User	comment	1.0.2	Seed tables.	2025-04-03 07:42:57
+6	Acorn.User	comment	1.0.3	Translated hard-coded text to language strings.	2025-04-03 07:42:57
+7	Acorn.User	comment	1.0.4	Improvements to user-interface for Location manager.	2025-04-03 07:42:57
+8	Acorn.User	comment	1.0.5	Added contact details for users.	2025-04-03 07:42:57
+9	Acorn.User	script	1.0.6	v1.0.6/create_mail_blockers_table.php	2025-04-03 07:42:57
+10	Acorn.User	comment	1.0.6	Added Mail Blocker utility so users can block specific mail templates.	2025-04-03 07:42:57
+11	Acorn.User	comment	1.0.7	Add back-end Settings page.	2025-04-03 07:42:57
+12	Acorn.User	comment	1.0.8	Updated the Settings page.	2025-04-03 07:42:57
+13	Acorn.User	comment	1.0.9	Adds new welcome mail message for users and administrators.	2025-04-03 07:42:57
+14	Acorn.User	comment	1.0.10	Adds administrator-only activation mode.	2025-04-03 07:42:57
+15	Acorn.User	script	1.0.11	v1.0.11/users_add_login_column.php	2025-04-03 07:42:57
+16	Acorn.User	comment	1.0.11	Users now have an optional login field that defaults to the email field.	2025-04-03 07:42:57
+17	Acorn.User	script	1.0.12	v1.0.12/users_rename_login_to_username.php	2025-04-03 07:42:57
+18	Acorn.User	comment	1.0.12	Create a dedicated setting for choosing the login mode.	2025-04-03 07:42:57
+19	Acorn.User	comment	1.0.13	Minor fix to the Account sign in logic.	2025-04-03 07:42:57
+20	Acorn.User	comment	1.0.14	Minor improvements to the code.	2025-04-03 07:42:57
+21	Acorn.User	script	1.0.15	v1.0.15/users_add_surname.php	2025-04-03 07:42:57
+22	Acorn.User	comment	1.0.15	Adds last name column to users table (surname).	2025-04-03 07:42:57
+23	Acorn.User	comment	1.0.16	Require permissions for settings page too.	2025-04-03 07:42:57
+24	Acorn.User	comment	1.1.0	!!! Profile fields and Locations have been removed.	2025-04-03 07:42:57
+25	Acorn.User	script	1.1.1	v1.1.1/create_user_groups_table.php	2025-04-03 07:42:57
+26	Acorn.User	script	1.1.1	v1.1.1/seed_user_groups_table.php	2025-04-03 07:42:58
+27	Acorn.User	comment	1.1.1	Users can now be added to groups.	2025-04-03 07:42:58
+28	Acorn.User	comment	1.1.2	A raw URL can now be passed as the redirect property in the Account component.	2025-04-03 07:42:58
+29	Acorn.User	comment	1.1.3	Adds a super user flag to the users table, reserved for future use.	2025-04-03 07:42:58
+30	Acorn.User	comment	1.1.4	User list can be filtered by the group they belong to.	2025-04-03 07:42:58
+31	Acorn.User	comment	1.1.5	Adds a new permission to hide the User settings menu item.	2025-04-03 07:42:58
+32	Acorn.User	script	1.2.0	v1.2.0/users_add_deleted_at.php	2025-04-03 07:42:58
+33	Acorn.User	comment	1.2.0	Users can now deactivate their own accounts.	2025-04-03 07:42:58
+34	Acorn.User	comment	1.2.1	New feature for checking if a user is recently active/online.	2025-04-03 07:42:58
+35	Acorn.User	comment	1.2.2	Add bulk action button to user list.	2025-04-03 07:42:58
+36	Acorn.User	comment	1.2.3	Included some descriptive paragraphs in the Reset Password component markup.	2025-04-03 07:42:58
+37	Acorn.User	comment	1.2.4	Added a checkbox for blocking all mail sent to the user.	2025-04-03 07:42:58
+38	Acorn.User	script	1.2.5	v1.2.5/update_timestamp_nullable.php	2025-04-03 07:42:58
+39	Acorn.User	comment	1.2.5	Database maintenance. Updated all timestamp columns to be nullable.	2025-04-03 07:42:58
+40	Acorn.User	script	1.2.6	v1.2.6/users_add_last_seen.php	2025-04-03 07:42:58
+41	Acorn.User	comment	1.2.6	Add a dedicated last seen column for users.	2025-04-03 07:42:58
+42	Acorn.User	comment	1.2.7	Minor fix to user timestamp attributes.	2025-04-03 07:42:58
+43	Acorn.User	comment	1.2.8	Add date range filter to users list. Introduced a logout event.	2025-04-03 07:42:58
+44	Acorn.User	comment	1.2.9	Add invitation mail for new accounts created in the back-end.	2025-04-03 07:42:58
+45	Acorn.User	script	1.3.0	v1.3.0/users_add_guest_flag.php	2025-04-03 07:42:58
+46	Acorn.User	script	1.3.0	v1.3.0/users_add_superuser_flag.php	2025-04-03 07:42:58
+47	Acorn.User	comment	1.3.0	Introduced guest user accounts.	2025-04-03 07:42:58
+48	Acorn.User	comment	1.3.1	User notification variables can now be extended.	2025-04-03 07:42:58
+49	Acorn.User	comment	1.3.2	Minor fix to the Auth::register method.	2025-04-03 07:42:58
+50	Acorn.User	comment	1.3.3	Allow prevention of concurrent user sessions via the user settings.	2025-04-03 07:42:58
+51	Acorn.User	comment	1.3.4	Added force secure protocol property to the account component.	2025-04-03 07:42:58
+52	Acorn.User	comment	1.4.0	!!! The Notifications tab in User settings has been removed.	2025-04-03 07:42:58
+53	Acorn.User	comment	1.4.1	Added support for user impersonation.	2025-04-03 07:42:58
+54	Acorn.User	comment	1.4.2	Fixes security bug in Password Reset component.	2025-04-03 07:42:58
+55	Acorn.User	comment	1.4.3	Fixes session handling for AJAX requests.	2025-04-03 07:42:58
+56	Acorn.User	comment	1.4.4	Fixes bug where impersonation touches the last seen timestamp.	2025-04-03 07:42:58
+57	Acorn.User	comment	1.4.5	Added token fallback process to Account / Reset Password components when parameter is missing.	2025-04-03 07:42:58
+58	Acorn.User	comment	1.4.6	Fixes Auth::register method signature mismatch with core Winter CMS Auth library	2025-04-03 07:42:58
+59	Acorn.User	comment	1.4.7	Fixes redirect bug in Account component / Update translations and separate user and group management.	2025-04-03 07:42:58
+60	Acorn.User	comment	1.4.8	Fixes a bug where calling MailBlocker::removeBlock could remove all mail blocks for the user.	2025-04-03 07:42:58
+61	Acorn.User	comment	1.5.0	!!! Required password length is now a minimum of 8 characters. Previous passwords will not be affected until the next password change.	2025-04-03 07:42:58
+62	Acorn.User	script	1.5.1	v1.5.1/users_add_ip_address.php	2025-04-03 07:42:58
+63	Acorn.User	comment	1.5.1	User IP addresses are now logged. Introduce registration throttle.	2025-04-03 07:42:58
+64	Acorn.User	comment	1.5.2	Whitespace from usernames is now trimmed, allowed for username to be added to Reset Password mail templates.	2025-04-03 07:42:58
+65	Acorn.User	comment	1.5.3	Fixes a bug in the user update functionality if password is not changed. Added highlighting for banned users in user list.	2025-04-03 07:42:58
+66	Acorn.User	comment	1.5.4	Multiple translation improvements. Added view events to extend user preview and user listing toolbars.	2025-04-03 07:42:58
+67	Acorn.User	script	2.0.0	v2.0.0/rename_tables.php	2025-04-03 07:42:58
+68	Acorn.User	comment	2.0.0	Rebrand to Acorn.User	2025-04-03 07:42:58
+69	Acorn.User	comment	2.0.0	Update Russian language	2025-04-03 07:42:58
+70	Acorn.User	script	2.0.1	v2.0.1/rename_indexes.php	2025-04-03 07:42:59
+71	Acorn.User	comment	2.0.1	Rebrand table indexes	2025-04-03 07:42:59
+72	Acorn.User	comment	2.1.0	Enforce password length rules on sign in. Compatibility fixes.	2025-04-03 07:42:59
+73	Acorn.User	comment	2.2.0	Add avatar removal. Password resets will activate users if User activation mode is enabled.	2025-04-03 07:42:59
+74	Acorn.User	comment	2.2.1	Fixes a bug introduced by the adoption of symfony/mime required since Laravel 7.x where sending an email to a blocked email address would not be prevented.	2025-04-03 07:42:59
+75	Acorn.User	comment	2.2.2	Improved French translation, updated plugin icons, fixed migrations for Laravel 9	2025-04-03 07:42:59
+76	Acorn.User	script	3.0.0	v3.0.0/create_user_roles_table.php	2025-04-03 07:42:59
+77	Acorn.User	script	3.0.0	v3.0.0/add_backend_user_column.php	2025-04-03 07:42:59
+78	Acorn.User	script	3.0.0	v3.0.0/create_user_languages.php	2025-04-03 07:42:59
+79	Acorn.User	script	3.0.0	v3.0.0/create_user_group_types_table.php	2025-04-03 07:42:59
+80	Acorn.User	comment	3.0.0	User Roles	2025-04-03 07:42:59
+81	Acorn.User	comment	3.0.0	Add Backend User column	2025-04-03 07:42:59
+82	Acorn.User	comment	3.0.0	Create user languages XtoX	2025-04-03 07:42:59
+83	Acorn.User	comment	3.0.0	Create User Group Types	2025-04-03 07:42:59
+84	Acorn.User	script	3.0.2	v3.0.2/create_usage_view.php	2025-04-03 07:42:59
+85	Acorn.User	script	3.0.2	v3.0.2/create_functions.php	2025-04-03 07:42:59
+86	Acorn.User	comment	3.0.2	Create Usage view	2025-04-03 07:42:59
+87	Acorn.User	comment	3.0.2	Create Functions	2025-04-03 07:42:59
 88	Winter.Location	comment	1.0.1	Initialize plugin.	2025-04-03 07:42:59
 89	Winter.Location	script	1.0.2	v1.0.2/create_states_table.php	2025-04-03 07:42:59
 90	Winter.Location	script	1.0.2	v1.0.2/create_countries_table.php	2025-04-03 07:42:59
@@ -4334,59 +4334,59 @@ COPY public.system_plugin_history (id, code, type, version, detail, created_at) 
 241	Winter.Translate	comment	2.1.7	Cleanup after model is deleted	2025-04-03 07:43:13
 242	Winter.Translate	comment	2.1.7	Add missing french translations	2025-04-03 07:43:13
 243	Winter.Translate	comment	2.2.0	Fix translating pages on Winter v1.2.7+	2025-04-03 07:43:13
-244	AcornAssociated.BackendLocalization	script	1.0.0	v1.1/seed_locale_backend.php	2025-04-03 07:43:13
-245	AcornAssociated.BackendLocalization	comment	1.0.0	Create special languages ​​for the backend 	2025-04-03 07:43:13
-246	AcornAssociated.Location	script	4.0.0	create_from_sql.php	2025-04-03 07:43:13
-247	AcornAssociated.Location	comment	4.0.0	Create from DB & seeder.sql	2025-04-03 07:43:13
-248	AcornAssociated.Messaging	script	1.0.1	builder_table_create_acornassociated_messaging_message.php	2025-04-03 07:43:13
-249	AcornAssociated.Messaging	script	1.0.1	builder_table_create_acornassociated_messaging_message_user.php	2025-04-03 07:43:13
-250	AcornAssociated.Messaging	script	1.0.1	builder_table_create_acornassociated_messaging_message_user_group.php	2025-04-03 07:43:13
-251	AcornAssociated.Messaging	script	1.0.1	builder_table_create_acornassociated_messaging_message_message.php	2025-04-03 07:43:13
-252	AcornAssociated.Messaging	script	1.0.1	builder_table_create_acornassociated_messaging_action.php	2025-04-03 07:43:14
-253	AcornAssociated.Messaging	script	1.0.1	builder_table_create_acornassociated_messaging_label.php	2025-04-03 07:43:14
-254	AcornAssociated.Messaging	script	1.0.1	builder_table_create_acornassociated_messaging_status.php	2025-04-03 07:43:14
-255	AcornAssociated.Messaging	script	1.0.1	seed_status.php	2025-04-03 07:43:14
-256	AcornAssociated.Messaging	comment	1.0.1	Initialize plugin.	2025-04-03 07:43:14
-257	AcornAssociated.Messaging	comment	1.0.1	Created table acornassociated_messaging_message	2025-04-03 07:43:14
-258	AcornAssociated.Messaging	comment	1.0.1	Created table acornassociated_messaging_message_user	2025-04-03 07:43:14
-259	AcornAssociated.Messaging	comment	1.0.1	Created table acornassociated_messaging_message_user_group	2025-04-03 07:43:14
-260	AcornAssociated.Messaging	comment	1.0.1	Created table acornassociated_messaging_message_message	2025-04-03 07:43:14
-261	AcornAssociated.Messaging	comment	1.0.1	Created table acornassociated_messaging_action	2025-04-03 07:43:14
-262	AcornAssociated.Messaging	comment	1.0.1	Created table acornassociated_messaging_label	2025-04-03 07:43:14
-263	AcornAssociated.Messaging	comment	1.0.1	Created table acornassociated_messaging_status	2025-04-03 07:43:14
-264	AcornAssociated.Messaging	comment	1.0.1	Seeding message status	2025-04-03 07:43:14
-265	AcornAssociated.Messaging	script	2.0.0	create_acornassociated_users_extra_fields.php	2025-04-03 07:43:14
-266	AcornAssociated.Messaging	comment	2.0.0	Create acornassociated users extra fields	2025-04-03 07:43:14
-267	AcornAssociated.Reporting	script	1.0.1	builder_table_create_acornassociated_reporting_reports.php	2025-04-03 07:43:14
-268	AcornAssociated.Reporting	comment	1.0.1	Initialize plugin.	2025-04-03 07:43:14
-269	AcornAssociated.Reporting	comment	1.0.1	Created table acornassociated_reporting_reports	2025-04-03 07:43:14
-270	AcornAssociated.Calendar	script	2.0.1	builder_table_create_acornassociated_calendar_calendars.php	2025-04-03 07:43:14
-271	AcornAssociated.Calendar	script	2.0.1	builder_table_create_acornassociated_calendar_event_types.php	2025-04-03 07:43:14
-272	AcornAssociated.Calendar	script	2.0.1	builder_table_create_acornassociated_calendar_event_statuses.php	2025-04-03 07:43:14
-273	AcornAssociated.Calendar	script	2.0.1	builder_table_create_acornassociated_calendar_events.php	2025-04-03 07:43:14
-274	AcornAssociated.Calendar	script	2.0.1	builder_table_create_acornassociated_calendar_event_parts.php	2025-04-03 07:43:15
-275	AcornAssociated.Calendar	script	2.0.1	builder_table_create_acornassociated_calendar_instances.php	2025-04-03 07:43:15
-276	AcornAssociated.Calendar	script	2.0.1	create_acornassociated_calendar_event_trigger.php	2025-04-03 07:43:15
-277	AcornAssociated.Calendar	script	2.0.1	builder_table_create_acornassociated_calendar_event_part_user.php	2025-04-03 07:43:15
-278	AcornAssociated.Calendar	script	2.0.1	builder_table_create_acornassociated_calendar_event_part_user_group.php	2025-04-03 07:43:15
-279	AcornAssociated.Calendar	script	2.0.1	table_create_acornassociated_messaging_instance.php	2025-04-03 07:43:15
-280	AcornAssociated.Calendar	script	2.0.1	create_acornassociated_users_extra_fields.php	2025-04-03 07:43:15
-281	AcornAssociated.Calendar	script	2.0.1	create_functions.php	2025-04-03 07:43:15
-282	AcornAssociated.Calendar	script	2.0.1	seed_calendar.php	2025-04-03 07:43:15
-283	AcornAssociated.Calendar	comment	2.0.1	Initialize plugin.	2025-04-03 07:43:15
-284	AcornAssociated.Calendar	comment	2.0.1	Created table acornassociated_calendar_calendars	2025-04-03 07:43:15
-285	AcornAssociated.Calendar	comment	2.0.1	Created table acornassociated_calendar_event_types	2025-04-03 07:43:15
-286	AcornAssociated.Calendar	comment	2.0.1	Created table acornassociated_calendar_event_statuses	2025-04-03 07:43:15
-287	AcornAssociated.Calendar	comment	2.0.1	Created table acornassociated_calendar_events	2025-04-03 07:43:15
-288	AcornAssociated.Calendar	comment	2.0.1	Created table acornassociated_calendar_event_parts	2025-04-03 07:43:15
-289	AcornAssociated.Calendar	comment	2.0.1	Created table acornassociated_calendar_instances	2025-04-03 07:43:15
-290	AcornAssociated.Calendar	comment	2.0.1	Created table acornassociated_calendar_event_trigger	2025-04-03 07:43:15
-291	AcornAssociated.Calendar	comment	2.0.1	Created table acornassociated_calendar_event_part_user	2025-04-03 07:43:15
-292	AcornAssociated.Calendar	comment	2.0.1	Created table acornassociated_calendar_event_part_user_group	2025-04-03 07:43:15
-293	AcornAssociated.Calendar	comment	2.0.1	Created table acornassociated_messaging_message_instance	2025-04-03 07:43:15
-294	AcornAssociated.Calendar	comment	2.0.1	Create acornassociated users extra fields	2025-04-03 07:43:15
-295	AcornAssociated.Calendar	comment	2.0.1	Create functions, including fn_acornassociated_calendar_seed()	2025-04-03 07:43:15
-296	AcornAssociated.Calendar	comment	2.0.1	Seeding default Calendar, Types and Statuses	2025-04-03 07:43:15
+244	Acorn.BackendLocalization	script	1.0.0	v1.1/seed_locale_backend.php	2025-04-03 07:43:13
+245	Acorn.BackendLocalization	comment	1.0.0	Create special languages ​​for the backend 	2025-04-03 07:43:13
+246	Acorn.Location	script	4.0.0	create_from_sql.php	2025-04-03 07:43:13
+247	Acorn.Location	comment	4.0.0	Create from DB & seeder.sql	2025-04-03 07:43:13
+248	Acorn.Messaging	script	1.0.1	builder_table_create_acorn_messaging_message.php	2025-04-03 07:43:13
+249	Acorn.Messaging	script	1.0.1	builder_table_create_acorn_messaging_message_user.php	2025-04-03 07:43:13
+250	Acorn.Messaging	script	1.0.1	builder_table_create_acorn_messaging_message_user_group.php	2025-04-03 07:43:13
+251	Acorn.Messaging	script	1.0.1	builder_table_create_acorn_messaging_message_message.php	2025-04-03 07:43:13
+252	Acorn.Messaging	script	1.0.1	builder_table_create_acorn_messaging_action.php	2025-04-03 07:43:14
+253	Acorn.Messaging	script	1.0.1	builder_table_create_acorn_messaging_label.php	2025-04-03 07:43:14
+254	Acorn.Messaging	script	1.0.1	builder_table_create_acorn_messaging_status.php	2025-04-03 07:43:14
+255	Acorn.Messaging	script	1.0.1	seed_status.php	2025-04-03 07:43:14
+256	Acorn.Messaging	comment	1.0.1	Initialize plugin.	2025-04-03 07:43:14
+257	Acorn.Messaging	comment	1.0.1	Created table acorn_messaging_message	2025-04-03 07:43:14
+258	Acorn.Messaging	comment	1.0.1	Created table acorn_messaging_message_user	2025-04-03 07:43:14
+259	Acorn.Messaging	comment	1.0.1	Created table acorn_messaging_message_user_group	2025-04-03 07:43:14
+260	Acorn.Messaging	comment	1.0.1	Created table acorn_messaging_message_message	2025-04-03 07:43:14
+261	Acorn.Messaging	comment	1.0.1	Created table acorn_messaging_action	2025-04-03 07:43:14
+262	Acorn.Messaging	comment	1.0.1	Created table acorn_messaging_label	2025-04-03 07:43:14
+263	Acorn.Messaging	comment	1.0.1	Created table acorn_messaging_status	2025-04-03 07:43:14
+264	Acorn.Messaging	comment	1.0.1	Seeding message status	2025-04-03 07:43:14
+265	Acorn.Messaging	script	2.0.0	create_acorn_users_extra_fields.php	2025-04-03 07:43:14
+266	Acorn.Messaging	comment	2.0.0	Create acorn users extra fields	2025-04-03 07:43:14
+267	Acorn.Reporting	script	1.0.1	builder_table_create_acorn_reporting_reports.php	2025-04-03 07:43:14
+268	Acorn.Reporting	comment	1.0.1	Initialize plugin.	2025-04-03 07:43:14
+269	Acorn.Reporting	comment	1.0.1	Created table acorn_reporting_reports	2025-04-03 07:43:14
+270	Acorn.Calendar	script	2.0.1	builder_table_create_acorn_calendar_calendars.php	2025-04-03 07:43:14
+271	Acorn.Calendar	script	2.0.1	builder_table_create_acorn_calendar_event_types.php	2025-04-03 07:43:14
+272	Acorn.Calendar	script	2.0.1	builder_table_create_acorn_calendar_event_statuses.php	2025-04-03 07:43:14
+273	Acorn.Calendar	script	2.0.1	builder_table_create_acorn_calendar_events.php	2025-04-03 07:43:14
+274	Acorn.Calendar	script	2.0.1	builder_table_create_acorn_calendar_event_parts.php	2025-04-03 07:43:15
+275	Acorn.Calendar	script	2.0.1	builder_table_create_acorn_calendar_instances.php	2025-04-03 07:43:15
+276	Acorn.Calendar	script	2.0.1	create_acorn_calendar_event_trigger.php	2025-04-03 07:43:15
+277	Acorn.Calendar	script	2.0.1	builder_table_create_acorn_calendar_event_part_user.php	2025-04-03 07:43:15
+278	Acorn.Calendar	script	2.0.1	builder_table_create_acorn_calendar_event_part_user_group.php	2025-04-03 07:43:15
+279	Acorn.Calendar	script	2.0.1	table_create_acorn_messaging_instance.php	2025-04-03 07:43:15
+280	Acorn.Calendar	script	2.0.1	create_acorn_users_extra_fields.php	2025-04-03 07:43:15
+281	Acorn.Calendar	script	2.0.1	create_functions.php	2025-04-03 07:43:15
+282	Acorn.Calendar	script	2.0.1	seed_calendar.php	2025-04-03 07:43:15
+283	Acorn.Calendar	comment	2.0.1	Initialize plugin.	2025-04-03 07:43:15
+284	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar_calendars	2025-04-03 07:43:15
+285	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar_event_types	2025-04-03 07:43:15
+286	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar_event_statuses	2025-04-03 07:43:15
+287	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar_events	2025-04-03 07:43:15
+288	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar_event_parts	2025-04-03 07:43:15
+289	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar_instances	2025-04-03 07:43:15
+290	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar_event_trigger	2025-04-03 07:43:15
+291	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar_event_part_user	2025-04-03 07:43:15
+292	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar_event_part_user_group	2025-04-03 07:43:15
+293	Acorn.Calendar	comment	2.0.1	Created table acorn_messaging_message_instance	2025-04-03 07:43:15
+294	Acorn.Calendar	comment	2.0.1	Create acorn users extra fields	2025-04-03 07:43:15
+295	Acorn.Calendar	comment	2.0.1	Create functions, including fn_acorn_calendar_seed()	2025-04-03 07:43:15
+296	Acorn.Calendar	comment	2.0.1	Seeding default Calendar, Types and Statuses	2025-04-03 07:43:15
 \.
 
 
@@ -4394,17 +4394,17 @@ COPY public.system_plugin_history (id, code, type, version, detail, created_at) 
 -- Data for Name: system_plugin_versions; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.system_plugin_versions (id, code, version, created_at, is_disabled, is_frozen, acornassociated_infrastructure) FROM stdin;
+COPY public.system_plugin_versions (id, code, version, created_at, is_disabled, is_frozen, acorn_infrastructure) FROM stdin;
 1	Winter.Demo	1.0.1	2025-04-03 07:39:25	f	f	f
-11	AcornAssociated.University	1.0.0	2025-04-03 12:27:46	f	f	f
-12	AcornAssociated.Exam	1.0.0	2025-04-08 18:24:18	f	f	f
-2	AcornAssociated.User	3.0.2	2025-04-03 07:42:59	f	f	f
+11	Acorn.University	1.0.0	2025-04-03 12:27:46	f	f	f
+12	Acorn.Exam	1.0.0	2025-04-08 18:24:18	f	f	f
+2	Acorn.User	3.0.2	2025-04-03 07:42:59	f	f	f
 5	Winter.Translate	2.2.0	2025-04-03 07:43:13	f	f	f
-6	AcornAssociated.BackendLocalization	1.0.0	2025-04-03 07:43:13	f	f	f
-7	AcornAssociated.Location	4.0.0	2025-04-03 07:43:13	f	f	f
-8	AcornAssociated.Messaging	2.0.0	2025-04-03 07:43:14	f	f	f
-9	AcornAssociated.Reporting	1.0.1	2025-04-03 07:43:14	f	f	f
-10	AcornAssociated.Calendar	2.0.1	2025-04-03 07:43:15	f	f	f
+6	Acorn.BackendLocalization	1.0.0	2025-04-03 07:43:13	f	f	f
+7	Acorn.Location	4.0.0	2025-04-03 07:43:13	f	f	f
+8	Acorn.Messaging	2.0.0	2025-04-03 07:43:14	f	f	f
+9	Acorn.Reporting	1.0.1	2025-04-03 07:43:14	f	f	f
+10	Acorn.Calendar	2.0.1	2025-04-03 07:43:15	f	f	f
 3	Winter.Location	2.0.2	2025-04-03 07:43:09	f	f	f
 4	Winter.TailwindUI	1.0.1	2025-04-03 07:43:09	f	f	f
 \.
@@ -5423,12 +5423,12 @@ COPY public.winter_location_states (id, country_id, name, code, is_enabled) FROM
 --
 
 COPY public.winter_translate_attributes (id, locale, model_id, model_type, attribute_data) FROM stdin;
-1	ar	9e95fdfa-b625-41d9-8f01-15d71f6b7552	AcornAssociated\\User\\Models\\UserGroup	{"name":"","description":""}
-2	ku	9e95fdfa-b625-41d9-8f01-15d71f6b7552	AcornAssociated\\User\\Models\\UserGroup	{"name":"","description":""}
-3	ar	9e95fe34-4596-4431-865c-a5a8d2a638c4	AcornAssociated\\Location\\Models\\Location	{"name":""}
-4	ku	9e95fe34-4596-4431-865c-a5a8d2a638c4	AcornAssociated\\Location\\Models\\Location	{"name":""}
-7	ar	9ea0cebf-6a5c-4ab8-9912-a387123f1c02	AcornAssociated\\Exam\\Models\\Exam	{"name":"","description":""}
-8	ku	9ea0cebf-6a5c-4ab8-9912-a387123f1c02	AcornAssociated\\Exam\\Models\\Exam	{"name":"","description":""}
+1	ar	9e95fdfa-b625-41d9-8f01-15d71f6b7552	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
+2	ku	9e95fdfa-b625-41d9-8f01-15d71f6b7552	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
+3	ar	9e95fe34-4596-4431-865c-a5a8d2a638c4	Acorn\\Location\\Models\\Location	{"name":""}
+4	ku	9e95fe34-4596-4431-865c-a5a8d2a638c4	Acorn\\Location\\Models\\Location	{"name":""}
+7	ar	9ea0cebf-6a5c-4ab8-9912-a387123f1c02	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+8	ku	9ea0cebf-6a5c-4ab8-9912-a387123f1c02	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
 \.
 
 
@@ -5460,10 +5460,10 @@ COPY public.winter_translate_messages (id, code, message_data, found, code_pre_2
 
 
 --
--- Name: acornassociated_reporting_reports_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
+-- Name: acorn_reporting_reports_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.acornassociated_reporting_reports_id_seq', 1, false);
+SELECT pg_catalog.setval('public.acorn_reporting_reports_id_seq', 1, false);
 
 
 --
@@ -5677,379 +5677,379 @@ SELECT pg_catalog.setval('public.system_settings_id_seq', 1, false);
 
 
 --
--- Name: acornassociated_calendar_calendars acornassociated_calendar_calendars_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_calendars acorn_calendar_calendars_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_calendars
-    ADD CONSTRAINT acornassociated_calendar_calendars_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_calendar_calendars
+    ADD CONSTRAINT acorn_calendar_calendars_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_calendar_event_part_user_group acornassociated_calendar_event_part_user_group_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_event_part_user_group acorn_calendar_event_part_user_group_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_part_user_group
-    ADD CONSTRAINT acornassociated_calendar_event_part_user_group_pkey PRIMARY KEY (event_part_id, user_group_id);
+ALTER TABLE ONLY public.acorn_calendar_event_part_user_group
+    ADD CONSTRAINT acorn_calendar_event_part_user_group_pkey PRIMARY KEY (event_part_id, user_group_id);
 
 
 --
--- Name: acornassociated_calendar_event_part_user acornassociated_calendar_event_part_user_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_event_part_user acorn_calendar_event_part_user_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_part_user
-    ADD CONSTRAINT acornassociated_calendar_event_part_user_pkey PRIMARY KEY (event_part_id, user_id, role_id);
+ALTER TABLE ONLY public.acorn_calendar_event_part_user
+    ADD CONSTRAINT acorn_calendar_event_part_user_pkey PRIMARY KEY (event_part_id, user_id, role_id);
 
 
 --
--- Name: acornassociated_calendar_event_parts acornassociated_calendar_event_parts_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_event_parts acorn_calendar_event_parts_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_parts
-    ADD CONSTRAINT acornassociated_calendar_event_parts_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_calendar_event_parts
+    ADD CONSTRAINT acorn_calendar_event_parts_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_calendar_event_statuses acornassociated_calendar_event_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_event_statuses acorn_calendar_event_statuses_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_statuses
-    ADD CONSTRAINT acornassociated_calendar_event_statuses_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_calendar_event_statuses
+    ADD CONSTRAINT acorn_calendar_event_statuses_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_calendar_event_types acornassociated_calendar_event_types_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_event_types acorn_calendar_event_types_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_types
-    ADD CONSTRAINT acornassociated_calendar_event_types_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_calendar_event_types
+    ADD CONSTRAINT acorn_calendar_event_types_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_calendar_events acornassociated_calendar_events_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_events acorn_calendar_events_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_events
-    ADD CONSTRAINT acornassociated_calendar_events_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_calendar_events
+    ADD CONSTRAINT acorn_calendar_events_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_calendar_instances acornassociated_calendar_instances_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_instances acorn_calendar_instances_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_instances
-    ADD CONSTRAINT acornassociated_calendar_instances_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_calendar_instances
+    ADD CONSTRAINT acorn_calendar_instances_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_exam_exam_materials acornassociated_exam_exam_material_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_exam_materials acorn_exam_exam_material_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_exam_materials
-    ADD CONSTRAINT acornassociated_exam_exam_material_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_exam_exam_materials
+    ADD CONSTRAINT acorn_exam_exam_material_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_exam_exams acornassociated_exam_exams_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_exams acorn_exam_exams_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_exams
-    ADD CONSTRAINT acornassociated_exam_exams_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_exam_exams
+    ADD CONSTRAINT acorn_exam_exams_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_exam_material_types acornassociated_exam_material_types_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_material_types acorn_exam_material_types_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_material_types
-    ADD CONSTRAINT acornassociated_exam_material_types_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_exam_material_types
+    ADD CONSTRAINT acorn_exam_material_types_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_exam_materials acornassociated_exam_materials_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_materials acorn_exam_materials_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_materials
-    ADD CONSTRAINT acornassociated_exam_materials_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_exam_materials
+    ADD CONSTRAINT acorn_exam_materials_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_exam_scores acornassociated_exam_results_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_scores acorn_exam_results_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_scores
-    ADD CONSTRAINT acornassociated_exam_results_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_exam_scores
+    ADD CONSTRAINT acorn_exam_results_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_exam_types acornassociated_exam_types_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_types acorn_exam_types_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_types
-    ADD CONSTRAINT acornassociated_exam_types_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_exam_types
+    ADD CONSTRAINT acorn_exam_types_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_location_lookup acornassociated_location_location_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_lookup acorn_location_location_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_lookup
-    ADD CONSTRAINT acornassociated_location_location_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_location_lookup
+    ADD CONSTRAINT acorn_location_location_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_messaging_label acornassociated_messaging_label_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_label acorn_messaging_label_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_label
-    ADD CONSTRAINT acornassociated_messaging_label_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_messaging_label
+    ADD CONSTRAINT acorn_messaging_label_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_messaging_message acornassociated_messaging_message_externalid_unique; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_message acorn_messaging_message_externalid_unique; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message
-    ADD CONSTRAINT acornassociated_messaging_message_externalid_unique UNIQUE ("externalID");
+ALTER TABLE ONLY public.acorn_messaging_message
+    ADD CONSTRAINT acorn_messaging_message_externalid_unique UNIQUE ("externalID");
 
 
 --
--- Name: acornassociated_messaging_message_instance acornassociated_messaging_message_instance_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_message_instance acorn_messaging_message_instance_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_instance
-    ADD CONSTRAINT acornassociated_messaging_message_instance_pkey PRIMARY KEY (message_id, instance_id);
+ALTER TABLE ONLY public.acorn_messaging_message_instance
+    ADD CONSTRAINT acorn_messaging_message_instance_pkey PRIMARY KEY (message_id, instance_id);
 
 
 --
--- Name: acornassociated_messaging_message_message acornassociated_messaging_message_message_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_message_message acorn_messaging_message_message_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_message
-    ADD CONSTRAINT acornassociated_messaging_message_message_pkey PRIMARY KEY (message1_id, message2_id, relationship);
+ALTER TABLE ONLY public.acorn_messaging_message_message
+    ADD CONSTRAINT acorn_messaging_message_message_pkey PRIMARY KEY (message1_id, message2_id, relationship);
 
 
 --
--- Name: acornassociated_messaging_message acornassociated_messaging_message_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_message acorn_messaging_message_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message
-    ADD CONSTRAINT acornassociated_messaging_message_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_messaging_message
+    ADD CONSTRAINT acorn_messaging_message_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_messaging_message_user_group acornassociated_messaging_message_user_group_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_message_user_group acorn_messaging_message_user_group_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_user_group
-    ADD CONSTRAINT acornassociated_messaging_message_user_group_pkey PRIMARY KEY (message_id, user_group_id);
+ALTER TABLE ONLY public.acorn_messaging_message_user_group
+    ADD CONSTRAINT acorn_messaging_message_user_group_pkey PRIMARY KEY (message_id, user_group_id);
 
 
 --
--- Name: acornassociated_messaging_message_user acornassociated_messaging_message_user_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_message_user acorn_messaging_message_user_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_user
-    ADD CONSTRAINT acornassociated_messaging_message_user_pkey PRIMARY KEY (message_id, user_id);
+ALTER TABLE ONLY public.acorn_messaging_message_user
+    ADD CONSTRAINT acorn_messaging_message_user_pkey PRIMARY KEY (message_id, user_id);
 
 
 --
--- Name: acornassociated_messaging_status acornassociated_messaging_status_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_status acorn_messaging_status_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_status
-    ADD CONSTRAINT acornassociated_messaging_status_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_messaging_status
+    ADD CONSTRAINT acorn_messaging_status_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_messaging_user_message_status acornassociated_messaging_user_message_status_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_user_message_status acorn_messaging_user_message_status_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_user_message_status
-    ADD CONSTRAINT acornassociated_messaging_user_message_status_pkey PRIMARY KEY (message_id, status_id);
+ALTER TABLE ONLY public.acorn_messaging_user_message_status
+    ADD CONSTRAINT acorn_messaging_user_message_status_pkey PRIMARY KEY (message_id, status_id);
 
 
 --
--- Name: acornassociated_reporting_reports acornassociated_reporting_reports_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_reporting_reports acorn_reporting_reports_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_reporting_reports
-    ADD CONSTRAINT acornassociated_reporting_reports_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_reporting_reports
+    ADD CONSTRAINT acorn_reporting_reports_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_servers acornassociated_servers_hostname_unique; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_servers acorn_servers_hostname_unique; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_servers
-    ADD CONSTRAINT acornassociated_servers_hostname_unique UNIQUE (hostname);
+ALTER TABLE ONLY public.acorn_servers
+    ADD CONSTRAINT acorn_servers_hostname_unique UNIQUE (hostname);
 
 
 --
--- Name: acornassociated_servers acornassociated_servers_id_unique; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_servers acorn_servers_id_unique; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_servers
-    ADD CONSTRAINT acornassociated_servers_id_unique UNIQUE (id);
+ALTER TABLE ONLY public.acorn_servers
+    ADD CONSTRAINT acorn_servers_id_unique UNIQUE (id);
 
 
 --
--- Name: acornassociated_university_courses acornassociated_university_courses_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_courses acorn_university_courses_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_courses
-    ADD CONSTRAINT acornassociated_university_courses_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_university_courses
+    ADD CONSTRAINT acorn_university_courses_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_university_departments acornassociated_university_departments_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_departments acorn_university_departments_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_departments
-    ADD CONSTRAINT acornassociated_university_departments_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_university_departments
+    ADD CONSTRAINT acorn_university_departments_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_university_education_authorities acornassociated_university_education_authorities_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_education_authorities acorn_university_education_authorities_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_education_authorities
-    ADD CONSTRAINT acornassociated_university_education_authorities_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_university_education_authorities
+    ADD CONSTRAINT acorn_university_education_authorities_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_university_entities acornassociated_university_entities_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_entities acorn_university_entities_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_entities
-    ADD CONSTRAINT acornassociated_university_entities_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_university_entities
+    ADD CONSTRAINT acorn_university_entities_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_university_faculties acornassociated_university_faculties_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_faculties acorn_university_faculties_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_faculties
-    ADD CONSTRAINT acornassociated_university_faculties_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_university_faculties
+    ADD CONSTRAINT acorn_university_faculties_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_university_hierarchies acornassociated_university_hierarchies_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_hierarchies acorn_university_hierarchies_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_hierarchies
-    ADD CONSTRAINT acornassociated_university_hierarchies_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_university_hierarchies
+    ADD CONSTRAINT acorn_university_hierarchies_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_university_schools acornassociated_university_schools_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_schools acorn_university_schools_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_schools
-    ADD CONSTRAINT acornassociated_university_schools_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_university_schools
+    ADD CONSTRAINT acorn_university_schools_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_university_universities acornassociated_university_universities_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_universities acorn_university_universities_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_universities
-    ADD CONSTRAINT acornassociated_university_universities_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_university_universities
+    ADD CONSTRAINT acorn_university_universities_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_university_years acornassociated_university_years_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_years acorn_university_years_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_years
-    ADD CONSTRAINT acornassociated_university_years_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_university_years
+    ADD CONSTRAINT acorn_university_years_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_user_language_user acornassociated_user_language_user_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_user_language_user acorn_user_language_user_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_user_language_user
-    ADD CONSTRAINT acornassociated_user_language_user_pkey PRIMARY KEY (user_id, language_id);
+ALTER TABLE ONLY public.acorn_user_language_user
+    ADD CONSTRAINT acorn_user_language_user_pkey PRIMARY KEY (user_id, language_id);
 
 
 --
--- Name: acornassociated_user_languages acornassociated_user_languages_name_unique; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_user_languages acorn_user_languages_name_unique; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_user_languages
-    ADD CONSTRAINT acornassociated_user_languages_name_unique UNIQUE (name);
+ALTER TABLE ONLY public.acorn_user_languages
+    ADD CONSTRAINT acorn_user_languages_name_unique UNIQUE (name);
 
 
 --
--- Name: acornassociated_user_languages acornassociated_user_languages_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_user_languages acorn_user_languages_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_user_languages
-    ADD CONSTRAINT acornassociated_user_languages_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_user_languages
+    ADD CONSTRAINT acorn_user_languages_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_user_roles acornassociated_user_roles_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_user_roles acorn_user_roles_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_user_roles
-    ADD CONSTRAINT acornassociated_user_roles_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_user_roles
+    ADD CONSTRAINT acorn_user_roles_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_user_throttle acornassociated_user_throttle_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_user_throttle acorn_user_throttle_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_user_throttle
-    ADD CONSTRAINT acornassociated_user_throttle_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_user_throttle
+    ADD CONSTRAINT acorn_user_throttle_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_user_user_group acornassociated_user_user_group_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_user_user_group acorn_user_user_group_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_user_user_group
-    ADD CONSTRAINT acornassociated_user_user_group_pkey PRIMARY KEY (user_id, user_group_id);
+ALTER TABLE ONLY public.acorn_user_user_group
+    ADD CONSTRAINT acorn_user_user_group_pkey PRIMARY KEY (user_id, user_group_id);
 
 
 --
--- Name: acornassociated_user_user_group_types acornassociated_user_user_group_types_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_user_user_group_types acorn_user_user_group_types_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_user_user_group_types
-    ADD CONSTRAINT acornassociated_user_user_group_types_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_user_user_group_types
+    ADD CONSTRAINT acorn_user_user_group_types_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_user_user_groups acornassociated_user_user_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_user_user_groups acorn_user_user_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_user_user_groups
-    ADD CONSTRAINT acornassociated_user_user_groups_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_user_user_groups
+    ADD CONSTRAINT acorn_user_user_groups_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_user_users acornassociated_user_users_email_unique; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_user_users acorn_user_users_email_unique; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_user_users
-    ADD CONSTRAINT acornassociated_user_users_email_unique UNIQUE (email);
+ALTER TABLE ONLY public.acorn_user_users
+    ADD CONSTRAINT acorn_user_users_email_unique UNIQUE (email);
 
 
 --
--- Name: acornassociated_user_users acornassociated_user_users_login_unique; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_user_users acorn_user_users_login_unique; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_user_users
-    ADD CONSTRAINT acornassociated_user_users_login_unique UNIQUE (username);
+ALTER TABLE ONLY public.acorn_user_users
+    ADD CONSTRAINT acorn_user_users_login_unique UNIQUE (username);
 
 
 --
--- Name: acornassociated_user_users acornassociated_user_users_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_user_users acorn_user_users_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_user_users
-    ADD CONSTRAINT acornassociated_user_users_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.acorn_user_users
+    ADD CONSTRAINT acorn_user_users_pkey PRIMARY KEY (id);
 
 
 --
@@ -6157,10 +6157,10 @@ ALTER TABLE ONLY public.backend_users
 
 
 --
--- Name: acornassociated_exam_exam_materials exam_material; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_exam_materials exam_material; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_exam_materials
+ALTER TABLE ONLY public.acorn_exam_exam_materials
     ADD CONSTRAINT exam_material UNIQUE (exam_id, material_id);
 
 
@@ -6197,50 +6197,50 @@ ALTER TABLE ONLY public.jobs
 
 
 --
--- Name: acornassociated_location_addresses location_addresses_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_addresses location_addresses_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_addresses
+ALTER TABLE ONLY public.acorn_location_addresses
     ADD CONSTRAINT location_addresses_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_location_area_types location_area_types_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_area_types location_area_types_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_area_types
+ALTER TABLE ONLY public.acorn_location_area_types
     ADD CONSTRAINT location_area_types_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_location_areas location_areas_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_areas location_areas_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_areas
+ALTER TABLE ONLY public.acorn_location_areas
     ADD CONSTRAINT location_areas_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_location_gps location_gps_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_gps location_gps_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_gps
+ALTER TABLE ONLY public.acorn_location_gps
     ADD CONSTRAINT location_gps_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_location_locations location_locations_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_locations location_locations_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_locations
+ALTER TABLE ONLY public.acorn_location_locations
     ADD CONSTRAINT location_locations_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acornassociated_location_types location_types_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_types location_types_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_types
+ALTER TABLE ONLY public.acorn_location_types
     ADD CONSTRAINT location_types_pkey PRIMARY KEY (id);
 
 
@@ -6317,10 +6317,10 @@ ALTER TABLE ONLY public.winter_translate_messages
 
 
 --
--- Name: acornassociated_user_mail_blockers rainlab_user_mail_blockers_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_user_mail_blockers rainlab_user_mail_blockers_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_user_mail_blockers
+ALTER TABLE ONLY public.acorn_user_mail_blockers
     ADD CONSTRAINT rainlab_user_mail_blockers_pkey PRIMARY KEY (id);
 
 
@@ -6429,73 +6429,73 @@ ALTER TABLE ONLY public.system_settings
 
 
 --
--- Name: acornassociated_calendar_instances_date_event_part_id_instance_; Type: INDEX; Schema: public; Owner: university
+-- Name: acorn_calendar_instances_date_event_part_id_instance_; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX acornassociated_calendar_instances_date_event_part_id_instance_ ON public.acornassociated_calendar_instances USING btree (date, event_part_id, instance_num);
-
-
---
--- Name: acornassociated_user_mail_blockers_email_index; Type: INDEX; Schema: public; Owner: university
---
-
-CREATE INDEX acornassociated_user_mail_blockers_email_index ON public.acornassociated_user_mail_blockers USING btree (email);
+CREATE INDEX acorn_calendar_instances_date_event_part_id_instance_ ON public.acorn_calendar_instances USING btree (date, event_part_id, instance_num);
 
 
 --
--- Name: acornassociated_user_mail_blockers_template_index; Type: INDEX; Schema: public; Owner: university
+-- Name: acorn_user_mail_blockers_email_index; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX acornassociated_user_mail_blockers_template_index ON public.acornassociated_user_mail_blockers USING btree (template);
-
-
---
--- Name: acornassociated_user_mail_blockers_user_id_index; Type: INDEX; Schema: public; Owner: university
---
-
-CREATE INDEX acornassociated_user_mail_blockers_user_id_index ON public.acornassociated_user_mail_blockers USING btree (user_id);
+CREATE INDEX acorn_user_mail_blockers_email_index ON public.acorn_user_mail_blockers USING btree (email);
 
 
 --
--- Name: acornassociated_user_throttle_ip_address_index; Type: INDEX; Schema: public; Owner: university
+-- Name: acorn_user_mail_blockers_template_index; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX acornassociated_user_throttle_ip_address_index ON public.acornassociated_user_throttle USING btree (ip_address);
-
-
---
--- Name: acornassociated_user_throttle_user_id_index; Type: INDEX; Schema: public; Owner: university
---
-
-CREATE INDEX acornassociated_user_throttle_user_id_index ON public.acornassociated_user_throttle USING btree (user_id);
+CREATE INDEX acorn_user_mail_blockers_template_index ON public.acorn_user_mail_blockers USING btree (template);
 
 
 --
--- Name: acornassociated_user_user_groups_code_index; Type: INDEX; Schema: public; Owner: university
+-- Name: acorn_user_mail_blockers_user_id_index; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX acornassociated_user_user_groups_code_index ON public.acornassociated_user_user_groups USING btree (code);
-
-
---
--- Name: acornassociated_user_users_activation_code_index; Type: INDEX; Schema: public; Owner: university
---
-
-CREATE INDEX acornassociated_user_users_activation_code_index ON public.acornassociated_user_users USING btree (activation_code);
+CREATE INDEX acorn_user_mail_blockers_user_id_index ON public.acorn_user_mail_blockers USING btree (user_id);
 
 
 --
--- Name: acornassociated_user_users_login_index; Type: INDEX; Schema: public; Owner: university
+-- Name: acorn_user_throttle_ip_address_index; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX acornassociated_user_users_login_index ON public.acornassociated_user_users USING btree (username);
+CREATE INDEX acorn_user_throttle_ip_address_index ON public.acorn_user_throttle USING btree (ip_address);
 
 
 --
--- Name: acornassociated_user_users_reset_password_code_index; Type: INDEX; Schema: public; Owner: university
+-- Name: acorn_user_throttle_user_id_index; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX acornassociated_user_users_reset_password_code_index ON public.acornassociated_user_users USING btree (reset_password_code);
+CREATE INDEX acorn_user_throttle_user_id_index ON public.acorn_user_throttle USING btree (user_id);
+
+
+--
+-- Name: acorn_user_user_groups_code_index; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX acorn_user_user_groups_code_index ON public.acorn_user_user_groups USING btree (code);
+
+
+--
+-- Name: acorn_user_users_activation_code_index; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX acorn_user_users_activation_code_index ON public.acorn_user_users USING btree (activation_code);
+
+
+--
+-- Name: acorn_user_users_login_index; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX acorn_user_users_login_index ON public.acorn_user_users USING btree (username);
+
+
+--
+-- Name: acorn_user_users_reset_password_code_index; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX acorn_user_users_reset_password_code_index ON public.acorn_user_users USING btree (reset_password_code);
 
 
 --
@@ -6611,143 +6611,143 @@ CREATE INDEX deferred_bindings_slave_type_index ON public.deferred_bindings USIN
 
 
 --
--- Name: dr_acornassociated_location_addresses_replica_identity; Type: INDEX; Schema: public; Owner: university
+-- Name: dr_acorn_location_addresses_replica_identity; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_location_addresses_replica_identity ON public.acornassociated_location_addresses USING btree (server_id, id);
-
-
---
--- Name: dr_acornassociated_location_area_types_replica_identity; Type: INDEX; Schema: public; Owner: university
---
-
-CREATE UNIQUE INDEX dr_acornassociated_location_area_types_replica_identity ON public.acornassociated_location_area_types USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_location_addresses_replica_identity ON public.acorn_location_addresses USING btree (server_id, id);
 
 
 --
--- Name: dr_acornassociated_location_areas_replica_identity; Type: INDEX; Schema: public; Owner: university
+-- Name: dr_acorn_location_area_types_replica_identity; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_location_areas_replica_identity ON public.acornassociated_location_areas USING btree (server_id, id);
-
-
---
--- Name: dr_acornassociated_location_gps_replica_identity; Type: INDEX; Schema: public; Owner: university
---
-
-CREATE UNIQUE INDEX dr_acornassociated_location_gps_replica_identity ON public.acornassociated_location_gps USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_location_area_types_replica_identity ON public.acorn_location_area_types USING btree (server_id, id);
 
 
 --
--- Name: dr_acornassociated_location_location_replica_identity; Type: INDEX; Schema: public; Owner: university
+-- Name: dr_acorn_location_areas_replica_identity; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_location_location_replica_identity ON public.acornassociated_location_locations USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_location_areas_replica_identity ON public.acorn_location_areas USING btree (server_id, id);
 
 
 --
--- Name: dr_acornassociated_location_types_replica_identity; Type: INDEX; Schema: public; Owner: university
+-- Name: dr_acorn_location_gps_replica_identity; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE UNIQUE INDEX dr_acornassociated_location_types_replica_identity ON public.acornassociated_location_types USING btree (server_id, id);
+CREATE UNIQUE INDEX dr_acorn_location_gps_replica_identity ON public.acorn_location_gps USING btree (server_id, id);
+
+
+--
+-- Name: dr_acorn_location_location_replica_identity; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE UNIQUE INDEX dr_acorn_location_location_replica_identity ON public.acorn_location_locations USING btree (server_id, id);
+
+
+--
+-- Name: dr_acorn_location_types_replica_identity; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE UNIQUE INDEX dr_acorn_location_types_replica_identity ON public.acorn_location_types USING btree (server_id, id);
 
 
 --
 -- Name: fki_course_id; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX fki_course_id ON public.acornassociated_exam_exams USING btree (course_id);
+CREATE INDEX fki_course_id ON public.acorn_exam_exams USING btree (course_id);
 
 
 --
 -- Name: fki_created_at_event_id; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX fki_created_at_event_id ON public.acornassociated_university_entities USING btree (created_at_event_id);
+CREATE INDEX fki_created_at_event_id ON public.acorn_university_entities USING btree (created_at_event_id);
 
 
 --
 -- Name: fki_created_by_user_id; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX fki_created_by_user_id ON public.acornassociated_university_entities USING btree (created_by_user_id);
+CREATE INDEX fki_created_by_user_id ON public.acorn_university_entities USING btree (created_by_user_id);
 
 
 --
 -- Name: fki_entity_id; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX fki_entity_id ON public.acornassociated_university_universities USING btree (id);
+CREATE INDEX fki_entity_id ON public.acorn_university_universities USING btree (id);
 
 
 --
 -- Name: fki_exam_id; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX fki_exam_id ON public.acornassociated_exam_exam_materials USING btree (exam_id);
+CREATE INDEX fki_exam_id ON public.acorn_exam_exam_materials USING btree (exam_id);
 
 
 --
 -- Name: fki_exam_material_id; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX fki_exam_material_id ON public.acornassociated_exam_scores USING btree (exam_material_id);
+CREATE INDEX fki_exam_material_id ON public.acorn_exam_scores USING btree (exam_material_id);
 
 
 --
 -- Name: fki_material_id; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX fki_material_id ON public.acornassociated_exam_exam_materials USING btree (material_id);
+CREATE INDEX fki_material_id ON public.acorn_exam_exam_materials USING btree (material_id);
 
 
 --
 -- Name: fki_parent_id; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX fki_parent_id ON public.acornassociated_university_hierarchies USING btree (parent_id);
+CREATE INDEX fki_parent_id ON public.acorn_university_hierarchies USING btree (parent_id);
 
 
 --
 -- Name: fki_server_id; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX fki_server_id ON public.acornassociated_university_entities USING btree (server_id);
+CREATE INDEX fki_server_id ON public.acorn_university_entities USING btree (server_id);
 
 
 --
 -- Name: fki_type_id; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX fki_type_id ON public.acornassociated_location_locations USING btree (type_id);
+CREATE INDEX fki_type_id ON public.acorn_location_locations USING btree (type_id);
 
 
 --
 -- Name: fki_updated_at_event_id; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX fki_updated_at_event_id ON public.acornassociated_university_entities USING btree (updated_at_event_id);
+CREATE INDEX fki_updated_at_event_id ON public.acorn_university_entities USING btree (updated_at_event_id);
 
 
 --
 -- Name: fki_updated_by_user_id; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX fki_updated_by_user_id ON public.acornassociated_university_entities USING btree (updated_by_user_id);
+CREATE INDEX fki_updated_by_user_id ON public.acorn_university_entities USING btree (updated_by_user_id);
 
 
 --
 -- Name: fki_user_id; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX fki_user_id ON public.acornassociated_exam_scores USING btree (user_id);
+CREATE INDEX fki_user_id ON public.acorn_exam_scores USING btree (user_id);
 
 
 --
 -- Name: fki_year_id; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX fki_year_id ON public.acornassociated_university_hierarchies USING btree (year_id);
+CREATE INDEX fki_year_id ON public.acorn_university_hierarchies USING btree (year_id);
 
 
 --
@@ -6982,1216 +6982,1216 @@ CREATE INDEX winter_translate_messages_code_pre_2_1_0_index ON public.winter_tra
 
 
 --
--- Name: acornassociated_calendar_event_parts tr_acornassociated_calendar_events_generate_event_instances; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_calendar_event_parts tr_acorn_calendar_events_generate_event_instances; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_calendar_events_generate_event_instances AFTER INSERT OR UPDATE ON public.acornassociated_calendar_event_parts FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_calendar_events_generate_event_instances();
+CREATE TRIGGER tr_acorn_calendar_events_generate_event_instances AFTER INSERT OR UPDATE ON public.acorn_calendar_event_parts FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_events_generate_event_instances();
 
 
 --
--- Name: acornassociated_exam_exam_materials tr_acornassociated_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_exam_exam_materials tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acornassociated_exam_exam_materials FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_calendar_trigger_activity_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_exam_exam_materials FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
--- Name: acornassociated_exam_exams tr_acornassociated_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_exam_exams tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acornassociated_exam_exams FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_calendar_trigger_activity_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_exam_exams FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
--- Name: acornassociated_exam_material_types tr_acornassociated_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_exam_material_types tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acornassociated_exam_material_types FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_calendar_trigger_activity_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_exam_material_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
--- Name: acornassociated_exam_materials tr_acornassociated_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_exam_materials tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acornassociated_exam_materials FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_calendar_trigger_activity_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_exam_materials FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
--- Name: acornassociated_exam_scores tr_acornassociated_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_exam_scores tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acornassociated_exam_scores FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_calendar_trigger_activity_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_exam_scores FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
--- Name: acornassociated_exam_types tr_acornassociated_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_exam_types tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acornassociated_exam_types FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_calendar_trigger_activity_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_exam_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
--- Name: acornassociated_university_entities tr_acornassociated_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_university_entities tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acornassociated_university_entities FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_calendar_trigger_activity_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_university_entities FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
--- Name: acornassociated_university_hierarchies tr_acornassociated_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_university_hierarchies tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acornassociated_university_hierarchies FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_calendar_trigger_activity_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_university_hierarchies FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
--- Name: acornassociated_university_years tr_acornassociated_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_university_years tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acornassociated_university_years FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_calendar_trigger_activity_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_university_years FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
--- Name: acornassociated_location_addresses tr_acornassociated_location_addresses_new_replicated_row; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_location_addresses tr_acorn_location_addresses_new_replicated_row; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_location_addresses_new_replicated_row BEFORE INSERT ON public.acornassociated_location_addresses FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_location_addresses_new_replicated_row BEFORE INSERT ON public.acorn_location_addresses FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_location_addresses ENABLE ALWAYS TRIGGER tr_acornassociated_location_addresses_new_replicated_row;
+ALTER TABLE public.acorn_location_addresses ENABLE ALWAYS TRIGGER tr_acorn_location_addresses_new_replicated_row;
 
 
 --
--- Name: acornassociated_location_addresses tr_acornassociated_location_addresses_server_id; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_location_addresses tr_acorn_location_addresses_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_location_addresses_server_id BEFORE INSERT ON public.acornassociated_location_addresses FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_location_addresses_server_id BEFORE INSERT ON public.acorn_location_addresses FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
--- Name: acornassociated_location_area_types tr_acornassociated_location_area_types_new_replicated_row; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_location_area_types tr_acorn_location_area_types_new_replicated_row; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_location_area_types_new_replicated_row BEFORE INSERT ON public.acornassociated_location_area_types FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_location_area_types_new_replicated_row BEFORE INSERT ON public.acorn_location_area_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_location_area_types ENABLE ALWAYS TRIGGER tr_acornassociated_location_area_types_new_replicated_row;
+ALTER TABLE public.acorn_location_area_types ENABLE ALWAYS TRIGGER tr_acorn_location_area_types_new_replicated_row;
 
 
 --
--- Name: acornassociated_location_area_types tr_acornassociated_location_area_types_server_id; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_location_area_types tr_acorn_location_area_types_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_location_area_types_server_id BEFORE INSERT ON public.acornassociated_location_area_types FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_location_area_types_server_id BEFORE INSERT ON public.acorn_location_area_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
--- Name: acornassociated_location_areas tr_acornassociated_location_areas_new_replicated_row; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_location_areas tr_acorn_location_areas_new_replicated_row; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_location_areas_new_replicated_row BEFORE INSERT ON public.acornassociated_location_areas FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_location_areas_new_replicated_row BEFORE INSERT ON public.acorn_location_areas FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_location_areas ENABLE ALWAYS TRIGGER tr_acornassociated_location_areas_new_replicated_row;
+ALTER TABLE public.acorn_location_areas ENABLE ALWAYS TRIGGER tr_acorn_location_areas_new_replicated_row;
 
 
 --
--- Name: acornassociated_location_areas tr_acornassociated_location_areas_server_id; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_location_areas tr_acorn_location_areas_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_location_areas_server_id BEFORE INSERT ON public.acornassociated_location_areas FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_location_areas_server_id BEFORE INSERT ON public.acorn_location_areas FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
--- Name: acornassociated_location_gps tr_acornassociated_location_gps_new_replicated_row; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_location_gps tr_acorn_location_gps_new_replicated_row; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_location_gps_new_replicated_row BEFORE INSERT ON public.acornassociated_location_gps FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_location_gps_new_replicated_row BEFORE INSERT ON public.acorn_location_gps FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_location_gps ENABLE ALWAYS TRIGGER tr_acornassociated_location_gps_new_replicated_row;
+ALTER TABLE public.acorn_location_gps ENABLE ALWAYS TRIGGER tr_acorn_location_gps_new_replicated_row;
 
 
 --
--- Name: acornassociated_location_gps tr_acornassociated_location_gps_server_id; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_location_gps tr_acorn_location_gps_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_location_gps_server_id BEFORE INSERT ON public.acornassociated_location_gps FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_location_gps_server_id BEFORE INSERT ON public.acorn_location_gps FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
--- Name: acornassociated_location_locations tr_acornassociated_location_locations_new_replicated_row; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_location_locations tr_acorn_location_locations_new_replicated_row; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_location_locations_new_replicated_row BEFORE INSERT ON public.acornassociated_location_locations FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_location_locations_new_replicated_row BEFORE INSERT ON public.acorn_location_locations FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_location_locations ENABLE ALWAYS TRIGGER tr_acornassociated_location_locations_new_replicated_row;
+ALTER TABLE public.acorn_location_locations ENABLE ALWAYS TRIGGER tr_acorn_location_locations_new_replicated_row;
 
 
 --
--- Name: acornassociated_location_locations tr_acornassociated_location_locations_server_id; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_location_locations tr_acorn_location_locations_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_location_locations_server_id BEFORE INSERT ON public.acornassociated_location_locations FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_location_locations_server_id BEFORE INSERT ON public.acorn_location_locations FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
--- Name: acornassociated_location_types tr_acornassociated_location_types_new_replicated_row; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_location_types tr_acorn_location_types_new_replicated_row; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_location_types_new_replicated_row BEFORE INSERT ON public.acornassociated_location_types FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_new_replicated_row();
+CREATE TRIGGER tr_acorn_location_types_new_replicated_row BEFORE INSERT ON public.acorn_location_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_new_replicated_row();
 
-ALTER TABLE public.acornassociated_location_types ENABLE ALWAYS TRIGGER tr_acornassociated_location_types_new_replicated_row;
+ALTER TABLE public.acorn_location_types ENABLE ALWAYS TRIGGER tr_acorn_location_types_new_replicated_row;
 
 
 --
--- Name: acornassociated_location_types tr_acornassociated_location_types_server_id; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_location_types tr_acorn_location_types_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_location_types_server_id BEFORE INSERT ON public.acornassociated_location_types FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_location_types_server_id BEFORE INSERT ON public.acorn_location_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
--- Name: acornassociated_exam_exam_materials tr_acornassociated_server_id; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_exam_exam_materials tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_server_id BEFORE INSERT ON public.acornassociated_exam_exam_materials FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_exam_exam_materials FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
--- Name: acornassociated_exam_exams tr_acornassociated_server_id; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_exam_exams tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_server_id BEFORE INSERT ON public.acornassociated_exam_exams FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_exam_exams FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
--- Name: acornassociated_exam_material_types tr_acornassociated_server_id; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_exam_material_types tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_server_id BEFORE INSERT ON public.acornassociated_exam_material_types FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_exam_material_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
--- Name: acornassociated_exam_materials tr_acornassociated_server_id; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_exam_materials tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_server_id BEFORE INSERT ON public.acornassociated_exam_materials FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_exam_materials FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
--- Name: acornassociated_exam_scores tr_acornassociated_server_id; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_exam_scores tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_server_id BEFORE INSERT ON public.acornassociated_exam_scores FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_exam_scores FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
--- Name: acornassociated_exam_types tr_acornassociated_server_id; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_exam_types tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_server_id BEFORE INSERT ON public.acornassociated_exam_types FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_exam_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
--- Name: acornassociated_university_entities tr_acornassociated_server_id; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_university_entities tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_server_id BEFORE INSERT ON public.acornassociated_university_entities FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_entities FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
--- Name: acornassociated_university_hierarchies tr_acornassociated_server_id; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_university_hierarchies tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_server_id BEFORE INSERT ON public.acornassociated_university_hierarchies FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_hierarchies FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
--- Name: acornassociated_university_years tr_acornassociated_server_id; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_university_years tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acornassociated_server_id BEFORE INSERT ON public.acornassociated_university_years FOR EACH ROW EXECUTE FUNCTION public.fn_acornassociated_server_id();
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_years FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
--- Name: acornassociated_calendar_calendars acornassociated_calendar_calendars_owner_user_group_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_calendars acorn_calendar_calendars_owner_user_group_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_calendars
-    ADD CONSTRAINT acornassociated_calendar_calendars_owner_user_group_id_foreign FOREIGN KEY (owner_user_group_id) REFERENCES public.acornassociated_user_user_groups(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_calendars
+    ADD CONSTRAINT acorn_calendar_calendars_owner_user_group_id_foreign FOREIGN KEY (owner_user_group_id) REFERENCES public.acorn_user_user_groups(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_calendar_calendars acornassociated_calendar_calendars_owner_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_calendars acorn_calendar_calendars_owner_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_calendars
-    ADD CONSTRAINT acornassociated_calendar_calendars_owner_user_id_foreign FOREIGN KEY (owner_user_id) REFERENCES public.acornassociated_user_users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_calendars
+    ADD CONSTRAINT acorn_calendar_calendars_owner_user_id_foreign FOREIGN KEY (owner_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_calendar_event_part_user acornassociated_calendar_event_part_user_event_part_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_event_part_user acorn_calendar_event_part_user_event_part_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_part_user
-    ADD CONSTRAINT acornassociated_calendar_event_part_user_event_part_id_foreign FOREIGN KEY (event_part_id) REFERENCES public.acornassociated_calendar_event_parts(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_part_user
+    ADD CONSTRAINT acorn_calendar_event_part_user_event_part_id_foreign FOREIGN KEY (event_part_id) REFERENCES public.acorn_calendar_event_parts(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_calendar_event_part_user_group acornassociated_calendar_event_part_user_group_event_part_id_fo; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_event_part_user_group acorn_calendar_event_part_user_group_event_part_id_fo; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_part_user_group
-    ADD CONSTRAINT acornassociated_calendar_event_part_user_group_event_part_id_fo FOREIGN KEY (event_part_id) REFERENCES public.acornassociated_calendar_event_parts(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_part_user_group
+    ADD CONSTRAINT acorn_calendar_event_part_user_group_event_part_id_fo FOREIGN KEY (event_part_id) REFERENCES public.acorn_calendar_event_parts(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_calendar_event_part_user_group acornassociated_calendar_event_part_user_group_user_group_id_fo; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_event_part_user_group acorn_calendar_event_part_user_group_user_group_id_fo; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_part_user_group
-    ADD CONSTRAINT acornassociated_calendar_event_part_user_group_user_group_id_fo FOREIGN KEY (user_group_id) REFERENCES public.acornassociated_user_user_groups(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_part_user_group
+    ADD CONSTRAINT acorn_calendar_event_part_user_group_user_group_id_fo FOREIGN KEY (user_group_id) REFERENCES public.acorn_user_user_groups(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_calendar_event_part_user acornassociated_calendar_event_part_user_role_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_event_part_user acorn_calendar_event_part_user_role_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_part_user
-    ADD CONSTRAINT acornassociated_calendar_event_part_user_role_id_foreign FOREIGN KEY (role_id) REFERENCES public.acornassociated_user_roles(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_part_user
+    ADD CONSTRAINT acorn_calendar_event_part_user_role_id_foreign FOREIGN KEY (role_id) REFERENCES public.acorn_user_roles(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_calendar_event_part_user acornassociated_calendar_event_part_user_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_event_part_user acorn_calendar_event_part_user_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_part_user
-    ADD CONSTRAINT acornassociated_calendar_event_part_user_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_part_user
+    ADD CONSTRAINT acorn_calendar_event_part_user_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_calendar_event_parts acornassociated_calendar_event_parts_event_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_event_parts acorn_calendar_event_parts_event_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_parts
-    ADD CONSTRAINT acornassociated_calendar_event_parts_event_id_foreign FOREIGN KEY (event_id) REFERENCES public.acornassociated_calendar_events(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_parts
+    ADD CONSTRAINT acorn_calendar_event_parts_event_id_foreign FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_events(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_calendar_event_parts acornassociated_calendar_event_parts_locked_by_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_event_parts acorn_calendar_event_parts_locked_by_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_parts
-    ADD CONSTRAINT acornassociated_calendar_event_parts_locked_by_user_id_foreign FOREIGN KEY (locked_by_user_id) REFERENCES public.backend_users(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.acorn_calendar_event_parts
+    ADD CONSTRAINT acorn_calendar_event_parts_locked_by_user_id_foreign FOREIGN KEY (locked_by_user_id) REFERENCES public.backend_users(id) ON DELETE SET NULL;
 
 
 --
--- Name: acornassociated_calendar_event_parts acornassociated_calendar_event_parts_parent_event_part_id_forei; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_event_parts acorn_calendar_event_parts_parent_event_part_id_forei; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_parts
-    ADD CONSTRAINT acornassociated_calendar_event_parts_parent_event_part_id_forei FOREIGN KEY (parent_event_part_id) REFERENCES public.acornassociated_calendar_event_parts(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_parts
+    ADD CONSTRAINT acorn_calendar_event_parts_parent_event_part_id_forei FOREIGN KEY (parent_event_part_id) REFERENCES public.acorn_calendar_event_parts(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_calendar_event_parts acornassociated_calendar_event_parts_status_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_event_parts acorn_calendar_event_parts_status_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_parts
-    ADD CONSTRAINT acornassociated_calendar_event_parts_status_id_foreign FOREIGN KEY (status_id) REFERENCES public.acornassociated_calendar_event_statuses(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_parts
+    ADD CONSTRAINT acorn_calendar_event_parts_status_id_foreign FOREIGN KEY (status_id) REFERENCES public.acorn_calendar_event_statuses(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_calendar_event_parts acornassociated_calendar_event_parts_type_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_event_parts acorn_calendar_event_parts_type_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_parts
-    ADD CONSTRAINT acornassociated_calendar_event_parts_type_id_foreign FOREIGN KEY (type_id) REFERENCES public.acornassociated_calendar_event_types(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_parts
+    ADD CONSTRAINT acorn_calendar_event_parts_type_id_foreign FOREIGN KEY (type_id) REFERENCES public.acorn_calendar_event_types(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_calendar_event_statuses acornassociated_calendar_event_statuses_calendar_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_event_statuses acorn_calendar_event_statuses_calendar_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_statuses
-    ADD CONSTRAINT acornassociated_calendar_event_statuses_calendar_id_foreign FOREIGN KEY (calendar_id) REFERENCES public.acornassociated_calendar_calendars(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_statuses
+    ADD CONSTRAINT acorn_calendar_event_statuses_calendar_id_foreign FOREIGN KEY (calendar_id) REFERENCES public.acorn_calendar_calendars(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_calendar_event_types acornassociated_calendar_event_types_calendar_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_event_types acorn_calendar_event_types_calendar_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_event_types
-    ADD CONSTRAINT acornassociated_calendar_event_types_calendar_id_foreign FOREIGN KEY (calendar_id) REFERENCES public.acornassociated_calendar_calendars(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_event_types
+    ADD CONSTRAINT acorn_calendar_event_types_calendar_id_foreign FOREIGN KEY (calendar_id) REFERENCES public.acorn_calendar_calendars(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_calendar_events acornassociated_calendar_events_calendar_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_events acorn_calendar_events_calendar_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_events
-    ADD CONSTRAINT acornassociated_calendar_events_calendar_id_foreign FOREIGN KEY (calendar_id) REFERENCES public.acornassociated_calendar_calendars(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_events
+    ADD CONSTRAINT acorn_calendar_events_calendar_id_foreign FOREIGN KEY (calendar_id) REFERENCES public.acorn_calendar_calendars(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_calendar_events acornassociated_calendar_events_owner_user_group_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_events acorn_calendar_events_owner_user_group_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_events
-    ADD CONSTRAINT acornassociated_calendar_events_owner_user_group_id_foreign FOREIGN KEY (owner_user_group_id) REFERENCES public.acornassociated_user_user_groups(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_events
+    ADD CONSTRAINT acorn_calendar_events_owner_user_group_id_foreign FOREIGN KEY (owner_user_group_id) REFERENCES public.acorn_user_user_groups(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_calendar_events acornassociated_calendar_events_owner_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_events acorn_calendar_events_owner_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_events
-    ADD CONSTRAINT acornassociated_calendar_events_owner_user_id_foreign FOREIGN KEY (owner_user_id) REFERENCES public.acornassociated_user_users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_events
+    ADD CONSTRAINT acorn_calendar_events_owner_user_id_foreign FOREIGN KEY (owner_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_calendar_instances acornassociated_calendar_instances_event_part_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_calendar_instances acorn_calendar_instances_event_part_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_calendar_instances
-    ADD CONSTRAINT acornassociated_calendar_instances_event_part_id_foreign FOREIGN KEY (event_part_id) REFERENCES public.acornassociated_calendar_event_parts(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_calendar_instances
+    ADD CONSTRAINT acorn_calendar_instances_event_part_id_foreign FOREIGN KEY (event_part_id) REFERENCES public.acorn_calendar_event_parts(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_messaging_message_instance acornassociated_messaging_message_instance_instance_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_message_instance acorn_messaging_message_instance_instance_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_instance
-    ADD CONSTRAINT acornassociated_messaging_message_instance_instance_id_foreign FOREIGN KEY (instance_id) REFERENCES public.acornassociated_calendar_instances(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_message_instance
+    ADD CONSTRAINT acorn_messaging_message_instance_instance_id_foreign FOREIGN KEY (instance_id) REFERENCES public.acorn_calendar_instances(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_messaging_message_instance acornassociated_messaging_message_instance_message_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_message_instance acorn_messaging_message_instance_message_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_instance
-    ADD CONSTRAINT acornassociated_messaging_message_instance_message_id_foreign FOREIGN KEY (message_id) REFERENCES public.acornassociated_messaging_message(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_message_instance
+    ADD CONSTRAINT acorn_messaging_message_instance_message_id_foreign FOREIGN KEY (message_id) REFERENCES public.acorn_messaging_message(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_messaging_message_user_group acornassociated_messaging_message_user_group_message_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_message_user_group acorn_messaging_message_user_group_message_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_user_group
-    ADD CONSTRAINT acornassociated_messaging_message_user_group_message_id_foreign FOREIGN KEY (message_id) REFERENCES public.acornassociated_messaging_message(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_message_user_group
+    ADD CONSTRAINT acorn_messaging_message_user_group_message_id_foreign FOREIGN KEY (message_id) REFERENCES public.acorn_messaging_message(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_messaging_message_user_group acornassociated_messaging_message_user_group_user_group_id_fore; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_message_user_group acorn_messaging_message_user_group_user_group_id_fore; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_user_group
-    ADD CONSTRAINT acornassociated_messaging_message_user_group_user_group_id_fore FOREIGN KEY (user_group_id) REFERENCES public.acornassociated_user_user_groups(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_message_user_group
+    ADD CONSTRAINT acorn_messaging_message_user_group_user_group_id_fore FOREIGN KEY (user_group_id) REFERENCES public.acorn_user_user_groups(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_messaging_message_user acornassociated_messaging_message_user_message_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_message_user acorn_messaging_message_user_message_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_user
-    ADD CONSTRAINT acornassociated_messaging_message_user_message_id_foreign FOREIGN KEY (message_id) REFERENCES public.acornassociated_messaging_message(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_message_user
+    ADD CONSTRAINT acorn_messaging_message_user_message_id_foreign FOREIGN KEY (message_id) REFERENCES public.acorn_messaging_message(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_messaging_message_user acornassociated_messaging_message_user_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_message_user acorn_messaging_message_user_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_message_user
-    ADD CONSTRAINT acornassociated_messaging_message_user_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_message_user
+    ADD CONSTRAINT acorn_messaging_message_user_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_messaging_user_message_status acornassociated_messaging_user_message_status_message_id_foreig; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_user_message_status acorn_messaging_user_message_status_message_id_foreig; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_user_message_status
-    ADD CONSTRAINT acornassociated_messaging_user_message_status_message_id_foreig FOREIGN KEY (message_id) REFERENCES public.acornassociated_messaging_message(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_user_message_status
+    ADD CONSTRAINT acorn_messaging_user_message_status_message_id_foreig FOREIGN KEY (message_id) REFERENCES public.acorn_messaging_message(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_messaging_user_message_status acornassociated_messaging_user_message_status_status_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_user_message_status acorn_messaging_user_message_status_status_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_user_message_status
-    ADD CONSTRAINT acornassociated_messaging_user_message_status_status_id_foreign FOREIGN KEY (status_id) REFERENCES public.acornassociated_messaging_status(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_user_message_status
+    ADD CONSTRAINT acorn_messaging_user_message_status_status_id_foreign FOREIGN KEY (status_id) REFERENCES public.acorn_messaging_status(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_messaging_user_message_status acornassociated_messaging_user_message_status_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_messaging_user_message_status acorn_messaging_user_message_status_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_messaging_user_message_status
-    ADD CONSTRAINT acornassociated_messaging_user_message_status_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_messaging_user_message_status
+    ADD CONSTRAINT acorn_messaging_user_message_status_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
 
 
 --
--- Name: acornassociated_user_language_user acornassociated_user_language_user_language_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_user_language_user acorn_user_language_user_language_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_user_language_user
-    ADD CONSTRAINT acornassociated_user_language_user_language_id_foreign FOREIGN KEY (language_id) REFERENCES public.acornassociated_user_languages(id);
+ALTER TABLE ONLY public.acorn_user_language_user
+    ADD CONSTRAINT acorn_user_language_user_language_id_foreign FOREIGN KEY (language_id) REFERENCES public.acorn_user_languages(id);
 
 
 --
--- Name: acornassociated_user_language_user acornassociated_user_language_user_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_user_language_user acorn_user_language_user_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_user_language_user
-    ADD CONSTRAINT acornassociated_user_language_user_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_user_language_user
+    ADD CONSTRAINT acorn_user_language_user_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
--- Name: acornassociated_user_user_groups acornassociated_user_user_groups_parent_user_group_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_user_user_groups acorn_user_user_groups_parent_user_group_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_user_user_groups
-    ADD CONSTRAINT acornassociated_user_user_groups_parent_user_group_id_foreign FOREIGN KEY (parent_user_group_id) REFERENCES public.acornassociated_user_user_groups(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.acorn_user_user_groups
+    ADD CONSTRAINT acorn_user_user_groups_parent_user_group_id_foreign FOREIGN KEY (parent_user_group_id) REFERENCES public.acorn_user_user_groups(id) ON DELETE SET NULL;
 
 
 --
--- Name: acornassociated_user_user_groups acornassociated_user_user_groups_type_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_user_user_groups acorn_user_user_groups_type_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_user_user_groups
-    ADD CONSTRAINT acornassociated_user_user_groups_type_id_foreign FOREIGN KEY (type_id) REFERENCES public.acornassociated_user_user_group_types(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.acorn_user_user_groups
+    ADD CONSTRAINT acorn_user_user_groups_type_id_foreign FOREIGN KEY (type_id) REFERENCES public.acorn_user_user_group_types(id) ON DELETE SET NULL;
 
 
 --
--- Name: acornassociated_location_locations address_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_locations address_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_locations
-    ADD CONSTRAINT address_id FOREIGN KEY (address_id) REFERENCES public.acornassociated_location_addresses(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_location_locations
+    ADD CONSTRAINT address_id FOREIGN KEY (address_id) REFERENCES public.acorn_location_addresses(id) NOT VALID;
 
 
 --
--- Name: acornassociated_location_addresses addresses_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_addresses addresses_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_addresses
-    ADD CONSTRAINT addresses_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_location_addresses
+    ADD CONSTRAINT addresses_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
--- Name: acornassociated_location_addresses area_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_addresses area_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_addresses
-    ADD CONSTRAINT area_id FOREIGN KEY (area_id) REFERENCES public.acornassociated_location_areas(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_location_addresses
+    ADD CONSTRAINT area_id FOREIGN KEY (area_id) REFERENCES public.acorn_location_areas(id) NOT VALID;
 
 
 --
--- Name: acornassociated_location_areas area_type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_areas area_type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_areas
-    ADD CONSTRAINT area_type_id FOREIGN KEY (area_type_id) REFERENCES public.acornassociated_location_area_types(id);
+ALTER TABLE ONLY public.acorn_location_areas
+    ADD CONSTRAINT area_type_id FOREIGN KEY (area_type_id) REFERENCES public.acorn_location_area_types(id);
 
 
 --
--- Name: acornassociated_location_area_types area_types_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_area_types area_types_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_area_types
-    ADD CONSTRAINT area_types_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_location_area_types
+    ADD CONSTRAINT area_types_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
--- Name: acornassociated_location_areas areas_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_areas areas_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_areas
-    ADD CONSTRAINT areas_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_location_areas
+    ADD CONSTRAINT areas_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
--- Name: backend_users backend_users_acornassociated_user_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: backend_users backend_users_acorn_user_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.backend_users
-    ADD CONSTRAINT backend_users_acornassociated_user_user_id_foreign FOREIGN KEY (acornassociated_user_user_id) REFERENCES public.acornassociated_user_users(id) ON DELETE SET NULL;
+    ADD CONSTRAINT backend_users_acorn_user_user_id_foreign FOREIGN KEY (acorn_user_user_id) REFERENCES public.acorn_user_users(id) ON DELETE SET NULL;
 
 
 --
--- Name: acornassociated_exam_exams course_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_exams course_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_exams
-    ADD CONSTRAINT course_id FOREIGN KEY (course_id) REFERENCES public.acornassociated_university_courses(id) NOT VALID;
-
-
---
--- Name: acornassociated_university_entities created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acornassociated_university_entities
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_exams
+    ADD CONSTRAINT course_id FOREIGN KEY (course_id) REFERENCES public.acorn_university_courses(id) NOT VALID;
 
 
 --
--- Name: acornassociated_university_years created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_entities created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_years
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
-
-
---
--- Name: acornassociated_university_hierarchies created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acornassociated_university_hierarchies
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_entities
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_material_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_years created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_material_types
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
-
-
---
--- Name: acornassociated_exam_materials created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acornassociated_exam_materials
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_years
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_hierarchies created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_types
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
-
-
---
--- Name: acornassociated_exam_exams created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acornassociated_exam_exams
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_hierarchies
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_scores created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_material_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_scores
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
-
-
---
--- Name: acornassociated_exam_exam_materials created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acornassociated_exam_exam_materials
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_material_types
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acornassociated_university_entities created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_materials created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_entities
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
-
-
---
--- Name: acornassociated_university_years created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acornassociated_university_years
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_materials
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acornassociated_university_hierarchies created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_hierarchies
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
-
-
---
--- Name: acornassociated_exam_material_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acornassociated_exam_material_types
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_types
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_materials created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_exams created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_materials
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
-
-
---
--- Name: acornassociated_exam_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acornassociated_exam_types
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_exams
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_exams created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_scores created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_exams
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
-
-
---
--- Name: acornassociated_exam_scores created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acornassociated_exam_scores
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_scores
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_exam_materials created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_exam_materials created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_exam_materials
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
-
-
---
--- Name: acornassociated_university_education_authorities entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acornassociated_university_education_authorities
-    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acornassociated_university_entities(id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_exam_materials
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: CONSTRAINT entity_id ON acornassociated_university_education_authorities; Type: COMMENT; Schema: public; Owner: university
+-- Name: acorn_university_entities created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT entity_id ON public.acornassociated_university_education_authorities IS 'type: leaf';
-
-
---
--- Name: acornassociated_university_courses entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acornassociated_university_courses
-    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acornassociated_university_entities(id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE ONLY public.acorn_university_entities
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: CONSTRAINT entity_id ON acornassociated_university_courses; Type: COMMENT; Schema: public; Owner: university
+-- Name: acorn_university_years created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT entity_id ON public.acornassociated_university_courses IS 'type: leaf';
-
-
---
--- Name: acornassociated_university_departments entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acornassociated_university_departments
-    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acornassociated_university_entities(id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE ONLY public.acorn_university_years
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: CONSTRAINT entity_id ON acornassociated_university_departments; Type: COMMENT; Schema: public; Owner: university
+-- Name: acorn_university_hierarchies created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT entity_id ON public.acornassociated_university_departments IS 'type: leaf';
-
-
---
--- Name: acornassociated_university_faculties entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acornassociated_university_faculties
-    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acornassociated_university_entities(id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE ONLY public.acorn_university_hierarchies
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: CONSTRAINT entity_id ON acornassociated_university_faculties; Type: COMMENT; Schema: public; Owner: university
+-- Name: acorn_exam_material_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT entity_id ON public.acornassociated_university_faculties IS 'type: leaf';
-
-
---
--- Name: acornassociated_university_schools entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acornassociated_university_schools
-    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acornassociated_university_entities(id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_material_types
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: CONSTRAINT entity_id ON acornassociated_university_schools; Type: COMMENT; Schema: public; Owner: university
+-- Name: acorn_exam_materials created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT entity_id ON public.acornassociated_university_schools IS 'type: leaf';
-
-
---
--- Name: acornassociated_university_universities entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acornassociated_university_universities
-    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acornassociated_university_entities(id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_materials
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: CONSTRAINT entity_id ON acornassociated_university_universities; Type: COMMENT; Schema: public; Owner: university
+-- Name: acorn_exam_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT entity_id ON public.acornassociated_university_universities IS 'type: leaf
+ALTER TABLE ONLY public.acorn_exam_types
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_exams created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_exams
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_scores created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_scores
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_exam_materials created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_exam_materials
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_education_authorities entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_education_authorities
+    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT entity_id ON acorn_university_education_authorities; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT entity_id ON public.acorn_university_education_authorities IS 'type: leaf';
+
+
+--
+-- Name: acorn_university_courses entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_courses
+    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT entity_id ON acorn_university_courses; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT entity_id ON public.acorn_university_courses IS 'type: leaf';
+
+
+--
+-- Name: acorn_university_departments entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_departments
+    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT entity_id ON acorn_university_departments; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT entity_id ON public.acorn_university_departments IS 'type: leaf';
+
+
+--
+-- Name: acorn_university_faculties entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_faculties
+    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT entity_id ON acorn_university_faculties; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT entity_id ON public.acorn_university_faculties IS 'type: leaf';
+
+
+--
+-- Name: acorn_university_schools entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_schools
+    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT entity_id ON acorn_university_schools; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT entity_id ON public.acorn_university_schools IS 'type: leaf';
+
+
+--
+-- Name: acorn_university_universities entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_universities
+    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT entity_id ON acorn_university_universities; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT entity_id ON public.acorn_university_universities IS 'type: leaf
 global-scope: to';
 
 
 --
--- Name: acornassociated_university_hierarchies entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_hierarchies entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_hierarchies
-    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acornassociated_university_entities(id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE ONLY public.acorn_university_hierarchies
+    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
 
 
 --
--- Name: CONSTRAINT entity_id ON acornassociated_university_hierarchies; Type: COMMENT; Schema: public; Owner: university
+-- Name: CONSTRAINT entity_id ON acorn_university_hierarchies; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT entity_id ON public.acornassociated_university_hierarchies IS 'global-scope: from';
+COMMENT ON CONSTRAINT entity_id ON public.acorn_university_hierarchies IS 'global-scope: from';
 
 
 --
--- Name: acornassociated_exam_exam_materials exam_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_exam_materials exam_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_exam_materials
-    ADD CONSTRAINT exam_id FOREIGN KEY (exam_id) REFERENCES public.acornassociated_exam_exams(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_exam_materials
+    ADD CONSTRAINT exam_id FOREIGN KEY (exam_id) REFERENCES public.acorn_exam_exams(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_scores exam_material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_scores exam_material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_scores
-    ADD CONSTRAINT exam_material_id FOREIGN KEY (exam_material_id) REFERENCES public.acornassociated_exam_exam_materials(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_scores
+    ADD CONSTRAINT exam_material_id FOREIGN KEY (exam_material_id) REFERENCES public.acorn_exam_exam_materials(id) NOT VALID;
 
 
 --
--- Name: CONSTRAINT exam_material_id ON acornassociated_exam_scores; Type: COMMENT; Schema: public; Owner: university
+-- Name: CONSTRAINT exam_material_id ON acorn_exam_scores; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT exam_material_id ON public.acornassociated_exam_scores IS 'type: Xto1';
+COMMENT ON CONSTRAINT exam_material_id ON public.acorn_exam_scores IS 'type: Xto1';
 
 
 --
--- Name: acornassociated_location_gps gps_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_gps gps_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_gps
-    ADD CONSTRAINT gps_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_location_gps
+    ADD CONSTRAINT gps_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
--- Name: acornassociated_location_areas gps_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_areas gps_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_areas
-    ADD CONSTRAINT gps_id FOREIGN KEY (gps_id) REFERENCES public.acornassociated_location_gps(id);
+ALTER TABLE ONLY public.acorn_location_areas
+    ADD CONSTRAINT gps_id FOREIGN KEY (gps_id) REFERENCES public.acorn_location_gps(id);
 
 
 --
--- Name: acornassociated_location_addresses gps_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_addresses gps_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_addresses
-    ADD CONSTRAINT gps_id FOREIGN KEY (gps_id) REFERENCES public.acornassociated_location_gps(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_location_addresses
+    ADD CONSTRAINT gps_id FOREIGN KEY (gps_id) REFERENCES public.acorn_location_gps(id) NOT VALID;
 
 
 --
--- Name: acornassociated_user_user_groups location_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_user_user_groups location_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_user_user_groups
-    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acornassociated_location_locations(id) ON DELETE SET NULL NOT VALID;
+ALTER TABLE ONLY public.acorn_user_user_groups
+    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acorn_location_locations(id) ON DELETE SET NULL NOT VALID;
 
 
 --
--- Name: acornassociated_servers location_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_servers location_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_servers
-    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acornassociated_location_locations(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.acorn_servers
+    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acorn_location_locations(id) ON DELETE SET NULL;
 
 
 --
--- Name: acornassociated_location_locations locations_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_locations locations_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_locations
-    ADD CONSTRAINT locations_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_location_locations
+    ADD CONSTRAINT locations_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
--- Name: acornassociated_exam_exam_materials material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_exam_materials material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_exam_materials
-    ADD CONSTRAINT material_id FOREIGN KEY (material_id) REFERENCES public.acornassociated_exam_materials(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_exam_materials
+    ADD CONSTRAINT material_id FOREIGN KEY (material_id) REFERENCES public.acorn_exam_materials(id) NOT VALID;
 
 
 --
--- Name: acornassociated_location_areas parent_area_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_areas parent_area_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_areas
-    ADD CONSTRAINT parent_area_id FOREIGN KEY (parent_area_id) REFERENCES public.acornassociated_location_areas(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_location_areas
+    ADD CONSTRAINT parent_area_id FOREIGN KEY (parent_area_id) REFERENCES public.acorn_location_areas(id) NOT VALID;
 
 
 --
--- Name: acornassociated_university_hierarchies parent_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_hierarchies parent_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_hierarchies
-    ADD CONSTRAINT parent_id FOREIGN KEY (parent_id) REFERENCES public.acornassociated_university_hierarchies(id) ON DELETE SET NULL NOT VALID;
+ALTER TABLE ONLY public.acorn_university_hierarchies
+    ADD CONSTRAINT parent_id FOREIGN KEY (parent_id) REFERENCES public.acorn_university_hierarchies(id) ON DELETE SET NULL NOT VALID;
 
 
 --
--- Name: acornassociated_location_types parent_type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_types parent_type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_types
-    ADD CONSTRAINT parent_type_id FOREIGN KEY (parent_type_id) REFERENCES public.acornassociated_location_types(id);
+ALTER TABLE ONLY public.acorn_location_types
+    ADD CONSTRAINT parent_type_id FOREIGN KEY (parent_type_id) REFERENCES public.acorn_location_types(id);
 
 
 --
--- Name: acornassociated_location_locations server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_locations server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_locations
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_location_locations
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
--- Name: acornassociated_location_gps server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_gps server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_gps
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_location_gps
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
--- Name: acornassociated_location_addresses server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_addresses server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_addresses
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_location_addresses
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
--- Name: acornassociated_location_area_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_area_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_area_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_location_area_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
--- Name: acornassociated_location_areas server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_areas server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_areas
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_location_areas
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
--- Name: acornassociated_location_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id);
+ALTER TABLE ONLY public.acorn_location_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
--- Name: acornassociated_university_hierarchies server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_hierarchies server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_hierarchies
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_hierarchies
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
--- Name: acornassociated_university_entities server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_entities server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_entities
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_entities
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
--- Name: acornassociated_university_years server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_years server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_years
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_years
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_material_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_material_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_material_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_material_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_materials server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_materials server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_materials
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_materials
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_exams server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_exams server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_exams
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_exams
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_scores server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_scores server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_scores
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_scores
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_exam_materials server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_exam_materials server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_exam_materials
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acornassociated_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_exam_materials
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
--- Name: acornassociated_location_locations type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_locations type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_locations
-    ADD CONSTRAINT type_id FOREIGN KEY (type_id) REFERENCES public.acornassociated_location_types(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_location_locations
+    ADD CONSTRAINT type_id FOREIGN KEY (type_id) REFERENCES public.acorn_location_types(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_exams type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_exams type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_exams
-    ADD CONSTRAINT type_id FOREIGN KEY (type_id) REFERENCES public.acornassociated_exam_types(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_exams
+    ADD CONSTRAINT type_id FOREIGN KEY (type_id) REFERENCES public.acorn_exam_types(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_materials type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_materials type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_materials
-    ADD CONSTRAINT type_id FOREIGN KEY (material_type_id) REFERENCES public.acornassociated_exam_material_types(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_materials
+    ADD CONSTRAINT type_id FOREIGN KEY (material_type_id) REFERENCES public.acorn_exam_material_types(id) NOT VALID;
 
 
 --
--- Name: acornassociated_location_types types_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_types types_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_location_types
-    ADD CONSTRAINT types_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acornassociated_user_users(id);
+ALTER TABLE ONLY public.acorn_location_types
+    ADD CONSTRAINT types_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
--- Name: acornassociated_university_entities updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_entities updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_entities
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_entities
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acornassociated_university_years updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_years updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_years
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_years
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acornassociated_university_hierarchies updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_hierarchies updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_hierarchies
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_hierarchies
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_material_types updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_material_types updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_material_types
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_material_types
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_materials updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_materials updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_materials
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_materials
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_types updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_types updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_types
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_types
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_exams updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_exams updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_exams
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_exams
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_scores updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_scores updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_scores
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_scores
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_exam_materials updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_exam_materials updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_exam_materials
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acornassociated_calendar_events(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_exam_materials
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acornassociated_university_entities updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_entities updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_entities
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_entities
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: acornassociated_university_years updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_years updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_years
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_years
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: acornassociated_university_hierarchies updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_hierarchies updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_hierarchies
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_hierarchies
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_material_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_material_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_material_types
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_material_types
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_materials updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_materials updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_materials
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_materials
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_types
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_types
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_exams updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_exams updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_exams
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_exams
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_scores updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_scores updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_scores
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_scores
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_exam_materials updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_exam_materials updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_exam_materials
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_exam_materials
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: acornassociated_exam_scores user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_scores user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_exam_scores
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acornassociated_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_scores
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: acornassociated_university_hierarchies year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_hierarchies year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acornassociated_university_hierarchies
-    ADD CONSTRAINT year_id FOREIGN KEY (year_id) REFERENCES public.acornassociated_university_years(id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE ONLY public.acorn_university_hierarchies
+    ADD CONSTRAINT year_id FOREIGN KEY (year_id) REFERENCES public.acorn_university_years(id) ON DELETE CASCADE NOT VALID;
 
 
 --
--- Name: CONSTRAINT year_id ON acornassociated_university_hierarchies; Type: COMMENT; Schema: public; Owner: university
+-- Name: CONSTRAINT year_id ON acorn_university_hierarchies; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT year_id ON public.acornassociated_university_hierarchies IS 'global-scope: to';
+COMMENT ON CONSTRAINT year_id ON public.acorn_university_hierarchies IS 'global-scope: to';
 
 
 --
@@ -8482,136 +8482,136 @@ GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO token
 
 
 --
--- Name: FUNCTION fn_acornassociated_add_websockets_triggers(schema character varying, table_prefix character varying); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.fn_acornassociated_add_websockets_triggers(schema character varying, table_prefix character varying) TO token_1 WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION fn_acornassociated_calendar_create_activity_log_event(owner_user_id uuid, type_id uuid, status_id uuid, name character varying); Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON FUNCTION public.fn_acornassociated_calendar_create_activity_log_event(owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION fn_acornassociated_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_calendar_create_activity_log_event(owner_user_id uuid, type_id uuid, status_id uuid, name character varying); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.fn_acornassociated_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO token_1 WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION fn_acornassociated_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone); Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON FUNCTION public.fn_acornassociated_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_activity_log_event(owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION fn_acornassociated_calendar_events_generate_event_instances(); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.fn_acornassociated_calendar_events_generate_event_instances() TO token_1 WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION fn_acornassociated_calendar_generate_event_instances(new_event_part record, old_event_part record); Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON FUNCTION public.fn_acornassociated_calendar_generate_event_instances(new_event_part record, old_event_part record) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION fn_acornassociated_calendar_is_date(s character varying, d timestamp without time zone); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.fn_acornassociated_calendar_is_date(s character varying, d timestamp without time zone) TO token_1 WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION fn_acornassociated_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying); Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON FUNCTION public.fn_acornassociated_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION fn_acornassociated_calendar_seed(); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_calendar_events_generate_event_instances(); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.fn_acornassociated_calendar_seed() TO token_1 WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION fn_acornassociated_calendar_trigger_activity_event(); Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON FUNCTION public.fn_acornassociated_calendar_trigger_activity_event() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION fn_acornassociated_eval(sql_expression character varying, et record); Type: ACL; Schema: public; Owner: sanchez
+-- Name: FUNCTION fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.fn_acornassociated_eval(sql_expression character varying, et record) TO token_1 WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION fn_acornassociated_first(anyelement, anyelement); Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON FUNCTION public.fn_acornassociated_first(anyelement, anyelement) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION fn_acornassociated_last(anyelement, anyelement); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_calendar_is_date(s character varying, d timestamp without time zone); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.fn_acornassociated_last(anyelement, anyelement) TO token_1 WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION fn_acornassociated_new_replicated_row(); Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON FUNCTION public.fn_acornassociated_new_replicated_row() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION fn_acornassociated_reset_sequences(schema_like character varying, table_like character varying); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.fn_acornassociated_reset_sequences(schema_like character varying, table_like character varying) TO token_1 WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION fn_acornassociated_server_id(); Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON FUNCTION public.fn_acornassociated_server_id() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION fn_acornassociated_table_counts(_schema character varying); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_calendar_seed(); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.fn_acornassociated_table_counts(_schema character varying) TO token_1 WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION fn_acornassociated_truncate_database(schema_like character varying, table_like character varying); Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON FUNCTION public.fn_acornassociated_truncate_database(schema_like character varying, table_like character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION fn_acornassociated_user_get_seed_user(); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_calendar_trigger_activity_event(); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.fn_acornassociated_user_get_seed_user() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_activity_event() TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_eval(sql_expression character varying, et record); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_eval(sql_expression character varying, et record) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_first(anyelement, anyelement); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_last(anyelement, anyelement); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_new_replicated_row(); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_reset_sequences(schema_like character varying, table_like character varying); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_server_id(); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_table_counts(_schema character varying); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_truncate_database(schema_like character varying, table_like character varying); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_user_get_seed_user(); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -8818,339 +8818,339 @@ GRANT ALL ON FUNCTION public.urlencode(string character varying) TO token_1 WITH
 
 
 --
--- Name: FUNCTION agg_acornassociated_first(anyelement); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION agg_acorn_first(anyelement); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.agg_acornassociated_first(anyelement) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION agg_acornassociated_last(anyelement); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION agg_acorn_last(anyelement); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.agg_acornassociated_last(anyelement) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_calendar_calendars; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_calendar_calendars; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_calendar_calendars TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_calendars TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_calendar_event_part_user; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_calendar_event_part_user; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_calendar_event_part_user TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_calendar_event_part_user_group; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_calendar_event_part_user_group; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_calendar_event_part_user_group TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_calendar_event_parts; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_calendar_event_parts; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_calendar_event_parts TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_parts TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_calendar_event_statuses; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_calendar_event_statuses; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_calendar_event_statuses TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_calendar_event_types; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_calendar_event_types; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_calendar_event_types TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_types TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_calendar_events; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_calendar_events; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_calendar_events TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_events TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_calendar_instances; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_calendar_instances; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_calendar_instances TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_instances TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_location_addresses; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_location_addresses; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_location_addresses TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_addresses TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_location_area_types; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_location_area_types; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_location_area_types TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_area_types TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_location_areas; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_location_areas; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_location_areas TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_areas TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_location_gps; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_location_gps; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_location_gps TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_gps TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_location_locations; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_location_locations; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_location_locations TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_locations TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_location_lookup; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_location_lookup; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_location_lookup TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_lookup TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_location_types; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_location_types; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_location_types TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_types TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_messaging_action; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_messaging_action; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_messaging_action TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_action TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_messaging_label; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_messaging_label; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_messaging_label TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_label TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_messaging_message; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_messaging_message; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_messaging_message TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_messaging_message_instance; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_messaging_message_instance; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_messaging_message_instance TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message_instance TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_messaging_message_message; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_messaging_message_message; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_messaging_message_message TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message_message TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_messaging_message_user; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_messaging_message_user; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_messaging_message_user TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message_user TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_messaging_message_user_group; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_messaging_message_user_group; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_messaging_message_user_group TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_messaging_status; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_messaging_status; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_messaging_status TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_status TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_messaging_user_message_status; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_messaging_user_message_status; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_messaging_user_message_status TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_reporting_reports; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_reporting_reports; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_reporting_reports TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_reporting_reports TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: SEQUENCE acornassociated_reporting_reports_id_seq; Type: ACL; Schema: public; Owner: university
+-- Name: SEQUENCE acorn_reporting_reports_id_seq; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON SEQUENCE public.acornassociated_reporting_reports_id_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_servers; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_servers; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_servers TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_servers TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_university_courses; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_university_courses; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_university_courses TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_courses TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_university_departments; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_university_departments; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_university_departments TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_departments TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_university_education_authorities; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_university_education_authorities; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_university_education_authorities TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_education_authorities TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_university_entities; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_university_entities; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_university_entities TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_entities TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_university_faculties; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_university_faculties; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_university_faculties TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_faculties TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_university_hierarchies; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_university_hierarchies; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_university_hierarchies TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_hierarchies TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_university_schools; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_university_schools; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_university_schools TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_schools TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_university_universities; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_university_universities; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_university_universities TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_universities TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_university_years; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_university_years; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_university_years TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_years TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_user_language_user; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_user_language_user; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_user_language_user TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_language_user TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_user_languages; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_user_languages; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_user_languages TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_languages TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_user_mail_blockers; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_user_mail_blockers; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_user_mail_blockers TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_mail_blockers TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_user_roles; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_user_roles; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_user_roles TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_roles TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_user_throttle; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_user_throttle; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_user_throttle TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_throttle TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_user_user_group; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_user_user_group; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_user_user_group TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_user_user_group_types; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_user_user_group_types; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_user_user_group_types TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group_types TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_user_user_group_version_usages; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_user_user_group_version_usages; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_user_user_group_version_usages TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_user_user_groups; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_user_user_groups; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_user_user_groups TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_groups TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acornassociated_user_users; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_user_users; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acornassociated_user_users TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_users TO token_1 WITH GRANT OPTION;
 
 
 --

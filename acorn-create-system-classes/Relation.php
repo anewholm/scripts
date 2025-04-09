@@ -1,4 +1,4 @@
-<?php namespace AcornAssociated\CreateSystem;
+<?php namespace Acorn\CreateSystem;
 
 class Relation {
     public $oid;
@@ -99,13 +99,13 @@ class Relation {
     public function qualifier(): string
     {
         // Foreign ID Fields can be qualified if they have a custom prefix before the to table name
-        // [payee_]user_group_id => user_group (acornassociated_user_user_groups)
+        // [payee_]user_group_id => user_group (acorn_user_user_groups)
         // This changes the translation domain construction
         // Without ID
         // payee_user_group
         $fieldName = $this->column->nameWithoutId();
         // From table name
-        // acornassociated_user_user_groups => user_group | invoice
+        // acorn_user_user_groups => user_group | invoice
         $otherModel = ($this->isFrom ? $this->to : $this->from);
         $baseName   = $otherModel->table->unqualifiedForeignKeyColumnBaseName();
 
@@ -119,7 +119,7 @@ class Relation {
     protected function checkQualifier($fieldName, $otherModel, $baseName): string|NULL
     {
         // Foreign ID Fields can be qualified if they have a custom prefix before the to table name
-        // [payee_]user_group_id => user_group (acornassociated_user_user_groups)
+        // [payee_]user_group_id => user_group (acorn_user_user_groups)
         // This changes the translation domain construction
         // Without ID
         // payee_user_group
@@ -130,7 +130,7 @@ class Relation {
         // TODO: If pointing to a Module, like AA...
         if (strstr($fieldName, $baseName) === FALSE
             && $otherModel->isOurs()
-            && !$otherModel->isKnownAcornAssociatedPlugin()
+            && !$otherModel->isKnownAcornPlugin()
         ) {
             $thisModel = ($this->isFrom ? $this->from : $this->to);
             $tableName = $thisModel->table->name;
@@ -231,7 +231,7 @@ class RelationXfromX extends RelationFrom {
     public function __construct(
         Model  &$from,          // Legalcase
         Model  &$to,            // User
-        Table  &$pivot,         // acornassociated_criminal_legalcase_category
+        Table  &$pivot,         // acorn_criminal_legalcase_category
         Column &$keyColumn,     // pivot.legalcase_id
         Column &$throughColumn, // pivot.user_id
         ForeignKey &$foreignKey

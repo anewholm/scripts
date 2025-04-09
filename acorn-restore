@@ -42,11 +42,11 @@ if [ -f "$env" ]; then
 		fi
 	fi
 
-	# Adjust APP_URL .laptop => https://... acornassociated.org
+	# Adjust APP_URL .laptop => https://... acorn.org
 	if [ -n "$(grep $db\.laptop)" $env ]; then
-		read -p "Adjust URL from http .laptop to https .acornassociated.org (yn)? [y] " yn
+		read -p "Adjust URL from http .laptop to https .acorn.org (yn)? [y] " yn
 		if [ "$yn" != 'n' ]; then
-			sed -i "s/$db\.laptop/$db.acornassociated.org/" $env
+			sed -i "s/$db\.laptop/$db.acorn.org/" $env
 			sed -i 's|http://|https://|' $env
 		fi
 	fi

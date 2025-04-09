@@ -213,8 +213,8 @@ if [ -z "$(which mysql)" ]; then
       Y|y|"")
         sudo mysql -e "create user 'root'@'localhost' identified by 'QueenPool1@';"
         sudo mysql -e "grant all on *.* to 'root'@'localhost' with grant option;"
-        sudo mysql -e "create user 'sanchez'@'localhost' identified with auth_socket by 'QueenPool1@';"
-        sudo mysql -e "grant all on *.* to 'sanchez'@'localhost' with grant option;"
+        sudo mysql -e "create user 'sz'@'localhost' identified with auth_socket by 'QueenPool1@';"
+        sudo mysql -e "grant all on *.* to 'sz'@'localhost' with grant option;"
         sudo mysql -e "flush privileges;"
         break
       ;;
@@ -254,7 +254,7 @@ if [ -z "$apt_postgresql" ]; then
 
   user_exists=`sudo -u postgres psql postgres -tXAc "SELECT 1 FROM pg_roles WHERE rolname='$outeruser'"`
   if [ "$user_exists" != 1 ]; then
-    echo "${GREEN}INFO${NC}: Creating PostGreSQL super-user ${YELLOW}$outeruser${NC}. PLease use password ${YELLOW}@cornAssociated.org${NC}:"
+    echo "${GREEN}INFO${NC}: Creating PostGreSQL super-user ${YELLOW}$outeruser${NC}. PLease use password ${YELLOW}@corn.org${NC}:"
     sudo -u postgres createuser -d -e -E -l -P -r -s $outeruser
     check "Failed to create postgresql user ${YELLOW}$outeruser${NC}"
   else
