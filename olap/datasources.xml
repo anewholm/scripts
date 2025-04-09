@@ -19,7 +19,7 @@
 
   <!-- DataSource>
     <DataSourceName>Winter</DataSourceName>
-    <DataSourceDescription>Acorn Calendar system</DataSourceDescription>
+    <DataSourceDescription>Acorn Associated Calendar system</DataSourceDescription>
     <URL>http://localhost:8080/xmondrian/xmla</URL>
     <DataSourceInfo>
       Provider=mondrian;

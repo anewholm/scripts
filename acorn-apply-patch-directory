@@ -8,8 +8,9 @@ TICK="${GREEN}✓${NC}"
 CROSS="${RED}✘${NC}"
 
 patch_dir="$1"
+winter_version="$2"
 if [ -z "$patch_dir" ]; then
-	echo "${RED}USAGE${NC}: $0 <patch dir>"
+	echo "${RED}USAGE${NC}: $0 <patch dir> [<winter version>]"
 	exit 1
 fi
 
@@ -25,6 +26,7 @@ hostname=`echo $app_url | cut -d '=' -f 2 | tr -d '"' | sed -E 's#.*://##'`
 port=6001 # Websockets hardcoding
 
 # ---------------------------------------------------------- Patches
+# TODO: winter_version logic
 if [ -n "$(ls $patch_dir/*.patch 2> /dev/null)" ]; then
 	for patch_file in $patch_dir/*.patch; do
 		if [ -n "$patch_file" ]; then

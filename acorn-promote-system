@@ -16,6 +16,8 @@ sudo -u postgres dropuser demo
 sudo -u postgres dropuser createsystem
 sudo -u postgres dropuser artisan
 
+# Remove winter demo
+php artisan winter:fresh
 
 # TODO:
 # Remove ARTISAN_AUTO_LOGIN

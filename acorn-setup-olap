@@ -158,5 +158,5 @@ sudo ln -s /etc/apache2/conf-available/tomcat.conf /etc/apache2/conf-enabled/tom
 sudo systemctl restart apache2
 
 sudo service tomcat9 restart
-echo "${YELLOW}WARNING${NC}: This expects a database called ${YELLOW}$database${NC} with the Acorn Calendar installed and a user: JdbcUser=${YELLOW}$database${NC}; JdbcPassword=${YELLOW}QueenPool1@${NC}. See $webapps/$type/WEB-INF/datasources.xml for schema and JDBC connection!"
+echo "${YELLOW}WARNING${NC}: This expects a database called ${YELLOW}$database${NC} with the AcornAssociated Calendar installed and a user: JdbcUser=${YELLOW}$database${NC}; JdbcPassword=${YELLOW}QueenPool1@${NC}. See $webapps/$type/WEB-INF/datasources.xml for schema and JDBC connection!"
 echo "Now go to http://localhost:$port/$type/"

@@ -1,6 +1,6 @@
--- drop FUNCTION fn_acorn_lojistiks_truncate_database(_schema varchar(1024));
+-- drop FUNCTION fn_acornassociated_lojistiks_truncate_database(_schema varchar(1024));
 
-CREATE OR REPLACE FUNCTION fn_acorn_lojistiks_truncate_database(schema_like varchar(1024), table_like varchar(1024))
+CREATE OR REPLACE FUNCTION fn_acornassociated_lojistiks_truncate_database(schema_like varchar(1024), table_like varchar(1024))
   RETURNS void
   LANGUAGE plpgsql AS
 $BODY$

@@ -1,4 +1,4 @@
-<?php namespace Acorn\CreateSystem;
+<?php namespace AcornAssociated\CreateSystem;
 
 require_once('Table.php');
 require_once('View.php');
@@ -42,7 +42,7 @@ class DB {
     // --------------------------------------- General query interface
     public function serverID(bool $quote = FALSE): string
     {
-        $results = $this->select("select id from acorn_servers where hostname=:hostname", array(
+        $results = $this->select("select id from acornassociated_servers where hostname=:hostname", array(
             'hostname' => gethostname()
         ));
         $serverID = $results[0]->id;
@@ -109,7 +109,7 @@ class DB {
     // https://www.postgresql.org/docs/current/functions-info.html#FUNCTIONS-INFO-COMMENT
     public function actionFunctionsForTable(string $table): array
     {
-        $tableParts     = explode('_', $table); // acorn_justice_legalcases
+        $tableParts     = explode('_', $table); // acornassociated_justice_legalcases
         $tableQualifier = implode('_', array_slice($tableParts, 2)); // legalcases_*
         return (isset($tableParts[1]) ? $this->functions($tableParts[0], $tableParts[1], 'action', $tableQualifier) : array());
     }
@@ -252,7 +252,7 @@ class DB {
         return $results;
     }
 
-    public function tableColumns(Table &$table): array
+    public function tableColumns(Table &$table, bool $allColumns = FALSE): array
     {
         $results = array();
 
@@ -268,7 +268,7 @@ class DB {
         $statement->execute();
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
             $column = Column::fromRow($table, $row);
-            if ($column->shouldProcess()) $results[$column->name] = $column;
+            if ($column->shouldProcess() || $allColumns) $results[$column->name] = $column;
         }
 
         return $results;
@@ -376,7 +376,7 @@ class DB {
             $reponse = $this->connection->query($sql);
             $results = $reponse->fetchAll(\PDO::FETCH_OBJ);
             if ($results[0]->count) {
-                print("${RED}ERROR$NC: $table has rows, so adding a NOT NULL column will fail\n");
+                print("{$RED}ERROR$NC: $table has rows, so adding a NOT NULL column will fail\n");
                 $yn = readline("Truncate cascade [$table] (y) ?");
                 if ($yn != 'n') {
                     $sql     = "TRUNCATE $table CASCADE;";

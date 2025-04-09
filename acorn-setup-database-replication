@@ -22,8 +22,8 @@ read -p "please enter database name " db_name
 read -p "IP-address/subnet-mask of other replication node (192.168.0.0/16)? " ip_node
 
 sub_hostname=`hostname`
-pub_name="pub_${db_name}_all_tables" # pub_acorn_lojistiks_all_tables
-sub_name="sub_${db_name}_all_tables" # sub_acorn_lojistiks_all_tables
+pub_name="pub_${db_name}_all_tables" # pub_acornassociated_lojistiks_all_tables
+sub_name="sub_${db_name}_all_tables" # sub_acornassociated_lojistiks_all_tables
 slot_name="${sub_name}_${sub_hostname}"
 
 # ------------------------------------------------- Test connection, if node
