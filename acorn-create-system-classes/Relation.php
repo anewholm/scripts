@@ -77,7 +77,7 @@ class Relation {
         return implode(' ', $cssClassesReturn);
     }
 
-    public function direction()
+    public function direction(): string
     {
         return ($this->isFrom ? '=>' : '<=');
     }
@@ -160,7 +160,7 @@ class RelationSelf extends Relation1fromX {
         parent::__construct($from, $from, $column, $foreignKey);
     }
 
-    public function direction()
+    public function direction(): string
     {
         return 'O';
     }

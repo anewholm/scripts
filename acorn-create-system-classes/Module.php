@@ -46,7 +46,7 @@ class Module {
 
     public function addTable(Table &$table)
     {
-        if ($table->isContentTable()) {
+        if ($table->isContentTable() || $table->isReportTable()) {
             $model = new Model($this, $table);
             $this->models[$model->name] = new Model($this, $table);
         }

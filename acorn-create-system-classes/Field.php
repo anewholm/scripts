@@ -7,6 +7,7 @@ class Field {
     public $column;    // Can be Null
     public $relations; // Can be empty array()
     public $autoFKType;
+    public $extraForeignKey;
 
     public $comment;     // From column->comment
     public $name;        // => fieldName & columnName

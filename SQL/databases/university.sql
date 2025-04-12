@@ -82,6 +82,58 @@ COMMENT ON EXTENSION http IS 'HTTP client for PostgreSQL, allows web page retrie
 
 
 --
+-- Name: avg(double precision[]); Type: FUNCTION; Schema: public; Owner: sz
+--
+
+CREATE FUNCTION public.avg(VARIADIC ints double precision[]) RETURNS double precision
+    LANGUAGE sql
+    AS $$
+	select avg(unnest) from (SELECT unnest(ints));
+$$;
+
+
+ALTER FUNCTION public.avg(VARIADIC ints double precision[]) OWNER TO sz;
+
+--
+-- Name: avg(integer[]); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.avg(VARIADIC ints integer[]) RETURNS double precision
+    LANGUAGE sql
+    AS $$
+	select avg(unnest) from (SELECT unnest(ints));
+$$;
+
+
+ALTER FUNCTION public.avg(VARIADIC ints integer[]) OWNER TO university;
+
+--
+-- Name: count(double precision, double precision[]); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.count(dp1 double precision, VARIADIC ints double precision[]) RETURNS integer
+    LANGUAGE sql
+    AS $$
+	select array_length(ints,1) + 1;
+$$;
+
+
+ALTER FUNCTION public.count(dp1 double precision, VARIADIC ints double precision[]) OWNER TO university;
+
+--
+-- Name: count(integer, integer[]); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.count(i1 integer, VARIADIC ints integer[]) RETURNS integer
+    LANGUAGE sql
+    AS $$
+	select array_length(ints,1) + 1;
+$$;
+
+
+ALTER FUNCTION public.count(i1 integer, VARIADIC ints integer[]) OWNER TO university;
+
+--
 -- Name: fn_acorn_add_websockets_triggers(character varying, character varying); Type: FUNCTION; Schema: public; Owner: university
 --
 
@@ -527,22 +579,239 @@ end;
 ALTER FUNCTION public.fn_acorn_calendar_trigger_activity_event() OWNER TO university;
 
 --
--- Name: fn_acorn_eval(character varying, record); Type: FUNCTION; Schema: public; Owner: sz
+-- Name: fn_acorn_exam_calculation_eval(uuid, uuid); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acorn_eval(sql_expression character varying, et record) RETURNS integer
+CREATE FUNCTION public.fn_acorn_exam_calculation_eval(p_student_id uuid, p_calculation_id uuid) RETURNS double precision
+    LANGUAGE sql
+    AS $$
+select fn_acorn_exam_calculation_expr_eval(p_student_id, 
+	replace(result_expression, '<student>', fn_acorn_exam_token_name(s.code))
+)
+from public.acorn_exam_calculations c,
+public.acorn_university_students s
+where c.id = p_calculation_id
+and s.id = p_student_id;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_exam_calculation_eval(p_student_id uuid, p_calculation_id uuid) OWNER TO university;
+
+--
+-- Name: fn_acorn_exam_calculation_expr_eval(uuid, character varying); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_exam_calculation_expr_eval(p_student_id uuid, p_expr character varying) RETURNS double precision
     LANGUAGE plpgsql
     AS $$
 declare
-	result int;
+	result double precision;
 begin
-	execute sql_expression into result;
+	-- Dynamic execute the expr
+	execute concat('select ', fn_acorn_exam_calculation_expr_tokenize(p_student_id, p_expr)) into result;
+	
 	return result;
 end;
 $$;
 
 
-ALTER FUNCTION public.fn_acorn_eval(sql_expression character varying, et record) OWNER TO sz;
+ALTER FUNCTION public.fn_acorn_exam_calculation_expr_eval(p_student_id uuid, p_expr character varying) OWNER TO university;
+
+--
+-- Name: fn_acorn_exam_calculation_expr_tokenize(uuid, character varying); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_exam_calculation_expr_tokenize(p_student_id uuid, p_expr character varying) RETURNS character varying
+    LANGUAGE plpgsql
+    AS $$
+declare
+	token_record record;
+	is_multiple bool;
+	name_count integer;
+begin
+	-- Replace all the tokens in the expr
+	-- with the values for this student
+	for token_record in select array_agg(name) as name, array_agg(value) as values,
+			regexp_matches[1] as match, regexp_matches[2] as match_name
+		from acorn_exam_calculation_tokens est, 
+		regexp_matches(p_expr, '(:([^ )(:=]+)=?([0-9.]*):)', 'g')
+		where regexp_like(name, regexp_matches[2])
+		group by match, match_name
+	loop
+		name_count := array_length(token_record.name, 1);
+		is_multiple := (name_count > 1 
+			or (name_count = 1 and token_record.name[1] != token_record.match_name) 
+		);
+		if is_multiple then
+			p_expr := replace(p_expr, token_record.match, array_to_string(token_record.values, ','));
+		else
+			p_expr := replace(p_expr, token_record.match, token_record.values[1]::text);
+		end if;
+	end loop;
+
+	-- Defaults
+	for token_record in select regexp_matches[1] as match, regexp_matches[2] as match_default
+		from regexp_matches(p_expr, '(:[^ )(:=]+=([0-9.]+):)', 'g')
+		group by match, match_default
+	loop
+		p_expr := replace(p_expr, token_record.match, token_record.match_default);
+	end loop;
+
+	-- NULL if tokens remain
+	if array_length(regexp_match(p_expr, '(:([^ )(:]+):)'), 1) != 0 then
+		p_expr := NULL;
+	end if;
+
+	return p_expr;
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_exam_calculation_expr_tokenize(p_student_id uuid, p_expr character varying) OWNER TO university;
+
+--
+-- Name: fn_acorn_exam_exam_eval(uuid, uuid); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_exam_exam_eval(p_student_id uuid, p_exam_id uuid) RETURNS double precision
+    LANGUAGE sql
+    AS $$
+select fn_acorn_exam_exam_expr_eval(p_student_id, 
+	replace(replace(result_expression, '<exam>', fn_acorn_exam_token_name(e.name)),
+		'<student>', fn_acorn_exam_token_name(s.code)
+	)) 
+from public.acorn_exam_exams e
+inner join public.acorn_exam_types et on e.type_id = et.id,
+public.acorn_university_students s
+where e.id = p_exam_id 
+and s.id = p_student_id;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_exam_exam_eval(p_student_id uuid, p_exam_id uuid) OWNER TO university;
+
+--
+-- Name: fn_acorn_exam_exam_expr_eval(uuid, character varying); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_exam_exam_expr_eval(p_student_id uuid, p_expr character varying) RETURNS double precision
+    LANGUAGE plpgsql
+    AS $$
+declare
+	result double precision;
+begin
+	-- Dynamic execute the expr
+	execute concat('select ', fn_acorn_exam_exam_expr_tokenize(p_student_id, p_expr)) into result;
+	
+	return result;
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_exam_exam_expr_eval(p_student_id uuid, p_expr character varying) OWNER TO university;
+
+--
+-- Name: fn_acorn_exam_exam_expr_tokenize(uuid, character varying); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_exam_exam_expr_tokenize(p_student_id uuid, p_expr character varying) RETURNS character varying
+    LANGUAGE plpgsql
+    AS $$
+declare
+	token_record record;
+	is_multiple bool;
+	name_count integer;
+begin
+	-- Replace all the tokens in the expr
+	-- with the values for this student
+	for token_record in select array_agg(name) as name, array_agg(value) as values, 
+			regexp_matches[1] as match, regexp_matches[2] as match_name
+		from acorn_exam_exam_tokens est, 
+		regexp_matches(p_expr, '(:([^ )(:=]+)=?([0-9.]*):)', 'g')
+		where regexp_like(name, regexp_matches[2])
+		group by match, match_name
+	loop
+		name_count := array_length(token_record.name, 1);
+		is_multiple := (name_count > 1 
+			or (name_count = 1 and token_record.name[1] != token_record.match_name) 
+		);
+		if is_multiple then
+			p_expr := replace(p_expr, token_record.match, array_to_string(token_record.values, ','));
+		else
+			p_expr := replace(p_expr, token_record.match, token_record.values[1]::text);
+		end if;
+	end loop;
+
+	-- Defaults
+	for token_record in select regexp_matches[1] as match, regexp_matches[2] as match_default
+		from regexp_matches(p_expr, '(:[^ )(:=]+=([0-9.]+):)', 'g')
+		group by match, match_default
+	loop
+		p_expr := replace(p_expr, token_record.match, token_record.match_default);
+	end loop;
+
+	-- NULL if tokens remain
+	if array_length(regexp_match(p_expr, '(:([^ )(:]+):)'), 1) != 0 then
+		p_expr := NULL;
+	end if;
+
+	return p_expr;
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_exam_exam_expr_tokenize(p_student_id uuid, p_expr character varying) OWNER TO university;
+
+--
+-- Name: fn_acorn_exam_token_name(character varying[]); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) RETURNS character varying
+    LANGUAGE sql
+    AS $$
+select fn_acorn_exam_token_name_internal(p_titles);
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) OWNER TO university;
+
+--
+-- Name: fn_acorn_exam_token_name(uuid, character varying[]); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) RETURNS character varying
+    LANGUAGE sql
+    AS $$
+select fn_acorn_exam_token_name_internal(array_prepend(p_id::character varying, p_titles));
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) OWNER TO university;
+
+--
+-- Name: fn_acorn_exam_token_name_internal(character varying[]); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) RETURNS character varying
+    LANGUAGE plpgsql
+    AS $$
+declare
+	token character varying = '';
+	record record;
+begin
+	for record in select unnest as title from unnest(p_titles) loop
+		if not record.title is null and length(record.title) > 0 then
+			if length(token) > 0 then token := token || '.'; end if;
+			token := token || regexp_replace(lower(record.title), '[^a-z0-9:.]+', '-', 1, 0, 'g');
+		end if;
+	end loop;
+
+	return token;
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) OWNER TO university;
 
 --
 -- Name: fn_acorn_first(anyelement, anyelement); Type: FUNCTION; Schema: public; Owner: university
@@ -754,6 +1023,58 @@ end;
 
 
 ALTER FUNCTION public.fn_acorn_user_get_seed_user() OWNER TO university;
+
+--
+-- Name: sum(double precision[]); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.sum(VARIADIC ints double precision[]) RETURNS double precision
+    LANGUAGE sql
+    AS $$
+	select sum(unnest) from unnest(ints);
+$$;
+
+
+ALTER FUNCTION public.sum(VARIADIC ints double precision[]) OWNER TO university;
+
+--
+-- Name: sum(integer[]); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.sum(VARIADIC ints integer[]) RETURNS double precision
+    LANGUAGE sql
+    AS $$
+	select sum(unnest) from unnest(ints);
+$$;
+
+
+ALTER FUNCTION public.sum(VARIADIC ints integer[]) OWNER TO university;
+
+--
+-- Name: sum(character varying); Type: FUNCTION; Schema: public; Owner: sz
+--
+
+CREATE FUNCTION public.sum(ints character varying) RETURNS integer
+    LANGUAGE sql
+    AS $$
+	select sum(unnest) from (SELECT unnest(ints::integer[]))
+$$;
+
+
+ALTER FUNCTION public.sum(ints character varying) OWNER TO sz;
+
+--
+-- Name: sums(integer[]); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.sums(VARIADIC ints integer[]) RETURNS integer
+    LANGUAGE sql
+    AS $$
+select sum(unnest) from unnest(ints);
+$$;
+
+
+ALTER FUNCTION public.sums(VARIADIC ints integer[]) OWNER TO university;
 
 --
 -- Name: agg_acorn_first(anyelement); Type: AGGREGATE; Schema: public; Owner: university
@@ -987,6 +1308,89 @@ COMMENT ON TABLE public.acorn_calendar_instances IS 'table-type: content';
 
 
 --
+-- Name: acorn_exam_calculations; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_exam_calculations (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(1024) DEFAULT 'calculation'::character varying NOT NULL,
+    description text,
+    result_expression character varying(2048) NOT NULL,
+    created_at_event_id uuid NOT NULL,
+    updated_at_event_id uuid,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.acorn_exam_calculations OWNER TO university;
+
+--
+-- Name: TABLE acorn_exam_calculations; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_exam_calculations IS 'seeding:
+  - [DEFAULT, ''avg'', NULL, ''avg(:<student>.*.result:)'']';
+
+
+--
+-- Name: acorn_university_students; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_university_students (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    code character varying(1024) NOT NULL
+);
+
+
+ALTER TABLE public.acorn_university_students OWNER TO university;
+
+--
+-- Name: TABLE acorn_university_students; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_university_students IS 'order: 500
+menu-splitter: true';
+
+
+--
+-- Name: acorn_exam_calculation_results; Type: VIEW; Schema: public; Owner: university
+--
+
+CREATE VIEW public.acorn_exam_calculation_results AS
+ SELECT s.id AS student_id,
+    public.fn_acorn_exam_token_name(VARIADIC ARRAY['calculation'::character varying, s.code, c.name]) AS name,
+    public.fn_acorn_exam_calculation_eval(s.id, c.id) AS value,
+    'expression'::text AS type,
+    c.result_expression AS expression,
+    c.id AS calculation_id,
+    public.fn_acorn_exam_calculation_expr_tokenize(s.id, (replace((c.result_expression)::text, '<student>'::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[s.code]))::text))::character varying) AS resolved_expression
+   FROM public.acorn_exam_calculations c,
+    public.acorn_university_students s
+  WHERE (NOT (public.fn_acorn_exam_calculation_eval(s.id, c.id) IS NULL));
+
+
+ALTER VIEW public.acorn_exam_calculation_results OWNER TO university;
+
+--
+-- Name: COLUMN acorn_exam_calculation_results.student_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_calculation_results.student_id IS 'extra-foreign-key: 
+  table: acorn_university_students';
+
+
+--
+-- Name: COLUMN acorn_exam_calculation_results.calculation_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_calculation_results.calculation_id IS 'extra-foreign-key: 
+  table: acorn_exam_calculations';
+
+
+--
 -- Name: acorn_exam_exam_materials; Type: TABLE; Schema: public; Owner: university
 --
 
@@ -1044,6 +1448,106 @@ COMMENT ON TABLE public.acorn_exam_exams IS 'order: 10';
 
 
 --
+-- Name: acorn_exam_scores; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_exam_scores (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    exam_material_id uuid NOT NULL,
+    score double precision NOT NULL,
+    created_at_event_id uuid NOT NULL,
+    updated_at_event_id uuid,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL,
+    student_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.acorn_exam_scores OWNER TO university;
+
+--
+-- Name: TABLE acorn_exam_scores; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_exam_scores IS 'order: 35
+methods:
+  name: return $this->exam_material->name();';
+
+
+--
+-- Name: acorn_exam_types; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_exam_types (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(1024) DEFAULT 'exam'::character varying NOT NULL,
+    result_expression character varying(1024) DEFAULT 'sum(:materials)'::character varying NOT NULL,
+    description text,
+    created_at_event_id uuid NOT NULL,
+    updated_at_event_id uuid,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.acorn_exam_types OWNER TO university;
+
+--
+-- Name: TABLE acorn_exam_types; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_exam_types IS 'order: 40
+menu-splitter: true
+seeding:
+  - [DEFAULT, ''sum'', ''sum(:<student>.<exam>.*:)'']
+  - [DEFAULT, ''average'', ''avg(:<student>.<exam>.*:)'']
+labels:
+  en: Exam Type
+labels-plural:
+  en: Exam Types';
+
+
+--
+-- Name: acorn_exam_exam_results; Type: VIEW; Schema: public; Owner: university
+--
+
+CREATE VIEW public.acorn_exam_exam_results AS
+ SELECT sc.student_id,
+    public.fn_acorn_exam_token_name(VARIADIC ARRAY['exam'::character varying, s.code, e.name, 'result'::character varying]) AS name,
+    public.fn_acorn_exam_exam_eval(sc.student_id, em.exam_id) AS value,
+    'expression'::text AS type,
+    et.result_expression AS expression,
+    em.exam_id,
+    public.fn_acorn_exam_exam_expr_tokenize(sc.student_id, (replace(replace((et.result_expression)::text, '<exam>'::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[e.name]))::text), '<student>'::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[s.code]))::text))::character varying) AS resolved_expression
+   FROM ((((public.acorn_exam_scores sc
+     JOIN public.acorn_university_students s ON ((sc.student_id = s.id)))
+     JOIN public.acorn_exam_exam_materials em ON ((sc.exam_material_id = em.id)))
+     JOIN public.acorn_exam_exams e ON ((em.exam_id = e.id)))
+     JOIN public.acorn_exam_types et ON ((e.type_id = et.id)))
+  GROUP BY e.name, em.exam_id, sc.student_id, s.code, et.result_expression, (public.fn_acorn_exam_exam_expr_tokenize(sc.student_id, (replace(replace((et.result_expression)::text, '<exam>'::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[e.name]))::text), '<student>'::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[s.code]))::text))::character varying));
+
+
+ALTER VIEW public.acorn_exam_exam_results OWNER TO university;
+
+--
+-- Name: COLUMN acorn_exam_exam_results.student_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_exam_results.student_id IS 'extra-foreign-key: 
+  table: acorn_university_students';
+
+
+--
+-- Name: COLUMN acorn_exam_exam_results.exam_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_exam_results.exam_id IS 'extra-foreign-key: 
+  table: acorn_exam_exams';
+
+
+--
 -- Name: acorn_exam_material_types; Type: TABLE; Schema: public; Owner: university
 --
 
@@ -1065,7 +1569,7 @@ ALTER TABLE public.acorn_exam_material_types OWNER TO university;
 -- Name: TABLE acorn_exam_material_types; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_exam_material_types IS 'order: 20
+COMMENT ON TABLE public.acorn_exam_material_types IS 'order: 45
 seeding:
   - [''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''Material'']
   - [DEFAULT, ''Interview'']
@@ -1102,60 +1606,184 @@ seeding:
 
 
 --
--- Name: acorn_exam_scores; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_user_users; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acorn_exam_scores (
+CREATE TABLE public.acorn_user_users (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    exam_material_id uuid NOT NULL,
-    score integer NOT NULL,
-    created_at_event_id uuid NOT NULL,
-    updated_at_event_id uuid,
-    created_by_user_id uuid NOT NULL,
-    updated_by_user_id uuid,
-    server_id uuid NOT NULL,
-    user_id uuid
+    name character varying(255),
+    email character varying(255),
+    password character varying(255),
+    activation_code character varying(255),
+    persist_code character varying(255),
+    reset_password_code character varying(255),
+    permissions text,
+    is_activated boolean DEFAULT false NOT NULL,
+    is_system_user boolean DEFAULT false NOT NULL,
+    activated_at timestamp(0) without time zone,
+    last_login timestamp(0) without time zone,
+    created_at timestamp(0) without time zone,
+    updated_at timestamp(0) without time zone,
+    username character varying(255),
+    surname character varying(255),
+    deleted_at timestamp(0) without time zone,
+    last_seen timestamp(0) without time zone,
+    is_guest boolean DEFAULT false NOT NULL,
+    is_superuser boolean DEFAULT false NOT NULL,
+    created_ip_address character varying(255),
+    last_ip_address character varying(255),
+    acorn_imap_username character varying(255),
+    acorn_imap_password character varying(255),
+    acorn_imap_server character varying(255),
+    acorn_imap_port integer,
+    acorn_imap_protocol character varying(255),
+    acorn_imap_encryption character varying(255),
+    acorn_imap_authentication character varying(255),
+    acorn_imap_validate_cert boolean,
+    acorn_smtp_server character varying(255),
+    acorn_smtp_port character varying(255),
+    acorn_smtp_encryption character varying(255),
+    acorn_smtp_authentication character varying(255),
+    acorn_smtp_username character varying(255),
+    acorn_smtp_password character varying(255),
+    acorn_messaging_sounds boolean,
+    acorn_messaging_email_notifications character(1),
+    acorn_messaging_autocreated boolean,
+    acorn_imap_last_fetch timestamp(0) without time zone,
+    acorn_default_calendar uuid,
+    acorn_start_of_week integer,
+    acorn_default_event_time_from date,
+    acorn_default_event_time_to date,
+    birth_date timestamp without time zone
 );
 
 
-ALTER TABLE public.acorn_exam_scores OWNER TO university;
+ALTER TABLE public.acorn_user_users OWNER TO university;
 
 --
--- Name: TABLE acorn_exam_scores; Type: COMMENT; Schema: public; Owner: university
+-- Name: acorn_exam_exam_tokens; Type: VIEW; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_exam_scores IS 'methods:
-  name: return $this->exam_material->material->name;';
+CREATE VIEW public.acorn_exam_exam_tokens AS
+ SELECT sc.student_id,
+    public.fn_acorn_exam_token_name(VARIADIC ARRAY['material'::character varying, mt.name, s.code, e.name, m.name, (
+        CASE
+            WHEN em.required THEN 'required'::text
+            ELSE NULL::text
+        END)::character varying]) AS name,
+    sc.score AS value,
+    'data'::text AS type,
+    (sc.score)::text AS expression,
+    em.exam_id,
+    (sc.score)::text AS resolved_expression
+   FROM (((((public.acorn_exam_scores sc
+     JOIN public.acorn_university_students s ON ((sc.student_id = s.id)))
+     JOIN public.acorn_exam_exam_materials em ON ((sc.exam_material_id = em.id)))
+     JOIN public.acorn_exam_exams e ON ((em.exam_id = e.id)))
+     JOIN public.acorn_exam_materials m ON ((em.material_id = m.id)))
+     JOIN public.acorn_exam_material_types mt ON ((m.material_type_id = mt.id)))
+UNION ALL
+ SELECT s.id AS student_id,
+    public.fn_acorn_exam_token_name(VARIADIC ARRAY['student'::character varying, s.code, 'age'::character varying]) AS name,
+    EXTRACT(year FROM age(u.birth_date)) AS value,
+    'formulae'::text AS type,
+    'extract(year from age(u.birth_date))'::text AS expression,
+    s.id AS exam_id,
+    (('extract(year from age('::text || u.birth_date) || '))'::text) AS resolved_expression
+   FROM (public.acorn_university_students s
+     JOIN public.acorn_user_users u ON ((s.user_id = u.id)));
+
+
+ALTER VIEW public.acorn_exam_exam_tokens OWNER TO university;
+
+--
+-- Name: COLUMN acorn_exam_exam_tokens.student_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_exam_tokens.student_id IS 'extra-foreign-key: 
+  table: acorn_university_students';
 
 
 --
--- Name: acorn_exam_types; Type: TABLE; Schema: public; Owner: university
+-- Name: COLUMN acorn_exam_exam_tokens.exam_id; Type: COMMENT; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acorn_exam_types (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    name character varying(1024) DEFAULT 'exam'::character varying NOT NULL,
-    result_algorithm character varying(1024) DEFAULT 'sum(:materials)'::character varying NOT NULL,
-    description text,
-    created_at_event_id uuid NOT NULL,
-    updated_at_event_id uuid,
-    created_by_user_id uuid NOT NULL,
-    updated_by_user_id uuid,
-    server_id uuid NOT NULL
-);
+COMMENT ON COLUMN public.acorn_exam_exam_tokens.exam_id IS 'extra-foreign-key: 
+  table: acorn_exam_exams';
 
-
-ALTER TABLE public.acorn_exam_types OWNER TO university;
 
 --
--- Name: TABLE acorn_exam_types; Type: COMMENT; Schema: public; Owner: university
+-- Name: acorn_exam_calculation_tokens; Type: VIEW; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_exam_types IS 'order: 30
-menu-splitter: true
-seeding:
-  - [DEFAULT, ''normal'', ''sum(:materials)'']
-  - [DEFAULT, ''average'', ''avg(:materials)'']';
+CREATE VIEW public.acorn_exam_calculation_tokens AS
+ SELECT acorn_exam_exam_results.student_id,
+    acorn_exam_exam_results.name,
+    acorn_exam_exam_results.value,
+    acorn_exam_exam_results.type,
+    acorn_exam_exam_results.expression,
+    acorn_exam_exam_results.exam_id,
+    acorn_exam_exam_results.resolved_expression
+   FROM public.acorn_exam_exam_results
+UNION ALL
+ SELECT acorn_exam_exam_tokens.student_id,
+    acorn_exam_exam_tokens.name,
+    acorn_exam_exam_tokens.value,
+    acorn_exam_exam_tokens.type,
+    acorn_exam_exam_tokens.expression,
+    acorn_exam_exam_tokens.exam_id,
+    acorn_exam_exam_tokens.resolved_expression
+   FROM public.acorn_exam_exam_tokens;
+
+
+ALTER VIEW public.acorn_exam_calculation_tokens OWNER TO university;
+
+--
+-- Name: COLUMN acorn_exam_calculation_tokens.student_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_calculation_tokens.student_id IS 'extra-foreign-key: 
+  table: acorn_university_students';
+
+
+--
+-- Name: COLUMN acorn_exam_calculation_tokens.exam_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_calculation_tokens.exam_id IS 'extra-foreign-key: 
+  table: acorn_exam_exams';
+
+
+--
+-- Name: acorn_exam_all_tokens; Type: VIEW; Schema: public; Owner: university
+--
+
+CREATE VIEW public.acorn_exam_all_tokens AS
+ SELECT acorn_exam_calculation_tokens.student_id,
+    acorn_exam_calculation_tokens.name,
+    acorn_exam_calculation_tokens.value,
+    acorn_exam_calculation_tokens.type,
+    acorn_exam_calculation_tokens.expression,
+    acorn_exam_calculation_tokens.resolved_expression
+   FROM public.acorn_exam_calculation_tokens
+UNION ALL
+ SELECT acorn_exam_calculation_results.student_id,
+    acorn_exam_calculation_results.name,
+    acorn_exam_calculation_results.value,
+    acorn_exam_calculation_results.type,
+    acorn_exam_calculation_results.expression,
+    acorn_exam_calculation_results.resolved_expression
+   FROM public.acorn_exam_calculation_results;
+
+
+ALTER VIEW public.acorn_exam_all_tokens OWNER TO university;
+
+--
+-- Name: COLUMN acorn_exam_all_tokens.student_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_all_tokens.student_id IS 'extra-foreign-key: 
+  table: acorn_university_students';
 
 
 --
@@ -1637,7 +2265,7 @@ ALTER TABLE public.acorn_university_hierarchies OWNER TO university;
 -- Name: TABLE acorn_university_hierarchies; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_university_hierarchies IS 'order: 100
+COMMENT ON TABLE public.acorn_university_hierarchies IS 'order: 1000
 menu-splitter: true
 methods:
   name: "return (is_string($this->entity) ? $this->entity . '' ('' . $this->year . '')'' : $this->entity->name . '' ('' . $this->year->name . '')'');"';
@@ -1660,6 +2288,25 @@ ALTER TABLE public.acorn_university_schools OWNER TO university;
 --
 
 COMMENT ON TABLE public.acorn_university_schools IS 'order: 30';
+
+
+--
+-- Name: acorn_university_teachers; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_university_teachers (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.acorn_university_teachers OWNER TO university;
+
+--
+-- Name: TABLE acorn_university_teachers; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_university_teachers IS 'order: 510';
 
 
 --
@@ -1708,7 +2355,7 @@ ALTER TABLE public.acorn_university_years OWNER TO university;
 --
 
 COMMENT ON TABLE public.acorn_university_years IS 'global-scope: true
-order: 110
+order: 1010
 seeding:
   - [DEFAULT, 2024, 01/01/2024, 30/12/2024, false]
   - [DEFAULT, 2025, 01/01/2025, 30/12/2025, true]';
@@ -1852,60 +2499,6 @@ CREATE TABLE public.acorn_user_user_groups (
 
 
 ALTER TABLE public.acorn_user_user_groups OWNER TO university;
-
---
--- Name: acorn_user_users; Type: TABLE; Schema: public; Owner: university
---
-
-CREATE TABLE public.acorn_user_users (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    name character varying(255),
-    email character varying(255),
-    password character varying(255),
-    activation_code character varying(255),
-    persist_code character varying(255),
-    reset_password_code character varying(255),
-    permissions text,
-    is_activated boolean DEFAULT false NOT NULL,
-    is_system_user boolean DEFAULT false NOT NULL,
-    activated_at timestamp(0) without time zone,
-    last_login timestamp(0) without time zone,
-    created_at timestamp(0) without time zone,
-    updated_at timestamp(0) without time zone,
-    username character varying(255),
-    surname character varying(255),
-    deleted_at timestamp(0) without time zone,
-    last_seen timestamp(0) without time zone,
-    is_guest boolean DEFAULT false NOT NULL,
-    is_superuser boolean DEFAULT false NOT NULL,
-    created_ip_address character varying(255),
-    last_ip_address character varying(255),
-    acorn_imap_username character varying(255),
-    acorn_imap_password character varying(255),
-    acorn_imap_server character varying(255),
-    acorn_imap_port integer,
-    acorn_imap_protocol character varying(255),
-    acorn_imap_encryption character varying(255),
-    acorn_imap_authentication character varying(255),
-    acorn_imap_validate_cert boolean,
-    acorn_smtp_server character varying(255),
-    acorn_smtp_port character varying(255),
-    acorn_smtp_encryption character varying(255),
-    acorn_smtp_authentication character varying(255),
-    acorn_smtp_username character varying(255),
-    acorn_smtp_password character varying(255),
-    acorn_messaging_sounds boolean,
-    acorn_messaging_email_notifications character(1),
-    acorn_messaging_autocreated boolean,
-    acorn_imap_last_fetch timestamp(0) without time zone,
-    acorn_default_calendar uuid,
-    acorn_start_of_week integer,
-    acorn_default_event_time_from date,
-    acorn_default_event_time_to date
-);
-
-
-ALTER TABLE public.acorn_user_users OWNER TO university;
 
 --
 -- Name: backend_access_log; Type: TABLE; Schema: public; Owner: university
@@ -3434,6 +4027,16 @@ dd927991-1b02-4659-96ec-00626e9afc5b	Exam Materials	\N	f	#333	\N	f	130202	f3bc49
 e3d8874c-e1b5-4bea-a4eb-9c9f7bd378c1	Exam Exams	\N	f	#333	\N	f	130168	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
 ae39a756-1988-4fc4-9f61-27c4e79f1c21	Exam Exam Materials	\N	f	#333	\N	f	130210	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
 e90d2e25-a11e-46bc-8c0f-c2e441737d4b	Exam Results	\N	f	#333	\N	f	130360	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
+c17e3dfd-f4b1-4e8e-a80b-5a499068e92e	University Years	\N	f	#333	\N	f	141180	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
+7989413a-b4ca-4b11-9899-0366af60e6b6	Exam Material Types	\N	f	#333	\N	f	141034	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
+9bb48e76-69fa-4108-808e-b281c24a37f0	Exam Materials	\N	f	#333	\N	f	141015	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
+259112f5-5a87-45a8-9484-634fe93ba2fd	Exam Types	\N	f	#333	\N	f	141002	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
+7f8556ac-88aa-44ab-a3d8-b92f826fd3a7	University Entities	\N	f	#333	\N	f	141157	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
+e1cd4897-23bb-4492-b230-9d4e4820a8ea	Exam Exams	\N	f	#333	\N	f	140991	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
+f3861664-97bb-469d-a47f-bd5082c8dcda	Exam Exam Materials	\N	f	#333	\N	f	140984	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
+171d152d-cde2-4c11-92fe-9d371d1929ea	Exam Scores	\N	f	#333	\N	f	140998	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
+9d9e45b6-2aed-4071-ba12-359359a36486	Exam Calculations	\N	f	#333	\N	f	140962	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
+9f4415a1-7bf9-4af5-a154-1b999a029baf	Exam Scores	\N	f	#333	\N	f	143542	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
 \.
 
 
@@ -3450,6 +4053,14 @@ COPY public.acorn_calendar_events (id, calendar_id, external_url, created_at, up
 --
 
 COPY public.acorn_calendar_instances (id, date, event_part_id, instance_num, instance_start, instance_end) FROM stdin;
+\.
+
+
+--
+-- Data for Name: acorn_exam_calculations; Type: TABLE DATA; Schema: public; Owner: university
+--
+
+COPY public.acorn_exam_calculations (id, name, description, result_expression, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
 \.
 
 
@@ -3489,7 +4100,7 @@ COPY public.acorn_exam_materials (id, name, description, material_type_id, creat
 -- Data for Name: acorn_exam_scores; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acorn_exam_scores (id, exam_material_id, score, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id, user_id) FROM stdin;
+COPY public.acorn_exam_scores (id, exam_material_id, score, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id, student_id) FROM stdin;
 \.
 
 
@@ -3497,7 +4108,7 @@ COPY public.acorn_exam_scores (id, exam_material_id, score, created_at_event_id,
 -- Data for Name: acorn_exam_types; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acorn_exam_types (id, name, result_algorithm, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_exam_types (id, name, result_expression, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
 \.
 
 
@@ -3726,6 +4337,24 @@ COPY public.acorn_university_schools (id, entity_id) FROM stdin;
 
 
 --
+-- Data for Name: acorn_university_students; Type: TABLE DATA; Schema: public; Owner: university
+--
+
+COPY public.acorn_university_students (id, user_id, code) FROM stdin;
+9ea61aa6-e7cf-4e71-b2d5-9375b103374f	9ea61aa6-e680-484d-9d30-aba185c5b329	KOB99
+9ea61ac5-d366-40f0-a172-4585931faa1f	9ea61ac5-d211-4e52-86f5-10c6d4dbe688	ROJ01
+\.
+
+
+--
+-- Data for Name: acorn_university_teachers; Type: TABLE DATA; Schema: public; Owner: university
+--
+
+COPY public.acorn_university_teachers (id, user_id) FROM stdin;
+\.
+
+
+--
 -- Data for Name: acorn_university_universities; Type: TABLE DATA; Schema: public; Owner: university
 --
 
@@ -3779,6 +4408,7 @@ COPY public.acorn_user_roles (id, name, permissions, created_at, updated_at) FRO
 
 COPY public.acorn_user_throttle (id, user_id, ip_address, attempts, last_attempt_at, is_suspended, suspended_at, is_banned, banned_at) FROM stdin;
 9ea0e068-32b3-4f4e-b4ac-6f2c0101019a	9e95e47b-46dc-492d-8ffa-1954bc3f1611	\N	0	\N	f	\N	f	\N
+9ea8645a-2223-40ae-a4e7-d220afbb5f70	9ea61ac5-d211-4e52-86f5-10c6d4dbe688	\N	0	\N	f	\N	f	\N
 \.
 
 
@@ -3813,14 +4443,16 @@ COPY public.acorn_user_user_groups (id, name, code, description, created_at, upd
 -- Data for Name: acorn_user_users; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acorn_user_users (id, name, email, password, activation_code, persist_code, reset_password_code, permissions, is_activated, is_system_user, activated_at, last_login, created_at, updated_at, username, surname, deleted_at, last_seen, is_guest, is_superuser, created_ip_address, last_ip_address, acorn_imap_username, acorn_imap_password, acorn_imap_server, acorn_imap_port, acorn_imap_protocol, acorn_imap_encryption, acorn_imap_authentication, acorn_imap_validate_cert, acorn_smtp_server, acorn_smtp_port, acorn_smtp_encryption, acorn_smtp_authentication, acorn_smtp_username, acorn_smtp_password, acorn_messaging_sounds, acorn_messaging_email_notifications, acorn_messaging_autocreated, acorn_imap_last_fetch, acorn_default_calendar, acorn_start_of_week, acorn_default_event_time_from, acorn_default_event_time_to) FROM stdin;
-9e95e475-919e-472a-b1e3-65d83adee981	Artisan	artisan@nowhere.org	$2y$10$04rS6CabSidfoSyFEwaOGeuv0SvRfwEySaQuyPFH0Szw2UnO5FoIS	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:22	2025-04-03 07:43:22	artisan	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-9e95e477-1d74-4314-8ae8-4dbb605cb027	Createsystem	createsystem@nowhere.org	$2y$10$xELVx7Ue7aLR2ffoLahdz.8nQsrCJu3uVZq3b2DRd4OV/zWPGBcWC	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:23	2025-04-03 07:43:23	createsystem	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-9e95e478-70c6-49a6-a82c-47f3639fc748	Seeder	seeder@nowhere.org	$2y$10$jnVJoLvkr0UMQ59RN6oZc.bFWyB0oVcteNUQ80N0EcAjv2xbAprpG	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:24	2025-04-03 07:43:24	seeder	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-9e95e479-9690-4091-a730-aecdf51f9258	Admin	admin@nowhere.org	$2y$10$CYphtl51Fbdv2TZcNZdtrezTwWNw0qeGfSc6oiuYEpE/pOK4gupYy	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:24	2025-04-03 07:43:24	admin	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-9e95e47b-46dc-492d-8ffa-1954bc3f1611	sz	sz@nowhere.org	$2y$10$lta6VXUFah18WoaE0L6/2eNtXxV1pJ14tG4juSxDF5QOlGq6C86zu	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:26	2025-04-03 07:43:26	sz	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-9e95e47c-db72-48ec-8c0c-908592ebf59c	Demo	demo@nowhere.org	$2y$10$fXtS/tknV8gTiWiKWD4NEuYaGRQ.aMaTKLjYUlko6bkH7V2JZq7Oa	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:27	2025-04-03 07:43:27	demo	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-a11d6172-6565-4195-a62e-038358aa9fa9	seeder	\N	\N	\N	\N	\N	\N	f	t	\N	\N	\N	\N	\N	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+COPY public.acorn_user_users (id, name, email, password, activation_code, persist_code, reset_password_code, permissions, is_activated, is_system_user, activated_at, last_login, created_at, updated_at, username, surname, deleted_at, last_seen, is_guest, is_superuser, created_ip_address, last_ip_address, acorn_imap_username, acorn_imap_password, acorn_imap_server, acorn_imap_port, acorn_imap_protocol, acorn_imap_encryption, acorn_imap_authentication, acorn_imap_validate_cert, acorn_smtp_server, acorn_smtp_port, acorn_smtp_encryption, acorn_smtp_authentication, acorn_smtp_username, acorn_smtp_password, acorn_messaging_sounds, acorn_messaging_email_notifications, acorn_messaging_autocreated, acorn_imap_last_fetch, acorn_default_calendar, acorn_start_of_week, acorn_default_event_time_from, acorn_default_event_time_to, birth_date) FROM stdin;
+9e95e475-919e-472a-b1e3-65d83adee981	Artisan	artisan@nowhere.org	$2y$10$04rS6CabSidfoSyFEwaOGeuv0SvRfwEySaQuyPFH0Szw2UnO5FoIS	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:22	2025-04-03 07:43:22	artisan	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+9e95e477-1d74-4314-8ae8-4dbb605cb027	Createsystem	createsystem@nowhere.org	$2y$10$xELVx7Ue7aLR2ffoLahdz.8nQsrCJu3uVZq3b2DRd4OV/zWPGBcWC	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:23	2025-04-03 07:43:23	createsystem	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+9e95e478-70c6-49a6-a82c-47f3639fc748	Seeder	seeder@nowhere.org	$2y$10$jnVJoLvkr0UMQ59RN6oZc.bFWyB0oVcteNUQ80N0EcAjv2xbAprpG	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:24	2025-04-03 07:43:24	seeder	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+9e95e479-9690-4091-a730-aecdf51f9258	Admin	admin@nowhere.org	$2y$10$CYphtl51Fbdv2TZcNZdtrezTwWNw0qeGfSc6oiuYEpE/pOK4gupYy	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:24	2025-04-03 07:43:24	admin	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+a11d6172-6565-4195-a62e-038358aa9fa9	seeder	\N	\N	\N	\N	\N	\N	f	t	\N	\N	\N	\N	\N	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+9e95e47b-46dc-492d-8ffa-1954bc3f1611	sz	sz@nowhere.org	$2y$10$lta6VXUFah18WoaE0L6/2eNtXxV1pJ14tG4juSxDF5QOlGq6C86zu	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:26	2025-04-03 07:43:26	sz	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	1971-08-11 00:00:00
+9e95e47c-db72-48ec-8c0c-908592ebf59c	Demo	demo@nowhere.org	$2y$10$fXtS/tknV8gTiWiKWD4NEuYaGRQ.aMaTKLjYUlko6bkH7V2JZq7Oa	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:27	2025-04-03 07:43:27	demo	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2001-10-10 00:00:00
+9ea61aa6-e680-484d-9d30-aba185c5b329	Me		\N	\N	\N	\N	\N	f	f	\N	\N	2025-04-11 09:08:09	2025-04-11 09:08:09		1	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	1971-08-11 00:00:00
+9ea61ac5-d211-4e52-86f5-10c6d4dbe688	You	a	\N	\N	\N	\N	\N	f	f	\N	\N	2025-04-11 09:08:29	2025-04-11 09:08:29	a	1	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2001-10-10 00:00:00
 \.
 
 
@@ -5429,6 +6061,48 @@ COPY public.winter_translate_attributes (id, locale, model_id, model_type, attri
 4	ku	9e95fe34-4596-4431-865c-a5a8d2a638c4	Acorn\\Location\\Models\\Location	{"name":""}
 7	ar	9ea0cebf-6a5c-4ab8-9912-a387123f1c02	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
 8	ku	9ea0cebf-6a5c-4ab8-9912-a387123f1c02	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+9	ar	9ea1ed07-6885-4b3f-b37c-1482c1a21624	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+10	ku	9ea1ed07-6885-4b3f-b37c-1482c1a21624	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+11	ar	9ea47ad3-7e86-4dde-8cd4-b63f1990ca35	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+12	ku	9ea47ad3-7e86-4dde-8cd4-b63f1990ca35	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+13	ar	c6bb2023-22d1-4f10-8767-89e159b618a6	Acorn\\Exam\\Models\\Type	{"name":"","description":""}
+14	ku	c6bb2023-22d1-4f10-8767-89e159b618a6	Acorn\\Exam\\Models\\Type	{"name":"","description":""}
+15	ar	076c0630-99cc-4324-9f67-c1c202a19b58	Acorn\\Exam\\Models\\Type	{"name":"","description":""}
+16	ku	076c0630-99cc-4324-9f67-c1c202a19b58	Acorn\\Exam\\Models\\Type	{"name":"","description":""}
+17	ar	996bf95c-e86b-4653-8d1d-440923f12cfd	Acorn\\Exam\\Models\\Type	{"name":"","description":""}
+18	ku	996bf95c-e86b-4653-8d1d-440923f12cfd	Acorn\\Exam\\Models\\Type	{"name":"","description":""}
+19	ar	a582b1ba-5d71-42d2-b776-46de370b3575	Acorn\\Exam\\Models\\Type	{"name":"","description":""}
+20	ku	a582b1ba-5d71-42d2-b776-46de370b3575	Acorn\\Exam\\Models\\Type	{"name":"","description":""}
+21	ar	9ea60a63-4050-466c-9947-d6a335a2f7bf	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+22	ku	9ea60a63-4050-466c-9947-d6a335a2f7bf	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+23	ar	9ea60bc4-324d-4091-baf9-6666d6183078	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+24	ku	9ea60bc4-324d-4091-baf9-6666d6183078	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+25	ar	9ea60dbe-8014-467f-ae96-b6083f2325c0	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+26	ku	9ea60dbe-8014-467f-ae96-b6083f2325c0	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+27	ar	9ea60dd4-96f6-457c-a10b-19d4ed657d40	Acorn\\Exam\\Models\\Material	{"name":"","description":""}
+28	ku	9ea60dd4-96f6-457c-a10b-19d4ed657d40	Acorn\\Exam\\Models\\Material	{"name":"","description":""}
+29	ar	9ea63f4c-7743-4a49-9963-856f0e1e4e9d	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+30	ku	9ea63f4c-7743-4a49-9963-856f0e1e4e9d	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+31	ar	9ea6417c-516e-4a0e-9637-924101c5b9b1	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+32	ku	9ea6417c-516e-4a0e-9637-924101c5b9b1	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+33	ar	9ea68ea6-ed7b-42c2-bc30-37c10be1c285	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+34	ku	9ea68ea6-ed7b-42c2-bc30-37c10be1c285	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+35	ar	9ea6ec5b-91fc-4629-bfa4-d218886b6c22	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+36	ku	9ea6ec5b-91fc-4629-bfa4-d218886b6c22	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+37	ar	9ea84304-5bc0-41a4-aa63-6269ed01a9bf	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+38	ku	9ea84304-5bc0-41a4-aa63-6269ed01a9bf	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+39	ar	9ea8435c-603a-4e8e-a422-b074ad26b59c	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+40	ku	9ea8435c-603a-4e8e-a422-b074ad26b59c	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+41	ar	9ea85983-2cd8-4e46-8aa6-d3691f2d9a84	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+42	ku	9ea85983-2cd8-4e46-8aa6-d3691f2d9a84	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+43	ar	d21483ec-5840-4894-9dbc-40125ed96835	Acorn\\Exam\\Models\\Type	{"name":"","description":""}
+44	ku	d21483ec-5840-4894-9dbc-40125ed96835	Acorn\\Exam\\Models\\Type	{"name":"","description":""}
+45	ar	9ea85e96-a848-4004-a4a8-48cb18f7f6ec	Acorn\\Exam\\Models\\Material	{"name":"","description":""}
+46	ku	9ea85e96-a848-4004-a4a8-48cb18f7f6ec	Acorn\\Exam\\Models\\Material	{"name":"","description":""}
+47	ar	9ea85f4e-0909-4534-975b-067544d30e86	Acorn\\Exam\\Models\\Type	{"name":"","description":""}
+48	ku	9ea85f4e-0909-4534-975b-067544d30e86	Acorn\\Exam\\Models\\Type	{"name":"","description":""}
+49	ar	9ea85f73-cca5-4aca-9d7e-55f9f5ab1409	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+50	ku	9ea85f73-cca5-4aca-9d7e-55f9f5ab1409	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
 \.
 
 
@@ -5575,7 +6249,7 @@ SELECT pg_catalog.setval('public.rainlab_location_states_id_seq', 720, true);
 -- Name: rainlab_translate_attributes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 8, true);
+SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 50, true);
 
 
 --
@@ -5603,7 +6277,7 @@ SELECT pg_catalog.setval('public.rainlab_translate_messages_id_seq', 1, false);
 -- Name: system_event_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.system_event_logs_id_seq', 126, true);
+SELECT pg_catalog.setval('public.system_event_logs_id_seq', 136, true);
 
 
 --
@@ -5738,6 +6412,14 @@ ALTER TABLE ONLY public.acorn_calendar_events
 
 ALTER TABLE ONLY public.acorn_calendar_instances
     ADD CONSTRAINT acorn_calendar_instances_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: acorn_exam_calculations acorn_exam_calculations_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculations
+    ADD CONSTRAINT acorn_exam_calculations_pkey PRIMARY KEY (id);
 
 
 --
@@ -5946,6 +6628,22 @@ ALTER TABLE ONLY public.acorn_university_hierarchies
 
 ALTER TABLE ONLY public.acorn_university_schools
     ADD CONSTRAINT acorn_university_schools_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: acorn_university_students acorn_university_students_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_students
+    ADD CONSTRAINT acorn_university_students_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: acorn_university_teachers acorn_university_teachers_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_teachers
+    ADD CONSTRAINT acorn_university_teachers_pkey PRIMARY KEY (id);
 
 
 --
@@ -6716,6 +7414,13 @@ CREATE INDEX fki_server_id ON public.acorn_university_entities USING btree (serv
 
 
 --
+-- Name: fki_student_id; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX fki_student_id ON public.acorn_exam_scores USING btree (student_id);
+
+
+--
 -- Name: fki_type_id; Type: INDEX; Schema: public; Owner: university
 --
 
@@ -6734,13 +7439,6 @@ CREATE INDEX fki_updated_at_event_id ON public.acorn_university_entities USING b
 --
 
 CREATE INDEX fki_updated_by_user_id ON public.acorn_university_entities USING btree (updated_by_user_id);
-
-
---
--- Name: fki_user_id; Type: INDEX; Schema: public; Owner: university
---
-
-CREATE INDEX fki_user_id ON public.acorn_exam_scores USING btree (user_id);
 
 
 --
@@ -6989,6 +7687,13 @@ CREATE TRIGGER tr_acorn_calendar_events_generate_event_instances AFTER INSERT OR
 
 
 --
+-- Name: acorn_exam_calculations tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_exam_calculations FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
+
+
+--
 -- Name: acorn_exam_exam_materials tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
 --
 
@@ -7145,6 +7850,13 @@ ALTER TABLE public.acorn_location_types ENABLE ALWAYS TRIGGER tr_acorn_location_
 --
 
 CREATE TRIGGER tr_acorn_location_types_server_id BEFORE INSERT ON public.acorn_location_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
+
+
+--
+-- Name: acorn_exam_calculations tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_exam_calculations FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
@@ -7579,19 +8291,27 @@ ALTER TABLE ONLY public.acorn_exam_exams
 
 
 --
--- Name: acorn_exam_scores created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_scores
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
 -- Name: acorn_exam_exam_materials created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_exam_exam_materials
     ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_calculations created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculations
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_scores created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_scores
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
 
 
 --
@@ -7651,19 +8371,27 @@ ALTER TABLE ONLY public.acorn_exam_exams
 
 
 --
--- Name: acorn_exam_scores created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_scores
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
 -- Name: acorn_exam_exam_materials created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_exam_exam_materials
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_calculations created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculations
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_scores created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_scores
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
@@ -7785,7 +8513,7 @@ ALTER TABLE ONLY public.acorn_exam_exam_materials
 --
 
 ALTER TABLE ONLY public.acorn_exam_scores
-    ADD CONSTRAINT exam_material_id FOREIGN KEY (exam_material_id) REFERENCES public.acorn_exam_exam_materials(id) NOT VALID;
+    ADD CONSTRAINT exam_material_id FOREIGN KEY (exam_material_id) REFERENCES public.acorn_exam_exam_materials(id);
 
 
 --
@@ -7980,19 +8708,35 @@ ALTER TABLE ONLY public.acorn_exam_exams
 
 
 --
--- Name: acorn_exam_scores server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_scores
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
 -- Name: acorn_exam_exam_materials server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_exam_exam_materials
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_calculations server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculations
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_scores server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_scores
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_exam_scores student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_scores
+    ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id) NOT VALID;
 
 
 --
@@ -8084,19 +8828,27 @@ ALTER TABLE ONLY public.acorn_exam_exams
 
 
 --
--- Name: acorn_exam_scores updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_scores
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
 -- Name: acorn_exam_exam_materials updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_exam_exam_materials
     ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_calculations updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculations
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_scores updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_scores
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id);
 
 
 --
@@ -8156,14 +8908,6 @@ ALTER TABLE ONLY public.acorn_exam_exams
 
 
 --
--- Name: acorn_exam_scores updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_scores
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
 -- Name: acorn_exam_exam_materials updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -8172,11 +8916,49 @@ ALTER TABLE ONLY public.acorn_exam_exam_materials
 
 
 --
--- Name: acorn_exam_scores user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_calculations updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculations
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_scores updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_exam_scores
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_university_students user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_students
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: CONSTRAINT user_id ON acorn_university_students; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT user_id ON public.acorn_university_students IS 'type: leaf';
+
+
+--
+-- Name: acorn_university_teachers user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_teachers
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: CONSTRAINT user_id ON acorn_university_teachers; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT user_id ON public.acorn_university_teachers IS 'type: leaf';
 
 
 --
@@ -8202,280 +8984,280 @@ GRANT ALL ON SCHEMA public TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_in(cstring); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_in(cstring); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_in(cstring) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_out(public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_out(public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_out(public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_recv(internal); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_recv(internal); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_recv(internal) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_send(public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_send(public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_send(public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION bytea_to_text(data bytea); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION bytea_to_text(data bytea); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube(double precision[]); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube(double precision[]); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube(double precision[]) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube(double precision); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube(double precision); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube(double precision) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube(double precision[], double precision[]); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube(double precision[], double precision[]); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube(double precision, double precision); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube(double precision, double precision); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube(public.cube, double precision); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube(public.cube, double precision); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube(public.cube, double precision, double precision); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube(public.cube, double precision, double precision); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_cmp(public.cube, public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_cmp(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_contained(public.cube, public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_contained(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_contains(public.cube, public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_contains(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_coord(public.cube, integer); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_coord(public.cube, integer); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_coord_llur(public.cube, integer); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_coord_llur(public.cube, integer); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_dim(public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_dim(public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_distance(public.cube, public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_distance(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_enlarge(public.cube, double precision, integer); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_enlarge(public.cube, double precision, integer); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_eq(public.cube, public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_eq(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_ge(public.cube, public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_ge(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_gt(public.cube, public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_gt(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_inter(public.cube, public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_inter(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_is_point(public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_is_point(public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_le(public.cube, public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_le(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_ll_coord(public.cube, integer); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_ll_coord(public.cube, integer); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_lt(public.cube, public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_lt(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_ne(public.cube, public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_ne(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_overlap(public.cube, public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_overlap(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_size(public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_size(public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_size(public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_subset(public.cube, integer[]); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_subset(public.cube, integer[]); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_union(public.cube, public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_union(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION cube_ur_coord(public.cube, integer); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION cube_ur_coord(public.cube, integer); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION distance_chebyshev(public.cube, public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION distance_chebyshev(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION distance_taxicab(public.cube, public.cube); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION distance_taxicab(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION earth(); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION earth(); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.earth() TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION gc_to_sec(double precision); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION gc_to_sec(double precision); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION earth_box(public.earth, double precision); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION earth_box(public.earth, double precision); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION sec_to_gc(double precision); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION sec_to_gc(double precision); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION earth_distance(public.earth, public.earth); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION earth_distance(public.earth, public.earth); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO token_1 WITH GRANT OPTION;
@@ -8552,13 +9334,6 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_activity_event() TO token
 
 
 --
--- Name: FUNCTION fn_acorn_eval(sql_expression character varying, et record); Type: ACL; Schema: public; Owner: sz
---
-
-GRANT ALL ON FUNCTION public.fn_acorn_eval(sql_expression character varying, et record) TO token_1 WITH GRANT OPTION;
-
-
---
 -- Name: FUNCTION fn_acorn_first(anyelement, anyelement); Type: ACL; Schema: public; Owner: university
 --
 
@@ -8615,203 +9390,203 @@ GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO token_1 WITH GRANT
 
 
 --
--- Name: FUNCTION g_cube_consistent(internal, public.cube, smallint, oid, internal); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION g_cube_consistent(internal, public.cube, smallint, oid, internal); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION g_cube_distance(internal, public.cube, smallint, oid, internal); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION g_cube_distance(internal, public.cube, smallint, oid, internal); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION g_cube_penalty(internal, internal, internal); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION g_cube_penalty(internal, internal, internal); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION g_cube_picksplit(internal, internal); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION g_cube_picksplit(internal, internal); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION g_cube_same(public.cube, public.cube, internal); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION g_cube_same(public.cube, public.cube, internal); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION g_cube_union(internal, internal); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION g_cube_union(internal, internal); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION geo_distance(point, point); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION geo_distance(point, point); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.geo_distance(point, point) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION hostname(); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION hostname(); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.hostname() TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION http(request public.http_request); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION http(request public.http_request); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.http(request public.http_request) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION http_delete(uri character varying); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION http_delete(uri character varying); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION http_delete(uri character varying, content character varying, content_type character varying); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION http_delete(uri character varying, content character varying, content_type character varying); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION http_get(uri character varying); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION http_get(uri character varying); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.http_get(uri character varying) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION http_get(uri character varying, data jsonb); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION http_get(uri character varying, data jsonb); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION http_head(uri character varying); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION http_head(uri character varying); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.http_head(uri character varying) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION http_header(field character varying, value character varying); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION http_header(field character varying, value character varying); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION http_list_curlopt(); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION http_list_curlopt(); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.http_list_curlopt() TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION http_patch(uri character varying, content character varying, content_type character varying); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION http_patch(uri character varying, content character varying, content_type character varying); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION http_post(uri character varying, data jsonb); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION http_post(uri character varying, data jsonb); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION http_post(uri character varying, content character varying, content_type character varying); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION http_post(uri character varying, content character varying, content_type character varying); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION http_put(uri character varying, content character varying, content_type character varying); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION http_put(uri character varying, content character varying, content_type character varying); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION http_reset_curlopt(); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION http_reset_curlopt(); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.http_reset_curlopt() TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION http_set_curlopt(curlopt character varying, value character varying); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION http_set_curlopt(curlopt character varying, value character varying); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION latitude(public.earth); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION latitude(public.earth); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.latitude(public.earth) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION ll_to_earth(double precision, double precision); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION ll_to_earth(double precision, double precision); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION longitude(public.earth); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION longitude(public.earth); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.longitude(public.earth) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION text_to_bytea(data text); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION text_to_bytea(data text); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION urlencode(string bytea); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION urlencode(string bytea); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.urlencode(string bytea) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION urlencode(data jsonb); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION urlencode(data jsonb); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION urlencode(string character varying); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION urlencode(string character varying); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.urlencode(string character varying) TO token_1 WITH GRANT OPTION;
@@ -8885,6 +9660,13 @@ GRANT ALL ON TABLE public.acorn_calendar_events TO token_1 WITH GRANT OPTION;
 --
 
 GRANT ALL ON TABLE public.acorn_calendar_instances TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_user_users; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_user_users TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -9144,13 +9926,6 @@ GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO token_1 WITH G
 --
 
 GRANT ALL ON TABLE public.acorn_user_user_groups TO token_1 WITH GRANT OPTION;
-
-
---
--- Name: TABLE acorn_user_users; Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON TABLE public.acorn_user_users TO token_1 WITH GRANT OPTION;
 
 
 --

@@ -625,6 +625,7 @@ FUNCTION
         }
 
         // Abstracted MVC creates
+        ob_start();
         $this->createPlugin($plugin);
         $this->createMenus($plugin);
         foreach ($plugin->models as $model) {
@@ -638,6 +639,8 @@ FUNCTION
 
         $this->writeOutFiles();
         $this->runChecks($plugin);
+        $this->writeReadme($plugin, ob_get_contents());
+        ob_end_flush();
 
         /* TODO: GIT
         if [ -d .git ]; then
@@ -658,4 +661,5 @@ FUNCTION
     protected function createController(Controller &$controller, bool $overwrite = FALSE) {}
     protected function createListInterface(Model &$model, bool $overwrite = FALSE) {}
     protected function runChecks(Plugin &$plugin) {}
+    protected function writeReadme(Plugin &$plugin, string $contents) {}
 }

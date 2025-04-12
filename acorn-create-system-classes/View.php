@@ -14,7 +14,4 @@ class View extends Table {
         $changes = FALSE;
         return $changes;
     }
-
-    public function loadForeignKeys() {}
-    public function loadActionFunctions() {}
 }

@@ -322,8 +322,11 @@ class DB {
         $statement->execute();
 
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
-            $fk = ForeignKey::fromRow($column, $to, $row);
-            if ($fk->shouldProcess()) $results[$fk->fullyQualifiedName()] = $fk;
+            $fk   = ForeignKey::fromRow($column, $to, $row);
+            $name = $fk->fullyQualifiedName();
+            if (isset($results[$name]))
+                throw new \Exception("Foreign Key $name already exists");
+            if ($fk->shouldProcess()) $results[$name] = $fk;
         }
 
         return $results;
