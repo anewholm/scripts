@@ -27,22 +27,17 @@ class Plugin {
 
         foreach ($tables as &$table) {
             if ($table->isPlugin()) {
-                if ($table instanceof View) {
-                    // TODO: What to do with views?
-                    print("{$YELLOW}WARNING{$NC}: Ignoring view [$table->name]\n");
-                } else {
-                    // Modules have NULL plugin name
-                    $authorName = $table->authorName(); // Acorn
-                    $pluginName = $table->pluginName(); // Lojistiks
-                    $pluginFullyQualifiedName = "$authorName\\$pluginName";
+                // Modules have NULL plugin name
+                $authorName = $table->authorName(); // Acorn
+                $pluginName = $table->pluginName(); // Lojistiks
+                $pluginFullyQualifiedName = "$authorName\\$pluginName";
 
-                    if (isset(self::$plugins[$pluginFullyQualifiedName]))
-                        $plugin = self::$plugins[$pluginFullyQualifiedName];
-                    else
-                        $plugin = new Plugin($framework, $authorName, $pluginName);
+                if (isset(self::$plugins[$pluginFullyQualifiedName]))
+                    $plugin = self::$plugins[$pluginFullyQualifiedName];
+                else
+                    $plugin = new Plugin($framework, $authorName, $pluginName);
 
-                    $plugin->addTable($table);
-                }
+                $plugin->addTable($table);
             }
         }
         return self::$plugins;
@@ -76,7 +71,7 @@ class Plugin {
         }
 
         // A Model and a Controller represents a content table
-        if ($table->isContentTable() || $table->isSemiPivotTable()) {
+        if ($table->isContentTable() || $table->isSemiPivotTable() || $table->isReportTable()) {
             $model      = new Model($this, $table);
             $controller = new Controller($model, 'CRUD');
             $model->addController($controller);

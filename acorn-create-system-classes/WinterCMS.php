@@ -112,43 +112,12 @@ class WinterCMS extends Framework
         $pluginFilePath      = "$pluginDirectoryPath/Plugin.php";
         $createdBy           = $this->createdByString();
 
+        print("Plugin: $plugin->name\n");
+        print('  '); // Pre-pend the artisan output
         $this->runWinterCommand('create:plugin', $plugin->dotClassName());
         // Immediately stamp it as create-system so that fields() 
         // include: 1to1 recognises it as native
         $this->appendTofile(  $pluginFilePath, "\n// $createdBy");
-
-        // --------------------------------------------- Created bys, authors & README.md
-        // TODO: Move README up to Framework level
-        $readmePath = "$pluginDirectoryPath/README.md";
-        if (!file_exists($readmePath)) {
-            $this->setFileContents($readmePath, "# $plugin->name");
-            $this->appendToFile($readmePath, $createdBy);
-
-            $this->appendToFile($readmePath, "# Models (table)");
-            foreach ($plugin->models as $name => $model) {
-                $table = $model->table;
-                $this->appendToFile($readmePath, "## $model->name ($table->name)");
-                if ($table->comment) $this->appendToFile($readmePath, "\n```\n$table->comment\n```\n",  0, TRUE, FALSE);
-                $this->appendToFile($readmePath, "* **Plural**:   " . $table->namePlural(),    1, TRUE, FALSE);
-                $this->appendToFile($readmePath, "* **Singular**: " . $table->nameSingular(),  1, TRUE, FALSE);
-                $this->appendToFile($readmePath, "* **Type**:     " . $table->type(), 1, TRUE, FALSE);
-
-                $this->appendToFile($readmePath, "### Fields (column)", 0, TRUE, FALSE);
-                foreach ($model->fields() as $name => $field) {
-                    if ($column = $field->column?->column_name) {
-                        $this->appendToFile($readmePath, "* $field->name ($column)", 0, TRUE, FALSE);
-                    } else {
-                        $this->appendToFile($readmePath, "* _{$field->name}_", 0, TRUE, FALSE);
-                    }
-                }
-
-                $this->appendToFile($readmePath, "### Relations (foreign key)", 0, TRUE, FALSE);
-                foreach ($model->relations() as $name => $relation) {
-                    $foreignKey = $relation->foreignKey;
-                    $this->appendToFile($readmePath, "* $relation ($foreignKey->name)", 0, TRUE, FALSE);
-                }
-            }
-        }
 
         // --------------------------------------------- Plugin.php misc
         // Alter the public function pluginDetails(): array function array return
@@ -170,7 +139,7 @@ class WinterCMS extends Framework
                 if ($otherPlugin instanceof Plugin) {
                     $fqn         = $otherPlugin->dotClassName();
                     if (!isset($requirePlugins[$fqn])) {
-                        print("      Adding Plugin \$require {$YELLOW}$fqn{$NC}\n");
+                        print("  Adding Plugin \$require {$YELLOW}$fqn{$NC}\n");
                         $requirePlugins[$fqn] = TRUE;
                     }
                 }
@@ -480,6 +449,29 @@ class WinterCMS extends Framework
         }
     }
 
+    protected function writeReadme(Plugin &$plugin, string $contents) {
+        // Created bys, authors & README.md
+        $pluginDirectoryPath = $this->pluginDirectoryPath($plugin);
+        $readmePath = "$pluginDirectoryPath/README.md";
+
+        if (!file_exists($readmePath)) {
+            // Lines that are zero-indented are top level headings
+            $contents  = preg_replace('/^([^ ].*)/m', "```\n\n# \$1\n\n```", $contents);
+            // Remove first code start
+            $contents  = preg_replace('/^```\n\n/m', '', $contents, 1);
+            // Complete last
+            $contents .= '```';
+            // Winter doc removes the first # Heading
+            $contents  = "# $plugin->name\n\n$contents";
+            // Remove terminal colour formatting
+            $contents  = preg_replace('/\[[0-9]+;[0-9]+m|\[0m/', '', $contents);
+            // Remove accidental commenting
+            $contents  = preg_replace('/\/\*/', '/ *', $contents);
+
+            $this->setFileContents($readmePath, $contents);
+        }
+    }
+
     public function createMenus(Plugin &$plugin) {
         global $GREEN, $YELLOW, $RED, $NC;
 
@@ -570,6 +562,8 @@ class WinterCMS extends Framework
         if (file_exists($modelFilePath)) {
             print("  {$RED}WARNING{$NC}: Model file [$modelFilePath] already exists. Leaving.\n");
         } else {
+            print("Model: $model->name\n");
+            print('  '); // Pre-pend the artisan output
             $this->runWinterCommand('create:model', $model->plugin->dotClassName(), $model->name);
 
             // Potentially rewrite $table because create:model will automatically plural it
@@ -915,7 +909,8 @@ PHP
             // get<Something>Attribute()s
             foreach ($model->attributeFunctions as $name => &$body) {
                 $namePascal = Str::studly($name);
-                $funcName   = "get{$namePascal}Attribute(\$value)"; // Encapsulation...
+                $type       = ($name == 'name' ? 'string' : 'mixed');
+                $funcName   = "get{$namePascal}Attribute(\$value): $type"; // Encapsulation...
                 print("  Injecting public {$YELLOW}$funcName{$NC}() into [$model->name]\n");
                 $this->addMethod($modelFilePath, $funcName, $body);
             }
@@ -1144,6 +1139,8 @@ PHP
         if (file_exists($controllerFilePath)) {
             print("  {$RED}WARNING{$NC}: Controller file [$controllerFilePath] already exists. Leaving.\n");
         } else {
+            print("Controller: $controller->name\n");
+            print('  '); // Pre-pend the artisan output
             $this->runWinterCommand('create:controller', $controller->model->plugin->dotClassName(), $controller->name);
 
             // Inheritance
@@ -1354,7 +1351,7 @@ PHP
 
     protected function runChecks(Plugin &$plugin)
     {
-        print("\nRunning post install checks for [$plugin]\n");
+        print("Running post install checks for [$plugin]\n");
         $pluginDirectoryPath = $this->pluginDirectoryPath($plugin);
         $modelsDirPath       = "$pluginDirectoryPath/models";
         $controllersDirPath  = "$pluginDirectoryPath/controllers";

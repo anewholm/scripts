@@ -50,6 +50,7 @@ class Column {
     public $foreignKeysFrom = array();
     public $foreignKeysTo   = array();
     public $autoFKType; // For auto-setting a single associated FK
+    public $extraForeignKey; // Explicit fake FK. VIEWS only
 
     // --------------------- Database column settings
     // information_schema.columns.* SQL standard
@@ -211,21 +212,47 @@ class Column {
         return ($this->table->shouldProcess() && !$this->system && !$this->todo);
     }
 
-    public function loadForeignKeys()
+    public function loadForeignKeys(): void
     {
-        $tableName = $this->table->name;
+        global $YELLOW, $NC;
+
         // The from on these foreign keys is always the column the FK is attached to
         // So foreignKeysTo will point (to) to this table id, and from a foreign table
         $this->foreignKeysFrom = $this->db()->foreignKeysFrom($this); // from => to
         $this->foreignKeysTo   = $this->db()->foreignKeysTo($this);   // to <= from
+
+        if ($this->extraForeignKey) {
+            // Used by views to create links with other tables
+            // We assume this is a FK from the view foreign key field
+            // to an id on another table
+            // TODO: Create the reverse FK on the target table...
+            $row  = array(
+                // Copied from DB::foreignKeys()
+                'oid'     => '',
+                'name'    => $this->name,
+                'comment' => '',
+                'table_from_schema' => $this->table->schema,
+                'table_from_name'   => $this->table->name,
+                'table_from_column' => $this->name,
+                'table_to_schema'   => $this->extraForeignKey['schema'] ?? 'public',
+                'table_to_name'     => $this->extraForeignKey['table'],
+                'table_to_column'   => $this->extraForeignKey['column'] ?? 'id',
+            );
+            $fk   = ForeignKey::fromRow($this, FALSE, $row);
+            $name = $fk->fullyQualifiedName();
+            if (isset($this->foreignKeysFrom[$name]))
+                throw new \Exception("Foreign Key $name already exists on $this->name");
+            $this->foreignKeysFrom[$name] = $fk;
+            print("  Added extra foreign key $YELLOW$name$NC from column $YELLOW$this->name$NC\n");
+        }
     }
 
-    protected function db()
+    public function db(): DB
     {
         return $this->table->db();
     }
 
-    public function dbLangPath()
+    public function dbLangPath(): string
     {
         $tableLangPath = $this->table->dbLangPath();
         return "$tableLangPath.columns.$this->column_name";

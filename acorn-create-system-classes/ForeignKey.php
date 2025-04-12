@@ -88,8 +88,9 @@ class ForeignKey {
         }
     }
 
-    protected function check()
+    protected function check(): bool
     {
+        $changes   = FALSE;
         $tableName = $this->column->table->name;
         $columnFQN = "$tableName.$this->column";
         if ($this->columnFrom->name == 'id')
@@ -105,6 +106,7 @@ class ForeignKey {
             $details   = array(
                 $this->isSelfReferencing(),
                 $this->tableFrom->isContentTable(),
+                $this->tableFrom->isReportTable(),
                 $this->columnFrom->isForeignID(),
                 $this->tableTo->isContentTable(),
                 $this->columnTo->isTheIdColumn()
@@ -112,14 +114,16 @@ class ForeignKey {
             $detailsString = implode('|', $details);
             throw new \Exception("Foreign Key [$this->name] on [$this->tableFrom] $direction [$columnFQN] has no type with [$detailsString]");
         }
+
+        return $changes;
     }
 
-    protected function db()
+    protected function db(): DB
     {
         return $this->column->db();
     }
 
-    public function dbLangPath()
+    public function dbLangPath(): string
     {
         $tableLangPath = $this->tableFrom->dbLangPath();
         return "$tableLangPath.foreignkeys.$this->name";
@@ -185,7 +189,7 @@ class ForeignKey {
         $explicitIs    = ($this->type == 'Xto1');
         $schemaIs      = (
               !$this->isSelfReferencing()
-            && $this->tableFrom->isContentTable()
+            && ($this->tableFrom->isContentTable() || $this->tableFrom->isReportTable())
             && $this->columnFrom->isForeignID()
             && $this->tableTo->isContentTable()  // True still if central
             && !$this->tableTo->isCentralTable()
