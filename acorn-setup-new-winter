@@ -234,6 +234,8 @@ composer require $no_scripts winter/wn-tailwindui-plugin # Menus
 if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 composer require $no_scripts staudenmeir/eloquent-has-many-deep # New Deep relations
 if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+composer require $no_scripts --dev winter/wn-debugbar-plugin
+if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 
 # We use acorn-create-system usually, so no builder
 # composer require $no_scripts winter/wn-builder-plugin
@@ -247,7 +249,7 @@ if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter/pat
 fi
 
 # -------------------------------------------- Install AA modules and plugins
-echo "${GREEN}INFO${NC}: composer require $no_scripts AA modules (from AA gitlab)"
+echo "${GREEN}INFO${NC}: composer require ($no_scripts) AA modules (from AA gitlab)"
 local_acorn=/var/www/plugins/acorn
 gitlab_acorn=gitlab.acorn.org
 gitlab_group=office

@@ -93,9 +93,21 @@ class Module {
         return ($this->name == 'Acorn');
     }
 
+    public function isCreateSystemPlugin(): bool
+    {
+        return $this->framework->wasCreatedByUs($this);
+    }
+
     public function translationDomain(): string
     {
         return $this->dotName();
+    }
+
+    public function dirName(): string
+    {
+        $authorLower = strtolower($this->author);
+        $nameLower   = strtolower($this->name);
+        return "$authorLower/$nameLower";
     }
 
     // ----------------------------------------- Display

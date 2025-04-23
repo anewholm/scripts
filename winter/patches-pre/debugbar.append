@@ -1,0 +1,8 @@
+#!append config/debugbar.php
+#!search return
+<?php
+return [
+    'collectors' => array(
+        'gate' => false, // Gate collection will fail because BeyondCode WebSockets is faulty
+    ),
+];

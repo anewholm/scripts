@@ -1,5 +1,9 @@
 <?php namespace Acorn\CreateSystem;
 
+use Acorn\CreateSystem\Relation1to1;
+use Acorn\CreateSystem\RelationHasManyDeep;
+use Exception;
+
 require_once('Relation.php');
 require_once('Field.php');
 
@@ -16,6 +20,7 @@ class Model {
     public $controllers = array();
     public $actionFunctions;
     public $printable;
+    public $readOnly;
 
     public $plugin;
     public $table;
@@ -82,6 +87,8 @@ class Model {
             if (property_exists($this, $nameCamel)) $this->$nameCamel = $value;
         }
 
+        if (!isset($readOnly) && $table instanceof View) $this->readOnly = TRUE;
+
         // Link back
         $this->table->model = &$this;
 
@@ -90,7 +97,8 @@ class Model {
 
     public function addController(Controller &$controller)
     {
-        if (isset($this->controllers[$controller->name])) throw new \Exception("Controller [$controller->name] already exists on Model [$this->name]");
+        if (isset($this->controllers[$controller->name])) 
+            throw new Exception("Controller [$controller->name] already exists on Model [$this->name]");
         $this->controllers[$controller->name] = &$controller;
     }
 
@@ -99,9 +107,9 @@ class Model {
         $controller = NULL;
 
         if (count($this->controllers) == 0) {
-            if ($throwIfNotOnly1) throw new \Exception("No controllers found on [$this->name]");
+            if ($throwIfNotOnly1) throw new Exception("No controllers found on [$this->name]");
         } else if (count($this->controllers) > 1) {
-            if ($throwIfNotOnly1) throw new \Exception("Several controllers found on [$this->name]");
+            if ($throwIfNotOnly1) throw new Exception("Several controllers found on [$this->name]");
         } else $controller = end($this->controllers);
 
         return $controller;
@@ -168,7 +176,7 @@ class Model {
     {
         // For a UserGroup model, we mean a from FK reference of user_group_id
         $subNameSingular = $this->table->subNameSingular();
-        if (is_null($subNameSingular)) throw new \Exception("$this has no sub-name singular");
+        if (is_null($subNameSingular)) throw new Exception("$this has no sub-name singular");
         return "{$subNameSingular}_id";
     }
 
@@ -223,18 +231,20 @@ class Model {
         }
 
         // Relations
-        $previousClass = NULL;
-        foreach ($this->relations() as &$relation) {
-            $classParts = explode('\\', get_class($relation));
-            $class      = end($classParts);
-            if ($previousClass != $class) print("{$indentString}  $class:\n");
-            $relation->show($indent+2);
-            $previousClass = $class;
-        }
-
-        print("{$indentString}  Fields:\n");
-        foreach ($this->fields() as &$field) {
-            $field->show($indent+2);
+        if ($this->plugin->isCreateSystemPlugin()) { // Non-create-system relations require Class::belongsTo
+            $previousClass = NULL;
+            foreach ($this->relations() as &$relation) {
+                $classParts = explode('\\', get_class($relation));
+                $class      = end($classParts);
+                if ($previousClass != $class) print("{$indentString}  $class:\n");
+                $relation->show($indent+2);
+                $previousClass = $class;
+            }
+            
+            print("{$indentString}  Fields:\n");
+            foreach ($this->fields() as &$field) {
+                $field->show($indent+2);
+            }
         }
     }
 
@@ -334,7 +344,7 @@ class Model {
                 $qualifiedPermissionName = $permissionDirective;
                 $isQualifiedName = (strstr($qualifiedPermissionName, '.') !== FALSE);
                 if ($isQualifiedName) {
-                    throw new \Exception("Model permission [$qualifiedPermissionName] cannot be qualified");
+                    throw new Exception("Model permission [$qualifiedPermissionName] cannot be qualified");
                 } else {
                     $pluginDotPath = $this->plugin->dotName();
                     $qualifiedPermissionName = "$pluginDotPath.$qualifiedPermissionName";
@@ -378,13 +388,28 @@ class Model {
         // Check these permissions keys are fully qualified
         foreach ($permissions as $fullyQualifiedKey => &$config) {
             $isQualifiedName = (strstr($fullyQualifiedKey, '.') !== FALSE);
-            if (!$isQualifiedName) throw new \Exception("Permission [$fullyQualifiedKey] is not qualified");
+            if (!$isQualifiedName) throw new Exception("Permission [$fullyQualifiedKey] is not qualified");
         }
 
         return $permissions;
     }
 
     // ----------------------------------------- Relations
+    public function winterModel()
+    {
+        $modelFQN = $this->fullyQualifiedName();
+        if (!class_exists($modelFQN))
+            throw new Exception("Call for " . __FUNCTION__ . "() on non-create-system plugin, model [$modelFQN] not loaded");
+        return new $modelFQN();
+    }
+
+    protected function isRelationConfigToModel(array|string $config, Model $modelTo): bool
+    {
+        $modelToFQN = $modelTo->fullyQualifiedName();
+        return (is_string($config) && $config == $modelToFQN)
+            || (isset($config[0]) && $config[0] == $modelToFQN);
+    }
+
     public function relations(Column &$forColumn = NULL): array
     {
         // foreignKeysTo this column (ID)
@@ -393,34 +418,49 @@ class Model {
         $r7 = $this->relationsXfromXSemi($forColumn); // XtoXsemi <= semi-pivot
         $r6 = $this->relationsXfromX($forColumn); // XtoX <= pivot
         // foreignKeysFrom this column
+        $r0 = $this->relationsHasManyDeep($forColumn);        // ?
         $r1 = $this->relationsSelf($forColumn);   // self
         $r3 = $this->relations1to1($forColumn);   // 1to1
         $r5 = $this->relationsXto1($forColumn);   // Xto1
 
-        $conflicts = array_intersect_key($r1, $r2, $r3, $r4, $r5, $r6, $r7);
-        if (count($conflicts)) throw new Exception("Relation conflicts for [$this]");
+        $conflicts = array_intersect_key($r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7);
+        if (count($conflicts)) 
+            throw new Exception("Relation conflicts for [$this]");
 
-        return array_merge($r1, $r2, $r3, $r4, $r5, $r6, $r7);
+        return array_merge($r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7);
     }
 
     public function relationsSelf(Column &$forColumn = NULL): array
     {
         $relations = array();
 
-        foreach ($this->table->columns as &$column) {
-            foreach ($column->foreignKeysFrom as &$foreignKeyFrom) {
-                if ($foreignKeyFrom->shouldProcess()) {
-                    // Returns true also if isLeaf()
-                    if ($foreignKeyFrom->isSelfReferencing() && (is_null($forColumn) || $forColumn->name == $column->name)) {
-                        $finalContentTable = &$foreignKeyFrom->tableTo;
-                        $finalColumnTo     = &$foreignKeyFrom->columnTo;
-                        if ($finalContentTable != $this->table)    throw new \Exception("Self-referencing [$foreignKeyFrom] on [$this->table.$column] is not to the same table");
-                        if (!$finalColumnTo->isTheIdColumn())      throw new \Exception("Self-referencing [$foreignKeyFrom] on [$this->table.$column] is not to the id column [$finalColumnTo->name]");
-                        $finalModel   = &$finalContentTable->model;
-                        $relationName = $foreignKeyFrom->columnFrom->relationName();
-                        if (isset($relations[$relationName])) throw new \Exception("Relation for [$relationName] already exists on [$this->name] on [$this->table.$column]");
-                        $relations[$relationName] = new RelationSelf($this, $foreignKeyFrom->columnFrom, $foreignKeyFrom);
+        if ($this->plugin->isCreateSystemPlugin()) {
+            foreach ($this->table->columns as &$column) {
+                foreach ($column->foreignKeysFrom as &$foreignKeyFrom) {
+                    if ($foreignKeyFrom->shouldProcess()) {
+                        // Returns true also if isLeaf()
+                        if ($foreignKeyFrom->isSelfReferencing() && (is_null($forColumn) || $forColumn->name == $column->name)) {
+                            $finalContentTable = &$foreignKeyFrom->tableTo;
+                            $finalColumnTo     = &$foreignKeyFrom->columnTo;
+                            if ($finalContentTable != $this->table)    throw new Exception("Self-referencing [$foreignKeyFrom] on [$this->table.$column] is not to the same table");
+                            if (!$finalColumnTo->isTheIdColumn())      throw new Exception("Self-referencing [$foreignKeyFrom] on [$this->table.$column] is not to the id column [$finalColumnTo->name]");
+                            $finalModel   = &$finalContentTable->model;
+                            $relationName = $foreignKeyFrom->columnFrom->relationName();
+                            if (isset($relations[$relationName])) throw new Exception("Relation for [$relationName] already exists on [$this->name] on [$this->table.$column]");
+                            $relations[$relationName] = new RelationSelf($relationName, $this, $foreignKeyFrom->columnFrom, $foreignKeyFrom);
+                        }
                     }
+                }
+            }
+        } else {
+            // Non-create system plugins do not represent their FKs correctly
+            // so we need to read the actual class definition, not the database FKs
+            $winterModel = $this->winterModel();
+            $modelFQN    = $this->fullyQualifiedName();
+            foreach ($winterModel->belongsTo as $relationName => &$config) {
+                if ($this->isRelationConfigToModel($config, $this) && isset($config['key'])) {
+                    $columnFrom       = Column::dummy($this->table, $config['key']);
+                    $relations[$relationName] = new RelationSelf($relationName, $this, $columnFrom);
                 }
             }
         }
@@ -433,28 +473,32 @@ class Model {
         // 1-1 & leaf relations
         $relations = array();
 
-        // 1 column pointing to the parent content table
-        if ($idColumn = $this->table->idColumn()) {
-            foreach ($idColumn->foreignKeysTo as &$foreignKeyTo) {
-                if ($foreignKeyTo->shouldProcess()) {
-                    // Returns true also if isLeaf()
-                    if ($foreignKeyTo->is1to1() && (is_null($forColumn) || $forColumn->name == $idColumn->name)) {
-                        $finalTableFrom  = &$foreignKeyTo->tableFrom;
-                        $finalColumnFrom = &$foreignKeyTo->columnFrom;
+        if ($this->plugin->isCreateSystemPlugin()) {
+            // 1 column pointing to the parent content table
+            if ($idColumn = $this->table->idColumn()) {
+                foreach ($idColumn->foreignKeysTo as &$foreignKeyTo) {
+                    if ($foreignKeyTo->shouldProcess()) {
+                        // Returns true also if isLeaf()
+                        if ($foreignKeyTo->is1to1() && (is_null($forColumn) || $forColumn->name == $idColumn->name)) {
+                            $finalTableFrom  = &$foreignKeyTo->tableFrom;
+                            $finalColumnFrom = &$foreignKeyTo->columnFrom;
 
-                        // created_at_event_id is 1to1 and can be from a pivot table
-                        // so there is no final model to report
-                        if (!$finalTableFrom->isPivotTable()) {
-                            if (!$finalTableFrom->model)            throw new \Exception("Foreign key [$foreignKeyTo] on [$this->table.id] has no to model");
-                            if ($finalColumnFrom->isTheIdColumn())  throw new \Exception("Foreign 1to1 key [$foreignKeyTo] on [$this->table.id] is from an id column");
-                            $finalModel   = &$finalTableFrom->model;
-                            $relationName = $foreignKeyTo->columnFrom->fromRelationName();
-                            if (isset($relations[$relationName])) throw new \Exception("Relation for [$relationName] on [$this->table.id] already exists on [$this->name]");
-                            $relations[$relationName] = new Relation1from1($this, $finalModel, $foreignKeyTo->columnFrom, $foreignKeyTo);
+                            // created_at_event_id is 1to1 and can be from a pivot table
+                            // so there is no final model to report
+                            if (!$finalTableFrom->isPivotTable()) {
+                                if (!$finalTableFrom->model)            throw new Exception("Foreign key [$foreignKeyTo] on [$this->table.id] has no to model");
+                                if ($finalColumnFrom->isTheIdColumn())  throw new Exception("Foreign 1to1 key [$foreignKeyTo] on [$this->table.id] is from an id column");
+                                $finalModel   = &$finalTableFrom->model;
+                                $relationName = $foreignKeyTo->columnFrom->fromRelationName();
+                                if (isset($relations[$relationName])) throw new Exception("Relation for [$relationName] on [$this->table.id] already exists on [$this->name]");
+                                $relations[$relationName] = new Relation1from1($relationName, $this, $finalModel, $foreignKeyTo->columnFrom, $foreignKeyTo);
+                            }
                         }
                     }
                 }
             }
+        } else {
+            // TODO: Non-create-system relations
         }
 
         return $relations;
@@ -465,28 +509,96 @@ class Model {
         // 1-1 & leaf relations
         $relations = array();
 
-        // 1 column pointing to the parent content table
-        foreach ($this->table->columns as &$column) {
-            foreach ($column->foreignKeysFrom as &$foreignKeyFrom) {
-                if ($foreignKeyFrom->shouldProcess()) {
-                    // Returns true also if isLeaf()
-                    if ($foreignKeyFrom->is1to1() && (is_null($forColumn) || $forColumn->name == $column->name)) {
-                        $finalContentTable = &$foreignKeyFrom->tableTo;
-                        $finalColumnTo     = &$foreignKeyFrom->columnTo;
-                        if (!$finalContentTable->isContentTable()) throw new \Exception("Final Content Table of [$foreignKeyFrom] on [$this->table.$column] is not type content");
-                        if (!$finalContentTable->model)            throw new \Exception("Foreign key [$foreignKeyFrom] on [$this->table.$column] has no to model");
-                        if (!$finalColumnTo->isTheIdColumn())      throw new \Exception("Foreign 1to1 key [$foreignKeyFrom] on [$this->table.$column] is not to the id column [$finalColumnTo->name]");
+        // Non-create system plugins do not declare 1to1 nature
+        if ($this->plugin->isCreateSystemPlugin()) {
+            // 1 column pointing to the parent content table
+            foreach ($this->table->columns as &$column) {
+                foreach ($column->foreignKeysFrom as &$foreignKeyFrom) {
+                    if ($foreignKeyFrom->shouldProcess()) {
+                        // Returns true also if isLeaf()
+                        if ($foreignKeyFrom->is1to1() && (is_null($forColumn) || $forColumn->name == $column->name)) {
+                            $finalContentTable = &$foreignKeyFrom->tableTo;
+                            $finalColumnTo     = &$foreignKeyFrom->columnTo;
+                            if (!$finalContentTable->isContentTable()) throw new Exception("Final Content Table of [$foreignKeyFrom] on [$this->table.$column] is not type content");
+                            if (!$finalContentTable->model)            throw new Exception("Foreign key [$foreignKeyFrom] on [$this->table.$column] has no to model");
+                            if (!$finalColumnTo->isTheIdColumn())      throw new Exception("Foreign 1to1 key [$foreignKeyFrom] on [$this->table.$column] is not to the id column [$finalColumnTo->name]");
 
-                        $finalModel   = &$finalContentTable->model;
-                        $relationName = $foreignKeyFrom->columnFrom->relationName();
-                        if (isset($relations[$relationName])) throw new \Exception("Relation for [$relationName] already exists on [$this->name] on [$this->table.$column]");
-                        $relations[$relationName] = ($foreignKeyFrom->isLeaf()
-                            ? new RelationLeaf($this, $finalModel, $foreignKeyFrom->columnFrom, $foreignKeyFrom)
-                            : new Relation1to1($this, $finalModel, $foreignKeyFrom->columnFrom, $foreignKeyFrom)
-                        );
+                            $finalModel   = &$finalContentTable->model;
+                            $relationName = $foreignKeyFrom->columnFrom->relationName();
+                            if (isset($relations[$relationName])) throw new Exception("Relation for [$relationName] already exists on [$this->name] on [$this->table.$column]");
+                            $relations[$relationName] = ($foreignKeyFrom->isLeaf()
+                                ? new RelationLeaf($relationName, $this, $finalModel, $foreignKeyFrom->columnFrom, $foreignKeyFrom)
+                                : new Relation1to1($relationName, $this, $finalModel, $foreignKeyFrom->columnFrom, $foreignKeyFrom)
+                            );
+                        }
                     }
                 }
             }
+        } else {
+            // TODO: Non-create-system relations
+        }
+
+        return $relations;
+    }
+
+    public function relationsHasManyDeep(Column &$forColumn = NULL): array
+    {
+        // Builds off relations1to1() below
+        return $this->recursive1to1Relations($this, $forColumn);
+    }
+
+    protected function recursive1to1Relations(Model $forModel, Column $forColumn = NULL, Model $stepModel = NULL, array $throughRelations = array()): array
+    {
+        if (is_null($stepModel)) $stepModel = $forModel;
+
+        $relations = array();
+        foreach ($stepModel->relations1to1($forColumn) as $name => &$relation) {
+            $isLeaf       = ($relation instanceof RelationLeaf);
+            $nameObject   = $relation->nameObject;
+            $modelTo      = &$relation->to;
+            $subRelations = array_merge(
+                $modelTo->relations1fromX(),
+                $modelTo->relationsXfromX(),
+                $modelTo->relationsXfromXSemi(),
+                $modelTo->relationsSelf(),
+                // We also want a relation entry for this 1to1 step
+                $modelTo->relations1to1(), 
+                // We do not want to chain other sub-HasManyDeep relations
+            );
+            $thisThroughRelations        = $throughRelations;
+            $thisThroughRelations[$name] = $relation; // Still in order for array_keys()
+
+            // Normal relations
+            foreach ($subRelations as $subName => &$deepRelation) {
+                $subthroughRelations           = $thisThroughRelations;
+                $subthroughRelations[$subName] = $deepRelation;
+                $subthroughRelationsNames      = array_keys($subthroughRelations);
+                $deepName = Model::nestedFieldName('', $subthroughRelationsNames);
+                if (isset($relations[$deepName])) 
+                    throw new Exception("Conflicting relations with [$deepName] on [$stepModel->name]");
+
+                $relations[$deepName] = new RelationHasManyDeep(
+                    $deepName,
+                    $forModel,         // model from
+                    $deepRelation->to, // model to
+                    $relation->column,
+                    $relation->foreignKey,
+                    // name => relation
+                    $subthroughRelations, 
+                    $isLeaf,
+                    // All steps must be nameObjects
+                    ($nameObject && $deepRelation->nameObject), 
+                    // Type is important because we can immediately identify 
+                    // fully 1to1 deep relations for embedding
+                    // 1to1 means all steps are 1to1
+                    // because $relation above will only be 1to1 traversal
+                    // other (XfromX, etc.) indicates the LAST step only
+                    $deepRelation->type()
+                );
+            }
+
+            // Deep 1to1 relation recursion
+            $relations = array_merge($relations, $this->recursive1to1Relations($forModel, NULL, $modelTo, $thisThroughRelations));
         }
 
         return $relations;
@@ -496,30 +608,40 @@ class Model {
     {
         $relations = array();
 
-        // All content tables pointing to this id
-        if ($idColumn = $this->table->idColumn()) {
-            foreach ($idColumn->foreignKeysTo as &$foreignKeyTo) {
-                if ($foreignKeyTo->shouldProcess()) {
-                    if ($foreignKeyTo->isXto1() && (is_null($forColumn) || $forColumn->name == $idColumn->name)) {
-                        $finalContentTable = &$foreignKeyTo->tableFrom;
+        if ($this->plugin->isCreateSystemPlugin()) {
+            // All content tables pointing to this id
+            if ($idColumn = $this->table->idColumn()) {
+                foreach ($idColumn->foreignKeysTo as &$foreignKeyTo) {
+                    if ($foreignKeyTo->shouldProcess()) {
+                        if ($foreignKeyTo->isXto1() && (is_null($forColumn) || $forColumn->name == $idColumn->name)) {
+                            $finalContentTable = &$foreignKeyTo->tableFrom;
 
-                        // created_at_event_id is 1to1 and can be from a pivot table
-                        // so there is no final model to report
-                        if (!$finalContentTable->isPivotTable()) {
-                            if (!$finalContentTable->isContentTable() && !$finalContentTable->isSemiPivotTable())
-                                throw new \Exception("Final Content Table for [$foreignKeyTo] on [$this->table.id] is not type content");
-                            if (!$finalContentTable->model)
-                                throw new \Exception("Foreign key from table for [$foreignKeyTo] on [$this->table.id] has no model");
-                            $finalModel   = &$finalContentTable->model;
-                            $relationName = $foreignKeyTo->columnFrom->fromRelationName();
-                            if (isset($relations[$relationName])) throw new \Exception("Relation for [$relationName] on [$this->table.id] already exists on [$this->name]");
-                            $relations[$relationName] = new Relation1fromX($this, $finalModel, $foreignKeyTo->columnFrom, $foreignKeyTo);
+                            // created_at_event_id is 1to1 and can be from a pivot table
+                            // so there is no final model to report
+                            if (!$finalContentTable->isPivotTable()) {
+                                if (!$finalContentTable->isContentTable() 
+                                    && !$finalContentTable->isSemiPivotTable()
+                                    && !$finalContentTable->isReportTable()
+                                )
+                                    throw new Exception("Final Content Table for [$foreignKeyTo] on [$this->table.id] is not type content");
+                                if (!$finalContentTable->model)
+                                    throw new Exception("Foreign key from table for [$foreignKeyTo] on [$this->table.id] has no model");
+                                $finalModel   = &$finalContentTable->model;
+                                $relationName = $foreignKeyTo->columnFrom->fromRelationName();
+                                if (isset($relations[$relationName])) throw new Exception("Relation for [$relationName] on [$this->table.id] already exists on [$this->name]");
+                                $relations[$relationName] = new Relation1fromX($relationName, $this, $finalModel, $foreignKeyTo->columnFrom, $foreignKeyTo);
+                            }
                         }
                     }
                 }
             }
+        } else {
+            // Non-create system plugins do not represent their FKs correctly
+            // so we need to read the actual class definition, not the database FKs
+            $model = $this->winterModel();
+            // TODO: 1fromX class relations
         }
-
+    
         return $relations;
     }
 
@@ -527,31 +649,35 @@ class Model {
     {
         $relations = array();
 
-        // All this tables foreign *_id columns pointing to an id column
-        foreach ($this->table->columns as &$column) {
-            foreach ($column->foreignKeysFrom as &$foreignKeyFrom) {
-                if ($foreignKeyFrom->shouldProcess()) {
-                    if (($foreignKeyFrom->isXto1() || $foreignKeyFrom->isXtoXSemi()) && (is_null($forColumn) || $forColumn->name == $column->name)) {
-                        $finalContentTable = &$foreignKeyFrom->tableTo;
-                        if ($column->isTheIdColumn())              throw new \Exception("Xto1 [$foreignKeyFrom] on [$this->table.$column] from column is id");
-                        if (!$foreignKeyFrom->columnTo->isTheIdColumn()) throw new \Exception("Xto1 [$foreignKeyFrom] on [$this->table.$column] to column not id");
-                        if (!$finalContentTable->isContentTable()) throw new \Exception("Final Content Table for [$foreignKeyFrom] on [$this->table.$column] is not type content");
-                        if (!$finalContentTable->model)            throw new \Exception("Foreign key from table for [$foreignKeyFrom] on [$this->table.$column] has no model");
-                        $finalModel   = &$finalContentTable->model;
-                        $relationName = $foreignKeyFrom->columnFrom->relationName();
-                        if (isset($relations[$relationName])) throw new \Exception("Relation for [$relationName] on [$this->table.$column] already exists on [$this->name]");
-                        $relations[$relationName] = new RelationXto1($this, $finalModel, $foreignKeyFrom->columnFrom, $foreignKeyFrom);
+        if ($this->plugin->isCreateSystemPlugin()) {
+            // All this tables foreign *_id columns pointing to an id column
+            foreach ($this->table->columns as &$column) {
+                foreach ($column->foreignKeysFrom as &$foreignKeyFrom) {
+                    if ($foreignKeyFrom->shouldProcess()) {
+                        if (($foreignKeyFrom->isXto1() || $foreignKeyFrom->isXtoXSemi()) && (is_null($forColumn) || $forColumn->name == $column->name)) {
+                            $finalContentTable = &$foreignKeyFrom->tableTo;
+                            if ($column->isTheIdColumn())              throw new Exception("Xto1 [$foreignKeyFrom] on [$this->table.$column] from column is id");
+                            if (!$foreignKeyFrom->columnTo->isTheIdColumn()) throw new Exception("Xto1 [$foreignKeyFrom] on [$this->table.$column] to column not id");
+                            if (!$finalContentTable->isContentTable()) throw new Exception("Final Content Table for [$foreignKeyFrom] on [$this->table.$column] is not type content");
+                            if (!$finalContentTable->model)            throw new Exception("Foreign key from table for [$foreignKeyFrom] on [$this->table.$column] has no model");
+                            $finalModel   = &$finalContentTable->model;
+                            $relationName = $foreignKeyFrom->columnFrom->relationName();
+                            if (isset($relations[$relationName])) throw new Exception("Relation for [$relationName] on [$this->table.$column] already exists on [$this->name]");
+                            $relations[$relationName] = new RelationXto1($relationName, $this, $finalModel, $foreignKeyFrom->columnFrom, $foreignKeyFrom);
+                        }
                     }
                 }
             }
-        }
 
-        /*
-        if ($this->table == 'acorn_user_users') {
-            var_dump(array_keys($relations));
-            exit(9);
+            /*
+            if ($this->table == 'acorn_user_users') {
+                var_dump(array_keys($relations));
+                exit(9);
+            }
+            */
+        } else {
+            // TODO: Non-create-system relations
         }
-        */
 
         return $relations;
     }
@@ -562,45 +688,49 @@ class Model {
         // but also an ID and extra content columns
         $relations = array();
 
-        // All pivot tables pointing to this id
-        if ($idColumn = $this->table->idColumn()) {
-            foreach ($idColumn->foreignKeysTo as &$foreignKeyTo) {
-                if ($foreignKeyTo->shouldProcess()) {
-                    if ($foreignKeyTo->isXtoXSemi() && (is_null($forColumn) || $forColumn->name == $idColumn->name)) {
-                        // We have a pivot table pointing to this id column
-                        // Where does its other foreign key point?
-                        $pivotTable = &$foreignKeyTo->tableFrom;
-                        if (!$pivotTable->isSemiPivotTable()) throw new \Exception("Semi-Pivot (Through) table for [$foreignKeyTo] on [$this->table.id] on XtoXSemi is not a semi-pivot table");
-                        if (!$pivotTable->hasIdColumn())      throw new \Exception("Semi-Pivot (Through) table for [$foreignKeyTo] on [$this->table.id] on XtoXSemi has no ID column");
-                        if (!$pivotTable->model)              throw new \Exception("Semi-Pivot (Through) table for [$foreignKeyTo] on [$this->table.id] on XtoXSemi has no model");
-                        $pivotModel = &$pivotTable->model;
+        if ($this->plugin->isCreateSystemPlugin()) {
+            // All pivot tables pointing to this id
+            if ($idColumn = $this->table->idColumn()) {
+                foreach ($idColumn->foreignKeysTo as &$foreignKeyTo) {
+                    if ($foreignKeyTo->shouldProcess()) {
+                        if ($foreignKeyTo->isXtoXSemi() && (is_null($forColumn) || $forColumn->name == $idColumn->name)) {
+                            // We have a pivot table pointing to this id column
+                            // Where does its other foreign key point?
+                            $pivotTable = &$foreignKeyTo->tableFrom;
+                            if (!$pivotTable->isSemiPivotTable()) throw new Exception("Semi-Pivot (Through) table for [$foreignKeyTo] on [$this->table.id] on XtoXSemi is not a semi-pivot table");
+                            if (!$pivotTable->hasIdColumn())      throw new Exception("Semi-Pivot (Through) table for [$foreignKeyTo] on [$this->table.id] on XtoXSemi has no ID column");
+                            if (!$pivotTable->model)              throw new Exception("Semi-Pivot (Through) table for [$foreignKeyTo] on [$this->table.id] on XtoXSemi has no model");
+                            $pivotModel = &$pivotTable->model;
 
-                        // The other throughColumn should have exactly 1 FK pointing to the other content table
-                        // However, it is a semi so there may be other foreign IDs. We choose the first in ordinal_position order
-                        $throughColumn = $pivotTable->throughColumn($foreignKeyTo->columnFrom, Table::FIRST_ONLY);
-                        if (!$throughColumn) throw new \Exception("Semi-Pivot Table [$pivotTable->name] has no custom foreign ID columns");
-                        if (count($throughColumn->foreignKeysFrom) == 0) throw new \Exception("Semi-Pivot Table for [$foreignKeyTo] on [$this->table.id] through column has no foreign keys");
-                        if (count($throughColumn->foreignKeysFrom) > 1)  throw new \Exception("Semi-Pivot Table for [$foreignKeyTo] on [$this->table.id] through column has multiple foreign keys");
+                            // The other throughColumn should have exactly 1 FK pointing to the other content table
+                            // However, it is a semi so there may be other foreign IDs. We choose the first in ordinal_position order
+                            $throughColumn = $pivotTable->throughColumn($foreignKeyTo->columnFrom, Table::FIRST_ONLY);
+                            if (!$throughColumn) throw new Exception("Semi-Pivot Table [$pivotTable->name] has no custom foreign ID columns");
+                            if (count($throughColumn->foreignKeysFrom) == 0) throw new Exception("Semi-Pivot Table for [$foreignKeyTo] on [$this->table.id] through column has no foreign keys");
+                            if (count($throughColumn->foreignKeysFrom) > 1)  throw new Exception("Semi-Pivot Table for [$foreignKeyTo] on [$this->table.id] through column has multiple foreign keys");
 
-                        $secondForeignKey  = array_values($throughColumn->foreignKeysFrom)[0];
-                        $finalContentTable = $secondForeignKey->tableTo;
-                        if (!$finalContentTable->isContentTable()) throw new \Exception("Final Content Table for [$foreignKeyTo] on [$this->table.id] is not type content");
-                        if (!$finalContentTable->model)            throw new \Exception("Final Content Table for [$foreignKeyTo] on [$this->table.id] has no model");
-                        $finalModel   = &$finalContentTable->model;
+                            $secondForeignKey  = array_values($throughColumn->foreignKeysFrom)[0];
+                            $finalContentTable = $secondForeignKey->tableTo;
+                            if (!$finalContentTable->isContentTable()) throw new Exception("Final Content Table for [$foreignKeyTo] on [$this->table.id] is not type content");
+                            if (!$finalContentTable->model)            throw new Exception("Final Content Table for [$foreignKeyTo] on [$this->table.id] has no model");
+                            $finalModel   = &$finalContentTable->model;
 
-                        $relationName = $foreignKeyTo->columnFrom->fromRelationName(Column::PLURAL);
-                        if (!$finalModel) throw new \Exception("Foreign key from table on [$foreignKeyTo] has no model");
+                            $relationName = $foreignKeyTo->columnFrom->fromRelationName(Column::PLURAL);
+                            if (!$finalModel) throw new Exception("Foreign key from table on [$foreignKeyTo] has no model");
 
-                        $relations[$relationName] = new RelationXfromXSemi($this,
-                            $finalModel,               // User
-                            $pivotModel,               // LegalcaseProsecutor
-                            $foreignKeyTo->columnFrom, // pivot.legalcase_id
-                            $throughColumn,            // pivot.user_id
-                            $foreignKeyTo
-                        );
+                            $relations[$relationName] = new RelationXfromXSemi($relationName, $this,
+                                $finalModel,               // User
+                                $pivotModel,               // LegalcaseProsecutor
+                                $foreignKeyTo->columnFrom, // pivot.legalcase_id
+                                $throughColumn,            // pivot.user_id
+                                $foreignKeyTo
+                            );
+                        }
                     }
                 }
             }
+        } else {
+            // TODO: Non-create-system relations
         }
 
         return $relations;
@@ -610,40 +740,44 @@ class Model {
     {
         $relations = array();
 
-        // All pivot tables pointing to this id
-        if ($idColumn = $this->table->idColumn()) {
-            foreach ($idColumn->foreignKeysTo as &$foreignKeyTo) {
-                if ($foreignKeyTo->shouldProcess()) {
-                    if ($foreignKeyTo->isXtoX() && (is_null($forColumn) || $forColumn->name == $idColumn->name)) {
-                        // We have a pivot table pointing to this id column
-                        // Where does its other foreign key point?
-                        $pivotTable = &$foreignKeyTo->tableFrom;
-                        if (!$pivotTable->isPivotTable()) throw new \Exception("Through table for [$foreignKeyTo] on [$this->table.id] on XtoX is not a pivot table");
+        if ($this->plugin->isCreateSystemPlugin()) {
+            // All pivot tables pointing to this id
+            if ($idColumn = $this->table->idColumn()) {
+                foreach ($idColumn->foreignKeysTo as &$foreignKeyTo) {
+                    if ($foreignKeyTo->shouldProcess()) {
+                        if ($foreignKeyTo->isXtoX() && (is_null($forColumn) || $forColumn->name == $idColumn->name)) {
+                            // We have a pivot table pointing to this id column
+                            // Where does its other foreign key point?
+                            $pivotTable = &$foreignKeyTo->tableFrom;
+                            if (!$pivotTable->isPivotTable()) throw new Exception("Through table for [$foreignKeyTo] on [$this->table.id] on XtoX is not a pivot table");
 
-                        // The other throughColumn should have exactly 1 FK pointing to the other content table
-                        $throughColumn = $pivotTable->throughColumn($foreignKeyTo->columnFrom);
-                        if (!$throughColumn) throw new \Exception("Pivot Table [$pivotTable->name] has no custom foreign ID columns");
-                        if (count($throughColumn->foreignKeysFrom) == 0) throw new \Exception("Pivot Table for [$foreignKeyTo] on [$this->table.id] through column has no foreign keys");
-                        if (count($throughColumn->foreignKeysFrom) > 1)  throw new \Exception("Pivot Table for [$foreignKeyTo] on [$this->table.id] through column has multiple foreign keys");
+                            // The other throughColumn should have exactly 1 FK pointing to the other content table
+                            $throughColumn = $pivotTable->throughColumn($foreignKeyTo->columnFrom);
+                            if (!$throughColumn) throw new Exception("Pivot Table [$pivotTable->name] has no custom foreign ID columns");
+                            if (count($throughColumn->foreignKeysFrom) == 0) throw new Exception("Pivot Table for [$foreignKeyTo] on [$this->table.id] through column has no foreign keys");
+                            if (count($throughColumn->foreignKeysFrom) > 1)  throw new Exception("Pivot Table for [$foreignKeyTo] on [$this->table.id] through column has multiple foreign keys");
 
-                        $secondForeignKey  = array_values($throughColumn->foreignKeysFrom)[0];
-                        $finalContentTable = $secondForeignKey->tableTo;
-                        if (!$finalContentTable->isContentTable()) throw new \Exception("Final Content Table for [$foreignKeyTo] on [$this->table.id] is not type content");
-                        if (!$finalContentTable->model)            throw new \Exception("Final Content Table for [$foreignKeyTo] on [$this->table.id] has no model");
-                        $finalModel   = &$finalContentTable->model;
-                        $relationName = $foreignKeyTo->columnFrom->fromRelationName(Column::PLURAL);
-                        if (!$finalModel) throw new \Exception("Foreign key from table on [$foreignKeyTo] on [$this->table.id] has no model");
+                            $secondForeignKey  = array_values($throughColumn->foreignKeysFrom)[0];
+                            $finalContentTable = $secondForeignKey->tableTo;
+                            if (!$finalContentTable->isContentTable()) throw new Exception("Final Content Table for [$foreignKeyTo] on [$this->table.id] is not type content");
+                            if (!$finalContentTable->model)            throw new Exception("Final Content Table for [$foreignKeyTo] on [$this->table.id] has no model");
+                            $finalModel   = &$finalContentTable->model;
+                            $relationName = $foreignKeyTo->columnFrom->fromRelationName(Column::PLURAL);
+                            if (!$finalModel) throw new Exception("Foreign key from table on [$foreignKeyTo] on [$this->table.id] has no model");
 
-                        $relations[$relationName] = new RelationXfromX($this,
-                            $finalModel,               // User
-                            $pivotTable,
-                            $foreignKeyTo->columnFrom, // pivot.legalcase_id
-                            $throughColumn,            // pivot.user_id
-                            $foreignKeyTo
-                        );
+                            $relations[$relationName] = new RelationXfromX($relationName, $this,
+                                $finalModel,               // User
+                                $pivotTable,
+                                $foreignKeyTo->columnFrom, // pivot.legalcase_id
+                                $throughColumn,            // pivot.user_id
+                                $foreignKeyTo
+                            );
+                        }
                     }
                 }
             }
+        } else {
+            // TODO: Non-create-system relations
         }
 
         return $relations;
@@ -655,37 +789,92 @@ class Model {
         //   a ForeignID, with a valueFrom to show the dropdown list
         //   a normal text field without valueFrom
         // $localFieldName is appended, and $valueFrom will be appended in NESTED_MODE
-        $nestedFieldName = $localFieldName;
+        if ($localFieldName) array_push($relation1to1Path, $localFieldName);
+        if ($valueFrom)      array_push($relation1to1Path, $valueFrom);
 
-        if (count($relation1to1Path)) {
+        if (!count($relation1to1Path))
+            throw new Exception("Request for empty nested field name");
+
+        $nestedFieldName = '';
+        foreach ($relation1to1Path as $fieldObj) {
+            if ($fieldObj instanceof Field) $fieldObj = $fieldObj->name;
+            if (empty($fieldObj))
+                throw new Exception("Empty step in [$nestedFieldName]");
             if ($relationMode) {
                 // name, [office, location, address] => office_location_address_name
                 // For use with relation and select directives
                 // searchable and sortable will also work with this
-                $nestedFieldName = '';
-                foreach ($relation1to1Path as $fieldObj) {
-                    if ($fieldObj instanceof Field) $fieldObj = $fieldObj->name;
-                    $nestedFieldName .= "{$fieldObj}_";
-                }
-                $nestedFieldName .= $localFieldName;
+                if ($nestedFieldName) $nestedFieldName .= '_';
+                $nestedFieldName .= $fieldObj;
             } else {
                 // name, [office, location, address] => office[location][address][name]
                 // select does not work with this. It would select the value from the first step, office
                 // relation does not work with this
                 // searchable and sortable also will not work
-                $firstFieldObj    = array_shift($relation1to1Path); // office obj
-                $path             = '';
-                foreach ($relation1to1Path as $fieldObj) {
-                    // [location][address]...[name]
-                    if ($fieldObj instanceof Field) $fieldObj = $fieldObj->name;
-                    $path .= "[$fieldObj]";
-                }
-                $nestedFieldName = "$firstFieldObj->name{$path}[$localFieldName]";    // office[location][address][name]
-                if ($valueFrom) $nestedFieldName .= "[$valueFrom]";
+                if ($nestedFieldName) $nestedFieldName .= "[$fieldObj]";
+                else                  $nestedFieldName .= $fieldObj;
             }
         }
 
         return $nestedFieldName;
+    }
+
+    protected static function arrayToName(array $fieldPath): string
+    {
+        $fieldName = $fieldPath[0];
+        if (count($fieldPath) > 1) {
+            $fieldNests = implode('][', array_slice($fieldPath, 1));
+            $fieldName .= "[$fieldNests]";
+        }
+        return $fieldName;
+    }
+
+    protected static function nestField(string|array $nest, string|array $fieldName, int &$nestlevel = NULL): string
+    {
+        if (!is_array($nest))      $nest      = HtmlHelper::nameToArray($nest);
+        if (!is_array($fieldName)) $fieldName = HtmlHelper::nameToArray($fieldName);
+        $nestedFieldPath = array_merge($nest, $fieldName);
+        $nestlevel       = count($nestedFieldPath);
+        return self::arrayToName($nestedFieldPath);
+    }
+
+    protected static function isNested(string $fieldName): bool
+    {
+        return (count(HtmlHelper::nameToArray($fieldName)) > 1);
+    }
+
+    protected static function isPseudo(string $fieldName): bool
+    {
+        return ($fieldName && $fieldName[0] == '_');
+    }
+
+    protected function injectFields(array $fields, array $columns, Relation $relation, int $tabLocation = NULL): array 
+    {
+        $fieldObjects = array();
+        foreach ($fields as $fieldName => $fieldConfig) {
+            $type              = (isset($fieldConfig['type'])           ? $fieldConfig['type']           : 'text');
+            $includeContext    = (isset($fieldConfig['includeContext']) ? $fieldConfig['includeContext'] : 'include');
+            $isPseudoFieldName = self::isPseudo($fieldName);
+
+            if ($fieldName != 'id' && $includeContext != 'no-include') {
+                // The $fields configs will contain the tab name
+                // tab-location will insert the field in the correct location
+                if ($tabLocation) $fieldConfig['tab-location'] = $tabLocation;
+                $columnConfig = (isset($columns[$fieldName]) ? $columns[$fieldName] : NULL);
+
+                // TODO: What to do if the field is 1-1 nested?
+
+                // Set the relation to use
+                if (isset($fieldConfig['relation'])) {
+                    // TODO: Try to find an appropriate HasManyDeep relation if relation is already set
+                } else {
+                    $fieldConfig['relation'] = $relation->name;
+                }
+
+                $fieldObjects[$fieldName] = Field::createFromYamlConfigs($this, $fieldName, $fieldConfig, $columnConfig);
+            }
+        }
+        return $fieldObjects;
     }
 
     public function fields(array $relation1to1Path = array()): array
@@ -703,10 +892,10 @@ class Model {
 
         // ---------------------------------------------------------------- Normal Columns
         foreach ($this->table->columns as $columnName => &$column) {
-            if ($column->shouldProcess()) {
+            if ($column->shouldProcess()) { // !system && !todo
                 $relations       = $this->relations($column);
                 $fieldObj        = Field::createFromColumn($this, $column, $relations);
-                $comment         = '';
+                $fieldName       = $fieldObj->name;
 
                 // Debug
                 $fieldClassParts = explode('\\', get_class($fieldObj));
@@ -714,58 +903,113 @@ class Model {
                 $fieldObj->debugComment = "$fieldClass for column $column->column_name on $plugin->name.$this->name";
 
                 // --------------------- + Nested Models
-                if ($fieldObj instanceof ForeignIdField && ($relationModel = $fieldObj->embedRelation1Model())) {
-                    // Static 1to1 whole form include. Most fields, not ID
-                    // e.g. location[name]
-                    // RECURSIVE!
-                    // TODO: Embedding of AA User will not go well. It's tables are not annotated, so we need to embed its fields.yaml instead...
-                    $thisRelation1to1Path = $relation1to1Path; // Local scope
-                    array_push($thisRelation1to1Path, $fieldObj);
+                // These relevant relations can only exist on our create-system plugins
+                // Known AA plugins are Final (they do not continue 1to1 hasManyDeep recursion)
+                if ($fieldObj instanceof ForeignIdField) {
+                    foreach ($fieldObj->relations as $relationName => &$relation) {
+                        // 1to1, leaf & hasManyDeep(1to1) relations.
+                        if ($relation->is1to1()) {
+                            $relationModelTo = $relation->to;
 
-                    $relationFields = NULL;
-                    if ($relationModel->plugin->isCreateSystemPlugin()) {
-                        // create-system made this plugin
-                        // so the database columns => fields() will describe the interface correctly
-                        // whereas a non-create-system plugin, only its custom fields.yaml will
-                        // describe its interface correctly
+                            // Static 1to1 whole form include. Most fields, not ID
+                            // e.g. location[name]
+                            // RECURSIVE! See $relationModelTo->fields() call below
+                            $thisRelation1to1Path = $relation1to1Path; // Local scope
+                            array_push($thisRelation1to1Path, $fieldObj);
 
-                        // Non-empty $thisRelation1to1Path will cause fields() to return nested field names
-                        // Depending on the type of field, this could be:
-                        //   relation1_relation2_name:   (searchable and sortable)
-                        //   relation1[relation2][name]: (not searchable nor sortable)
-                        // with associated relevant relation: relation1 and select: directives
-                        $relationFields = $relationModel->fields($thisRelation1to1Path);
+                            $relationFields = NULL;
+                            if ($relationModelTo->plugin->isCreateSystemPlugin()) {
+                                // ---------------- Target (relationModelTo) is a Create-system plugin Model
+                                // so the database columns => fields() will describe the interface correctly
+                                // whereas a non-create-system plugin, only its custom fields.yaml will
+                                // describe its interface correctly
 
-                        // includeContext is applied in this ->fields() recurive call below
-                        foreach ($relationFields as $nestedFieldName => $subFieldObj) {
-                            // Exclude fields that have the same local name as fields in the parent form
-                            // this naturally exlcudes id and created_*
-                            // TODO: created_* is not being excluded
-                            $isDuplicateField = isset($fields[$subFieldObj->name]);
-                            if (!$isDuplicateField) {
-                                $fields[$nestedFieldName] = $subFieldObj;
-                                if ($subFieldObj->tabLocation > $maxTabLocation) $maxTabLocation = $subFieldObj->tabLocation;
+                                // Non-empty $thisRelation1to1Path will cause fields() to return nested field names
+                                // Depending on the type of field, this could be:
+                                //   relation1_relation2_name:   (searchable and sortable)
+                                //   relation1[relation2][name]: (not searchable nor sortable)
+                                // with associated relevant relation: relation1 and select: directives
+                                // TODO: Use the HasManyDeep instead
+                                $relationFields = $relationModelTo->fields($thisRelation1to1Path);
+
+                                // includeContext is applied in this ->fields() recursive call below
+                                foreach ($relationFields as $nestedFieldName => $subFieldObj) {
+                                    // Exclude fields that have the same local name as fields in the parent form
+                                    // this naturally exlcudes id and created_*
+                                    // TODO: created_* is not being excluded
+                                    $isDuplicateField = isset($fields[$subFieldObj->name]);
+                                    if (!$isDuplicateField) {
+                                        $fields[$nestedFieldName] = $subFieldObj;
+                                        if ($subFieldObj->tabLocation > $maxTabLocation) $maxTabLocation = $subFieldObj->tabLocation;
+                                    }
+                                }
+                            } else {
+                                // ---------------- Target (relationModelTo) is Not a create-system Plugin!
+                                // But maybe isOurs(), e.g. Calendar or UserGroup
+                                // The database columns do not describe the fields necessarily, or well
+                                // Only its custom fields.yaml will describe its interface correctly
+                                // e.g. Embedding of AA User will not go well. It's tables are not annotated, 
+                                // so we need to embed its fields.yaml instead...
+                                print("    Copying/Embedding the {$YELLOW}$relationModelTo->plugin{$NC} into {$YELLOW}$this->name{$NC}\n");
+                                print("      (not a create-system plugin so embedding its database->columns() will not work...)\n");
+                                
+                                $copy1to1Fields = TRUE;
+                                if ($copy1to1Fields) {
+                                    print("      Copying fields in to the child form from the Yaml files\n");
+                                    // Load the config yaml files
+                                    $fieldsPath       = $this->plugin->framework->modelFileDirectoryPath($this, 'fields.yaml');
+                                    $subFieldsConfig  = $this->plugin->framework->yamlFileLoad($fieldsPath, Framework::NO_CACHE, Framework::THROW);
+                                    $subFieldsConfig  = (object) $subFieldsConfig;
+                                    print("      Loaded {$YELLOW}$fieldsPath{$NC}\n");
+                                    $columnsPath      = $this->plugin->framework->modelFileDirectoryPath($this, 'columns.yaml');
+                                    $subColumnsConfig = $this->plugin->framework->yamlFileLoad($columnsPath, Framework::NO_CACHE, Framework::THROW);
+                                    $subColumnsConfig = (object) $subColumnsConfig;
+                                    print("      Loaded {$YELLOW}$columnsPath{$NC}\n");
+
+                                    // Inject fields, and tab fields
+                                    if (property_exists($subFieldsConfig, 'fields')) {
+                                        $injectFields = $this->injectFields($subFieldsConfig->fields, $subColumnsConfig->columns, $relation);
+                                        if ($injectFields) $fields = array_merge($fields, $injectFields);
+                                    }
+                                    if (property_exists($subFieldsConfig, 'tabs') && isset($subFieldsConfig->tabs['fields'])) {
+                                        $injectFields = $this->injectFields($subFieldsConfig->tabs['fields'], $subColumnsConfig->columns, $relation, 1);
+                                        if ($injectFields) {
+                                            $fields = array_merge($fields, $injectFields);
+                                            if (1 > $maxTabLocation) $maxTabLocation = 1;
+                                        }
+                                    }
+                                    if (property_exists($subFieldsConfig, 'secondaryTabs') && isset($subFieldsConfig->secondaryTabs['fields'])) {
+                                        $injectFields = $this->injectFields($subFieldsConfig->secondaryTabs['fields'], $subColumnsConfig->columns, $relation, 2);
+                                        if ($injectFields) {
+                                            $fields = array_merge($fields, $injectFields);
+                                            if (2 > $maxTabLocation) $maxTabLocation = 2;
+                                        }
+                                    }
+                                    if (property_exists($subFieldsConfig, 'tertiaryTabs') && isset($subFieldsConfig->tertiaryTabs['fields'])) {
+                                        $injectFields = $this->injectFields($subFieldsConfig->tertiaryTabs['fields'], $subColumnsConfig->columns, $relation, 3);
+                                        if ($injectFields) {
+                                            $fields = array_merge($fields, $injectFields);
+                                            if (3 > $maxTabLocation) $maxTabLocation = 3;
+                                        }
+                                    }
+
+                                    // TODO: setting: directive and 1to1 image fields do not work with include: 1to1
+                                    // TODO: Pseudo field embedding could conflict...
+                                    /*
+                                    print("Temporary solution: refuse all PseudoFields");
+                                    $relationFields = $relationModelTo->fields($thisRelation1to1Path);
+                                    foreach ($relationFields as $nestedFieldName => $subFieldObj) {
+                                        if ($subFieldObj instanceof PseudoField) unset($relationFields[$nestedFieldName]);
+                                    }
+                                    */
+                                } else {
+                                    print("      {$RED}WARNING{$NC}: Temporary solution? Use MorphConfig.php dynamic include: 1to1\n");
+                                    $fieldObj->include      = '1to1';
+                                    $fieldObj->includeModel = $relationModelTo->absoluteFullyQualifiedName();
+                                    $fields[$fieldObj->name] = $fieldObj;
+                                }
                             }
                         }
-                    } else {
-                        // This is a non acorn-create-system Plugin
-                        // so the database columns do not describe the fields necessarily
-                        // only its custom fields.yaml will describe its interface correctly
-                        // TODO: Copy fields from a non-create-system plugin
-                        print("    $relationModel->plugin is not a create-system plugin so embedding its database->columns() will not work...\n");
-                        /*
-                        print("Temporary solution: refuse all PseudoFields");
-                        $relationFields = $relationModel->fields($thisRelation1to1Path);
-                        foreach ($relationFields as $nestedFieldName => $subFieldObj) {
-                            if ($subFieldObj instanceof PseudoField) unset($relationFields[$nestedFieldName]);
-                        }
-                        */
-
-                        // TODO: setting: directive and 1to1 image fields do not work with include: 1to1
-                        print("    Temporary solution: use include: 1to1\n");
-                        $fieldObj->include      = '1to1';
-                        $fieldObj->includeModel = $relationModel->absoluteFullyQualifiedName();
-                        $fields[$fieldObj->name] = $fieldObj;
                     }
                 } else {
                     // Direct entry in fields array
@@ -796,6 +1040,7 @@ class Model {
         * legalcase_type.id <= legalcase_type.parent_leagalcase_type_id
         * we will present a children selection tab
         */
+        print("    Relations:\n");
         foreach ($this->relationsSelf() as $name => &$relation) {
             $nameFrom  = 'fully_qualified_name';
             $tab       = $relation->from->translationKey(Model::PLURAL); // Reverse relation, so it is from!
@@ -1129,7 +1374,7 @@ class Model {
                 }
             }
 
-            print("      Creating tab multi-select with ({$GREEN}create button{$NC}) for {$YELLOW}$relation{$NC}\n");
+            print("    Creating tab multi-select with ({$GREEN}create button{$NC}) for {$YELLOW}$relation{$NC}\n");
             $thisIdRelation = array($name => $relation);
             $rlButtons      = array(
                 'create' => TRUE,
@@ -1176,7 +1421,7 @@ class Model {
         }
 
         // ---------------------------------------------------------------- QR code support fields
-        print("      Injecting _qrcode field\n");
+        print("    Injecting _qrcode field\n");
         // TODO: Move to QRCode FormField when available
         $fields['_qrcode'] = new PseudoField($this, array(
             'name'        => '_qrcode',
@@ -1200,7 +1445,7 @@ class Model {
 
         // ---------------------------------------------------------------- Actions
         // These also appear in columns.yaml
-        print("      Injecting list actions column\n");
+        print("    Injecting list actions column\n");
         $fields['_actions'] = new PseudoField($this, array(
             'name'          => '_actions',
             'hidden'        => TRUE,
@@ -1267,7 +1512,7 @@ HTML;
         //   relation: based columns should use relationMode columnKey: relation1_relation2_name:
         if ($nestLevel) {
             foreach ($fields as $localFieldName => &$fieldObj) {
-                if ($fieldObj->includeContext != 'exclude') {
+                if ($fieldObj->includeContext != 'exclude') { // QR code
                     $columnName        = $fieldObj->column?->name;
                     $singleNestParent  = ($nestLevel ? $relation1to1Path[0] : NULL);
 
@@ -1328,7 +1573,7 @@ HTML;
                         // If there is no ...[attribute] then Winter will use the whole field name again
                         $valueFrom = 'name';
                         if (property_exists($fieldObj, 'sqlSelect') && $fieldObj->sqlSelect) {
-                            if ($fieldObj->valueFrom) throw new \Exception("select and valueFrom on not allowed on same field [$fieldObj->name]");
+                            if ($fieldObj->valueFrom) throw new Exception("select and valueFrom on not allowed on same field [$fieldObj->name]");
                             $valueFrom = $fieldObj->sqlSelect;
                             $fieldObj->sqlSelect = NULL;
                         }

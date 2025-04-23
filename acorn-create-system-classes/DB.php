@@ -77,7 +77,11 @@ class DB {
     {
         $statement = $this->connection->prepare($sql);
         foreach ($namedParameters as $name => $value) $statement->bindParam(":$name", $value);
-        $statement->execute();
+        try {
+            $statement->execute();
+        } catch (\Exception $ex) {
+            throw $ex;
+        }
         return $statement->fetchAll(\PDO::FETCH_OBJ);
     }
 
@@ -200,7 +204,7 @@ class DB {
                 and table_schema like(:schemaMatch)
                 and table_name   like(:tableMatch)
             order by 
-                coalesce(substring(obj_description(concat(table_schema, '.', table_name)::regclass, 'pg_class'), 'order: ([0-9]+)')::int, 10000) asc,
+                coalesce(substring(obj_description(concat(table_schema, '.', table_name)::regclass, 'pg_class'), 'order: ([0-9-]+)')::int, 10000) asc,
                 length(table_name) desc"
         );
         $statement->bindParam(':schemaMatch', $schemaMatch);
@@ -252,23 +256,47 @@ class DB {
         return $results;
     }
 
-    public function tableColumns(Table &$table, bool $allColumns = FALSE): array
+    public function tableColumns(Table|string $table, bool $allColumns = FALSE): array
     {
         $results = array();
 
+        // Can process any table and return raw results
+        // or, if it is a table obejct return create-system objects
+        $schema = NULL;
+        $name   = NULL;
+        if ($table instanceof Table) {
+            $schema = $table->schema;
+            $name   = $table->name;
+        } else {
+            $tableParts = explode('.', $table);
+            $isFQN      = (count($tableParts) > 1);
+            $schema     = ($isFQN ? $tableParts[0] : 'public');
+            $name       = ($isFQN ? $tableParts[1] : $tableParts[0]);
+        }
+
         // TODO: oid for comment write-back
-        $statement = $this->connection->prepare("SELECT *, pg_catalog.col_description(concat(table_schema, '.', table_name)::regclass::oid, ordinal_position) as comment
+        $statement = $this->connection->prepare("SELECT *, 
+            pg_catalog.col_description(concat(table_schema, '.', table_name)::regclass::oid, ordinal_position) as comment
             FROM information_schema.columns
             WHERE   table_schema = :schema
                 and table_name   = :table
-            order by coalesce(substring(pg_catalog.col_description(concat(table_schema, '.', table_name)::regclass, ordinal_position), 'order: ([0-9]+)')::int, 10000) asc"
+            order by 
+                coalesce(
+                    substring(pg_catalog.col_description(concat(table_schema, '.', table_name)::regclass, 
+                    ordinal_position), 'order: ([0-9]+)')::int, 10000) asc"
         );
-        $statement->bindParam(':schema', $table->schema);
-        $statement->bindParam(':table',  $table->name);
+        $statement->bindParam(':schema', $schema);
+        $statement->bindParam(':table',  $name);
         $statement->execute();
-        foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
-            $column = Column::fromRow($table, $row);
-            if ($column->shouldProcess() || $allColumns) $results[$column->name] = $column;
+        $results = $statement->fetchAll(\PDO::FETCH_ASSOC);
+
+        if ($table instanceof Table) {
+            $resultsObjects = array();
+            foreach ($results as $row) {
+                $column = Column::fromRow($table, $row);
+                if ($column->shouldProcess() || $allColumns) $resultsObjects[$column->name] = $column;
+            }
+            $results = $resultsObjects;
         }
 
         return $results;

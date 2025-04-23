@@ -1,5 +1,10 @@
 <?php namespace Acorn\CreateSystem;
 
+use \Symfony\Component\Console\Input\ArgvInput;
+use \Symfony\Component\Console\Output\ConsoleOutput;
+use \Illuminate\Contracts\Console\Kernel;
+use \Exception;
+
 require_once('bootstrap/autoload.php');
 
 class WinterCMS extends Framework
@@ -28,17 +33,26 @@ class WinterCMS extends Framework
 
         // WinterCMS CLI boot
         $this->app    = require_once('bootstrap/app.php');
-        $this->kernel = $this->app->make(\Illuminate\Contracts\Console\Kernel::class);
-        $this->output = new \Symfony\Component\Console\Output\ConsoleOutput;
+        $this->kernel = $this->app->make(Kernel::class);
+        $this->output = new ConsoleOutput;
 
-        if (!file_exists("$cwd/modules/acorn/Model.php")) throw new \Exception("WinterCMS at [$cwd] does not have the required Acorn module");
+        // We run a winter command to indirectly load all classes
+        // We may get an error:
+        //  System\\Traits\\SecurityController not defined
+        // which means that the classes.php class loader has been removed
+        $this->runWinterCommand('list');
+
+        // WinterCMS always requires the AA infrastructure to be pre-installed
+        $moduleAALocation = "$cwd/modules/acorn/Model.php";
+        if (!file_exists($moduleAALocation)) 
+            throw new Exception("WinterCMS at [$cwd] does not have the required Acorn module at [$moduleAALocation]");
 
         // ---------------------------- DB
-        # Get DB connection parameters from Laravel
+        // Get DB connection parameters from Laravel
         if (!$this->DB_HOST) $this->DB_HOST = '127.0.0.1';
         if (!$this->DB_PORT) $this->DB_PORT = 5432;
         if ( $this->DB_CONNECTION != 'pgsql' || $this->DB_HOST != "127.0.0.1" ) {
-            throw new \Exception("$this->DB_CONNECTION@$this->DB_HOST:$this->DB_PORT is not local. Aborted");
+            throw new Exception("$this->DB_CONNECTION@$this->DB_HOST:$this->DB_PORT is not local. Aborted");
         }
         $this->connection = "pgsql:host=$this->DB_HOST;dbname=$this->DB_DATABASE;port=$this->DB_PORT;";
         $this->database   = $this->DB_DATABASE;
@@ -47,16 +61,18 @@ class WinterCMS extends Framework
 
         // ---------------------------- DBAUTH
         if ($this->username == '<DBAUTH>') {
-            print("{$YELLOW}NOTE{$NC}: DBAuth module detected, using winter user instead\n");
-            $this->username   = 'createsystem';
+            $dbAuthCreateSystemUser = 'createsystem';
+            print("{$YELLOW}NOTE{$NC}: DBAuth module detected, using assumed {$YELLOW}$dbAuthCreateSystemUser{$NC} user, with standard password, instead\n");
+            $this->username   = $dbAuthCreateSystemUser;
             $this->password   = 'QueenPool1@';
         }
 
         // ---------------------------- Icons
+        // This icon library is used for the automatic, sequential assignment of icons to menu-items
         $this->iconFile    = "$cwd/modules/backend/formwidgets/iconpicker/meta/libraries.yaml";
         $this->iconCurrent = 7;
         if (!file_exists($this->iconFile)) {
-            throw new \Exception("Icon file [$this->iconFile] missing");
+            throw new Exception("Icon file [$this->iconFile] missing");
         }
     }
 
@@ -69,7 +85,7 @@ class WinterCMS extends Framework
     protected function environment(): array
     {
         $env = file_get_contents("$this->cwd/.env");
-        if (!$env) throw new \Exception("WinterCMS .env file not found or empty at [$this->cwd]");
+        if (!$env) throw new Exception("WinterCMS .env file not found or empty at [$this->cwd]");
         return explode("\n", $env);
     }
 
@@ -87,19 +103,41 @@ class WinterCMS extends Framework
     protected function runWinterCommand(string $command, ...$args): int
     {
         print("artisan $command\n");
-        $this->input  = new \Symfony\Component\Console\Input\ArgvInput(array('', $command, ...$args));
+        $this->input  = new ArgvInput(array('', $command, ...$args));
         $this->status = $this->kernel->handle($this->input, $this->output);
 
         return $this->status;
     }
 
-    protected function pluginDirectoryPath(Plugin &$plugin): string
+    public function pluginDirectoryPath(Plugin|Module &$plugin): string
     {
         $dirName = $plugin->dirName();
         return "$this->cwd/plugins/$dirName";
     }
 
-    protected function pluginFile(Plugin &$plugin): string
+    public function modelFileDirectoryPath(Model &$model, string $file = NULL): string
+    {
+        $pluginDirectoryPath = $this->pluginDirectoryPath($model->plugin);
+        $dirName             = $model->dirName();
+        $modelDirectoryPath  = "$pluginDirectoryPath/models/$dirName";
+        if ($file) $modelDirectoryPath .= "/$file";
+        return $modelDirectoryPath;
+    }
+
+    public function langPath(Plugin|Module $plugin, string $lang = NULL): string
+    {
+        $domainDirPath = $this->pluginDirectoryPath($plugin);
+        $langDir       = "$domainDirPath/lang";
+        if ($lang) $langDir .= "/$lang/lang.php";
+        return $langDir;
+    }
+
+    public function langEnPath(Plugin|Module $plugin): string
+    {
+        return $this->langPath($plugin, 'en');
+    }
+
+    protected function pluginFile(Plugin|Module &$plugin): string
     {
         return $this->pluginDirectoryPath($plugin) . "/Plugin.php";
     }
@@ -333,7 +371,7 @@ class WinterCMS extends Framework
             // Check these permissions keys are fully qualified
             foreach ($permissions as $fullyQualifiedKey => &$config) {
                 $isQualifiedName = (strstr($fullyQualifiedKey, '.') !== FALSE);
-                if (!$isQualifiedName) throw new \Exception("Permission [$fullyQualifiedKey] is not qualified");
+                if (!$isQualifiedName) throw new Exception("Permission [$fullyQualifiedKey] is not qualified");
             }
 
             foreach ($permissions as $fullyQualifiedName => &$config) {
@@ -447,6 +485,10 @@ class WinterCMS extends Framework
                 array('plugin' => $dotClassName)
             );
         }
+
+        // --------------------------------------------- Seeding
+        // Note that this will seed also table comments that are not Models
+        $this->runWinterCommand('acorn:seed', $plugin->dotClassName());
     }
 
     protected function writeReadme(Plugin &$plugin, string $contents) {
@@ -569,6 +611,10 @@ class WinterCMS extends Framework
             // Potentially rewrite $table because create:model will automatically plural it
             $this->setPropertyInClassFile($modelFilePath, 'table', $model->table->fullyQualifiedName());
 
+            // Views create read-only models
+            if ($model->readOnly)
+                $this->setPropertyInClassFile($modelFilePath, 'readOnly', TRUE, Framework::NEW_PROPERTY);
+
             $createdBy  = $this->createdByString();
             $this->appendToFile($modelFilePath, "// $createdBy");
 
@@ -603,12 +649,12 @@ class WinterCMS extends Framework
                 'Carbon\\Carbon' => TRUE,
                 'Carbon\\CarbonInterval' => TRUE,
             ));
-            print("  Inheriting from Acorn\\\\Model\n");
+            print("    Inheriting from Acorn\\\\Model\n");
             // WinterCMS v1.2.7 changed to Winter\Storm\Database\Model
             $this->replaceInFile($modelFilePath, '/^use (Winter\\\Storm\\\Database\\\Model|Model);$/m', 'use Acorn\\Model;');
 
             // Traits
-            print("  Adding Trait Revisionable\n");
+            print("    Adding Trait Revisionable\n");
             $model->traits['\\Winter\\Storm\\Database\\Traits\\Revisionable'] = TRUE;
             $this->setPropertyInClassFile($modelFilePath, 'revisionable', array(), FALSE, 'protected');
             $this->setPropertyInClassFile($modelFilePath, 'morphMany', array(
@@ -616,11 +662,11 @@ class WinterCMS extends Framework
             ));
 
             if ($model->hasSoftDelete()) {
-                print("  Adding Trait SoftDelete\n");
+                print("    Adding Trait SoftDelete\n");
                 $model->traits['\\Winter\\Storm\\Database\\Traits\\SoftDelete'] = TRUE;
             }
             if ($model->isDistributed()) {
-                print("  Adding Trait HasUuids\n");
+                print("    Adding Trait HasUuids\n");
                 $model->traits['\\Illuminate\\Database\\Eloquent\\Concerns\\HasUuids'] = TRUE;
             }
             if ($model->isSelfReferencingHierarchy()) 
@@ -672,8 +718,8 @@ use Acorn\Scopes\GlobalChainScope;
 
 class $scopeName extends GlobalChainScope
 {
-    public function apply(Builder \$builder, Model \$model) {
-        self::applySession(\$builder, \$model);
+    public function apply(Builder \$builder, Model \$model): bool {
+        return self::applySession(\$builder, \$model);
     }
 }
 PHP
@@ -687,12 +733,54 @@ PHP
             // This moves seeding: directives in to updates\seed.sql
             // and also appends any fn_acorn_*_seed_*() functions
             $seederPath = "$pluginDirectoryPath/updates/seed.sql";
+            if ($model->table->seedingOther) {
+                foreach ($model->table->seedingOther as $table => $rows) {
+                    $tableParts = explode('.', $table);
+                    $isFQN      = (count($tableParts) > 1);
+                    $schema     = ($isFQN ? $tableParts[0] : 'public');
+                    $table      = ($isFQN ? $tableParts[1] : $tableParts[0]);
+
+                    print("  {$GREEN}SEEDING (other){$NC} for [$schema.$table]\n");
+                    foreach ($rows as $row) {
+                        // $table is a string so we will get raw PDO::FETCH_ASSOC results
+                        // with ->column_name properties
+                        $columns = $this->db->tableColumns($table);
+                        $names   = array();
+                        $values  = array();
+                        foreach ($columns as $column) {
+                            if (!count($row)) break;
+                            $value = array_shift($row);
+
+                            // TODO: Creation of NOT NULL associated calendar events: EVENT_ID => $this->db->createCalendarEvent('SEEDER')
+                            if      ($value === 'DEFAULT')   $valueSQL = 'DEFAULT';
+                            else if ($value === 'NULL')      $valueSQL = 'NULL';
+                            else if (substr($value, 0, 19) === 'fn_acorn_' && substr($value, -1) == ')') $valueSQL = $value;
+                            else $valueSQL = var_export($value, TRUE);
+
+                            array_push($names, $column['column_name']);
+                            array_push($values, $valueSQL);
+                        }
+                        $namesSQL  = '"' . implode('","', $names) . '"';
+                        $valuesSQL = implode(',', $values);
+                        
+                        // Include a not exists if there is a specific id
+                        if ($names[0] == 'id' && $values[0] != 'DEFAULT') {
+                            $id        = trim($values[0], "'");
+                            $insertSQL = "insert into $schema.$table($namesSQL) select $valuesSQL where not exists(select * from $schema.$table where id='$id')";
+                        } else {
+                            $insertSQL = "insert into $schema.$table($namesSQL) values($valuesSQL)";
+                        }
+                        $insertSQL .= ';';
+    
+                        $this->appendToFile($seederPath, $insertSQL);
+                    }
+                }
+            }
+            
             if ($model->table->seeding) {
                 $schema     = $model->table->schema;
                 $table      = $model->table->name;
-                $inserts    = array();
 
-                // Table comment seeding directive
                 print("  {$GREEN}SEEDING{$NC} for [$table]\n");
                 foreach ($model->table->seeding as $row) {
                     $names  = array();
@@ -716,22 +804,17 @@ PHP
                     }
                     $namesSQL  = '"' . implode('","', $names) . '"';
                     $valuesSQL = implode(',', $values);
-                    $insertSQL = "insert into $schema.$table($namesSQL) values($valuesSQL);";
-                    array_push($inserts, $insertSQL);
-                    $this->appendToFile($seederPath, $insertSQL);
-                }
-                
-                // Run the seeding IF there are no records in the table
-                // Because we are not doing a winter:down,up here, but we still want the records
-                if ($model->table->isEmpty() && count($inserts)) {
-                    print("  Running {$YELLOW}$table{$NC} seed inserts because the table is empty: [");
-                    // We do not $this->db->disableTriggers(), because we want the created_at_event_id
-                    foreach ($inserts as $insert) {
-                        print(".");
-                        $this->db->insert($insert);
+
+                    // Include a not exists if there is a specific id
+                    if ($names[0] == 'id' && $values[0] != 'DEFAULT') {
+                        $id        = trim($values[0], "'");
+                        $insertSQL = "insert into $schema.$table($namesSQL) select $valuesSQL where not exists(select * from $schema.$table where id='$id')";
+                    } else {
+                        $insertSQL = "insert into $schema.$table($namesSQL) values($valuesSQL)";
                     }
-                    // $this->db->enableTriggers();
-                    print("]\n");
+                    $insertSQL .= ';';
+
+                    $this->appendToFile($seederPath, $insertSQL);
                 }
             }
 
@@ -772,7 +855,7 @@ PHP
             // -------- belongsTo
             $relations = array();
             foreach ($model->relations1to1() as $name => &$relation) {
-                if (isset($relations[$name])) throw new \Exception("Conflicting relations with [$name] on [$model->name]");
+                if (isset($relations[$name])) throw new Exception("Conflicting relations with [$name] on [$model->name]");
                 $isLeaf           = ($relation instanceof RelationLeaf);
                 $relations[$name] = $this->removeEmpty(array($relation->to,
                     'key'    => $relation->column->name,
@@ -785,7 +868,7 @@ PHP
             }
             foreach ($model->relationsXto1() as $name => &$relation) {
                 if (isset($relations[$name])) 
-                    throw new \Exception("Conflicting relations with [$name] on [$model->name]");
+                    throw new Exception("Conflicting relations with [$name] on [$model->name]");
                 $relations[$name] = $this->removeEmpty(array($relation->to,
                     'key'    => $relation->column->name,
                     'name'   => $relation->nameObject,
@@ -795,36 +878,41 @@ PHP
                 ), Framework::AND_FALSES);
             }
             foreach ($model->relationsSelf() as $name => &$relation) {
-                if (isset($relations[$name]))    throw new \Exception("Conflicting relations with [$name] on [$model->name]");
-                if (isset($relations['parent'])) throw new \Exception("Only one parent relation allowed on [$model->name]");
+                if (isset($relations[$name]))    throw new Exception("Conflicting relations with [$name] on [$model->name]");
+                if (isset($relations['parent'])) throw new Exception("Only one parent relation allowed on [$model->name]");
                 $relations[$name]    = array($relation->to, 'key' => $relation->column->name, 'type' => $relation->type());
                 $relations['parent'] = array($relation->to, 'key' => $relation->column->name, 'type' => $relation->type());
             }
             $this->setPropertyInClassFile($modelFilePath, 'belongsTo', $relations);
 
             // -------- hasManyDeep
-            // 1-1 => 1-X
+            // 1-1 => 1-X && 1-1 => 1-1 => 1-X
+            // Important also for form embedding:
+            // 1-1 => 1-1 deep form embedding
+            // TODO: Move this up in to model->relationsHasManyDeep()
             $relations = array();
-            foreach ($model->relations1to1() as $name => &$relation) {
-                $isLeaf       = ($relation instanceof RelationLeaf);
-                $subRelations = array_merge(
-                    $relation->to->relations1fromX(),
-                    $relation->to->relationsXfromX(),
-                    $relation->to->relationsXfromXSemi(),
-                );
-                // Only supporting 1 level at the moment
-                foreach ($subRelations as $subName => &$deepRelation) {
-                    $deepName = Model::nestedFieldName($subName, array($name));
-                    if (isset($relations[$deepName])) throw new \Exception("Conflicting relations with [$deepName] on [$model->name]");
-                    $relations[$deepName] = array($deepRelation->to, 'throughRelations' => array($name, $subName));
-                }
+            foreach ($model->relationsHasManyDeep() as $name => &$relation) {
+                $relations[$name]     = $this->removeEmpty(array(
+                    $relation->to, 
+                    'throughRelations' => array_keys($relation->throughRelations), 
+                    'containsLeaf'     => $relation->containsLeaf,
+                    'name'             => $relation->nameObject,
+                    'key'              => $relation->column->name,
+                    'global_scope'     => ($relation->globalScope == 'from'),
+                    // Type is important because we can immediately identify 
+                    // fully 1to1 deep relations for embedding
+                    // 1to1 means all steps are 1to1
+                    // because $relation above will only be 1to1 traversal
+                    // other (XfromX, etc.) indicates the LAST step only
+                    'type' => $relation->type(), 
+                ), Framework::AND_FALSES);
             }
             $this->setPropertyInClassFile($modelFilePath, 'hasManyDeep', $relations, FALSE);
 
             // -------- hasMany
             $relations = array();
             foreach ($model->relations1fromX() as $name => &$relation) {
-                if (isset($relations[$name])) throw new \Exception("Conflicting relations with [$name] on [$model->name]");
+                if (isset($relations[$name])) throw new Exception("Conflicting relations with [$name] on [$model->name]");
                 $relations[$name] = $this->removeEmpty(array($relation->to,
                     'key' => $relation->column->name,
                     'global_scope' => ($relation->globalScope == 'from'),
@@ -834,7 +922,7 @@ PHP
             foreach ($model->relationsXfromXSemi() as $name => &$relation) {
                 // For the pivot model only
                 $name = "{$name}_pivot";
-                if (isset($relations[$name])) throw new \Exception("Conflicting relations with [$name] on [$model->name]");
+                if (isset($relations[$name])) throw new Exception("Conflicting relations with [$name] on [$model->name]");
                 $relations[$name] = $this->removeEmpty(array(
                     $relation->pivotModel,
                     'key'      => $relation->keyColumn->name,  // pivot.legalcase_id
@@ -844,7 +932,7 @@ PHP
                 ), Framework::AND_FALSES);
             }
             foreach ($model->relationsSelf() as $name => &$relation) {
-                if (isset($relations['children'])) throw new \Exception("Only one children relation allowed on [$model->name]");
+                if (isset($relations['children'])) throw new Exception("Only one children relation allowed on [$model->name]");
                 $relations['children'] = array($relation->to, 'key' => $relation->column->name, 'type' => $relation->type());
             }
             $this->setPropertyInClassFile($modelFilePath, 'hasMany', $relations);
@@ -852,7 +940,7 @@ PHP
             // -------- belongsToMany
             $relations = array();
             foreach ($model->relationsXfromX() as $name => &$relation) {
-                if (isset($relations[$name])) throw new \Exception("Conflicting relations with [$name] on [$model->name]");
+                if (isset($relations[$name])) throw new Exception("Conflicting relations with [$name] on [$model->name]");
                 $relations[$name] = $this->removeEmpty(array(
                     $relation->to,
                     'table'    => $relation->pivot->name,
@@ -866,7 +954,7 @@ PHP
             foreach ($model->relationsXfromXSemi() as $name => &$relation) {
                 // This is a link to the primary through field
                 // For other through fields, the pivot model should be used, $hasMany[*_pivot], from above
-                if (isset($relations[$name])) throw new \Exception("Conflicting relations with [$name] on [$model->name]");
+                if (isset($relations[$name])) throw new Exception("Conflicting relations with [$name] on [$model->name]");
                 $relations[$name] = $this->removeEmpty(array(
                     $relation->to,
                     'table'    => $relation->pivot->name,      // Semi-Pivot Model
@@ -882,7 +970,7 @@ PHP
             // -------- hasOne
             $relations = array();
             foreach ($model->relations1from1() as $name => &$relation) {
-                if (isset($relations[$name])) throw new \Exception("Conflicting relations with [$name] on [$model->name]");
+                if (isset($relations[$name])) throw new Exception("Conflicting relations with [$name] on [$model->name]");
                 $relations[$name] = $this->removeEmpty(array($relation->to,
                     'key'    => $relation->column->name,
                     'type'   => $relation->type(),
@@ -904,20 +992,21 @@ PHP
             // ----------------------------------------------------------------- Methods
             // menuitemCount() for plugins.yaml
             print("  Adding menuitemCount()\n");
-            $this->addStaticMethod($modelFilePath, 'menuitemCount', 'return self::all()->count();');
+            $this->addStaticMethod($modelFilePath, 'menuitemCount', 'return self::count();');
 
             // get<Something>Attribute()s
-            foreach ($model->attributeFunctions as $name => &$body) {
-                $namePascal = Str::studly($name);
-                $type       = ($name == 'name' ? 'string' : 'mixed');
-                $funcName   = "get{$namePascal}Attribute(\$value): $type"; // Encapsulation...
-                print("  Injecting public {$YELLOW}$funcName{$NC}() into [$model->name]\n");
-                $this->addMethod($modelFilePath, $funcName, $body);
+            foreach ($model->attributeFunctions as $funcName => &$body) {
+                $funcNamePascal = Str::studly($funcName);
+                $type           = ($funcNamePascal == 'name' ? 'string' : 'mixed');
+                $signature      = "get{$funcNamePascal}Attribute(\$value)"; // Encapsulation...
+                print("  Injecting public {$YELLOW}$signature{$NC}() into [$model->name]\n");
+                $this->addMethod($modelFilePath, $signature, $body, $type);
             }
             // methods()
             foreach ($model->methods as $funcName => &$body) {
-                print("  Injecting public function {$YELLOW}$funcName{$NC} into [$model->name]\n");
-                $this->addMethod($modelFilePath, $funcName, $body);
+                $type = ($funcName == 'name' ? 'string' : 'mixed');
+                print("  Injecting public function {$YELLOW}$funcName(): $type{$NC} into [$model->name]\n");
+                $this->addMethod($modelFilePath, $funcName, $body, $type);
             }
             // static methods()
             foreach ($model->staticMethods as $funcName => &$body) {
@@ -1010,13 +1099,15 @@ PHP
                 'nested'       => ($field->nested    ?: NULL),
                 'nestLevel'    => ($field->nestLevel ?: NULL),
 
+                // MorphConfig.php
+                // Complex permissions
                 'permissionSettings' => $field->permissionSettings,
                 'permissions'        => $field->permissions,
-
-                'include'      => $field->include,
-                'includeModel' => $field->includeModel,
-                'includePath'  => $field->includePath,
-                'includeContext' => $field->includeContext,
+                // Dynamic include
+                'include'      => $field->include,          // Only include: 1to1
+                'includeModel' => $field->includeModel,     // Required for include
+                'includePath'  => $field->includePath,      // Not used
+                'includeContext' => $field->includeContext, // = exclude for QRCode
             );
             if ($field->fieldConfig) $fieldDefinition = array_merge($fieldDefinition, $field->fieldConfig);
             $fieldDefinition = $this->removeEmpty($fieldDefinition, self::AND_FALSES); // Remove FALSE
@@ -1036,7 +1127,7 @@ PHP
             // -------------------------------------------------------- Special ButtonFields
             foreach ($field->buttons as $buttonName => &$buttonField) {
                 if ($buttonField) { // Can be FALSE
-                    if ($buttonField->contexts) throw new \Exception("Button field different contexts to main field is not supported yet on [$name]");
+                    if ($buttonField->contexts) throw new Exception("Button field different contexts to main field is not supported yet on [$name]");
                     $buttonDefinition = array(
                         'name'         => $buttonField->name,
                         'type'         => $buttonField->fieldType,
@@ -1094,7 +1185,7 @@ PHP
                 if ($field->labels) {
                     foreach ($field->labels as $langName => &$translation) {
                         $langFilePath = "$langDirPath/$langName/lang.php";
-                        if (!file_exists($langFilePath)) throw new \Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
+                        if (!file_exists($langFilePath)) throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
                         $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
                     }
                 }
@@ -1106,7 +1197,7 @@ PHP
                     $localTranslationKey = "$modelKey.$code";
                     foreach ($labels as $langName => &$translation) {
                         $langFilePath = "$langDirPath/$langName/lang.php";
-                        if (!file_exists($langFilePath)) throw new \Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
+                        if (!file_exists($langFilePath)) throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
                         $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
                     }
                 }
@@ -1117,7 +1208,7 @@ PHP
             $localTranslationKey = "$modelKey.$code";
             foreach ($labels as $langName => &$translation) {
                 $langFilePath = "$langDirPath/$langName/lang.php";
-                if (!file_exists($langFilePath)) throw new \Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
+                if (!file_exists($langFilePath)) throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
                 $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
             }
         }
@@ -1206,7 +1297,7 @@ PHP
                                     if ($field->useRelationCondition) {
                                         // Probably because it is neseted
                                         // TODO: This is actually the _un-nested_ relation
-                                        if (!$field->fieldKey) throw new \Exception("Field [$name] has no fieldKey for relationCondition");
+                                        if (!$field->fieldKey) throw new Exception("Field [$name] has no fieldKey for relationCondition");
                                         $filterDefinition['relationCondition'] = $field->fieldKey;
                                     } else {
                                         if (!isset($filterDefinition['conditions']) || is_null($filterDefinition['conditions']))
@@ -1228,7 +1319,7 @@ PHP
                         // TODO: Non-relation fields, like dates
                         // Nothing comes here at the moment
                         // because everything is a foreign key: dates, users, etc.
-                        throw new \Exception("Un-considered filter [$name]");
+                        throw new Exception("Un-considered filter [$name]");
                         // $this->yamlFileSet($configFilterPath, "scopes.$name", $filterDefinition);
                     }
                 } else {
@@ -1243,8 +1334,8 @@ PHP
         $this->yamlFileSet($configRelationPath, '#', $createdBy);
         foreach ($controller->model->fields() as $name => &$field) {
             if ($field->fieldType == 'relationmanager') {
-                if (count($field->relations) == 0) throw new \Exception("Field $name has no relations for relationmanager configuration");
-                if (count($field->relations) > 1)  throw new \Exception("Field $name has multiple relations for relationmanager configuration");
+                if (count($field->relations) == 0) throw new Exception("Field $name has no relations for relationmanager configuration");
+                if (count($field->relations) > 1)  throw new Exception("Field $name has multiple relations for relationmanager configuration");
                 $relationModel           = end($field->relations)->to;
                 $relationPluginDirectory = $relationModel->plugin->dirName();
                 $relationModelDirName    = $relationModel->dirName();
@@ -1316,8 +1407,8 @@ PHP
         foreach ($model->fields() as $name => &$field) {
             if ($field->canDisplayAsColumn()) {
                 // Columns.yaml checks
-                if ($field->sqlSelect && $field->valueFrom)              throw new \Exception("select: and valueFrom: are mutually exclusive on [$field->name]");
-                if ($field->relation  && strstr($field->columnKey, '[')) throw new \Exception("relation: and nesting are mutually exclusive on [$field->name]");
+                if ($field->sqlSelect && $field->valueFrom)              throw new Exception("select: and valueFrom: are mutually exclusive on [$field->name]");
+                if ($field->relation  && strstr($field->columnKey, '[')) throw new Exception("relation: and nesting are mutually exclusive on [$field->name]");
 
                 print("      Add {$YELLOW}$name{$NC}($field->fieldType/$field->columnType): to {$YELLOW}columns.yaml{$NC}\n");
                 $columnDefinition = array(
@@ -1337,10 +1428,13 @@ PHP
                     'multi'      => $field->multi,             // Relation _multi.php directives
 
                     // TODO: Columns should also include Xto1 relations
-                    'include'        => $field->include,
-                    'includeModel'   => $field->includeModel,
-                    'includePath'    => $field->includePath,
-                    'includeContext' => $field->includeContext,
+
+                    // MorphConfig.php
+                    // Dynamic include
+                    'include'      => $field->include,          // Only include: 1to1
+                    'includeModel' => $field->includeModel,     // Required for include
+                    'includePath'  => $field->includePath,      // Not used
+                    'includeContext' => $field->includeContext, // = exclude for QRCode
                 );
                 if ($field->columnConfig) $columnDefinition = array_merge($columnDefinition, $field->columnConfig);
                 $columnDefinition = $this->removeEmpty($columnDefinition); // We do not remove falses
@@ -1369,7 +1463,7 @@ PHP
                         if (is_array($config) && isset($config['label'])) {
                             $key = $config['label'];
                             if (!$this->checkTranslationKey($key))
-                                throw new \Exception("Lang key [$key] in [$fieldsFilePath] not found");
+                                throw new Exception("Lang key [$key] in [$fieldsFilePath] not found");
                         }
                     }
                 }
@@ -1377,13 +1471,14 @@ PHP
                     foreach ($fields['tabs']['fields'] as $name => $config) {
                         if (is_array($config) && isset($config['label'])) {
                             $key = $config['label'];
-                            if (!$this->checkTranslationKey($key))
-                                throw new \Exception("Lang key [$key] in [$fieldsFilePath] not found");
+                            if (!$this->checkTranslationKey($key)) {
+                                throw new Exception("Lang key [$key] in [$fieldsFilePath] not found");
+                            }
                         }
                         if (is_array($config) && isset($config['tab'])) {
                             $key = $config['tab'];
                             if (!$this->checkTranslationKey($key))
-                                throw new \Exception("Lang key [$key] in [$fieldsFilePath] not found");
+                                throw new Exception("Lang key [$key] in [$fieldsFilePath] not found");
                         }
                     }
                 }
@@ -1395,7 +1490,7 @@ PHP
                         if (is_array($config) && isset($config['label'])) {
                             $key = $config['label'];
                             if (!$this->checkTranslationKey($key))
-                                throw new \Exception("Lang key [$key] in [$columnsFilePath] not found");
+                                throw new Exception("Lang key [$key] in [$columnsFilePath] not found");
                         }
                     }
                 }
@@ -1413,7 +1508,7 @@ PHP
                 $modelName     = $fileParts[0];
                 $modelFQN      = "$pluginFQN\\Models\\$modelName";
                 print('.');
-                require($filePath);
+                if (!class_exists($modelFQN)) require_once($filePath);
                 new $modelFQN;
             }
         }
@@ -1435,18 +1530,30 @@ PHP
         print(" ✓\n");
     }
 
+    public function translationKeyPlugin(string $key, bool $pluginOnly = Framework::PLUGIN_ONLY): Plugin|Module|NULL
+    {
+        // acorn.user::lang.models.user.label
+        // acorn::lang.models.general.name
+        $keyParts      = explode('::', $key);
+        $domain        = $keyParts[0]; // acorn.user | acorn
+        $isModule      = (strstr($domain, '.') === FALSE); // acorn
+        if ($pluginOnly && $isModule) 
+            throw new Exception("Translation key ''$domain' needs 2 dot parts");
+        return Plugin::fromDotName($domain);
+    }
+
     public function checkTranslationKey(string $key): bool
     {
+        $plugin        = $this->translationKeyPlugin($key, Framework::PLUGIN_ONLY);
         $keyParts      = explode('::', $key);
-        $domain        = $keyParts[0];                     // acorn.user | acorn
-        if (count($keyParts) < 2) throw new \Exception("Translation key ''$domain' needs 2 dot parts");
         $localParts    = explode('.', $keyParts[1]);       // lang, models, general, id
         $localKey      = implode('.', array_slice($localParts, 1)); // models.general.id
-        $isModule      = (strstr($domain, '.') === FALSE); // acorn
-        $domainRelDir  = str_replace('.', '/', $domain);   // acorn/user | acorn
-        $domainDirPath = ($isModule ? "modules/$domainRelDir" : "plugins/$domainRelDir");
-        $langFilePath  = realpath("$domainDirPath/lang/en/lang.php");
 
-        return $this->arrayFileValueExists($langFilePath, $localKey, Framework::NO_CACHE);
+        // TODO: Check all lang files
+        // NO_CACHE because we do not want to overwrite other plugins lang files
+        $keyExists = $this->arrayFileValueExists($plugin->langEnPath(), $localKey, Framework::NO_CACHE);
+
+        // We do not error if the plugin has not been created
+        return (!$plugin->exists() || $keyExists);
     }
 }
