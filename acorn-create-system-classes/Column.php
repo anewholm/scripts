@@ -107,17 +107,23 @@ class Column {
     public $parsedComment; // array
     public $fieldOptions;  // array
     public $order;
-    public $default;
-    public $required;
-    public $fieldComment; // HTML field comment
+    public $invisible;
     public $system;  // Internal column, do not process
     public $todo;    // TODO: This column structure has not been analysed / enabled yet
     public $setting; // Only show the column if a Setting is TRUE
     public $env;     // Only show the column if an env VAR is TRUE
-    // For fields
+    public $listEditable;
+    public $columnType;
+    public $sqlSelect;
+    public $valueFrom; // We should never use this because it cannot be sorted
+
+    // --------------------- Field comment accepted values
     public $fieldType;
-    public $partial;
+    public $fieldComment; // HTML field comment
     public $rules = array();
+    public $partial;
+    public $default;
+    public $required;
     public $span;
     public $hidden;
     // Arrays for css class
@@ -130,21 +136,25 @@ class Column {
     public $containerAttributes;
     public $permissionSettings;
     // For columns
-    public $columnType;
-    public $sqlSelect;
-    public $valueFrom; // We should never use this because it cannot be sorted
-    public $invisible;
     public $tab;
     public $icon;
     public $tabLocation; // primary|secondary|tertiary
+
     // Translation arrays
     public $labels;
     public $labelsPlural;
     public $extraTranslations; // array
 
-    public static function fromRow(Table &$table, array $row)
+    public static function fromRow(Table &$table, array $row): Column
     {
         return new self($table, ...$row);
+    }
+
+    public static function dummy(Table &$table, string $column_name): Column
+    {
+        return self::fromRow($table, array(
+            'column_name' => $column_name,
+        ));
     }
 
     static protected function blockingAlert(string $message, string $level = 'WARNING'): void
@@ -218,32 +228,60 @@ class Column {
 
         // The from on these foreign keys is always the column the FK is attached to
         // So foreignKeysTo will point (to) to this table id, and from a foreign table
-        $this->foreignKeysFrom = $this->db()->foreignKeysFrom($this); // from => to
-        $this->foreignKeysTo   = $this->db()->foreignKeysTo($this);   // to <= from
+        $this->foreignKeysFrom = $this->db()->foreignKeysFrom($this); // from => to(id), $to=FALSE
+        $this->foreignKeysTo   = $this->db()->foreignKeysTo($this);   // to(id) <= from, $to=TRUE
 
         if ($this->extraForeignKey) {
             // Used by views to create links with other tables
             // We assume this is a FK from the view foreign key field
             // to an id on another table
-            // TODO: Create the reverse FK on the target table...
-            $row  = array(
+            $table    = $this->table;
+            $toSchema = $this->extraForeignKey['schema']  ?? 'public';
+            $toTable  = $this->extraForeignKey['table'];
+            $toColumn = $this->extraForeignKey['column']  ?? 'id';
+            $comment  = $this->extraForeignKey['comment'] ?? array();
+            $addReverse  = $this->extraForeignKey['add-reverse'] ?? TRUE;
+            $commentTo   = $this->extraForeignKey['comment-to'] ?? array();
+            $commentFrom = $this->extraForeignKey['comment-from'] ?? array();
+            
+            if (!$commentTo)   $commentTo   = $comment;
+            if (!$commentFrom) $commentFrom = $comment;
+            if (!isset($commentTo['read-only']))   $commentTo['read-only']   = TRUE;
+            if (!isset($commentFrom['read-only'])) $commentFrom['read-only'] = TRUE;
+            
+            $to     = FALSE;
+            $row    = array(
                 // Copied from DB::foreignKeys()
                 'oid'     => '',
-                'name'    => $this->name,
-                'comment' => '',
-                'table_from_schema' => $this->table->schema,
-                'table_from_name'   => $this->table->name,
+                'name'    => "$toTable.$this->name",
+                'comment' => \Spyc::YAMLDump($commentTo, FALSE, FALSE, TRUE), // e.g. tab-location: 3
+                'table_from_schema' => $table->schema,
+                'table_from_name'   => $table->name,
                 'table_from_column' => $this->name,
-                'table_to_schema'   => $this->extraForeignKey['schema'] ?? 'public',
-                'table_to_name'     => $this->extraForeignKey['table'],
-                'table_to_column'   => $this->extraForeignKey['column'] ?? 'id',
+                'table_to_schema'   => $toSchema,
+                'table_to_name'     => $toTable,
+                'table_to_column'   => $toColumn,
             );
-            $fk   = ForeignKey::fromRow($this, FALSE, $row);
+            $fk   = ForeignKey::fromRow($this, $to, $row);
             $name = $fk->fullyQualifiedName();
             if (isset($this->foreignKeysFrom[$name]))
-                throw new \Exception("Foreign Key $name already exists on $this->name");
+                throw new \Exception("Foreign Key (to) $name already exists on $table->name.$this->name");
             $this->foreignKeysFrom[$name] = $fk;
             print("  Added extra foreign key $YELLOW$name$NC from column $YELLOW$this->name$NC\n");
+
+            if ($addReverse) {
+                // Create the reverse FK on the target table...
+                $to     = TRUE;
+                $row['comment'] = \Spyc::YAMLDump($commentFrom, FALSE, FALSE, TRUE); // e.g. tab-location: 3
+                $toTableObject  = Table::get($toTable, $toSchema); // Will throw
+                $toColumnObject = $toTableObject->getColumn($toColumn);
+                $fk   = ForeignKey::fromRow($toColumnObject, $to, $row);
+                $name = $fk->fullyQualifiedName();
+                if (isset($toColumnObject->foreignKeysTo[$name]))
+                    throw new \Exception("Foreign Key (from) $name already exists on $toTable.$toColumn");
+                $toColumnObject->foreignKeysTo[$name] = $fk;
+                print("  Added extra {$YELLOW}reverse{$NC} foreign key $YELLOW$name$NC to column $YELLOW$toTable.$toColumn$NC\n");
+            }
         }
     }
 

@@ -1,6 +1,9 @@
 <?php namespace Acorn\CreateSystem;
 
+use Exception;
+
 class Relation {
+    public $name;
     public $oid;
     public $from; // Model
     public $to;   // Model
@@ -13,7 +16,7 @@ class Relation {
     public $type;   // explicit typing
     public $delete; // Relation delete: true will cause reverse cascade deletion of associated object
     public $isFrom      = TRUE; // From this column, attached to it
-    public $nameObject  = FALSE;
+    public $nameObject;
     public $readOnly;
     public $cssClasses;
     public $placeholder = 'backend::lang.form.select';
@@ -29,7 +32,7 @@ class Relation {
     public $labels;
     public $labelsPlural;
 
-    public function __construct(Model &$from, Model &$to, Column $column, ForeignKey $foreignKey)
+    public function __construct(string $name, Model &$from, Model &$to, Column $column, ForeignKey $foreignKey = NULL)
     {
         // Relations are DIRECTIONAL, unlike FKs
         // That is, from Relations, like Relation1from1, is attached to its FK to ID column,
@@ -39,18 +42,20 @@ class Relation {
         //   because those are the FKs attached to this column
         // Relation?from? (REVERSE relations) will use the column->foreignKeysTo collection
         //   they are attached to other tables and reference this table ID column
-        $this->oid        = $foreignKey->oid;
+        $this->name       = $name;
+        $this->oid        = $foreignKey?->oid;
         $this->from       = &$from;
         $this->to         = &$to;
         $this->column     = &$column;
         $this->foreignKey = &$foreignKey;
 
         // Inherit FK comment values
-        $this->comment = $this->foreignKey->comment;
+        $this->comment = $this->foreignKey?->comment;
         foreach (\Spyc::YAMLLoadString($this->comment) as $name => $value) {
             $nameCamel = Str::camel($name);
             if (property_exists($this, $nameCamel)) $this->$nameCamel = $value;
         }
+        if (!isset($this->nameObject)) $this->nameObject = $this->foreignKey?->nameObject;
     }
 
     public function __toString()
@@ -88,6 +93,12 @@ class Relation {
         return preg_replace('/Relation/', '', end($classParts));
     }
 
+    public function is1to1(): bool
+    {
+        // This will include HasManyDeep(1to1), Leaf and 1to1
+        return ($this instanceof Relation1to1 || $this->type() == '1to1');
+    }
+
     public function show(int $indent = 0)
     {
         global $YELLOW, $NC;
@@ -110,7 +121,7 @@ class Relation {
         $baseName   = $otherModel->table->unqualifiedForeignKeyColumnBaseName();
 
         if ($error = $this->checkQualifier($fieldName, $otherModel, $baseName))
-            throw new \Exception($error);
+            throw new Exception($error);
 
         // payee
         return trim(str_replace($baseName, '', $fieldName), '_');
@@ -155,9 +166,9 @@ class Relation1fromX extends RelationFrom {
 }
 
 class RelationSelf extends Relation1fromX {
-    public function __construct(Model &$from, Column &$column, ForeignKey &$foreignKey)
+    public function __construct(string $name, Model &$from, Column &$column, ForeignKey &$foreignKey = NULL)
     {
-        parent::__construct($from, $from, $column, $foreignKey);
+        parent::__construct($name, $from, $from, $column, $foreignKey);
     }
 
     public function direction(): string
@@ -183,9 +194,9 @@ class Relation1from1 extends RelationFrom {
 }
 
 class RelationXto1 extends Relation {
-    public function __construct(Model &$from, Model &$to, Column &$column, ForeignKey &$foreignKey)
+    public function __construct(string $name, Model &$from, Model &$to, Column &$column, ForeignKey &$foreignKey)
     {
-        parent::__construct($from, $to, $column, $foreignKey);
+        parent::__construct($name, $from, $to, $column, $foreignKey);
 
         // Do either of our Models indicate that the field canFilter?
         $relations = array($this);
@@ -203,6 +214,7 @@ class RelationXfromXSemi extends RelationFrom {
     public $canFilter = TRUE;
 
     public function __construct(
+        string $name, 
         Model  &$from,          // Legalcase
         Model  &$to,            // User
         Model  &$pivotModel,    // LegalcaseProsecutor
@@ -210,7 +222,7 @@ class RelationXfromXSemi extends RelationFrom {
         Column &$throughColumn, // pivot.user_id
         ForeignKey &$foreignKey
     ) {
-        parent::__construct($from, $to, $throughColumn, $foreignKey);
+        parent::__construct($name, $from, $to, $throughColumn, $foreignKey);
 
         $this->pivotModel = &$pivotModel;
         $this->pivot      = &$pivotModel->table;
@@ -229,6 +241,7 @@ class RelationXfromX extends RelationFrom {
     public $canFilter = TRUE;
 
     public function __construct(
+        string $name, 
         Model  &$from,          // Legalcase
         Model  &$to,            // User
         Table  &$pivot,         // acorn_criminal_legalcase_category
@@ -236,7 +249,7 @@ class RelationXfromX extends RelationFrom {
         Column &$throughColumn, // pivot.user_id
         ForeignKey &$foreignKey
     ) {
-        parent::__construct($from, $to, $throughColumn, $foreignKey);
+        parent::__construct($name, $from, $to, $throughColumn, $foreignKey);
 
         $this->pivot     = &$pivot;
         $this->keyColumn = &$keyColumn;
@@ -245,5 +258,48 @@ class RelationXfromX extends RelationFrom {
     public function __toString()
     {
         return parent::__toString() . " through [$this->pivot]";
+    }
+}
+
+class RelationHasManyDeep extends Relation {
+    // Type is important because we can immediately identify 
+    // fully 1to1 deep relations for embedding
+    // 1to1 means all steps are 1to1
+    // because $relation above will only be 1to1 traversal
+    // other (XfromX, etc.) indicates the LAST step only
+    public $type;
+    // Important that the keys are 
+    // the correct names of the array entires on the target Model
+    public $throughRelations;
+    public $containsLeaf;
+    public $nameObject;
+
+    public function __construct(
+        string $name, 
+        Model  &$from,          // Entity
+        Model  &$to,            // User
+        Column &$column,
+        ForeignKey &$firstForeignKey,
+        array $throughRelations, // name => relation
+        bool  $containsLeaf,
+        bool  $nameObject,
+        string $type
+    ) {
+        parent::__construct($name, $from, $to, $column, $firstForeignKey);
+        $this->type             = $type;
+        $this->throughRelations = $throughRelations;
+        $this->containsLeaf     = $containsLeaf;
+        $this->nameObject       = $nameObject;
+    }
+
+    protected function checkQualifier($fieldName, $otherModel, $baseName): string|NULL
+    {
+        // Column names are not related to the deep final model
+        return NULL;
+    }
+
+    public function type(): string
+    {
+        return $this->type;
     }
 }

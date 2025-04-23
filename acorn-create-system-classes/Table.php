@@ -43,7 +43,9 @@ class Table {
     public $menu;
     public $menuSplitter;
     public $menuIndent;
+    public $seedingOther;
     public $seeding;
+
     // Translation arrays
     public $pluginNames;
     public $pluginDescriptions;
@@ -539,6 +541,12 @@ class Table {
     }
 
     // ------------------------------------------------ Table interrogation
+    public function &getColumn(string $name): Column
+    {
+        if (!isset($this->columns[$name])) throw new \Exception("Column $name does not exist on table $this->name");
+        return $this->columns[$name];
+    }
+
     public function isFrameworkTable(): bool
     {
         return $this->db->isFrameworkTable($this->name);

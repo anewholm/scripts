@@ -579,190 +579,6 @@ end;
 ALTER FUNCTION public.fn_acorn_calendar_trigger_activity_event() OWNER TO university;
 
 --
--- Name: fn_acorn_exam_calculation_eval(uuid, uuid); Type: FUNCTION; Schema: public; Owner: university
---
-
-CREATE FUNCTION public.fn_acorn_exam_calculation_eval(p_student_id uuid, p_calculation_id uuid) RETURNS double precision
-    LANGUAGE sql
-    AS $$
-select fn_acorn_exam_calculation_expr_eval(p_student_id, 
-	replace(result_expression, '<student>', fn_acorn_exam_token_name(s.code))
-)
-from public.acorn_exam_calculations c,
-public.acorn_university_students s
-where c.id = p_calculation_id
-and s.id = p_student_id;
-$$;
-
-
-ALTER FUNCTION public.fn_acorn_exam_calculation_eval(p_student_id uuid, p_calculation_id uuid) OWNER TO university;
-
---
--- Name: fn_acorn_exam_calculation_expr_eval(uuid, character varying); Type: FUNCTION; Schema: public; Owner: university
---
-
-CREATE FUNCTION public.fn_acorn_exam_calculation_expr_eval(p_student_id uuid, p_expr character varying) RETURNS double precision
-    LANGUAGE plpgsql
-    AS $$
-declare
-	result double precision;
-begin
-	-- Dynamic execute the expr
-	execute concat('select ', fn_acorn_exam_calculation_expr_tokenize(p_student_id, p_expr)) into result;
-	
-	return result;
-end;
-$$;
-
-
-ALTER FUNCTION public.fn_acorn_exam_calculation_expr_eval(p_student_id uuid, p_expr character varying) OWNER TO university;
-
---
--- Name: fn_acorn_exam_calculation_expr_tokenize(uuid, character varying); Type: FUNCTION; Schema: public; Owner: university
---
-
-CREATE FUNCTION public.fn_acorn_exam_calculation_expr_tokenize(p_student_id uuid, p_expr character varying) RETURNS character varying
-    LANGUAGE plpgsql
-    AS $$
-declare
-	token_record record;
-	is_multiple bool;
-	name_count integer;
-begin
-	-- Replace all the tokens in the expr
-	-- with the values for this student
-	for token_record in select array_agg(name) as name, array_agg(value) as values,
-			regexp_matches[1] as match, regexp_matches[2] as match_name
-		from acorn_exam_calculation_tokens est, 
-		regexp_matches(p_expr, '(:([^ )(:=]+)=?([0-9.]*):)', 'g')
-		where regexp_like(name, regexp_matches[2])
-		group by match, match_name
-	loop
-		name_count := array_length(token_record.name, 1);
-		is_multiple := (name_count > 1 
-			or (name_count = 1 and token_record.name[1] != token_record.match_name) 
-		);
-		if is_multiple then
-			p_expr := replace(p_expr, token_record.match, array_to_string(token_record.values, ','));
-		else
-			p_expr := replace(p_expr, token_record.match, token_record.values[1]::text);
-		end if;
-	end loop;
-
-	-- Defaults
-	for token_record in select regexp_matches[1] as match, regexp_matches[2] as match_default
-		from regexp_matches(p_expr, '(:[^ )(:=]+=([0-9.]+):)', 'g')
-		group by match, match_default
-	loop
-		p_expr := replace(p_expr, token_record.match, token_record.match_default);
-	end loop;
-
-	-- NULL if tokens remain
-	if array_length(regexp_match(p_expr, '(:([^ )(:]+):)'), 1) != 0 then
-		p_expr := NULL;
-	end if;
-
-	return p_expr;
-end;
-$$;
-
-
-ALTER FUNCTION public.fn_acorn_exam_calculation_expr_tokenize(p_student_id uuid, p_expr character varying) OWNER TO university;
-
---
--- Name: fn_acorn_exam_exam_eval(uuid, uuid); Type: FUNCTION; Schema: public; Owner: university
---
-
-CREATE FUNCTION public.fn_acorn_exam_exam_eval(p_student_id uuid, p_exam_id uuid) RETURNS double precision
-    LANGUAGE sql
-    AS $$
-select fn_acorn_exam_exam_expr_eval(p_student_id, 
-	replace(replace(result_expression, '<exam>', fn_acorn_exam_token_name(e.name)),
-		'<student>', fn_acorn_exam_token_name(s.code)
-	)) 
-from public.acorn_exam_exams e
-inner join public.acorn_exam_types et on e.type_id = et.id,
-public.acorn_university_students s
-where e.id = p_exam_id 
-and s.id = p_student_id;
-$$;
-
-
-ALTER FUNCTION public.fn_acorn_exam_exam_eval(p_student_id uuid, p_exam_id uuid) OWNER TO university;
-
---
--- Name: fn_acorn_exam_exam_expr_eval(uuid, character varying); Type: FUNCTION; Schema: public; Owner: university
---
-
-CREATE FUNCTION public.fn_acorn_exam_exam_expr_eval(p_student_id uuid, p_expr character varying) RETURNS double precision
-    LANGUAGE plpgsql
-    AS $$
-declare
-	result double precision;
-begin
-	-- Dynamic execute the expr
-	execute concat('select ', fn_acorn_exam_exam_expr_tokenize(p_student_id, p_expr)) into result;
-	
-	return result;
-end;
-$$;
-
-
-ALTER FUNCTION public.fn_acorn_exam_exam_expr_eval(p_student_id uuid, p_expr character varying) OWNER TO university;
-
---
--- Name: fn_acorn_exam_exam_expr_tokenize(uuid, character varying); Type: FUNCTION; Schema: public; Owner: university
---
-
-CREATE FUNCTION public.fn_acorn_exam_exam_expr_tokenize(p_student_id uuid, p_expr character varying) RETURNS character varying
-    LANGUAGE plpgsql
-    AS $$
-declare
-	token_record record;
-	is_multiple bool;
-	name_count integer;
-begin
-	-- Replace all the tokens in the expr
-	-- with the values for this student
-	for token_record in select array_agg(name) as name, array_agg(value) as values, 
-			regexp_matches[1] as match, regexp_matches[2] as match_name
-		from acorn_exam_exam_tokens est, 
-		regexp_matches(p_expr, '(:([^ )(:=]+)=?([0-9.]*):)', 'g')
-		where regexp_like(name, regexp_matches[2])
-		group by match, match_name
-	loop
-		name_count := array_length(token_record.name, 1);
-		is_multiple := (name_count > 1 
-			or (name_count = 1 and token_record.name[1] != token_record.match_name) 
-		);
-		if is_multiple then
-			p_expr := replace(p_expr, token_record.match, array_to_string(token_record.values, ','));
-		else
-			p_expr := replace(p_expr, token_record.match, token_record.values[1]::text);
-		end if;
-	end loop;
-
-	-- Defaults
-	for token_record in select regexp_matches[1] as match, regexp_matches[2] as match_default
-		from regexp_matches(p_expr, '(:[^ )(:=]+=([0-9.]+):)', 'g')
-		group by match, match_default
-	loop
-		p_expr := replace(p_expr, token_record.match, token_record.match_default);
-	end loop;
-
-	-- NULL if tokens remain
-	if array_length(regexp_match(p_expr, '(:([^ )(:]+):)'), 1) != 0 then
-		p_expr := NULL;
-	end if;
-
-	return p_expr;
-end;
-$$;
-
-
-ALTER FUNCTION public.fn_acorn_exam_exam_expr_tokenize(p_student_id uuid, p_expr character varying) OWNER TO university;
-
---
 -- Name: fn_acorn_exam_token_name(character varying[]); Type: FUNCTION; Schema: public; Owner: university
 --
 
@@ -801,7 +617,7 @@ declare
 begin
 	for record in select unnest as title from unnest(p_titles) loop
 		if not record.title is null and length(record.title) > 0 then
-			if length(token) > 0 then token := token || '.'; end if;
+			if length(token) > 0 then token := token || '/'; end if;
 			token := token || regexp_replace(lower(record.title), '[^a-z0-9:.]+', '-', 1, 0, 'g');
 		end if;
 	end loop;
@@ -812,6 +628,76 @@ $$;
 
 
 ALTER FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) OWNER TO university;
+
+--
+-- Name: fn_acorn_exam_tokenize(character varying, integer); Type: FUNCTION; Schema: public; Owner: sz
+--
+
+CREATE FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, level integer DEFAULT 0) RETURNS double precision
+    LANGUAGE plpgsql
+    AS $_$
+declare
+	token_record record;
+	expression_record record;
+	is_multiple bool;
+	result1 double precision;
+	results double precision[];
+	"result" double precision;
+begin
+	-- Recursively replace all the tokens in the expr with the final value
+	-- Only running the eval for the selected tokens, not the whole view
+	raise notice '%: Expression(%)', level, p_expr;
+	
+	for token_record in select 
+			array_agg(regexp_replace(id, '^[^:]*::', '')) as name, 
+			array_agg("expression") as expressions, 
+			regexp_matches[1] as match, 
+			regexp_matches[2] as match_name
+		from acorn_exam_tokens est, 
+		regexp_matches(p_expr, '(:([^ )(:=]+)=?([0-9.]*):)', 'g')
+		where regexp_like(regexp_replace(id, '^[^:]*::', ''), concat('^', regexp_matches[2], '$'))
+		group by match, match_name
+	loop
+		-- Now we have 1/multiple expressions for each :token.*:
+		-- some of which will lead to a recursive evaluation, some not
+		results := '{}';
+		raise notice '  matched(%, %)', token_record.name, token_record.match_name;
+		
+		for expression_record in select unnest as "expression" from unnest(token_record.expressions)
+		loop
+			raise notice '    Sub-Expression(%)', expression_record.expression;
+			result1 := fn_acorn_exam_tokenize(expression_record.expression, "level"+1);
+			raise notice '      => %', result1;
+			results := array_append(results, result1);
+		end loop;
+		
+		p_expr := replace(p_expr, token_record.match, array_to_string(results, ','));
+	end loop;
+
+	-- Defaults
+	for token_record in select regexp_matches[1] as match, regexp_matches[2] as match_default
+		from regexp_matches(p_expr, '(:[^ )(:=]+=([0-9.]+):)', 'g')
+		group by match, match_default
+	loop
+		p_expr := replace(p_expr, token_record.match, token_record.match_default);
+	end loop;
+
+	-- NULL if un-resolved tokens remain
+	if array_length(regexp_match(p_expr, '(:([^ )(:]+):)'), 1) != 0 then
+		p_expr := 'NULL';
+	end if;
+
+	-- No replacements, no tokens
+	-- Run the eval
+	raise notice '  No match, evaluating(%)', p_expr;
+	execute concat('select ', p_expr) into "result";
+
+	return "result";
+end;
+$_$;
+
+
+ALTER FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, level integer) OWNER TO sz;
 
 --
 -- Name: fn_acorn_first(anyelement, anyelement); Type: FUNCTION; Schema: public; Owner: university
@@ -1335,69 +1221,13 @@ COMMENT ON TABLE public.acorn_exam_calculations IS 'seeding:
 
 
 --
--- Name: acorn_university_students; Type: TABLE; Schema: public; Owner: university
---
-
-CREATE TABLE public.acorn_university_students (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
-    code character varying(1024) NOT NULL
-);
-
-
-ALTER TABLE public.acorn_university_students OWNER TO university;
-
---
--- Name: TABLE acorn_university_students; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON TABLE public.acorn_university_students IS 'order: 500
-menu-splitter: true';
-
-
---
--- Name: acorn_exam_calculation_results; Type: VIEW; Schema: public; Owner: university
---
-
-CREATE VIEW public.acorn_exam_calculation_results AS
- SELECT s.id AS student_id,
-    public.fn_acorn_exam_token_name(VARIADIC ARRAY['calculation'::character varying, s.code, c.name]) AS name,
-    public.fn_acorn_exam_calculation_eval(s.id, c.id) AS value,
-    'expression'::text AS type,
-    c.result_expression AS expression,
-    c.id AS calculation_id,
-    public.fn_acorn_exam_calculation_expr_tokenize(s.id, (replace((c.result_expression)::text, '<student>'::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[s.code]))::text))::character varying) AS resolved_expression
-   FROM public.acorn_exam_calculations c,
-    public.acorn_university_students s
-  WHERE (NOT (public.fn_acorn_exam_calculation_eval(s.id, c.id) IS NULL));
-
-
-ALTER VIEW public.acorn_exam_calculation_results OWNER TO university;
-
---
--- Name: COLUMN acorn_exam_calculation_results.student_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_calculation_results.student_id IS 'extra-foreign-key: 
-  table: acorn_university_students';
-
-
---
--- Name: COLUMN acorn_exam_calculation_results.calculation_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_calculation_results.calculation_id IS 'extra-foreign-key: 
-  table: acorn_exam_calculations';
-
-
---
 -- Name: acorn_exam_exam_materials; Type: TABLE; Schema: public; Owner: university
 --
 
 CREATE TABLE public.acorn_exam_exam_materials (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     exam_id uuid NOT NULL,
-    material_id uuid NOT NULL,
+    course_material_id uuid NOT NULL,
     required boolean DEFAULT false NOT NULL,
     minimum integer DEFAULT 0 NOT NULL,
     maximum integer DEFAULT 100 NOT NULL,
@@ -1417,7 +1247,25 @@ ALTER TABLE public.acorn_exam_exam_materials OWNER TO university;
 
 COMMENT ON TABLE public.acorn_exam_exam_materials IS 'menu: false
 methods:
-  name: return $this->exam->name . ''::'' . $this->material->name;';
+  name: return $this->exam->name . ''::'' . $this->course_material->name;
+labels:
+  en: Exam
+labels-plural:
+  en: Exams';
+
+
+--
+-- Name: COLUMN acorn_exam_exam_materials.minimum; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_exam_materials.minimum IS 'list-editable: true';
+
+
+--
+-- Name: COLUMN acorn_exam_exam_materials.maximum; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_exam_materials.maximum IS 'list-editable: true';
 
 
 --
@@ -1448,6 +1296,62 @@ COMMENT ON TABLE public.acorn_exam_exams IS 'order: 10';
 
 
 --
+-- Name: acorn_exam_interview_students; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_exam_interview_students (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    interview_id uuid NOT NULL,
+    student_id uuid NOT NULL,
+    teacher_id uuid,
+    event_id uuid NOT NULL,
+    created_at_event_id uuid NOT NULL,
+    updated_at_event_id uuid,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL,
+    score double precision
+);
+
+
+ALTER TABLE public.acorn_exam_interview_students OWNER TO university;
+
+--
+-- Name: TABLE acorn_exam_interview_students; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_exam_interview_students IS 'menu: false
+methods:
+  name: return $this->interview->name;';
+
+
+--
+-- Name: acorn_exam_interviews; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_exam_interviews (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying DEFAULT 'interview'::character varying NOT NULL,
+    description text,
+    created_at_event_id uuid NOT NULL,
+    updated_at_event_id uuid,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.acorn_exam_interviews OWNER TO university;
+
+--
+-- Name: TABLE acorn_exam_interviews; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_exam_interviews IS 'seeding:
+  - [DEFAULT, ''Mofadala'']';
+
+
+--
 -- Name: acorn_exam_scores; Type: TABLE; Schema: public; Owner: university
 --
 
@@ -1473,6 +1377,13 @@ ALTER TABLE public.acorn_exam_scores OWNER TO university;
 COMMENT ON TABLE public.acorn_exam_scores IS 'order: 35
 methods:
   name: return $this->exam_material->name();';
+
+
+--
+-- Name: COLUMN acorn_exam_scores.score; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_scores.score IS 'list-editable: true';
 
 
 --
@@ -1510,48 +1421,65 @@ labels-plural:
 
 
 --
--- Name: acorn_exam_exam_results; Type: VIEW; Schema: public; Owner: university
+-- Name: acorn_university_courses; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE VIEW public.acorn_exam_exam_results AS
- SELECT sc.student_id,
-    public.fn_acorn_exam_token_name(VARIADIC ARRAY['exam'::character varying, s.code, e.name, 'result'::character varying]) AS name,
-    public.fn_acorn_exam_exam_eval(sc.student_id, em.exam_id) AS value,
-    'expression'::text AS type,
-    et.result_expression AS expression,
-    em.exam_id,
-    public.fn_acorn_exam_exam_expr_tokenize(sc.student_id, (replace(replace((et.result_expression)::text, '<exam>'::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[e.name]))::text), '<student>'::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[s.code]))::text))::character varying) AS resolved_expression
-   FROM ((((public.acorn_exam_scores sc
-     JOIN public.acorn_university_students s ON ((sc.student_id = s.id)))
-     JOIN public.acorn_exam_exam_materials em ON ((sc.exam_material_id = em.id)))
-     JOIN public.acorn_exam_exams e ON ((em.exam_id = e.id)))
-     JOIN public.acorn_exam_types et ON ((e.type_id = et.id)))
-  GROUP BY e.name, em.exam_id, sc.student_id, s.code, et.result_expression, (public.fn_acorn_exam_exam_expr_tokenize(sc.student_id, (replace(replace((et.result_expression)::text, '<exam>'::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[e.name]))::text), '<student>'::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[s.code]))::text))::character varying));
+CREATE TABLE public.acorn_university_courses (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    entity_id uuid NOT NULL
+);
 
 
-ALTER VIEW public.acorn_exam_exam_results OWNER TO university;
+ALTER TABLE public.acorn_university_courses OWNER TO university;
 
 --
--- Name: COLUMN acorn_exam_exam_results.student_id; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_university_courses; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_exam_exam_results.student_id IS 'extra-foreign-key: 
-  table: acorn_university_students';
+COMMENT ON TABLE public.acorn_university_courses IS 'order: 60
+seeding:
+  - [''66d3ca90-1b6c-11f0-90cc-a77dd8e640be'', ''204c8a80-1b5d-11f0-9a78-07337e2f1cca'']';
 
 
 --
--- Name: COLUMN acorn_exam_exam_results.exam_id; Type: COMMENT; Schema: public; Owner: university
+-- Name: acorn_university_entities; Type: TABLE; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_exam_exam_results.exam_id IS 'extra-foreign-key: 
-  table: acorn_exam_exams';
+CREATE TABLE public.acorn_university_entities (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_group_id uuid NOT NULL,
+    created_at_event_id uuid NOT NULL,
+    updated_at_event_id uuid,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.acorn_university_entities OWNER TO university;
+
+--
+-- Name: TABLE acorn_university_entities; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_university_entities IS 'menu: false
+order: -100
+seeding-other:
+  acorn_user_user_groups:
+    - [''cae7ba7c-1b63-11f0-8a05-c36be60d3d46'', ''Rojava'']
+    - [''f2c7a61a-1b63-11f0-9899-2b70d1861dd4'', ''Kobani'']
+    - [''f334763c-1b63-11f0-aab4-4f7e5f7e30cb'', ''Jineologi'']
+seeding:
+  - [''e985ddc6-1b5c-11f0-9787-2b6b92ddc057'', ''cae7ba7c-1b63-11f0-8a05-c36be60d3d46'']
+  - [''f4c3a7cc-1b5c-11f0-8158-d7027851c1cd'', ''f2c7a61a-1b63-11f0-9899-2b70d1861dd4'']
+  - [''204c8a80-1b5d-11f0-9a78-07337e2f1cca'', ''f334763c-1b63-11f0-aab4-4f7e5f7e30cb'']';
 
 
 --
--- Name: acorn_exam_material_types; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_university_material_types; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acorn_exam_material_types (
+CREATE TABLE public.acorn_university_material_types (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) DEFAULT 'test'::character varying NOT NULL,
     description text,
@@ -1563,24 +1491,22 @@ CREATE TABLE public.acorn_exam_material_types (
 );
 
 
-ALTER TABLE public.acorn_exam_material_types OWNER TO university;
+ALTER TABLE public.acorn_university_material_types OWNER TO university;
 
 --
--- Name: TABLE acorn_exam_material_types; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_university_material_types; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_exam_material_types IS 'order: 45
+COMMENT ON TABLE public.acorn_university_material_types IS 'order: 25
 seeding:
-  - [''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''Material'']
-  - [DEFAULT, ''Interview'']
-  - [DEFAULT, ''Project'']';
+  - [''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''Material'']';
 
 
 --
--- Name: acorn_exam_materials; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_university_materials; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acorn_exam_materials (
+CREATE TABLE public.acorn_university_materials (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
     description text,
@@ -1593,17 +1519,101 @@ CREATE TABLE public.acorn_exam_materials (
 );
 
 
-ALTER TABLE public.acorn_exam_materials OWNER TO university;
+ALTER TABLE public.acorn_university_materials OWNER TO university;
 
 --
--- Name: TABLE acorn_exam_materials; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_university_materials; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_exam_materials IS 'order: 30
+COMMENT ON TABLE public.acorn_university_materials IS 'order: 30
 seeding:
   - [DEFAULT, ''Math'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
-  - [DEFAULT, ''English'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']';
+  - [DEFAULT, ''Biology'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
+  - [DEFAULT, ''Physics'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
+  - [DEFAULT, ''Geography'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
+  - [DEFAULT, ''Chemistry'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
+  - [DEFAULT, ''Kurdish'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
+  - [DEFAULT, ''English'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
+  - [DEFAULT, ''Arabic'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']';
 
+
+--
+-- Name: acorn_university_projects; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_university_projects (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(2048) NOT NULL,
+    description text,
+    owner_student_id uuid,
+    user_group_id uuid NOT NULL,
+    created_at_event_id uuid NOT NULL,
+    updated_at_event_id uuid,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL,
+    score double precision
+);
+
+
+ALTER TABLE public.acorn_university_projects OWNER TO university;
+
+--
+-- Name: acorn_university_students; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_university_students (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    code character varying(1024) NOT NULL
+);
+
+
+ALTER TABLE public.acorn_university_students OWNER TO university;
+
+--
+-- Name: TABLE acorn_university_students; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_university_students IS 'order: 500
+menu-splitter: true';
+
+
+--
+-- Name: acorn_user_user_group; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_user_user_group (
+    user_id uuid NOT NULL,
+    user_group_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.acorn_user_user_group OWNER TO university;
+
+--
+-- Name: acorn_user_user_groups; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_user_user_groups (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(255) NOT NULL,
+    code character varying(255),
+    description text,
+    created_at timestamp(0) without time zone,
+    updated_at timestamp(0) without time zone,
+    parent_user_group_id uuid,
+    nest_left integer,
+    nest_right integer,
+    nest_depth integer,
+    image character varying(1024),
+    colour character varying(1024),
+    type_id uuid,
+    location_id uuid
+);
+
+
+ALTER TABLE public.acorn_user_user_groups OWNER TO university;
 
 --
 -- Name: acorn_user_users; Type: TABLE; Schema: public; Owner: university
@@ -1661,129 +1671,277 @@ CREATE TABLE public.acorn_user_users (
 ALTER TABLE public.acorn_user_users OWNER TO university;
 
 --
--- Name: acorn_exam_exam_tokens; Type: VIEW; Schema: public; Owner: university
+-- Name: acorn_exam_tokens; Type: VIEW; Schema: public; Owner: university
 --
 
-CREATE VIEW public.acorn_exam_exam_tokens AS
- SELECT sc.student_id,
-    public.fn_acorn_exam_token_name(VARIADIC ARRAY['material'::character varying, mt.name, s.code, e.name, m.name, (
+CREATE VIEW public.acorn_exam_tokens AS
+ SELECT (concat(sc.student_id, '::', public.fn_acorn_exam_token_name(VARIADIC ARRAY[mt.name, s.code, e.name, m.name, (
+        CASE
+            WHEN em.required THEN 'required'::text
+            ELSE NULL::text
+        END)::character varying])))::character varying AS id,
+    public.fn_acorn_exam_token_name(VARIADIC ARRAY[mt.name, s.code, e.name, m.name, (
         CASE
             WHEN em.required THEN 'required'::text
             ELSE NULL::text
         END)::character varying]) AS name,
-    sc.score AS value,
-    'data'::text AS type,
-    (sc.score)::text AS expression,
+    sc.student_id,
     em.exam_id,
-    (sc.score)::text AS resolved_expression
+    NULL::uuid AS calculation_id,
+    NULL::uuid AS entity_id,
+    NULL::uuid AS project_id,
+    NULL::uuid AS interview_id,
+    (sc.score)::character varying AS expression,
+    'data'::text AS expression_type,
+    false AS needs_evaluate
    FROM (((((public.acorn_exam_scores sc
      JOIN public.acorn_university_students s ON ((sc.student_id = s.id)))
      JOIN public.acorn_exam_exam_materials em ON ((sc.exam_material_id = em.id)))
      JOIN public.acorn_exam_exams e ON ((em.exam_id = e.id)))
-     JOIN public.acorn_exam_materials m ON ((em.material_id = m.id)))
-     JOIN public.acorn_exam_material_types mt ON ((m.material_type_id = mt.id)))
+     JOIN public.acorn_university_materials m ON ((em.course_material_id = m.id)))
+     JOIN public.acorn_university_material_types mt ON ((m.material_type_id = mt.id)))
 UNION ALL
- SELECT s.id AS student_id,
+ SELECT (concat('::', public.fn_acorn_exam_token_name(VARIADIC ARRAY['course'::character varying, ug.name, 'count'::character varying])))::character varying AS id,
+    public.fn_acorn_exam_token_name(VARIADIC ARRAY['course'::character varying, ug.name, 'count'::character varying]) AS name,
+    NULL::uuid AS student_id,
+    NULL::uuid AS exam_id,
+    NULL::uuid AS calculation_id,
+    NULL::uuid AS entity_id,
+    NULL::uuid AS project_id,
+    e.id AS interview_id,
+    (count(uug.user_id))::character varying AS expression,
+    'formulae'::text AS expression_type,
+    false AS needs_evaluate
+   FROM (((public.acorn_university_courses c
+     JOIN public.acorn_university_entities e ON ((c.entity_id = e.id)))
+     JOIN public.acorn_user_user_groups ug ON ((e.user_group_id = ug.id)))
+     LEFT JOIN public.acorn_user_user_group uug ON ((ug.id = uug.user_group_id)))
+  GROUP BY c.id, e.id, ug.name
+UNION ALL
+ SELECT (concat(s.id, '::', public.fn_acorn_exam_token_name(VARIADIC ARRAY['student'::character varying, s.code, 'age'::character varying])))::character varying AS id,
     public.fn_acorn_exam_token_name(VARIADIC ARRAY['student'::character varying, s.code, 'age'::character varying]) AS name,
-    EXTRACT(year FROM age(u.birth_date)) AS value,
-    'formulae'::text AS type,
-    'extract(year from age(u.birth_date))'::text AS expression,
-    s.id AS exam_id,
-    (('extract(year from age('::text || u.birth_date) || '))'::text) AS resolved_expression
+    s.id AS student_id,
+    NULL::uuid AS exam_id,
+    NULL::uuid AS calculation_id,
+    NULL::uuid AS entity_id,
+    NULL::uuid AS project_id,
+    NULL::uuid AS interview_id,
+    (EXTRACT(year FROM age(u.birth_date)))::character varying AS expression,
+    'formulae'::text AS expression_type,
+    false AS needs_evaluate
    FROM (public.acorn_university_students s
-     JOIN public.acorn_user_users u ON ((s.user_id = u.id)));
-
-
-ALTER VIEW public.acorn_exam_exam_tokens OWNER TO university;
-
---
--- Name: COLUMN acorn_exam_exam_tokens.student_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_exam_tokens.student_id IS 'extra-foreign-key: 
-  table: acorn_university_students';
-
-
---
--- Name: COLUMN acorn_exam_exam_tokens.exam_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_exam_tokens.exam_id IS 'extra-foreign-key: 
-  table: acorn_exam_exams';
-
-
---
--- Name: acorn_exam_calculation_tokens; Type: VIEW; Schema: public; Owner: university
---
-
-CREATE VIEW public.acorn_exam_calculation_tokens AS
- SELECT acorn_exam_exam_results.student_id,
-    acorn_exam_exam_results.name,
-    acorn_exam_exam_results.value,
-    acorn_exam_exam_results.type,
-    acorn_exam_exam_results.expression,
-    acorn_exam_exam_results.exam_id,
-    acorn_exam_exam_results.resolved_expression
-   FROM public.acorn_exam_exam_results
+     JOIN public.acorn_user_users u ON ((s.user_id = u.id)))
 UNION ALL
- SELECT acorn_exam_exam_tokens.student_id,
-    acorn_exam_exam_tokens.name,
-    acorn_exam_exam_tokens.value,
-    acorn_exam_exam_tokens.type,
-    acorn_exam_exam_tokens.expression,
-    acorn_exam_exam_tokens.exam_id,
-    acorn_exam_exam_tokens.resolved_expression
-   FROM public.acorn_exam_exam_tokens;
-
-
-ALTER VIEW public.acorn_exam_calculation_tokens OWNER TO university;
-
---
--- Name: COLUMN acorn_exam_calculation_tokens.student_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_calculation_tokens.student_id IS 'extra-foreign-key: 
-  table: acorn_university_students';
-
-
---
--- Name: COLUMN acorn_exam_calculation_tokens.exam_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_calculation_tokens.exam_id IS 'extra-foreign-key: 
-  table: acorn_exam_exams';
-
-
---
--- Name: acorn_exam_all_tokens; Type: VIEW; Schema: public; Owner: university
---
-
-CREATE VIEW public.acorn_exam_all_tokens AS
- SELECT acorn_exam_calculation_tokens.student_id,
-    acorn_exam_calculation_tokens.name,
-    acorn_exam_calculation_tokens.value,
-    acorn_exam_calculation_tokens.type,
-    acorn_exam_calculation_tokens.expression,
-    acorn_exam_calculation_tokens.resolved_expression
-   FROM public.acorn_exam_calculation_tokens
+ SELECT concat(sc.student_id, '::', public.fn_acorn_exam_token_name(VARIADIC ARRAY['exam'::character varying, s.code, e.name, 'result'::character varying])) AS id,
+    public.fn_acorn_exam_token_name(VARIADIC ARRAY['exam'::character varying, s.code, e.name, 'result'::character varying]) AS name,
+    sc.student_id,
+    em.exam_id,
+    NULL::uuid AS calculation_id,
+    NULL::uuid AS entity_id,
+    NULL::uuid AS project_id,
+    NULL::uuid AS interview_id,
+    replace(replace((et.result_expression)::text, ('<exam>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[e.name]))::text), ('<student>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[s.code]))::text) AS expression,
+    'expression'::text AS expression_type,
+    true AS needs_evaluate
+   FROM ((((public.acorn_exam_scores sc
+     JOIN public.acorn_university_students s ON ((sc.student_id = s.id)))
+     JOIN public.acorn_exam_exam_materials em ON ((sc.exam_material_id = em.id)))
+     JOIN public.acorn_exam_exams e ON ((em.exam_id = e.id)))
+     JOIN public.acorn_exam_types et ON ((e.type_id = et.id)))
 UNION ALL
- SELECT acorn_exam_calculation_results.student_id,
-    acorn_exam_calculation_results.name,
-    acorn_exam_calculation_results.value,
-    acorn_exam_calculation_results.type,
-    acorn_exam_calculation_results.expression,
-    acorn_exam_calculation_results.resolved_expression
-   FROM public.acorn_exam_calculation_results;
+ SELECT concat(s.id, '::', public.fn_acorn_exam_token_name(VARIADIC ARRAY['calculation'::character varying, s.code, c.name])) AS id,
+    public.fn_acorn_exam_token_name(VARIADIC ARRAY['calculation'::character varying, s.code, c.name]) AS name,
+    s.id AS student_id,
+    NULL::uuid AS exam_id,
+    c.id AS calculation_id,
+    NULL::uuid AS entity_id,
+    NULL::uuid AS project_id,
+    NULL::uuid AS interview_id,
+    replace((c.result_expression)::text, ('<student>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[s.code]))::text) AS expression,
+    'expression'::text AS expression_type,
+    true AS needs_evaluate
+   FROM public.acorn_exam_calculations c,
+    public.acorn_university_students s
+UNION ALL
+ SELECT concat(s.id, '::', public.fn_acorn_exam_token_name(VARIADIC ARRAY['project'::character varying, s.code, p.name])) AS id,
+    public.fn_acorn_exam_token_name(VARIADIC ARRAY['project'::character varying, s.code, p.name]) AS name,
+    s.id AS student_id,
+    NULL::uuid AS exam_id,
+    NULL::uuid AS calculation_id,
+    NULL::uuid AS entity_id,
+    p.id AS project_id,
+    NULL::uuid AS interview_id,
+    (p.score)::character varying AS expression,
+    'data'::text AS expression_type,
+    false AS needs_evaluate
+   FROM (public.acorn_university_projects p
+     JOIN public.acorn_university_students s ON ((p.owner_student_id = s.id)))
+UNION ALL
+ SELECT concat(s.id, '::', public.fn_acorn_exam_token_name(VARIADIC ARRAY['interview'::character varying, s.code, i.name])) AS id,
+    public.fn_acorn_exam_token_name(VARIADIC ARRAY['interview'::character varying, s.code, i.name]) AS name,
+    s.id AS student_id,
+    NULL::uuid AS exam_id,
+    NULL::uuid AS calculation_id,
+    NULL::uuid AS entity_id,
+    NULL::uuid AS project_id,
+    i.id AS interview_id,
+    (iss.score)::character varying AS expression,
+    'data'::text AS expression_type,
+    false AS needs_evaluate
+   FROM ((public.acorn_exam_interview_students iss
+     JOIN public.acorn_university_students s ON ((iss.student_id = s.id)))
+     JOIN public.acorn_exam_interviews i ON ((iss.interview_id = i.id)));
 
 
-ALTER VIEW public.acorn_exam_all_tokens OWNER TO university;
+ALTER VIEW public.acorn_exam_tokens OWNER TO university;
 
 --
--- Name: COLUMN acorn_exam_all_tokens.student_id; Type: COMMENT; Schema: public; Owner: university
+-- Name: VIEW acorn_exam_tokens; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_exam_all_tokens.student_id IS 'extra-foreign-key: 
-  table: acorn_university_students';
+COMMENT ON VIEW public.acorn_exam_tokens IS 'menu: false';
+
+
+--
+-- Name: COLUMN acorn_exam_tokens.student_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_tokens.student_id IS 'extra-foreign-key: 
+  table: acorn_university_students
+  comment:
+    tab-location: 3';
+
+
+--
+-- Name: COLUMN acorn_exam_tokens.exam_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_tokens.exam_id IS 'extra-foreign-key: 
+  table: acorn_exam_exams
+  comment:
+    tab-location: 3';
+
+
+--
+-- Name: COLUMN acorn_exam_tokens.calculation_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_tokens.calculation_id IS 'extra-foreign-key: 
+  table: acorn_exam_calculations
+  comment:
+    tab-location: 3';
+
+
+--
+-- Name: COLUMN acorn_exam_tokens.entity_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_tokens.entity_id IS 'extra-foreign-key: 
+  table: acorn_university_entities
+  comment:
+    tab-location: 3';
+
+
+--
+-- Name: COLUMN acorn_exam_tokens.project_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_tokens.project_id IS 'extra-foreign-key: 
+  table: acorn_university_projects
+  comment:
+    tab-location: 3';
+
+
+--
+-- Name: COLUMN acorn_exam_tokens.interview_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_tokens.interview_id IS 'extra-foreign-key: 
+  table: acorn_exam_interviews
+  comment:
+    tab-location: 3';
+
+
+--
+-- Name: acorn_exam_results; Type: VIEW; Schema: public; Owner: sz
+--
+
+CREATE VIEW public.acorn_exam_results AS
+ SELECT id,
+    name,
+    student_id,
+    exam_id,
+    calculation_id,
+    entity_id,
+    project_id,
+    interview_id,
+    expression,
+    expression_type,
+    needs_evaluate,
+    public.fn_acorn_exam_tokenize(expression) AS result
+   FROM public.acorn_exam_tokens;
+
+
+ALTER VIEW public.acorn_exam_results OWNER TO sz;
+
+--
+-- Name: COLUMN acorn_exam_results.student_id; Type: COMMENT; Schema: public; Owner: sz
+--
+
+COMMENT ON COLUMN public.acorn_exam_results.student_id IS 'extra-foreign-key: 
+  table: acorn_university_students
+  comment:
+    tab-location: 3';
+
+
+--
+-- Name: COLUMN acorn_exam_results.exam_id; Type: COMMENT; Schema: public; Owner: sz
+--
+
+COMMENT ON COLUMN public.acorn_exam_results.exam_id IS 'extra-foreign-key: 
+  table: acorn_exam_exams
+  comment:
+    tab-location: 3';
+
+
+--
+-- Name: COLUMN acorn_exam_results.calculation_id; Type: COMMENT; Schema: public; Owner: sz
+--
+
+COMMENT ON COLUMN public.acorn_exam_results.calculation_id IS 'extra-foreign-key: 
+  table: acorn_exam_calculations
+  comment:
+    tab-location: 3';
+
+
+--
+-- Name: COLUMN acorn_exam_results.entity_id; Type: COMMENT; Schema: public; Owner: sz
+--
+
+COMMENT ON COLUMN public.acorn_exam_results.entity_id IS 'extra-foreign-key: 
+  table: acorn_university_entities
+  comment:
+    tab-location: 3';
+
+
+--
+-- Name: COLUMN acorn_exam_results.project_id; Type: COMMENT; Schema: public; Owner: sz
+--
+
+COMMENT ON COLUMN public.acorn_exam_results.project_id IS 'extra-foreign-key: 
+  table: acorn_university_projects
+  comment:
+    tab-location: 3';
+
+
+--
+-- Name: COLUMN acorn_exam_results.interview_id; Type: COMMENT; Schema: public; Owner: sz
+--
+
+COMMENT ON COLUMN public.acorn_exam_results.interview_id IS 'extra-foreign-key: 
+  table: acorn_exam_interviews
+  comment:
+    tab-location: 3';
 
 
 --
@@ -2138,22 +2296,32 @@ CREATE TABLE public.acorn_servers (
 ALTER TABLE public.acorn_servers OWNER TO university;
 
 --
--- Name: acorn_university_courses; Type: TABLE; Schema: public; Owner: university
+-- Name: acorn_university_course_materials; Type: TABLE; Schema: public; Owner: university
 --
 
-CREATE TABLE public.acorn_university_courses (
+CREATE TABLE public.acorn_university_course_materials (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    entity_id uuid NOT NULL
+    course_id uuid NOT NULL,
+    material_id uuid NOT NULL,
+    required boolean DEFAULT false NOT NULL,
+    minimum integer DEFAULT 0 NOT NULL,
+    maximum integer DEFAULT 100 NOT NULL,
+    created_at_event_id uuid NOT NULL,
+    updated_at_event_id uuid,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL
 );
 
 
-ALTER TABLE public.acorn_university_courses OWNER TO university;
+ALTER TABLE public.acorn_university_course_materials OWNER TO university;
 
 --
--- Name: TABLE acorn_university_courses; Type: COMMENT; Schema: public; Owner: university
+-- Name: TABLE acorn_university_course_materials; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_university_courses IS 'order: 60';
+COMMENT ON TABLE public.acorn_university_course_materials IS 'methods:
+  name: return $this->course->entity_user_group->name . ''::'' . $this->material->name;';
 
 
 --
@@ -2192,32 +2360,6 @@ ALTER TABLE public.acorn_university_education_authorities OWNER TO university;
 --
 
 COMMENT ON TABLE public.acorn_university_education_authorities IS 'order: 10';
-
-
---
--- Name: acorn_university_entities; Type: TABLE; Schema: public; Owner: university
---
-
-CREATE TABLE public.acorn_university_entities (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    name character varying(2048) NOT NULL,
-    description text,
-    women_only boolean DEFAULT false NOT NULL,
-    created_at_event_id uuid NOT NULL,
-    updated_at_event_id uuid,
-    created_by_user_id uuid NOT NULL,
-    updated_by_user_id uuid,
-    server_id uuid NOT NULL
-);
-
-
-ALTER TABLE public.acorn_university_entities OWNER TO university;
-
---
--- Name: TABLE acorn_university_entities; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON TABLE public.acorn_university_entities IS 'menu: false';
 
 
 --
@@ -2268,7 +2410,7 @@ ALTER TABLE public.acorn_university_hierarchies OWNER TO university;
 COMMENT ON TABLE public.acorn_university_hierarchies IS 'order: 1000
 menu-splitter: true
 methods:
-  name: "return (is_string($this->entity) ? $this->entity . '' ('' . $this->year . '')'' : $this->entity->name . '' ('' . $this->year->name . '')'');"';
+  name: "return (is_string($this->entity->user_group) ? $this->entity->user_group . '' ('' . $this->year . '')'' : $this->entity->user_group->name . '' ('' . $this->year->name . '')'');"';
 
 
 --
@@ -2326,7 +2468,10 @@ ALTER TABLE public.acorn_university_universities OWNER TO university;
 --
 
 COMMENT ON TABLE public.acorn_university_universities IS 'plugin-icon: book
-order: 20';
+order: 20
+seeding:
+  - [''204c8a80-1b5d-11f0-9a78-07337e2f1cca'', ''e985ddc6-1b5c-11f0-9787-2b6b92ddc057'']
+  - [''11ad9e2e-1b6c-11f0-9008-4f702d5c7ef2'', ''f4c3a7cc-1b5c-11f0-8158-d7027851c1cd'']';
 
 
 --
@@ -2357,8 +2502,8 @@ ALTER TABLE public.acorn_university_years OWNER TO university;
 COMMENT ON TABLE public.acorn_university_years IS 'global-scope: true
 order: 1010
 seeding:
-  - [DEFAULT, 2024, 01/01/2024, 30/12/2024, false]
-  - [DEFAULT, 2025, 01/01/2025, 30/12/2025, true]';
+  - [''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', 2024, 01/01/2024, 30/12/2024, false]
+  - [''543d0928-1b6c-11f0-abc1-8bd8fff1240d'', 2025, 01/01/2025, 30/12/2025, true]';
 
 
 --
@@ -2436,18 +2581,6 @@ CREATE TABLE public.acorn_user_throttle (
 ALTER TABLE public.acorn_user_throttle OWNER TO university;
 
 --
--- Name: acorn_user_user_group; Type: TABLE; Schema: public; Owner: university
---
-
-CREATE TABLE public.acorn_user_user_group (
-    user_id uuid NOT NULL,
-    user_group_id uuid NOT NULL
-);
-
-
-ALTER TABLE public.acorn_user_user_group OWNER TO university;
-
---
 -- Name: acorn_user_user_group_types; Type: TABLE; Schema: public; Owner: university
 --
 
@@ -2475,30 +2608,6 @@ CREATE VIEW public.acorn_user_user_group_version_usages AS
 
 
 ALTER VIEW public.acorn_user_user_group_version_usages OWNER TO university;
-
---
--- Name: acorn_user_user_groups; Type: TABLE; Schema: public; Owner: university
---
-
-CREATE TABLE public.acorn_user_user_groups (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    name character varying(255) NOT NULL,
-    code character varying(255),
-    description text,
-    created_at timestamp(0) without time zone,
-    updated_at timestamp(0) without time zone,
-    parent_user_group_id uuid,
-    nest_left integer,
-    nest_right integer,
-    nest_depth integer,
-    image character varying(1024),
-    colour character varying(1024),
-    type_id uuid,
-    location_id uuid
-);
-
-
-ALTER TABLE public.acorn_user_user_groups OWNER TO university;
 
 --
 -- Name: backend_access_log; Type: TABLE; Schema: public; Owner: university
@@ -4037,6 +4146,8 @@ f3861664-97bb-469d-a47f-bd5082c8dcda	Exam Exam Materials	\N	f	#333	\N	f	140984	f
 171d152d-cde2-4c11-92fe-9d371d1929ea	Exam Scores	\N	f	#333	\N	f	140998	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
 9d9e45b6-2aed-4071-ba12-359359a36486	Exam Calculations	\N	f	#333	\N	f	140962	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
 9f4415a1-7bf9-4af5-a154-1b999a029baf	Exam Scores	\N	f	#333	\N	f	143542	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
+8c604e8e-b860-4bfd-898a-461703b57ff4	Exam Interviews	\N	f	#333	\N	f	148386	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
+d4b30352-82e8-4c50-b0ef-dcb2dc2b9c9b	University Course Materials	\N	f	#333	\N	f	148335	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
 \.
 
 
@@ -4068,7 +4179,7 @@ COPY public.acorn_exam_calculations (id, name, description, result_expression, c
 -- Data for Name: acorn_exam_exam_materials; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acorn_exam_exam_materials (id, exam_id, material_id, required, minimum, maximum, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_exam_exam_materials (id, exam_id, course_material_id, required, minimum, maximum, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
 \.
 
 
@@ -4081,18 +4192,18 @@ COPY public.acorn_exam_exams (id, name, description, type_id, course_id, created
 
 
 --
--- Data for Name: acorn_exam_material_types; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_exam_interview_students; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acorn_exam_material_types (id, name, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_exam_interview_students (id, interview_id, student_id, teacher_id, event_id, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id, score) FROM stdin;
 \.
 
 
 --
--- Data for Name: acorn_exam_materials; Type: TABLE DATA; Schema: public; Owner: university
+-- Data for Name: acorn_exam_interviews; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acorn_exam_materials (id, name, description, material_type_id, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_exam_interviews (id, name, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
 \.
 
 
@@ -4281,6 +4392,14 @@ cf9c9fa5-349c-4b42-a4af-ffac2a7c98bc	laptop	\N	\N	2025-04-03 08:42:57	\N
 
 
 --
+-- Data for Name: acorn_university_course_materials; Type: TABLE DATA; Schema: public; Owner: university
+--
+
+COPY public.acorn_university_course_materials (id, course_id, material_id, required, minimum, maximum, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+\.
+
+
+--
 -- Data for Name: acorn_university_courses; Type: TABLE DATA; Schema: public; Owner: university
 --
 
@@ -4308,7 +4427,7 @@ COPY public.acorn_university_education_authorities (id, entity_id) FROM stdin;
 -- Data for Name: acorn_university_entities; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acorn_university_entities (id, name, description, women_only, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_university_entities (id, user_group_id, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
 \.
 
 
@@ -4325,6 +4444,30 @@ COPY public.acorn_university_faculties (id, entity_id) FROM stdin;
 --
 
 COPY public.acorn_university_hierarchies (id, entity_id, year_id, parent_id, server_id, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, nest_left, nest_right, nest_depth) FROM stdin;
+\.
+
+
+--
+-- Data for Name: acorn_university_material_types; Type: TABLE DATA; Schema: public; Owner: university
+--
+
+COPY public.acorn_university_material_types (id, name, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: acorn_university_materials; Type: TABLE DATA; Schema: public; Owner: university
+--
+
+COPY public.acorn_university_materials (id, name, description, material_type_id, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: acorn_university_projects; Type: TABLE DATA; Schema: public; Owner: university
+--
+
+COPY public.acorn_university_projects (id, name, description, owner_student_id, user_group_id, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id, score) FROM stdin;
 \.
 
 
@@ -4383,6 +4526,8 @@ COPY public.acorn_user_language_user (user_id, language_id) FROM stdin;
 --
 
 COPY public.acorn_user_languages (id, name) FROM stdin;
+9eaa5c43-db07-4597-ac8c-156253e84376	Kurdish
+9eaa5c4d-9080-4799-afa7-3741349b5beb	English
 \.
 
 
@@ -4417,6 +4562,7 @@ COPY public.acorn_user_throttle (id, user_id, ip_address, attempts, last_attempt
 --
 
 COPY public.acorn_user_user_group (user_id, user_group_id) FROM stdin;
+9ea61ac5-d211-4e52-86f5-10c6d4dbe688	cae7ba7c-1b63-11f0-8a05-c36be60d3d46
 \.
 
 
@@ -4436,6 +4582,9 @@ COPY public.acorn_user_user_groups (id, name, code, description, created_at, upd
 9e95e450-97ee-40a8-a55e-4eb76beaf9ae	Guest	guest	Default group for guest users.	2025-04-03 07:42:58	2025-04-03 07:42:58	\N	1	2	0	\N	\N	\N	\N
 9e95e450-a158-42c4-a1ea-fddb46b67e7e	Registered	registered	Default group for registered users.	2025-04-03 07:42:58	2025-04-07 07:26:58	\N	3	6	0	\N	\N	\N	\N
 9e95fdfa-b625-41d9-8f01-15d71f6b7552	weeee	weeee		2025-04-03 08:54:43	2025-04-07 07:26:58	9e95e450-a158-42c4-a1ea-fddb46b67e7e	4	5	1		\N	\N	9e95fe34-4596-4431-865c-a5a8d2a638c4
+cae7ba7c-1b63-11f0-8a05-c36be60d3d46	Rojava	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+f2c7a61a-1b63-11f0-9899-2b70d1861dd4	Kobani	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+f334763c-1b63-11f0-aab4-4f7e5f7e30cb	Jineologi	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 \.
 
 
@@ -4465,6 +4614,9 @@ COPY public.backend_access_log (id, user_id, ip_address, created_at, updated_at)
 2	1	127.0.0.1	2025-04-08 11:22:57	2025-04-08 11:22:57
 3	1	127.0.0.1	2025-04-08 13:35:30	2025-04-08 13:35:30
 4	1	127.0.0.1	2025-04-08 13:36:45	2025-04-08 13:36:45
+5	1	127.0.0.1	2025-04-17 09:10:43	2025-04-17 09:10:43
+6	1	127.0.0.1	2025-04-22 07:33:37	2025-04-22 07:33:37
+7	1	127.0.0.1	2025-04-23 13:32:41	2025-04-23 13:32:41
 \.
 
 
@@ -4485,6 +4637,10 @@ COPY public.backend_user_preferences (id, user_id, namespace, "group", item, val
 2	5	backend	backend	preferences	{"locale":"ku","fallback_locale":"en","timezone":"Europe\\/Istanbul","icon_location":"inline","menu_location":"top"}
 3	6	backend	backend	preferences	{"locale":"ku","fallback_locale":"en","timezone":"Europe\\/Istanbul","icon_location":"inline","menu_location":"top"}
 1	1	backend	backend	preferences	{"locale":"en","fallback_locale":"en","timezone":"Europe\\/Istanbul","icon_location":"inline","menu_location":"top","dark_mode":"light","editor_theme":"twilight","editor_word_wrap":"off","editor_font_size":"11","editor_tab_size":"2","editor_code_folding":"manual","editor_autocompletion":"manual","editor_show_gutter":"0","editor_highlight_active_line":"0","editor_use_hard_tabs":"0","editor_display_indent_guides":"0","editor_show_invisibles":"0","editor_show_print_margin":"0","editor_auto_closing":"0","editor_enable_snippets":"0","user_id":1}
+4	1	acorn_university	students	lists-relationexamresultsstudentviewlist	{"visible":["student","exam","calculation","entity","expression","expression_type","needs_evaluate","result","_actions"],"order":["id","student","exam","calculation","entity","expression","expression_type","needs_evaluate","result","_qrcode","_actions"],"per_page":"10"}
+5	1	acorn_exam	exams	lists-relationexamresultsexamviewlist	{"visible":["id","student","calculation","entity","expression","expression_type","needs_evaluate","result","_actions"],"order":["id","student","exam","calculation","entity","expression","expression_type","needs_evaluate","result","_qrcode","_actions"],"per_page":"10"}
+6	1	acorn_exam	tokens	lists	{"visible":["name","student","exam","calculation","entity","expression","expression_type","needs_evaluate","_actions"],"order":["id","name","student","exam","calculation","entity","expression","expression_type","needs_evaluate","_qrcode","_actions"],"per_page":"20"}
+7	1	acorn_university	universities	lists	{"visible":["name","_actions"],"order":["id","name","_qrcode","_actions"],"per_page":"20"}
 \.
 
 
@@ -4504,6 +4660,7 @@ COPY public.backend_user_roles (id, name, code, description, permissions, is_sys
 
 COPY public.backend_user_throttle (id, user_id, ip_address, attempts, last_attempt_at, is_suspended, suspended_at, is_banned, banned_at) FROM stdin;
 1	1	127.0.0.1	0	\N	f	\N	f	\N
+2	5	\N	0	\N	f	\N	f	\N
 \.
 
 
@@ -4517,7 +4674,7 @@ COPY public.backend_users (id, first_name, last_name, login, email, password, ac
 4	\N	\N	seeder	seeder@nowhere.org	$2y$10$HJ1ZIEc4od1rqY9awLMeeulTb91fIOuQup1MnLtVkaqR2o6.etILu	\N	\N	\N	\N	f	\N	\N	\N	2025-04-03 07:43:23	2025-04-03 07:43:24	\N	f	\N	\N	9e95e478-70c6-49a6-a82c-47f3639fc748
 5	\N	\N	sz	sz@nowhere.org	$2y$10$r5Zck2dEs35hFYhepIOFeOKrp3CfQ5u.vlTew04YgIaumzY8uq1Uu	\N	\N	\N	\N	f	\N	\N	\N	2025-04-03 07:43:25	2025-04-03 07:43:26	\N	f	\N	\N	9e95e47b-46dc-492d-8ffa-1954bc3f1611
 6	\N	\N	demo	demo@nowhere.org	$2y$10$iDWeqZhd1b/q.naIRMthX.wNkPXpdqVCP3FwLOSIyxlnJmKevMney	\N	\N	\N	\N	f	\N	\N	\N	2025-04-03 07:43:26	2025-04-03 07:43:27	\N	f	\N	\N	9e95e47c-db72-48ec-8c0c-908592ebf59c
-1	Admin	Person	admin	admin@example.com	$2y$10$WE.zLZTDg7WGnQphFr431.dSBCDebgw/QbRNYzhnhI7OuliWyv8/C	\N	$2y$10$IV0RC1KM6rbmD.DtR.9PjeK7e2irMLAtesTME1d.ID3C0IbLDPQre	\N		t	2	\N	2025-04-08 13:36:45	2025-04-03 07:39:25	2025-04-08 13:36:45	\N	t	\N	\N	9e95e479-9690-4091-a730-aecdf51f9258
+1	Admin	Person	admin	admin@example.com	$2y$10$WE.zLZTDg7WGnQphFr431.dSBCDebgw/QbRNYzhnhI7OuliWyv8/C	\N	$2y$10$IV0RC1KM6rbmD.DtR.9PjeK7e2irMLAtesTME1d.ID3C0IbLDPQre	\N		t	2	\N	2025-04-23 13:32:41	2025-04-03 07:39:25	2025-04-23 13:32:41	\N	t	\N	\N	9e95e479-9690-4091-a730-aecdf51f9258
 \.
 
 
@@ -4712,9 +4869,9 @@ COPY public.system_mail_templates (id, code, subject, description, content_html,
 COPY public.system_parameters (id, namespace, "group", item, value) FROM stdin;
 1	system	app	birthday	"2025-04-03T07:39:23.508552Z"
 2	system	update	count	0
-3	system	core	build	"1.2.7"
 4	system	core	modified	true
-5	system	update	retry	1744197798
+3	system	core	build	"1.2.6"
+5	system	update	retry	1745501827
 \.
 
 
@@ -5019,6 +5176,26 @@ COPY public.system_plugin_history (id, code, type, version, detail, created_at) 
 294	Acorn.Calendar	comment	2.0.1	Create acorn users extra fields	2025-04-03 07:43:15
 295	Acorn.Calendar	comment	2.0.1	Create functions, including fn_acorn_calendar_seed()	2025-04-03 07:43:15
 296	Acorn.Calendar	comment	2.0.1	Seeding default Calendar, Types and Statuses	2025-04-03 07:43:15
+297	Winter.Debugbar	comment	1.0.1	First version of Debugbar	2025-04-23 11:38:27
+298	Winter.Debugbar	comment	1.0.2	Debugbar facade aliased (Alxy)	2025-04-23 11:38:27
+299	Winter.Debugbar	comment	1.0.3	Added ajax debugging	2025-04-23 11:38:27
+300	Winter.Debugbar	comment	1.0.4	Only display to backend authenticated users	2025-04-23 11:38:27
+301	Winter.Debugbar	comment	1.0.5	Use elevated privileges	2025-04-23 11:38:27
+302	Winter.Debugbar	comment	1.0.6	Fix fatal error when cms.page.beforeDisplay is fired multiple times (mnishihan)	2025-04-23 11:38:27
+303	Winter.Debugbar	comment	1.0.7	Allow plugin to be installed via Composer (tim0991)	2025-04-23 11:38:27
+304	Winter.Debugbar	comment	1.0.8	Fix debugbar dependency	2025-04-23 11:38:27
+305	Winter.Debugbar	comment	2.0.0	!!! Upgrade for compatibility with Laravel 5.5 (PHP 7+, October 420+)	2025-04-23 11:38:27
+306	Winter.Debugbar	comment	2.0.1	Add config file to prevent exceptions from being thrown (credit alxy)	2025-04-23 11:38:27
+307	Winter.Debugbar	comment	3.0.0	Switched vendor to RainLab from Bedard, upgraded for compatibility with Laravel 6.x	2025-04-23 11:38:27
+308	Winter.Debugbar	comment	3.0.1	Fixed bug that caused 502 errors on AJAX requests	2025-04-23 11:38:27
+309	Winter.Debugbar	comment	3.1.0	Important security update and improved styling.	2025-04-23 11:38:27
+310	Winter.Debugbar	comment	3.1.1	Added new "store all requests" config option. Added Slovenian translations.	2025-04-23 11:38:27
+311	Winter.Debugbar	comment	4.0.0	Switched vendor to Winter from RainLab	2025-04-23 11:38:27
+312	Winter.Debugbar	comment	4.0.1	Added Russian translation, added support for Twig v3 / Winter v1.2 / Laravel 9	2025-04-23 11:38:27
+313	Winter.Debugbar	comment	4.0.2	Adds new collectors for Twig, CMS and Backend. Updated styling to match Winter branding	2025-04-23 11:38:27
+314	Winter.Debugbar	comment	4.0.3	Improved compatibility with latest version of dependencies	2025-04-23 11:38:27
+315	Winter.Debugbar	comment	4.0.4	Align styling with barryvdh/laravel-debugbar v3.15.x dependency	2025-04-23 11:38:27
+316	Winter.Debugbar	comment	4.0.5	Styling / branding improvements	2025-04-23 11:38:27
 \.
 
 
@@ -5031,7 +5208,6 @@ COPY public.system_plugin_versions (id, code, version, created_at, is_disabled, 
 11	Acorn.University	1.0.0	2025-04-03 12:27:46	f	f	f
 12	Acorn.Exam	1.0.0	2025-04-08 18:24:18	f	f	f
 2	Acorn.User	3.0.2	2025-04-03 07:42:59	f	f	f
-5	Winter.Translate	2.2.0	2025-04-03 07:43:13	f	f	f
 6	Acorn.BackendLocalization	1.0.0	2025-04-03 07:43:13	f	f	f
 7	Acorn.Location	4.0.0	2025-04-03 07:43:13	f	f	f
 8	Acorn.Messaging	2.0.0	2025-04-03 07:43:14	f	f	f
@@ -5039,6 +5215,8 @@ COPY public.system_plugin_versions (id, code, version, created_at, is_disabled, 
 10	Acorn.Calendar	2.0.1	2025-04-03 07:43:15	f	f	f
 3	Winter.Location	2.0.2	2025-04-03 07:43:09	f	f	f
 4	Winter.TailwindUI	1.0.1	2025-04-03 07:43:09	f	f	f
+5	Winter.Translate	2.1.6	2025-04-23 11:38:27	f	f	f
+13	Winter.Debugbar	4.0.5	2025-04-23 11:38:27	f	f	f
 \.
 
 
@@ -6103,6 +6281,20 @@ COPY public.winter_translate_attributes (id, locale, model_id, model_type, attri
 48	ku	9ea85f4e-0909-4534-975b-067544d30e86	Acorn\\Exam\\Models\\Type	{"name":"","description":""}
 49	ar	9ea85f73-cca5-4aca-9d7e-55f9f5ab1409	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
 50	ku	9ea85f73-cca5-4aca-9d7e-55f9f5ab1409	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+51	ar	9eaaacf0-a713-4b6b-9a72-4570887c83fe	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+52	ku	9eaaacf0-a713-4b6b-9a72-4570887c83fe	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+53	ar	9eac0755-4691-4f86-acab-8e1e10649245	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+54	ku	9eac0755-4691-4f86-acab-8e1e10649245	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+55	ar	5efa30cd-a16f-4d94-b8ec-604b4625b516	Acorn\\Exam\\Models\\Type	{"name":"","description":""}
+56	ku	5efa30cd-a16f-4d94-b8ec-604b4625b516	Acorn\\Exam\\Models\\Type	{"name":"","description":""}
+57	ar	a7d5143d-7e99-4d2b-92c9-86e7429adfa7	Acorn\\Exam\\Models\\Type	{"name":"","description":""}
+58	ku	a7d5143d-7e99-4d2b-92c9-86e7429adfa7	Acorn\\Exam\\Models\\Type	{"name":"","description":""}
+59	ar	9eac27c4-7d21-4424-b54c-80e036f939cd	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+60	ku	9eac27c4-7d21-4424-b54c-80e036f939cd	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+61	ar	f5b2f310-2118-4a93-b7b9-2ae9c7d7925a	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+62	ku	f5b2f310-2118-4a93-b7b9-2ae9c7d7925a	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+63	ar	9eb2644c-d933-45f7-8d7b-53305a08d026	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+64	ku	9eb2644c-d933-45f7-8d7b-53305a08d026	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
 \.
 
 
@@ -6144,7 +6336,7 @@ SELECT pg_catalog.setval('public.acorn_reporting_reports_id_seq', 1, false);
 -- Name: backend_access_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.backend_access_log_id_seq', 4, true);
+SELECT pg_catalog.setval('public.backend_access_log_id_seq', 7, true);
 
 
 --
@@ -6158,7 +6350,7 @@ SELECT pg_catalog.setval('public.backend_user_groups_id_seq', 1, true);
 -- Name: backend_user_preferences_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.backend_user_preferences_id_seq', 3, true);
+SELECT pg_catalog.setval('public.backend_user_preferences_id_seq', 7, true);
 
 
 --
@@ -6172,7 +6364,7 @@ SELECT pg_catalog.setval('public.backend_user_roles_id_seq', 2, true);
 -- Name: backend_user_throttle_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.backend_user_throttle_id_seq', 1, true);
+SELECT pg_catalog.setval('public.backend_user_throttle_id_seq', 2, true);
 
 
 --
@@ -6249,7 +6441,7 @@ SELECT pg_catalog.setval('public.rainlab_location_states_id_seq', 720, true);
 -- Name: rainlab_translate_attributes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 50, true);
+SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 64, true);
 
 
 --
@@ -6277,7 +6469,7 @@ SELECT pg_catalog.setval('public.rainlab_translate_messages_id_seq', 1, false);
 -- Name: system_event_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.system_event_logs_id_seq', 136, true);
+SELECT pg_catalog.setval('public.system_event_logs_id_seq', 281, true);
 
 
 --
@@ -6319,14 +6511,14 @@ SELECT pg_catalog.setval('public.system_parameters_id_seq', 5, true);
 -- Name: system_plugin_history_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.system_plugin_history_id_seq', 296, true);
+SELECT pg_catalog.setval('public.system_plugin_history_id_seq', 316, true);
 
 
 --
 -- Name: system_plugin_versions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.system_plugin_versions_id_seq', 12, true);
+SELECT pg_catalog.setval('public.system_plugin_versions_id_seq', 13, true);
 
 
 --
@@ -6439,18 +6631,34 @@ ALTER TABLE ONLY public.acorn_exam_exams
 
 
 --
--- Name: acorn_exam_material_types acorn_exam_material_types_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_interview_students acorn_exam_interview_student_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_material_types
+ALTER TABLE ONLY public.acorn_exam_interview_students
+    ADD CONSTRAINT acorn_exam_interview_student_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: acorn_exam_interviews acorn_exam_interviews_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interviews
+    ADD CONSTRAINT acorn_exam_interviews_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: acorn_university_material_types acorn_exam_material_types_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_material_types
     ADD CONSTRAINT acorn_exam_material_types_pkey PRIMARY KEY (id);
 
 
 --
--- Name: acorn_exam_materials acorn_exam_materials_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_materials acorn_exam_materials_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_materials
+ALTER TABLE ONLY public.acorn_university_materials
     ADD CONSTRAINT acorn_exam_materials_pkey PRIMARY KEY (id);
 
 
@@ -6575,6 +6783,14 @@ ALTER TABLE ONLY public.acorn_servers
 
 
 --
+-- Name: acorn_university_course_materials acorn_university_course_material_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_materials
+    ADD CONSTRAINT acorn_university_course_material_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: acorn_university_courses acorn_university_courses_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -6620,6 +6836,14 @@ ALTER TABLE ONLY public.acorn_university_faculties
 
 ALTER TABLE ONLY public.acorn_university_hierarchies
     ADD CONSTRAINT acorn_university_hierarchies_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: acorn_university_projects acorn_university_projects_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_projects
+    ADD CONSTRAINT acorn_university_projects_pkey PRIMARY KEY (id);
 
 
 --
@@ -6839,6 +7063,14 @@ ALTER TABLE ONLY public.cms_theme_templates
 
 
 --
+-- Name: acorn_university_course_materials course_material; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_materials
+    ADD CONSTRAINT course_material UNIQUE (course_id, material_id);
+
+
+--
 -- Name: deferred_bindings deferred_bindings_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -6855,11 +7087,11 @@ ALTER TABLE ONLY public.backend_users
 
 
 --
--- Name: acorn_exam_exam_materials exam_material; Type: CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_exam_materials exam_course_material; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_exam_exam_materials
-    ADD CONSTRAINT exam_material UNIQUE (exam_id, material_id);
+    ADD CONSTRAINT exam_course_material UNIQUE (exam_id, course_material_id);
 
 
 --
@@ -6951,11 +7183,27 @@ ALTER TABLE ONLY public.backend_users
 
 
 --
+-- Name: acorn_university_materials material_name; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_materials
+    ADD CONSTRAINT material_name UNIQUE (name);
+
+
+--
 -- Name: migrations migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.migrations
     ADD CONSTRAINT migrations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: acorn_university_years name; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_years
+    ADD CONSTRAINT name UNIQUE (name);
 
 
 --
@@ -7358,6 +7606,13 @@ CREATE INDEX fki_course_id ON public.acorn_exam_exams USING btree (course_id);
 
 
 --
+-- Name: fki_course_material_id; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX fki_course_material_id ON public.acorn_exam_exam_materials USING btree (course_material_id);
+
+
+--
 -- Name: fki_created_at_event_id; Type: INDEX; Schema: public; Owner: university
 --
 
@@ -7379,6 +7634,13 @@ CREATE INDEX fki_entity_id ON public.acorn_university_universities USING btree (
 
 
 --
+-- Name: fki_event_id; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX fki_event_id ON public.acorn_exam_interview_students USING btree (event_id);
+
+
+--
 -- Name: fki_exam_id; Type: INDEX; Schema: public; Owner: university
 --
 
@@ -7393,10 +7655,31 @@ CREATE INDEX fki_exam_material_id ON public.acorn_exam_scores USING btree (exam_
 
 
 --
+-- Name: fki_interview_id; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX fki_interview_id ON public.acorn_exam_interview_students USING btree (interview_id);
+
+
+--
 -- Name: fki_material_id; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX fki_material_id ON public.acorn_exam_exam_materials USING btree (material_id);
+CREATE INDEX fki_material_id ON public.acorn_exam_exam_materials USING btree (course_material_id);
+
+
+--
+-- Name: fki_owner_student_id; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX fki_owner_student_id ON public.acorn_university_projects USING btree (owner_student_id);
+
+
+--
+-- Name: fki_owner_user_id; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX fki_owner_user_id ON public.acorn_university_projects USING btree (owner_student_id);
 
 
 --
@@ -7421,6 +7704,13 @@ CREATE INDEX fki_student_id ON public.acorn_exam_scores USING btree (student_id)
 
 
 --
+-- Name: fki_teacher_id; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX fki_teacher_id ON public.acorn_exam_interview_students USING btree (teacher_id);
+
+
+--
 -- Name: fki_type_id; Type: INDEX; Schema: public; Owner: university
 --
 
@@ -7439,6 +7729,13 @@ CREATE INDEX fki_updated_at_event_id ON public.acorn_university_entities USING b
 --
 
 CREATE INDEX fki_updated_by_user_id ON public.acorn_university_entities USING btree (updated_by_user_id);
+
+
+--
+-- Name: fki_user_group_id; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX fki_user_group_id ON public.acorn_university_entities USING btree (user_group_id);
 
 
 --
@@ -7708,17 +8005,17 @@ CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE 
 
 
 --
--- Name: acorn_exam_material_types tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_exam_interview_students tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_exam_material_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_exam_interview_students FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
--- Name: acorn_exam_materials tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_exam_interviews tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_exam_materials FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_exam_interviews FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
@@ -7736,6 +8033,13 @@ CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE 
 
 
 --
+-- Name: acorn_university_course_materials tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_university_course_materials FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
+
+
+--
 -- Name: acorn_university_entities tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
 --
 
@@ -7747,6 +8051,27 @@ CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE 
 --
 
 CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_university_hierarchies FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
+
+
+--
+-- Name: acorn_university_material_types tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_university_material_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
+
+
+--
+-- Name: acorn_university_materials tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_university_materials FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
+
+
+--
+-- Name: acorn_university_projects tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_university_projects FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
@@ -7874,17 +8199,17 @@ CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_exam_exams FOR E
 
 
 --
--- Name: acorn_exam_material_types tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_exam_interview_students tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_exam_material_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_exam_interview_students FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
--- Name: acorn_exam_materials tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_exam_interviews tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_exam_materials FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_exam_interviews FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
@@ -7902,6 +8227,13 @@ CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_exam_types FOR E
 
 
 --
+-- Name: acorn_university_course_materials tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_course_materials FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
+
+
+--
 -- Name: acorn_university_entities tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
@@ -7913,6 +8245,27 @@ CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_entit
 --
 
 CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_hierarchies FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
+
+
+--
+-- Name: acorn_university_material_types tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_material_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
+
+
+--
+-- Name: acorn_university_materials tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_materials FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
+
+
+--
+-- Name: acorn_university_projects tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_projects FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
@@ -8235,11 +8588,19 @@ ALTER TABLE ONLY public.acorn_exam_exams
 
 
 --
--- Name: acorn_university_entities created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_course_materials course_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_entities
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_course_materials
+    ADD CONSTRAINT course_id FOREIGN KEY (course_id) REFERENCES public.acorn_university_courses(id);
+
+
+--
+-- Name: acorn_exam_exam_materials course_material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_exam_materials
+    ADD CONSTRAINT course_material_id FOREIGN KEY (course_material_id) REFERENCES public.acorn_university_course_materials(id) NOT VALID;
 
 
 --
@@ -8259,18 +8620,18 @@ ALTER TABLE ONLY public.acorn_university_hierarchies
 
 
 --
--- Name: acorn_exam_material_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_material_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_material_types
+ALTER TABLE ONLY public.acorn_university_material_types
     ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acorn_exam_materials created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_materials created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_materials
+ALTER TABLE ONLY public.acorn_university_materials
     ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
@@ -8315,11 +8676,43 @@ ALTER TABLE ONLY public.acorn_exam_scores
 
 
 --
--- Name: acorn_university_entities created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_course_materials created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_materials
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_university_projects created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_projects
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interviews created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interviews
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interview_students created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interview_students
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_entities created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_university_entities
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
@@ -8339,18 +8732,18 @@ ALTER TABLE ONLY public.acorn_university_hierarchies
 
 
 --
--- Name: acorn_exam_material_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_material_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_material_types
+ALTER TABLE ONLY public.acorn_university_material_types
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: acorn_exam_materials created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_materials created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_materials
+ALTER TABLE ONLY public.acorn_university_materials
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -8392,6 +8785,46 @@ ALTER TABLE ONLY public.acorn_exam_calculations
 
 ALTER TABLE ONLY public.acorn_exam_scores
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_university_course_materials created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_materials
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_university_projects created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_projects
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interviews created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interviews
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interview_students created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interview_students
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_entities created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_entities
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
@@ -8501,6 +8934,14 @@ COMMENT ON CONSTRAINT entity_id ON public.acorn_university_hierarchies IS 'globa
 
 
 --
+-- Name: acorn_exam_interview_students event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interview_students
+    ADD CONSTRAINT event_id FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
 -- Name: acorn_exam_exam_materials exam_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -8548,6 +8989,14 @@ ALTER TABLE ONLY public.acorn_location_addresses
 
 
 --
+-- Name: acorn_exam_interview_students interview_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interview_students
+    ADD CONSTRAINT interview_id FOREIGN KEY (interview_id) REFERENCES public.acorn_exam_interviews(id) NOT VALID;
+
+
+--
 -- Name: acorn_user_user_groups location_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -8572,11 +9021,19 @@ ALTER TABLE ONLY public.acorn_location_locations
 
 
 --
--- Name: acorn_exam_exam_materials material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_course_materials material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_exam_materials
-    ADD CONSTRAINT material_id FOREIGN KEY (material_id) REFERENCES public.acorn_exam_materials(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_course_materials
+    ADD CONSTRAINT material_id FOREIGN KEY (material_id) REFERENCES public.acorn_university_materials(id);
+
+
+--
+-- Name: acorn_university_projects owner_student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_projects
+    ADD CONSTRAINT owner_student_id FOREIGN KEY (owner_student_id) REFERENCES public.acorn_university_students(id) NOT VALID;
 
 
 --
@@ -8660,14 +9117,6 @@ ALTER TABLE ONLY public.acorn_university_hierarchies
 
 
 --
--- Name: acorn_university_entities server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_entities
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
 -- Name: acorn_university_years server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -8676,18 +9125,18 @@ ALTER TABLE ONLY public.acorn_university_years
 
 
 --
--- Name: acorn_exam_material_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_material_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_material_types
+ALTER TABLE ONLY public.acorn_university_material_types
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
--- Name: acorn_exam_materials server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_materials server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_materials
+ALTER TABLE ONLY public.acorn_university_materials
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
@@ -8732,11 +9181,67 @@ ALTER TABLE ONLY public.acorn_exam_scores
 
 
 --
+-- Name: acorn_university_course_materials server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_materials
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_university_projects server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_projects
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interviews server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interviews
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interview_students server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interview_students
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_entities server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_entities
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
 -- Name: acorn_exam_scores student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_exam_scores
     ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interview_students student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interview_students
+    ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interview_students teacher_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interview_students
+    ADD CONSTRAINT teacher_id FOREIGN KEY (teacher_id) REFERENCES public.acorn_university_teachers(id) NOT VALID;
 
 
 --
@@ -8756,11 +9261,11 @@ ALTER TABLE ONLY public.acorn_exam_exams
 
 
 --
--- Name: acorn_exam_materials type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_materials type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_materials
-    ADD CONSTRAINT type_id FOREIGN KEY (material_type_id) REFERENCES public.acorn_exam_material_types(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_materials
+    ADD CONSTRAINT type_id FOREIGN KEY (material_type_id) REFERENCES public.acorn_university_material_types(id) NOT VALID;
 
 
 --
@@ -8769,14 +9274,6 @@ ALTER TABLE ONLY public.acorn_exam_materials
 
 ALTER TABLE ONLY public.acorn_location_types
     ADD CONSTRAINT types_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_university_entities updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_entities
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
@@ -8796,18 +9293,18 @@ ALTER TABLE ONLY public.acorn_university_hierarchies
 
 
 --
--- Name: acorn_exam_material_types updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_material_types updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_material_types
+ALTER TABLE ONLY public.acorn_university_material_types
     ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acorn_exam_materials updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_materials updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_materials
+ALTER TABLE ONLY public.acorn_university_materials
     ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
@@ -8852,11 +9349,43 @@ ALTER TABLE ONLY public.acorn_exam_scores
 
 
 --
--- Name: acorn_university_entities updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_course_materials updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_materials
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_university_projects updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_projects
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interviews updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interviews
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interview_students updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interview_students
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_entities updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_university_entities
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
@@ -8876,18 +9405,18 @@ ALTER TABLE ONLY public.acorn_university_hierarchies
 
 
 --
--- Name: acorn_exam_material_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_material_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_material_types
+ALTER TABLE ONLY public.acorn_university_material_types
     ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: acorn_exam_materials updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_materials updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_materials
+ALTER TABLE ONLY public.acorn_university_materials
     ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -8929,6 +9458,70 @@ ALTER TABLE ONLY public.acorn_exam_calculations
 
 ALTER TABLE ONLY public.acorn_exam_scores
     ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_university_course_materials updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_materials
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_university_projects updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_projects
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interviews updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interviews
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interview_students updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interview_students
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_entities updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_entities
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_entities user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_entities
+    ADD CONSTRAINT user_group_id FOREIGN KEY (user_group_id) REFERENCES public.acorn_user_user_groups(id) NOT VALID;
+
+
+--
+-- Name: CONSTRAINT user_group_id ON acorn_university_entities; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT user_group_id ON public.acorn_university_entities IS 'type: 1to1
+name-object: true';
+
+
+--
+-- Name: acorn_university_projects user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_projects
+    ADD CONSTRAINT user_group_id FOREIGN KEY (user_group_id) REFERENCES public.acorn_user_user_groups(id) NOT VALID;
 
 
 --
@@ -9012,10 +9605,38 @@ GRANT ALL ON FUNCTION public.cube_send(public.cube) TO token_1 WITH GRANT OPTION
 
 
 --
+-- Name: FUNCTION avg(VARIADIC ints double precision[]); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.avg(VARIADIC ints double precision[]) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION avg(VARIADIC ints integer[]); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.avg(VARIADIC ints integer[]) TO token_1 WITH GRANT OPTION;
+
+
+--
 -- Name: FUNCTION bytea_to_text(data bytea); Type: ACL; Schema: public; Owner: sz
 --
 
 GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION count(dp1 double precision, VARIADIC ints double precision[]); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.count(dp1 double precision, VARIADIC ints double precision[]) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION count(i1 integer, VARIADIC ints integer[]); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.count(i1 integer, VARIADIC ints integer[]) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -9334,6 +9955,34 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_trigger_activity_event() TO token
 
 
 --
+-- Name: FUNCTION fn_acorn_exam_token_name(VARIADIC p_titles character varying[]); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_exam_token_name_internal(p_titles character varying[]); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_exam_tokenize(p_expr character varying, level integer); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, level integer) TO token_1 WITH GRANT OPTION;
+
+
+--
 -- Name: FUNCTION fn_acorn_first(anyelement, anyelement); Type: ACL; Schema: public; Owner: university
 --
 
@@ -9565,6 +10214,34 @@ GRANT ALL ON FUNCTION public.longitude(public.earth) TO token_1 WITH GRANT OPTIO
 
 
 --
+-- Name: FUNCTION sum(VARIADIC ints double precision[]); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.sum(VARIADIC ints double precision[]) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION sum(VARIADIC ints integer[]); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.sum(VARIADIC ints integer[]) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION sum(ints character varying); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.sum(ints character varying) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION sums(VARIADIC ints integer[]); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.sums(VARIADIC ints integer[]) TO token_1 WITH GRANT OPTION;
+
+
+--
 -- Name: FUNCTION text_to_bytea(data text); Type: ACL; Schema: public; Owner: sz
 --
 
@@ -9663,10 +10340,129 @@ GRANT ALL ON TABLE public.acorn_calendar_instances TO token_1 WITH GRANT OPTION;
 
 
 --
+-- Name: TABLE acorn_exam_calculations; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_exam_calculations TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_exam_exam_materials; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_exam_exam_materials TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_exam_exams; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_exam_exams TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_exam_interview_students; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_exam_interview_students TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_exam_interviews; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_exam_interviews TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_exam_scores; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_exam_scores TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_exam_types; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_exam_types TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_university_courses; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_university_courses TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_university_entities; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_university_entities TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_university_material_types; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_university_material_types TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_university_materials; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_university_materials TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_university_projects; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_university_projects TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_university_students; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_university_students TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_user_user_group; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_user_user_group TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_user_user_groups; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_user_user_groups TO token_1 WITH GRANT OPTION;
+
+
+--
 -- Name: TABLE acorn_user_users; Type: ACL; Schema: public; Owner: university
 --
 
 GRANT ALL ON TABLE public.acorn_user_users TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_exam_tokens; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_exam_tokens TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_exam_results; Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON TABLE public.acorn_exam_results TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -9803,10 +10599,10 @@ GRANT ALL ON TABLE public.acorn_servers TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acorn_university_courses; Type: ACL; Schema: public; Owner: university
+-- Name: TABLE acorn_university_course_materials; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON TABLE public.acorn_university_courses TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_course_materials TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -9821,13 +10617,6 @@ GRANT ALL ON TABLE public.acorn_university_departments TO token_1 WITH GRANT OPT
 --
 
 GRANT ALL ON TABLE public.acorn_university_education_authorities TO token_1 WITH GRANT OPTION;
-
-
---
--- Name: TABLE acorn_university_entities; Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON TABLE public.acorn_university_entities TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -9849,6 +10638,13 @@ GRANT ALL ON TABLE public.acorn_university_hierarchies TO token_1 WITH GRANT OPT
 --
 
 GRANT ALL ON TABLE public.acorn_university_schools TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: TABLE acorn_university_teachers; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_university_teachers TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -9901,13 +10697,6 @@ GRANT ALL ON TABLE public.acorn_user_throttle TO token_1 WITH GRANT OPTION;
 
 
 --
--- Name: TABLE acorn_user_user_group; Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON TABLE public.acorn_user_user_group TO token_1 WITH GRANT OPTION;
-
-
---
 -- Name: TABLE acorn_user_user_group_types; Type: ACL; Schema: public; Owner: university
 --
 
@@ -9919,13 +10708,6 @@ GRANT ALL ON TABLE public.acorn_user_user_group_types TO token_1 WITH GRANT OPTI
 --
 
 GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO token_1 WITH GRANT OPTION;
-
-
---
--- Name: TABLE acorn_user_user_groups; Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON TABLE public.acorn_user_user_groups TO token_1 WITH GRANT OPTION;
 
 
 --

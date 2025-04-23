@@ -86,6 +86,11 @@ class ForeignKey {
             // Checks
             $this->check();
         }
+
+        if (!isset($this->nameObject)) {
+            if ($this->isLeaf()) $this->nameObject = TRUE;
+            else $this->nameObject = FALSE;
+        }
     }
 
     protected function check(): bool

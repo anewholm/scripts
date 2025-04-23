@@ -1,5 +1,8 @@
 <?php namespace Acorn\CreateSystem;
 
+use Exception;
+use Spyc;
+
 class Framework
 {
     public const AND_FALSES = TRUE;
@@ -11,10 +14,15 @@ class Framework
     public const NEW_PROPERTY = FALSE;
     public const CACHE = TRUE;
     public const NO_CACHE = FALSE;
+    public const NO_THROW = FALSE;
+    public const THROW = TRUE;
+    public const PLUGIN_ONLY = TRUE;
+    public const PLUGIN_OR_MODULE = FALSE;
 
     protected $cwd;
     protected $script;
     protected $version;
+    protected $scriptDirPath;
 
     public $connection;
     public $database;
@@ -74,7 +82,7 @@ class Framework
         // DB Object => Language key, useful for translation work
         // plugin: table|view|function: [column:] en|ku|ar: <text>
         // All translations should be added in to this file
-        $yamlString = \Spyc::YAMLDump($this->LANG, FALSE, 1000, TRUE);
+        $yamlString = Spyc::YAMLDump($this->LANG, FALSE, 1000, TRUE);
         file_put_contents('lang.yaml', $yamlString);
 
         foreach ($this->FILES as $path => &$contents) {
@@ -87,7 +95,7 @@ class Framework
         }
 
         foreach ($this->YAML_FILES as $path => &$array) {
-            $yamlString = \Spyc::YAMLDump($array, FALSE, 1000, TRUE);
+            $yamlString = Spyc::YAMLDump($array, FALSE, 1000, TRUE);
             file_put_contents($path, $yamlString);
         }
     }
@@ -130,13 +138,19 @@ class Framework
     }
 
     // ----------------------------------------- Plugin info
-    protected function pluginDirectoryPath(Plugin &$plugin): string
+    public function pluginDirectoryPath(Plugin &$plugin): string
     {
         // Override this
         return '';
     }
 
-    protected function pluginExists(Plugin &$plugin): bool
+    public function modelFileDirectoryPath(Model &$model, string $file = NULL): string
+    {
+        // Override this
+        return '';
+    }
+
+    public function pluginExists(Plugin &$plugin): bool
     {
         return is_file($this->pluginFile($plugin));
     }
@@ -146,7 +160,19 @@ class Framework
         return is_dir($this->pluginDirectoryPath($plugin) . "/.git");
     }
 
-    protected function whoCreatedBy(Plugin &$plugin): string|NULL
+    public function langPath(Plugin|Module $plugin, string $lang = NULL): string
+    {
+        // Override this
+        return '';
+    }
+
+    public function langEnPath(Plugin|Module $plugin): string
+    {
+        // Override this
+        return '';
+    }
+
+    protected function whoCreatedBy(Plugin|Module &$plugin): string|NULL
     {
         $createdBy = NULL;
         $path      = $this->pluginFile($plugin);
@@ -161,7 +187,7 @@ class Framework
         return $createdBy;
     }
 
-    public function wasCreatedByUs(Plugin &$plugin): bool
+    public function wasCreatedByUs(Plugin|Module &$plugin): bool
     {
         return ($this->whoCreatedBy($plugin) == 'acorn-create-system');
     }
@@ -194,7 +220,8 @@ class Framework
     {
         // TODO: We should still check the cache, even if we don't store it
         // because something else may be writing to this file
-        if (!$path) throw new \Exception("ARRAY_FILE path is empty");
+        if (!$path) 
+            throw new Exception("ARRAY_FILE path is empty");
         $content = (file_exists($path) ? include($path) : array());
         if ($cache) {
             if (!isset($this->ARRAY_FILES[$path])) $this->ARRAY_FILES[$path] = $content;
@@ -225,11 +252,11 @@ class Framework
         foreach ($keys as $step) {
             if (!isset($level[$step])) $level[$step] = array();
             $level = &$level[$step];
-            if (!is_array($level)) throw new \Exception("Pre-level [$step] in [$dotPath] is not array when trying to set [$name]");
+            if (!is_array($level)) throw new Exception("Pre-level [$step] in [$dotPath] is not array when trying to set [$name]");
         }
 
         if (isset($level[$name])) {
-            if ($throwIfAlreadySet) throw new \Exception("[$dotPath] already set in [$path]");
+            if ($throwIfAlreadySet) throw new Exception("[$dotPath] already set in [$path]");
             if (is_array($level[$name])) $newValue = array_merge($level[$name], $newValue);
         }
         $level[$name] = $newValue;
@@ -246,13 +273,13 @@ class Framework
         foreach ($keys as $step) {
             if (!isset($level[$step])) $level[$step] = array();
             $level = &$level[$step];
-            if (!is_array($level)) throw new \Exception("Pre-level [$step] in [$dotPath] is not array when trying to unset [$name]");
+            if (!is_array($level)) throw new Exception("Pre-level [$step] in [$dotPath] is not array when trying to unset [$name]");
         }
 
         if (isset($level[$name])) {
             unset($level[$name]);
         } else if ($throwIfNotSet) {
-            throw new \Exception("[$dotPath] not set in [$path]");
+            throw new Exception("[$dotPath] not set in [$path]");
         }
 
         // Destructor will write cached arrays
@@ -260,7 +287,7 @@ class Framework
 
     protected function langFileSet(string $path, string $dotPath, string|array $text, string $langName, object|NULL $dbObject, bool $throwIfAlreadySet = TRUE, string $comment = NULL)
     {
-        if (!$langName) throw new \Exception("Lang name required when setting [$dotPath]");
+        if (!$langName) throw new Exception("Lang name required when setting [$dotPath]");
 
         // Set the ~/lang/<language>/lang.php file
         $this->arrayFileSet($path, $dotPath, $text, $throwIfAlreadySet);
@@ -268,7 +295,7 @@ class Framework
         if ($dbObject) {
             // Contribute to the DB language translation file
             // For ease for someone to translate and feed back in to the DB
-            if (!method_exists($dbObject, 'dbLangPath')) throw new \Exception("Incompatible DB object when setting [$dotPath]");
+            if (!method_exists($dbObject, 'dbLangPath')) throw new Exception("Incompatible DB object when setting [$dotPath]");
             $dbLangPath = $dbObject->dbLangPath();
 
             if (!is_array($text)) $text = array('' => $text);
@@ -288,7 +315,7 @@ class Framework
     // ---------------------------------------------- Filesystem
     protected function removeDir(string $dirPath, bool $removeTopLevelHidden = TRUE, bool $removeTopLevel = TRUE, bool $throwIfNotFound = TRUE): void
     {
-        if (!$dirPath) throw new \Exception("removeDir path is empty");
+        if (!$dirPath) throw new Exception("removeDir path is empty");
         if (is_dir($dirPath)) {
             if (substr($dirPath, -1) != '/') $dirPath .= '/';
 
@@ -308,7 +335,7 @@ class Framework
 
     protected function setFileContents(string $path, string $newContent, bool $newline = TRUE)
     {
-        if (!$path) throw new \Exception("FileContents path is empty");
+        if (!$path) throw new Exception("FileContents path is empty");
         $newlineCharacter = ($newline ? "\n" : '');
         $this->FILES[$path] = "$newContent$newlineCharacter";
     }
@@ -322,17 +349,28 @@ class Framework
     }
 
     // ----------------------------------------- YAML
-    protected function &yamlFileLoad(string $path, bool $cache = self::CACHE): array
+    public function &yamlFileLoad(string $path, bool $cache = self::CACHE, bool $throwIfNotFound = self::NO_THROW): array
     {
         // TODO: We should still check the cache, even if we don't store it
         // because something else may be writing to this file
-        if (!$path) throw new \Exception("YAML path is empty");
-        $content = (file_exists($path) ? \Spyc::YAMLLoad($path) : array());
+        if (!$path) throw new Exception("YAML path is empty");
+
         if ($cache) {
-            if (!isset($this->YAML_FILES[$path])) $this->YAML_FILES[$path] = $content;
+            if (!isset($this->YAML_FILES[$path])) {
+                if ($throwIfNotFound && !file_exists($path)) 
+                    throw new Exception("YAML file not found");
+                $this->YAML_FILES[$path] = (file_exists($path) ? Spyc::YAMLLoad($path) : array());
+            }
             return $this->YAML_FILES[$path];
+        } else {
+            // We still check the cache, even if we don't store it
+            // because something else may be writing to this file
+            if (isset($this->YAML_FILES[$path])) return $this->YAML_FILES[$path];
+            else {
+                $content = (file_exists($path) ? Spyc::YAMLLoad($path) : array());
+                return $content;
+            }
         }
-        return $content;
     }
 
     protected function yamlFileValueExists(string $path, string $dotPath, bool $cache = self::CACHE): bool
@@ -359,9 +397,9 @@ class Framework
         foreach ($keys as $step) {
             if (!isset($level[$step])) $level[$step] = array();
             $level = &$level[$step];
-            if (!is_array($level)) throw new \Exception("Pre-level [$step] in [$dotPath] is not array when trying to set [$name]");
+            if (!is_array($level)) throw new Exception("Pre-level [$step] in [$dotPath] is not array when trying to set [$name]");
         }
-        if ($throwIfAlreadySet && isset($level[$name])) throw new \Exception("[$dotPath] already set in [$path]");
+        if ($throwIfAlreadySet && isset($level[$name])) throw new Exception("[$dotPath] already set in [$path]");
         $level[$name] = $newValue;
 
         // Destructor will write cached arrays
@@ -377,20 +415,23 @@ class Framework
             if (!isset($level[$step])) $level[$step] = array();
             $level = &$level[$step];
         }
-        if ($throwIfNotSet && !isset($level[$name])) throw new \Exception("[$dotPath] not already set in [$path]");
+        if ($throwIfNotSet && !isset($level[$name])) throw new Exception("[$dotPath] not already set in [$path]");
         unset($level[$name]);
 
         // Destructor will write cached arrays
     }
 
     // ----------------------------------------- File
-    public function &fileLoad(string $path, bool $cache = self::CACHE): string
+    public function &fileLoad(string $path, bool $cache = self::CACHE, bool $throwIfNotFound = self::NO_THROW): string
     {
-        if (!$path) throw new \Exception("FILES path is empty");
+        if (!$path) throw new Exception("FILES path is empty");
         
         if ($cache) {
-            if (!isset($this->FILES[$path])) 
+            if (!isset($this->FILES[$path])) {
+                if ($throwIfNotFound && !file_exists($path)) 
+                    throw new Exception("YAML file not found");
                 $this->FILES[$path] = (file_exists($path) ? file_get_contents($path) : '');
+            }
             return $this->FILES[$path];
         } else {
             // We still check the cache, even if we don't store it
@@ -407,7 +448,7 @@ class Framework
     {
         $contents = &$this->fileLoad($path, $cache);
         
-        if ($throwIfContentExists && strstr($contents, $newContent)) throw new \Exception("[$newContent] already found in [$path]");
+        if ($throwIfContentExists && strstr($contents, $newContent)) throw new Exception("[$newContent] already found in [$path]");
         
         $newlineCharacter = ($newline ? "\n" : '');
         $contents .= "$newContent$newlineCharacter";
@@ -419,8 +460,8 @@ class Framework
 
         if ($throwIfNotFound) {
             $matched = preg_match($regex, $contents);
-            if ($matched === 0)          throw new \Exception("[$regex] not found in [$path]");
-            else if ($matched === FALSE) throw new \Exception("Failed to compile [$regex]");
+            if ($matched === 0)          throw new Exception("[$regex] not found in [$path]");
+            else if ($matched === FALSE) throw new Exception("Failed to compile [$regex]");
         }
 
         $contents = preg_replace($regex, $replacement, $contents);
@@ -430,12 +471,12 @@ class Framework
 
     protected function runBashScript(string $path, bool $chdir = FALSE, string &$output = NULL, bool $throwOnNoZeroReturn = TRUE): int
     {
-        if (!$path) throw new \Exception("bash path is empty");
+        if (!$path) throw new Exception("bash path is empty");
         $cwd = getcwd();
 
         if ($chdir) chdir(dirname($path));
         $lastline = exec($path, $output, $ret);
-        if ($ret && $throwOnNoZeroReturn) throw new \Exception("Bash script [$path] returned [$ret] with [$lastline]");
+        if ($ret && $throwOnNoZeroReturn) throw new Exception("Bash script [$path] returned [$ret] with [$lastline]");
         if ($chdir) chdir($cwd);
 
         return $ret;
@@ -444,7 +485,7 @@ class Framework
     // ---------------------------------------------- Functions & Property control
     protected function writeFileUses(string $path, array &$uses)
     {
-        if (!$path) throw new \Exception("FileUses path is empty");
+        if (!$path) throw new Exception("FileUses path is empty");
         $usesString = '';
         foreach ($uses as $name => $include) {
             if ($include) $usesString .= "use $name;\n";
@@ -454,7 +495,7 @@ class Framework
 
     protected function writeClassTraits(string $path, array &$traits, int $indent = 1)
     {
-        if (!$path) throw new \Exception("ClassTraits path is empty");
+        if (!$path) throw new Exception("ClassTraits path is empty");
         $indentString = str_repeat(' ', $indent*4);
         $traitsString = '';
         foreach ($traits as $name => $include) {
@@ -465,20 +506,25 @@ class Framework
 
     protected function addStaticMethod(string $path, string $name, string $body, string $scope = 'public', int $indent = 1)
     {
-        if (!$path) throw new \Exception("StaticMethod path is empty");
-        return $this->addMethod($path, $name, $body, $scope, TRUE, $indent);
+        if (!$path) throw new Exception("StaticMethod path is empty");
+        return $this->addMethod($path, $name, $body, 'mixed', $scope, TRUE, $indent);
     }
 
-    protected function addMethod(string $path, string $name, string $body, string $scope = 'public', bool $static = FALSE, int $indent = 1)
+    protected function addMethod(string $path, string $name, string $body, string $type = NULL, string $scope = 'public', bool $static = FALSE, int $indent = 1)
     {
-        if (!$path) throw new \Exception("Method path is empty");
-        $parameters    = (strstr($name, '(') !== FALSE ? '' : '()');
+        if (!$path) throw new Exception("Method path is empty");
+
+        // Parameters will be empty if included in the $name
+        $nameHasParameters = (strstr($name, '(') !== FALSE);
+        $parameters    = ($nameHasParameters ? '' : '()');
         $indentString  = str_repeat(' ', $indent*4);
         $indentString2 = str_repeat(' ', ($indent+1)*4);
         $staticString  = ($static ? ' static' : '');
+        $signature     = "$name$parameters"; 
+        if ($type) $signature .= ": $type";
         $this->replaceInFile($path, '/^}$/m', <<<FUNCTION
 
-$indentString$scope$staticString function $name$parameters {
+$indentString$scope$staticString function $signature {
 $indentString2# Auto-injected by acorn-create-system
 $indentString2$body
 $indentString}
@@ -489,7 +535,7 @@ FUNCTION
 
     protected function setPropertyInClassFile(string $path, string $name, string|int|array $value, bool $overwriteExisting = self::OVERWRITE_EXISTING, string $scope = 'public', int $indent = self::STD_INDENT, bool $passthrough = self::FIRST_MULTILINE)
     {
-        if (!$path) throw new \Exception("FILES path is empty");
+        if (!$path) throw new Exception("FILES path is empty");
         if (!isset($this->FILES[$path])) $this->FILES[$path] = file_get_contents($path);
         $contents = &$this->FILES[$path];
 
@@ -556,7 +602,7 @@ FUNCTION
 
     protected function removeFunction(string $path, string $functionName, string $scope = 'public', int $indent = 1)
     {
-        if (!$path) throw new \Exception("Function path is empty");
+        if (!$path) throw new Exception("Function path is empty");
         $this->replaceInFile($path, "/$scope function $functionName\(/", "$scope function {$functionName}_REMOVED(");
     }
 
@@ -575,8 +621,8 @@ FUNCTION
         //     ];
         //   }
         // /.../s == multiline DOT_ALL: . matches newline, and [^...] also matches newlines
-        if (!$path)         throw new \Exception("File path is empty");
-        if (!$functionName) throw new \Exception("Function name is empty");
+        if (!$path)         throw new Exception("File path is empty");
+        if (!$functionName) throw new Exception("Function name is empty");
 
         $indentString  = str_repeat(' ', $indent*4);
         $indent2string = str_repeat(' ', $indent*8);
@@ -605,9 +651,9 @@ FUNCTION
         //         'icon'        => 'icon-leaf'
         //     ];
         //   }
-        if (!$path)         throw new \Exception("File path is empty");
-        if (!$functionName) throw new \Exception("Function name is empty");
-        if (strstr($arrayDotPath, '.') !== FALSE) throw new \Exception("Dot array replacement [$arrayDotPath] not supported yet");
+        if (!$path)         throw new Exception("File path is empty");
+        if (!$functionName) throw new Exception("Function name is empty");
+        if (strstr($arrayDotPath, '.') !== FALSE) throw new Exception("Dot array replacement [$arrayDotPath] not supported yet");
 
         $escapedValue = str_replace("'", "\\'", $newValue);
         $this->replaceInFile($path, "/'$arrayDotPath' *=>.*/", "'$arrayDotPath' => '$escapedValue',");

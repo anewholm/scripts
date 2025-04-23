@@ -571,9 +571,12 @@ class Spyc {
   }
 
   private function loadFromString ($input) {
-    $lines = explode("\n",$input);
-    foreach ($lines as $k => $_) {
-      $lines[$k] = rtrim ($_, "\r");
+    $lines = array();
+    if ($input) {
+      $lines = explode("\n",$input);
+      foreach ($lines as $k => $_) {
+        $lines[$k] = rtrim ($_, "\r");
+      }
     }
     return $lines;
   }

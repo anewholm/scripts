@@ -27,10 +27,11 @@ class Field {
     // to enable sorting and searching wherever possible
     public $oid; // From column or FK or the like
 
-    // Forms fields.yaml
+    // ------------------------- Forms fields.yaml
     public $fieldKey;
     public $fieldKeyQualifier; // Should always be added on to the fields.yaml name
     public $fieldType;
+    public $typeEditable;
     public $default;
     public $length;
     public $hidden       = FALSE; // Set during __construct
@@ -84,7 +85,7 @@ class Field {
     public $rules = array();
     public $controller; // For popups
 
-    // Lists columns.yaml
+    // ------------------------- Lists columns.yaml
     public $columnKey;
     public $invisible    = FALSE; // Set during __construct
     public $columnType   = 'text';
@@ -95,8 +96,9 @@ class Field {
     public $sqlSelect;
     public $relation;  // relation: user_group
     public $columnConfig;
+    public $listEditable;
 
-    // Filter config_filter.yaml
+    // ------------------------- Filter config_filter.yaml
     public $canFilter = FALSE;
     public $useRelationCondition = FALSE; // Custom filtering system for deep relations
     public $filterType;
@@ -129,8 +131,8 @@ class Field {
             if (is_numeric($column->column_default)) $this->default = (int) $column->column_default;
             else {
                 $defaultStripped = preg_replace("/^'|'\$/", '', $column->column_default);
-                if (strlen($defaultStripped) && $defaultStripped[0] = "'")
-                $this->default = preg_replace("/^'|'\$/", '', $defaultStripped);
+                if (strlen($defaultStripped) && $defaultStripped[0] == "'")
+                    $this->default = preg_replace("/^'|'\$/", '', $defaultStripped);
             }
         }
 
@@ -138,8 +140,33 @@ class Field {
         $className  = end($classParts);
         $this->yamlComment = "$className: $this->yamlComment";
 
+        if ($this->listEditable) {
+            $this->typeEditable = $this->columnType;
+            $this->columnType   = 'partial';
+            if (!$this->partial) $this->columnPartial = 'list_editable';
+        }
+
         // Checks
         if (!$this->name) throw new \Exception("Field has no name");
+    }
+
+    public static function createFromYamlConfigs(Model &$model, string $fieldName, array $fieldConfig, array $columnConfig = NULL): Field
+    {
+        // Loading from non-create-system fields&columns.yaml
+        $column          = Column::dummy($model->table, $fieldName);
+        $relations       = array();
+        $fieldDefinition = array(
+            '#'          => "From $column",
+            'name'       => $column->nameWithoutId(),
+            'hidden'     => $column->isStandard(Column::DATA_COLUMN_ONLY), // Doesn't include name
+            'invisible'  => $column->isStandard(Column::DATA_COLUMN_ONLY),
+        );
+
+        if      ($column->isTheIdColumn()) $field = new IdField(       $model, $fieldDefinition, $column, $relations);
+        else if ($column->isForeignID())   $field = new ForeignIdField($model, $fieldDefinition, $column, $relations); // Includes RelationSelf
+        else                               $field = new Field($model, $fieldDefinition, $column);
+
+        return $field;
     }
 
     public static function createFromColumn(Model &$model, Column &$column, array &$relations): Field
@@ -240,7 +267,7 @@ class Field {
 
         if      ($column->isTheIdColumn()) $field = new IdField(       $model, $fieldDefinition, $column, $relations);
         else if ($column->isForeignID())   $field = new ForeignIdField($model, $fieldDefinition, $column, $relations); // Includes RelationSelf
-        else $field = new Field($model, $fieldDefinition, $column, $relations);
+        else                               $field = new Field($model, $fieldDefinition, $column, $relations);
 
         return $field;
     }
@@ -589,15 +616,6 @@ class ForeignIdField extends Field {
             // !isOurs
             $this->yamlComment = "Not ours/known $this->yamlComment";
         }
-    }
-
-    public function embedRelation1Model(): Model|bool
-    {
-        $shouldEmbed = ($this->model->table->isOurs()
-            && !$this->model->table->isKnownAcornPlugin()
-            && $this->relation1 instanceof Relation1to1 // Includes RelationLeaf
-        );
-        return ($shouldEmbed ? $this->relation1->to : FALSE);
     }
 
     public function translationKey(string $name = NULL): string

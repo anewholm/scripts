@@ -9,6 +9,7 @@ $NC="\033[0m";
 //$CROSS="✘"
 $heading = str_repeat('-', 20);
 
+require_once('acorn-create-system-classes/GlobalHelpers.php');
 require_once('acorn-create-system-classes/Spyc.php'); // YAML parser
 require_once('acorn-create-system-classes/DatabaseNamingConvention.php');
 require_once('acorn-create-system-classes/DB.php');
@@ -16,7 +17,6 @@ require_once('acorn-create-system-classes/Module.php');
 require_once('acorn-create-system-classes/Plugin.php');
 require_once('acorn-create-system-classes/Framework.php');
 require_once('acorn-create-system-classes/WinterCMS.php');
-
 
 // ------------------------------------------- Inputs
 $file = basename(__FILE__);

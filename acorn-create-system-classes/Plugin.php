@@ -1,5 +1,7 @@
 <?php namespace Acorn\CreateSystem;
 
+use Exception;
+
 require_once('Model.php');
 require_once('Controller.php');
 
@@ -49,6 +51,11 @@ class Plugin {
         return self::$plugins[$pluginFullyQualifiedName];
     }
 
+    public function exists(): bool
+    {
+        return $this->framework->pluginExists($this);
+    }
+
     protected function __construct(Framework &$framework, string $authorName, string $pluginName)
     {
         $this->framework = $framework;
@@ -65,7 +72,7 @@ class Plugin {
         foreach (\Spyc::YAMLLoadString($this->comment) as $name => $value) {
             $nameCamel = Str::camel($name);
             if (property_exists($this, $nameCamel)) {
-                if (isset($this->$name)) throw new \Exception("Plugin value for [$name] set twice by [$table->name]");
+                if (isset($this->$name)) throw new Exception("Plugin value for [$name] set twice by [$table->name]");
                 $this->$nameCamel = $value;
             }
         }
@@ -136,12 +143,28 @@ class Plugin {
         foreach ($this->models as &$model) {
             foreach ($model->relations() as $name => &$relation) {
                 // Exclude Modules
-                if ($relation->to->plugin instanceof Plugin && $relation->to->plugin != $this) {
-                    $relations[$name] = &$relation;
+                if ($relation instanceof RelationHasManyDeep) {
+                    // These create deep circular relations
+                } else {
+                    if ($relation->to->plugin instanceof Plugin && $relation->to->plugin != $this) {
+                        $relations[$name] = &$relation;
+                    }
                 }
             }
         }
         return $relations;
+    }
+
+    public static function fromDotName(string $domain): Plugin|Module|NULL
+    {
+        $plugin = NULL;
+        foreach (Plugin::$plugins as $searchPlugin) {
+            if ($searchPlugin->dotName() == $domain) {
+                $plugin = $searchPlugin;
+                break;
+            }
+        }
+        return $plugin;
     }
 
     public function isOurs(string $which = NULL): bool
@@ -164,6 +187,11 @@ class Plugin {
     public function translationDomain(): string
     {
         return $this->dotName();
+    }
+
+    public function langEnPath(): string
+    {
+        return $this->framework->langEnPath($this);
     }
 
     public function dirName(): string
@@ -190,7 +218,7 @@ class Plugin {
         // Check these permissions keys are fully qualified
         foreach ($permissions as $fullyQualifiedKey => &$config) {
             $isQualifiedName = (strstr($fullyQualifiedKey, '.') !== FALSE);
-            if (!$isQualifiedName) throw new \Exception("Permission [$fullyQualifiedKey] is not qualified");
+            if (!$isQualifiedName) throw new Exception("Permission [$fullyQualifiedKey] is not qualified");
         }
 
         return $permissions;
