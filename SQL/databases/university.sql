@@ -4638,9 +4638,9 @@ COPY public.backend_user_preferences (id, user_id, namespace, "group", item, val
 3	6	backend	backend	preferences	{"locale":"ku","fallback_locale":"en","timezone":"Europe\\/Istanbul","icon_location":"inline","menu_location":"top"}
 1	1	backend	backend	preferences	{"locale":"en","fallback_locale":"en","timezone":"Europe\\/Istanbul","icon_location":"inline","menu_location":"top","dark_mode":"light","editor_theme":"twilight","editor_word_wrap":"off","editor_font_size":"11","editor_tab_size":"2","editor_code_folding":"manual","editor_autocompletion":"manual","editor_show_gutter":"0","editor_highlight_active_line":"0","editor_use_hard_tabs":"0","editor_display_indent_guides":"0","editor_show_invisibles":"0","editor_show_print_margin":"0","editor_auto_closing":"0","editor_enable_snippets":"0","user_id":1}
 4	1	acorn_university	students	lists-relationexamresultsstudentviewlist	{"visible":["student","exam","calculation","entity","expression","expression_type","needs_evaluate","result","_actions"],"order":["id","student","exam","calculation","entity","expression","expression_type","needs_evaluate","result","_qrcode","_actions"],"per_page":"10"}
+7	1	acorn_university	universities	lists	{"visible":["name","_actions","entity_university_hierarchies_entity","entity_exam_tokens_entity","entity_exam_results_entity","entity[university_hierarchies_entity][name]","entity[exam_tokens_entity][name]","entity[exam_results_entity][name]"],"order":["id","name","_qrcode","_actions","entity_university_hierarchies_entity","entity_exam_tokens_entity","entity_exam_results_entity","entity[university_hierarchies_entity][name]","entity[exam_tokens_entity][name]","entity[exam_results_entity][name]"],"per_page":"20"}
 5	1	acorn_exam	exams	lists-relationexamresultsexamviewlist	{"visible":["id","student","calculation","entity","expression","expression_type","needs_evaluate","result","_actions"],"order":["id","student","exam","calculation","entity","expression","expression_type","needs_evaluate","result","_qrcode","_actions"],"per_page":"10"}
 6	1	acorn_exam	tokens	lists	{"visible":["name","student","exam","calculation","entity","expression","expression_type","needs_evaluate","_actions"],"order":["id","name","student","exam","calculation","entity","expression","expression_type","needs_evaluate","_qrcode","_actions"],"per_page":"20"}
-7	1	acorn_university	universities	lists	{"visible":["name","_actions"],"order":["id","name","_qrcode","_actions"],"per_page":"20"}
 \.
 
 
@@ -6469,7 +6469,7 @@ SELECT pg_catalog.setval('public.rainlab_translate_messages_id_seq', 1, false);
 -- Name: system_event_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.system_event_logs_id_seq', 281, true);
+SELECT pg_catalog.setval('public.system_event_logs_id_seq', 340, true);
 
 
 --

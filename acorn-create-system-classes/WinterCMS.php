@@ -718,8 +718,14 @@ use Acorn\Scopes\GlobalChainScope;
 
 class $scopeName extends GlobalChainScope
 {
-    public function apply(Builder \$builder, Model \$model): bool {
-        return self::applySession(\$builder, \$model);
+    public function shouldApply(Builder \$builder, Model \$model): bool
+    {
+        return self::hasSession(\$model);
+    }
+
+    public function apply(Builder \$builder, Model \$model): void 
+    {
+        self::applySession(\$builder, \$model);
     }
 }
 PHP
@@ -1070,7 +1076,7 @@ PHP
                     }
                 }
             }
-            $labelKey = $field->translationKey();
+            $labelKey = ($field->explicitLabelKey ?: $field->translationKey());
             $fieldTab = ($field->tab === 'INHERIT' ? $labelKey : $field->tab); // Can be NULL
             $fieldDefinition = array(
                 '#'         => $field->yamlComment,
@@ -1086,6 +1092,7 @@ PHP
                 'cssClass'  => $field->cssClass(),
                 'comment'      => $field->fieldComment,
                 'commentHtml'  => ($field->commentHtml && $field->fieldComment),
+                'context'      => array_keys($field->contexts),
                 'tab'          => $fieldTab,
 
                 'options'      => $field->fieldOptions,      // Function call
@@ -1094,8 +1101,9 @@ PHP
                 'hierarchical' => $field->hierarchical,
                 'relatedModel' => $field->relatedModel,      // Model name
                 'nameFrom'     => $field->nameFrom,
-                'context'      => array_keys($field->contexts),
                 'dependsOn'    => array_keys($field->dependsOn),
+
+                // Extended info
                 'nested'       => ($field->nested    ?: NULL),
                 'nestLevel'    => ($field->nestLevel ?: NULL),
 
@@ -1293,11 +1301,15 @@ PHP
                                     $otherColumn      = &$relation->column;
                                     $pivotTableName   = $pivotTable->name;
 
+                                    // Custom relation scopes based on relations, not SQL
+                                    // relationCondition => <the name of the relevant relation>, e.g. belongsTo['language']
+                                    // Filters the listed models based on a filtered: of selected related models
+                                    // Probably because it is nested
+                                    // TODO: This is actually the _un-nested_ relation
                                     // TODO: Write these in to the Model Relations, not here
                                     if ($field->useRelationCondition) {
-                                        // Probably because it is neseted
-                                        // TODO: This is actually the _un-nested_ relation
-                                        if (!$field->fieldKey) throw new Exception("Field [$name] has no fieldKey for relationCondition");
+                                        if (!$field->fieldKey) 
+                                            throw new Exception("Field [$name] has no fieldKey for relationCondition");
                                         $filterDefinition['relationCondition'] = $field->fieldKey;
                                     } else {
                                         if (!isset($filterDefinition['conditions']) || is_null($filterDefinition['conditions']))
@@ -1411,10 +1423,11 @@ PHP
                 if ($field->relation  && strstr($field->columnKey, '[')) throw new Exception("relation: and nesting are mutually exclusive on [$field->name]");
 
                 print("      Add {$YELLOW}$name{$NC}($field->fieldType/$field->columnType): to {$YELLOW}columns.yaml{$NC}\n");
+                $labelKey = ($field->explicitLabelKey ?: $field->translationKey());
                 $columnDefinition = array(
                     '#'          => $field->yamlComment,
                     '# Debug:'   => $field->debugComment,
-                    'label'      => $field->translationKey(),
+                    'label'      => $labelKey,
                     'type'       => $field->columnType,
                     'valueFrom'  => $field->valueFrom,
                     'searchable' => $field->searchable,
@@ -1423,14 +1436,13 @@ PHP
                     'path'       => $field->columnPartial,
                     'relation'   => $field->relation,
                     'select'     => $field->sqlSelect,
+
+                    // Extended info
                     'nested'     => ($field->nested    ?: NULL),
                     'nestLevel'  => ($field->nestLevel ?: NULL),
                     'multi'      => $field->multi,             // Relation _multi.php directives
 
-                    // TODO: Columns should also include Xto1 relations
-
-                    // MorphConfig.php
-                    // Dynamic include
+                    // MorphConfig.php dynamic include
                     'include'      => $field->include,          // Only include: 1to1
                     'includeModel' => $field->includeModel,     // Required for include
                     'includePath'  => $field->includePath,      // Not used
@@ -1499,7 +1511,6 @@ PHP
         print(" ✓\n");
 
         print("  Checking Models PHP syntax");
-        // TODO: Not sure this syntax checking is working...
         foreach (scandir($modelsDirPath) as $fileName) {
             $fileParts = explode('.', $fileName);
             $filePath  = "$modelsDirPath/$fileName";
@@ -1534,26 +1545,31 @@ PHP
     {
         // acorn.user::lang.models.user.label
         // acorn::lang.models.general.name
+        if (!$pluginOnly) throw new Exception("Module translation search not supported yet");
+
+        $plugin        = NULL;
         $keyParts      = explode('::', $key);
         $domain        = $keyParts[0]; // acorn.user | acorn
         $isModule      = (strstr($domain, '.') === FALSE); // acorn
-        if ($pluginOnly && $isModule) 
-            throw new Exception("Translation key ''$domain' needs 2 dot parts");
-        return Plugin::fromDotName($domain);
+        if (!$isModule)
+            $plugin = Plugin::fromDotName($domain);
+        return $plugin;
     }
 
     public function checkTranslationKey(string $key): bool
     {
-        $plugin        = $this->translationKeyPlugin($key, Framework::PLUGIN_ONLY);
-        $keyParts      = explode('::', $key);
-        $localParts    = explode('.', $keyParts[1]);       // lang, models, general, id
-        $localKey      = implode('.', array_slice($localParts, 1)); // models.general.id
+        if ($plugin = $this->translationKeyPlugin($key, Framework::PLUGIN_ONLY)) {
+            $keyParts      = explode('::', $key);  // backend::lang.models.general.id@create
+            $contextParts  = explode('@', $keyParts[1]); // lang.models.general.id, create
+            $localParts    = explode('.', $contextParts[0]);       // lang, models, general, id
+            $localKey      = implode('.', array_slice($localParts, 1)); // models.general.id
 
-        // TODO: Check all lang files
-        // NO_CACHE because we do not want to overwrite other plugins lang files
-        $keyExists = $this->arrayFileValueExists($plugin->langEnPath(), $localKey, Framework::NO_CACHE);
+            // TODO: Check all lang files
+            // NO_CACHE because we do not want to overwrite other plugins lang files
+            $keyExists = $this->arrayFileValueExists($plugin->langEnPath(), $localKey, Framework::NO_CACHE);
+        }
 
         // We do not error if the plugin has not been created
-        return (!$plugin->exists() || $keyExists);
+        return (!$plugin || !$plugin->exists() || $keyExists);
     }
 }

@@ -136,6 +136,11 @@ class Model {
         return ($this->fullyQualifiedName() == 'Acorn\\User\\Models\\User');
     }
 
+    public function isAcornUserGroup(): bool
+    {
+        return ($this->fullyQualifiedName() == 'Acorn\\User\\Models\\UserGroup');
+    }
+
     public function isKnownAcornPlugin(): bool
     {
         return $this->table->isKnownAcornPlugin();
@@ -819,6 +824,31 @@ class Model {
         return $nestedFieldName;
     }
 
+    public static function nameToArray($string)
+    {
+        // Copied from HtmlHelper
+        $result = [$string];
+
+        if (strpbrk($string, '[]') === false) {
+            return $result;
+        }
+
+        if (preg_match('/^([^\]]+)(?:\[(.+)\])+$/', $string, $matches)) {
+            if (count($matches) < 2) {
+                return $result;
+            }
+
+            $result = explode('][', $matches[2]);
+            array_unshift($result, $matches[1]);
+        }
+
+        $result = array_filter($result, function ($val) {
+            return strlen($val) > 0;
+        });
+
+        return $result;
+    }
+
     protected static function arrayToName(array $fieldPath): string
     {
         $fieldName = $fieldPath[0];
@@ -831,8 +861,8 @@ class Model {
 
     protected static function nestField(string|array $nest, string|array $fieldName, int &$nestlevel = NULL): string
     {
-        if (!is_array($nest))      $nest      = HtmlHelper::nameToArray($nest);
-        if (!is_array($fieldName)) $fieldName = HtmlHelper::nameToArray($fieldName);
+        if (!is_array($nest))      $nest      = self::nameToArray($nest);
+        if (!is_array($fieldName)) $fieldName = self::nameToArray($fieldName);
         $nestedFieldPath = array_merge($nest, $fieldName);
         $nestlevel       = count($nestedFieldPath);
         return self::arrayToName($nestedFieldPath);
@@ -840,7 +870,7 @@ class Model {
 
     protected static function isNested(string $fieldName): bool
     {
-        return (count(HtmlHelper::nameToArray($fieldName)) > 1);
+        return (count(self::nameToArray($fieldName)) > 1);
     }
 
     protected static function isPseudo(string $fieldName): bool
@@ -848,31 +878,12 @@ class Model {
         return ($fieldName && $fieldName[0] == '_');
     }
 
-    protected function injectFields(array $fields, array $columns, Relation $relation, int $tabLocation = NULL): array 
+    protected function fieldsFromYamlConfig(array $fieldsConfigs, array $columnsConfigs, int $tabLocation = NULL): array 
     {
         $fieldObjects = array();
-        foreach ($fields as $fieldName => $fieldConfig) {
-            $type              = (isset($fieldConfig['type'])           ? $fieldConfig['type']           : 'text');
-            $includeContext    = (isset($fieldConfig['includeContext']) ? $fieldConfig['includeContext'] : 'include');
-            $isPseudoFieldName = self::isPseudo($fieldName);
-
-            if ($fieldName != 'id' && $includeContext != 'no-include') {
-                // The $fields configs will contain the tab name
-                // tab-location will insert the field in the correct location
-                if ($tabLocation) $fieldConfig['tab-location'] = $tabLocation;
-                $columnConfig = (isset($columns[$fieldName]) ? $columns[$fieldName] : NULL);
-
-                // TODO: What to do if the field is 1-1 nested?
-
-                // Set the relation to use
-                if (isset($fieldConfig['relation'])) {
-                    // TODO: Try to find an appropriate HasManyDeep relation if relation is already set
-                } else {
-                    $fieldConfig['relation'] = $relation->name;
-                }
-
-                $fieldObjects[$fieldName] = Field::createFromYamlConfigs($this, $fieldName, $fieldConfig, $columnConfig);
-            }
+        foreach ($fieldsConfigs as $fieldName => $fieldConfig) {
+            $columnConfig = (isset($columnsConfigs[$fieldName]) ? $columnsConfigs[$fieldName] : NULL);
+            $fieldObjects[$fieldName] = Field::createFromYamlConfigs($this, $fieldName, $fieldConfig, $columnConfig, $tabLocation);
         }
         return $fieldObjects;
     }
@@ -884,138 +895,220 @@ class Model {
         // TODO: Relations should reference their Fields, not columns
         $plugin = &$this->plugin;
         $fields = array();
-        $maxTabLocation     = 0;
-        $nestLevel          = count($relation1to1Path);
-        $isNested           = (bool)$nestLevel;
-        $topLevelNest       = ($nestLevel == 1);
         $useRelationManager = TRUE; //!$isNested;
 
-        // ---------------------------------------------------------------- Normal Columns
-        foreach ($this->table->columns as $columnName => &$column) {
-            if ($column->shouldProcess()) { // !system && !todo
-                $relations       = $this->relations($column);
-                $fieldObj        = Field::createFromColumn($this, $column, $relations);
-                $fieldName       = $fieldObj->name;
+        if ($this->plugin->isCreateSystemPlugin()) {
+            // ---------------------------------------------------------------- Database Columns => Fields
+            foreach ($this->table->columns as $columnName => &$column) {
+                if ($column->shouldProcess()) { // !system && !todo
+                    $relations       = $this->relations($column); // Includes HasManyDeep
+                    $fieldObj        = Field::createFromColumn($this, $column, $relations);
 
-                // Debug
-                $fieldClassParts = explode('\\', get_class($fieldObj));
-                $fieldClass      = end($fieldClassParts);
-                $fieldObj->debugComment = "$fieldClass for column $column->column_name on $plugin->name.$this->name";
-
-                // --------------------- + Nested Models
-                // These relevant relations can only exist on our create-system plugins
-                // Known AA plugins are Final (they do not continue 1to1 hasManyDeep recursion)
-                if ($fieldObj instanceof ForeignIdField) {
-                    foreach ($fieldObj->relations as $relationName => &$relation) {
+                    // Debug
+                    $fieldClassParts = explode('\\', get_class($fieldObj));
+                    $fieldClass      = end($fieldClassParts);
+                    $fieldObj->debugComment = "$fieldClass for column $column->column_name on $plugin->name.$this->name";
+                    
+                    if ($fieldObj instanceof ForeignIdField) {
                         // 1to1, leaf & hasManyDeep(1to1) relations.
-                        if ($relation->is1to1()) {
-                            $relationModelTo = $relation->to;
+                        // Known AA plugins are Final
+                        // they do not continue 1to1 hasManyDeep recursion
+                        if ($relations1to1 = $fieldObj->relations1to1()) {
+                            $nextRelation1to1Path = $relation1to1Path; // Local scope
+                            array_push($nextRelation1to1Path, $fieldObj);
+                            $nestLevel          = count($nextRelation1to1Path);
+                            $topLevelNest       = ($nestLevel == 1);
+                            
+                            foreach ($relations1to1 as $relation1to1Name => &$relation1to1) {
+                                // Static 1to1 whole form/list include
+                                //   fields.yaml:  entity[user_group][name]
+                                //   columns.yaml: name: name, relation: entity_user_group
+                                
+                                if ($relation1to1 instanceof RelationHasManyDeep && $topLevelNest) {
+                                    // -------------------------------------------------- Nested columns
+                                    // HasManyDeep only
+                                    // HasManyDeep should include the immediate 1-1 level, and chained 1-1 levels
+                                    // This allows sorting and searching of 1-1 relation columns
+                                    // that is not possible with nested 1-1 columns
+                                    // RELATION_MODE: relation: <has_many_deep_name>
+                                    //
+                                    // This call also returns Fields from non-create-system Yaml. See below
+                                    // NOT RECURSIVE: topLevelNest only
+                                    $relation1to1Fields = $relation1to1->to->fields($nextRelation1to1Path);
 
-                            // Static 1to1 whole form include. Most fields, not ID
-                            // e.g. location[name]
-                            // RECURSIVE! See $relationModelTo->fields() call below
-                            $thisRelation1to1Path = $relation1to1Path; // Local scope
-                            array_push($thisRelation1to1Path, $fieldObj);
+                                    foreach ($relation1to1Fields as $subFieldName => $subFieldObj) {
+                                        // Exclude fields that have the same local name as fields in the parent form
+                                        // this naturally exlcudes id and created_*
+                                        // TODO: created_* is not being excluded
+                                        $isDuplicateField  = isset($fields[$subFieldObj->name]);
+                                        $includeContext    = ($subFieldObj->includeContext != 'no-include');
+                                        // Pseudo fields relate to dependsOn as well
+                                        // but are for form functionality and should not interfere
+                                        $isPseudoFieldName = self::isPseudo($subFieldName);
+                                        // We could change the id name to also allow them...
+                                        $isSpecialField    = ($subFieldName == 'id');
+                                        // We cannot do anything with nested fields
+                                        $isAlreadyNested   = self::isNested($subFieldName);
+                                        // Sub relation fields should generate another HasManyDeep and include them
+                                        $hasSubRelation    = isset($subFieldObj->relation);
+                                        // Normal field
+                                        $noRelations       = (count($subFieldObj->relations) == 0);
+                                        
+                                        if (!$isSpecialField
+                                            && $includeContext 
+                                            && !$isDuplicateField
+                                            && !$isPseudoFieldName
+                                            && !$hasSubRelation
+                                            && !$isAlreadyNested
+                                        ) {
+                                            $subFieldObj->columnKey = $subFieldName;
+                                            $subFieldObj->relation  = $relation1to1Name;
+                                            // Custom relation scopes based on relations, not SQL
+                                            // Will set filter[relationCondition] = <the name of the relevant relation>, e.g. belongsTo['language']
+                                            // Filters the listed models based on a filtered: of selected related models
+                                            // Probably because it is nested
+                                            // TODO: This is actually the _un-nested_ relation
+                                            // TODO: Write these in to the Model Relations, not here
+                                            $subFieldObj->useRelationCondition = TRUE;
 
-                            $relationFields = NULL;
-                            if ($relationModelTo->plugin->isCreateSystemPlugin()) {
-                                // ---------------- Target (relationModelTo) is a Create-system plugin Model
-                                // so the database columns => fields() will describe the interface correctly
-                                // whereas a non-create-system plugin, only its custom fields.yaml will
-                                // describe its interface correctly
+                                            // Special case: Our Event & User fields
+                                            // TODO: This should probably be set already in the main fields area: Field::standardFieldSettings() or whatever
+                                            if ($relation1to1->to->isAcornEvent()) {
+                                                // Returns a DateTime object: aacep.start
+                                                $subFieldObj->debugComment .= ' Single level embedded Event.';
+                                                $subFieldObj->valueFrom     = NULL;
+                                            }    
+                                            else if ($relation1to1->to->isAcornUser()) {
+                                                // Returns the User name
+                                                $subFieldObj->debugComment .= ' Single level embedded User.';
+                                                $subFieldObj->valueFrom     = NULL;
+                                            }    
+                                            else if ($relation1to1->to->isAcornUserGroup()) {
+                                                // Returns the User name
+                                                $subFieldObj->debugComment .= ' Single level embedded User.';
+                                                $subFieldObj->valueFrom     = NULL;
+                                            }    
 
-                                // Non-empty $thisRelation1to1Path will cause fields() to return nested field names
-                                // Depending on the type of field, this could be:
-                                //   relation1_relation2_name:   (searchable and sortable)
-                                //   relation1[relation2][name]: (not searchable nor sortable)
-                                // with associated relevant relation: relation1 and select: directives
-                                // TODO: Use the HasManyDeep instead
-                                $relationFields = $relationModelTo->fields($thisRelation1to1Path);
+                                            // Shallow nesting of normal fields
+                                            // no select:, just relation: and valueFrom: 
+                                            // as the fieldName is RELATION_MODE, not the column name
+                                            //   legalcase_something_name: with relation: & valueFrom:
+                                            // Id fields with ?from? relationships will not be included here    
+                                            else if ($noRelations) {
+                                                if (!isset($subFieldObj->sqlSelect)) {
+                                                    // valueFrom cannot be sorted
+                                                    // UnQualified 'name' will cause ambiguity
+                                                    $subFieldObj->sqlSelect = $subFieldObj->column->fullyQualifiedName(); 
+                                                }    
+                                                $subFieldObj->debugComment .= ' Single level embedded normal primitive, no to/from relations.';
+                                            }    
 
-                                // includeContext is applied in this ->fields() recursive call below
-                                foreach ($relationFields as $nestedFieldName => $subFieldObj) {
-                                    // Exclude fields that have the same local name as fields in the parent form
-                                    // this naturally exlcudes id and created_*
-                                    // TODO: created_* is not being excluded
-                                    $isDuplicateField = isset($fields[$subFieldObj->name]);
-                                    if (!$isDuplicateField) {
-                                        $fields[$nestedFieldName] = $subFieldObj;
-                                        if ($subFieldObj->tabLocation > $maxTabLocation) $maxTabLocation = $subFieldObj->tabLocation;
+                                            // NOT SUPPORTED YET
+                                            /*
+                                            else if ($subFieldObj instanceof PseudoFromForeignIdField 
+                                                && $relation1to1 instanceof RelationXfromX
+                                            ) {
+                                                print("      {$RED}WARNING{$NC}: Rejected tab multi-select for ({$GREEN}$nestedColumnKey{$NC}) because 1-1 => X-X hasManyDeep is not supported yet\n");
+                                                unset($fields[$localFieldName]);
+                                                continue;
+                                            }    
+                                            */
+
+                                            // Unhandled
+                                            else {
+                                                throw new Exception("[$subFieldName] not handled");
+                                            }
+
+                                            $fields[$subFieldName] = $subFieldObj;
+                                        }
                                     }
                                 }
-                            } else {
-                                // ---------------- Target (relationModelTo) is Not a create-system Plugin!
-                                // But maybe isOurs(), e.g. Calendar or UserGroup
-                                // The database columns do not describe the fields necessarily, or well
-                                // Only its custom fields.yaml will describe its interface correctly
-                                // e.g. Embedding of AA User will not go well. It's tables are not annotated, 
-                                // so we need to embed its fields.yaml instead...
-                                print("    Copying/Embedding the {$YELLOW}$relationModelTo->plugin{$NC} into {$YELLOW}$this->name{$NC}\n");
-                                print("      (not a create-system plugin so embedding its database->columns() will not work...)\n");
-                                
-                                $copy1to1Fields = TRUE;
-                                if ($copy1to1Fields) {
-                                    print("      Copying fields in to the child form from the Yaml files\n");
-                                    // Load the config yaml files
-                                    $fieldsPath       = $this->plugin->framework->modelFileDirectoryPath($this, 'fields.yaml');
-                                    $subFieldsConfig  = $this->plugin->framework->yamlFileLoad($fieldsPath, Framework::NO_CACHE, Framework::THROW);
-                                    $subFieldsConfig  = (object) $subFieldsConfig;
-                                    print("      Loaded {$YELLOW}$fieldsPath{$NC}\n");
-                                    $columnsPath      = $this->plugin->framework->modelFileDirectoryPath($this, 'columns.yaml');
-                                    $subColumnsConfig = $this->plugin->framework->yamlFileLoad($columnsPath, Framework::NO_CACHE, Framework::THROW);
-                                    $subColumnsConfig = (object) $subColumnsConfig;
-                                    print("      Loaded {$YELLOW}$columnsPath{$NC}\n");
 
-                                    // Inject fields, and tab fields
-                                    if (property_exists($subFieldsConfig, 'fields')) {
-                                        $injectFields = $this->injectFields($subFieldsConfig->fields, $subColumnsConfig->columns, $relation);
-                                        if ($injectFields) $fields = array_merge($fields, $injectFields);
-                                    }
-                                    if (property_exists($subFieldsConfig, 'tabs') && isset($subFieldsConfig->tabs['fields'])) {
-                                        $injectFields = $this->injectFields($subFieldsConfig->tabs['fields'], $subColumnsConfig->columns, $relation, 1);
-                                        if ($injectFields) {
-                                            $fields = array_merge($fields, $injectFields);
-                                            if (1 > $maxTabLocation) $maxTabLocation = 1;
-                                        }
-                                    }
-                                    if (property_exists($subFieldsConfig, 'secondaryTabs') && isset($subFieldsConfig->secondaryTabs['fields'])) {
-                                        $injectFields = $this->injectFields($subFieldsConfig->secondaryTabs['fields'], $subColumnsConfig->columns, $relation, 2);
-                                        if ($injectFields) {
-                                            $fields = array_merge($fields, $injectFields);
-                                            if (2 > $maxTabLocation) $maxTabLocation = 2;
-                                        }
-                                    }
-                                    if (property_exists($subFieldsConfig, 'tertiaryTabs') && isset($subFieldsConfig->tertiaryTabs['fields'])) {
-                                        $injectFields = $this->injectFields($subFieldsConfig->tertiaryTabs['fields'], $subColumnsConfig->columns, $relation, 3);
-                                        if ($injectFields) {
-                                            $fields = array_merge($fields, $injectFields);
-                                            if (3 > $maxTabLocation) $maxTabLocation = 3;
-                                        }
-                                    }
+                                else if ($relation1to1 instanceof Relation1to1) {
+                                    // -------------------------------------------------- Nested fields
+                                    // Requires full recursive embedding
+                                    // stepping along the chain 1-1 belongsTo relations
+                                    // A $relation1to1Path indicates that the caller routine, also this method, wants these fields nested
+                                    // TODO: dependsOn morphing
+                                    // TODO: All of this should be moved to the Field class
+                                    // RECURSIVE!!
+                                    $relation1to1Fields = $relation1to1->to->fields($nextRelation1to1Path);
 
-                                    // TODO: setting: directive and 1to1 image fields do not work with include: 1to1
-                                    // TODO: Pseudo field embedding could conflict...
-                                    /*
-                                    print("Temporary solution: refuse all PseudoFields");
-                                    $relationFields = $relationModelTo->fields($thisRelation1to1Path);
-                                    foreach ($relationFields as $nestedFieldName => $subFieldObj) {
-                                        if ($subFieldObj instanceof PseudoField) unset($relationFields[$nestedFieldName]);
+                                    foreach ($relation1to1Fields as $subFieldName => $subFieldObj) {
+                                        // Exclude fields that have the same local name as fields in the parent form
+                                        // this naturally exlcudes id and created_*
+                                        // TODO: created_* is not being excluded
+                                        $includeContext    = ($subFieldObj->includeContext != 'no-include');
+                                        // Pseudo fields relate to dependsOn as well
+                                        // but are for form functionality and should not interfere
+                                        $isPseudoFieldName = self::isPseudo($subFieldName);
+                                        $isDuplicateField  = isset($fields[$subFieldObj->name]);
+                                        // We could change the id name to also allow them...
+                                        $isSpecialField    = ($subFieldName == 'id');
+                                        $isAlreadyNested   = self::isNested($subFieldName);
+                                        
+                                        if (!$isSpecialField
+                                            && $includeContext 
+                                            && !$isDuplicateField
+                                            && !$isPseudoFieldName
+                                        ) {
+                                            $subFieldObj->nested     = TRUE;
+                                            $subFieldObj->nestLevel  = $nestLevel;
+                                            // Prevent this field displaying as a column
+                                            // canDisplayAsColumn() checks columnType
+                                            $subFieldObj->columnType = NULL;
+                                            
+                                            // type: remationmanager does not use nested names
+                                            // because they relate to config_relation.yaml entries only
+                                            $isRelationManager     = ($subFieldObj->fieldType == 'relationmanager');
+                                            $nestingMode           = ($isRelationManager ? self::RELATION_MODE : self::NESTED_MODE);
+                                            $subFieldObj->fieldKey = $this->nestedFieldName(
+                                                $subFieldName,
+                                                $nextRelation1to1Path,
+                                                $nestingMode,
+                                                // nameFrom should not be included in the fields.yaml name:
+                                                // as it will be applied to the output in the nested scenario
+                                            );    
+                                            $fields[$subFieldObj->fieldKey] = $subFieldObj;
+                                        }
                                     }
-                                    */
-                                } else {
-                                    print("      {$RED}WARNING{$NC}: Temporary solution? Use MorphConfig.php dynamic include: 1to1\n");
-                                    $fieldObj->include      = '1to1';
-                                    $fieldObj->includeModel = $relationModelTo->absoluteFullyQualifiedName();
-                                    $fields[$fieldObj->name] = $fieldObj;
                                 }
                             }
-                        }
+                        } 
+                    } else {
+                        // Direct entry in fields array
+                        $fields[$fieldObj->name] = $fieldObj;
                     }
-                } else {
-                    // Direct entry in fields array
-                    $fields[$fieldObj->name] = $fieldObj;
-                    if ($fieldObj->tabLocation > $maxTabLocation) $maxTabLocation = $fieldObj->tabLocation;
                 }
+            }
+        } else {
+            // ---------------------------------------------------------------- Yaml => Fields
+            // Load the config yaml files
+            $fieldsPath       = $this->plugin->framework->modelFileDirectoryPath($this, 'fields.yaml');
+            $subFieldsConfig  = $this->plugin->framework->yamlFileLoad($fieldsPath, Framework::NO_CACHE, Framework::THROW);
+            $subFieldsConfig  = (object) $subFieldsConfig;
+            print("      Loaded {$YELLOW}$fieldsPath{$NC}\n");
+            $columnsPath      = $this->plugin->framework->modelFileDirectoryPath($this, 'columns.yaml');
+            $subColumnsConfig = $this->plugin->framework->yamlFileLoad($columnsPath, Framework::NO_CACHE, Framework::THROW);
+            $subColumnsConfig = (object) $subColumnsConfig;
+            print("      Loaded {$YELLOW}$columnsPath{$NC}\n");
+
+            // Inject fields, and tab fields
+            if (property_exists($subFieldsConfig, 'fields')) {
+                $subFields = $this->fieldsFromYamlConfig($subFieldsConfig->fields, $subColumnsConfig->columns);
+                $fields    = array_merge($fields, $subFields);
+            }
+            if (property_exists($subFieldsConfig, 'tabs') && isset($subFieldsConfig->tabs['fields'])) {
+                $subFields = $this->fieldsFromYamlConfig($subFieldsConfig->tabs['fields'], $subColumnsConfig->columns, 1);
+                $fields    = array_merge($fields, $subFields);
+            }
+            if (property_exists($subFieldsConfig, 'secondaryTabs') && isset($subFieldsConfig->secondaryTabs['fields'])) {
+                $subFields = $this->fieldsFromYamlConfig($subFieldsConfig->secondaryTabs['fields'], $subColumnsConfig->columns, 2);
+                $fields    = array_merge($fields, $subFields);
+            }
+            if (property_exists($subFieldsConfig, 'tertiaryTabs') && isset($subFieldsConfig->tertiaryTabs['fields'])) {
+                $subFields = $this->fieldsFromYamlConfig($subFieldsConfig->tertiaryTabs['fields'], $subColumnsConfig->columns, 3);
+                $fields    = array_merge($fields, $subFields);
             }
         }
 
@@ -1075,8 +1168,6 @@ class Model {
                 'searchable'    => FALSE, // These fields don't exist
             ), $relations);
             $fields['children'] = $fieldObj;
-
-            if ($fieldObj->tabLocation > $maxTabLocation) $maxTabLocation = $fieldObj->tabLocation;
         }
 
         /* ---------- type: 1fromX ($hasMany) => this table.id:
@@ -1161,8 +1252,6 @@ class Model {
                 'valueFrom'     => $valueFrom, // Necessary for search to work, is removed in nested scenario
             ), $thisIdRelation);
             $fields[$name] = $fieldObj;
-
-            if ($fieldObj->tabLocation > $maxTabLocation) $maxTabLocation = $fieldObj->tabLocation;
         }
 
         /* ---------- type: XtoXSemi ($hasMany) => this table.id:
@@ -1293,8 +1382,6 @@ class Model {
                 'valueFrom'     => $valueFrom, // Necessary for search to work, is removed in nested scenario
             ), $thisIdRelation);
             $fields[$name] = $fieldObj;
-
-            if ($fieldObj->tabLocation > $maxTabLocation) $maxTabLocation = $fieldObj->tabLocation;
         }
 
         /* ---------- type: XtoX ($hasManyThrough) => this table.id:
@@ -1416,8 +1503,6 @@ class Model {
                 'valueFrom'     => $valueFrom, // Necessary for search to work, is removed in nested scenario
             ), $thisIdRelation);
             $fields[$name] = $fieldObj;
-
-            if ($fieldObj->tabLocation > $maxTabLocation) $maxTabLocation = $fieldObj->tabLocation;
         }
 
         // ---------------------------------------------------------------- QR code support fields
@@ -1429,8 +1514,8 @@ class Model {
             'fieldType'   => 'partial',
             'contexts'    => array('update' => TRUE, 'preview' => TRUE),
             'span'        => 'storm',
-            'tabLocation' => ($maxTabLocation == 3 ? 3 : NULL),
-            'cssClasses'  => ($maxTabLocation == 3 ? array('bottom') : NULL),
+            'tabLocation' => 3,
+            'cssClasses'  => array('bottom'),
             'bootstraps'  => array('xs' => 6),
             'partial'        => 'qrcode',
             'includeContext' => 'exclude',
@@ -1500,114 +1585,6 @@ HTML;
 HTML;
                         }
                     }
-                }
-            }
-        }
-
-        // ------------------------------------------------------------- Nesting
-        // A $relation1to1Path indicates that the caller routine, also this method, wants these fields nested
-        // columns.yaml searching and sorting:
-        //   Single level 1-1 nesting of primitive columns should be based on relation: location, for sorting and searching
-        //   Single level 1-1,1-X should also be based on relation: location, with _multi display, as this also allows searching
-        //   relation: based columns should use relationMode columnKey: relation1_relation2_name:
-        if ($nestLevel) {
-            foreach ($fields as $localFieldName => &$fieldObj) {
-                if ($fieldObj->includeContext != 'exclude') { // QR code
-                    $columnName        = $fieldObj->column?->name;
-                    $singleNestParent  = ($nestLevel ? $relation1to1Path[0] : NULL);
-
-                    // TODO: All of this should be moved to the Field class
-                    $fieldObj->nested    = TRUE;
-                    $fieldObj->nestLevel = $nestLevel;
-
-                    // ----------------------------- Columns.yaml setup
-                    // We try to make the column sortable and searchable
-                    // RELATION_MODE: relation1_relation2_name: + relation:
-                    $fieldObj->searchable = TRUE;
-                    $fieldObj->sortable   = TRUE;
-                    $fieldObj->useRelationCondition = TRUE;
-                    $nestedColumnKey      = $this->nestedFieldName($localFieldName, $relation1to1Path, self::RELATION_MODE);
-                    $fieldObj->relation   = $singleNestParent->name;
-
-                    // Special case #1: Our Event fields
-                    // TODO: This should probably be set already in the main fields area: Field::standardFieldSettings() or whatever
-                    // select: and relation:
-                    if ($topLevelNest && $fieldObj instanceof ForeignIdField && $fieldObj->relation1 && $fieldObj->relation1->to->isAcornEvent()) {
-                        // Returns a DateTime object: aacep.start
-                        $fieldObj->debugComment .= ' Single level embedded Event.';
-                        $fieldObj->valueFrom     = NULL;
-                    }
-
-                    // Special case #2: Our User fields
-                    // select: and relation:
-                    else if ($topLevelNest && $fieldObj instanceof ForeignIdField && $fieldObj->relation1 && $fieldObj->relation1->to->isAcornUser()) {
-                        // Returns the User name
-                        $fieldObj->debugComment .= ' Single level embedded User.';
-                        $fieldObj->valueFrom     = NULL;
-                    }
-
-                    // Shallow nesting of normal fields
-                    // no select:, just relation: and valueFrom: as the fieldName is RELATION_MODE, not the column name
-                    //   legalcase_something_name: with relation: & valueFrom:
-                    // Id fields with ?from? relationships will not be included here
-                    else if ($topLevelNest && count($fieldObj->relations) == 0) {
-                        $fieldObj->sqlSelect     = $columnName; // valueFrom cannot be sorted
-                        $fieldObj->debugComment .= ' Single level embedded normal primitive, no to/from relations.';
-                    }
-
-                    // NOT SUPPORTED YET
-                    /*
-                    else if ($topLevelNest && $fieldObj instanceof PseudoFromForeignIdField && $fieldObj->relation1 && $fieldObj->relation1 instanceof RelationXfromX) {
-                        print("      {$RED}WARNING{$NC}: Rejected tab multi-select for ({$GREEN}$nestedColumnKey{$NC}) because 1-1 => X-X hasManyDeep is not supported yet\n");
-                        unset($fields[$localFieldName]);
-                        continue;
-                    }
-                    */
-
-                    // Deep nesting: legalcase[another_relation][name]:
-                    // Cannot shallow nest, so we give up
-                    // Id fields with ?from? relationships included here
-                    else {
-                        // select & valueFrom: does not work with NESTED_MODE
-                        // instead, it is inserted to the end of the nested field name
-                        // If there is no ...[attribute] then Winter will use the whole field name again
-                        $valueFrom = 'name';
-                        if (property_exists($fieldObj, 'sqlSelect') && $fieldObj->sqlSelect) {
-                            if ($fieldObj->valueFrom) throw new Exception("select and valueFrom on not allowed on same field [$fieldObj->name]");
-                            $valueFrom = $fieldObj->sqlSelect;
-                            $fieldObj->sqlSelect = NULL;
-                        }
-                        else if ($fieldObj->valueFrom) {
-                            $valueFrom = $fieldObj->valueFrom;
-                            $fieldObj->valueFrom = NULL;
-                        }
-                        $fieldObj->relation   = NULL;
-                        $fieldObj->searchable = FALSE;
-                        $fieldObj->sortable   = FALSE;
-                        $nestedColumnKey      = $this->nestedFieldName($localFieldName, $relation1to1Path, self::NESTED_MODE, $valueFrom);
-
-                        // Debug
-                        $fieldClass           = preg_replace('/.*\\\\/', '', get_class($fieldObj));
-                        $relationCount        = count($fieldObj->relations);
-                        $relationTo           = (count($fieldObj->relations) ? 'to ' . current($fieldObj->relations)->to->name : '');
-                        $fieldObj->debugComment .= " Normal nest of $fieldClass, level $nestLevel with $relationCount relations $relationTo. Searching and Sorting disabled.";
-                    }
-                    $fieldObj->columnKey = $nestedColumnKey;
-
-                    // ----------------------------- Fields.yaml setup
-                    // type: remationmanager does not use nested names
-                    // because they relate to config_relation.yaml entries only
-                    $isRelationManager  = ($fieldObj->fieldType == 'relationmanager');
-                    $nestingMode        = ($isRelationManager ? self::RELATION_MODE : self::NESTED_MODE);
-                    $fieldObj->fieldKey = $this->nestedFieldName(
-                        $localFieldName,
-                        $relation1to1Path,
-                        $nestingMode,
-                        // nameFrom should not be included in the fields.yaml name:
-                        // as it will be applied to the output in the nested scenario
-                    );
-
-                    // TODO: dependsOn morphing
                 }
             }
         }
