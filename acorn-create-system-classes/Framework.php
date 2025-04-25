@@ -682,11 +682,11 @@ FUNCTION
                 $this->createController($controller);
             }
         }
+        ob_end_flush();
 
         $this->writeOutFiles();
         $this->runChecks($plugin);
         $this->writeReadme($plugin, ob_get_contents());
-        ob_end_flush();
 
         /* TODO: GIT
         if [ -d .git ]; then

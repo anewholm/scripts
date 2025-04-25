@@ -1,5 +1,7 @@
 <?php namespace Acorn\CreateSystem;
 
+use Exception;
+
 class Field {
     public const NO_COLUMN = NULL;
 
@@ -19,6 +21,7 @@ class Field {
     public $labels;
     public $labelsPlural;
     public $extraTranslations; // array
+    public $explicitLabelKey; // From YAML Models
 
     // fieldName & columnName
     // fields.yaml <name>: and columns.yaml <name>: can be different
@@ -85,6 +88,15 @@ class Field {
     public $rules = array();
     public $controller; // For popups
 
+    // UnHandled settings, pass through
+    // These mostly come from Yaml fields.yaml parsing
+    // TODO: Pass these through
+    public $preset;
+    public $width;
+    public $height;
+    public $size;
+    public $emptyOption;
+
     // ------------------------- Lists columns.yaml
     public $columnKey;
     public $invisible    = FALSE; // Set during __construct
@@ -118,7 +130,8 @@ class Field {
         // Overwrite all defaults
         foreach ($definition as $name => $value) {
             if ($name == '#') $name = 'yamlComment';
-            if (!property_exists($this, $name)) throw new \Exception("Property [$name] with value [$value] does not exist on Field");
+            if (!property_exists($this, $name)) 
+                throw new Exception("Property [$name] with value [$value] does not exist on Field");
             if (!is_null($value)) $this->$name = $value;
         }
 
@@ -147,20 +160,76 @@ class Field {
         }
 
         // Checks
-        if (!$this->name) throw new \Exception("Field has no name");
+        if (!$this->name) throw new Exception("Field has no name");
     }
 
-    public static function createFromYamlConfigs(Model &$model, string $fieldName, array $fieldConfig, array $columnConfig = NULL): Field
+    public static function createFromYamlConfigs(Model &$model, string $fieldName, array $fieldConfig, array $columnConfig = NULL, int $tabLocation = NULL): Field
     {
+        global $YELLOW, $NC;
+
         // Loading from non-create-system fields&columns.yaml
         $column          = Column::dummy($model->table, $fieldName);
         $relations       = array();
+        if (!isset($fieldConfig['label']))
+            throw new Exception("Yaml Field [$fieldName] in [$model->name] has no label setting");
         $fieldDefinition = array(
-            '#'          => "From $column",
-            'name'       => $column->nameWithoutId(),
-            'hidden'     => $column->isStandard(Column::DATA_COLUMN_ONLY), // Doesn't include name
-            'invisible'  => $column->isStandard(Column::DATA_COLUMN_ONLY),
+            // Create-System specific settings
+            '#'           => "From YAML $fieldName",
+            'name'        => $fieldName, // $column->nameWithoutId()
+            'explicitLabelKey' => $fieldConfig['label'], // For the translation key
+            'tabLocation' => $tabLocation,
         );
+
+        // --------------------------- fields.yaml => Field settings
+        foreach ($fieldConfig as $yamlName => $yamlValue) {
+            $targetName = $yamlName;
+            switch ($yamlName) {
+                case 'label':   $targetName = 'explicitLabelKey'; break;
+                case 'type':    $targetName = 'fieldType'; break;
+                case 'comment': $targetName = 'fieldComment'; break;
+                case 'partial': $targetName = 'path'; break;
+                case 'options': $targetName = 'fieldOptions'; break;
+                case 'context': 
+                    $targetName = 'contexts'; 
+                    if (!is_array($yamlValue)) $yamlValue = array($yamlValue => TRUE);
+                    break;
+                case 'cssClass': 
+                    $targetName = 'cssClasses'; 
+                    if (!is_array($yamlValue)) $yamlValue = explode(' ', $yamlValue);
+                    break;
+                /*
+                fieldOptionsModel
+                hierarchical
+                relatedModel
+                */
+            }
+            if (isset($fieldDefinition[$targetName]) && $fieldDefinition[$targetName] != $yamlValue)
+                throw new Exception("[$yamlName => $targetName] already set on Field [$fieldName] to different value [$yamlValue]");
+            $fieldDefinition[$targetName] = $yamlValue;
+        }
+
+        // --------------------------- columns.yaml => Field settings
+        if ($columnConfig) {
+            foreach ($columnConfig as $yamlName => $yamlValue) {
+                $targetName = $yamlName;
+                switch ($yamlName) {
+                    case 'label':   $targetName = 'explicitLabelKey'; break;
+                    case 'type':    $targetName = 'columnType'; break;
+                    case 'select':  $targetName = 'sqlSelect'; break;
+                    case 'path':    $targetName = 'columnPartial'; break;
+                    /*
+                    multi
+                    'hidden'      => $column->isStandard(Column::DATA_COLUMN_ONLY), // Doesn't include name
+                    'invisible'   => $column->isStandard(Column::DATA_COLUMN_ONLY),
+                    */
+                }
+                if (isset($fieldDefinition[$targetName]) && $fieldDefinition[$targetName] != $yamlValue)
+                    throw new Exception("[$yamlName => $targetName] already set on Field [$fieldName] to different value [$yamlValue]");
+                $fieldDefinition[$targetName] = $yamlValue;
+            }
+        } else {
+            print("        {$YELLOW}WARNING{$NC}: No {$YELLOW}columns.yaml{$NC} field config for [$model->name::$fieldName]\n");
+        }
 
         if      ($column->isTheIdColumn()) $field = new IdField(       $model, $fieldDefinition, $column, $relations);
         else if ($column->isForeignID())   $field = new ForeignIdField($model, $fieldDefinition, $column, $relations); // Includes RelationSelf
@@ -231,7 +300,7 @@ class Field {
                 break;
             case 'path':
                 // File uploads are NOT stored in the actual column
-                if (!$column->is_nullable) throw new \Exception("File upload column $column->column_name(path) must be nullable, because it does not store the path");
+                if (!$column->is_nullable) throw new Exception("File upload column $column->column_name(path) must be nullable, because it does not store the path");
                 $uploadDefinition = array(
                     'fieldType'    => 'fileupload',
                     'mode'         => 'image',
@@ -298,13 +367,13 @@ class Field {
 
     // --------------------------------------------- Info
     public function isStandard(): bool {
-        if (!$this->column) throw new \Exception("Field [$this->name] is not related to a column");
+        if (!$this->column) throw new Exception("Field [$this->name] is not related to a column");
         return $this->column->isStandard();
     }
 
     public function isCustom():   bool {
         // TODO: Change this to Field name checks to include _qrcode etc.?
-        if (!$this->column) throw new \Exception("Field [$this->name] is not related to a column");
+        if (!$this->column) throw new Exception("Field [$this->name] is not related to a column");
         return $this->column->isCustom();
     }
 
@@ -324,7 +393,7 @@ class Field {
 
     public function sqlFullyQualifiedName(): string
     {
-        if (!$this->column) throw new \Exception("Field [$this->name] is not related to a column");
+        if (!$this->column) throw new Exception("Field [$this->name] is not related to a column");
         return $this->column->fullyQualifiedName();
     }
 
@@ -339,7 +408,7 @@ class Field {
         //   sm: 12
         //   xs: 4
         if ($this->bootstraps) {
-            if (!is_array($this->bootstraps)) throw new \Exception("bootstraps must be an array on [$this]");
+            if (!is_array($this->bootstraps)) throw new Exception("bootstraps must be an array on [$this]");
             foreach ($this->bootstraps as $size => $columns) {
                 array_push($cssClasses, "col-$size-$columns");
             }
@@ -347,10 +416,10 @@ class Field {
 
         // Popups, including bootstraps
         if ($this->popupClasses) {
-            if (!is_array($this->popupClasses)) throw new \Exception("popupClasses must be an array on [$this]");
+            if (!is_array($this->popupClasses)) throw new Exception("popupClasses must be an array on [$this]");
             foreach ($this->popupClasses as $name => $value) {
                 if ($name == 'bootstraps') {
-                    if (!is_array($value)) throw new \Exception("All bootstraps must be YAML arrays of size: columns when processing [$this]");
+                    if (!is_array($value)) throw new Exception("All bootstraps must be YAML arrays of size: columns when processing [$this]");
                     foreach ($value as $size => $columns) {
                         array_push($cssClasses, "popup-col-$size-$columns");
                     }
@@ -461,6 +530,15 @@ class Field {
         return "$domain::lang.$group.$subgroup.$name";
     }
 
+    public function relations1to1(): array
+    {
+        $relations1to1 = array();
+        foreach ($this->relations as $relationName => &$relation) {
+            // 1to1, leaf & hasManyDeep(1to1) relations.
+            if ($relation->is1to1()) $relations1to1[$relationName] = $relation;
+        }
+        return $relations1to1;
+    }
 }
 
 
@@ -512,14 +590,15 @@ class ForeignIdField extends Field {
                 $foreignKeysToCount   = count($column->foreignKeysTo);
                 $foreignKeysFrom1Type = ($foreignKeysFromCount ? end($column->foreignKeysFrom)->type() : '');
                 $foreignKeysTo1Type   = ($foreignKeysToCount   ? end($column->foreignKeysTo)->type()   : '');
-                throw new \Exception("ForeignIdField [$this->name] has no relation. FKs from:$foreignKeysFromCount($foreignKeysFrom1Type), to:$foreignKeysToCount($foreignKeysTo1Type)]");
+                throw new Exception("ForeignIdField [$this->name] has no relation. FKs from:$foreignKeysFromCount($foreignKeysFrom1Type), to:$foreignKeysToCount($foreignKeysTo1Type)]");
             }
             foreach ($this->relations as $name => &$relation) {
                 if ( $relation instanceof Relation1to1 // includes RelationLeaf
                   || $relation instanceof RelationXto1
                   || $relation instanceof RelationSelf // parent_event_id = "parent" qualifier to the same "event" table
                 ) {
-                    if ($this->relation1) throw new \Exception("Multiple 1to1/X/Self relations on ForeignIdField[$this->name]");
+                    if ($this->relation1) 
+                        throw new Exception("Multiple 1to1/X/Self relations on ForeignIdField[$this->name]");
                     $this->relation1 = &$relation;
                 }
             }
@@ -538,8 +617,9 @@ class ForeignIdField extends Field {
                 // We should only set sqlSelect if the relation table has the column
                 // otherwise use valueFrom
                 // valueFrom will use name() which will consider nameObject relations
-                if ($this->relation1 && $this->relation1->to->table->hasColumn('name') && !isset($this->sqlSelect)) {
-                    $this->sqlSelect  = 'name';
+                $relation1ToTable = $this->relation1->to->table;
+                if ($this->relation1 && $relation1ToTable->hasColumn('name') && !isset($this->sqlSelect)) {
+                    $this->sqlSelect  = "$relation1ToTable->name.name";
                     $this->valueFrom  = NULL;
                     $this->sortable   = TRUE;
                     $this->searchable = TRUE;
@@ -589,7 +669,7 @@ class ForeignIdField extends Field {
                         foreach ($targetModel->permissionSettings as $localPermissionName => $permissionConfig) {
                             $isQualifiedName = (strstr($localPermissionName, '.') !== FALSE);
                             if ($isQualifiedName) {
-                                throw new \Exception("Model [$targetModel->name] permission [$localPermissionName] cannot be qualified (it has a dot)");
+                                throw new Exception("Model [$targetModel->name] permission [$localPermissionName] cannot be qualified (it has a dot)");
                             }
 
                             // Add the required permission to the Fields.yaml permissions: directive
@@ -701,7 +781,7 @@ class PseudoFromForeignIdField extends PseudoField {
                 || $relation instanceof Relation1fromX
                 || $relation instanceof RelationXfromX
             ) {
-                if ($this->relation1) throw new \Exception("Multiple X/1from1/X relations on PseudoFromForeignIdField[$this->name]");
+                if ($this->relation1) throw new Exception("Multiple X/1from1/X relations on PseudoFromForeignIdField[$this->name]");
                 $this->relation1 = &$relation;
                 $this->oid       = $this->relation1->oid;
             }
@@ -719,7 +799,7 @@ class PseudoFromForeignIdField extends PseudoField {
                 foreach ($targetModel->permissionSettings as $localPermissionName => $permissionConfig) {
                     $isQualifiedName = (strstr($localPermissionName, '.') !== FALSE);
                     if ($isQualifiedName) {
-                        throw new \Exception("Model [$targetModel->name] permission [$localPermissionName] cannot be qualified (it has a dot)");
+                        throw new Exception("Model [$targetModel->name] permission [$localPermissionName] cannot be qualified (it has a dot)");
                     }
 
                     // Add the required permission to the Fields.yaml permissions: directive
