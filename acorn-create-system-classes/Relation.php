@@ -32,8 +32,13 @@ class Relation {
     public $labels;
     public $labelsPlural;
 
-    public function __construct(string $name, Model &$from, Model &$to, Column $column, ForeignKey $foreignKey = NULL)
-    {
+    public function __construct(
+        string $name, 
+        Model $from, 
+        Model $to, 
+        Column $column, 
+        ForeignKey $foreignKey = NULL
+    ) {
         // Relations are DIRECTIONAL, unlike FKs
         // That is, from Relations, like Relation1from1, is attached to its FK to ID column,
         // when the actually FK is attached to the FK from column, as always.
@@ -99,6 +104,16 @@ class Relation {
         return ($this instanceof Relation1to1 || $this->type() == '1to1');
     }
 
+    public function isNameObject(): bool
+    {
+        return (bool) $this->nameObject;
+    }
+
+    public function isSelfReferencing(): bool
+    {
+        return ($this->foreignKey ? $this->foreignKey->isSelfReferencing() : FALSE);
+    }
+
     public function show(int $indent = 0)
     {
         global $YELLOW, $NC;
@@ -118,7 +133,7 @@ class Relation {
         // From table name
         // acorn_user_user_groups => user_group | invoice
         $otherModel = ($this->isFrom ? $this->to : $this->from);
-        $baseName   = $otherModel->table->unqualifiedForeignKeyColumnBaseName();
+        $baseName   = $otherModel->getTable()->unqualifiedForeignKeyColumnBaseName();
 
         if ($error = $this->checkQualifier($fieldName, $otherModel, $baseName))
             throw new Exception($error);
@@ -142,9 +157,10 @@ class Relation {
         if (strstr($fieldName, $baseName) === FALSE
             && $otherModel->isOurs()
             && !$otherModel->isKnownAcornPlugin()
+            && !$this->isSelfReferencing() // parent_id is allowed
         ) {
             $thisModel = ($this->isFrom ? $this->from : $this->to);
-            $tableName = $thisModel->table->name;
+            $tableName = $thisModel->getTable()->name;
             $error     = "Foreign table base name [$baseName] not found in foreign column field name [$fieldName] on [$tableName]";
         }
         
@@ -165,37 +181,18 @@ class Relation1fromX extends RelationFrom {
     public $isFrom    = FALSE;
 }
 
-class RelationSelf extends Relation1fromX {
-    public function __construct(string $name, Model &$from, Column &$column, ForeignKey &$foreignKey = NULL)
-    {
-        parent::__construct($name, $from, $from, $column, $foreignKey);
-    }
-
-    public function direction(): string
-    {
-        return 'O';
-    }
-
-    protected function checkQualifier($fieldName, $otherModel, $baseName): string|NULL
-    {
-        // Self referencing parent_id is allowed to not have the base table name in the field name
-        $error = NULL;
-        if ($fieldName == 'parent') {
-            // parent_id is ok, parent_hierarchy_id is also allowed
-        } else {
-            $error = parent::checkQualifier($fieldName, $otherModel, $baseName);
-        }
-        return $error;
-    }
-}
-
 class Relation1from1 extends RelationFrom {
     public $isFrom = FALSE;
 }
 
 class RelationXto1 extends Relation {
-    public function __construct(string $name, Model &$from, Model &$to, Column &$column, ForeignKey &$foreignKey)
-    {
+    public function __construct(
+        string $name, 
+        Model  $from, 
+        Model  $to, 
+        Column $column, 
+        ForeignKey $foreignKey = NULL
+    ) {
         parent::__construct($name, $from, $to, $column, $foreignKey);
 
         // Do either of our Models indicate that the field canFilter?
@@ -215,17 +212,18 @@ class RelationXfromXSemi extends RelationFrom {
 
     public function __construct(
         string $name, 
-        Model  &$from,          // Legalcase
-        Model  &$to,            // User
-        Model  &$pivotModel,    // LegalcaseProsecutor
-        Column &$keyColumn,     // pivot.legalcase_id
-        Column &$throughColumn, // pivot.user_id
-        ForeignKey &$foreignKey
+        Model  $from,          // Legalcase
+        Model  $to,            // User
+        Model  $pivotModel,    // LegalcaseProsecutor
+        Column $keyColumn,     // pivot.user_group_id
+        Column $throughColumn, // pivot.user_id
+        ForeignKey|NULL $foreignKey = NULL
     ) {
         parent::__construct($name, $from, $to, $throughColumn, $foreignKey);
 
+        $table            = $pivotModel->getTable();
         $this->pivotModel = &$pivotModel;
-        $this->pivot      = &$pivotModel->table;
+        $this->pivot      = &$table;
         $this->keyColumn  = &$keyColumn;
     }
 
@@ -242,12 +240,12 @@ class RelationXfromX extends RelationFrom {
 
     public function __construct(
         string $name, 
-        Model  &$from,          // Legalcase
-        Model  &$to,            // User
-        Table  &$pivot,         // acorn_criminal_legalcase_category
-        Column &$keyColumn,     // pivot.legalcase_id
-        Column &$throughColumn, // pivot.user_id
-        ForeignKey &$foreignKey
+        Model  $from,          // Legalcase
+        Model  $to,            // User
+        Table  $pivot,         // acorn_criminal_user_group_category
+        Column $keyColumn,     // pivot.user_group_id
+        Column $throughColumn, // pivot.user_id
+        ForeignKey|NULL $foreignKey = NULL
     ) {
         parent::__construct($name, $from, $to, $throughColumn, $foreignKey);
 
@@ -268,6 +266,7 @@ class RelationHasManyDeep extends Relation {
     // because $relation above will only be 1to1 traversal
     // other (XfromX, etc.) indicates the LAST step only
     public $type;
+    public $repeatingModels;
     // Important that the keys are 
     // the correct names of the array entires on the target Model
     public $throughRelations;
@@ -276,26 +275,49 @@ class RelationHasManyDeep extends Relation {
 
     public function __construct(
         string $name, 
-        Model  &$from,          // Entity
-        Model  &$to,            // User
-        Column &$column,
-        ForeignKey &$firstForeignKey,
+        Model  $from,          // Entity
+        Model  $to,            // User
+        Column $column,
+        ForeignKey $firstForeignKey,
         array $throughRelations, // name => relation
         bool  $containsLeaf,
         bool  $nameObject,
         string $type
     ) {
         parent::__construct($name, $from, $to, $column, $firstForeignKey);
+
+        // Check for Model repetition
+        // which can cause duplicated tables in the from clause
+        // TODO: At the moment, we do not know how to alias the tables in same model joins
+        $repeatingModels = FALSE;
+        /*
+        $throughModels   = array();
+        foreach ($throughRelations as $throughRelation) {
+            $modeToName = $throughRelation->to->name;
+            if (isset($throughModels[$modeToName])) $repeatingModels = TRUE;
+            $throughModels[$modeToName] = TRUE;
+        }
+        */
+
         $this->type             = $type;
         $this->throughRelations = $throughRelations;
         $this->containsLeaf     = $containsLeaf;
         $this->nameObject       = $nameObject;
+        $this->repeatingModels  = $repeatingModels;
     }
 
     protected function checkQualifier($fieldName, $otherModel, $baseName): string|NULL
     {
         // Column names are not related to the deep final model
         return NULL;
+    }
+
+    public function __toString()
+    {
+        $to1String    = '';
+        $parentString = parent::__toString();
+        foreach ($this->throughRelations as $name => $relation) $to1String .= "=[$name]> ";
+        return "$to1String$parentString";
     }
 
     public function type(): string

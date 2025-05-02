@@ -1,6 +1,8 @@
 <?php namespace Acorn\CreateSystem;
 
 use Exception;
+use Serializable;
+use Spyc;
 
 class Field {
     public const NO_COLUMN = NULL;
@@ -90,7 +92,6 @@ class Field {
 
     // UnHandled settings, pass through
     // These mostly come from Yaml fields.yaml parsing
-    // TODO: Pass these through
     public $preset;
     public $width;
     public $height;
@@ -130,17 +131,23 @@ class Field {
         // Overwrite all defaults
         foreach ($definition as $name => $value) {
             if ($name == '#') $name = 'yamlComment';
-            if (!property_exists($this, $name)) 
+            if (!property_exists($this, $name)) {
+                $value = (is_string($value) ? $value : '?');
                 throw new Exception("Property [$name] with value [$value] does not exist on Field");
+            }
             if (!is_null($value)) $this->$name = $value;
         }
 
         // Defaults
-        if (!$this->fieldKey)      $this->fieldKey      = $this->name;
-        if (!$this->columnKey)     $this->columnKey     = $this->name;
-        if (!$this->columnType)    $this->columnType    = $this->fieldType;
-        if (!$this->columnPartial) $this->columnPartial = $this->partial;
-        if (!$this->default && $column) {
+        // Set fieldType|columnType to FALSE to prevent canDisplayAs*()
+        if (!isset($this->fieldType))     $this->fieldType     = 'text'; 
+        if (!isset($this->columnType))    $this->columnType    = $this->fieldType;
+        // fields|columns.yaml field names:
+        if (!isset($this->fieldKey))      $this->fieldKey      = $this->name;
+        if (!isset($this->columnKey))     $this->columnKey     = $this->name;
+        // Fields.yaml uses partial, columns.yaml uses columnPartial
+        if (!isset($this->columnPartial)) $this->columnPartial = $this->partial;
+        if (!isset($this->default) && $column) {
             if (is_numeric($column->column_default)) $this->default = (int) $column->column_default;
             else {
                 $defaultStripped = preg_replace("/^'|'\$/", '', $column->column_default);
@@ -153,6 +160,7 @@ class Field {
         $className  = end($classParts);
         $this->yamlComment = "$className: $this->yamlComment";
 
+        // TODO: This listEditable should be somewhere else...
         if ($this->listEditable) {
             $this->typeEditable = $this->columnType;
             $this->columnType   = 'partial';
@@ -163,28 +171,29 @@ class Field {
         if (!$this->name) throw new Exception("Field has no name");
     }
 
-    public static function createFromYamlConfigs(Model &$model, string $fieldName, array $fieldConfig, array $columnConfig = NULL, int $tabLocation = NULL): Field
+    public static function createFromYamlConfigs(Model &$model, string $fieldName, string|NULL $context, array $fieldConfig, array $columnConfig = NULL, int $tabLocation = NULL): Field
     {
         global $YELLOW, $NC;
 
         // Loading from non-create-system fields&columns.yaml
-        $column          = Column::dummy($model->table, $fieldName);
+        $table           = $model->getTable();
+        $column          = Column::dummy($table, $fieldName);
         $relations       = array();
         if (!isset($fieldConfig['label']))
             throw new Exception("Yaml Field [$fieldName] in [$model->name] has no label setting");
         $fieldDefinition = array(
             // Create-System specific settings
-            '#'           => "From YAML $fieldName",
-            'name'        => $fieldName, // $column->nameWithoutId()
-            'explicitLabelKey' => $fieldConfig['label'], // For the translation key
+            '#'           => "From YAML $model->name::$fieldName(TabLocation:$tabLocation)",
+            'name'        => $fieldName, // $column->nameWithoutId(), also => fieldKey
             'tabLocation' => $tabLocation,
         );
+        if ($context) $fieldDefinition['contexts'] = array($context);
 
         // --------------------------- fields.yaml => Field settings
         foreach ($fieldConfig as $yamlName => $yamlValue) {
             $targetName = $yamlName;
             switch ($yamlName) {
-                case 'label':   $targetName = 'explicitLabelKey'; break;
+                case 'label':   $targetName = 'explicitLabelKey'; break; // For the translation key
                 case 'type':    $targetName = 'fieldType'; break;
                 case 'comment': $targetName = 'fieldComment'; break;
                 case 'partial': $targetName = 'path'; break;
@@ -229,11 +238,17 @@ class Field {
             }
         } else {
             print("        {$YELLOW}WARNING{$NC}: No {$YELLOW}columns.yaml{$NC} field config for [$model->name::$fieldName]\n");
+            $fieldDefinition['columnType'] = FALSE;
         }
 
+        return self::create($model, $fieldDefinition, $column, $relations);
+    }
+
+    protected static function create(Model $model, array $fieldDefinition, Column $column, array $relations): Field
+    {
         if      ($column->isTheIdColumn()) $field = new IdField(       $model, $fieldDefinition, $column, $relations);
-        else if ($column->isForeignID())   $field = new ForeignIdField($model, $fieldDefinition, $column, $relations); // Includes RelationSelf
-        else                               $field = new Field($model, $fieldDefinition, $column);
+        else if ($column->isForeignID())   $field = new ForeignIdField($model, $fieldDefinition, $column, $relations);
+        else                               $field = new Field(         $model, $fieldDefinition, $column);
 
         return $field;
     }
@@ -329,16 +344,12 @@ class Field {
         // Inherit Column comment values
         // Include label translations
         $fieldDefinition['comment'] = $column->comment;
-        foreach (\Spyc::YAMLLoadString($column->comment) as $name => $value) {
+        foreach (Spyc::YAMLLoadString($column->comment) as $name => $value) {
             $nameCamel = Str::camel($name);
             $fieldDefinition[$nameCamel] = $value;
         }
 
-        if      ($column->isTheIdColumn()) $field = new IdField(       $model, $fieldDefinition, $column, $relations);
-        else if ($column->isForeignID())   $field = new ForeignIdField($model, $fieldDefinition, $column, $relations); // Includes RelationSelf
-        else                               $field = new Field($model, $fieldDefinition, $column, $relations);
-
-        return $field;
+        return self::create($model, $fieldDefinition, $column, $relations);
     }
 
     public function dbObject()
@@ -359,7 +370,7 @@ class Field {
         $indentString = str_repeat(' ', $indent * 2);
         print("$indentString$YELLOW$this$NC\n");
 
-        if ($this->model->table->isOurs() && !$this->model->table->isKnownAcornPlugin()) {
+        if ($this->model->getTable()->isOurs() && !$this->model->getTable()->isKnownAcornPlugin()) {
             $translationKey = $this->translationKey();
             print("$indentString  label: $translationKey\n");
         }
@@ -380,6 +391,11 @@ class Field {
     public function canDisplayAsColumn(): bool
     {
         return (bool) $this->columnType;
+    }
+
+    public function canDisplayAsField(): bool
+    {
+        return (bool) $this->fieldType;
     }
 
     public function devEnTitle(bool $plural = Model::SINGULAR): string
@@ -583,8 +599,8 @@ class ForeignIdField extends Field {
         // We omit some of our own known plugins
         // because they do not conform yet to our naming requirements
         // And all system plugins which do not have correct FK setup!
-        if ($this->model->table->isOurs() && !$this->model->table->isKnownAcornPlugin()) {
-            // All foreign ids, e.g. legalcase_id, MUST have only 1 Xto1 or 1to1 FK
+        if ($this->model->getTable()->isOurs() && !$this->model->getTable()->isKnownAcornPlugin()) {
+            // All foreign ids, e.g. user_group_id, MUST have only 1 Xto1 or 1to1 FK
             if (!count($this->relations)) {
                 $foreignKeysFromCount = count($column->foreignKeysFrom);
                 $foreignKeysToCount   = count($column->foreignKeysTo);
@@ -595,10 +611,9 @@ class ForeignIdField extends Field {
             foreach ($this->relations as $name => &$relation) {
                 if ( $relation instanceof Relation1to1 // includes RelationLeaf
                   || $relation instanceof RelationXto1
-                  || $relation instanceof RelationSelf // parent_event_id = "parent" qualifier to the same "event" table
                 ) {
                     if ($this->relation1) 
-                        throw new Exception("Multiple 1to1/X/Self relations on ForeignIdField[$this->name]");
+                        throw new Exception("Multiple 1to1/X relations on ForeignIdField[$this->name]");
                     $this->relation1 = &$relation;
                 }
             }
@@ -610,22 +625,24 @@ class ForeignIdField extends Field {
             // because, for example, created_at_event_id wants to show a datepicker
             // TODO: This morph to a dropdown needs to be rationalised a bit
             if (!isset($this->fieldType) || $this->fieldType == 'text' || $this->fieldType == 'radio' || $this->fieldType == 'dropdown') {
-                // ----------------------- Columns.yaml sortable relation
-                // We use relation, select and valueFrom because it can be column sorted and searched
-                // whereas 1to1 relation[value]: fields cannot
-                if (!isset($this->relation))  $this->relation  = $this->column->relationName();
+                // ----------------------- Columns.yaml ForeignIdField relation
+                // We try to use relation & sqlSelect because it can be column sorted and searched
+                // whereas 1to1 nested relation[value][value] fields cannot
                 // We should only set sqlSelect if the relation table has the column
-                // otherwise use valueFrom
-                // valueFrom will use name() which will consider nameObject relations
-                $relation1ToTable = $this->relation1->to->table;
+                // otherwise use [nested] valueFrom
+                if (!isset($this->relation)) $this->relation  = $this->column->relationName();
+                $relation1ToTable = $this->relation1->to->getTable();
                 if ($this->relation1 && $relation1ToTable->hasColumn('name') && !isset($this->sqlSelect)) {
+                    // Sortable relation & select
                     $this->sqlSelect  = "$relation1ToTable->name.name";
                     $this->valueFrom  = NULL;
                     $this->sortable   = TRUE;
                     $this->searchable = TRUE;
                 } else {
+                    // Not sortable, potentially nested valueFrom
+                    // Allows 1to1 Models
                     $this->sqlSelect  = NULL;
-                    $this->valueFrom  = 'name';
+                    $this->valueFrom  = $this->relation1->to->nameFromPath(); 
                     $this->sortable   = FALSE;
                     $this->searchable = FALSE;
                 }
@@ -636,8 +653,8 @@ class ForeignIdField extends Field {
                 if ($this->relation1->to->plugin->isOurs('User') || $this->hidden == 'true') {
                     // User plugin does not inherit from AA\Model
                     // 3-state deny
-                    $this->buttons['create'] = FALSE;
-                    $this->buttons['add']    = FALSE;
+                    $this->buttons['create'] = array();
+                    $this->buttons['add']    = array();
                 } else {
                     $this->dependsOn["_create_$this->name"] = TRUE;
                 }
@@ -680,11 +697,12 @@ class ForeignIdField extends Field {
                 }
 
                 // ----------------------- Fields.yaml Dropdown
-                if (!$this->cssClasses) $this->cssClasses = array('popup-col-xs-6');
-                if (!$this->bootstraps) $this->bootstraps = array('xs' => 5);
-                if ($this->relation1 instanceof RelationSelf) $this->hierarchical = TRUE;
-                if (!$this->nameFrom)   $this->nameFrom = 'fully_qualified_name';
-                if (!$this->fieldType || $this->fieldType == 'text') $this->fieldType = 'dropdown';
+                if ($this->relation1->isSelfReferencing()) $this->hierarchical = TRUE;
+                if (!isset($this->cssClasses)) $this->cssClasses = array('popup-col-xs-6');
+                if (!isset($this->bootstraps)) $this->bootstraps = array('xs' => 5);
+                if (!isset($this->nameFrom))   $this->nameFrom   = $this->relation1->to->nameFromPath();
+                if (!isset($this->readOnly))   $this->readOnly   = $this->relation1->to->readOnly;
+                if (!isset($this->fieldType) || $this->fieldType == 'text') $this->fieldType = 'dropdown';
             }
 
             if ($this->relation1) {

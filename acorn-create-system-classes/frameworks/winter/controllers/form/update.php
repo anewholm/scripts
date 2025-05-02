@@ -1,6 +1,11 @@
-<?php Block::put('breadcrumb') ?>
+<?php
+$controllerListUrl = $this->actionUrl('');
+$modelLabelKey     = $formModel->translateModelKey();
+$modelsLabelKey    = $formModel->translateModelKey('label_plural');
+
+Block::put('breadcrumb') ?>
     <ul>
-        <li><a href="<?= Backend::url('acorn/criminal/legalcases') ?>"><?= e(trans('acorn.criminal::lang.models.legalcase.label_plural')); ?></a></li>
+        <li><a href="<?= $controllerListUrl ?>"><?= e($modelsLabelKey); ?></a></li>
         <li><?= e($this->pageTitle) ?></li>
     </ul>
 <?php Block::endPut() ?>
@@ -21,7 +26,7 @@
                     data-request="onSave"
                     data-request-data="redirect:0"
                     data-hotkey="ctrl+s, cmd+s"
-                    data-load-indicator="<?= e(trans('backend::lang.form.saving_name', ['name' => trans('acorn.criminal::lang.models.legalcase.label')])); ?>"
+                    data-load-indicator="<?= e(trans('backend::lang.form.saving_name', ['name' => $modelLabelKey])); ?>"
                     class="btn btn-primary">
                     <?= e(trans('backend::lang.form.save')); ?>
                 </button>
@@ -30,7 +35,7 @@
                     data-request="onSave"
                     data-request-data="close:1"
                     data-hotkey="ctrl+enter, cmd+enter"
-                    data-load-indicator="<?= e(trans('backend::lang.form.saving_name', ['name' => trans('acorn.criminal::lang.models.legalcase.label')])); ?>"
+                    data-load-indicator="<?= e(trans('backend::lang.form.saving_name', ['name' => $modelLabelKey])); ?>"
                     class="btn btn-default">
                     <?= e(trans('backend::lang.form.save_and_close')); ?>
                 </button>
@@ -38,11 +43,11 @@
                     type="button"
                     class="wn-icon-trash-o btn-icon danger pull-right"
                     data-request="onDelete"
-                    data-load-indicator="<?= e(trans('backend::lang.form.deleting_name', ['name' => trans('acorn.criminal::lang.models.legalcase.label')])); ?>"
+                    data-load-indicator="<?= e(trans('backend::lang.form.deleting_name', ['name' => $modelLabelKey])); ?>"
                     data-request-confirm="<?= e(trans('backend::lang.form.confirm_delete')); ?>">
                 </button>
                 <span class="btn-text">
-                    or <a href="<?= Backend::url('acorn/criminal/legalcases') ?>"><?= e(trans('backend::lang.form.cancel')); ?></a>
+                    or <a href="<?= $controllerListUrl ?>"><?= e(trans('backend::lang.form.cancel')); ?></a>
                 </span>
             </div>
         </div>
@@ -57,6 +62,6 @@
 <?php else: ?>
 
     <p class="flash-message static error"><?= e($this->fatalError) ?></p>
-    <p><a href="<?= Backend::url('acorn/criminal/legalcases') ?>" class="btn btn-default"><?= e(trans('backend::lang.form.return_to_list')); ?></a></p>
+    <p><a href="<?= $controllerListUrl ?>" class="btn btn-default"><?= e(trans('backend::lang.form.return_to_list')); ?></a></p>
 
 <?php endif ?>

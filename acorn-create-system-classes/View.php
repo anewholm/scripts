@@ -10,7 +10,8 @@ class View extends Table {
 
     public function check(): bool
     {
-        // Checks
+        // Checks: Views do not have any structural standards currently
+        // IDs are nice for update screens, but not necessary currently
         $changes = FALSE;
         return $changes;
     }

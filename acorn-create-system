@@ -133,6 +133,7 @@ if ($installPlugins == '*') {
 
 // ------------------------------------------- Write the plugins
 // to the framework
+// README.md generation is buffered in the plugin create
 foreach ($chosenPlugins as $plugin) {
     $framework->create($plugin);
 }

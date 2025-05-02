@@ -1,5 +1,7 @@
 <?php namespace Acorn\CreateSystem;
 
+use Exception;
+
 require_once('Str.php');
 require_once('Column.php');
 require_once('Trigger.php');
@@ -84,17 +86,26 @@ class Table {
             $schemaName = (count($nameParts) == 2 ? $nameParts[0] : 'public');
             $qualifiedName = "$schemaName.$tableName";
         }
-        if (!isset(self::$tables[$qualifiedName])) throw new \Exception("Table [$qualifiedName] not in static list");
+        if (!isset(self::$tables[$qualifiedName])) 
+            throw new Exception("Table [$qualifiedName] not in static list");
         return self::$tables[$qualifiedName];
     }
 
-    static protected function blockingAlert(string $message, string $level = 'WARNING'): void
+    public static function dummy(DB &$db, string $name, string $schema = NULL, array $columns = array()): Table
     {
-        global $YELLOW, $NC;
+        // Allow search with or without schema, with or without dot notation
+        // Note that the Lojistiks system uses 2 schemas: public and product
+        if (!$schema) {
+            $nameParts  = explode('.', $name);
+            $name       = (count($nameParts) == 2 ? $nameParts[1] : $nameParts[0]);
+            $schema     = (count($nameParts) == 2 ? $nameParts[0] : 'public');
+        }
 
-        print("$YELLOW$level$NC: $message. Continue (y)? ");
-        $yn = readline();
-        if (strtolower($yn) == 'n') exit(0);
+        return new Table($db, array(
+            'name'    => $name,
+            'schema'  => $schema,
+            'columns' => $columns
+        ));
     }
 
     protected function __construct(DB &$db, ...$properties)
@@ -110,10 +121,24 @@ class Table {
             if (!isset($this->$nameCamel)) $this->$nameCamel = $value;
         }
 
-        $this->columns = $this->tableColumns(); // Will not return system columns
+        if (!isset($this->columns)) 
+            $this->columns = $this->tableColumns(); // Will not return system columns
 
+        // Name and registration
+        $nameParts  = explode('.', $this->name);
+        if (count($nameParts) > 1)
+            throw new Exception("Name [$this->name] is already qualified. Use schema instead");
         $qualifiedName = "$this->schema.$this->name";
         self::$tables[$qualifiedName] = $this;
+    }
+
+    static protected function blockingAlert(string $message, string $level = 'WARNING'): void
+    {
+        global $YELLOW, $NC;
+
+        print("$YELLOW$level$NC: $message. Continue (y)? ");
+        $yn = readline();
+        if (strtolower($yn) == 'n') exit(0);
     }
 
     public function tableColumns(bool $allColumns = FALSE): array
@@ -147,13 +172,13 @@ class Table {
                 self::$generalOwner = $this->owner;
                 print("Set general owner to [$YELLOW$this->owner$NC]\n");
             } else if ($this->owner != self::$generalOwner)
-                throw new \Exception("Table $this->name is owned by $this->owner, not " . self::$generalOwner);
+                throw new Exception("Table $this->name is owned by $this->owner, not " . self::$generalOwner);
 
             // ------------------------------------ Content tables
             if ($this->isContentTable()) {
                 if (!$this->hasColumn('id', 'uuid', 'gen_random_uuid()')) {
                     // TODO: Offer to add it?
-                    throw new \Exception("Content table [$this->name] has no id(uuid/gen_random_uuid()) column");
+                    throw new Exception("Content table [$this->name] has no id(uuid/gen_random_uuid()) column");
                 }
 
                 // ------------------------ name
@@ -161,7 +186,8 @@ class Table {
                 if (!$this->hasColumn($columnCheck) 
                     && !$this->hasCustom1to1FK() 
                     && !$this->hasCustomNameObjectFK()
-                    && !$this->hasPHPMethod('name')
+                    && !$this->hasPHPMethod($columnCheck)
+                    && !$this->hasAttributeFunction($columnCheck)
                 ) {
                     $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] column, 1to1, name-object or name PHP method";
                     print("{$RED}WARNING$NC: $error\n");
@@ -179,7 +205,8 @@ class Table {
                 if (!$this->hasColumn($columnCheck)
                     && !$this->hasCustom1to1FK() 
                     && !$this->hasCustomNameObjectFK()
-                    && !$this->hasPHPMethod('description')
+                    && !$this->hasPHPMethod($columnCheck)
+                    && !$this->hasAttributeFunction($columnCheck)
                 ) {
                     $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] column";
                     print("{$RED}WARNING$NC: $error\n");
@@ -410,17 +437,17 @@ class Table {
             // ------------------------------------ Pivot tables
             else if ($this->isPivotTable()) {
                 if ($this->hasColumn('id')) {
-                    throw new \Exception("Pivot table [$this->name] ($this->plural/$strPlural) ($this->singular/$strSingular) has id column");
+                    throw new Exception("Pivot table [$this->name] ($this->plural/$strPlural) ($this->singular/$strSingular) has id column");
                 }
                 if (count($this->customForeignIdColumns()) != 2) {
                     $customForeignIdColumns = implode(', ', array_keys($this->customForeignIdColumns()));
-                    throw new \Exception("Pivot table [$this->name] does not have 2 custom foreign id columns [$customForeignIdColumns]");
+                    throw new Exception("Pivot table [$this->name] does not have 2 custom foreign id columns [$customForeignIdColumns]");
                 }
             }
 
             foreach ($this->columns as &$column) {
                 if ($column->isForeignID() && count($column->foreignKeysFrom) == 0) 
-                    throw new \Exception("Custom Foreign ID column [$this->name.$column->name] has no FK");
+                    throw new Exception("Custom Foreign ID column [$this->name.$column->name] has no FK");
             }
 
             // ------------------------------------ Any tables
@@ -490,7 +517,7 @@ class Table {
         $this->triggers = $this->db->triggers($this);
     }
 
-    public function db()
+    public function db(): DB
     {
         return $this->db;
     }
@@ -543,7 +570,7 @@ class Table {
     // ------------------------------------------------ Table interrogation
     public function &getColumn(string $name): Column
     {
-        if (!isset($this->columns[$name])) throw new \Exception("Column $name does not exist on table $this->name");
+        if (!isset($this->columns[$name])) throw new Exception("Column $name does not exist on table $this->name");
         return $this->columns[$name];
     }
 
@@ -653,6 +680,11 @@ class Table {
     public function hasPHPMethod(string $method): bool
     {
         return (bool) $this->commentValue("methods.$method");
+    }
+
+    public function hasAttributeFunction(string $method): bool
+    {
+        return (bool) $this->commentValue("attribute-functions.$method");
     }
 
     public function dateColumns(): array
@@ -781,7 +813,7 @@ class Table {
             // 3 parts required!
             $subName = $this->subName();
         }
-        if (!$subName) throw new \Exception("Could not calculate model name for table [$this->name]");
+        if (!$subName) throw new Exception("Could not calculate model name for table [$this->name]");
 
         return Str::singular($subName);
     }
@@ -790,7 +822,7 @@ class Table {
     {
         // finance_invoices
         $relationName = strtolower($this->isModule() ? $this->moduleName() : $this->pluginName());
-        if (!$relationName) throw new \Exception("Table [$this->name] has no plugin-name during relation name construction");
+        if (!$relationName) throw new Exception("Table [$this->name] has no plugin-name during relation name construction");
         $subName      = $this->subName();
         if ($subName) $relationName = "{$relationName}_$subName";
         return $relationName;
@@ -831,7 +863,7 @@ class Table {
             if ($fromTableColumn != $otherColumn) {
                 if ($throughColumn) {
                     $customForeignIdColumns = implode(', ', array_keys($this->customForeignIdColumns()));
-                    throw new \Exception("Pivot Table [$this->name] has too many custom foreign ID columns [$customForeignIdColumns] when ignoring [$otherColumn->name]");
+                    throw new Exception("Pivot Table [$this->name] has too many custom foreign ID columns [$customForeignIdColumns] when ignoring [$otherColumn->name]");
                 }
                 $throughColumn = &$fromTableColumn;
                 if ($firstOnly) break;
@@ -839,10 +871,10 @@ class Table {
         }
 
         // Checks
-        if ($firstOnly  && !$this->isSemiPivotTable()) throw new \Exception("First only through column requested on non-semi-pivot table [$this->name] to [$otherColumn->name]");
-        if (!$firstOnly && !$this->isPivotTable())     throw new \Exception("Through column requested on non-pivot table [$this->name] to [$otherColumn->name]");
-        if ($throughColumn && !$throughColumn->isForeignID())          throw new \Exception("Through column [$this->name.$throughColumn->name] is not a foreign ID column");
-        if ($throughColumn && !count($throughColumn->foreignKeysFrom)) throw new \Exception("Through column [$this->name.$throughColumn->name] has no foreign keys from");
+        if ($firstOnly  && !$this->isSemiPivotTable()) throw new Exception("First only through column requested on non-semi-pivot table [$this->name] to [$otherColumn->name]");
+        if (!$firstOnly && !$this->isPivotTable())     throw new Exception("Through column requested on non-pivot table [$this->name] to [$otherColumn->name]");
+        if ($throughColumn && !$throughColumn->isForeignID())          throw new Exception("Through column [$this->name.$throughColumn->name] is not a foreign ID column");
+        if ($throughColumn && !count($throughColumn->foreignKeysFrom)) throw new Exception("Through column [$this->name.$throughColumn->name] has no foreign keys from");
 
         return $throughColumn;
     }
@@ -902,7 +934,7 @@ class Table {
             // It's our Acorn module
             // e.g. acorn_servers
         } else {
-            throw new \Exception("Not sure how to classify [$this->name]");
+            throw new Exception("Not sure how to classify [$this->name]");
         }
 
         return $plugin;
@@ -935,7 +967,7 @@ class Table {
             // 3 parts required!
             $subName = $this->subName();
         }
-        if (!$subName) throw new \Exception("Could not calculate model name for table [$this->name]");
+        if (!$subName) throw new Exception("Could not calculate model name for table [$this->name]");
         $singular  = Str::singular($subName);
         $modelName = Str::studly($singular);
         // print("$subName => $singular => $modelName\n");
@@ -954,7 +986,7 @@ class Table {
         } else {
             $subName = $this->subName();
         }
-        if (!$subName) throw new \Exception("Could not calculate controller name for table [$this->name]");
+        if (!$subName) throw new Exception("Could not calculate controller name for table [$this->name]");
         return Str::studly($subName);
     }
 

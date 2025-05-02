@@ -100,9 +100,13 @@ class WinterCMS extends Framework
         return (array_search($tableNameParts[0], self::WINTER_MODULES) !== FALSE);
     }
 
-    protected function runWinterCommand(string $command, ...$args): int
+    protected function runWinterCommand(string $command, int $indent = 2, ...$args): int
     {
-        print("artisan $command\n");
+        global $YELLOW, $RED, $NC;
+
+        $indentString = str_repeat(' ', $indent);
+        print("{$indentString}{$RED}artisan $command{$NC}\n");
+        
         $this->input  = new ArgvInput(array('', $command, ...$args));
         $this->status = $this->kernel->handle($this->input, $this->output);
 
@@ -151,10 +155,9 @@ class WinterCMS extends Framework
         $createdBy           = $this->createdByString();
 
         print("Plugin: $plugin->name\n");
-        print('  '); // Pre-pend the artisan output
-        $this->runWinterCommand('create:plugin', $plugin->dotClassName());
-        // Immediately stamp it as create-system so that fields() 
-        // include: 1to1 recognises it as native
+        $this->runWinterCommand('create:plugin', 2, $plugin->dotClassName());
+        // Immediately stamp it as create-system so that 
+        // fields() call below recognises this plugin as native
         $this->appendTofile(  $pluginFilePath, "\n// $createdBy");
 
         // --------------------------------------------- Plugin.php misc
@@ -177,7 +180,7 @@ class WinterCMS extends Framework
                 if ($otherPlugin instanceof Plugin) {
                     $fqn         = $otherPlugin->dotClassName();
                     if (!isset($requirePlugins[$fqn])) {
-                        print("  Adding Plugin \$require {$YELLOW}$fqn{$NC}\n");
+                        print("    Adding Plugin \$require {$YELLOW}$fqn{$NC}\n");
                         $requirePlugins[$fqn] = TRUE;
                     }
                 }
@@ -199,7 +202,7 @@ class WinterCMS extends Framework
                 if (file_exists($langFilePath)) {
                     if ($langName != 'en') print("  {$RED}LANG{$NC}: {$YELLOW}$langName{$NC} language file already exists\n");
                 } else {
-                    print("  {$GREEN}LANG{$NC}: Created {$YELLOW}$langName{$NC} language file\n");
+                    print("    {$GREEN}LANG{$NC}: Created {$YELLOW}$langName{$NC} language file\n");
                     copy($langEnPath, $langFilePath);
                 }
                 $this->arrayFileSet($langFilePath, 'plugin.description', $createdBy, FALSE);
@@ -488,7 +491,7 @@ class WinterCMS extends Framework
 
         // --------------------------------------------- Seeding
         // Note that this will seed also table comments that are not Models
-        $this->runWinterCommand('acorn:seed', $plugin->dotClassName());
+        $this->runWinterCommand('acorn:seed', 2, $plugin->dotClassName());
     }
 
     protected function writeReadme(Plugin &$plugin, string $contents) {
@@ -524,10 +527,9 @@ class WinterCMS extends Framework
 
         if ($plugin->pluginMenu !== FALSE) {
             if ($this->yamlFileValueExists($pluginYamlPath, 'navigation')) {
-                print("  Navigation already present for [$plugin->name]\n");
+                print("  {$YELLOW}WARNING{$NC}: Navigation already present for [{$YELLOW}$plugin->name{$NC}]\n");
             } else {
-                print("  Adding navigation\n");
-                print("  Adding navigation setup side-menu\n");
+                print("  Adding navigation, setup side-menu\n");
 
                 $sideMenu      = array();
                 $firstModelUrl = NULL;
@@ -539,23 +541,23 @@ class WinterCMS extends Framework
                             $modelFQN = $model->absoluteFullyQualifiedName();
                             $langSectionName = $model->langSectionName();
 
-                            print("  Adding setup side-menu entry for $name\n");
-                            print("    @$url\n");
+                            print("    +Side-menu entry [$name] @{$YELLOW}$url{$NC}");
                             if ($icon) {
                                 if (substr($icon, 0, 5) != 'icon-') $icon = "icon-$icon";
                             } else {
                                 $icon = $this->getNextIcon();
-                                print("    Auto-selected controller icon {$YELLOW}$icon{$NC}\n");
+                                print(" with auto-selected icon {$YELLOW}$icon{$NC}");
                             }
-
+                            
                             if ($controller->menuSplitter) {
                                 $sideMenu["_splitter_$name"] = array(
                                     'label' => 'splitter',
                                     'url'   => 'splitter',
                                     'icon'  => 'acorn-splitter',
                                 );
+                                print(", menu-splitter");
                             }
-
+                            
                             // CRUD Navigation item
                             $sideMenu[$name] = array(
                                 'label'   => "$translationDomain::lang.models.$langSectionName.label_plural",
@@ -564,6 +566,8 @@ class WinterCMS extends Framework
                                 'counter' => "$modelFQN::menuitemCount",
                             );
                             if (!$firstModelUrl) $firstModelUrl = $url;
+
+                            print("\n");
                         }
                     }
                 }
@@ -605,11 +609,10 @@ class WinterCMS extends Framework
             print("  {$RED}WARNING{$NC}: Model file [$modelFilePath] already exists. Leaving.\n");
         } else {
             print("Model: $model->name\n");
-            print('  '); // Pre-pend the artisan output
-            $this->runWinterCommand('create:model', $model->plugin->dotClassName(), $model->name);
+            $this->runWinterCommand('create:model', 2, $model->plugin->dotClassName(), $model->name);
 
             // Potentially rewrite $table because create:model will automatically plural it
-            $this->setPropertyInClassFile($modelFilePath, 'table', $model->table->fullyQualifiedName());
+            $this->setPropertyInClassFile($modelFilePath, 'table', $model->getTable()->fullyQualifiedName());
 
             // Views create read-only models
             if ($model->readOnly)
@@ -627,12 +630,12 @@ class WinterCMS extends Framework
 
             // Explicit plural name injection
             // Otherwise PathsHelper will get confused when making URLs and things
-            $plural = $model->table->plural;
+            $plural = $model->getTable()->plural;
             if ($plural) $this->setPropertyInClassFile($modelFilePath, 'namePlural', $plural, Framework::NEW_PROPERTY);
 
             // ----------------------------------------------------------------- Behaviours, Uses, Classes & inheritance
             // TODO: SoftDelete
-            $dateColumns = array_keys($model->table->dateColumns());
+            $dateColumns = array_keys($model->getTable()->dateColumns());
             $this->setPropertyInClassFile($modelFilePath, 'dates', $dateColumns, TRUE, 'protected');
             if (!count($dateColumns)) $this->setPropertyInClassFile($modelFilePath, 'timestamps', FALSE, FALSE);
 
@@ -669,7 +672,7 @@ class WinterCMS extends Framework
                 print("    Adding Trait HasUuids\n");
                 $model->traits['\\Illuminate\\Database\\Eloquent\\Concerns\\HasUuids'] = TRUE;
             }
-            if ($model->isSelfReferencingHierarchy()) 
+            if ($model->hasSelfReferencingRelations()) 
                 $model->traits['\\Winter\\Storm\\Database\\Traits\\NestedTree'] = TRUE;
 
             $this->writeFileUses(   $modelFilePath, $model->uses);
@@ -678,6 +681,16 @@ class WinterCMS extends Framework
             // Relax guarding
             // TODO: SECURITY: Relaxed guarding is ok?
             $this->setPropertyInClassFile($modelFilePath, 'guarded', array(), TRUE, 'protected');
+
+            // ---------------------------------------------------------------- Relations debug
+            if ($relations = $model->relations()) {
+                print("  Relations:\n");
+                foreach ($relations as $name => $relation) {
+                    $classParts = explode('\\', get_class($relation));
+                    $class      = end($classParts);
+                    print("    {$GREEN}$class{$NC}({$YELLOW}$name{$NC}): $relation\n");
+                }
+            }
 
             // ---------------------------------------------------------------- Model based action functions
             // Write the labels to lang, and the translationKeys to the YAML
@@ -739,8 +752,8 @@ PHP
             // This moves seeding: directives in to updates\seed.sql
             // and also appends any fn_acorn_*_seed_*() functions
             $seederPath = "$pluginDirectoryPath/updates/seed.sql";
-            if ($model->table->seedingOther) {
-                foreach ($model->table->seedingOther as $table => $rows) {
+            if ($model->getTable()->seedingOther) {
+                foreach ($model->getTable()->seedingOther as $table => $rows) {
                     $tableParts = explode('.', $table);
                     $isFQN      = (count($tableParts) > 1);
                     $schema     = ($isFQN ? $tableParts[0] : 'public');
@@ -783,15 +796,15 @@ PHP
                 }
             }
             
-            if ($model->table->seeding) {
-                $schema     = $model->table->schema;
-                $table      = $model->table->name;
+            if ($model->getTable()->seeding) {
+                $schema     = $model->getTable()->schema;
+                $table      = $model->getTable()->name;
 
                 print("  {$GREEN}SEEDING{$NC} for [$table]\n");
-                foreach ($model->table->seeding as $row) {
+                foreach ($model->getTable()->seeding as $row) {
                     $names  = array();
                     $values = array();
-                    foreach ($model->table->columns as &$column) {
+                    foreach ($model->getTable()->columns as &$column) {
                         if (!count($row)) break;
                         $value = array_shift($row);
 
@@ -804,7 +817,7 @@ PHP
                         array_push($names, $column->name);
                         array_push($values, $valueSQL);
                     }
-                    if ($model->table->hasColumn('created_by_user_id')) {
+                    if ($model->getTable()->hasColumn('created_by_user_id')) {
                         array_push($names, 'created_by_user_id');
                         array_push($values, 'fn_acorn_user_get_seed_user()');
                     }
@@ -883,22 +896,15 @@ PHP
                     'delete' => $relation->delete,
                 ), Framework::AND_FALSES);
             }
-            foreach ($model->relationsSelf() as $name => &$relation) {
-                if (isset($relations[$name]))    throw new Exception("Conflicting relations with [$name] on [$model->name]");
-                if (isset($relations['parent'])) throw new Exception("Only one parent relation allowed on [$model->name]");
-                $relations[$name]    = array($relation->to, 'key' => $relation->column->name, 'type' => $relation->type());
-                $relations['parent'] = array($relation->to, 'key' => $relation->column->name, 'type' => $relation->type());
-            }
             $this->setPropertyInClassFile($modelFilePath, 'belongsTo', $relations);
 
             // -------- hasManyDeep
             // 1-1 => 1-X && 1-1 => 1-1 => 1-X
             // Important also for form embedding:
             // 1-1 => 1-1 deep form embedding
-            // TODO: Move this up in to model->relationsHasManyDeep()
             $relations = array();
-            foreach ($model->relationsHasManyDeep() as $name => &$relation) {
-                $relations[$name]     = $this->removeEmpty(array(
+            foreach ($model->relationsHasManyDeep() as $name => $relation) {
+                $relations[$name] = $this->removeEmpty(array(
                     $relation->to, 
                     'throughRelations' => array_keys($relation->throughRelations), 
                     'containsLeaf'     => $relation->containsLeaf,
@@ -931,15 +937,11 @@ PHP
                 if (isset($relations[$name])) throw new Exception("Conflicting relations with [$name] on [$model->name]");
                 $relations[$name] = $this->removeEmpty(array(
                     $relation->pivotModel,
-                    'key'      => $relation->keyColumn->name,  // pivot.legalcase_id
+                    'key'      => $relation->keyColumn->name,  // pivot.user_group_id
                     'otherKey' => $relation->column->name,     // pivot.user_id
                     'global_scope' => ($relation->globalScope == 'from'),
                     'type'     => $relation->type()
                 ), Framework::AND_FALSES);
-            }
-            foreach ($model->relationsSelf() as $name => &$relation) {
-                if (isset($relations['children'])) throw new Exception("Only one children relation allowed on [$model->name]");
-                $relations['children'] = array($relation->to, 'key' => $relation->column->name, 'type' => $relation->type());
             }
             $this->setPropertyInClassFile($modelFilePath, 'hasMany', $relations);
 
@@ -950,7 +952,7 @@ PHP
                 $relations[$name] = $this->removeEmpty(array(
                     $relation->to,
                     'table'    => $relation->pivot->name,
-                    'key'      => $relation->keyColumn->name,  // pivot.legalcase_id
+                    'key'      => $relation->keyColumn->name,  // pivot.user_group_id
                     'otherKey' => $relation->column->name,     // pivot.user_id
                     'type'     => $relation->type(),
                     'global_scope' => ($relation->globalScope == 'from'),
@@ -964,7 +966,7 @@ PHP
                 $relations[$name] = $this->removeEmpty(array(
                     $relation->to,
                     'table'    => $relation->pivot->name,      // Semi-Pivot Model
-                    'key'      => $relation->keyColumn->name,  // pivot.legalcase_id
+                    'key'      => $relation->keyColumn->name,  // pivot.user_group_id
                     'otherKey' => $relation->column->name,     // pivot.user_id
                     'type'     => $relation->type(),
                     'global_scope' => ($relation->globalScope == 'from'),
@@ -986,10 +988,15 @@ PHP
             }
             $this->setPropertyInClassFile($modelFilePath, 'hasOne', $relations);
 
-            // ----------------------------------------------------------------- File Uploads
+            // ----------------------------------------------------------------- File Uploads $attachOne
+            // Model needs to state them in public $attachOne
             $attachments = array();
             foreach ($model->fields() as $name => &$field) {
                 if ($field->fieldType == 'fileupload') {
+                    if (isset($attachments[$name])) {
+                        $attachments_name = $attachments[$name];
+                        throw new Exception("Field [$name] fileupload already has an attachement class [$attachments_name]");
+                    }
                     $attachments[$name] = 'System\Models\File';
                 }
             }
@@ -1004,7 +1011,7 @@ PHP
             foreach ($model->attributeFunctions as $funcName => &$body) {
                 $funcNamePascal = Str::studly($funcName);
                 $type           = ($funcNamePascal == 'name' ? 'string' : 'mixed');
-                $signature      = "get{$funcNamePascal}Attribute(\$value)"; // Encapsulation...
+                $signature      = "get{$funcNamePascal}Attribute()";
                 print("  Injecting public {$YELLOW}$signature{$NC}() into [$model->name]\n");
                 $this->addMethod($modelFilePath, $signature, $body, $type);
             }
@@ -1026,7 +1033,7 @@ PHP
             // ----------------------------------------------------------------- Columns commenting in header
             $indent         = str_repeat(' ', 1*4);
             $commentHeader  = "$indent/* Generated Fields:\n";
-            foreach ($model->table->columns as $name => &$column) $commentHeader .= "$indent * $column\n";
+            foreach ($model->getTable()->columns as $name => &$column) $commentHeader .= "$indent * $column\n";
             $commentHeader .= "$indent */\n";
             $this->replaceInFile($modelFilePath, '/^{$/m', "{\n$commentHeader");
         } // Model exists
@@ -1043,122 +1050,135 @@ PHP
         $createdBy           = $this->createdByString();
         $extraTranslations   = array();
 
-        print("  Check/create [$fieldsPath], add fields:\n");
+        print("  Fields.yaml: Check/create [$fieldsPath]:\n");
         if (!is_dir($modelDirPath)) mkdir($modelDirPath, TRUE);
         $this->setFileContents($fieldsPath, "# $createdBy");
 
         // ---------------------------------------- Main fields.yaml
-        $indent = 1;
+        // fields(TRUE) call output
         $this->yamlFileUnSet($fieldsPath, 'fields.id');
-        foreach ($model->fields() as $name => &$field) {
-            print("      Add {$YELLOW}$name{$NC}($field->fieldType/$field->columnType): to {$YELLOW}fields.yaml{$NC}\n");
-            $dotPath = "fields.$field->fieldKey$field->fieldKeyQualifier";
-            if (!$field->include) {
-                if      ($field->tabLocation == 2) $dotPath = "secondaryTabs.$dotPath";
-                else if ($field->tabLocation == 3) $dotPath = "tertiaryTabs.$dotPath";
-                else if ($field->tab)              $dotPath = "tabs.$dotPath";
-            }
-            if (is_array($field->fieldOptions)) {
-                // options: can be in the format of translated codes:
-                // options:
-                //   G:
-                //     en: guilty
-                //     ku: suc
-                foreach ($field->fieldOptions as $code => $labels) {
-                    if (!is_numeric($code) 
-                        && is_array($labels)
-                    ) {
-                        // If we are using single letter codes, then try to use the english label instead
-                        $localTranslationKey = (strlen($code) == 1 && isset($labels['en']) ? strtolower($labels['en']) : $code);
-                        // Add these codes to extraTranslations
-                        $extraTranslations[$localTranslationKey] = $labels;
-                        $field->fieldOptions[$code] = $field->translationKey($localTranslationKey);
-                    }
-                }
-            }
-            $labelKey = ($field->explicitLabelKey ?: $field->translationKey());
-            $fieldTab = ($field->tab === 'INHERIT' ? $labelKey : $field->tab); // Can be NULL
-            $fieldDefinition = array(
-                '#'         => $field->yamlComment,
-                'label'     => $labelKey,
-                'type'      => $field->fieldType,
-                'path'      => $field->partial,
-                'hidden'    => $field->hidden,
-                'required'  => $field->required,
-                'default'   => $field->default,
-                'disabled'  => $field->disabled,
-                'readOnly'  => $field->readOnly,
-                'span'      => $field->span,
-                'cssClass'  => $field->cssClass(),
-                'comment'      => $field->fieldComment,
-                'commentHtml'  => ($field->commentHtml && $field->fieldComment),
-                'context'      => array_keys($field->contexts),
-                'tab'          => $fieldTab,
-
-                'options'      => $field->fieldOptions,      // Function call
-                'optionsModel' => $field->fieldOptionsModel, // Model name
-                'placeholder'  => $field->placeholder,
-                'hierarchical' => $field->hierarchical,
-                'relatedModel' => $field->relatedModel,      // Model name
-                'nameFrom'     => $field->nameFrom,
-                'dependsOn'    => array_keys($field->dependsOn),
-
-                // Extended info
-                'nested'       => ($field->nested    ?: NULL),
-                'nestLevel'    => ($field->nestLevel ?: NULL),
-
-                // MorphConfig.php
-                // Complex permissions
-                'permissionSettings' => $field->permissionSettings,
-                'permissions'        => $field->permissions,
-                // Dynamic include
-                'include'      => $field->include,          // Only include: 1to1
-                'includeModel' => $field->includeModel,     // Required for include
-                'includePath'  => $field->includePath,      // Not used
-                'includeContext' => $field->includeContext, // = exclude for QRCode
-            );
-            if ($field->fieldConfig) $fieldDefinition = array_merge($fieldDefinition, $field->fieldConfig);
-            $fieldDefinition = $this->removeEmpty($fieldDefinition, self::AND_FALSES); // Remove FALSE
-            if ($field->goto) $fieldDefinition['containerAttributes'] = array('goto-form-group-selection' => $field->goto);
-            $this->yamlFileSet($fieldsPath, $dotPath, $fieldDefinition);
-
-            // Tabs and icons
-            if ($field->tabLocation == 2) $this->yamlFileSet($fieldsPath, 'secondaryTabs.cssClass', 'primary-tabs', FALSE);
-            // TODO: Make tab icon configuarble
-            if ($icon = $field->icon) {
-                if (substr($icon, 0, 5) != 'icon-') $icon = "icon-$icon";
-                if      ($field->tabLocation == 2) $this->yamlFileSet($fieldsPath, 'secondaryTabs.icons', $icon, TRUE,  $labelKey);
-                else if ($field->tabLocation == 3) $this->yamlFileSet($fieldsPath, 'tertiaryTabs.icons',  $icon, TRUE,  $labelKey);
-                else if ($field->tab)              $this->yamlFileSet($fieldsPath, 'tabs.icons',          $icon, FALSE, $labelKey);
-            }
-
-            // -------------------------------------------------------- Special ButtonFields
-            foreach ($field->buttons as $buttonName => &$buttonField) {
-                if ($buttonField) { // Can be FALSE
-                    if ($buttonField->contexts) throw new Exception("Button field different contexts to main field is not supported yet on [$name]");
-                    $buttonDefinition = array(
-                        'name'         => $buttonField->name,
-                        'type'         => $buttonField->fieldType,
-                        'span'         => $buttonField->span,
-                        'cssClass'     => $buttonField->cssClass(),
-                        'context'      => array_keys($field->contexts),
-                        'dependsOn'    => array_keys($buttonField->dependsOn),
-                        'options'      => $buttonField->fieldOptions,      // Function call
-                        'optionsModel' => $buttonField->fieldOptionsModel, // Model name
-                        'path'         => $buttonField->partial,
-                        'comment'      => $buttonField->fieldComment,
-                        'commentHtml'  => ($buttonField->commentHtml && $buttonField->fieldComment),
-                        'controller'   => $buttonField->controller?->fullyQualifiedName(),
-                        'tab'          => $fieldTab, // Same tab as parent field
-                    );
-                    $buttonDefinition = $this->removeEmpty($buttonDefinition, TRUE);
-
-                    $dotPath = "fields.$buttonName";
+        foreach ($model->fields(Model::PRINT) as $name => &$field) {
+            $indentString = str_repeat(' ', ($field->nestLevel ?: 0) * 2);
+            $typeString   = ($field->fieldType ?: '<no field type>') . ' / ' . ($field->columnType ?: '<no column type>');
+            if ($field->canDisplayAsField()) {
+                print("    $indentString+{$YELLOW}$name{$NC}($typeString): to {$YELLOW}fields.yaml{$NC}\n");
+                $dotPath = "fields.$field->fieldKey$field->fieldKeyQualifier";
+                if (!$field->include) {
                     if      ($field->tabLocation == 2) $dotPath = "secondaryTabs.$dotPath";
                     else if ($field->tabLocation == 3) $dotPath = "tertiaryTabs.$dotPath";
                     else if ($field->tab)              $dotPath = "tabs.$dotPath";
-                    $this->yamlFileSet($fieldsPath, $dotPath, $buttonDefinition);
                 }
+                if (is_array($field->fieldOptions)) {
+                    // options: can be in the format of translated codes:
+                    // options:
+                    //   G:
+                    //     en: guilty
+                    //     ku: suc
+                    foreach ($field->fieldOptions as $code => $labels) {
+                        if (!is_numeric($code) 
+                            && is_array($labels)
+                        ) {
+                            // If we are using single letter codes, then try to use the english label instead
+                            $localTranslationKey = (strlen($code) == 1 && isset($labels['en']) ? strtolower($labels['en']) : $code);
+                            // Add these codes to extraTranslations
+                            $extraTranslations[$localTranslationKey] = $labels;
+                            $field->fieldOptions[$code] = $field->translationKey($localTranslationKey);
+                        }
+                    }
+                }
+                $labelKey = ($field->explicitLabelKey ?: $field->translationKey());
+                $fieldTab = ($field->tab === 'INHERIT' ? $labelKey : $field->tab); // Can be NULL
+                $fieldDefinition = array(
+                    '#'         => $field->yamlComment,
+                    'label'     => $labelKey,
+                    'type'      => $field->fieldType,
+                    'path'      => $field->partial,
+                    'hidden'    => $field->hidden,
+                    'required'  => $field->required,
+                    'default'   => $field->default,
+                    'disabled'  => $field->disabled,
+                    'readOnly'  => $field->readOnly,
+                    'span'      => $field->span,
+                    'cssClass'  => $field->cssClass(),
+                    'comment'      => $field->fieldComment,
+                    'commentHtml'  => ($field->commentHtml && $field->fieldComment),
+                    'context'      => array_keys($field->contexts),
+                    'tab'          => $fieldTab,
+
+                    // Pass through
+                    'preset' => $field->preset,
+                    'width'  => $field->width,
+                    'height' => $field->height,
+                    'size'   => $field->size,
+                    'emptyOption' => $field->emptyOption,
+                
+                    'options'      => $field->fieldOptions,      // Function call
+                    'optionsModel' => $field->fieldOptionsModel, // Model name
+                    'placeholder'  => $field->placeholder,
+                    'hierarchical' => $field->hierarchical,
+                    'relatedModel' => $field->relatedModel,      // Model name
+                    'nameFrom'     => $field->nameFrom,
+                    'dependsOn'    => array_keys($field->dependsOn),
+
+                    // Extended info
+                    'nested'       => ($field->nested    ?: NULL),
+                    'nestLevel'    => ($field->nestLevel ?: NULL),
+
+                    // MorphConfig.php
+                    // Complex permissions
+                    'permissionSettings' => $field->permissionSettings,
+                    'permissions'        => $field->permissions,
+                    // Dynamic include
+                    'include'      => $field->include,          // Only include: 1to1
+                    'includeModel' => $field->includeModel,     // Required for include
+                    'includePath'  => $field->includePath,      // Not used
+                    'includeContext' => $field->includeContext, // = exclude for QRCode
+                );
+                if ($field->fieldConfig) $fieldDefinition = array_merge($fieldDefinition, $field->fieldConfig);
+                $fieldDefinition = $this->removeEmpty($fieldDefinition, self::AND_FALSES); // Remove FALSE
+                if ($field->goto) $fieldDefinition['containerAttributes'] = array('goto-form-group-selection' => $field->goto);
+                $this->yamlFileSet($fieldsPath, $dotPath, $fieldDefinition);
+
+                // Tabs and icons
+                if ($field->tabLocation == 2) $this->yamlFileSet($fieldsPath, 'secondaryTabs.cssClass', 'primary-tabs', FALSE);
+                // TODO: Make tab icon configuarble
+                if ($icon = $field->icon) {
+                    if (substr($icon, 0, 5) != 'icon-') $icon = "icon-$icon";
+                    if      ($field->tabLocation == 2) $this->yamlFileSet($fieldsPath, 'secondaryTabs.icons', $icon, TRUE,  $labelKey);
+                    else if ($field->tabLocation == 3) $this->yamlFileSet($fieldsPath, 'tertiaryTabs.icons',  $icon, TRUE,  $labelKey);
+                    else if ($field->tab)              $this->yamlFileSet($fieldsPath, 'tabs.icons',          $icon, FALSE, $labelKey);
+                }
+
+                // -------------------------------------------------------- Special ButtonFields
+                foreach ($field->buttons as $buttonName => &$buttonField) {
+                    if ($buttonField) { // Can be FALSE
+                        if ($buttonField->contexts) throw new Exception("Button field different contexts to main field is not supported yet on [$name]");
+                        $buttonDefinition = array(
+                            'name'         => $buttonField->name,
+                            'type'         => $buttonField->fieldType,
+                            'span'         => $buttonField->span,
+                            'cssClass'     => $buttonField->cssClass(),
+                            'context'      => array_keys($field->contexts),
+                            'dependsOn'    => array_keys($buttonField->dependsOn),
+                            'options'      => $buttonField->fieldOptions,      // Function call
+                            'optionsModel' => $buttonField->fieldOptionsModel, // Model name
+                            'path'         => $buttonField->partial,
+                            'comment'      => $buttonField->fieldComment,
+                            'commentHtml'  => ($buttonField->commentHtml && $buttonField->fieldComment),
+                            'controller'   => $buttonField->controller?->fullyQualifiedName(),
+                            'tab'          => $fieldTab, // Same tab as parent field
+                        );
+                        $buttonDefinition = $this->removeEmpty($buttonDefinition, TRUE);
+
+                        $dotPath = "fields.$buttonName";
+                        if      ($field->tabLocation == 2) $dotPath = "secondaryTabs.$dotPath";
+                        else if ($field->tabLocation == 3) $dotPath = "tertiaryTabs.$dotPath";
+                        else if ($field->tab)              $dotPath = "tabs.$dotPath";
+                        $this->yamlFileSet($fieldsPath, $dotPath, $buttonDefinition);
+                    }
+                }
+            } else {
+                print("    $indentString{$YELLOW}WARNING{$NC}: Field [$name]($typeString) cannot display as {$YELLOW}field{$NC} because fieldType is blank\n");
             }
         }
 
@@ -1174,16 +1194,21 @@ PHP
             }
             if ($fieldRules) $allRules[$name] = implode('|', $fieldRules);
         }
-        if ($allRules) $this->setPropertyInClassFile($modelFilePath, 'rules', $allRules);
+        if ($allRules) {
+            print("  Rules:\n");
+            foreach ($allRules as $name => $rule) print("    $name => $rule\n");
+            $this->setPropertyInClassFile($modelFilePath, 'rules', $allRules);
+        }
 
         // ---------------------------------------- Lang
+        print("  LANG:\n");
         $langDirPath   = "$pluginDirectoryPath/lang";
         $langEnPath    = "$pluginDirectoryPath/lang/en/lang.php";
         $modelKey      = $model->localTranslationKey();
         foreach ($model->fields() as $name => &$field) {
             $localTranslationKey = $field->localTranslationKey();
             if ($field->isLocalTranslationKey() && !$field->isStandard() && !$this->arrayFileValueExists($langEnPath, $localTranslationKey)) {
-                print("      Add {$YELLOW}$localTranslationKey{$NC} to {$YELLOW}lang/*{$NC} for {$YELLOW}$name{$NC}\n");
+                print("    Add {$YELLOW}$localTranslationKey{$NC} to {$YELLOW}lang/*{$NC} for {$YELLOW}$name{$NC}\n");
                 // At least set the english label programmatically
                 // during development, and translation file generation
                 if (!$field->labels || !isset($field->labels['en']))
@@ -1193,7 +1218,8 @@ PHP
                 if ($field->labels) {
                     foreach ($field->labels as $langName => &$translation) {
                         $langFilePath = "$langDirPath/$langName/lang.php";
-                        if (!file_exists($langFilePath)) throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
+                        if (!file_exists($langFilePath)) 
+                            throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
                         $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
                     }
                 }
@@ -1201,22 +1227,24 @@ PHP
 
             if ($field->extraTranslations) {
                 foreach ($field->extraTranslations as $code => $labels) {
-                    print("      Add {$YELLOW}$code{$NC} to {$YELLOW}lang/*{$NC} for {$YELLOW}$name{$NC}\n");
+                    print("    Add {$YELLOW}$code{$NC} to {$YELLOW}lang/*{$NC} for {$YELLOW}$name{$NC}\n");
                     $localTranslationKey = "$modelKey.$code";
                     foreach ($labels as $langName => &$translation) {
                         $langFilePath = "$langDirPath/$langName/lang.php";
-                        if (!file_exists($langFilePath)) throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
+                        if (!file_exists($langFilePath)) 
+                            throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
                         $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
                     }
                 }
             }
         }
         foreach ($extraTranslations as $code => $labels) {
-            print("      Add {$YELLOW}$code{$NC} to {$YELLOW}lang/*{$NC}\n");
+            print("    Add {$YELLOW}$code{$NC} to {$YELLOW}lang/*{$NC}\n");
             $localTranslationKey = "$modelKey.$code";
             foreach ($labels as $langName => &$translation) {
                 $langFilePath = "$langDirPath/$langName/lang.php";
-                if (!file_exists($langFilePath)) throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
+                if (!file_exists($langFilePath)) 
+                    throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
                 $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
             }
         }
@@ -1239,8 +1267,7 @@ PHP
             print("  {$RED}WARNING{$NC}: Controller file [$controllerFilePath] already exists. Leaving.\n");
         } else {
             print("Controller: $controller->name\n");
-            print('  '); // Pre-pend the artisan output
-            $this->runWinterCommand('create:controller', $controller->model->plugin->dotClassName(), $controller->name);
+            $this->runWinterCommand('create:controller', 2, $controller->model->plugin->dotClassName(), $controller->name);
 
             // Inheritance
             $author = $controller->author();
@@ -1257,10 +1284,10 @@ PHP
 
             // Explicit plural name injection
             // Otherwise PathsHelper will get confused when making URLs and things
-            $plural = $controller->model->table->plural;
+            $plural = $controller->model->getTable()->plural;
             if ($plural) $this->setPropertyInClassFile($controllerFilePath, 'namePlural', $plural, Framework::NEW_PROPERTY);
 
-            if ($controller->model->isSelfReferencingHierarchy()) 
+            if ($controller->model->hasSelfReferencingRelations()) 
                 $this->appendToFile("$controllerDirPath/config_list.yaml", "showTree: true");
 
             // -------------------------------- Filters
@@ -1359,7 +1386,7 @@ PHP
                     'view' => array(
                         'list' => "\$$relationModelDirPath/columns.yaml",
                         'toolbarButtons' => implode('|', array_keys($rlButtons)),
-                        'showCheckboxes' => true,
+                        'showCheckboxes' => !$field->readOnly,
                         'recordsPerPage' => $field->recordsPerPage, // Can be false
                     ),
                     'manage' => array(
@@ -1405,7 +1432,7 @@ PHP
         $columnsPath         = "$modelDirPath/columns.yaml";
         $createdBy           = $this->createdByString();
 
-        print("  Check/create [$columnsPath], add columns:\n");
+        print("  Columns.yaml: Check/create [$columnsPath]:\n");
         if (!is_dir($modelDirPath)) mkdir($modelDirPath, TRUE);
         $this->setFileContents($columnsPath, "# $createdBy");
 
@@ -1417,12 +1444,16 @@ PHP
         $this->yamlFileUnSet($columnsPath, 'columns.updated_at');
 
         foreach ($model->fields() as $name => &$field) {
+            $indentString = str_repeat(' ', ($field->nestLevel ?: 0) * 2);
+            $typeString   = ($field->fieldType ?: '<no field type>') . ' / ' . ($field->columnType ?: '<no column type>');
             if ($field->canDisplayAsColumn()) {
                 // Columns.yaml checks
-                if ($field->sqlSelect && $field->valueFrom)              throw new Exception("select: and valueFrom: are mutually exclusive on [$field->name]");
-                if ($field->relation  && strstr($field->columnKey, '[')) throw new Exception("relation: and nesting are mutually exclusive on [$field->name]");
+                if ($field->sqlSelect && $field->valueFrom)              
+                    throw new Exception("select: and valueFrom: are mutually exclusive on [$field->name]");
+                if ($field->relation  && strstr($field->columnKey, '[')) 
+                    throw new Exception("relation: and nesting are mutually exclusive on [$field->name]");
 
-                print("      Add {$YELLOW}$name{$NC}($field->fieldType/$field->columnType): to {$YELLOW}columns.yaml{$NC}\n");
+                print("    $indentString+{$YELLOW}$name{$NC}($typeString): to {$YELLOW}columns.yaml{$NC}\n");
                 $labelKey = ($field->explicitLabelKey ?: $field->translationKey());
                 $columnDefinition = array(
                     '#'          => $field->yamlComment,
@@ -1451,6 +1482,8 @@ PHP
                 if ($field->columnConfig) $columnDefinition = array_merge($columnDefinition, $field->columnConfig);
                 $columnDefinition = $this->removeEmpty($columnDefinition); // We do not remove falses
                 $this->yamlFileSet($columnsPath, "columns.$field->columnKey", $columnDefinition);
+            } else {
+                print("    $indentString{$YELLOW}WARNING{$NC}: Field [$name]($typeString) cannot display as {$YELLOW}column{$NC} because columnType is blank\n");
             }
         }
     }
