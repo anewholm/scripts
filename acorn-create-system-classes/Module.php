@@ -58,7 +58,7 @@ class Module {
         return $this->name;
     }
 
-    public function dotName()
+    public function dotName(): string
     {
         return strtolower($this->name);
     }

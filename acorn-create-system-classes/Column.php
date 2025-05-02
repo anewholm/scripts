@@ -405,25 +405,18 @@ class Column {
         return ($this->is_generated != 'NEVER');
     }
 
+    public function hasParentInName(): bool
+    {
+        return (strstr($this->name, 'parent_') !== FALSE);
+    }
+
     public function relationName(bool $plural = self::SINGULAR): string
     {
         // TODO: This should be static Relation::nameFromColumn(Column $column)
-        if ($this->isTheIdColumn()) throw new \Exception("Relation name not possible for ID columns");
+        if ($this->isTheIdColumn()) 
+            throw new \Exception("Relation name not possible for ID columns");
         $fieldName = $this->nameWithoutId();
         return ($plural ? Str::plural($fieldName) : $fieldName);
-    }
-
-    public function fromRelationName(bool $plural = self::SINGULAR): string
-    {
-        // TODO: This should be static Relation::fromNameFromColumn(Column $column)
-        // When a relation is from this column to an id
-        // e.g. 1fromX justice.id <= civil.legalcase_id
-        // where we cannot use the Field that the from relation is attached to, ID
-        // so we use civil_legalcases_legalcase
-        if ($this->isTheIdColumn()) throw new \Exception("From relation name not possible for ID columns");
-        $tableRelationName = $this->table->relationName(); // civil_legalcases
-        $relationName      = $this->relationName($plural); // legalcase[s]
-        return "{$tableRelationName}_$relationName";
     }
 
     public function fullyQualifiedName(bool $includeSchema = self::INCLUDE_SCHEMA): string

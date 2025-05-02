@@ -1235,7 +1235,8 @@ CREATE TABLE public.acorn_exam_exam_materials (
     updated_at_event_id uuid,
     created_by_user_id uuid NOT NULL,
     updated_by_user_id uuid,
-    server_id uuid NOT NULL
+    server_id uuid NOT NULL,
+    weight double precision
 );
 
 
@@ -1246,12 +1247,12 @@ ALTER TABLE public.acorn_exam_exam_materials OWNER TO university;
 --
 
 COMMENT ON TABLE public.acorn_exam_exam_materials IS 'menu: false
-methods:
+attribute-functions:
   name: return $this->exam->name . ''::'' . $this->course_material->name;
 labels:
-  en: Exam
+  en: Material Exam
 labels-plural:
-  en: Exams';
+  en: Material Exams';
 
 
 --
@@ -1321,8 +1322,12 @@ ALTER TABLE public.acorn_exam_interview_students OWNER TO university;
 --
 
 COMMENT ON TABLE public.acorn_exam_interview_students IS 'menu: false
-methods:
-  name: return $this->interview->name;';
+attribute-functions:
+  name: return $this->interview->name;
+labels:
+  en: Student Interview
+labels-plural:
+  en: Student Interviews';
 
 
 --
@@ -1375,8 +1380,8 @@ ALTER TABLE public.acorn_exam_scores OWNER TO university;
 --
 
 COMMENT ON TABLE public.acorn_exam_scores IS 'order: 35
-methods:
-  name: return $this->exam_material->name();';
+attribute-functions:
+  name: return $this->exam_material->name;';
 
 
 --
@@ -1466,9 +1471,9 @@ COMMENT ON TABLE public.acorn_university_entities IS 'menu: false
 order: -100
 seeding-other:
   acorn_user_user_groups:
-    - [''cae7ba7c-1b63-11f0-8a05-c36be60d3d46'', ''Rojava'']
-    - [''f2c7a61a-1b63-11f0-9899-2b70d1861dd4'', ''Kobani'']
-    - [''f334763c-1b63-11f0-aab4-4f7e5f7e30cb'', ''Jineologi'']
+    - [''cae7ba7c-1b63-11f0-8a05-c36be60d3d46'', ''Rojava'', ''ROJ'', NULL, NULL, NULL, NULL, 0, 0, 0]
+    - [''f2c7a61a-1b63-11f0-9899-2b70d1861dd4'', ''Kobani'', ''KOB'', NULL, NULL, NULL, NULL, 0, 0, 0]
+    - [''f334763c-1b63-11f0-aab4-4f7e5f7e30cb'', ''Jineologi'', ''JIN'', NULL, NULL, NULL, ''cae7ba7c-1b63-11f0-8a05-c36be60d3d46'', 0, 0, 1]
 seeding:
   - [''e985ddc6-1b5c-11f0-9787-2b6b92ddc057'', ''cae7ba7c-1b63-11f0-8a05-c36be60d3d46'']
   - [''f4c3a7cc-1b5c-11f0-8158-d7027851c1cd'', ''f2c7a61a-1b63-11f0-9899-2b70d1861dd4'']
@@ -1603,9 +1608,9 @@ CREATE TABLE public.acorn_user_user_groups (
     created_at timestamp(0) without time zone,
     updated_at timestamp(0) without time zone,
     parent_user_group_id uuid,
-    nest_left integer,
-    nest_right integer,
-    nest_depth integer,
+    nest_left integer DEFAULT 0 NOT NULL,
+    nest_right integer DEFAULT 0 NOT NULL,
+    nest_depth integer DEFAULT 0 NOT NULL,
     image character varying(1024),
     colour character varying(1024),
     type_id uuid,
@@ -2310,7 +2315,8 @@ CREATE TABLE public.acorn_university_course_materials (
     updated_at_event_id uuid,
     created_by_user_id uuid NOT NULL,
     updated_by_user_id uuid,
-    server_id uuid NOT NULL
+    server_id uuid NOT NULL,
+    weight double precision
 );
 
 
@@ -2320,8 +2326,29 @@ ALTER TABLE public.acorn_university_course_materials OWNER TO university;
 -- Name: TABLE acorn_university_course_materials; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_university_course_materials IS 'methods:
-  name: return $this->course->entity_user_group->name . ''::'' . $this->material->name;';
+COMMENT ON TABLE public.acorn_university_course_materials IS 'attribute-functions:
+  name: return $this->course->entity->user_group->name . ''::'' . $this->material->name;';
+
+
+--
+-- Name: COLUMN acorn_university_course_materials.minimum; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_materials.minimum IS 'list-editable: true';
+
+
+--
+-- Name: COLUMN acorn_university_course_materials.maximum; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_materials.maximum IS 'list-editable: true';
+
+
+--
+-- Name: COLUMN acorn_university_course_materials.weight; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_materials.weight IS 'list-editable: true';
 
 
 --
@@ -2545,6 +2572,18 @@ CREATE TABLE public.acorn_user_mail_blockers (
 
 
 ALTER TABLE public.acorn_user_mail_blockers OWNER TO university;
+
+--
+-- Name: acorn_user_role_user; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_user_role_user (
+    user_id uuid NOT NULL,
+    role_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.acorn_user_role_user OWNER TO university;
 
 --
 -- Name: acorn_user_roles; Type: TABLE; Schema: public; Owner: university
@@ -4148,6 +4187,7 @@ f3861664-97bb-469d-a47f-bd5082c8dcda	Exam Exam Materials	\N	f	#333	\N	f	140984	f
 9f4415a1-7bf9-4af5-a154-1b999a029baf	Exam Scores	\N	f	#333	\N	f	143542	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
 8c604e8e-b860-4bfd-898a-461703b57ff4	Exam Interviews	\N	f	#333	\N	f	148386	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
 d4b30352-82e8-4c50-b0ef-dcb2dc2b9c9b	University Course Materials	\N	f	#333	\N	f	148335	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
+f12691d2-5fbc-46ca-bb43-598a131893d1	University Hierarchies	\N	f	#333	\N	f	141168	f3bc49bc-eac7-11ef-9e4a-1740a039dada	2025-04-03 08:43:15	\N
 \.
 
 
@@ -4179,7 +4219,7 @@ COPY public.acorn_exam_calculations (id, name, description, result_expression, c
 -- Data for Name: acorn_exam_exam_materials; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acorn_exam_exam_materials (id, exam_id, course_material_id, required, minimum, maximum, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_exam_exam_materials (id, exam_id, course_material_id, required, minimum, maximum, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id, weight) FROM stdin;
 \.
 
 
@@ -4395,7 +4435,7 @@ cf9c9fa5-349c-4b42-a4af-ffac2a7c98bc	laptop	\N	\N	2025-04-03 08:42:57	\N
 -- Data for Name: acorn_university_course_materials; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acorn_university_course_materials (id, course_id, material_id, required, minimum, maximum, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_university_course_materials (id, course_id, material_id, required, minimum, maximum, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id, weight) FROM stdin;
 \.
 
 
@@ -4518,6 +4558,7 @@ COPY public.acorn_university_years (id, name, start, "end", current, description
 --
 
 COPY public.acorn_user_language_user (user_id, language_id) FROM stdin;
+9ea61aa6-e680-484d-9d30-aba185c5b329	9eaa5c43-db07-4597-ac8c-156253e84376
 \.
 
 
@@ -4536,6 +4577,14 @@ COPY public.acorn_user_languages (id, name) FROM stdin;
 --
 
 COPY public.acorn_user_mail_blockers (id, email, template, user_id, created_at, updated_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: acorn_user_role_user; Type: TABLE DATA; Schema: public; Owner: university
+--
+
+COPY public.acorn_user_role_user (user_id, role_id) FROM stdin;
 \.
 
 
@@ -4563,6 +4612,8 @@ COPY public.acorn_user_throttle (id, user_id, ip_address, attempts, last_attempt
 
 COPY public.acorn_user_user_group (user_id, user_group_id) FROM stdin;
 9ea61ac5-d211-4e52-86f5-10c6d4dbe688	cae7ba7c-1b63-11f0-8a05-c36be60d3d46
+9ea61aa6-e680-484d-9d30-aba185c5b329	cae7ba7c-1b63-11f0-8a05-c36be60d3d46
+9ea61aa6-e680-484d-9d30-aba185c5b329	f2c7a61a-1b63-11f0-9899-2b70d1861dd4
 \.
 
 
@@ -4571,6 +4622,7 @@ COPY public.acorn_user_user_group (user_id, user_group_id) FROM stdin;
 --
 
 COPY public.acorn_user_user_group_types (id, name, description, colour, image, created_at, updated_at) FROM stdin;
+9ec2de06-399d-4bc4-8cb0-e641a39aef1d	Test	\N	\N		\N	\N
 \.
 
 
@@ -4579,12 +4631,13 @@ COPY public.acorn_user_user_group_types (id, name, description, colour, image, c
 --
 
 COPY public.acorn_user_user_groups (id, name, code, description, created_at, updated_at, parent_user_group_id, nest_left, nest_right, nest_depth, image, colour, type_id, location_id) FROM stdin;
-9e95e450-97ee-40a8-a55e-4eb76beaf9ae	Guest	guest	Default group for guest users.	2025-04-03 07:42:58	2025-04-03 07:42:58	\N	1	2	0	\N	\N	\N	\N
-9e95e450-a158-42c4-a1ea-fddb46b67e7e	Registered	registered	Default group for registered users.	2025-04-03 07:42:58	2025-04-07 07:26:58	\N	3	6	0	\N	\N	\N	\N
-9e95fdfa-b625-41d9-8f01-15d71f6b7552	weeee	weeee		2025-04-03 08:54:43	2025-04-07 07:26:58	9e95e450-a158-42c4-a1ea-fddb46b67e7e	4	5	1		\N	\N	9e95fe34-4596-4431-865c-a5a8d2a638c4
-cae7ba7c-1b63-11f0-8a05-c36be60d3d46	Rojava	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-f2c7a61a-1b63-11f0-9899-2b70d1861dd4	Kobani	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-f334763c-1b63-11f0-aab4-4f7e5f7e30cb	Jineologi	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+9e95e450-97ee-40a8-a55e-4eb76beaf9ae	Guest	guest	Default group for guest users.	2025-04-03 07:42:58	2025-04-25 16:48:45	\N	0	1	0	\N	\N	\N	\N
+9e95fdfa-b625-41d9-8f01-15d71f6b7552	weeee	weeee		2025-04-03 08:54:43	2025-04-25 16:48:45	9e95e450-a158-42c4-a1ea-fddb46b67e7e	3	4	1		\N	\N	9e95fe34-4596-4431-865c-a5a8d2a638c4
+9e95e450-a158-42c4-a1ea-fddb46b67e7e	Registered	registered	Default group for registered users.	2025-04-03 07:42:58	2025-04-28 11:25:27	\N	2	8	0	\N	\N	\N	\N
+f2c7a61a-1b63-11f0-9899-2b70d1861dd4	Kobani	\N	\N	\N	2025-04-28 11:25:27	\N	7	7	0	\N	\N	\N	\N
+9ec87e7c-cb27-4774-a024-6f4df6b3c61e	Jineologi2	jineologi2		2025-04-28 11:25:27	2025-04-28 11:25:27	cae7ba7c-1b63-11f0-8a05-c36be60d3d46	5	6	1		#2ECC71	9ec2de06-399d-4bc4-8cb0-e641a39aef1d	\N
+cae7ba7c-1b63-11f0-8a05-c36be60d3d46	Rojava	ROJ	test	\N	2025-05-02 06:57:19	9e95e450-a158-42c4-a1ea-fddb46b67e7e	7	7	3	/logo.png	#F1C40F	9ec2de06-399d-4bc4-8cb0-e641a39aef1d	9e95fe34-4596-4431-865c-a5a8d2a638c4
+f334763c-1b63-11f0-aab4-4f7e5f7e30cb	Jineologi	JIN		\N	2025-05-02 07:08:19	cae7ba7c-1b63-11f0-8a05-c36be60d3d46	7	7	3		#34495E	\N	\N
 \.
 
 
@@ -4600,8 +4653,8 @@ COPY public.acorn_user_users (id, name, email, password, activation_code, persis
 a11d6172-6565-4195-a62e-038358aa9fa9	seeder	\N	\N	\N	\N	\N	\N	f	t	\N	\N	\N	\N	\N	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 9e95e47b-46dc-492d-8ffa-1954bc3f1611	sz	sz@nowhere.org	$2y$10$lta6VXUFah18WoaE0L6/2eNtXxV1pJ14tG4juSxDF5QOlGq6C86zu	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:26	2025-04-03 07:43:26	sz	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	1971-08-11 00:00:00
 9e95e47c-db72-48ec-8c0c-908592ebf59c	Demo	demo@nowhere.org	$2y$10$fXtS/tknV8gTiWiKWD4NEuYaGRQ.aMaTKLjYUlko6bkH7V2JZq7Oa	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:27	2025-04-03 07:43:27	demo	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2001-10-10 00:00:00
-9ea61aa6-e680-484d-9d30-aba185c5b329	Me		\N	\N	\N	\N	\N	f	f	\N	\N	2025-04-11 09:08:09	2025-04-11 09:08:09		1	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	1971-08-11 00:00:00
 9ea61ac5-d211-4e52-86f5-10c6d4dbe688	You	a	\N	\N	\N	\N	\N	f	f	\N	\N	2025-04-11 09:08:29	2025-04-11 09:08:29	a	1	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2001-10-10 00:00:00
+9ea61aa6-e680-484d-9d30-aba185c5b329	Me		\N	\N	\N	\N	\N	f	f	\N	\N	2025-04-11 09:08:09	2025-04-25 10:07:44		1to1	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	1971-08-11 00:00:00
 \.
 
 
@@ -4638,9 +4691,12 @@ COPY public.backend_user_preferences (id, user_id, namespace, "group", item, val
 3	6	backend	backend	preferences	{"locale":"ku","fallback_locale":"en","timezone":"Europe\\/Istanbul","icon_location":"inline","menu_location":"top"}
 1	1	backend	backend	preferences	{"locale":"en","fallback_locale":"en","timezone":"Europe\\/Istanbul","icon_location":"inline","menu_location":"top","dark_mode":"light","editor_theme":"twilight","editor_word_wrap":"off","editor_font_size":"11","editor_tab_size":"2","editor_code_folding":"manual","editor_autocompletion":"manual","editor_show_gutter":"0","editor_highlight_active_line":"0","editor_use_hard_tabs":"0","editor_display_indent_guides":"0","editor_show_invisibles":"0","editor_show_print_margin":"0","editor_auto_closing":"0","editor_enable_snippets":"0","user_id":1}
 4	1	acorn_university	students	lists-relationexamresultsstudentviewlist	{"visible":["student","exam","calculation","entity","expression","expression_type","needs_evaluate","result","_actions"],"order":["id","student","exam","calculation","entity","expression","expression_type","needs_evaluate","result","_qrcode","_actions"],"per_page":"10"}
-7	1	acorn_university	universities	lists	{"visible":["name","_actions","entity_university_hierarchies_entity","entity_exam_tokens_entity","entity_exam_results_entity","entity[university_hierarchies_entity][name]","entity[exam_tokens_entity][name]","entity[exam_results_entity][name]"],"order":["id","name","_qrcode","_actions","entity_university_hierarchies_entity","entity_exam_tokens_entity","entity_exam_results_entity","entity[university_hierarchies_entity][name]","entity[exam_tokens_entity][name]","entity[exam_results_entity][name]"],"per_page":"20"}
 5	1	acorn_exam	exams	lists-relationexamresultsexamviewlist	{"visible":["id","student","calculation","entity","expression","expression_type","needs_evaluate","result","_actions"],"order":["id","student","exam","calculation","entity","expression","expression_type","needs_evaluate","result","_qrcode","_actions"],"per_page":"10"}
+10	1	acorn_university	courses	lists-relationuniversitycoursematerialscourseviewlist	{"visible":["course","material","required","minimum","maximum","weight","exam_exam_materials__course_material","_actions"],"order":["id","course","material","required","minimum","maximum","created_at_event","updated_at_event","created_by_user","updated_by_user","server","weight","exam_exam_materials__course_material","_qrcode","_actions"],"per_page":"10"}
 6	1	acorn_exam	tokens	lists	{"visible":["name","student","exam","calculation","entity","expression","expression_type","needs_evaluate","_actions"],"order":["id","name","student","exam","calculation","entity","expression","expression_type","needs_evaluate","_qrcode","_actions"],"per_page":"20"}
+7	1	acorn_university	universities	lists	{"visible":["name","_actions","code","colour","image","description","parent_user_group"],"order":["id","name","_qrcode","_actions","code","colour","image","description","parent_user_group"],"per_page":"20"}
+8	1	acorn_university	courses	lists	{"visible":["name","code","colour","parent_user_group","description","exam_exams__course","university_course_materials__course","_actions"],"order":["id","name","code","colour","image","parent_user_group","description","exam_exams__course","university_course_materials__course","_qrcode","_actions"],"per_page":"20"}
+9	1	acorn_university	students	lists	{"visible":["name","surname","email","username","created_ip_address","code","exam_scores__student","exam_interview_students__student","university_projects__owner_student","exam_tokens__student","exam_results__student","_actions"],"order":["id","name","surname","email","username","created_ip_address","last_ip_address","code","exam_scores__student","exam_interview_students__student","university_projects__owner_student","exam_tokens__student","exam_results__student","_qrcode","_actions"],"per_page":"20"}
 \.
 
 
@@ -4661,6 +4717,7 @@ COPY public.backend_user_roles (id, name, code, description, permissions, is_sys
 COPY public.backend_user_throttle (id, user_id, ip_address, attempts, last_attempt_at, is_suspended, suspended_at, is_banned, banned_at) FROM stdin;
 1	1	127.0.0.1	0	\N	f	\N	f	\N
 2	5	\N	0	\N	f	\N	f	\N
+3	4	\N	0	\N	f	\N	f	\N
 \.
 
 
@@ -6295,6 +6352,18 @@ COPY public.winter_translate_attributes (id, locale, model_id, model_type, attri
 62	ku	f5b2f310-2118-4a93-b7b9-2ae9c7d7925a	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
 63	ar	9eb2644c-d933-45f7-8d7b-53305a08d026	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
 64	ku	9eb2644c-d933-45f7-8d7b-53305a08d026	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+65	ar	cae7ba7c-1b63-11f0-8a05-c36be60d3d46	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
+66	ku	cae7ba7c-1b63-11f0-8a05-c36be60d3d46	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
+75	ar	f334763c-1b63-11f0-aab4-4f7e5f7e30cb	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
+76	ku	f334763c-1b63-11f0-aab4-4f7e5f7e30cb	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
+77	ar	9ec2de06-399d-4bc4-8cb0-e641a39aef1d	Acorn\\User\\Models\\UserGroupType	{"name":""}
+78	ku	9ec2de06-399d-4bc4-8cb0-e641a39aef1d	Acorn\\User\\Models\\UserGroupType	{"name":""}
+79	ar	9ec87e7c-cb27-4774-a024-6f4df6b3c61e	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
+80	ku	9ec87e7c-cb27-4774-a024-6f4df6b3c61e	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
+82	ku	69e907ec-edce-4e2a-ba01-31628baf447d	Acorn\\Exam\\Models\\Interview	{"name":"","description":""}
+81	ar	69e907ec-edce-4e2a-ba01-31628baf447d	Acorn\\Exam\\Models\\Interview	{"name":"Arab","description":""}
+83	ar	9ecef4a3-734e-4193-9e2e-f2b04c46349b	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
+84	ku	9ecef4a3-734e-4193-9e2e-f2b04c46349b	Acorn\\Exam\\Models\\Exam	{"name":"","description":""}
 \.
 
 
@@ -6350,7 +6419,7 @@ SELECT pg_catalog.setval('public.backend_user_groups_id_seq', 1, true);
 -- Name: backend_user_preferences_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.backend_user_preferences_id_seq', 7, true);
+SELECT pg_catalog.setval('public.backend_user_preferences_id_seq', 10, true);
 
 
 --
@@ -6364,7 +6433,7 @@ SELECT pg_catalog.setval('public.backend_user_roles_id_seq', 2, true);
 -- Name: backend_user_throttle_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.backend_user_throttle_id_seq', 2, true);
+SELECT pg_catalog.setval('public.backend_user_throttle_id_seq', 3, true);
 
 
 --
@@ -6441,7 +6510,7 @@ SELECT pg_catalog.setval('public.rainlab_location_states_id_seq', 720, true);
 -- Name: rainlab_translate_attributes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 64, true);
+SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 84, true);
 
 
 --
@@ -6469,7 +6538,7 @@ SELECT pg_catalog.setval('public.rainlab_translate_messages_id_seq', 1, false);
 -- Name: system_event_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.system_event_logs_id_seq', 340, true);
+SELECT pg_catalog.setval('public.system_event_logs_id_seq', 455, true);
 
 
 --
@@ -6908,6 +6977,14 @@ ALTER TABLE ONLY public.acorn_user_languages
 
 ALTER TABLE ONLY public.acorn_user_languages
     ADD CONSTRAINT acorn_user_languages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: acorn_user_role_user acorn_user_role_user_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_user_role_user
+    ADD CONSTRAINT acorn_user_role_user_pkey PRIMARY KEY (user_id, role_id);
 
 
 --
@@ -9061,6 +9138,14 @@ ALTER TABLE ONLY public.acorn_location_types
 
 
 --
+-- Name: acorn_user_role_user role_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_user_role_user
+    ADD CONSTRAINT role_id FOREIGN KEY (role_id) REFERENCES public.acorn_user_roles(id);
+
+
+--
 -- Name: acorn_location_locations server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -9552,6 +9637,14 @@ ALTER TABLE ONLY public.acorn_university_teachers
 --
 
 COMMENT ON CONSTRAINT user_id ON public.acorn_university_teachers IS 'type: leaf';
+
+
+--
+-- Name: acorn_user_role_user user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_user_role_user
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id);
 
 
 --

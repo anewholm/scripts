@@ -670,8 +670,8 @@ FUNCTION
             $this->removeDir($pluginDirectoryPath, FALSE, FALSE);
         }
 
+        ob_start(); // README.md content
         // Abstracted MVC creates
-        ob_start();
         $this->createPlugin($plugin);
         $this->createMenus($plugin);
         foreach ($plugin->models as $model) {
@@ -682,11 +682,12 @@ FUNCTION
                 $this->createController($controller);
             }
         }
-        ob_end_flush();
+        // README.md content
+        $this->writeReadme($plugin, ob_get_contents());
+        ob_end_flush(); 
 
         $this->writeOutFiles();
         $this->runChecks($plugin);
-        $this->writeReadme($plugin, ob_get_contents());
 
         /* TODO: GIT
         if [ -d .git ]; then

@@ -20,7 +20,7 @@ class DB {
         $this->comment    = $this->databaseComment();
         foreach (\Spyc::YAMLLoadString($this->comment) as $name => $value) {
             $nameCamel = Str::camel($name);
-            if (!property_exists($this, $nameCamel)) throw new \Exception("Property [$nameCamel] does not exist on [$this->name]");
+            if (!property_exists($this, $nameCamel)) throw new \Exception("Property [$nameCamel] does not exist on [$this->database]");
             if (!isset($this->$nameCamel)) $this->$nameCamel = $value;
         }
 
@@ -218,6 +218,7 @@ class DB {
                     $object = Table::fromRow($this, $row);
                     break;
                 case 'VIEW':
+                    // View inherits from Table
                     $object = View::fromRow($this, $row);
                     break;
                 default:
@@ -305,10 +306,10 @@ class DB {
     protected function foreignKeys(Column &$column, bool $to = FALSE): array
     {
         // Foreign tables that this column points to / from
-        // For example, column = criminal_legalcase.legalcase_id:
-        //   criminal_legalcase.legalcase_id => legalcase.id
+        // For example, column = criminal_legalcase.user_group_id:
+        //   criminal_legalcase.user_group_id => legalcase.id
         // Or reversed (to this field):
-        //   legalcase.id <= criminal_legalcase.legalcase_id, civil_legalcase.legalcase_id, houseofpeace_legalcase.legalcase_id
+        //   legalcase.id <= criminal_legalcase.user_group_id, civil_legalcase.user_group_id, houseofpeace_legalcase.user_group_id
         $toFrom = ($to ? 'to' : 'from');
 
         $results   = array();

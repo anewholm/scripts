@@ -173,6 +173,30 @@ class ForeignKey {
         return $fullyQualifiedName;
     }
 
+    public function fromRelationName(bool $plural = Column::SINGULAR): string
+    {
+        // This (Column) is the *_id foreign column, e.g. entity.user_group_id
+        // This Relation*from* will be attached to a local id column
+        // but the DB-FK is on the foreign table *_id column
+        // e.g. Relation1fromX attached to user_group.id <= DB-FK on entity.my_user_group_id
+        //
+        // For the relation name:
+        // We cannot use the local   Field name id that the Relation*from* is attached to
+        // we cannot use the foreign Field name *_id because it could repeat on this Model, e.g. *.user_group_id
+        // There could also be 2 FKs from the same foreign table pointing to the local id
+        // so we cannot just use the foreign table name
+        // so we use foreign <this table name>_<this column name> for uniqueness
+        // e.g. user_groups_user_group
+        //
+        // TODO: This should be static Relation::fromNameFromColumn(Column $column)
+        if ($this->columnFrom->isTheIdColumn()) 
+            throw new \Exception("From relation name not possible for ID columns");
+        $tableRelationName = $this->columnFrom->table->relationName(); // user_groups
+        $relationName      = $this->columnFrom->relationName($plural); // user_group[s]
+
+        return "{$tableRelationName}__$relationName";
+    }
+
     // ----------------------------------------- Sematic information
     // Foreign Keys are single directional, from (attached column) => to
     // Always from = the column they are attached to, usually (always) to an ID PK column on a foreign table
@@ -193,8 +217,7 @@ class ForeignKey {
         $isExplicitNot = ($this->type && $this->type != 'Xto1');
         $explicitIs    = ($this->type == 'Xto1');
         $schemaIs      = (
-              !$this->isSelfReferencing()
-            && ($this->tableFrom->isContentTable() || $this->tableFrom->isReportTable())
+              ($this->tableFrom->isContentTable() || $this->tableFrom->isReportTable())
             && $this->columnFrom->isForeignID()
             && $this->tableTo->isContentTable()  // True still if central
             && !$this->tableTo->isCentralTable()
@@ -211,6 +234,7 @@ class ForeignKey {
         // pointing to the ID column
         return ($this->tableFrom == $this->tableTo
             && $this->columnTo->isTheIdColumn()
+            && $this->columnFrom->hasParentInName()
         );
     }
 
@@ -237,8 +261,7 @@ class ForeignKey {
         $isExplicitNot = ($this->type && $this->type != 'XtoX');
         $explicitIs    = ($this->type == 'XtoX');
         $schemaIs      = (
-              !$this->isSelfReferencing()
-            && $this->tableFrom->isPivotTable()
+               $this->tableFrom->isPivotTable()
             && $this->columnFrom->isForeignID()
             && $this->tableTo->isContentTable()
             && $this->columnTo->isTheIdColumn()
@@ -254,8 +277,7 @@ class ForeignKey {
         $isExplicitNot = ($this->type && $this->type != 'XtoXSemi');
         $explicitIs    = ($this->type == 'XtoXSemi');
         $schemaIs      = (
-              !$this->isSelfReferencing()
-            && $this->tableFrom->isSemiPivotTable() // It has an ID column
+               $this->tableFrom->isSemiPivotTable() // It has an ID column
             && $this->columnFrom->isForeignID()
             && $this->tableTo->isContentTable()
             && $this->columnTo->isTheIdColumn()
@@ -276,14 +298,13 @@ class ForeignKey {
     public function type(): string
     {
         return
-            ($this->isSelfReferencing() ? 'self' :
             ($this->isLeaf() ? 'leaf' :
             ($this->is1to1() ? '1to1' :
             ($this->isXtoXSemi() ? 'XtoXSemi' :
             ($this->isXtoX() ? 'XtoX' :
             ($this->isXto1() ? 'Xto1' :
             'unknown'
-        ))))));
+        )))));
     }
 
     public function isUnknownType(): bool
