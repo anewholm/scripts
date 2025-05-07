@@ -386,7 +386,7 @@ class Framework
         return isset($level[$name]);
     }
 
-    protected function yamlFileSet(string $path, string $dotPath, string|array|int $newValue, bool $throwIfAlreadySet = TRUE, string $complexDotName = NULL)
+    protected function yamlFileSet(string $path, string $dotPath, string|array|int|bool $newValue, bool $throwIfAlreadySet = TRUE, string $complexDotName = NULL)
     {
         $array = &$this->yamlFileLoad($path);
         $keys  = explode('.', $dotPath);
@@ -397,9 +397,11 @@ class Framework
         foreach ($keys as $step) {
             if (!isset($level[$step])) $level[$step] = array();
             $level = &$level[$step];
-            if (!is_array($level)) throw new Exception("Pre-level [$step] in [$dotPath] is not array when trying to set [$name]");
+            if (!is_array($level)) 
+                throw new Exception("Pre-level [$step] in [$dotPath] is not array when trying to set [$name]");
         }
-        if ($throwIfAlreadySet && isset($level[$name])) throw new Exception("[$dotPath] already set in [$path]");
+        if ($throwIfAlreadySet && isset($level[$name])) 
+            throw new Exception("[$dotPath] already set in [$path]");
         $level[$name] = $newValue;
 
         // Destructor will write cached arrays
@@ -415,7 +417,8 @@ class Framework
             if (!isset($level[$step])) $level[$step] = array();
             $level = &$level[$step];
         }
-        if ($throwIfNotSet && !isset($level[$name])) throw new Exception("[$dotPath] not already set in [$path]");
+        if ($throwIfNotSet && !isset($level[$name])) 
+            throw new Exception("[$dotPath] not already set in [$path]");
         unset($level[$name]);
 
         // Destructor will write cached arrays
@@ -510,9 +513,10 @@ class Framework
         return $this->addMethod($path, $name, $body, 'mixed', $scope, TRUE, $indent);
     }
 
-    protected function addMethod(string $path, string $name, string $body, string $type = NULL, string $scope = 'public', bool $static = FALSE, int $indent = 1)
+    protected function addMethod(string $path, string $name, string|array $body, string $type = NULL, string $scope = 'public', bool $static = FALSE, int $indent = 1)
     {
-        if (!$path) throw new Exception("Method path is empty");
+        if (!$path) 
+            throw new Exception("Method path is empty");
 
         // Parameters will be empty if included in the $name
         $nameHasParameters = (strstr($name, '(') !== FALSE);
@@ -521,6 +525,7 @@ class Framework
         $indentString2 = str_repeat(' ', ($indent+1)*4);
         $staticString  = ($static ? ' static' : '');
         $signature     = "$name$parameters"; 
+        if (is_array($body)) $body = implode("\n$indentString2", $body);
         if ($type) $signature .= ": $type";
         $this->replaceInFile($path, '/^}$/m', <<<FUNCTION
 

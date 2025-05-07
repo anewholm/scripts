@@ -11,6 +11,7 @@ class Relation {
     public $foreignKey;
 
     public $comment;
+    public $hidden;
     public $status; // ok|exclude|broken
     public $multi;  // _multi.php config
     public $type;   // explicit typing
@@ -112,6 +113,11 @@ class Relation {
     public function isSelfReferencing(): bool
     {
         return ($this->foreignKey ? $this->foreignKey->isSelfReferencing() : FALSE);
+    }
+
+    public function canDisplayAsFilter(): bool
+    {
+        return (bool) $this->canFilter;
     }
 
     public function show(int $indent = 0)
