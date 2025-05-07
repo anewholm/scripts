@@ -36,6 +36,12 @@ class Table {
     public $todo;   // TODO: This structure has not been analysed / enabled yet
     public $addMissingColumns; // Add missing columns
     public $permissionSettings;
+    public $readOnly;
+    // Rotate values => columns in list display
+    // by: pivot column
+    // 
+    public $pivot; 
+
 
     public $icon;
     public $tableType; // TODO: create a Derived class instead?
@@ -822,7 +828,8 @@ class Table {
     {
         // finance_invoices
         $relationName = strtolower($this->isModule() ? $this->moduleName() : $this->pluginName());
-        if (!$relationName) throw new Exception("Table [$this->name] has no plugin-name during relation name construction");
+        if (!$relationName) 
+            throw new Exception("Table [$this->name] has no plugin-name during relation name construction");
         $subName      = $this->subName();
         if ($subName) $relationName = "{$relationName}_$subName";
         return $relationName;

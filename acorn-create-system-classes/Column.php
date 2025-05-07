@@ -106,6 +106,8 @@ class Column {
     public $comment; // YAML comment
     public $parsedComment; // array
     public $fieldOptions;  // array
+    public $searchable;
+    public $sortable;
     public $order;
     public $invisible;
     public $system;  // Internal column, do not process
@@ -116,6 +118,7 @@ class Column {
     public $columnType;
     public $sqlSelect;
     public $valueFrom; // We should never use this because it cannot be sorted
+    public $jsonable;
 
     // --------------------- Field comment accepted values
     public $fieldType;

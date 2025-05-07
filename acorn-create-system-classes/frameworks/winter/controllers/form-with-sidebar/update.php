@@ -1,7 +1,8 @@
 <?php 
+// If $this->fatalError, vars will not be available
+$modelLabelKey     = (isset($formModel) ? $formModel->translateModelKey() : '');
+$modelsLabelKey    = (isset($formModel) ? $formModel->translateModelKey('label_plural') : '');
 $controllerListUrl = $this->actionUrl('');
-$modelLabelKey     = $formModel->translateModelKey();
-$modelsLabelKey    = $formModel->translateModelKey('label_plural');
 
 Block::put('breadcrumb') ?>
     <ul>

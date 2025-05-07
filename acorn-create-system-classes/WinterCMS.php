@@ -1002,6 +1002,22 @@ PHP
             }
             $this->setPropertyInClassFile($modelFilePath, 'attachOne', $attachments);
 
+            // ----------------------------------------------------------------- List Editable
+            $listEditable = array();
+            foreach ($model->fields() as $name => &$field) {
+                if ($field->listEditable)
+                    array_push($listEditable, $name);
+            }
+            $this->setPropertyInClassFile($modelFilePath, 'listEditable', $listEditable, FALSE);
+
+            // ----------------------------------------------------------------- JSONable
+            $jsonable = array();
+            foreach ($model->fields() as $name => &$field) {
+                if ($field->jsonable)
+                    array_push($jsonable, $name);
+            }
+            $this->setPropertyInClassFile($modelFilePath, 'jsonable', $jsonable, TRUE, 'protected');
+
             // ----------------------------------------------------------------- Methods
             // menuitemCount() for plugins.yaml
             print("  Adding menuitemCount()\n");
@@ -1057,7 +1073,8 @@ PHP
         // ---------------------------------------- Main fields.yaml
         // fields(TRUE) call output
         $this->yamlFileUnSet($fieldsPath, 'fields.id');
-        foreach ($model->fields(Model::PRINT) as $name => &$field) {
+        $fields = $model->fields(Model::PRINT);
+        foreach ($fields as $name => &$field) {
             $indentString = str_repeat(' ', ($field->nestLevel ?: 0) * 2);
             $typeString   = ($field->fieldType ?: '<no field type>') . ' / ' . ($field->columnType ?: '<no column type>');
             if ($field->canDisplayAsField()) {
@@ -1150,6 +1167,7 @@ PHP
                 }
 
                 // -------------------------------------------------------- Special ButtonFields
+                /*
                 foreach ($field->buttons as $buttonName => &$buttonField) {
                     if ($buttonField) { // Can be FALSE
                         if ($buttonField->contexts) throw new Exception("Button field different contexts to main field is not supported yet on [$name]");
@@ -1177,6 +1195,7 @@ PHP
                         $this->yamlFileSet($fieldsPath, $dotPath, $buttonDefinition);
                     }
                 }
+                */
             } else {
                 print("    $indentString{$YELLOW}WARNING{$NC}: Field [$name]($typeString) cannot display as {$YELLOW}field{$NC} because fieldType is blank\n");
             }
@@ -1288,21 +1307,25 @@ PHP
             if ($plural) $this->setPropertyInClassFile($controllerFilePath, 'namePlural', $plural, Framework::NEW_PROPERTY);
 
             if ($controller->model->hasSelfReferencingRelations()) 
-                $this->appendToFile("$controllerDirPath/config_list.yaml", "showTree: true");
+                $this->yamlFileSet("$controllerDirPath/config_list.yaml", 'showTree', true);
+            if ($controller->model->readOnly) {
+                $this->yamlFileSet("$controllerDirPath/config_list.yaml", 'showCheckboxes', false, Framework::NO_THROW);
+                $this->yamlFileUnSet("$controllerDirPath/config_list.yaml", 'recordUrl');
+            }
 
             // -------------------------------- Filters
             $indent = 0;
             $this->appendToFile("$controllerDirPath/config_list.yaml", "filter: config_filter.yaml");
             $this->appendToFile($configFilterPath, "# $createdBy");
-            foreach ($controller->model->fields() as $name => &$field) {
+            foreach ($controller->model->fields() as $fieldName => &$field) {
                 $filterDefinition = NULL;
 
-                if ($field->canFilter) {
+                if ($field->canDisplayAsFilter()) {
                     // Usually PseudoField ?from? relation filters
                     // The IdField also has all these relations on it, but is usually marked as !canFilter
                     // Time fields also have relations
                     $filterDefinition = array(
-                        '#'          => $name,
+                        '#'          => $fieldName,
                         'label'      => $field->translationKey(Model::PLURAL),
                         'type'       => $field->filterType,
                         'conditions' => $field->conditions,
@@ -1319,7 +1342,7 @@ PHP
                             $otherModelFQN    = $otherModel->fullyQualifiedName();
                             if (!isset($filterDefinition['modelClass'])) $filterDefinition['modelClass'] = $otherModelFQN;
 
-                            if ($relation->canFilter) {
+                            if ($relation->canDisplayAsFilter()) {
                                 $filterDefinition['# Relation'] = (string) $relation;
                                 if ($relation instanceof RelationXfromX || $relation instanceof RelationXfromXSemi) {
                                     // SQL
@@ -1336,7 +1359,7 @@ PHP
                                     // TODO: Write these in to the Model Relations, not here
                                     if ($field->useRelationCondition) {
                                         if (!$field->fieldKey) 
-                                            throw new Exception("Field [$name] has no fieldKey for relationCondition");
+                                            throw new Exception("Field [$fieldName] has no fieldKey for relationCondition");
                                         $filterDefinition['relationCondition'] = $field->fieldKey;
                                     } else {
                                         if (!isset($filterDefinition['conditions']) || is_null($filterDefinition['conditions']))
@@ -1348,22 +1371,25 @@ PHP
                                 }
 
                                 $filterDefinition = $this->removeEmpty($filterDefinition, TRUE);
-                                $this->yamlFileSet($configFilterPath, "scopes.$relationName", $filterDefinition);
+                                $this->yamlFileSet($configFilterPath, "scopes.$fieldName", $filterDefinition);
                             } else {
+                                // Relation !canDisplayAsFilter()
                                 $relationClass = preg_replace('/.*\\\\/', '', get_class($relation));
-                                $this->yamlFileSet($configFilterPath, "# {$relationName}[$relation] ($relationClass)", 'relation !canFilter');
+                                $this->yamlFileSet($configFilterPath, "# $fieldClass($fieldName)::$relationClass($relationName)", 'relation !canDisplayAsFilter()');
                             }
                         }
                     } else {
-                        // TODO: Non-relation fields, like dates
+                        // !relations
+                        // Non-relation fields, like dates
                         // Nothing comes here at the moment
                         // because everything is a foreign key: dates, users, etc.
-                        throw new Exception("Un-considered filter [$name]");
+                        throw new Exception("Un-considered filter [$fieldClass($fieldName)]");
                         // $this->yamlFileSet($configFilterPath, "scopes.$name", $filterDefinition);
                     }
-                } else {
+                } else { 
+                    // !canDisplayAsFilter()
                     $fieldClass = preg_replace('/.*\\\\/', '', get_class($field));
-                    $this->yamlFileSet($configFilterPath, "# {$name} ($fieldClass)", 'field !canFilter');
+                    $this->yamlFileSet($configFilterPath, "# $fieldClass($fieldName)", 'field !canDisplayAsFilter()');
                 }
             }
         }

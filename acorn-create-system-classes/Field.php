@@ -100,17 +100,19 @@ class Field {
 
     // ------------------------- Lists columns.yaml
     public $columnKey;
-    public $invisible    = FALSE; // Set during __construct
-    public $columnType   = 'text';
-    public $searchable   = TRUE;
-    public $sortable     = FALSE;
     public $valueFrom;
     public $columnPartial;
     public $sqlSelect;
     public $relation;  // relation: user_group
     public $columnConfig;
-    public $listEditable;
-
+    public $listEditable; // => partial list_editable
+    public $jsonable; // Column type json! :)
+    // Set during __construct
+    public $invisible; 
+    public $columnType;
+    public $searchable;
+    public $sortable;
+    
     // ------------------------- Filter config_filter.yaml
     public $canFilter = FALSE;
     public $useRelationCondition = FALSE; // Custom filtering system for deep relations
@@ -141,7 +143,15 @@ class Field {
         // Defaults
         // Set fieldType|columnType to FALSE to prevent canDisplayAs*()
         if (!isset($this->fieldType))     $this->fieldType     = 'text'; 
-        if (!isset($this->columnType))    $this->columnType    = $this->fieldType;
+        if (!isset($this->columnType))    {
+            switch ($this->fieldType) {
+                case 'richeditor':
+                    $this->columnType = 'text';
+                    break;
+                default:
+                    $this->columnType = $this->fieldType;
+            }
+        }
         // fields|columns.yaml field names:
         if (!isset($this->fieldKey))      $this->fieldKey      = $this->name;
         if (!isset($this->columnKey))     $this->columnKey     = $this->name;
@@ -155,7 +165,10 @@ class Field {
                     $this->default = preg_replace("/^'|'\$/", '', $defaultStripped);
             }
         }
-
+        if (!isset($this->invisible))  $this->invisible  = FALSE;
+        if (!isset($this->searchable)) $this->searchable = TRUE;
+        if (!isset($this->sortable))   $this->sortable   = FALSE;
+    
         $classParts = explode('\\', get_class($this));
         $className  = end($classParts);
         $this->yamlComment = "$className: $this->yamlComment";
@@ -164,11 +177,15 @@ class Field {
         if ($this->listEditable) {
             $this->typeEditable = $this->columnType;
             $this->columnType   = 'partial';
-            if (!$this->partial) $this->columnPartial = 'list_editable';
+            if (!$this->partial) {
+                if ($this->jsonable) $this->columnPartial = 'record_list_editable';
+                else                 $this->columnPartial = 'list_editable';
+            }
         }
 
         // Checks
-        if (!$this->name) throw new Exception("Field has no name");
+        if (!$this->name) 
+            throw new Exception("Field has no name");
     }
 
     public static function createFromYamlConfigs(Model &$model, string $fieldName, string|NULL $context, array $fieldConfig, array $columnConfig = NULL, int $tabLocation = NULL): Field
@@ -181,9 +198,11 @@ class Field {
         $relations       = array();
         if (!isset($fieldConfig['label']))
             throw new Exception("Yaml Field [$fieldName] in [$model->name] has no label setting");
+        $tabLocationStr  = ($tabLocation  ? "TabLocation:$tabLocation" : '');
+        $columnConfigStr = ($columnConfig ? 'with column config'       : 'without column config');
         $fieldDefinition = array(
             // Create-System specific settings
-            '#'           => "From YAML $model->name::$fieldName(TabLocation:$tabLocation)",
+            '#'           => "From YAML $model->name::$fieldName($tabLocationStr) $columnConfigStr",
             'name'        => $fieldName, // $column->nameWithoutId(), also => fieldKey
             'tabLocation' => $tabLocation,
         );
@@ -279,6 +298,9 @@ class Field {
         // ---------------------------------- Field type
         $fieldDefinition['fieldType'] = 'text';
         switch ($column->data_type) {
+            case 'json':
+                $fieldDefinition['jsonable'] = true;
+                break;
             case 'double precision':
             case 'double':
             case 'int':
@@ -396,6 +418,16 @@ class Field {
     public function canDisplayAsField(): bool
     {
         return (bool) $this->fieldType;
+    }
+
+    public function canDisplayAsFilter(): bool
+    {
+        return (bool) $this->canFilter;
+    }
+
+    public function shouldInclude(): bool
+    {
+        return ($this->includeContext != 'no-include');
     }
 
     public function devEnTitle(bool $plural = Model::SINGULAR): string
@@ -650,6 +682,7 @@ class ForeignIdField extends Field {
                 // ------------------------ Buttons interface???
                 // TODO: These should all be in a separate semantic interface class with WinterCMS rendering
                 // TODO: Not sure this part is actually working... buttons are made _outside_ this area
+                /*
                 if ($this->relation1->to->plugin->isOurs('User') || $this->hidden == 'true') {
                     // User plugin does not inherit from AA\Model
                     // 3-state deny
@@ -658,6 +691,7 @@ class ForeignIdField extends Field {
                 } else {
                     $this->dependsOn["_create_$this->name"] = TRUE;
                 }
+                */
 
                 // ------------------------ Create and select comment help
                 if ($this->relation1) {

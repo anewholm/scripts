@@ -29,6 +29,7 @@ class ForeignKey {
 
     // Comment
     public $comment;
+    public $hidden;
     public $order;  // Appearance in tab pools
     public $type;
     public $multi;  // _multi.php config
@@ -65,7 +66,7 @@ class ForeignKey {
         foreach (\Spyc::YAMLLoadString($this->comment) as $name => $value) {
             $nameCamel = Str::camel($name);
             if (!property_exists($this, $nameCamel)) 
-                throw new \Exception("Property [$nameCamel] does not exist on [$this->table_from_name.$column->name.$this->name]");
+                throw new \Exception("Property [$nameCamel] does not exist on [$this->table_from_name.$column->name] => [$this->name]");
             if (!isset($this->$nameCamel)) $this->$nameCamel = $value;
         }
 
@@ -193,6 +194,8 @@ class ForeignKey {
             throw new \Exception("From relation name not possible for ID columns");
         $tableRelationName = $this->columnFrom->table->relationName(); // user_groups
         $relationName      = $this->columnFrom->relationName($plural); // user_group[s]
+
+        if ($this->isSelfReferencing() && $plural) $relationName = 'children';
 
         return "{$tableRelationName}__$relationName";
     }
