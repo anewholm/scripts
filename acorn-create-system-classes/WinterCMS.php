@@ -767,17 +767,36 @@ PHP
                         $names   = array();
                         $values  = array();
                         foreach ($columns as $column) {
-                            if (!count($row)) break;
-                            $value = array_shift($row);
+                            if (!in_array($column['column_name'], Column::SEED_IGNORE_COLUMNS)) {
+                                if (!count($row)) break;
+                                $value = array_shift($row);
 
-                            // TODO: Creation of NOT NULL associated calendar events: EVENT_ID => $this->db->createCalendarEvent('SEEDER')
-                            if      ($value === 'DEFAULT')   $valueSQL = 'DEFAULT';
-                            else if ($value === 'NULL')      $valueSQL = 'NULL';
-                            else if (substr($value, 0, 19) === 'fn_acorn_' && substr($value, -1) == ')') $valueSQL = $value;
-                            else $valueSQL = var_export($value, TRUE);
+                                if      ($value === 'DEFAULT')   $valueSQL = 'DEFAULT';
+                                else if ($value === 'NULL')      $valueSQL = 'NULL';
+                                else if (substr($value, 0, 5) === 'EVENT') {
+                                    // Creation of NOT NULL associated calendar events: 
+                                    // EVENT(<params>) => $this->db->createCalendarEvent(<params>)
+                                    $params       = explode(';', trim(substr($value, 6), ')'));
+                                    $calendarName = $params[0];
+                                    $eventName    = $params[1];
+                                    // TODO: $from         = $params[3];
+                                    // TODO: $to           = $params[3];
+                                    $typeName     = (isset($params[2]) ? $params[2] : 'Normal');
+                                    $statusName   = (isset($params[3]) ? $params[3] : 'Normal');
+                                    $eventId      = $this->db->lazyCreateCalendarEvent(
+                                        $calendarName, 
+                                        $eventName, 
+                                        $typeName, 
+                                        $statusName
+                                    );
+                                    $valueSQL     = "'$eventId'";
+                                }
+                                else if (substr($value, 0, 19) === 'fn_acorn_' && substr($value, -1) == ')') $valueSQL = $value;
+                                else $valueSQL = var_export($value, TRUE);
 
-                            array_push($names, $column['column_name']);
-                            array_push($values, $valueSQL);
+                                array_push($names, $column['column_name']);
+                                array_push($values, $valueSQL);
+                            }
                         }
                         $namesSQL  = '"' . implode('","', $names) . '"';
                         $valuesSQL = implode(',', $values);
@@ -805,19 +824,40 @@ PHP
                     $names  = array();
                     $values = array();
                     foreach ($model->getTable()->columns as &$column) {
-                        if (!count($row)) break;
-                        $value = array_shift($row);
+                        if (!in_array($column->column_name, Column::SEED_IGNORE_COLUMNS)) {
+                            if (!count($row)) break;
+                            $value = array_shift($row);
 
-                        // TODO: Creation of NOT NULL associated calendar events: EVENT_ID => $this->db->createCalendarEvent('SEEDER')
-                        if      ($value === 'DEFAULT')   $valueSQL = 'DEFAULT';
-                        else if ($value === 'NULL')      $valueSQL = 'NULL';
-                        else if (substr($value, 0, 19) === 'fn_acorn_' && substr($value, -1) == ')') $valueSQL = $value;
-                        else $valueSQL = var_export($value, TRUE);
+                            if      ($value === 'DEFAULT')   $valueSQL = 'DEFAULT';
+                            else if ($value === 'NULL')      $valueSQL = 'NULL';
+                            else if (substr($value, 0, 5) === 'EVENT') {
+                                // Creation of NOT NULL associated calendar events: 
+                                // EVENT(<params>) => $this->db->createCalendarEvent(<params>)
+                                $params       = explode(';', trim(substr($value, 6), ')'));
+                                $calendarName = $params[0];
+                                $eventName    = $params[1];
+                                // TODO: $from         = $params[3];
+                                // TODO: $to           = $params[3];
+                                $typeName     = (isset($params[2]) ? $params[2] : 'Normal');
+                                $statusName   = (isset($params[3]) ? $params[3] : 'Normal');
+                                $eventId      = $this->db->lazyCreateCalendarEvent(
+                                    $calendarName, 
+                                    $eventName, 
+                                    $typeName, 
+                                    $statusName
+                                );
+                                $valueSQL     = "'$eventId'";
+                            }
+                            else if (substr($value, 0, 19) === 'fn_acorn_' && substr($value, -1) == ')') $valueSQL = $value;
+                            else $valueSQL = var_export($value, TRUE);
 
-                        array_push($names, $column->name);
-                        array_push($values, $valueSQL);
+                            array_push($names, $column->name);
+                            array_push($values, $valueSQL);
+                        }
                     }
-                    if ($model->getTable()->hasColumn('created_by_user_id')) {
+                    if (   $model->getTable()->hasColumn('created_by_user_id') 
+                        && !in_array('created_by_user_id', $names)
+                    ) {
                         array_push($names, 'created_by_user_id');
                         array_push($values, 'fn_acorn_user_get_seed_user()');
                     }
@@ -1005,8 +1045,20 @@ PHP
             // ----------------------------------------------------------------- List Editable
             $listEditable = array();
             foreach ($model->fields() as $name => &$field) {
-                if ($field->listEditable)
-                    array_push($listEditable, $name);
+                switch ($field->listEditable) {
+                    case 'delete-on-null':
+                        $listEditable[$name] = 2;
+                        break;
+                    case 'validate':
+                    case TRUE:
+                        $listEditable[$name] = TRUE;
+                        break;
+                    case NULL:
+                    case FALSE:
+                        break;
+                    default:
+                        throw new Exception("List Editable setting [$field->listEditable] on [$name] not understood");
+                }
             }
             $this->setPropertyInClassFile($modelFilePath, 'listEditable', $listEditable, FALSE);
 
@@ -1315,7 +1367,8 @@ PHP
 
             // -------------------------------- Filters
             $indent = 0;
-            $this->appendToFile("$controllerDirPath/config_list.yaml", "filter: config_filter.yaml");
+            print("  Inserting {$YELLOW}config_filter{$NC} to the list [{$YELLOW}$controllerDirPath/config_list.yaml{$NC}]\n");
+            $this->yamlFileSet("$controllerDirPath/config_list.yaml", 'filter', 'config_filter.yaml', Framework::NEW_PROPERTY);
             $this->appendToFile($configFilterPath, "# $createdBy");
             foreach ($controller->model->fields() as $fieldName => &$field) {
                 $filterDefinition = NULL;
@@ -1370,6 +1423,7 @@ PHP
                                     // conditions already defined
                                 }
 
+                                print("    +{$YELLOW}$fieldName{$NC} filter\n");
                                 $filterDefinition = $this->removeEmpty($filterDefinition, TRUE);
                                 $this->yamlFileSet($configFilterPath, "scopes.$fieldName", $filterDefinition);
                             } else {
@@ -1396,6 +1450,7 @@ PHP
 
         // ---------------------------------------- Relation Manager configuration
         // We always need a config_relation.yaml, because all controllers implement the behaviour
+        print("  Setting up relations in {$YELLOW}$configRelationPath{$NC}\n");
         $this->yamlFileSet($configRelationPath, '#', $createdBy);
         foreach ($controller->model->fields() as $name => &$field) {
             if ($field->fieldType == 'relationmanager') {
@@ -1407,19 +1462,33 @@ PHP
                 $relationModelDirPath    = "/$relationPluginDirectory/models/$relationModelDirName";
                 $rlButtons               = ($field->rlButtons ?: array('create' => TRUE, 'delete' => TRUE));
 
-                $this->yamlFileSet($configRelationPath, $field->fieldKey, array(
-                    'label' => $field->translationKey(),
-                    'view' => array(
-                        'list' => "\$$relationModelDirPath/columns.yaml",
-                        'toolbarButtons' => implode('|', array_keys($rlButtons)),
-                        'showCheckboxes' => !$field->readOnly,
-                        'recordsPerPage' => $field->recordsPerPage, // Can be false
-                    ),
-                    'manage' => array(
-                        'form' => "\$$relationModelDirPath/fields.yaml",
-                        'recordsPerPage' => $field->recordsPerPage,
-                    ),
-                ));
+                print("    +{$YELLOW}$field->fieldKey{$NC} filter\n");
+                if ($field->readOnly) {
+                    $this->yamlFileSet($configRelationPath, $field->fieldKey, array(
+                        'label'    => $field->translationKey(),
+                        'readOnly' => TRUE,
+                        'view'     => array(
+                            'list' => "\$$relationModelDirPath/columns.yaml",
+                            'toolbarButtons' => false,
+                            'recordsPerPage' => $field->recordsPerPage, // Can be false
+                            'showCheckboxes' => FALSE,
+                            'recordOnClick'  => 'return false',
+                        ),
+                    ));
+                } else {
+                    $this->yamlFileSet($configRelationPath, $field->fieldKey, array(
+                        'label' => $field->translationKey(),
+                        'view' => array(
+                            'list' => "\$$relationModelDirPath/columns.yaml",
+                            'toolbarButtons' => implode('|', array_keys($rlButtons)),
+                            'recordsPerPage' => $field->recordsPerPage, // Can be false
+                        ),
+                        'manage' => array(
+                            'form' => "\$$relationModelDirPath/fields.yaml",
+                            'recordsPerPage' => $field->recordsPerPage,
+                        ),
+                    ));
+                }
             }
         }
 
@@ -1427,9 +1496,20 @@ PHP
         // config_form.yaml
         // TODO: Write the labels to lang, and the translationKeys to the YAML
         // TODO: These are not used yet, only the Model->actionFunctions set above
+        $afCount = count($controller->model->actionFunctions);
+        if ($afCount) print("  Setting up [$afCount] {$YELLOW}actionFunctions{$NC}\n");
+        else          print("  No {$YELLOW}actionFunctions{$NC}\n");
         $this->yamlFileSet($configFormPath, 'actionFunctions', $controller->model->actionFunctions);
 
         // ----------------------------------------------- Interface variants
+        // TODO: Not used anymore. Superceeded by generic aa/partials/create|update.php
+        // Remove standard create|update.php
+        print("    Unlink {$YELLOW}$controllerDirPath/update.php{$NC}\n");
+        unlink("$controllerDirPath/update.php");
+        print("    Unlink {$YELLOW}$controllerDirPath/create.php{$NC}\n");
+        unlink("$controllerDirPath/create.php");
+        $this->setPropertyInClassFile($controllerFilePath, 'bodyClass', 'compact-container', FALSE);
+        /*
         $maxTabLocation = 0;
         foreach ($controller->model->fields() as $name => &$field) {
             if ($field->tabLocation > $maxTabLocation) $maxTabLocation = $field->tabLocation;
@@ -1446,6 +1526,7 @@ PHP
                 copy($controllerFilePath, "$controllerDirPath/$controllerFile");
             }
         }
+        */
     }
 
     protected function createListInterface(Model &$model, bool $overwrite = FALSE) {

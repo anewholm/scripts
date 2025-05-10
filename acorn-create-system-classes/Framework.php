@@ -85,6 +85,13 @@ class Framework
         $yamlString = Spyc::YAMLDump($this->LANG, FALSE, 1000, TRUE);
         file_put_contents('lang.yaml', $yamlString);
 
+        // We will get Ghost writing if the same file is cached & changed in multiple places
+        $overlap = array_intersect_key($this->FILES, $this->ARRAY_FILES, $this->YAML_FILES);
+        if (count($overlap)) {
+            $overlapKeys = implode(', ', array_keys($overlap));
+            throw new Exception("[$overlapKeys] are present in multiple different file caches");
+        }
+
         foreach ($this->FILES as $path => &$contents) {
             file_put_contents($path, $contents);
         }
@@ -674,8 +681,8 @@ FUNCTION
             print("{$GREEN}REMOVING{$NC} existing plugin sub-directories and files from [$pluginDirectoryPath]...\n");
             $this->removeDir($pluginDirectoryPath, FALSE, FALSE);
         }
-
         ob_start(); // README.md content
+
         // Abstracted MVC creates
         $this->createPlugin($plugin);
         $this->createMenus($plugin);

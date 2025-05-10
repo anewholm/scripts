@@ -424,6 +424,30 @@ class DB {
         $statement->execute();
     }
 
+    public function lazyCreateCalendarEvent(string $calendarName, string $eventName, string $typeName = 'Normal', string $statusName = 'Normal'): string
+    {
+        $sql = <<<SQL
+            select public.fn_acorn_calendar_lazy_create_event(
+                :calendar_name,
+                fn_acorn_user_get_seed_user(),
+                :type_name,
+                :status_name,
+                :event_name
+            ) as event_id;
+SQL;
+        $statement = $this->connection->prepare($sql);
+        $statement->bindParam(':calendar_name', $calendarName);
+        $statement->bindParam(':type_name',     $typeName);
+        $statement->bindParam(':status_name',   $statusName);
+        $statement->bindParam(':event_name',    $eventName);
+        $statement->execute();
+
+        $results   = $statement->fetchAll(\PDO::FETCH_OBJ);
+        $eventId   = $results[0]->event_id;
+
+        return $eventId;
+    }
+
     public function setDefault(string $table, string $column, string $default, bool $quote = FALSE)
     {
         if ($quote) $default = "'$default'";
