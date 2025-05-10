@@ -12,6 +12,9 @@ class Relation {
 
     public $comment;
     public $hidden;
+    public $invisible;
+    public $fieldExclude;
+    public $columnExclude;
     public $status; // ok|exclude|broken
     public $multi;  // _multi.php config
     public $type;   // explicit typing
@@ -26,7 +29,7 @@ class Relation {
     public $tabLocation; // primary|secondary|tertiary
 
     // Filter config_filter.yaml
-    public $canFilter = FALSE;
+    public $canFilter;
     public $globalScope; // Chaining from|to
 
     // Translation arrays
@@ -62,6 +65,8 @@ class Relation {
             if (property_exists($this, $nameCamel)) $this->$nameCamel = $value;
         }
         if (!isset($this->nameObject)) $this->nameObject = $this->foreignKey?->nameObject;
+        if (!isset($this->canFilter))  $this->canFilter  = TRUE;
+        if (!isset($this->readOnly))   $this->readOnly   = $this->to->readOnly;
     }
 
     public function __toString()
@@ -206,7 +211,7 @@ class RelationXto1 extends Relation {
         $fieldDefinitions = array();
         $from->standardTargetModelFieldDefinitions($column, $relations, $fieldDefinitions); // &$fieldDefinitions pass-by-reference
         $to->standardTargetModelFieldDefinitions(  $column, $relations, $fieldDefinitions); // &$fieldDefinitions pass-by-reference
-        $this->canFilter = (isset($fieldDefinitions['canFilter']) ? $fieldDefinitions['canFilter'] : FALSE);
+        $this->canFilter = (isset($fieldDefinitions['canFilter']) ? $fieldDefinitions['canFilter'] : TRUE);
     }
 }
 

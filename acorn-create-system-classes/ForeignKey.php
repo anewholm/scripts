@@ -30,6 +30,9 @@ class ForeignKey {
     // Comment
     public $comment;
     public $hidden;
+    public $invisible;
+    public $fieldExclude;
+    public $columnExclude;
     public $order;  // Appearance in tab pools
     public $type;
     public $multi;  // _multi.php config

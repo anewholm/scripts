@@ -37,6 +37,8 @@ class Field {
     public $fieldKeyQualifier; // Should always be added on to the fields.yaml name
     public $fieldType;
     public $typeEditable;
+    public $fieldExclude;
+    public $columnExclude;
     public $default;
     public $length;
     public $hidden       = FALSE; // Set during __construct
@@ -114,7 +116,7 @@ class Field {
     public $sortable;
     
     // ------------------------- Filter config_filter.yaml
-    public $canFilter = FALSE;
+    public $canFilter;
     public $useRelationCondition = FALSE; // Custom filtering system for deep relations
     public $filterType;
     public $yearRange;
@@ -168,6 +170,7 @@ class Field {
         if (!isset($this->invisible))  $this->invisible  = FALSE;
         if (!isset($this->searchable)) $this->searchable = TRUE;
         if (!isset($this->sortable))   $this->sortable   = FALSE;
+        if (!isset($this->canFilter))  $this->canFilter  = FALSE;
     
         $classParts = explode('\\', get_class($this));
         $className  = end($classParts);
@@ -412,12 +415,12 @@ class Field {
 
     public function canDisplayAsColumn(): bool
     {
-        return (bool) $this->columnType;
+        return (bool) $this->columnType && !$this->columnExclude;
     }
 
     public function canDisplayAsField(): bool
     {
-        return (bool) $this->fieldType;
+        return (bool) $this->fieldType && !$this->fieldExclude;
     }
 
     public function canDisplayAsFilter(): bool
@@ -618,8 +621,10 @@ class ForeignIdField extends Field {
 
     // Based on relation: so can be searched and sorted
     // > 1 level nesting will turn this off if it cannot be
-    public $searchable     = TRUE;
-    public $sortable       = TRUE;
+    public $searchable = TRUE;
+    public $sortable   = TRUE;
+    public $canFilter  = TRUE;
+
 
     protected function __construct(Model &$model, array $definition, Column &$column, array &$relations)
     {
@@ -737,6 +742,10 @@ class ForeignIdField extends Field {
                 if (!isset($this->nameFrom))   $this->nameFrom   = $this->relation1->to->nameFromPath();
                 if (!isset($this->readOnly))   $this->readOnly   = $this->relation1->to->readOnly;
                 if (!isset($this->fieldType) || $this->fieldType == 'text') $this->fieldType = 'dropdown';
+
+                // ----------------------- Filter
+                $column = &$this->column;
+                if (!isset($this->conditions)) $this->conditions = "$column->column_name in(:filtered)";
             }
 
             if ($this->relation1) {
@@ -885,6 +894,7 @@ class PseudoFromForeignIdField extends PseudoField {
 // --------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------------------
+/*
 class ButtonField extends PseudoField {
     // These do not have a column on this table
     // They are extra fields from external from relations
@@ -901,3 +911,4 @@ class ButtonField extends PseudoField {
         return FALSE;
     }
 }
+*/

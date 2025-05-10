@@ -1378,36 +1378,39 @@ class Model {
 
             $thisIdRelation = array($name => $relation);
             $fieldObj       = new PseudoFromForeignIdField($this, array(
-                '#'            => "Tab multi-select for $relation",
-                'name'         => $name,
+                '#'              => "Tab multi-select for $relation",
+                'name'           => $name,
                 'translationKey' => $tab,
-                'labels'       => $relation->labelsPlural, // Overrides translationKey to force a local key
-                'fieldType'    => ($useRelationManager ? 'relationmanager' : 'relation'),
-                'hidden'       => $relation->hidden,
-                'nameFrom'     => $nameFrom,
-                'cssClasses'   => $relation->cssClass('single-tab-1fromX', $useRelationManager),
-                'bootstraps'   => $relation->bootstraps,
-                'dependsOn'    => $dependsOn,
-                'buttons'      => $buttons,
-                'tabLocation'  => $relation->tabLocation,
-                'icon'         => $relation->to->icon,
-                'fieldComment' => $comment,
-                'debugComment' => "Tab multi-select for $relation on $plugin->name.$this->name",
-                'comment'      => $relation->comment,
-                'commentHtml'  => TRUE,
-                'relatedModel' => $relation->to->fullyQualifiedName(),
-                'canFilter'    => FALSE, // These are linked only to the content table
-                'readOnly'     => $relation->readOnly,
-                'multi'        => $relation->multi,
-                'tab'          => 'INHERIT',
+                'labels'         => $relation->labelsPlural, // Overrides translationKey to force a local key
+                'fieldType'      => ($useRelationManager ? 'relationmanager' : 'relation'),
+                'hidden'         => $relation->hidden,
+                'invisible'      => $relation->invisible,
+                'fieldExclude'   => $relation->fieldExclude,
+                'columnExclude'  => $relation->columnExclude,
+                'nameFrom'       => $nameFrom,
+                'cssClasses'     => $relation->cssClass('single-tab-1fromX', $useRelationManager),
+                'bootstraps'     => $relation->bootstraps,
+                'dependsOn'      => $dependsOn,
+                'buttons'        => $buttons,
+                'tabLocation'    => $relation->tabLocation,
+                'icon'           => $relation->to->icon,
+                'fieldComment'   => $comment,
+                'debugComment'   => "Tab multi-select for $relation on $plugin->name.$this->name",
+                'comment'        => $relation->comment,
+                'commentHtml'    => TRUE,
+                'relatedModel'   => $relation->to->fullyQualifiedName(),
+                'canFilter'      => FALSE, // These are linked only to the content table
+                'readOnly'       => $relation->readOnly,
+                'multi'          => $relation->multi,
+                'tab'            => 'INHERIT',
 
                 // List
-                'columnType'    => 'partial',
-                'columnPartial' => 'multi',
+                'columnType'     => 'partial',
+                'columnPartial'  => 'multi',
                 // For searching
-                'relation'      => $name,
-                'searchable'    => (bool) $valueFrom,
-                'valueFrom'     => $valueFrom, // Necessary for search to work, is removed in nested scenario
+                'relation'       => $name,
+                'searchable'     => (bool) $valueFrom,
+                'valueFrom'      => $valueFrom, // Necessary for search to work, is removed in nested scenario
             ), $thisIdRelation);
             $fields[$name] = $fieldObj;
         }
@@ -1515,6 +1518,9 @@ class Model {
                 'labels'         => $relation->labelsPlural, // Overrides translationKey
                 'fieldType'      => ($useRelationManager ? 'relationmanager' : 'relation'),
                 'hidden'         => $relation->hidden,
+                'invisible'      => $relation->invisible,
+                'fieldExclude'   => $relation->fieldExclude,
+                'columnExclude'  => $relation->columnExclude,
                 'recordsPerPage' => FALSE, // TODO: Currently does not work for XtoXSemi
                 'nameFrom'       => $nameFrom,
                 'cssClasses'     => $relation->cssClass('single-tab-1fromX', $useRelationManager),
@@ -1639,6 +1645,9 @@ class Model {
                 'labels'         => $relation->labelsPlural, // Overrides translationKey
                 'fieldType'      => ($useRelationManager ? 'relationmanager' : 'relation'),
                 'hidden'         => $relation->hidden,
+                'invisible'      => $relation->invisible,
+                'fieldExclude'   => $relation->fieldExclude,
+                'columnExclude'  => $relation->columnExclude,
                 'recordsPerPage' => FALSE, // TODO: Currently does not work for XtoXSemi
                 'nameFrom'       => $nameFrom,
                 'cssClasses'     => $relation->cssClass('single-tab-XfromX', $useRelationManager),

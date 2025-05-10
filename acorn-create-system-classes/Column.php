@@ -3,6 +3,17 @@
 require_once('ForeignKey.php');
 
 class Column {
+    public const SEED_IGNORE_COLUMNS = array(
+        // Calendar created & updated => event_id
+        'created_at_event_id',
+        'updated_at_event_id',
+        // created & updated => user_id
+        'created_by_user_id',
+        'updated_by_user_id',
+        // Misc
+        'server_id',
+    );
+
     protected const STANDARD_DATA_COLUMNS = array(
         'id',
         // Normal created & updated timestamps
@@ -51,6 +62,8 @@ class Column {
     public $foreignKeysTo   = array();
     public $autoFKType; // For auto-setting a single associated FK
     public $extraForeignKey; // Explicit fake FK. VIEWS only
+    public $fieldExclude;
+    public $columnExclude;
 
     // --------------------- Database column settings
     // information_schema.columns.* SQL standard
