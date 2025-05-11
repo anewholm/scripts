@@ -24,7 +24,7 @@ class Table {
 
     public $schema;
     public $name;
-    protected $order;
+    public $order;
     protected $owner;
     static $generalOwner;
 

@@ -64,6 +64,7 @@ class Column {
     public $extraForeignKey; // Explicit fake FK. VIEWS only
     public $fieldExclude;
     public $columnExclude;
+    public $filters;
 
     // --------------------- Database column settings
     // information_schema.columns.* SQL standard

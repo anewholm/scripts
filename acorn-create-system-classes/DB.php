@@ -291,16 +291,22 @@ class DB {
         $statement->execute();
         $results = $statement->fetchAll(\PDO::FETCH_ASSOC);
 
-        if ($table instanceof Table) {
-            $resultsObjects = array();
-            foreach ($results as $row) {
-                $column = Column::fromRow($table, $row);
-                if ($column->shouldProcess() || $allColumns) $resultsObjects[$column->name] = $column;
+        $resultsObjects = array();
+        foreach ($results as $row) {
+            $shouldProcess = TRUE;
+            if ($table instanceof Table) {
+                // Table object => Column objects
+                $column        = Column::fromRow($table, $row);
+                $shouldProcess = ($column->shouldProcess() || $allColumns);
+            } else {
+                // table string => (object) array
+                $column        = (object) $row;
             }
-            $results = $resultsObjects;
+            if ($shouldProcess) 
+                $resultsObjects[$column->column_name] = $column;
         }
 
-        return $results;
+        return $resultsObjects;
     }
 
     protected function foreignKeys(Column &$column, bool $to = FALSE): array

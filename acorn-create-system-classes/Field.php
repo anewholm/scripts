@@ -122,6 +122,7 @@ class Field {
     public $yearRange;
     public $conditions;
     public $autoRelationCanFilter;
+    public $filters; // Custom filters
 
     // --------------------------------------------- Construction
     protected function __construct(Model &$model, array $definition, Column $column = NULL, array $relations = array())

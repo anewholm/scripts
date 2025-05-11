@@ -82,6 +82,19 @@ COMMENT ON EXTENSION http IS 'HTTP client for PostgreSQL, allows web page retrie
 
 
 --
+-- Name: avg(); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.avg() RETURNS double precision
+    LANGUAGE sql
+    AS $$
+	select NULL::double precision;
+$$;
+
+
+ALTER FUNCTION public.avg() OWNER TO university;
+
+--
 -- Name: avg(double precision[]); Type: FUNCTION; Schema: public; Owner: sz
 --
 
@@ -519,6 +532,9 @@ activity_log_calendar_id uuid = 'f3bc49bc-eac7-11ef-9e4a-1740a039dada';
             owner_user_id := NEW.created_by_user_id; -- NOT NULL
             type_name     := initcap(replace(replace(TG_TABLE_NAME, 'acorn_', ''), '_', ' '));
             title         := initcap(TG_OP) || ' ' || type_name;
+			if owner_user_id is null then
+				raise exception '% on %, created_by_user_id was NULL, and thus owner_user_id during fn_acorn_calendar_trigger_activity_event() auto-create', TG_OP, TG_TABLE_NAME;
+			end if;
 
             -- Optional fields
             if exists(SELECT * FROM pg_attribute WHERE attrelid = TG_RELID AND attname = 'name') then name_optional := NEW.name; end if;
@@ -964,6 +980,19 @@ $$;
 ALTER FUNCTION public.min(VARIADIC ints integer[]) OWNER TO university;
 
 --
+-- Name: sum(); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.sum() RETURNS double precision
+    LANGUAGE sql
+    AS $$
+	select NULL::double precision;
+$$;
+
+
+ALTER FUNCTION public.sum() OWNER TO university;
+
+--
 -- Name: sum(double precision[]); Type: FUNCTION; Schema: public; Owner: university
 --
 
@@ -1317,7 +1346,10 @@ CREATE TABLE public.acorn_exam_calculations (
     updated_at_event_id uuid,
     created_by_user_id uuid NOT NULL,
     updated_by_user_id uuid,
-    server_id uuid NOT NULL
+    server_id uuid NOT NULL,
+    minimum double precision,
+    maximum double precision,
+    required boolean
 );
 
 
@@ -1489,7 +1521,32 @@ attribute-functions:
 labels:
   en: Material Exam
 labels-plural:
-  en: Material Exams';
+  en: Material Exams
+seeding:
+  # Bakeloria - Science
+  - [''457d9378-2e39-11f0-ba8b-6f3ecb4364d7'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''d60faf78-2d91-11f0-91b5-4ba74601f388'']
+  - [''457d945e-2e39-11f0-ba8c-c76bfb0d6f2b'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''d7166b8c-2d91-11f0-8b19-e7d49c2e84f1'']
+  - [''457d94b8-2e39-11f0-ba8e-b719896c4900'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''d7613d74-2d91-11f0-a545-27a082b4a92e'']
+  - [''457d9508-2e39-11f0-ba90-034ead284875'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''d7a990f6-2d91-11f0-95db-c330df9f103b'']
+  - [''457d953a-2e39-11f0-ba91-c3ac478afe9d'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''d7ceec66-2d91-11f0-b5d5-db13369d9435'']
+  - [''457d9562-2e39-11f0-ba92-a323dc5ecf81'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''d7f26d1c-2d91-11f0-a26f-f3e5473b3167'']
+  - [''ffc94c10-2e3c-11f0-a5ae-af23be35f757'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''f36c46d6-2e3a-11f0-b6f1-17b78d5f0aec'']
+  - [''ffc94e0e-2e3c-11f0-a5af-9bfe9eafb920'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''f36c48de-2e3a-11f0-b6f2-3b9b22699d6a'']
+  - [''ffc94e86-2e3c-11f0-a5b0-ff3bca5d218c'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''90916acc-2e3b-11f0-8dcc-67434a77fd63'']
+  # Bakeloria - Literature
+  - [''457d95a8-2e39-11f0-ba94-7388a320a161'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''d83b7214-2d91-11f0-81ee-973d6ea6519e'']
+  - [''70d93d42-2e39-11f0-ac40-5ba568515e38'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''d882e05e-2d91-11f0-90fa-83869ea90163'']
+  - [''70d93e3c-2e39-11f0-ac42-af3e12ded276'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''d8c70de2-2d91-11f0-adfc-f320089c0508'']
+  - [''70d93eb4-2e39-11f0-ac43-972da636cb7c'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''d8ed5b64-2d91-11f0-a8f4-d31ec556c6aa'']
+  - [''70d93f18-2e39-11f0-ac44-73bb6ff561a0'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''d912a6bc-2d91-11f0-800e-6f442946f1de'']
+  - [''70d93fea-2e39-11f0-ac46-971488fba3f3'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''d95cc1d4-2d91-11f0-9084-33d5bf8f0fe0'']
+  - [''3b38f444-2e3d-11f0-8ff5-f3c23880ba04'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''f36c4974-2e3a-11f0-b6f3-b33bd4aa8e09'']
+  - [''3b38f7fa-2e3d-11f0-8ff6-63d00474903f'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''f36c49f6-2e3a-11f0-b6f4-53ae331645fa'']
+  # Year 10,11
+  - [''be8521f8-2e54-11f0-946a-670c67ddf3e8'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''4e2005fe-2e54-11f0-982d-23d1bc2b7e01'']
+  - [''be8525b8-2e54-11f0-946b-87c080955d16'', ''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''4e20093c-2e54-11f0-982e-63aa632c9cfa'']
+
+';
 
 
 --
@@ -1529,7 +1586,7 @@ ALTER TABLE public.acorn_exam_exams OWNER TO university;
 -- Name: TABLE acorn_exam_exams; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_exam_exams IS 'order: 10
+COMMENT ON TABLE public.acorn_exam_exams IS 'order: 50
 seeding:
   - [''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''Theory'', '''', ''cb58f452-28e3-11f0-bf77-eb3094eae79e'']
   - [''fb9806d4-2beb-11f0-9893-2ba7af07260a'', ''Laboratory'', '''', ''c2975b06-28e3-11f0-a996-1f7fab9642e9'']';
@@ -1589,7 +1646,10 @@ CREATE TABLE public.acorn_exam_interviews (
     updated_at_event_id uuid,
     created_by_user_id uuid NOT NULL,
     updated_by_user_id uuid,
-    server_id uuid NOT NULL
+    server_id uuid NOT NULL,
+    maximum double precision,
+    minimum double precision,
+    required boolean
 );
 
 
@@ -1713,28 +1773,36 @@ seeding:
   - [''7419875a-2be6-11f0-bf3e-13eea1a5d3c8'', ''66d3ca90-1b6c-11f0-90cc-a77dd8e640be'', ''d88f0f6e-2bd9-11f0-8846-8bc9dcb96017'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
   - [''745124c6-2be6-11f0-801e-ff295edc2ab4'', ''66d3ca90-1b6c-11f0-90cc-a77dd8e640be'', ''dd494c0e-28be-11f0-94e1-a7b2083dd749'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
   - [''9eae5f86-2be6-11f0-b57a-f7e9398cd276'', ''66d3ca90-1b6c-11f0-90cc-a77dd8e640be'', ''e427a282-28be-11f0-8856-a7abd8a449c5'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
-  # Bakeloria - Science
-  - [''d60faf78-2d91-11f0-91b5-4ba74601f388'', ''ffc92184-2d8f-11f0-9f2f-af2e2a870b91'', ''005bba60-28bf-11f0-bf7f-cff663f8102b'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
+  # Bakeloria - Science: kurdish_language	english	math	biology	chemistry	phisic	arabic_language	geneology	Sociology 
+  - [''f36c46d6-2e3a-11f0-b6f1-17b78d5f0aec'', ''ffc92184-2d8f-11f0-9f2f-af2e2a870b91'', ''f3c853a8-28be-11f0-8938-73b157eb85a1'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
+  - [''f36c48de-2e3a-11f0-b6f2-3b9b22699d6a'', ''ffc92184-2d8f-11f0-9f2f-af2e2a870b91'', ''fa61ead0-28be-11f0-9fb3-2bbf7e1c7c7c'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
   - [''d7166b8c-2d91-11f0-8b19-e7d49c2e84f1'', ''ffc92184-2d8f-11f0-9f2f-af2e2a870b91'', ''cdc800ae-28be-11f0-a8a6-334555029afd'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
-  - [''d73d936a-2d91-11f0-8dd0-ffdc026241e6'', ''ffc92184-2d8f-11f0-9f2f-af2e2a870b91'', ''d43af2a2-2bd9-11f0-b08b-5fd59b502470'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
   - [''d7613d74-2d91-11f0-a545-27a082b4a92e'', ''ffc92184-2d8f-11f0-9f2f-af2e2a870b91'', ''d675a530-28be-11f0-a2c9-9bb10fa15bd3'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
-  - [''d781623e-2d91-11f0-9bd6-b7cc61913303'', ''ffc92184-2d8f-11f0-9f2f-af2e2a870b91'', ''d8168f4e-2bd9-11f0-97a5-1b42cf640b5b'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
-  - [''d7a990f6-2d91-11f0-95db-c330df9f103b'', ''ffc92184-2d8f-11f0-9f2f-af2e2a870b91'', ''d84f8434-2bd9-11f0-bfa1-7b92380571bd'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
-  - [''d7ceec66-2d91-11f0-b5d5-db13369d9435'', ''ffc92184-2d8f-11f0-9f2f-af2e2a870b91'', ''d88f0f6e-2bd9-11f0-8846-8bc9dcb96017'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
+  - [''90916acc-2e3b-11f0-8dcc-67434a77fd63'', ''ffc92184-2d8f-11f0-9f2f-af2e2a870b91'', ''ecf3dae8-28be-11f0-91f7-f31527b6ca23'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
   - [''d7f26d1c-2d91-11f0-a26f-f3e5473b3167'', ''ffc92184-2d8f-11f0-9f2f-af2e2a870b91'', ''dd494c0e-28be-11f0-94e1-a7b2083dd749'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
-  - [''d815764a-2d91-11f0-a5ef-777bd9a16cd2'', ''ffc92184-2d8f-11f0-9f2f-af2e2a870b91'', ''e427a282-28be-11f0-8856-a7abd8a449c5'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
-  # Bakeloria - Literature
+  - [''d60faf78-2d91-11f0-91b5-4ba74601f388'', ''ffc92184-2d8f-11f0-9f2f-af2e2a870b91'', ''005bba60-28bf-11f0-bf7f-cff663f8102b'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
+  - [''d7ceec66-2d91-11f0-b5d5-db13369d9435'', ''ffc92184-2d8f-11f0-9f2f-af2e2a870b91'', ''d88f0f6e-2bd9-11f0-8846-8bc9dcb96017'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
+  - [''d7a990f6-2d91-11f0-95db-c330df9f103b'', ''ffc92184-2d8f-11f0-9f2f-af2e2a870b91'', ''d84f8434-2bd9-11f0-bfa1-7b92380571bd'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
+  # Bakeloria - Literature: kurdish_language	english_language	arabic_language	history	geography	philosophy	sociology	science_of_woman
+  - [''f36c4974-2e3a-11f0-b6f3-b33bd4aa8e09'', ''001382ce-2d90-11f0-b3fe-bf0261495ded'', ''f3c853a8-28be-11f0-8938-73b157eb85a1'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
+  - [''f36c49f6-2e3a-11f0-b6f4-53ae331645fa'', ''001382ce-2d90-11f0-b3fe-bf0261495ded'', ''fa61ead0-28be-11f0-9fb3-2bbf7e1c7c7c'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
   - [''d83b7214-2d91-11f0-81ee-973d6ea6519e'', ''001382ce-2d90-11f0-b3fe-bf0261495ded'', ''005bba60-28bf-11f0-bf7f-cff663f8102b'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
-  - [''d85ee15e-2d91-11f0-9803-377e2ac811b1'', ''001382ce-2d90-11f0-b3fe-bf0261495ded'', ''cdc800ae-28be-11f0-a8a6-334555029afd'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
   - [''d882e05e-2d91-11f0-90fa-83869ea90163'', ''001382ce-2d90-11f0-b3fe-bf0261495ded'', ''d43af2a2-2bd9-11f0-b08b-5fd59b502470'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
-  - [''d8a62a8c-2d91-11f0-92aa-97044e472505'', ''001382ce-2d90-11f0-b3fe-bf0261495ded'', ''d675a530-28be-11f0-a2c9-9bb10fa15bd3'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
+  - [''d95cc1d4-2d91-11f0-9084-33d5bf8f0fe0'', ''001382ce-2d90-11f0-b3fe-bf0261495ded'', ''e427a282-28be-11f0-8856-a7abd8a449c5'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
   - [''d8c70de2-2d91-11f0-adfc-f320089c0508'', ''001382ce-2d90-11f0-b3fe-bf0261495ded'', ''d8168f4e-2bd9-11f0-97a5-1b42cf640b5b'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
   - [''d8ed5b64-2d91-11f0-a8f4-d31ec556c6aa'', ''001382ce-2d90-11f0-b3fe-bf0261495ded'', ''d84f8434-2bd9-11f0-bfa1-7b92380571bd'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
   - [''d912a6bc-2d91-11f0-800e-6f442946f1de'', ''001382ce-2d90-11f0-b3fe-bf0261495ded'', ''d88f0f6e-2bd9-11f0-8846-8bc9dcb96017'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
-  - [''d93839f4-2d91-11f0-8f84-6ba6e9d7e17e'', ''001382ce-2d90-11f0-b3fe-bf0261495ded'', ''dd494c0e-28be-11f0-94e1-a7b2083dd749'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
-  - [''d95cc1d4-2d91-11f0-9084-33d5bf8f0fe0'', ''001382ce-2d90-11f0-b3fe-bf0261495ded'', ''e427a282-28be-11f0-8856-a7abd8a449c5'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
-
+  # Year 10,11
+  - [''4e2005fe-2e54-11f0-982d-23d1bc2b7e01'', ''f6210e20-2e53-11f0-b41e-bbc1e97e17dc'', ''7f5c3dc8-2e53-11f0-8600-6ff513625846'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
+  - [''4e20093c-2e54-11f0-982e-63aa632c9cfa'', ''f62111ea-2e53-11f0-b41f-ff3908814684'', ''7f5c4156-2e53-11f0-8601-43470f236a9e'', false, 0, 100, 50, ''9c6e1d20-2bd1-11f0-8119-93a057070d34'', ''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'']
 ';
+
+
+--
+-- Name: COLUMN acorn_university_course_materials.required; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_materials.required IS 'comment: primary';
 
 
 --
@@ -1779,8 +1847,13 @@ ALTER TABLE public.acorn_university_courses OWNER TO university;
 COMMENT ON TABLE public.acorn_university_courses IS 'order: 60
 seeding:
   - [''66d3ca90-1b6c-11f0-90cc-a77dd8e640be'', ''204c8a80-1b5d-11f0-9a78-07337e2f1cca'']
+  # Science, Literature
   - [''ffc92184-2d8f-11f0-9f2f-af2e2a870b91'', ''c555e604-2d8f-11f0-b535-bb3e95f882b4'']
   - [''001382ce-2d90-11f0-b3fe-bf0261495ded'', ''c5b7ccb6-2d8f-11f0-9338-4fa17b2a6436'']
+  # Year 10,11
+  - [''f6210e20-2e53-11f0-b41e-bbc1e97e17dc'', ''4bf9dbe8-2e53-11f0-ad9d-eb001b270147'']
+  - [''f62111ea-2e53-11f0-b41f-ff3908814684'', ''4bf9de9a-2e53-11f0-ad9e-1339796bedc7'']
+
 ';
 
 
@@ -1817,6 +1890,8 @@ seeding-other:
     # Bakeloria
     - [''a7237520-2d8f-11f0-a834-2b294fbfca54'', ''Science'', ''SCI'', NULL, NULL, NULL, NULL, 0, 0, 0]
     - [''a828ffc6-2d8f-11f0-9495-9bc5bbe65e8b'', ''Literature'', ''LIT'', NULL, NULL, NULL, NULL, 0, 0, 0]
+    - [''21397b0c-2e53-11f0-8a85-1759860470a0'', ''Year 10'', ''Y10'', NULL, NULL, NULL, NULL, 0, 0, 0]
+    - [''21397d32-2e53-11f0-8a86-abb690facbb0'', ''Year 11'', ''Y11'', NULL, NULL, NULL, NULL, 0, 0, 0]
 seeding:
   - [''5a722502-2cfc-11f0-8fc6-4f662cb2699a'', ''2c4251c8-2cf9-11f0-bbd1-3370778ee65e'']
   - [''e985ddc6-1b5c-11f0-9787-2b6b92ddc057'', ''cae7ba7c-1b63-11f0-8a05-c36be60d3d46'']
@@ -1826,6 +1901,8 @@ seeding:
     # Bakeloria
   - [''c555e604-2d8f-11f0-b535-bb3e95f882b4'', ''a7237520-2d8f-11f0-a834-2b294fbfca54'']
   - [''c5b7ccb6-2d8f-11f0-9338-4fa17b2a6436'', ''a828ffc6-2d8f-11f0-9495-9bc5bbe65e8b'']
+  - [''4bf9dbe8-2e53-11f0-ad9d-eb001b270147'', ''21397b0c-2e53-11f0-8a85-1759860470a0'']
+  - [''4bf9de9a-2e53-11f0-ad9e-1339796bedc7'', ''21397d32-2e53-11f0-8a86-abb690facbb0'']
 attribute-functions:
   name: "return $this->user_group->name;"
 ';
@@ -1895,7 +1972,12 @@ seeding:
   - [''d43af2a2-2bd9-11f0-b08b-5fd59b502470'', ''History'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
   - [''d8168f4e-2bd9-11f0-97a5-1b42cf640b5b'', ''Philosophy'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
   - [''d84f8434-2bd9-11f0-bfa1-7b92380571bd'', ''Sociology'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
-  - [''d88f0f6e-2bd9-11f0-8846-8bc9dcb96017'', ''Jineologi'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']';
+  - [''d88f0f6e-2bd9-11f0-8846-8bc9dcb96017'', ''Jineologi'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
+  # Year 10,11 Bakeloria
+  - [''7f5c3dc8-2e53-11f0-8600-6ff513625846'', ''Year 10'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
+  - [''7f5c4156-2e53-11f0-8601-43470f236a9e'', ''Year 11'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
+
+';
 
 
 --
@@ -1936,6 +2018,35 @@ labels-plural:
 --
 
 COMMENT ON COLUMN public.acorn_university_project_students.score IS 'list-editable: true';
+
+
+--
+-- Name: acorn_university_projects; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_university_projects (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(2048) NOT NULL,
+    description text,
+    created_at_event_id uuid NOT NULL,
+    updated_at_event_id uuid,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL,
+    maximum double precision,
+    minimum double precision,
+    required boolean
+);
+
+
+ALTER TABLE public.acorn_university_projects OWNER TO university;
+
+--
+-- Name: TABLE acorn_university_projects; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_university_projects IS 'seeding:
+  - [''5fcc2166-2bed-11f0-ae13-87be01ade284'', ''Example Project'']';
 
 
 --
@@ -2073,6 +2184,9 @@ CREATE VIEW public.acorn_exam_tokens AS
     NULL::uuid AS project_id,
     NULL::uuid AS interview_id,
     (sc.score)::character varying AS expression,
+    em.minimum,
+    em.maximum,
+    em.required,
     'data'::text AS expression_type,
     false AS needs_evaluate
    FROM ((((((((((public.acorn_exam_scores sc
@@ -2096,21 +2210,22 @@ UNION ALL
         CASE
             WHEN (NOT (cacm.expression IS NULL)) THEN cacm.id
             WHEN (NOT (camt.expression IS NULL)) THEN camt.id
-            WHEN (NOT (cac.expression IS NULL)) THEN cac.id
             ELSE NULL::uuid
         END AS calculation_id,
     NULL::uuid AS project_id,
     NULL::uuid AS interview_id,
-    replace(replace(replace((
+    replace(replace(replace(replace((
         CASE
             WHEN (NOT (cacm.expression IS NULL)) THEN cacm.expression
             WHEN (NOT (camt.expression IS NULL)) THEN camt.expression
-            WHEN (NOT (cac.expression IS NULL)) THEN cac.expression
             ELSE NULL::character varying
-        END)::text, ('<course>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[ugs.name]))::text), ('<material>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[m.name]))::text), ('<student>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[s.code]))::text) AS expression,
+        END)::text, ('<course>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[ugs.name]))::text), ('<material>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[m.name]))::text), ('<material-type>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[mt.name]))::text), ('<student>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[s.code]))::text) AS expression,
+    cm.minimum,
+    cm.maximum,
+    cm.required,
     'expression'::text AS expression_type,
     true AS needs_evaluate
-   FROM ((((((((((public.acorn_university_course_materials cm
+   FROM (((((((((public.acorn_university_course_materials cm
      JOIN public.acorn_university_courses c ON ((cm.course_id = c.id)))
      JOIN public.acorn_university_entities en ON ((c.entity_id = en.id)))
      JOIN public.acorn_user_user_groups ugs ON ((en.user_group_id = ugs.id)))
@@ -2120,7 +2235,29 @@ UNION ALL
      JOIN public.acorn_university_material_types mt ON ((m.material_type_id = mt.id)))
      LEFT JOIN public.acorn_exam_calculations cacm ON ((cm.calculation_id = cacm.id)))
      LEFT JOIN public.acorn_exam_calculations camt ON ((mt.calculation_id = camt.id)))
-     LEFT JOIN public.acorn_exam_calculations cac ON ((c.calculation_id = cac.id)))
+  WHERE (NOT ((cacm.expression IS NULL) AND (camt.expression IS NULL)))
+UNION ALL
+ SELECT concat(s.id, '::', public.fn_acorn_exam_token_name(VARIADIC ARRAY['course'::character varying, ugs.name, s.code, 'result'::character varying])) AS id,
+    public.fn_acorn_exam_token_name(VARIADIC ARRAY['course'::character varying, ugs.name, s.code, 'result'::character varying]) AS name,
+    s.id AS student_id,
+    NULL::uuid AS exam_id,
+    NULL::uuid AS course_material_id,
+    c.id AS course_id,
+    cac.id AS calculation_id,
+    NULL::uuid AS project_id,
+    NULL::uuid AS interview_id,
+    replace(replace((cac.expression)::text, ('<course>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[ugs.name]))::text), ('<student>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[s.code]))::text) AS expression,
+    NULL::double precision AS minimum,
+    NULL::double precision AS maximum,
+    NULL::boolean AS required,
+    'expression'::text AS expression_type,
+    true AS needs_evaluate
+   FROM (((((public.acorn_university_courses c
+     JOIN public.acorn_university_entities en ON ((c.entity_id = en.id)))
+     JOIN public.acorn_user_user_groups ugs ON ((en.user_group_id = ugs.id)))
+     JOIN public.acorn_user_user_group ug ON ((en.user_group_id = ug.user_group_id)))
+     JOIN public.acorn_university_students s ON ((ug.user_id = s.user_id)))
+     JOIN public.acorn_exam_calculations cac ON ((c.calculation_id = cac.id)))
 UNION ALL
  SELECT (concat(s.id, '::', public.fn_acorn_exam_token_name(VARIADIC ARRAY['student'::character varying, s.code, 'age'::character varying])))::character varying AS id,
     public.fn_acorn_exam_token_name(VARIADIC ARRAY['student'::character varying, s.code, 'age'::character varying]) AS name,
@@ -2132,6 +2269,9 @@ UNION ALL
     NULL::uuid AS project_id,
     NULL::uuid AS interview_id,
     (EXTRACT(year FROM age(u.birth_date)))::character varying AS expression,
+    NULL::double precision AS minimum,
+    NULL::double precision AS maximum,
+    NULL::boolean AS required,
     'formulae'::text AS expression_type,
     false AS needs_evaluate
    FROM (public.acorn_university_students s
@@ -2147,6 +2287,9 @@ UNION ALL
     NULL::uuid AS project_id,
     NULL::uuid AS interview_id,
     (count(uug.user_id))::character varying AS expression,
+    NULL::double precision AS minimum,
+    NULL::double precision AS maximum,
+    NULL::boolean AS required,
     'formulae'::text AS expression_type,
     false AS needs_evaluate
    FROM (((public.acorn_university_courses c
@@ -2165,10 +2308,14 @@ UNION ALL
     NULL::uuid AS project_id,
     NULL::uuid AS interview_id,
     replace((c.expression)::text, ('<student>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[s.code]))::text) AS expression,
+    c.minimum,
+    c.maximum,
+    c.required,
     'expression'::text AS expression_type,
     true AS needs_evaluate
    FROM public.acorn_exam_calculations c,
     public.acorn_university_students s
+  WHERE (NOT (replace((c.expression)::text, ('<student>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[s.code]))::text) ~~ '%<%'::text))
 UNION ALL
  SELECT concat(s.id, '::', public.fn_acorn_exam_token_name(VARIADIC ARRAY['project'::character varying, s.code, p.name])) AS id,
     public.fn_acorn_exam_token_name(VARIADIC ARRAY['project'::character varying, s.code, p.name]) AS name,
@@ -2180,9 +2327,13 @@ UNION ALL
     p.id AS project_id,
     NULL::uuid AS interview_id,
     (p.score)::character varying AS expression,
+    pr.minimum,
+    pr.maximum,
+    pr.required,
     'data'::text AS expression_type,
     false AS needs_evaluate
-   FROM (public.acorn_university_project_students p
+   FROM ((public.acorn_university_project_students p
+     JOIN public.acorn_university_projects pr ON ((p.project_id = pr.id)))
      JOIN public.acorn_university_students s ON ((p.owner_student_id = s.id)))
 UNION ALL
  SELECT concat(s.id, '::', public.fn_acorn_exam_token_name(VARIADIC ARRAY['interview'::character varying, s.code, i.name])) AS id,
@@ -2195,6 +2346,9 @@ UNION ALL
     NULL::uuid AS project_id,
     i.id AS interview_id,
     (iss.score)::character varying AS expression,
+    i.minimum,
+    i.maximum,
+    i.required,
     'data'::text AS expression_type,
     false AS needs_evaluate
    FROM ((public.acorn_exam_interview_students iss
@@ -2310,9 +2464,13 @@ CREATE VIEW public.acorn_exam_results AS
     project_id,
     interview_id,
     expression,
+    minimum,
+    maximum,
+    required,
     expression_type,
     needs_evaluate,
-    public.fn_acorn_exam_tokenize(expression) AS result
+    public.fn_acorn_exam_tokenize(expression) AS result,
+    (public.fn_acorn_exam_tokenize(expression) >= COALESCE(minimum, (0)::double precision)) AS passed
    FROM public.acorn_exam_tokens;
 
 
@@ -2392,6 +2550,29 @@ COMMENT ON COLUMN public.acorn_exam_results.interview_id IS 'extra-foreign-key:
   comment:
     tab-location: 2
     invisible: true';
+
+
+--
+-- Name: COLUMN acorn_exam_results.expression_type; Type: COMMENT; Schema: public; Owner: sz
+--
+
+COMMENT ON COLUMN public.acorn_exam_results.expression_type IS 'filters:
+  expression_type:
+    label: acorn.exam::lang.models.result.expression_type
+    conditions: expression_type in(:filtered)
+    options:
+      data: Data
+      expression: Expression
+      formulae: Formulae
+';
+
+
+--
+-- Name: COLUMN acorn_exam_results.passed; Type: COMMENT; Schema: public; Owner: sz
+--
+
+COMMENT ON COLUMN public.acorn_exam_results.passed IS 'css-classes: 
+  - show-cross';
 
 
 --
@@ -2767,7 +2948,8 @@ ALTER TABLE public.acorn_university_academic_years OWNER TO university;
 -- Name: TABLE acorn_university_academic_years; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_university_academic_years IS 'seeding:
+COMMENT ON TABLE public.acorn_university_academic_years IS 'order: 1005
+seeding:
   - [''5afc781c-2b47-11f0-bc2a-0bdc97d6ed09'', ''1'']
   - [''607dd68c-2b47-11f0-a57e-5f9aa740c8dc'', ''2'']
   - [''60dc4aaa-2b47-11f0-83f4-7f2b70ba9b18'', ''3'']
@@ -2874,7 +3056,7 @@ ALTER TABLE public.acorn_university_hierarchies OWNER TO university;
 -- Name: TABLE acorn_university_hierarchies; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_university_hierarchies IS 'order: 1000
+COMMENT ON TABLE public.acorn_university_hierarchies IS 'order: 1010
 menu-splitter: true
 attribute-functions:
   name: 
@@ -2889,32 +3071,6 @@ seeding:
   # 2025
   - [''0da577c8-2be0-11f0-848f-577d1a1a8da3'', ''e985ddc6-1b5c-11f0-9787-2b6b92ddc057'', ''543d0928-1b6c-11f0-abc1-8bd8fff1240d'']
   - [''0ded31f8-2be0-11f0-b58f-63d2d9622b6b'', ''f4c3a7cc-1b5c-11f0-8158-d7027851c1cd'', ''543d0928-1b6c-11f0-abc1-8bd8fff1240d'']';
-
-
---
--- Name: acorn_university_projects; Type: TABLE; Schema: public; Owner: university
---
-
-CREATE TABLE public.acorn_university_projects (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    name character varying(2048) NOT NULL,
-    description text,
-    created_at_event_id uuid NOT NULL,
-    updated_at_event_id uuid,
-    created_by_user_id uuid NOT NULL,
-    updated_by_user_id uuid,
-    server_id uuid NOT NULL
-);
-
-
-ALTER TABLE public.acorn_university_projects OWNER TO university;
-
---
--- Name: TABLE acorn_university_projects; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON TABLE public.acorn_university_projects IS 'seeding:
-  - [''5fcc2166-2bed-11f0-ae13-87be01ade284'', ''Example Project'']';
 
 
 --
@@ -2961,7 +3117,8 @@ ALTER TABLE public.acorn_university_semester_years OWNER TO university;
 -- Name: TABLE acorn_university_semester_years; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_university_semester_years IS 'attribute-functions:
+COMMENT ON TABLE public.acorn_university_semester_years IS 'order: 1015
+attribute-functions:
   name: return $this->year?->name . '' ::'' . $this->semester?->name;
 seeding:
   # Year 2024
@@ -2997,7 +3154,8 @@ ALTER TABLE public.acorn_university_semesters OWNER TO university;
 -- Name: TABLE acorn_university_semesters; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_university_semesters IS 'seeding:
+COMMENT ON TABLE public.acorn_university_semesters IS 'order: 1012
+seeding:
   - [''61c051fa-2b47-11f0-bc0f-ab4c8b696730'', ''Semester 1'']
   - [''61eb583c-2b47-11f0-adc3-ef976031065b'', ''Semester 2'']
   - [''6212587e-2b47-11f0-b854-631a30042bb5'', ''Semester 3'']
@@ -3072,7 +3230,7 @@ ALTER TABLE public.acorn_university_years OWNER TO university;
 --
 
 COMMENT ON TABLE public.acorn_university_years IS 'global-scope: true
-order: 1010
+order: 1000
 seeding:
   - [''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', 2024, 01/01/2024, 30/12/2024, false]
   - [''543d0928-1b6c-11f0-abc1-8bd8fff1240d'', 2025, 01/01/2025, 30/12/2025, true]';
@@ -4762,7 +4920,7 @@ COPY public.acorn_calendar_instances (id, date, event_part_id, instance_num, ins
 -- Data for Name: acorn_exam_calculations; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acorn_exam_calculations (id, name, description, expression, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_exam_calculations (id, name, description, expression, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id, minimum, maximum, required) FROM stdin;
 \.
 
 
@@ -4794,7 +4952,7 @@ COPY public.acorn_exam_interview_students (id, interview_id, student_id, teacher
 -- Data for Name: acorn_exam_interviews; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acorn_exam_interviews (id, name, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_exam_interviews (id, name, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id, maximum, minimum, required) FROM stdin;
 \.
 
 
@@ -5082,7 +5240,7 @@ COPY public.acorn_university_project_students (id, name, owner_student_id, user_
 -- Data for Name: acorn_university_projects; Type: TABLE DATA; Schema: public; Owner: university
 --
 
-COPY public.acorn_university_projects (id, name, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
+COPY public.acorn_university_projects (id, name, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id, maximum, minimum, required) FROM stdin;
 \.
 
 
@@ -5222,6 +5380,14 @@ a11d6172-6565-4195-a62e-038358aa9fa9	f334763c-1b63-11f0-aab4-4f7e5f7e30cb
 9e95e47b-46dc-492d-8ffa-1954bc3f1611	f334763c-1b63-11f0-aab4-4f7e5f7e30cb
 9ea61aa6-e680-484d-9d30-aba185c5b329	505282d6-2cf9-11f0-8450-87f83af99ff9
 9ea61ac5-d211-4e52-86f5-10c6d4dbe688	505282d6-2cf9-11f0-8450-87f83af99ff9
+9ea61ac5-d211-4e52-86f5-10c6d4dbe688	a7237520-2d8f-11f0-a834-2b294fbfca54
+9ea61aa6-e680-484d-9d30-aba185c5b329	a7237520-2d8f-11f0-a834-2b294fbfca54
+9ea61ac5-d211-4e52-86f5-10c6d4dbe688	a828ffc6-2d8f-11f0-9495-9bc5bbe65e8b
+9ea61aa6-e680-484d-9d30-aba185c5b329	a828ffc6-2d8f-11f0-9495-9bc5bbe65e8b
+9ea61ac5-d211-4e52-86f5-10c6d4dbe688	21397b0c-2e53-11f0-8a85-1759860470a0
+9ea61aa6-e680-484d-9d30-aba185c5b329	21397b0c-2e53-11f0-8a85-1759860470a0
+9ea61ac5-d211-4e52-86f5-10c6d4dbe688	21397d32-2e53-11f0-8a86-abb690facbb0
+9ea61aa6-e680-484d-9d30-aba185c5b329	21397d32-2e53-11f0-8a86-abb690facbb0
 \.
 
 
@@ -5249,8 +5415,12 @@ f334763c-1b63-11f0-aab4-4f7e5f7e30cb	Jineologi	JIN		\N	2025-05-07 08:56:03	cae7b
 2c4251c8-2cf9-11f0-bbd1-3370778ee65e	Education Committee	EDU	\N	\N	\N	\N	0	0	0	\N	\N	\N	\N
 505282d6-2cf9-11f0-8450-87f83af99ff9	Til Maroof school	MAR	\N	\N	\N	\N	0	0	0	\N	\N	\N	\N
 a7237520-2d8f-11f0-a834-2b294fbfca54	Science	SCI	\N	\N	\N	\N	0	0	0	\N	\N	\N	\N
-a828ffc6-2d8f-11f0-9495-9bc5bbe65e8b	Literature	LIT	\N	\N	\N	\N	0	0	0	\N	\N	\N	\N
+a828ffc6-2d8f-11f0-9495-9bc5bbe65e8b	Literature	LIT		\N	2025-05-11 09:57:15	\N	0	0	0		\N	\N	\N
+9ee2914d-f255-44ae-9564-d302d5cdb96b	Year 10	Y10		2025-05-11 10:29:36	2025-05-11 10:29:36	\N	11	12	0		\N	\N	\N
+9ee2915f-dd78-4b97-a45e-4ba9a9fd4506	Year 11	Y11		2025-05-11 10:29:47	2025-05-11 10:29:47	\N	13	14	0		\N	\N	\N
+21397b0c-2e53-11f0-8a85-1759860470a0	Year 10	10Y		\N	2025-05-11 10:50:35	\N	0	0	0		\N	\N	\N
 9ec87e7c-cb27-4774-a024-6f4df6b3c61e	Jineologi2	jineologi2		2025-04-28 11:25:27	2025-04-28 11:25:27	cae7ba7c-1b63-11f0-8a05-c36be60d3d46	5	6	1		#2ECC71	9ec2de06-399d-4bc4-8cb0-e641a39aef1d	\N
+21397d32-2e53-11f0-8a86-abb690facbb0	Year 11	11Y		\N	2025-05-11 10:50:50	\N	0	0	0		\N	\N	\N
 \.
 
 
@@ -5266,12 +5436,12 @@ COPY public.acorn_user_users (id, name, email, password, activation_code, persis
 a11d6172-6565-4195-a62e-038358aa9fa9	seeder	\N	\N	\N	\N	\N	\N	f	t	\N	\N	\N	\N	\N	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 9e95e47b-46dc-492d-8ffa-1954bc3f1611	sz	sz@nowhere.org	$2y$10$lta6VXUFah18WoaE0L6/2eNtXxV1pJ14tG4juSxDF5QOlGq6C86zu	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:26	2025-04-03 07:43:26	sz	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	1971-08-11 00:00:00
 9ed4aad8-b9a4-44b6-82ae-3d80b981cbd5	Weeeeeee	a@we22.com	\N	\N	\N	\N	\N	f	f	\N	\N	2025-05-04 12:39:25	2025-05-04 12:39:25	a@we22.com	w	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-9ea61ac5-d211-4e52-86f5-10c6d4dbe688	You	a	\N	\N	\N	\N	\N	f	f	\N	\N	2025-04-11 09:08:29	2025-05-04 17:52:21	a	1	\N	\N	f	f	\N	\N	a		imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal	a		f	N	\N	\N	ceea8856-e4c8-11ef-8719-5f58c97885a2	1	\N	\N	2001-10-10 00:00:00
-9ea61aa6-e680-484d-9d30-aba185c5b329	Me		\N	\N	\N	\N	\N	f	f	\N	\N	2025-04-11 09:08:09	2025-05-04 17:55:58		1to1	\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	ceea8856-e4c8-11ef-8719-5f58c97885a2	1	\N	\N	1971-08-11 00:00:00
 9e95e47c-db72-48ec-8c0c-908592ebf59c	Demo	demo@nowhere.org	$2y$10$fXtS/tknV8gTiWiKWD4NEuYaGRQ.aMaTKLjYUlko6bkH7V2JZq7Oa	\N	\N	\N	\N	f	f	\N	\N	2025-04-03 07:43:27	2025-05-04 17:56:19	demo		\N	\N	f	f	\N	\N	demo@nowhere.org		imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal	demo@nowhere.org		f	N	\N	\N	ceea8856-e4c8-11ef-8719-5f58c97885a2	1	\N	\N	2001-10-10 00:00:00
 9eda3ec9-0240-4f44-8f58-ff497c3845d3	Yani	r@a.com	\N	\N	\N	\N	\N	f	f	\N	\N	2025-05-07 07:12:14	2025-05-07 07:12:14	r@a.com		\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 9eda41e0-abe7-4899-8d7b-bcfa2fd7bd8c	a	a@b.com44	\N	\N	\N	\N	\N	f	f	\N	\N	2025-05-07 07:20:53	2025-05-07 07:20:53	a@b.com44	s	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 9eda61e1-2736-4187-bb6f-8ed20e6cc171	Yippee 38745	y@hhh.com	\N	\N	\N	\N	\N	f	f	\N	\N	2025-05-07 08:50:22	2025-05-07 08:50:22	y@hhh.com		\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+9ea61aa6-e680-484d-9d30-aba185c5b329	Me (row 2)		\N	\N	\N	\N	\N	f	f	\N	\N	2025-04-11 09:08:09	2025-05-04 17:55:58		1to1	\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	ceea8856-e4c8-11ef-8719-5f58c97885a2	1	\N	\N	1971-08-11 00:00:00
+9ea61ac5-d211-4e52-86f5-10c6d4dbe688	You (row 1)	a	\N	\N	\N	\N	\N	f	f	\N	\N	2025-04-11 09:08:29	2025-05-04 17:52:21	a	1	\N	\N	f	f	\N	\N	a		imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal	a		f	N	\N	\N	ceea8856-e4c8-11ef-8719-5f58c97885a2	1	\N	\N	2001-10-10 00:00:00
 \.
 
 
@@ -5313,7 +5483,8 @@ COPY public.backend_user_preferences (id, user_id, namespace, "group", item, val
 4	1	acorn_university	students	lists-relationexamresultsstudentviewlist	{"visible":["student","exam","calculation","expression","expression_type","needs_evaluate","result","_actions","course"],"order":["id","student","exam","calculation","expression","expression_type","needs_evaluate","result","_qrcode","_actions","name","course_material","course","project","interview"],"per_page":"10"}
 6	1	acorn_exam	tokens	lists	{"visible":["name","student","exam","calculation","entity","expression","expression_type","needs_evaluate","_actions"],"order":["id","name","student","exam","calculation","entity","expression","expression_type","needs_evaluate","_qrcode","_actions"],"per_page":"20"}
 7	1	acorn_university	universities	lists	{"visible":["name","_actions","code","colour","image","description","parent_user_group"],"order":["id","name","_qrcode","_actions","code","colour","image","description","parent_user_group"],"per_page":"20"}
-8	1	acorn_university	courses	lists	{"visible":["name","code","colour","university_course_materials__course","_actions","weight"],"order":["id","name","code","colour","image","university_course_materials__course","_qrcode","_actions","created_at_event","updated_at_event","result_expression","weight","exam_results__course"],"per_page":"20"}
+13	1	acorn_exam	dataentryscores	lists	{"visible":["student","course_user_group","exam","scores"],"order":["student_user","student","student_code","course_user_group","course_code","exam","ids","student_ids","exam_material_ids","titles","scores","_qrcode","_actions"],"per_page":"20"}
+8	1	acorn_university	courses	lists	{"visible":["name","code","colour","university_course_materials__course","_actions","weight","calculation"],"order":["id","name","code","colour","image","university_course_materials__course","_qrcode","_actions","created_at_event","updated_at_event","weight","exam_results__course","calculation","exam_tokens__course","university_course_language__courses"],"per_page":"20"}
 9	1	acorn_university	students	lists	{"visible":["name","surname","email","username","created_ip_address","code","exam_scores__student","exam_interview_students__student","_actions","university_project_students__owner_student"],"order":["id","name","surname","email","username","created_ip_address","last_ip_address","code","exam_scores__student","exam_interview_students__student","exam_results__student","_qrcode","_actions","university_project_students__owner_student"],"per_page":"20"}
 \.
 
@@ -7013,6 +7184,12 @@ COPY public.winter_translate_attributes (id, locale, model_id, model_type, attri
 112	ku	9ede9377-9aa9-4b3f-9d61-3b5de579ae9e	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
 113	ar	6b4bae9a-149f-11f0-a4e5-779d31ace22e	Acorn\\University\\Models\\MaterialType	{"name":"","description":""}
 114	ku	6b4bae9a-149f-11f0-a4e5-779d31ace22e	Acorn\\University\\Models\\MaterialType	{"name":"","description":""}
+115	ar	15f02b5c-2bff-11f0-8074-4bf737ba6a74	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+116	ku	15f02b5c-2bff-11f0-8074-4bf737ba6a74	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+117	ar	9ee28508-e4dc-4734-9426-9ca21608c987	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+118	ku	9ee28508-e4dc-4734-9426-9ca21608c987	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+119	ar	9ee289d9-dcb8-4b36-87a9-049575ee43fa	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
+120	ku	9ee289d9-dcb8-4b36-87a9-049575ee43fa	Acorn\\Exam\\Models\\Calculation	{"name":"","description":""}
 \.
 
 
@@ -7068,7 +7245,7 @@ SELECT pg_catalog.setval('public.backend_user_groups_id_seq', 1, true);
 -- Name: backend_user_preferences_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.backend_user_preferences_id_seq', 12, true);
+SELECT pg_catalog.setval('public.backend_user_preferences_id_seq', 13, true);
 
 
 --
@@ -7159,7 +7336,7 @@ SELECT pg_catalog.setval('public.rainlab_location_states_id_seq', 720, true);
 -- Name: rainlab_translate_attributes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 114, true);
+SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 120, true);
 
 
 --
@@ -7187,7 +7364,7 @@ SELECT pg_catalog.setval('public.rainlab_translate_messages_id_seq', 1, false);
 -- Name: system_event_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: university
 --
 
-SELECT pg_catalog.setval('public.system_event_logs_id_seq', 696, true);
+SELECT pg_catalog.setval('public.system_event_logs_id_seq', 729, true);
 
 
 --
@@ -10831,6 +11008,13 @@ GRANT ALL ON FUNCTION public.cube_send(public.cube) TO token_1 WITH GRANT OPTION
 
 
 --
+-- Name: FUNCTION avg(); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.avg() TO token_1 WITH GRANT OPTION;
+
+
+--
 -- Name: FUNCTION avg(VARIADIC ints double precision[]); Type: ACL; Schema: public; Owner: sz
 --
 
@@ -11454,6 +11638,13 @@ GRANT ALL ON FUNCTION public.min(VARIADIC ints double precision[]) TO token_1 WI
 
 
 --
+-- Name: FUNCTION sum(); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.sum() TO token_1 WITH GRANT OPTION;
+
+
+--
 -- Name: FUNCTION sum(VARIADIC ints double precision[]); Type: ACL; Schema: public; Owner: university
 --
 
@@ -11671,6 +11862,13 @@ GRANT ALL ON TABLE public.acorn_university_project_students TO token_1 WITH GRAN
 
 
 --
+-- Name: TABLE acorn_university_projects; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_university_projects TO token_1 WITH GRANT OPTION;
+
+
+--
 -- Name: TABLE acorn_university_students; Type: ACL; Schema: public; Owner: university
 --
 
@@ -11871,13 +12069,6 @@ GRANT ALL ON TABLE public.acorn_university_faculties TO token_1 WITH GRANT OPTIO
 --
 
 GRANT ALL ON TABLE public.acorn_university_hierarchies TO token_1 WITH GRANT OPTION;
-
-
---
--- Name: TABLE acorn_university_projects; Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON TABLE public.acorn_university_projects TO token_1 WITH GRANT OPTION;
 
 
 --
