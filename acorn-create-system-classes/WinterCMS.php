@@ -173,17 +173,19 @@ class WinterCMS extends Framework
             'Acorn.Location'  => TRUE,
             'Acorn.Messaging' => TRUE
         );
-        foreach ($plugin->otherPluginRelations() as &$relation) {
-            if (!$relation instanceof RelationFrom) {
-                // Do not make requires to Modules
-                $otherPlugin = &$relation->to->plugin;
-                if ($otherPlugin instanceof Plugin) {
-                    $fqn         = $otherPlugin->dotClassName();
-                    if (!isset($requirePlugins[$fqn])) {
-                        print("    Adding Plugin \$require {$YELLOW}$fqn{$NC}\n");
-                        $requirePlugins[$fqn] = TRUE;
-                    }
+        foreach ($plugin->pluginRequires() as $fqn => &$otherPlugin) {
+            // Check for direct recursion
+            $circular = FALSE;
+            foreach ($otherPlugin->pluginRequires() as &$otherOtherPlugin) {
+                if ($otherOtherPlugin->is($plugin)) {
+                    $circular = TRUE;
+                    print("    {$RED}ERROR{$NC}: Circular plugin dependency [{$YELLOW}$plugin{$NC}] <=> [{$YELLOW}$otherPlugin{$NC}]");
                 }
+            }
+
+            if (!$circular && !isset($requirePlugins[$fqn])) {
+                print("    Adding Plugin \$require {$YELLOW}$fqn{$NC}\n");
+                $requirePlugins[$fqn] = TRUE;
             }
         }
         $this->setPropertyInClassFile($pluginFilePath, 'require', array_keys($requirePlugins), FALSE);
@@ -489,7 +491,7 @@ class WinterCMS extends Framework
             );
         }
 
-        // --------------------------------------------- Seeding
+        // --------------------------------------------- Do Seeding
         // Note that this will seed also table comments that are not Models
         $this->runWinterCommand('acorn:seed', 2, $plugin->dotClassName());
     }
@@ -603,6 +605,7 @@ class WinterCMS extends Framework
         $modelDirPath        = "$pluginDirectoryPath/models/$modelDirName";
         $translationDomain   = $model->plugin->translationDomain();
         $langDirPath         = "$pluginDirectoryPath/lang";
+        $table               = $model->getTable();
 
         if (file_exists($modelFilePath) && $overwrite) unlink($modelFilePath);
         if (file_exists($modelFilePath)) {
@@ -748,133 +751,24 @@ PHP
                 $this->setPropertyInClassFile($modelFilePath, 'globalScope', $scopeFQN, FALSE, 'public static');
             }
 
-            // ---------------------------------------------------------------- Seeding
+            // ---------------------------------------------------------------- Create Seeding
             // This moves seeding: directives in to updates\seed.sql
             // and also appends any fn_acorn_*_seed_*() functions
             $seederPath = "$pluginDirectoryPath/updates/seed.sql";
-            if ($model->getTable()->seedingOther) {
-                foreach ($model->getTable()->seedingOther as $table => $rows) {
-                    $tableParts = explode('.', $table);
-                    $isFQN      = (count($tableParts) > 1);
-                    $schema     = ($isFQN ? $tableParts[0] : 'public');
-                    $table      = ($isFQN ? $tableParts[1] : $tableParts[0]);
-
-                    print("  {$GREEN}SEEDING (other){$NC} for [$schema.$table]\n");
-                    foreach ($rows as $row) {
-                        // $table is a string so we will get raw PDO::FETCH_ASSOC results
-                        // with ->column_name properties
-                        $columns = $this->db->tableColumns($table);
-                        $names   = array();
-                        $values  = array();
-                        foreach ($columns as $column) {
-                            if (!in_array($column['column_name'], Column::SEED_IGNORE_COLUMNS)) {
-                                if (!count($row)) break;
-                                $value = array_shift($row);
-
-                                if      ($value === 'DEFAULT')   $valueSQL = 'DEFAULT';
-                                else if ($value === 'NULL')      $valueSQL = 'NULL';
-                                else if (substr($value, 0, 5) === 'EVENT') {
-                                    // Creation of NOT NULL associated calendar events: 
-                                    // EVENT(<params>) => $this->db->createCalendarEvent(<params>)
-                                    $params       = explode(';', trim(substr($value, 6), ')'));
-                                    $calendarName = $params[0];
-                                    $eventName    = $params[1];
-                                    // TODO: $from         = $params[3];
-                                    // TODO: $to           = $params[3];
-                                    $typeName     = (isset($params[2]) ? $params[2] : 'Normal');
-                                    $statusName   = (isset($params[3]) ? $params[3] : 'Normal');
-                                    $eventId      = $this->db->lazyCreateCalendarEvent(
-                                        $calendarName, 
-                                        $eventName, 
-                                        $typeName, 
-                                        $statusName
-                                    );
-                                    $valueSQL     = "'$eventId'";
-                                }
-                                else if (substr($value, 0, 19) === 'fn_acorn_' && substr($value, -1) == ')') $valueSQL = $value;
-                                else $valueSQL = var_export($value, TRUE);
-
-                                array_push($names, $column['column_name']);
-                                array_push($values, $valueSQL);
-                            }
-                        }
-                        $namesSQL  = '"' . implode('","', $names) . '"';
-                        $valuesSQL = implode(',', $values);
-                        
-                        // Include a not exists if there is a specific id
-                        if ($names[0] == 'id' && $values[0] != 'DEFAULT') {
-                            $id        = trim($values[0], "'");
-                            $insertSQL = "insert into $schema.$table($namesSQL) select $valuesSQL where not exists(select * from $schema.$table where id='$id')";
-                        } else {
-                            $insertSQL = "insert into $schema.$table($namesSQL) values($valuesSQL)";
-                        }
-                        $insertSQL .= ';';
-    
-                        $this->appendToFile($seederPath, $insertSQL);
-                    }
-                }
+            if ($seeding = $table->seedingOther) {
+                $sqls = $this->seedingToSQLs($seeding);
+                $sql  = implode("\n", $sqls);
+                $this->appendToFile($seederPath, "-- $table->order: $table->name (other)", 0, TRUE, FALSE);
+                $this->appendToFile($seederPath, $sql);
             }
             
-            if ($model->getTable()->seeding) {
-                $schema     = $model->getTable()->schema;
-                $table      = $model->getTable()->name;
-
-                print("  {$GREEN}SEEDING{$NC} for [$table]\n");
-                foreach ($model->getTable()->seeding as $row) {
-                    $names  = array();
-                    $values = array();
-                    foreach ($model->getTable()->columns as &$column) {
-                        if (!in_array($column->column_name, Column::SEED_IGNORE_COLUMNS)) {
-                            if (!count($row)) break;
-                            $value = array_shift($row);
-
-                            if      ($value === 'DEFAULT')   $valueSQL = 'DEFAULT';
-                            else if ($value === 'NULL')      $valueSQL = 'NULL';
-                            else if (substr($value, 0, 5) === 'EVENT') {
-                                // Creation of NOT NULL associated calendar events: 
-                                // EVENT(<params>) => $this->db->createCalendarEvent(<params>)
-                                $params       = explode(';', trim(substr($value, 6), ')'));
-                                $calendarName = $params[0];
-                                $eventName    = $params[1];
-                                // TODO: $from         = $params[3];
-                                // TODO: $to           = $params[3];
-                                $typeName     = (isset($params[2]) ? $params[2] : 'Normal');
-                                $statusName   = (isset($params[3]) ? $params[3] : 'Normal');
-                                $eventId      = $this->db->lazyCreateCalendarEvent(
-                                    $calendarName, 
-                                    $eventName, 
-                                    $typeName, 
-                                    $statusName
-                                );
-                                $valueSQL     = "'$eventId'";
-                            }
-                            else if (substr($value, 0, 19) === 'fn_acorn_' && substr($value, -1) == ')') $valueSQL = $value;
-                            else $valueSQL = var_export($value, TRUE);
-
-                            array_push($names, $column->name);
-                            array_push($values, $valueSQL);
-                        }
-                    }
-                    if (   $model->getTable()->hasColumn('created_by_user_id') 
-                        && !in_array('created_by_user_id', $names)
-                    ) {
-                        array_push($names, 'created_by_user_id');
-                        array_push($values, 'fn_acorn_user_get_seed_user()');
-                    }
-                    $namesSQL  = '"' . implode('","', $names) . '"';
-                    $valuesSQL = implode(',', $values);
-
-                    // Include a not exists if there is a specific id
-                    if ($names[0] == 'id' && $values[0] != 'DEFAULT') {
-                        $id        = trim($values[0], "'");
-                        $insertSQL = "insert into $schema.$table($namesSQL) select $valuesSQL where not exists(select * from $schema.$table where id='$id')";
-                    } else {
-                        $insertSQL = "insert into $schema.$table($namesSQL) values($valuesSQL)";
-                    }
-                    $insertSQL .= ';';
-
-                    $this->appendToFile($seederPath, $insertSQL);
-                }
+            if ($seeding = $table->seeding) {
+                $tableFQN     = $table->fullyQualifiedName();
+                $seedingTable = array($tableFQN => $seeding);
+                $sqls         = $this->seedingToSQLs($seedingTable);
+                $sql          = implode("\n", $sqls);
+                $this->appendToFile($seederPath, "-- $table->order: $table->name", 0, TRUE, FALSE);
+                $this->appendToFile($seederPath, $sql);
             }
 
             // ----------------------------------------------------------------- Language
@@ -1105,6 +999,82 @@ PHP
             $commentHeader .= "$indent */\n";
             $this->replaceInFile($modelFilePath, '/^{$/m', "{\n$commentHeader");
         } // Model exists
+    }
+
+    protected function seedingToSQLs(array $seeding, string $type = ''): array
+    {
+        global $GREEN, $RED, $YELLOW, $NC;
+
+        $sqls       = array();
+        $typeString = ($type ? "($type)" : '');
+
+        foreach ($seeding as $table => $rows) {
+            $tableParts = explode('.', $table);
+            $isFQN      = (count($tableParts) > 1);
+            $schema     = ($isFQN ? $tableParts[0] : 'public');
+            $table      = ($isFQN ? $tableParts[1] : $tableParts[0]);
+
+            print("  {$GREEN}SEEDING $typeString{$NC} for [$schema.$table]\n");
+            foreach ($rows as $row) {
+                // $table is a string so we will get raw PDO::FETCH_ASSOC results
+                // with ->column_name properties
+                $columns = $this->db->tableColumns($table);
+                $names   = array();
+                $values  = array();
+                foreach ($columns as $column) {
+                    if (!in_array($column->column_name, Column::SEED_IGNORE_COLUMNS)) {
+                        if (!count($row)) break;
+                        $value = array_shift($row);
+
+                        if      ($value === 'DEFAULT')   $valueSQL = 'DEFAULT';
+                        else if ($value === 'NULL')      $valueSQL = 'NULL';
+                        else if (substr($value, 0, 5) === 'EVENT') {
+                            // Creation of NOT NULL associated calendar events: 
+                            // EVENT(<params>) => $this->db->createCalendarEvent(<params>)
+                            $params       = explode(';', trim(substr($value, 6), ')'));
+                            $calendarName = addslashes($params[0]);
+                            $eventName    = addslashes($params[1]);
+                            $typeName     = addslashes(isset($params[2]) ? $params[2] : 'Normal');
+                            $statusName   = addslashes(isset($params[3]) ? $params[3] : 'Normal');
+                            // TODO: from/to
+                            $from         = addslashes(isset($params[4]) ? $params[4] : 'now()');
+                            $to           = addslashes(isset($params[5]) ? $params[5] : 'now()');
+                            $fn           = 'fn_acorn_calendar_lazy_create_event';
+                            $valueSQL     = "$fn('$calendarName', fn_acorn_user_get_seed_user(),'$typeName', '$statusName', '$eventName')";
+                        }
+                        else if (substr($value, 0, 19) === 'fn_acorn_' && substr($value, -1) == ')') $valueSQL = $value;
+                        else $valueSQL = var_export($value, TRUE);
+
+                        array_push($names, $column->column_name);
+                        array_push($values, $valueSQL);
+                    }
+                }
+
+                // created_by_user_id must be sent by the external layer
+                if (   isset($columns['created_by_user_id'])
+                    && !in_array('created_by_user_id', $names)
+                ) {
+                    array_push($names, 'created_by_user_id');
+                    array_push($values, 'fn_acorn_user_get_seed_user()');
+                }
+            
+                $namesSQL  = '"' . implode('","', $names) . '"';
+                $valuesSQL = implode(',', $values);
+                
+                // Include a not exists if there is a specific id
+                if ($names[0] == 'id' && $values[0] != 'DEFAULT') {
+                    $id        = trim($values[0], "'");
+                    $insertSQL = "insert into $schema.$table($namesSQL) select $valuesSQL where not exists(select * from $schema.$table where id='$id')";
+                } else {
+                    $insertSQL = "insert into $schema.$table($namesSQL) values($valuesSQL)";
+                }
+                $insertSQL .= ';';
+
+                array_push($sqls, $insertSQL);
+            }
+        }
+
+        return $sqls;
     }
 
     protected function createFormInterface(Model &$model, bool $overwrite = FALSE) {
@@ -1445,7 +1415,39 @@ PHP
                     $fieldClass = preg_replace('/.*\\\\/', '', get_class($field));
                     $this->yamlFileSet($configFilterPath, "# $fieldClass($fieldName)", 'field !canDisplayAsFilter()');
                 }
+
+                // ---------------------------- Custom field filters
+                // On the column comment:
+                // filters:
+                //     expression_type:
+                //         label: acorn.exam::lang.models.result.expression_type
+                //         conditions: expression_type in(:filtered)
+                //         options:
+                //           data: Data
+                //           expression: Expression
+                //           formulae: Formulae
+                if ($field->filters) {
+                    foreach ($field->filters as $name => $filter) {
+                        $this->yamlFileSet($configFilterPath, "scopes.$name", $filter);
+                    }
+                }                
             }
+
+            // ---------------------------- Custom table filters
+            // On the table comment:
+            // filters:
+            //     expression_type:
+            //         label: acorn.exam::lang.models.result.expression_type
+            //         conditions: expression_type in(:filtered)
+            //         options:
+            //           data: Data
+            //           expression: Expression
+            //           formulae: Formulae
+            if ($controller->model->filters) {
+                foreach ($controller->model->filters as $name => $filter) {
+                    $this->yamlFileSet($configFilterPath, "scopes.$name", $filter);
+                }
+            }                
         }
 
         // ---------------------------------------- Relation Manager configuration
@@ -1574,6 +1576,7 @@ PHP
                     'path'       => $field->columnPartial,
                     'relation'   => $field->relation,
                     'select'     => $field->sqlSelect,
+                    'cssClass'   => $field->cssClass(),
 
                     // Extended info
                     'nested'     => ($field->nested    ?: NULL),

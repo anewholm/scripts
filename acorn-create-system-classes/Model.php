@@ -455,12 +455,13 @@ class Model {
     }
 
     // ----------------------------------------- Relations
-    public function winterModel(string $modelFQN = NULL)
+    public function winterModel(bool $throwIfNotFound = TRUE, string $modelFQN = NULL): object|null
     {
         if (!$modelFQN) $modelFQN = $this->fullyQualifiedName();
-        if (!class_exists($modelFQN))
+        $classExists = class_exists($modelFQN);
+        if (!$classExists && $throwIfNotFound)
             throw new Exception("Call for " . __FUNCTION__ . "() on non-create-system plugin, model [$modelFQN] not loaded");
-        return new $modelFQN();
+        return ($classExists ? new $modelFQN() : NULL);
     }
 
     protected function relationConfigModelFQN(array|string $relationConfig): string
@@ -705,14 +706,15 @@ class Model {
         } else {
             // Non-create system plugins do not represent their FKs correctly
             // so we need to read the actual class definition relations, not the database FKs
-            $winterModel = $this->winterModel();
-            foreach ($winterModel->hasMany as $relationName => $config) {
-                // If the relation config has a ModelTo setting, usually config[0]
-                $finalModel = $this->relationConfigModel($config);
-                $key        = (isset($config['key']) ? $config['key'] : $this->standardBareReferencingField());
-                $columnFrom = Column::dummy($finalModel->table, $key);
-                if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
-                    $relations[$relationName] = new RelationXto1($relationName, $this, $finalModel, $columnFrom);
+            if ($winterModel = $this->winterModel(FALSE)) {
+                foreach ($winterModel->hasMany as $relationName => $config) {
+                    // If the relation config has a ModelTo setting, usually config[0]
+                    $finalModel = $this->relationConfigModel($config);
+                    $key        = (isset($config['key']) ? $config['key'] : $this->standardBareReferencingField());
+                    $columnFrom = Column::dummy($finalModel->table, $key);
+                    if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
+                        $relations[$relationName] = new RelationXto1($relationName, $this, $finalModel, $columnFrom);
+                }
             }
         }
     
@@ -750,24 +752,25 @@ class Model {
             // Non-create system plugins do not represent all their FKs necessarily, 
             // nor with our or standard naming conventions
             // so we need to read the actual class definition relations, not the database FKs
-            $winterModel = $this->winterModel();
-            foreach ($winterModel->belongsTo as $relationName => $config) {
-                if (!isset($config['count'])) {
-                    // If the relation config has a ModelTo setting, usually config[0]
-                    $finalModel = $this->relationConfigModel($config);
-                    $table = NULL;
-                    if ($finalModel) {
-                        $table = $finalModel->getTable();
-                    } else {
-                        $modelFQN   = $this->relationConfigModelFQN($config);
-                        $finalModel = $this->winterModel($modelFQN);
-                        // Winter Model $table is protected
-                        $table      = Table::get($finalModel->getTable());
+            if ($winterModel = $this->winterModel(FALSE)) {
+                foreach ($winterModel->belongsTo as $relationName => $config) {
+                    if (!isset($config['count'])) {
+                        // If the relation config has a ModelTo setting, usually config[0]
+                        $finalModel = $this->relationConfigModel($config);
+                        $table = NULL;
+                        if ($finalModel) {
+                            $table = $finalModel->getTable();
+                        } else {
+                            $modelFQN   = $this->relationConfigModelFQN($config);
+                            $finalModel = $this->winterModel(TRUE, $modelFQN);
+                            // Winter Model $table is protected
+                            $table      = Table::get($finalModel->getTable());
+                        }
+                        $key        = (isset($config['key']) ? $config['key'] : $this->standardBareReferencingField());
+                        $columnFrom = Column::dummy($table, $key);
+                        if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
+                            $relations[$relationName] = new RelationXto1($relationName, $this, $finalModel, $columnFrom);
                     }
-                    $key        = (isset($config['key']) ? $config['key'] : $this->standardBareReferencingField());
-                    $columnFrom = Column::dummy($table, $key);
-                    if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
-                        $relations[$relationName] = new RelationXto1($relationName, $this, $finalModel, $columnFrom);
                 }
             }
         }
@@ -900,30 +903,31 @@ class Model {
             //   'key'      => $relation->keyColumn->name,  // pivot.user_group_id
             //   'otherKey' => $relation->column->name,     // pivot.user_id
             // ]]
-            $winterModel = $this->winterModel();
-            foreach ($winterModel->belongsToMany as $relationName => $config) {
-                if (!isset($config['count'])) {
-                    // If the relation config has a ModelTo setting, usually config[0]
-                    $db            = $this->table->db();
-                    $finalModel    = $this->relationConfigModel($config);
-                    $key           = (isset($config['key'])      ? $config['key']      : $this->standardBareReferencingField());
-                    $otherKey      = (isset($config['otherKey']) ? $config['otherKey'] : $finalModel->standardBareReferencingField());
-                    if (!isset($config['table'])) 
-                        throw new Exception("[$relationName] on [$this->name] has no table config");
-                    $table         = $config['table'];
-                    $pivotTable    = Table::get($table);
-                    if (!$pivotTable) $pivotTable = Table::dummy($db, $table);
-                    $columnFrom    = Column::dummy($finalModel->table, $key);
-                    $throughColumn = Column::dummy($finalModel->table, $otherKey);
-                    if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
-                        $relations[$relationName] = new RelationXfromX(
-                            $relationName, 
-                            $this, 
-                            $finalModel, 
-                            $pivotTable,
-                            $columnFrom,
-                            $throughColumn
-                        );
+            if ($winterModel = $this->winterModel(FALSE)) {
+                foreach ($winterModel->belongsToMany as $relationName => $config) {
+                    if (!isset($config['count'])) {
+                        // If the relation config has a ModelTo setting, usually config[0]
+                        $db            = $this->table->db();
+                        $finalModel    = $this->relationConfigModel($config);
+                        $key           = (isset($config['key'])      ? $config['key']      : $this->standardBareReferencingField());
+                        $otherKey      = (isset($config['otherKey']) ? $config['otherKey'] : $finalModel->standardBareReferencingField());
+                        if (!isset($config['table'])) 
+                            throw new Exception("[$relationName] on [$this->name] has no table config");
+                        $table         = $config['table'];
+                        $pivotTable    = Table::get($table);
+                        if (!$pivotTable) $pivotTable = Table::dummy($db, $table);
+                        $columnFrom    = Column::dummy($finalModel->table, $key);
+                        $throughColumn = Column::dummy($finalModel->table, $otherKey);
+                        if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
+                            $relations[$relationName] = new RelationXfromX(
+                                $relationName, 
+                                $this, 
+                                $finalModel, 
+                                $pivotTable,
+                                $columnFrom,
+                                $throughColumn
+                            );
+                    }
                 }
             }
         }
@@ -1713,18 +1717,6 @@ class Model {
             'searchable'    => FALSE,
             'invisible'     => FALSE,
         ));
-
-        // ------------------------------------------------------------- Custom filters
-        foreach ($fields as $localFieldName => &$fieldObj) {
-            if ($conditions = $this->filters[$localFieldName] ?? NULL) {
-                if (count($fieldObj->relations)) {
-                    $relation1 = current($fieldObj->relations);
-                    $relation1->canFilter = TRUE;
-                }
-                $fieldObj->canFilter  = TRUE;
-                $fieldObj->conditions = $conditions;
-            }
-        }
 
         // ------------------------------------------------------------- Debug
         $relations = $this->relations();

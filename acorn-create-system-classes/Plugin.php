@@ -155,6 +155,26 @@ class Plugin {
         return $relations;
     }
 
+    public function pluginRequires(): array
+    {
+        $pluginRequires = array();
+
+        foreach ($this->otherPluginRelations() as &$relation) {
+            if (!$relation instanceof RelationFrom) {
+                // Do not make requires to Modules
+                $otherPlugin = &$relation->to->plugin;
+                if ($otherPlugin instanceof Plugin) {
+                    $fqn = $otherPlugin->dotClassName();
+                    if (!isset($pluginRequires[$fqn])) {
+                        $pluginRequires[$fqn] = $otherPlugin;
+                    }
+                }
+            }
+        }
+
+        return $pluginRequires;
+    }
+
     public static function fromDotName(string $domain): Plugin|Module|NULL
     {
         $plugin = NULL;
@@ -165,6 +185,11 @@ class Plugin {
             }
         }
         return $plugin;
+    }
+
+    public function is(Plugin|Module &$otherPlugin): bool
+    {
+        return ($this->fullyQualifiedName() == $otherPlugin->fullyQualifiedName());
     }
 
     public function isOurs(string $which = NULL): bool
