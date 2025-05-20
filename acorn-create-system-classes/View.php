@@ -16,3 +16,4 @@ class View extends Table {
         return $changes;
     }
 }
+

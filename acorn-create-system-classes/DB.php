@@ -2,6 +2,7 @@
 
 require_once('Table.php');
 require_once('View.php');
+require_once('MaterializedView.php');
 
 class DB {
     public    $nc;
@@ -141,14 +142,18 @@ class DB {
             $types      = explode(' ', $result->types);
             $returnType = 'unknown';
 
-            foreach (explode(',', substr($result->parameters, 1, -1)) as $i => $name) {
-                // TODO: Translate type oids
-                $typeOID = (int) $types[$i];
-                $typeName = 'unknown';
-                switch ($typeOID) {
-                    case 2950: $typeName = 'uuid';
+            $dbParametersString = substr($result->parameters, 1, -1);
+            foreach (explode(',', $dbParametersString) as $i => $name) {
+                $name = trim($name);
+                if ($name) {
+                    // TODO: Translate type oids
+                    $typeOID = (int) $types[$i];
+                    $typeName = 'unknown';
+                    switch ($typeOID) {
+                        case 2950: $typeName = 'uuid';
+                    }
+                    $parameters[$name] = $typeName;
                 }
-                $parameters[$name] = $typeName;
             }
             
             switch ($result->returntype) {
@@ -257,7 +262,97 @@ class DB {
         return $results;
     }
 
-    public function tableColumns(Table|string $table, bool $allColumns = FALSE): array
+    public function materializedViews(string $schemaMatch = '%', string $tableMatch = '%'): array
+    {
+        // table-type: report (read-only)
+        $results = array();
+
+        // TODO: oid for comment write-back
+        $statement = $this->connection->prepare("select matviewowner as table_catalog, schemaname as schema, matviewname as name,
+                substring(obj_description(concat(schemaname, '.', matviewname)::regclass, 'pg_class'), 'order: ([0-9]+)')::int as order,
+                obj_description(concat(schemaname, '.', matviewname)::regclass, 'pg_class') as comment
+            from pg_matviews
+            where matviewowner = current_database()
+                and schemaname not like('pg_%') and not schemaname = 'information_schema'
+                and schemaname like(:schemaMatch)
+                and matviewname like(:tableMatch)
+            order by coalesce(substring(obj_description(concat(schemaname, '.', matviewname)::regclass, 'pg_class'), 'order: ([0-9]+)')::int, 10000) asc"
+        );
+        $statement->bindParam(':schemaMatch', $schemaMatch);
+        $statement->bindParam(':tableMatch',  $tableMatch);
+        $statement->execute();
+        foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $view = MaterializedView::fromRow($this, $row);
+            if ($view->shouldProcess()) $results[$view->fullyQualifiedName()] = $view;
+        }
+
+        return $results;
+    }
+
+    protected function materializedViewColumns(View|string $table, bool $allColumns = FALSE): array
+    {
+        $results = array();
+
+        // Can process any table and return raw results
+        // or, if it is a table obejct return create-system objects
+        $schema = NULL;
+        $name   = NULL;
+        if ($table instanceof Table) {
+            $schema = $table->schema;
+            $name   = $table->name;
+        } else {
+            $tableParts = explode('.', $table);
+            $isFQN      = (count($tableParts) > 1);
+            $schema     = ($isFQN ? $tableParts[0] : 'public');
+            $name       = ($isFQN ? $tableParts[1] : $tableParts[0]);
+        }
+
+        // TODO: oid for comment write-back
+        $statement = $this->connection->prepare("SELECT s.nspname as table_schema,
+                t.relname as table_name,
+                a.attname as column_name,
+                a.attnum as ordinal_position,
+                case when a.attnotnull then 'YES' else 'NO' end::character varying(3) as is_nullable,
+                pg_catalog.format_type(a.atttypid, a.atttypmod)::character varying as data_type,
+
+                pg_catalog.col_description(concat(s.nspname, '.', t.relname)::regclass::oid, a.attnum) as comment
+            FROM pg_attribute a
+                JOIN pg_class t on a.attrelid = t.oid
+                JOIN pg_namespace s on t.relnamespace = s.oid
+                --JOIN pg_namespace d on t.relowner = d.oid
+            WHERE a.attnum > 0 
+                AND NOT a.attisdropped
+                AND t.relname like(:table)
+                AND s.nspname like(:schema)
+            order by 
+                coalesce(
+                    substring(pg_catalog.col_description(concat(s.nspname, '.', t.relname)::regclass, 
+                    a.attnum), 'order: ([0-9]+)')::int, 10000) asc"
+        );
+        $statement->bindParam(':schema', $schema);
+        $statement->bindParam(':table',  $name);
+        $statement->execute();
+        $results = $statement->fetchAll(\PDO::FETCH_ASSOC);
+
+        $resultsObjects = array();
+        foreach ($results as $row) {
+            $shouldProcess = TRUE;
+            if ($table instanceof View) {
+                // Table object => Column objects
+                $column        = Column::fromRow($table, $row);
+                $shouldProcess = ($column->shouldProcess() || $allColumns);
+            } else {
+                // table string => (object) array
+                $column        = (object) $row;
+            }
+            if ($shouldProcess) 
+                $resultsObjects[$column->column_name] = $column;
+        }
+
+        return $resultsObjects;
+    }
+
+    public function tableColumns(Table|View|string $table, bool $allColumns = FALSE): array
     {
         $results = array();
 
@@ -294,7 +389,7 @@ class DB {
         $resultsObjects = array();
         foreach ($results as $row) {
             $shouldProcess = TRUE;
-            if ($table instanceof Table) {
+            if ($table instanceof Table || $table instanceof View) {
                 // Table object => Column objects
                 $column        = Column::fromRow($table, $row);
                 $shouldProcess = ($column->shouldProcess() || $allColumns);
@@ -304,6 +399,11 @@ class DB {
             }
             if ($shouldProcess) 
                 $resultsObjects[$column->column_name] = $column;
+        }
+
+        if (!$resultsObjects && $table instanceof View) {
+            // It might be a non-SQL-standard PostGreSQL Materialized View
+            $resultsObjects = $this->materializedViewColumns($table, $allColumns);
         }
 
         return $resultsObjects;

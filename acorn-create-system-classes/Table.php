@@ -68,6 +68,9 @@ class Table {
     public $actionFunctions;
     public $triggers;
     public $printable;
+    public $import;
+    public $export;
+    public $batchPrint;
 
     public $filters = array();
 
