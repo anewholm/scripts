@@ -31,6 +31,7 @@ class Relation {
     // Filter config_filter.yaml
     public $canFilter;
     public $globalScope; // Chaining from|to
+    public $conditions;  // config_relation.yaml conditions
 
     // Translation arrays
     public $labels;
@@ -293,7 +294,7 @@ class RelationHasManyDeep extends Relation {
         array $throughRelations, // name => relation
         bool  $containsLeaf,
         bool  $nameObject,
-        string $type
+        string $type // Last relation type
     ) {
         parent::__construct($name, $from, $to, $column, $firstForeignKey);
 

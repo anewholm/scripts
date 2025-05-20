@@ -47,6 +47,8 @@ class ForeignKey {
     public $newRow;
     public $bootstraps;
     public $tabLocation; // primary|secondary|tertiary
+    public $conditions;  // config_relation.yaml conditions
+
     // Translation arrays
     public $labels;
     public $labelsPlural;

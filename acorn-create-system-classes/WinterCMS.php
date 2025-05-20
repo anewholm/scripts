@@ -939,20 +939,11 @@ PHP
             // ----------------------------------------------------------------- List Editable
             $listEditable = array();
             foreach ($model->fields() as $name => &$field) {
-                switch ($field->listEditable) {
-                    case 'delete-on-null':
-                        $listEditable[$name] = 2;
-                        break;
-                    case 'validate':
-                    case TRUE:
-                        $listEditable[$name] = TRUE;
-                        break;
-                    case NULL:
-                    case FALSE:
-                        break;
-                    default:
-                        throw new Exception("List Editable setting [$field->listEditable] on [$name] not understood");
-                }
+                // listEditable can be a string or a boolean
+                // so we cannot use a switch
+                if      ($field->listEditable === 'delete-on-null') $listEditable[$name] = 2;
+                else if ($field->listEditable === 'validate')       $listEditable[$name] = TRUE;
+                else if ($field->listEditable === TRUE)             $listEditable[$name] = TRUE;
             }
             $this->setPropertyInClassFile($modelFilePath, 'listEditable', $listEditable, FALSE);
 
@@ -970,7 +961,7 @@ PHP
             $this->addStaticMethod($modelFilePath, 'menuitemCount', 'return self::count();');
 
             // get<Something>Attribute()s
-            foreach ($model->attributeFunctions as $funcName => &$body) {
+            foreach ($model->attributeFunctions() as $funcName => &$body) {
                 $funcNamePascal = Str::studly($funcName);
                 $type           = ($funcNamePascal == 'name' ? 'string' : 'mixed');
                 $signature      = "get{$funcNamePascal}Attribute()";
@@ -1125,7 +1116,7 @@ PHP
                         }
                     }
                 }
-                $labelKey = ($field->explicitLabelKey ?: $field->translationKey());
+                $labelKey = (isset($field->explicitLabelKey) ? $field->explicitLabelKey : $field->translationKey());
                 $fieldTab = ($field->tab === 'INHERIT' ? $labelKey : $field->tab); // Can be NULL
                 $fieldDefinition = array(
                     '#'         => $field->yamlComment,
@@ -1299,9 +1290,11 @@ PHP
         $controllerDirName   = $controller->dirName();
         $controllerFilePath  = "$pluginDirectoryPath/controllers/$controller->name.php";
         $controllerDirPath   = "$pluginDirectoryPath/controllers/$controllerDirName";
+        $configListPath      = "$controllerDirPath/config_list.yaml";
         $configFilterPath    = "$controllerDirPath/config_filter.yaml";
         $configFormPath      = "$controllerDirPath/config_form.yaml";
         $configRelationPath  = "$controllerDirPath/config_relation.yaml";
+        $configImExportPath  = "$controllerDirPath/config_import_export.yaml";
 
         if (file_exists($controllerFilePath) && $overwrite) unlink($controllerFilePath);
         if (file_exists($controllerFilePath)) {
@@ -1316,12 +1309,15 @@ PHP
             $this->replaceInFile($controllerFilePath, '/^use Backend\\\\Classes\\\\Controller;$/m', "use $author\\\\Controller;");
 
             // Implements
-            $this->setPropertyInClassFile($controllerFilePath, 'implement', array(
+            $implements = array(
                 "\\\\$author\\\\Behaviors\\\\FormController",
                 "\\\\$author\\\\Behaviors\\\\ListController",
                 "Backend\\\\Behaviors\\\\RelationController", // Only here to prevent RelationController requirement error
                 "\\\\Acorn\\\\Behaviors\\\\RelationController",
-            ), Framework::OVERWRITE_EXISTING);
+            );
+            if ($controller->model->export || $controller->model->import || $controller->model->batchPrint) 
+                array_push($implements, "\Acorn\Behaviors\ImportExportController");
+            $this->setPropertyInClassFile($controllerFilePath, 'implement', $implements, Framework::OVERWRITE_EXISTING);
 
             // Explicit plural name injection
             // Otherwise PathsHelper will get confused when making URLs and things
@@ -1329,11 +1325,46 @@ PHP
             if ($plural) $this->setPropertyInClassFile($controllerFilePath, 'namePlural', $plural, Framework::NEW_PROPERTY);
 
             if ($controller->model->hasSelfReferencingRelations()) 
-                $this->yamlFileSet("$controllerDirPath/config_list.yaml", 'showTree', true);
+                $this->yamlFileSet($configListPath, 'showTree', true);
             if ($controller->model->readOnly) {
-                $this->yamlFileSet("$controllerDirPath/config_list.yaml", 'showCheckboxes', false, Framework::NO_THROW);
-                $this->yamlFileUnSet("$controllerDirPath/config_list.yaml", 'recordUrl');
+                $this->yamlFileSet($configListPath, 'showCheckboxes', false, Framework::NO_THROW);
+                $this->yamlFileUnSet($configListPath, 'recordUrl');
             }
+
+            // -------------------------------- Import / Export
+            $modelsName    = Str::plural($controller->model->name);
+            $pluginDirName = $controller->model->plugin->dirName();
+            $modelDirName  = $controller->model->dirName();
+            $modelDirPath  = "/$pluginDirName/models/$modelDirName";
+            if ($controller->model->import) {
+                $this->yamlFileSet($configImExportPath, 'import', array(
+                    'title'      => "Import $modelsName",
+                    'modelClass' => "Acorn\\Models\\Import",
+                    'list'       => "\$$modelDirPath/columns.yaml",
+                ));
+            }
+            if ($controller->model->export) {
+                $this->yamlFileSet($configImExportPath, 'export', array(
+                    'title'      => "Export $modelsName",
+                    'modelClass' => "Acorn\\Models\\Export",
+                    'list'       => "\$$modelDirPath/columns.yaml",
+                    'dataModel'  => $controller->model->fullyQualifiedName(),
+                ));
+            } else if ($controller->model->batchPrint) {
+                $this->yamlFileSet($configImExportPath, 'export', array(
+                    'title'      => "Batch print $modelsName",
+                    'modelClass' => "Acorn\\Models\\BatchPrint",
+                    'list'       => "\$$modelDirPath/columns.yaml",
+                    'dataModel'  => $controller->model->fullyQualifiedName(),
+                    'form'       => '$/../modules/acorn/models/export/fields_batch_print.yaml',
+                    'fileName'   => 'print.zip',
+                ));
+                $defaultExtensions = ['avi','bmp','css','doc','docx','eot','flv','gif','ico','ics','jpeg','jpg','js','less','map','mkv','mov','mp3','mp4','mpeg','ods','odt','ogg','pdf','png','ppt','pptx','rar','scss','svg','swf','ttf','txt','wav','webm','webp','wmv','woff','woff2','xls','xlsx','zip'];
+                print("  Adding {$YELLOW}Flat XML ODT libre office{$NC} for batch print runs to [{$YELLOW}config/cms.php{$NC}]\n");
+                array_push($defaultExtensions, 'fodt');
+                // TODO: This is a bit dodgy cause we loose the comments
+                // $this->arrayFileSet('config/cms.php', 'fileDefinitions.defaultExtensions', $defaultExtensions, Framework::NEW_PROPERTY);            
+            }            
 
             // -------------------------------- Filters
             $indent = 0;
@@ -1347,12 +1378,13 @@ PHP
                     // Usually PseudoField ?from? relation filters
                     // The IdField also has all these relations on it, but is usually marked as !canFilter
                     // Time fields also have relations
+                    $nameFromEmbedded = (strstr($field->nameFrom, '[') !== FALSE);
                     $filterDefinition = array(
                         '#'          => $fieldName,
                         'label'      => $field->translationKey(Model::PLURAL),
                         'type'       => $field->filterType,
-                        'conditions' => $field->conditions,
-                        'nameFrom'   => $field->nameFrom, // Often fully_qualified_name
+                        'conditions' => $field->filterConditions,
+                        'nameFrom'   => ($nameFromEmbedded ? FALSE : $field->nameFrom), 
                     );
 
                     if (count($field->relations)) {
@@ -1458,15 +1490,17 @@ PHP
             if ($field->fieldType == 'relationmanager') {
                 if (count($field->relations) == 0) throw new Exception("Field $name has no relations for relationmanager configuration");
                 if (count($field->relations) > 1)  throw new Exception("Field $name has multiple relations for relationmanager configuration");
-                $relationModel           = end($field->relations)->to;
+                $relation1               = end($field->relations);
+                $relationModel           = $relation1->to;
                 $relationPluginDirectory = $relationModel->plugin->dirName();
                 $relationModelDirName    = $relationModel->dirName();
                 $relationModelDirPath    = "/$relationPluginDirectory/models/$relationModelDirName";
                 $rlButtons               = ($field->rlButtons ?: array('create' => TRUE, 'delete' => TRUE));
 
                 print("    +{$YELLOW}$field->fieldKey{$NC} filter\n");
+                $relationDefinition = NULL;
                 if ($field->readOnly) {
-                    $this->yamlFileSet($configRelationPath, $field->fieldKey, array(
+                    $relationDefinition = array(
                         'label'    => $field->translationKey(),
                         'readOnly' => TRUE,
                         'view'     => array(
@@ -1476,9 +1510,9 @@ PHP
                             'showCheckboxes' => FALSE,
                             'recordOnClick'  => 'return false',
                         ),
-                    ));
+                    );
                 } else {
-                    $this->yamlFileSet($configRelationPath, $field->fieldKey, array(
+                    $relationDefinition = array(
                         'label' => $field->translationKey(),
                         'view' => array(
                             'list' => "\$$relationModelDirPath/columns.yaml",
@@ -1489,8 +1523,12 @@ PHP
                             'form' => "\$$relationModelDirPath/fields.yaml",
                             'recordsPerPage' => $field->recordsPerPage,
                         ),
-                    ));
+                    );
                 }
+                
+                if ($relation1->conditions) $relationDefinition['view']['conditions'] = $relation1->conditions;
+
+                $this->yamlFileSet($configRelationPath, $field->fieldKey, $relationDefinition);
             }
         }
 
@@ -1499,8 +1537,10 @@ PHP
         // TODO: Write the labels to lang, and the translationKeys to the YAML
         // TODO: These are not used yet, only the Model->actionFunctions set above
         $afCount = count($controller->model->actionFunctions);
-        if ($afCount) print("  Setting up [$afCount] {$YELLOW}actionFunctions{$NC}\n");
-        else          print("  No {$YELLOW}actionFunctions{$NC}\n");
+        if ($afCount) 
+            print("  Setting up [$afCount] {$YELLOW}actionFunctions{$NC}\n");
+        else          
+            print("  No {$YELLOW}actionFunctions{$NC}\n");
         $this->yamlFileSet($configFormPath, 'actionFunctions', $controller->model->actionFunctions);
 
         // ----------------------------------------------- Interface variants
@@ -1576,12 +1616,15 @@ PHP
                     'path'       => $field->columnPartial,
                     'relation'   => $field->relation,
                     'select'     => $field->sqlSelect,
-                    'cssClass'   => $field->cssClass(),
-
+                    'cssClass'   => $field->cssClassColumn(),
+                    
                     // Extended info
                     'nested'     => ($field->nested    ?: NULL),
                     'nestLevel'  => ($field->nestLevel ?: NULL),
-                    'multi'      => $field->multi,             // Relation _multi.php directives
+                    // Relation _multi.php and other special directives
+                    'multi'      => $field->multi,             
+                    'prefix'     => $field->prefix,
+                    'suffix'     => $field->suffix,
 
                     // MorphConfig.php dynamic include
                     'include'      => $field->include,          // Only include: 1to1

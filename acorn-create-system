@@ -69,7 +69,7 @@ $framework->show();
 $nc      = new AcornNamingConvention();
 $db      = new DB($nc, $framework); // TODO: Also db->comment => properties heye
 do {
-    $tables  = array_merge($db->tables(), $db->views());
+    $tables  = array_merge($db->tables(), $db->views(), $db->materializedViews());
     foreach ($tables as &$table) {
         $table->loadForeignKeys();
         $table->loadActionFunctions();

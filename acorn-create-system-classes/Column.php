@@ -114,6 +114,8 @@ class Column {
 
     // Aliases
     public $name; // = column_name
+    public $prefix; // Supported by _some_ partials
+    public $suffix; // Supported by _some_ partials
 
     // --------------------- Column comment accepted values
     // These flow through to Field
@@ -121,7 +123,9 @@ class Column {
     public $parsedComment; // array
     public $fieldOptions;  // array
     public $searchable;
+    public $cssClassesColumn;
     public $sortable;
+    public $relation; // Explicit relation: setting
     public $order;
     public $invisible;
     public $system;  // Internal column, do not process
@@ -130,6 +134,7 @@ class Column {
     public $env;     // Only show the column if an env VAR is TRUE
     public $listEditable;
     public $columnType;
+    public $columnPartial;
     public $sqlSelect;
     public $valueFrom; // We should never use this because it cannot be sorted
     public $jsonable;
@@ -141,6 +146,8 @@ class Column {
     public $partial;
     public $default;
     public $required;
+    public $trigger;
+    public $showSearch;
     public $span;
     public $hidden;
     // Arrays for css class

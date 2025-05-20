@@ -24,6 +24,8 @@ class Field {
     public $labelsPlural;
     public $extraTranslations; // array
     public $explicitLabelKey; // From YAML Models
+    public $prefix; // Supported by _some_ partials
+    public $suffix; // Supported by _some_ partials
 
     // fieldName & columnName
     // fields.yaml <name>: and columns.yaml <name>: can be different
@@ -36,6 +38,7 @@ class Field {
     public $fieldKey;
     public $fieldKeyQualifier; // Should always be added on to the fields.yaml name
     public $fieldType;
+    public $descriptionFrom;
     public $typeEditable;
     public $fieldExclude;
     public $columnExclude;
@@ -44,6 +47,9 @@ class Field {
     public $hidden       = FALSE; // Set during __construct
     public $disabled     = FALSE;
     public $required     = TRUE;
+    public $trigger;
+    public $showSearch;
+
     public $readOnly     = FALSE;
     public $newRow       = FALSE; // From column comment
     public $noLabel      = FALSE; // From column comment
@@ -103,6 +109,7 @@ class Field {
     // ------------------------- Lists columns.yaml
     public $columnKey;
     public $valueFrom;
+    public $cssClassesColumn;
     public $columnPartial;
     public $sqlSelect;
     public $relation;  // relation: user_group
@@ -120,7 +127,7 @@ class Field {
     public $useRelationCondition = FALSE; // Custom filtering system for deep relations
     public $filterType;
     public $yearRange;
-    public $conditions;
+    public $filterConditions;
     public $autoRelationCanFilter;
     public $filters; // Custom filters
 
@@ -196,12 +203,10 @@ class Field {
     {
         global $YELLOW, $NC;
 
-        // Loading from non-create-system fields&columns.yaml
+        // Loading from non-create-system fields & columns.yaml
         $table           = $model->getTable();
         $column          = Column::dummy($table, $fieldName);
         $relations       = array();
-        if (!isset($fieldConfig['label']))
-            throw new Exception("Yaml Field [$fieldName] in [$model->name] has no label setting");
         $tabLocationStr  = ($tabLocation  ? "TabLocation:$tabLocation" : '');
         $columnConfigStr = ($columnConfig ? 'with column config'       : 'without column config');
         $fieldDefinition = array(
@@ -219,7 +224,8 @@ class Field {
                 case 'label':   $targetName = 'explicitLabelKey'; break; // For the translation key
                 case 'type':    $targetName = 'fieldType'; break;
                 case 'comment': $targetName = 'fieldComment'; break;
-                case 'partial': $targetName = 'path'; break;
+                case 'path':    $targetName = 'partial'; break;
+                case 'select':  $targetName = 'sqlSelect'; break;
                 case 'options': $targetName = 'fieldOptions'; break;
                 case 'context': 
                     $targetName = 'contexts'; 
@@ -262,6 +268,11 @@ class Field {
         } else {
             print("        {$YELLOW}WARNING{$NC}: No {$YELLOW}columns.yaml{$NC} field config for [$model->name::$fieldName]\n");
             $fieldDefinition['columnType'] = FALSE;
+        }
+
+        if (!isset($fieldDefinition['explicitLabelKey'])) {
+            print("        {$YELLOW}WARNING{$NC}: Yaml Field [$fieldName] in [$model->name] has no label setting\n");
+            $fieldDefinition['explicitLabelKey'] = ''; // Prevent label writing
         }
 
         return self::create($model, $fieldDefinition, $column, $relations);
@@ -449,6 +460,13 @@ class Field {
         return $this->column->fullyQualifiedName();
     }
 
+    public function cssClassesColumn(): array
+    {
+        $cssClassesColumn = ($this->cssClassesColumn ?: array());
+        if (is_string($cssClassesColumn)) $cssClassesColumn = array($cssClassesColumn);
+        return $cssClassesColumn;
+    }
+
     public function cssClasses(): array
     {
         // Array cssClasses
@@ -549,6 +567,11 @@ class Field {
         return implode(' ', $this->cssClasses());
     }
 
+    public function cssClassColumn(): string
+    {
+        return implode(' ', $this->cssClassesColumn());
+    }
+
     public function isLocalTranslationKey(): bool
     {
         // $domain
@@ -638,7 +661,8 @@ class ForeignIdField extends Field {
         // because they do not conform yet to our naming requirements
         // And all system plugins which do not have correct FK setup!
         if ($this->model->getTable()->isOurs() && !$this->model->getTable()->isKnownAcornPlugin()) {
-            // All foreign ids, e.g. user_group_id, MUST have only 1 Xto1 or 1to1 FK
+            // All foreign ids, e.g. user_group_id, MUST have only 1 Xto1|1to1 FK
+            // but also other 1|Xfrom1|X relations are acceptable 
             if (!count($this->relations)) {
                 $foreignKeysFromCount = count($column->foreignKeysFrom);
                 $foreignKeysToCount   = count($column->foreignKeysTo);
@@ -662,7 +686,9 @@ class ForeignIdField extends Field {
             // We only override the default text setting
             // because, for example, created_at_event_id wants to show a datepicker
             // TODO: This morph to a dropdown needs to be rationalised a bit
-            if (!isset($this->fieldType) || $this->fieldType == 'text' || $this->fieldType == 'radio' || $this->fieldType == 'dropdown') {
+            if (!isset($this->fieldType) 
+                || in_array($this->fieldType, array('text', 'radio', 'dropdown'))
+            ) {
                 // ----------------------- Columns.yaml ForeignIdField relation
                 // We try to use relation & sqlSelect because it can be column sorted and searched
                 // whereas 1to1 nested relation[value][value] fields cannot
@@ -680,24 +706,10 @@ class ForeignIdField extends Field {
                     // Not sortable, potentially nested valueFrom
                     // Allows 1to1 Models
                     $this->sqlSelect  = NULL;
-                    $this->valueFrom  = $this->relation1->to->nameFromPath(); 
+                    if (!isset($this->valueFrom)) $this->valueFrom  = $this->relation1->to->nameFromPath(); 
                     $this->sortable   = FALSE;
                     $this->searchable = FALSE;
                 }
-
-                // ------------------------ Buttons interface???
-                // TODO: These should all be in a separate semantic interface class with WinterCMS rendering
-                // TODO: Not sure this part is actually working... buttons are made _outside_ this area
-                /*
-                if ($this->relation1->to->plugin->isOurs('User') || $this->hidden == 'true') {
-                    // User plugin does not inherit from AA\Model
-                    // 3-state deny
-                    $this->buttons['create'] = array();
-                    $this->buttons['add']    = array();
-                } else {
-                    $this->dependsOn["_create_$this->name"] = TRUE;
-                }
-                */
 
                 // ------------------------ Create and select comment help
                 if ($this->relation1) {
@@ -737,16 +749,17 @@ class ForeignIdField extends Field {
                 }
 
                 // ----------------------- Fields.yaml Dropdown
-                if ($this->relation1->isSelfReferencing()) $this->hierarchical = TRUE;
+                // NOTE: custom handling of embedded nameFrom in AA module
+                if (!isset($this->nameFrom))   $this->nameFrom   = $this->relation1->to->nameFromPath();
                 if (!isset($this->cssClasses)) $this->cssClasses = array('popup-col-xs-6');
                 if (!isset($this->bootstraps)) $this->bootstraps = array('xs' => 5);
-                if (!isset($this->nameFrom))   $this->nameFrom   = $this->relation1->to->nameFromPath();
                 if (!isset($this->readOnly))   $this->readOnly   = $this->relation1->to->readOnly;
                 if (!isset($this->fieldType) || $this->fieldType == 'text') $this->fieldType = 'dropdown';
+                if ($this->relation1->isSelfReferencing()) $this->hierarchical = TRUE;
 
                 // ----------------------- Filter
                 $column = &$this->column;
-                if (!isset($this->conditions)) $this->conditions = "$column->column_name in(:filtered)";
+                if (!isset($this->filterConditions)) $this->filterConditions = "$column->column_name in(:filtered)";
             }
 
             if ($this->relation1) {
