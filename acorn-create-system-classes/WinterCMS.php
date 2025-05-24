@@ -179,7 +179,8 @@ class WinterCMS extends Framework
             foreach ($otherPlugin->pluginRequires() as &$otherOtherPlugin) {
                 if ($otherOtherPlugin->is($plugin)) {
                     $circular = TRUE;
-                    print("    {$RED}ERROR{$NC}: Circular plugin dependency [{$YELLOW}$plugin{$NC}] <=> [{$YELLOW}$otherPlugin{$NC}]");
+                    //     {$RED}ERROR{$NC}: [{$YELLOW}$plugin{$NC}] <=> [{$YELLOW}$otherPlugin{$NC}]
+                    throw new Exception("Circular plugin dependency $plugin <=> $otherPlugin");
                 }
             }
 
@@ -1622,7 +1623,8 @@ PHP
                     'nested'     => ($field->nested    ?: NULL),
                     'nestLevel'  => ($field->nestLevel ?: NULL),
                     // Relation _multi.php and other special directives
-                    'multi'      => $field->multi,             
+                    'multi'      => $field->multi,   
+                    'nameObject' => $field->nameObject,
                     'prefix'     => $field->prefix,
                     'suffix'     => $field->suffix,
 

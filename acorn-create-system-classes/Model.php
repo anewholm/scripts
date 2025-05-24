@@ -68,7 +68,8 @@ class Model {
 
         $this->actionFunctions = array();
         foreach ($table->actionFunctions as $fnName => $definition) {
-            $fnNameParts = explode('_', $fnName);
+            $fnNameBare  = str_replace($this->table->subName(), 'table', $fnName);
+            $fnNameParts = explode('_', $fnNameBare);
             $nameParts   = array_slice($fnNameParts, 5);
             $name        = implode('_', $nameParts);
 
@@ -217,6 +218,11 @@ class Model {
         return isset($this->methods[$name]);
     }
 
+    public function hasNameAttributeMethod(): bool
+    {
+        return $this->hasAttributeMethod('name');
+    }
+
     public function hasAttributeMethod(string $name): bool
     {   
         return isset($this->attributeFunctions[$name]);
@@ -227,24 +233,17 @@ class Model {
         $attributeFunctions = $this->attributeFunctions;
 
         // Auto getNameAttribute() following name relation(s)
-        if (!$this->hasAttributeMethod('name')) {
-            if ($relationsName = $this->relationsName()) {
-                if (count($relationsName) == 1) {
-                    // e.g. return $this->entity->name;
-                    $nameRelation = array_keys($relationsName)[0];
-                    $fName        = "return \$this->{$nameRelation}->name;";
-                } else {
-                    $fParams = '';
-                    foreach ($relationsName as $name => &$relation) {
-                        if ($fParams) $fParams .= ', ';
-                        $fParams .= "\$this->$name";
-                    }
-                    // FALSE = plain text, delimeter = ::
-                    $fName = "return \$this->buildName(FALSE, '::', $fParams);";
-                }
-                
-                $attributeFunctions['name'] = $fName;
-            }
+        if (   !$this->hasNameAttributeMethod() 
+            && !$this->table->hasColumn('name')
+        ) {
+            // FALSE = plain text, delimeter = ::
+            $attributeFunctions['name'] = "return \$this->buildNameFromRelations();";
+        }
+        if (!$this->hasAttributeMethod('htmlName')
+            && !$this->table->hasColumn('html_name')
+        ) {
+            // TRUE = HTML, delimeter = ::
+            $attributeFunctions['htmlName'] = "return \$this->buildNameFromRelations(TRUE);";
         }
 
         return $attributeFunctions;
@@ -691,7 +690,9 @@ class Model {
                     $forModel,         // model from
                     $deepRelation->to, // model to
                     $relation->column,
-                    $relation->foreignKey,
+                    // If the last relation has a real FK, use it, for the comment
+                    // otherwise use this first one
+                    $deepRelation->foreignKey ?: $relation->foreignKey,
                     // name => relation
                     $subthroughRelations, 
                     $isLeaf,
@@ -1393,6 +1394,36 @@ class Model {
         * but we have added the $relations
         */
 
+        /* ---------- type: HasManyDeep columns 
+        */
+        foreach ($this->relationsHasManyDeep() as $name => &$relation) {
+            $relationClass = get_class($relation);
+            $relationType  = $relation->type();
+            $valueFrom     = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
+
+            print("    {$indentString}Creating column _multi for HAsManyDeep({$YELLOW}$relation{$NC})\n");
+            $thisIdRelation = array($name => $relation);
+            $fieldObj       = new PseudoFromForeignIdField($this, array(
+                '#'              => "Tab multi-select for relations1fromX($relationClass($relationType) $relation)",
+                'name'           => $name,
+                'labels'         => $relation->labelsPlural, // Overrides translationKey to force a local key
+                'invisible'      => $relation->invisible,
+                'fieldExclude'   => TRUE,
+                'columnExclude'  => $relation->columnExclude,
+                'icon'           => $relation->to->icon,
+                'debugComment'   => "Column _multi for $relation on $plugin->name.$this->name",
+                'canFilter'      => TRUE, // These are linked only to the content table
+                'columnType'     => 'partial',
+                'columnPartial'  => 'multi',
+                'multi'          => $relation->multi,
+                'nameObject'     => $relation->lastRelation()->nameObject,
+                'relation'       => $name,
+                'searchable'     => (bool) $valueFrom,
+                'valueFrom'      => $valueFrom, // Necessary for search to work, is removed in nested scenario
+            ), $thisIdRelation);
+            $fields[$name] = $fieldObj;
+        }
+
         /* ---------- type: 1fromX ($hasMany) => this table.id:
         * For example: foreign defendants(plural).user_group_id (X)=>(1) this legalcase.id table
         * This relation is identified by the plurality of the foreign table, thus a table-type: content table
@@ -1416,7 +1447,7 @@ class Model {
                 : $relation->to->translationKey(Model::PLURAL)
             );
             $comment       = '';
-            $valueFrom     = ($relation->to->hasField('name') ? 'name' : NULL); // For searcheable
+            $valueFrom     = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
             if ($relation->status == 'broken') continue;
 
             print("    {$indentString}Creating tab multi-select for {$YELLOW}$relation{$NC}\n");
@@ -1477,6 +1508,7 @@ class Model {
                 'canFilter'      => FALSE, // These are linked only to the content table
                 'readOnly'       => $relation->readOnly,
                 'multi'          => $relation->multi,
+                'nameObject'     => $relation->nameObject,
                 'tab'            => 'INHERIT',
 
                 // List
@@ -1516,7 +1548,7 @@ class Model {
             $tab           = $relation->pivotModel->translationKey(Model::PLURAL);
             $dependsOn     = array('_paste' => TRUE);
             $comment       = '';
-            $valueFrom     = ($relation->to->hasField('name') ? 'name' : NULL); // For searcheable
+            $valueFrom     = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
             if ($relation->status == 'broken') continue;
 
             print("    {$indentString}Creating tab multi-select for {$YELLOW}$relation{$NC}\n");
@@ -1615,6 +1647,7 @@ class Model {
                 'readOnly'       => $relation->readOnly,
                 'tab'            => 'INHERIT',
                 'multi'          => $relation->multi,
+                'nameObject'     => $relation->nameObject,
                 'dependsOn'      => $dependsOn,
 
                 // List
@@ -1649,7 +1682,7 @@ class Model {
             $tab           = $relation->to->translationKey(Model::PLURAL);
             $dependsOn     = array('_paste' => TRUE);
             $comment       = '';
-            $valueFrom     = ($relation->to->hasField('name') ? 'name' : NULL); // For searcheable
+            $valueFrom     = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
             if ($relation->status == 'broken') continue;
 
             // TODO: Translatable "create new" comment
@@ -1744,6 +1777,7 @@ class Model {
                 'readOnly'       => $relation->readOnly,
                 'tab'            => $tab,
                 'multi'          => $relation->multi,
+                'nameObject'     => $relation->nameObject,
                 'dependsOn'      => $dependsOn,
 
                 // List

@@ -290,13 +290,13 @@ class RelationHasManyDeep extends Relation {
         Model  $from,          // Entity
         Model  $to,            // User
         Column $column,
-        ForeignKey $firstForeignKey,
+        ForeignKey $lastForeignKey,
         array $throughRelations, // name => relation
         bool  $containsLeaf,
         bool  $nameObject,
         string $type // Last relation type
     ) {
-        parent::__construct($name, $from, $to, $column, $firstForeignKey);
+        parent::__construct($name, $from, $to, $column, $lastForeignKey);
 
         // Check for Model repetition
         // which can cause duplicated tables in the from clause
@@ -322,6 +322,11 @@ class RelationHasManyDeep extends Relation {
     {
         // Column names are not related to the deep final model
         return NULL;
+    }
+
+    public function lastRelation(): Relation
+    {
+        return end($this->throughRelations);
     }
 
     public function __toString()
