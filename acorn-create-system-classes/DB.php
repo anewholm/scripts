@@ -150,7 +150,18 @@ class DB {
                     $typeOID = (int) $types[$i];
                     $typeName = 'unknown';
                     switch ($typeOID) {
-                        case 2950: $typeName = 'uuid';
+                        case 16:   $typeName = 'bool'; break;
+                        case 18:   $typeName = 'char'; break;
+                        case 20:   
+                        case 21:   
+                        case 23:   
+                            $typeName = 'integer'; break;
+                        case 25:   $typeName = 'text'; break;
+                        case 602:  $typeName = 'path'; break;
+                        case 1082: $typeName = 'date'; break;
+                        case 1114: $typeName = 'timestamp'; break;
+                        case 1186: $typeName = 'interval'; break;
+                        case 2950: $typeName = 'uuid'; break;
                     }
                     $parameters[$name] = $typeName;
                 }

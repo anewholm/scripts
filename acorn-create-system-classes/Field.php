@@ -89,6 +89,7 @@ class Field {
     public $phpAttributeCalculation;
     public $include;
     public $multi;
+    public $nameObject;
     public $includeModel;
     public $includePath;
     public $includeContext;
@@ -449,7 +450,11 @@ class Field {
     {
         // Development EN title
         // This is only used in the absence of multi-lingual labels:
-        $title = str_replace('_', ' ', Str::title($this->name));
+        $title = preg_replace('/_+/', ' ', 
+            Str::title(
+                preg_replace('/__.*/', '', $this->name)
+            )
+        );
         if ($plural) $title = Str::plural($title);
         return $title;
     }
@@ -706,7 +711,11 @@ class ForeignIdField extends Field {
                     // Not sortable, potentially nested valueFrom
                     // Allows 1to1 Models
                     $this->sqlSelect  = NULL;
-                    if (!isset($this->valueFrom)) $this->valueFrom  = $this->relation1->to->nameFromPath(); 
+                    if (!isset($this->valueFrom)) {
+                        $this->valueFrom = $this->relation1->to->nameFromPath(); // Can be null
+                        if (is_null($this->valueFrom)) 
+                            $this->valueFrom = 'name';
+                    }
                     $this->sortable   = FALSE;
                     $this->searchable = FALSE;
                 }
