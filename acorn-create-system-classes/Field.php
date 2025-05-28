@@ -67,6 +67,7 @@ class Field {
     public $permissionSettings;    // Database column Input settings
     public $commentHtml  = TRUE;
     public $hierarchical;
+    public $useRelationCount;
     public $optionsStaticMethod = 'dropdownOptions';
     public $fieldOptions;
     public $fieldOptionsModel;
@@ -94,7 +95,7 @@ class Field {
     public $includePath;
     public $includeContext;
     public $buttons      = array(); // Of new ButtonField()s
-    public $rlButtons    = array(); // On the relationmanager
+    public $rlButtons    = array('create' => TRUE, 'delete' => TRUE); // On the relationmanager
     public $goto;
     public $rules = array();
     public $controller; // For popups

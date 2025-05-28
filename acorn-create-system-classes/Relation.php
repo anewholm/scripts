@@ -27,11 +27,13 @@ class Relation {
     public $newRow;
     public $bootstraps;
     public $tabLocation; // primary|secondary|tertiary
+    public $rlButtons = array('create' => TRUE, 'delete' => TRUE);
 
     // Filter config_filter.yaml
     public $canFilter;
     public $globalScope; // Chaining from|to
     public $conditions;  // config_relation.yaml conditions
+    public $isCount;
 
     // Translation arrays
     public $labels;
@@ -42,7 +44,8 @@ class Relation {
         Model $from, 
         Model $to, 
         Column $column, 
-        ForeignKey $foreignKey = NULL
+        ForeignKey $foreignKey = NULL,
+        bool $isCount = FALSE
     ) {
         // Relations are DIRECTIONAL, unlike FKs
         // That is, from Relations, like Relation1from1, is attached to its FK to ID column,
@@ -58,6 +61,7 @@ class Relation {
         $this->to         = &$to;
         $this->column     = &$column;
         $this->foreignKey = &$foreignKey;
+        $this->isCount    = $isCount;
 
         // Inherit FK comment values
         $this->comment = $this->foreignKey?->comment;
@@ -203,9 +207,10 @@ class RelationXto1 extends Relation {
         Model  $from, 
         Model  $to, 
         Column $column, 
-        ForeignKey $foreignKey = NULL
+        ForeignKey $foreignKey = NULL,
+        bool $isCount = FALSE
     ) {
-        parent::__construct($name, $from, $to, $column, $foreignKey);
+        parent::__construct($name, $from, $to, $column, $foreignKey, $isCount);
 
         // Do either of our Models indicate that the field canFilter?
         $relations = array($this);
@@ -221,6 +226,12 @@ class RelationXfromXSemi extends RelationFrom {
     public $pivotModel;
     public $keyColumn;
     public $canFilter = TRUE;
+    public $rlButtons = array(
+        'create' => TRUE,
+        'delete' => TRUE,
+        'link'   => TRUE,
+        'unlink' => TRUE,
+    );
 
     public function __construct(
         string $name, 
@@ -249,6 +260,12 @@ class RelationXfromX extends RelationFrom {
     public $pivot;
     public $keyColumn;
     public $canFilter = TRUE;
+    public $rlButtons = array(
+        'create' => TRUE,
+        'delete' => TRUE,
+        'link'   => TRUE,
+        'unlink' => TRUE,
+    );
 
     public function __construct(
         string $name, 
@@ -257,9 +274,10 @@ class RelationXfromX extends RelationFrom {
         Table  $pivot,         // acorn_criminal_user_group_category
         Column $keyColumn,     // pivot.user_group_id
         Column $throughColumn, // pivot.user_id
-        ForeignKey|NULL $foreignKey = NULL
+        ForeignKey|NULL $foreignKey = NULL,
+        bool $isCount = FALSE
     ) {
-        parent::__construct($name, $from, $to, $throughColumn, $foreignKey);
+        parent::__construct($name, $from, $to, $throughColumn, $foreignKey, $isCount);
 
         $this->pivot     = &$pivot;
         $this->keyColumn = &$keyColumn;
@@ -284,6 +302,7 @@ class RelationHasManyDeep extends Relation {
     public $throughRelations;
     public $containsLeaf;
     public $nameObject;
+    public $fieldExclude; // canDisplayAsField()
 
     public function __construct(
         string $name, 
@@ -296,7 +315,13 @@ class RelationHasManyDeep extends Relation {
         bool  $nameObject,
         string $type // Last relation type
     ) {
-        parent::__construct($name, $from, $to, $column, $lastForeignKey);
+        $lastRelation = end($throughRelations);
+        $isCount      = $lastRelation->isCount;
+        // Includes RelationXfromXSemi
+        $isFromX      = ($lastRelation instanceof Relation1fromX || $lastRelation instanceof RelationXfromX);
+        $fieldAllow   = (!$isCount && $isFromX);
+
+        parent::__construct($name, $from, $to, $column, $lastForeignKey, $isCount);
 
         // Check for Model repetition
         // which can cause duplicated tables in the from clause
@@ -316,6 +341,9 @@ class RelationHasManyDeep extends Relation {
         $this->containsLeaf     = $containsLeaf;
         $this->nameObject       = $nameObject;
         $this->repeatingModels  = $repeatingModels;
+        // 1toX, XtoX, XtoXSemi
+        $this->fieldExclude     = !$fieldAllow;
+        $this->rlButtons        = $lastRelation->rlButtons;
     }
 
     protected function checkQualifier($fieldName, $otherModel, $baseName): string|NULL

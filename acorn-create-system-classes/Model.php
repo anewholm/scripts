@@ -802,23 +802,22 @@ class Model {
             // so we need to read the actual class definition relations, not the database FKs
             if ($winterModel = $this->winterModel(FALSE)) {
                 foreach ($winterModel->belongsTo as $relationName => $config) {
-                    if (!isset($config['count'])) {
-                        // If the relation config has a ModelTo setting, usually config[0]
-                        $finalModel = $this->relationConfigModel($config);
-                        $table = NULL;
-                        if ($finalModel) {
-                            $table = $finalModel->getTable();
-                        } else {
-                            $modelFQN   = $this->relationConfigModelFQN($config);
-                            $finalModel = $this->winterModel(TRUE, $modelFQN);
-                            // Winter Model $table is protected
-                            $table      = Table::get($finalModel->getTable());
-                        }
-                        $key        = (isset($config['key']) ? $config['key'] : $this->standardBareReferencingField());
-                        $columnFrom = Column::dummy($table, $key);
-                        if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
-                            $relations[$relationName] = new RelationXto1($relationName, $this, $finalModel, $columnFrom);
+                    // If the relation config has a ModelTo setting, usually config[0]
+                    $finalModel = $this->relationConfigModel($config);
+                    $isCount    = (isset($config['count']) && $config['count']);
+                    $table      = NULL;
+                    if ($finalModel) {
+                        $table = $finalModel->getTable();
+                    } else {
+                        $modelFQN   = $this->relationConfigModelFQN($config);
+                        $finalModel = $this->winterModel(TRUE, $modelFQN);
+                        // Winter Model $table is protected
+                        $table      = Table::get($finalModel->getTable());
                     }
+                    $key        = (isset($config['key']) ? $config['key'] : $this->standardBareReferencingField());
+                    $columnFrom = Column::dummy($table, $key);
+                    if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
+                        $relations[$relationName] = new RelationXto1($relationName, $this, $finalModel, $columnFrom, NULL, $isCount);
                 }
             }
         }
@@ -953,29 +952,30 @@ class Model {
             // ]]
             if ($winterModel = $this->winterModel(FALSE)) {
                 foreach ($winterModel->belongsToMany as $relationName => $config) {
-                    if (!isset($config['count'])) {
-                        // If the relation config has a ModelTo setting, usually config[0]
-                        $db            = $this->table->db();
-                        $finalModel    = $this->relationConfigModel($config);
-                        $key           = (isset($config['key'])      ? $config['key']      : $this->standardBareReferencingField());
-                        $otherKey      = (isset($config['otherKey']) ? $config['otherKey'] : $finalModel->standardBareReferencingField());
-                        if (!isset($config['table'])) 
-                            throw new Exception("[$relationName] on [$this->name] has no table config");
-                        $table         = $config['table'];
-                        $pivotTable    = Table::get($table);
-                        if (!$pivotTable) $pivotTable = Table::dummy($db, $table);
-                        $columnFrom    = Column::dummy($finalModel->table, $key);
-                        $throughColumn = Column::dummy($finalModel->table, $otherKey);
-                        if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
-                            $relations[$relationName] = new RelationXfromX(
-                                $relationName, 
-                                $this, 
-                                $finalModel, 
-                                $pivotTable,
-                                $columnFrom,
-                                $throughColumn
-                            );
-                    }
+                    // If the relation config has a ModelTo setting, usually config[0]
+                    $db            = $this->table->db();
+                    $isCount       = (isset($config['count']) && $config['count']);
+                    $finalModel    = $this->relationConfigModel($config);
+                    $key           = (isset($config['key'])      ? $config['key']      : $this->standardBareReferencingField());
+                    $otherKey      = (isset($config['otherKey']) ? $config['otherKey'] : $finalModel->standardBareReferencingField());
+                    if (!isset($config['table'])) 
+                        throw new Exception("[$relationName] on [$this->name] has no table config");
+                    $table         = $config['table'];
+                    $pivotTable    = Table::get($table);
+                    if (!$pivotTable) $pivotTable = Table::dummy($db, $table);
+                    $columnFrom    = Column::dummy($finalModel->table, $key);
+                    $throughColumn = Column::dummy($finalModel->table, $otherKey);
+                    if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
+                        $relations[$relationName] = new RelationXfromX(
+                            $relationName, 
+                            $this, 
+                            $finalModel, 
+                            $pivotTable,
+                            $columnFrom,
+                            $throughColumn,
+                            NULL,
+                            $isCount
+                        );
                 }
             }
         }
@@ -1401,18 +1401,17 @@ class Model {
             $relationType  = $relation->type();
             $valueFrom     = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
 
-            print("    {$indentString}Creating column _multi for HAsManyDeep({$YELLOW}$relation{$NC})\n");
-            $thisIdRelation = array($name => $relation);
-            $fieldObj       = new PseudoFromForeignIdField($this, array(
+            print("    {$indentString}Creating column _multi for HasManyDeep({$YELLOW}$relation{$NC})\n");
+            $thisIdRelation  = array($name => $relation);
+            $fieldDefinition = array(
                 '#'              => "Tab multi-select for relations1fromX($relationClass($relationType) $relation)",
                 'name'           => $name,
                 'labels'         => $relation->labelsPlural, // Overrides translationKey to force a local key
                 'invisible'      => $relation->invisible,
-                'fieldExclude'   => TRUE,
                 'columnExclude'  => $relation->columnExclude,
                 'icon'           => $relation->to->icon,
                 'debugComment'   => "Column _multi for $relation on $plugin->name.$this->name",
-                'canFilter'      => TRUE, // These are linked only to the content table
+                'canFilter'      => TRUE, // These are linked only to fieldTabthe content table
                 'columnType'     => 'partial',
                 'columnPartial'  => 'multi',
                 'multi'          => $relation->multi,
@@ -1420,8 +1419,29 @@ class Model {
                 'relation'       => $name,
                 'searchable'     => (bool) $valueFrom,
                 'valueFrom'      => $valueFrom, // Necessary for search to work, is removed in nested scenario
-            ), $thisIdRelation);
-            $fields[$name] = $fieldObj;
+                
+                // The relation decides about its presentation with fieldExclude
+                // Essentially, only for 1toX and XtoX final relations
+                // that need a relationmanager
+                'fieldExclude'   => $relation->fieldExclude,
+                'fieldType'      => 'relationmanager',
+                'tab'            => 'INHERIT',
+                'cssClasses'     => array('single-tab', 'nolabel', 'col-xs-12'),
+                'rlButtons'      => $relation->rlButtons,
+                'tabLocation'    => $relation->tabLocation,
+            );
+            if ($relation->isCount) {
+                $fieldDefinition = array_merge($fieldDefinition, array(
+                    'columnType'       => 'partial',
+                    'columnPartial'    => 'count',
+                    'multi'            => NULL,
+                    'useRelationCount' => TRUE,
+                    'searchable'       => FALSE,
+                    'valueFrom'        => NULL,
+                    'canFilter'        => FALSE,
+                ));
+            }
+            $fields[$name] = new PseudoFromForeignIdField($this, $fieldDefinition, $thisIdRelation);
         }
 
         /* ---------- type: 1fromX ($hasMany) => this table.id:
@@ -1614,12 +1634,6 @@ class Model {
             */
 
             $thisIdRelation         = array($name => $relation);
-            $relationManagerButtons = array(
-                'create' => TRUE,
-                'delete' => TRUE,
-                'link'   => TRUE,
-                'unlink' => TRUE,
-            );
             $fieldObj       = new PseudoFromForeignIdField($this, array(
                 '#'              => "Tab multi-select for relationsXfromXSemi($relationClass($relationType) $relation)",
                 'name'           => $name,
@@ -1635,7 +1649,7 @@ class Model {
                 'cssClasses'     => $relation->cssClass('single-tab-1fromX', $useRelationManager),
                 'bootstraps'     => $relation->bootstraps,
                 'buttons'        => $buttons,
-                'rlButtons'      => $relationManagerButtons,
+                'rlButtons'      => $relation->rlButtons,
                 'tabLocation'    => $relation->tabLocation,
                 'icon'           => $relation->to->icon,
                 'fieldComment'   => $comment,
@@ -1744,12 +1758,6 @@ class Model {
 
             print("    {$indentString}Creating tab multi-select with for {$YELLOW}$relation{$NC}\n");
             $thisIdRelation         = array($name => $relation);
-            $relationManagerButtons = array(
-                'create' => TRUE,
-                'delete' => TRUE,
-                'link'   => TRUE,
-                'unlink' => TRUE,
-            );
             $fieldObj = new PseudoFromForeignIdField($this, array(
                 '#'              => "Tab multi-select for relationsXfromX($relationClass($relationType) $relation)",
                 'name'           => $name,
@@ -1766,7 +1774,7 @@ class Model {
                 'bootstraps'     => $relation->bootstraps,
                 'placeholder'    => $relation->placeholder,
                 'buttons'        => $buttons,
-                'rlButtons'      => $relationManagerButtons,
+                'rlButtons'      => $relation->rlButtons,
                 'tabLocation'    => $relation->tabLocation,
                 'comment'        => $relation->comment,
                 'icon'           => $relation->to->icon,
