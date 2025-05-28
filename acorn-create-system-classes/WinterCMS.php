@@ -818,6 +818,7 @@ PHP
                     'leaf'   => $isLeaf,
                     'global_scope' => ($relation->globalScope == 'to'),
                     'delete' => $relation->delete,
+                    'count'  => $relation->isCount,
                 ), Framework::AND_FALSES);
             }
             foreach ($model->relationsXto1() as $name => &$relation) {
@@ -829,6 +830,7 @@ PHP
                     'type'   => $relation->type(),
                     'global_scope' => ($relation->globalScope == 'to'),
                     'delete' => $relation->delete,
+                    'count'  => $relation->isCount,
                 ), Framework::AND_FALSES);
             }
             $this->setPropertyInClassFile($modelFilePath, 'belongsTo', $relations);
@@ -851,7 +853,8 @@ PHP
                     // 1to1 means all steps are 1to1
                     // because $relation above will only be 1to1 traversal
                     // other (XfromX, etc.) indicates the LAST step only
-                    'type' => $relation->type(), 
+                    'type'   => $relation->type(), 
+                    'count'  => $relation->isCount,
                 ), Framework::AND_FALSES);
             }
             $this->setPropertyInClassFile($modelFilePath, 'hasManyDeep', $relations, FALSE);
@@ -861,9 +864,10 @@ PHP
             foreach ($model->relations1fromX() as $name => &$relation) {
                 if (isset($relations[$name])) throw new Exception("Conflicting relations with [$name] on [$model->name]");
                 $relations[$name] = $this->removeEmpty(array($relation->to,
-                    'key' => $relation->column->name,
+                    'key'    => $relation->column->name,
                     'global_scope' => ($relation->globalScope == 'from'),
-                    'type' => $relation->type()
+                    'type'   => $relation->type(),
+                    'count'  => $relation->isCount,
                 ), Framework::AND_FALSES);
             }
             foreach ($model->relationsXfromXSemi() as $name => &$relation) {
@@ -875,7 +879,8 @@ PHP
                     'key'      => $relation->keyColumn->name,  // pivot.user_group_id
                     'otherKey' => $relation->column->name,     // pivot.user_id
                     'global_scope' => ($relation->globalScope == 'from'),
-                    'type'     => $relation->type()
+                    'type'     => $relation->type(),
+                    'count'    => $relation->isCount,
                 ), Framework::AND_FALSES);
             }
             $this->setPropertyInClassFile($modelFilePath, 'hasMany', $relations);
@@ -892,6 +897,7 @@ PHP
                     'type'     => $relation->type(),
                     'global_scope' => ($relation->globalScope == 'from'),
                     'delete'   => $relation->delete,
+                    'count'    => $relation->isCount,
                 ), Framework::AND_FALSES);
             }
             foreach ($model->relationsXfromXSemi() as $name => &$relation) {
@@ -906,6 +912,7 @@ PHP
                     'type'     => $relation->type(),
                     'global_scope' => ($relation->globalScope == 'from'),
                     'delete'   => $relation->delete,
+                    'count'    => $relation->isCount,
                 ), Framework::AND_FALSES);
             }
             $this->setPropertyInClassFile($modelFilePath, 'belongsToMany', $relations);
@@ -919,6 +926,7 @@ PHP
                     'type'   => $relation->type(),
                     'global_scope' => ($relation->globalScope == 'from'),
                     'delete' => $relation->delete, // This can be done by a DELETE CASCADE FK
+                    'count'  => $relation->isCount,
                 ), Framework::AND_FALSES);
             }
             $this->setPropertyInClassFile($modelFilePath, 'hasOne', $relations);
@@ -1211,7 +1219,7 @@ PHP
                 }
                 */
             } else {
-                print("    $indentString{$YELLOW}WARNING{$NC}: Field [$name]($typeString) cannot display as {$YELLOW}field{$NC} because fieldType is blank\n");
+                print("    $indentString{$YELLOW}WARNING{$NC}: Field [$name]($typeString) !canDisplayAs{$YELLOW}Field{$NC}() because fieldType($field->fieldType) is blank or fieldExclude($field->fieldExclude)\n");
             }
         }
 
@@ -1617,6 +1625,7 @@ PHP
                     'path'       => $field->columnPartial,
                     'relation'   => $field->relation,
                     'select'     => $field->sqlSelect,
+                    'useRelationCount' => $field->useRelationCount,
                     'cssClass'   => $field->cssClassColumn(),
                     
                     // Extended info
