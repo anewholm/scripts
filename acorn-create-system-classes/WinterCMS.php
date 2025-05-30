@@ -1469,7 +1469,7 @@ PHP
                 //           formulae: Formulae
                 if ($field->filters) {
                     foreach ($field->filters as $name => $filter) {
-                        $this->yamlFileSet($configFilterPath, "scopes.$name", $filter);
+                        $this->yamlFileSet($configFilterPath, "scopes.$name", $filter, Framework::NO_THROW);
                     }
                 }                
             }
