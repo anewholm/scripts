@@ -120,6 +120,7 @@ class Column {
     // --------------------- Column comment accepted values
     // These flow through to Field
     public $comment; // YAML comment
+    public $format; // text, date, number, etc. Includes suffix & prefix
     public $parsedComment; // array
     public $fieldOptions;  // array
     public $searchable;
@@ -163,6 +164,7 @@ class Column {
     public $tab;
     public $icon;
     public $tabLocation; // primary|secondary|tertiary
+    public $advanced; // Toggle advanced to show
 
     // Translation arrays
     public $labels;

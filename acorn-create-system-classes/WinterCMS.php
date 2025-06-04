@@ -254,10 +254,11 @@ class WinterCMS extends Framework
             'print'      => 'Print',
             'save_and_print'    => 'Save and Print',
             'correct_and_print' => 'Correct and Print',
+            'advanced'   => 'Advanced',
 
             // System
-            'response' => 'HTTP call response',
-            'replication_debug' => 'Replication Debug',
+            'response'                   => 'HTTP call response',
+            'replication_debug'          => 'Replication Debug',
             'trigger_http_call_response' => 'Trigger HTTP call response',
         ), FALSE);
         if (isset($plugin->pluginNames['en']))        $this->arrayFileSet("$langDirPath/en/lang.php", 'plugin.name',        $plugin->pluginNames['en'],        FALSE);
@@ -292,9 +293,9 @@ class WinterCMS extends Framework
             'reports' => 'التقارير',
 
             // In-built QR codes
-            'qrcode'        => 'رمز QR',
-            'qrcode_scan'   => 'مسح الرمز',
-            'find_by_qrcode' => 'البحث بواسطة الرمز',
+            'qrcode'          => 'رمز QR',
+            'qrcode_scan'     => 'مسح الرمز',
+            'find_by_qrcode'  => 'البحث بواسطة الرمز',
             'state_indicator' => 'Status',
 
             // Standard Buttons
@@ -304,10 +305,11 @@ class WinterCMS extends Framework
             'print'      => 'Print',
             'save_and_print'    => 'حفظ وطباعة',
             'correct_and_print' => 'حفظ التصحيح وطباعته',
+            'advanced'   => 'Advanced',
 
             // System
-            'response' => 'HTTP call response',
-            'replication_debug' => 'تصحيح أخطاء التكرار',
+            'response'                   => 'HTTP call response',
+            'replication_debug'          => 'تصحيح أخطاء التكرار',
             'trigger_http_call_response' => 'تشغيل استجابة اتصال HTTP',
         ), FALSE);
         if (isset($plugin->pluginNames['ar']))        $this->arrayFileSet("$langDirPath/ar/lang.php", 'plugin.name',        $plugin->pluginNames['ar'],        FALSE);
@@ -354,10 +356,11 @@ class WinterCMS extends Framework
             'print'      => 'Çap',
             'save_and_print'    => 'Rizgardike û Çap',
             'correct_and_print' => 'Lihevanîn û Çap',
+            'advanced'   => 'Advanced',
 
             // System
-            'response' => 'HTTP call response', // TODO: Rename "response" to "http_response"
-            'replication_debug' => 'Replication Debug',
+            'response'                   => 'HTTP call response', // TODO: Rename "response" to "http_response"
+            'replication_debug'          => 'Replication Debug',
             'trigger_http_call_response' => 'Trigger HTTP call response',
         ), FALSE);
         if (isset($plugin->pluginNames['ku']))        $this->arrayFileSet("$langDirPath/ku/lang.php", 'plugin.name',        $plugin->pluginNames['ku'],        FALSE);
@@ -964,10 +967,20 @@ PHP
             }
             $this->setPropertyInClassFile($modelFilePath, 'jsonable', $jsonable, TRUE, 'protected');
 
+            // ----------------------------------------------------------------- Advanced
+            $advanced = array();
+            foreach ($model->fields() as $name => &$field) {
+                if ($field->advanced)
+                    array_push($advanced, $name);
+            }
+            $this->setPropertyInClassFile($modelFilePath, 'advanced', $advanced, Framework::NEW_PROPERTY);
+
             // ----------------------------------------------------------------- Methods
             // menuitemCount() for plugins.yaml
+            // Note that MATERIALIZED VIEWs can throw errors if not populated
+            // so we try{}, otherwise we will take down the whole interface
             print("  Adding menuitemCount()\n");
-            $this->addStaticMethod($modelFilePath, 'menuitemCount', 'return self::count();');
+            $this->addStaticMethod($modelFilePath, 'menuitemCount', 'try{return self::count();} catch (Exception $ex) {return NULL;}');
 
             // get<Something>Attribute()s
             foreach ($model->attributeFunctions() as $funcName => &$body) {
@@ -1162,6 +1175,7 @@ PHP
                     // Extended info
                     'nested'       => ($field->nested    ?: NULL),
                     'nestLevel'    => ($field->nestLevel ?: NULL),
+                    'advanced'     => $field->advanced,
 
                     // MorphConfig.php
                     // Complex permissions
@@ -1324,8 +1338,10 @@ PHP
                 "Backend\\\\Behaviors\\\\RelationController", // Only here to prevent RelationController requirement error
                 "\\\\Acorn\\\\Behaviors\\\\RelationController",
             );
-            if ($controller->model->export || $controller->model->import || $controller->model->batchPrint) 
+            if ($controller->model->export || $controller->model->import)
                 array_push($implements, "\Acorn\Behaviors\ImportExportController");
+            if ($controller->model->batchPrint) 
+                array_push($implements, "\Acorn\Behaviors\BatchPrintController");
             $this->setPropertyInClassFile($controllerFilePath, 'implement', $implements, Framework::OVERWRITE_EXISTING);
 
             // Explicit plural name injection
@@ -1365,7 +1381,7 @@ PHP
                     'modelClass' => "Acorn\\Models\\BatchPrint",
                     'list'       => "\$$modelDirPath/columns.yaml",
                     'dataModel'  => $controller->model->fullyQualifiedName(),
-                    'form'       => '$/../modules/acorn/models/export/fields_batch_print.yaml',
+                    //'form'       => '$/../modules/acorn/models/export/fields_batch_print.yaml',
                     'fileName'   => 'print.zip',
                 ));
                 $defaultExtensions = ['avi','bmp','css','doc','docx','eot','flv','gif','ico','ics','jpeg','jpg','js','less','map','mkv','mov','mp3','mp4','mpeg','ods','odt','ogg','pdf','png','ppt','pptx','rar','scss','svg','swf','ttf','txt','wav','webm','webp','wmv','woff','woff2','xls','xlsx','zip'];
@@ -1619,6 +1635,7 @@ PHP
                     'label'      => $labelKey,
                     'type'       => $field->columnType,
                     'valueFrom'  => $field->valueFrom,
+                    'format'     => $field->format,
                     'searchable' => $field->searchable,
                     'sortable'   => $field->sortable,
                     'invisible'  => $field->invisible,
