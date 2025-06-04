@@ -1835,7 +1835,7 @@ class Model {
             'invisible'     => FALSE,
         ));
 
-        // ------------------------------------------------------------- Debug
+        // ------------------------------------------------------------- Debug / Checks
         $relations = $this->relations();
         foreach ($fields as $name => &$field) {
             if (   $field->fieldKey 
@@ -1844,12 +1844,12 @@ class Model {
             )
                 throw new Exception("Model [$this->name] relation [$field->fieldKey] is missing for RelationManager field [$field->fieldKey]");
 
-            if (   $field->columnKey 
+            if ($field->columnKey 
                 && in_array($field->columnType, array('richeditor' , 'relationmanager'))
             )
                 throw new Exception("Model [$this->name] column [$field->columnKey] has illegal type [$field->columnType]");
 
-            if (    $field->sortable) {
+            if ($field->sortable) {
                 if (!$field->sqlSelect)
                     throw new Exception("[$this->name::$name] field is sortable but without (fully qualified) select clause. This will cause ambiguity issues");
                 else if (strstr($field->sqlSelect, '.') === FALSE)

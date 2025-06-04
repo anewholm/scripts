@@ -99,6 +99,7 @@ class Field {
     public $goto;
     public $rules = array();
     public $controller; // For popups
+    public $advanced; // Toggle advanced to show
 
     // UnHandled settings, pass through
     // These mostly come from Yaml fields.yaml parsing
@@ -111,6 +112,7 @@ class Field {
     // ------------------------- Lists columns.yaml
     public $columnKey;
     public $valueFrom;
+    public $format; // text, date, number, etc. Includes suffix & prefix
     public $cssClassesColumn;
     public $columnPartial;
     public $sqlSelect;
@@ -179,8 +181,8 @@ class Field {
         }
         if (!isset($this->invisible))  $this->invisible  = FALSE;
         if (!isset($this->searchable)) $this->searchable = TRUE;
-        if (!isset($this->sortable))   $this->sortable   = FALSE;
         if (!isset($this->canFilter))  $this->canFilter  = FALSE;
+        if (!isset($this->sortable))   $this->sortable   = FALSE;
     
         $classParts = explode('\\', get_class($this));
         $className  = end($classParts);
@@ -324,6 +326,8 @@ class Field {
             case 'bigint':
             case 'integer':
                 $fieldDefinition['fieldType'] = 'number';
+                $fieldDefinition['sortable']  = TRUE;
+                if (!isset($fieldDefinition['sqlSelect'])) $fieldDefinition['sqlSelect'] = $column->fullyQualifiedName();
                 break;
             case 'timestamp with time zone':
             case 'timestamp without time zone':
@@ -332,6 +336,8 @@ class Field {
                 $fieldDefinition['fieldType']     = 'datepicker';
                 $fieldDefinition['columnType']    = 'partial';
                 $fieldDefinition['columnPartial'] = 'datetime'; // 2 line with tooltip
+                $fieldDefinition['sortable']  = TRUE;
+                if (!isset($fieldDefinition['sqlSelect'])) $fieldDefinition['sqlSelect'] = $column->fullyQualifiedName();
                 break;
             case 'interval':
                 // TODO: Currently intervals are just presented as text
@@ -341,16 +347,23 @@ class Field {
                 $fieldDefinition['fieldType']     = 'switch';
                 $fieldDefinition['columnType']    = 'partial';
                 $fieldDefinition['columnPartial'] = 'tick';
+                $fieldDefinition['sortable']  = TRUE;
+                if (!isset($fieldDefinition['sqlSelect'])) $fieldDefinition['sqlSelect'] = $column->fullyQualifiedName();
                 break;
             case 'char':
                 $fieldDefinition['length']     = 1;
+                $fieldDefinition['sortable']  = TRUE;
+                if (!isset($fieldDefinition['sqlSelect'])) $fieldDefinition['sqlSelect'] = $column->fullyQualifiedName();
                 break;
             case 'text':
                 $fieldDefinition['fieldType']     = 'richeditor';
+                $fieldDefinition['sortable']  = TRUE;
+                if (!isset($fieldDefinition['sqlSelect'])) $fieldDefinition['sqlSelect'] = $column->fullyQualifiedName();
                 break;
             case 'money':
                 $tableName = $column->table->name;
-                $fieldDefinition['sqlSelect'] = "$tableName.$column->name::numeric";
+                $fieldDefinition['sortable']  = TRUE;
+                if (!isset($fieldDefinition['sqlSelect'])) $fieldDefinition['sqlSelect'] = "$tableName.$column->name::numeric";
                 break;
             case 'path':
                 // File uploads are NOT stored in the actual column
