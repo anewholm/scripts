@@ -975,6 +975,13 @@ PHP
             }
             $this->setPropertyInClassFile($modelFilePath, 'advanced', $advanced, Framework::NEW_PROPERTY);
 
+            foreach ($model->fields() as $name => &$field) {
+                if ($field->qrcodeObject) {
+                    $this->setPropertyInClassFile($modelFilePath, 'qrCodeObject', $name, Framework::NEW_PROPERTY);
+                    break;
+                }
+            }
+
             // ----------------------------------------------------------------- Methods
             // menuitemCount() for plugins.yaml
             // Note that MATERIALIZED VIEWs can throw errors if not populated
@@ -1381,7 +1388,8 @@ PHP
                     'modelClass' => "Acorn\\Models\\BatchPrint",
                     'list'       => "\$$modelDirPath/columns.yaml",
                     'dataModel'  => $controller->model->fullyQualifiedName(),
-                    //'form'       => '$/../modules/acorn/models/export/fields_batch_print.yaml',
+                    'useListQuery' => true, // Custom
+                    'form'       => '$/../modules/acorn/behaviors/batchprintcontroller/partials/fields_export.yaml',
                     'fileName'   => 'print.zip',
                 ));
                 $defaultExtensions = ['avi','bmp','css','doc','docx','eot','flv','gif','ico','ics','jpeg','jpg','js','less','map','mkv','mov','mp3','mp4','mpeg','ods','odt','ogg','pdf','png','ppt','pptx','rar','scss','svg','swf','ttf','txt','wav','webm','webp','wmv','woff','woff2','xls','xlsx','zip'];
@@ -1636,9 +1644,11 @@ PHP
                     'type'       => $field->columnType,
                     'valueFrom'  => $field->valueFrom,
                     'format'     => $field->format,
+                    'bar'        => $field->bar,
                     'searchable' => $field->searchable,
                     'sortable'   => $field->sortable,
                     'invisible'  => $field->invisible,
+                    'readOnly'   => $field->readOnly,
                     'path'       => $field->columnPartial,
                     'relation'   => $field->relation,
                     'select'     => $field->sqlSelect,
@@ -1653,6 +1663,7 @@ PHP
                     'nameObject' => $field->nameObject,
                     'prefix'     => $field->prefix,
                     'suffix'     => $field->suffix,
+                    'qrcodeObject' => $field->qrcodeObject,
 
                     // MorphConfig.php dynamic include
                     'include'      => $field->include,          // Only include: 1to1

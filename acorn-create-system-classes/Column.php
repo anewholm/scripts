@@ -121,6 +121,7 @@ class Column {
     // These flow through to Field
     public $comment; // YAML comment
     public $format; // text, date, number, etc. Includes suffix & prefix
+    public $bar;
     public $parsedComment; // array
     public $fieldOptions;  // array
     public $searchable;
@@ -139,6 +140,7 @@ class Column {
     public $sqlSelect;
     public $valueFrom; // We should never use this because it cannot be sorted
     public $jsonable;
+    public $qrcodeObject;
 
     // --------------------- Field comment accepted values
     public $fieldType;
@@ -155,6 +157,7 @@ class Column {
     public $cssClasses;   // css-classes: - hug-left
     public $newRow;
     public $readOnly;
+    public $commentHtml;
     public $noLabel;      // css-classes: nolabel
     public $bootstraps;   // bootstrap: xs: 12 sm: 4
     public $popupClasses; // popup-classes: h

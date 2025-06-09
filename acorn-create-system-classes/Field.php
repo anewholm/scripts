@@ -65,7 +65,7 @@ class Field {
     public $fieldComment;
     public $permissions = array(); // Resultant Fields.yaml permissions: directive
     public $permissionSettings;    // Database column Input settings
-    public $commentHtml  = TRUE;
+    public $commentHtml = TRUE;
     public $hierarchical;
     public $useRelationCount;
     public $optionsStaticMethod = 'dropdownOptions';
@@ -113,6 +113,7 @@ class Field {
     public $columnKey;
     public $valueFrom;
     public $format; // text, date, number, etc. Includes suffix & prefix
+    public $bar;
     public $cssClassesColumn;
     public $columnPartial;
     public $sqlSelect;
@@ -120,6 +121,7 @@ class Field {
     public $columnConfig;
     public $listEditable; // => partial list_editable
     public $jsonable; // Column type json! :)
+    public $qrcodeObject;
     // Set during __construct
     public $invisible; 
     public $columnType;
