@@ -1,5 +1,7 @@
 <?php namespace Acorn\CreateSystem;
 
+use Exception;
+
 class ForeignKey {
     protected $column;
     public $oid;
@@ -29,10 +31,12 @@ class ForeignKey {
 
     // Comment
     public $comment;
+    public $fieldComment;
     public $hidden;
     public $invisible;
     public $fieldExclude;
     public $columnExclude;
+    public $hasManyDeep; // HasManyDeep control
     public $order;  // Appearance in tab pools
     public $type;
     public $multi;  // _multi.php config
@@ -46,7 +50,9 @@ class ForeignKey {
     public $cssClasses;
     public $newRow;
     public $bootstraps;
+    public $tab;
     public $tabLocation; // primary|secondary|tertiary
+    public $span;
     public $conditions;  // config_relation.yaml conditions
 
     // Translation arrays
@@ -71,7 +77,7 @@ class ForeignKey {
         foreach (\Spyc::YAMLLoadString($this->comment) as $name => $value) {
             $nameCamel = Str::camel($name);
             if (!property_exists($this, $nameCamel)) 
-                throw new \Exception("Property [$nameCamel] does not exist on [$this->table_from_name.$column->name] => [$this->name]");
+                throw new Exception("Property [$nameCamel] does not exist on [$this->table_from_name.$column->name] => [$this->name]");
             if (!isset($this->$nameCamel)) $this->$nameCamel = $value;
         }
 
@@ -105,13 +111,13 @@ class ForeignKey {
         $tableName = $this->column->table->name;
         $columnFQN = "$tableName.$this->column";
         if ($this->columnFrom->name == 'id')
-            throw new \Exception("FK type [$this->type] on column objects [$columnFQN] is from the ID column");
+            throw new Exception("FK type [$this->type] on column objects [$columnFQN] is from the ID column");
         if ($this->columnTo->name != 'id')
-            throw new \Exception("FK type [$this->type] on column objects [$columnFQN] is not to an ID column");
+            throw new Exception("FK type [$this->type] on column objects [$columnFQN] is not to an ID column");
         if ($this->to   && $this->column->name != $this->table_to_column)
-            throw new \Exception("FK type [$this->type] on column objects [$columnFQN] is different to column to data [$this->table_to_name.$this->table_to_column]");
+            throw new Exception("FK type [$this->type] on column objects [$columnFQN] is different to column to data [$this->table_to_name.$this->table_to_column]");
         if ($this->from && $this->column->name != $this->table_from_column)
-            throw new \Exception("FK type [$this->type] on column objects [$columnFQN] is different to column from data [$this->table_from_name.$this->table_from_column]");
+            throw new Exception("FK type [$this->type] on column objects [$columnFQN] is different to column from data [$this->table_from_name.$this->table_from_column]");
         if ($this->isUnknownType()) {
             $direction = $this->directionName();
             $details   = array(
@@ -123,7 +129,7 @@ class ForeignKey {
                 $this->columnTo->isTheIdColumn()
             );
             $detailsString = implode('|', $details);
-            throw new \Exception("Foreign Key [$this->name] on [$this->tableFrom] $direction [$columnFQN] has no type with [$detailsString]");
+            throw new Exception("Foreign Key [$this->name] on [$this->tableFrom] $direction [$columnFQN] has no type with [$detailsString]");
         }
 
         return $changes;
@@ -196,7 +202,7 @@ class ForeignKey {
         //
         // TODO: This should be static Relation::fromNameFromColumn(Column $column)
         if ($this->columnFrom->isTheIdColumn()) 
-            throw new \Exception("From relation name not possible for ID columns");
+            throw new Exception("From relation name not possible for ID columns");
         $tableRelationName = $this->columnFrom->table->relationName(); // user_groups
         $relationName      = $this->columnFrom->relationName($plural); // user_group[s]
 

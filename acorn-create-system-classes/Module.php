@@ -79,9 +79,12 @@ class Module {
     {
         $relations = array();
         foreach ($this->models as &$model) {
-            foreach ($model->relations() as $name => &$relation) {
-                if ($relation->to->plugin != $this) {
-                    $relations[$name] = &$relation;
+            // TODO: The relations don't work on WinterModels
+            if ($model instanceof Model) {
+                foreach ($model->relations() as $name => &$relation) {
+                    if ($relation->to->plugin != $this) {
+                        $relations[$name] = &$relation;
+                    }
                 }
             }
         }
@@ -108,6 +111,11 @@ class Module {
         $authorLower = strtolower($this->author);
         $nameLower   = strtolower($this->name);
         return "$authorLower/$nameLower";
+    }
+
+    public function permissionFQN(): string
+    {
+        return $this->dotName();
     }
 
     // ----------------------------------------- Display

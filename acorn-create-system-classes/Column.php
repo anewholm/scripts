@@ -50,6 +50,7 @@ class Column {
     public    const DATA_COLUMN_ONLY = TRUE;
     public    const INCLUDE_CONTENT_COLUMNS = FALSE;
     public    const INCLUDE_SCHEMA   = TRUE;
+    public    const NO_SCHEMA   = FALSE;
     public    const PLURAL   = TRUE;
     public    const SINGULAR = FALSE;
     public const NULLABLE = TRUE;
@@ -162,6 +163,16 @@ class Column {
     public $bootstraps;   // bootstrap: xs: 12 sm: 4
     public $popupClasses; // popup-classes: h
     public $containerAttributes;
+    // Assemble all field permission-settings directives names
+    // for Plugin registerPermissions()
+    // Permission names (keys) are fully-qualified
+    //   permission-settings:
+    //      NOT=legalcases__owner_user_group_id__update@update:
+    //         field:
+    //         readOnly: true
+    //         disabled: true
+    //         labels: 
+    //           en: Update owning Group
     public $permissionSettings;
     // For columns
     public $tab;

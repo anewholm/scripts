@@ -263,7 +263,8 @@ class Framework
         }
 
         if (isset($level[$name])) {
-            if ($throwIfAlreadySet) throw new Exception("[$dotPath] already set in [$path]");
+            if ($throwIfAlreadySet) 
+                throw new Exception("[$dotPath] already set in [$path]");
             if (is_array($level[$name])) $newValue = array_merge($level[$name], $newValue);
         }
         $level[$name] = $newValue;
@@ -280,7 +281,8 @@ class Framework
         foreach ($keys as $step) {
             if (!isset($level[$step])) $level[$step] = array();
             $level = &$level[$step];
-            if (!is_array($level)) throw new Exception("Pre-level [$step] in [$dotPath] is not array when trying to unset [$name]");
+            if (!is_array($level)) 
+                throw new Exception("Pre-level [$step] in [$dotPath] is not array when trying to unset [$name]");
         }
 
         if (isset($level[$name])) {
@@ -294,7 +296,8 @@ class Framework
 
     protected function langFileSet(string $path, string $dotPath, string|array $text, string $langName, object|NULL $dbObject, bool $throwIfAlreadySet = TRUE, string $comment = NULL)
     {
-        if (!$langName) throw new Exception("Lang name required when setting [$dotPath]");
+        if (!$langName) 
+            throw new Exception("Lang name required when setting [$dotPath]");
 
         // Set the ~/lang/<language>/lang.php file
         $this->arrayFileSet($path, $dotPath, $text, $throwIfAlreadySet);

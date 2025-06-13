@@ -39,6 +39,16 @@ class Model {
     public $menuSplitter = FALSE;
     public $menuIndent   = 0;
     public $icon;
+    // Assemble all field permission-settings directives names
+    // for Plugin registerPermissions()
+    // Permission names (keys) are fully-qualified
+    //   permission-settings:
+    //      NOT=legalcases__owner_user_group_id__update@update:
+    //         field:
+    //         readOnly: true
+    //         disabled: true
+    //         labels: 
+    //           en: Update owning Group
     public $permissionSettings; // Database column Input settings
     // PHP model methods
     public $attributeFunctions = array();
@@ -348,6 +358,18 @@ class Model {
         return "$absoluteFullyQualifiedName::dropdownOptions";
     }
 
+    public function fullyQualifiedDotName():string
+    {
+        $pluginDirName = $this->plugin->dotName();
+        $dirName = $this->dirName();
+        return "$pluginDirName.$dirName";
+    }
+
+    public function permissionFQN(): string
+    {
+        return $this->fullyQualifiedDotName();
+    }
+
     public function fullyQualifiedName(bool $withClassString = FALSE): string
     {
         $classString = ($withClassString ? '::class' : '');
@@ -415,6 +437,14 @@ class Model {
         //         labels: 
         //         en: Create a Trial
         $permissions = array();
+
+        // Standard view menu item
+        // acorn.university.entity
+        $view           = 'View';
+        $menuitemPlural = Str::plural(Str::title($this->name));
+        $permissions[$this->permissionFQN()] = array(
+            'labels' => array('en' => "$view $menuitemPlural")
+        );
 
         if ($this->permissionSettings) {
             foreach ($this->permissionSettings as $permissionDirective => $config) {
@@ -657,6 +687,8 @@ class Model {
 
     protected function recursive1to1Relations(Model $forModel, Column $forColumn = NULL, Model $stepModel = NULL, array $throughRelations = array()): array
     {
+        global $YELLOW, $GREEN, $RED, $NC;
+
         if (is_null($stepModel)) $stepModel = $forModel;
 
         $relations = array();
@@ -685,9 +717,12 @@ class Model {
                 if (isset($relations[$deepName])) 
                     throw new Exception("Conflicting relations with [$deepName] on [$stepModel->name]");
 
+                if ($deepRelation->conditions)
+                    print("      {$RED}WARNING{$NC}: Relation HasManyDeep $deepName has conditions\n");
+
                 $relations[$deepName] = new RelationHasManyDeep(
                     $deepName,
-                    $forModel,         // model from
+                    $forModel,       // model from
                     $deepRelation->to, // model to
                     $relation->column,
                     // If the last relation has a real FK, use it, for the comment
@@ -703,7 +738,8 @@ class Model {
                     // 1to1 means all steps are 1to1
                     // because $relation above will only be 1to1 traversal
                     // other (XfromX, etc.) indicates the LAST step only
-                    $deepRelation->type()
+                    $deepRelation->type(),
+                    $deepRelation->conditions
                 );
             }
 
@@ -759,9 +795,10 @@ class Model {
                     // If the relation config has a ModelTo setting, usually config[0]
                     $finalModel = $this->relationConfigModel($config);
                     $key        = (isset($config['key']) ? $config['key'] : $this->standardBareReferencingField());
+                    $conditions = (isset($config['conditions']) ? $config['conditions'] : NULL);
                     $columnFrom = Column::dummy($finalModel->table, $key);
                     if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
-                        $relations[$relationName] = new RelationXto1($relationName, $this, $finalModel, $columnFrom);
+                        $relations[$relationName] = new RelationXto1($relationName, $this, $finalModel, $columnFrom, NULL, FALSE, $conditions);
                 }
             }
         }
@@ -815,9 +852,10 @@ class Model {
                         $table      = Table::get($finalModel->getTable());
                     }
                     $key        = (isset($config['key']) ? $config['key'] : $this->standardBareReferencingField());
+                    $conditions = (isset($config['conditions']) ? $config['conditions'] : NULL);
                     $columnFrom = Column::dummy($table, $key);
                     if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
-                        $relations[$relationName] = new RelationXto1($relationName, $this, $finalModel, $columnFrom, NULL, $isCount);
+                        $relations[$relationName] = new RelationXto1($relationName, $this, $finalModel, $columnFrom, NULL, $isCount, $conditions);
                 }
             }
         }
@@ -957,6 +995,7 @@ class Model {
                     $isCount       = (isset($config['count']) && $config['count']);
                     $finalModel    = $this->relationConfigModel($config);
                     $key           = (isset($config['key'])      ? $config['key']      : $this->standardBareReferencingField());
+                    $conditions    = (isset($config['conditions']) ? $config['conditions'] : NULL);
                     $otherKey      = (isset($config['otherKey']) ? $config['otherKey'] : $finalModel->standardBareReferencingField());
                     if (!isset($config['table'])) 
                         throw new Exception("[$relationName] on [$this->name] has no table config");
@@ -974,7 +1013,8 @@ class Model {
                             $columnFrom,
                             $throughColumn,
                             NULL,
-                            $isCount
+                            $isCount,
+                            $conditions
                         );
                 }
             }
@@ -1394,12 +1434,14 @@ class Model {
         * but we have added the $relations
         */
 
-        /* ---------- type: HasManyDeep columns 
+        /* ---------- type: HasManyDeep relation managers and column _multi's 
         */
         foreach ($this->relationsHasManyDeep() as $name => &$relation) {
-            $relationClass = get_class($relation);
-            $relationType  = $relation->type();
-            $valueFrom     = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
+            $relationClass   = get_class($relation);
+            $relationType    = $relation->type();
+            $valueFrom       = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
+            $tab             = ($relation->tab ?: 'INHERIT'); 
+            $translationKey  = $relation->to->translationKey(Model::PLURAL);
 
             print("    {$indentString}Creating column _multi for HasManyDeep({$YELLOW}$relation{$NC})\n");
             $thisIdRelation  = array($name => $relation);
@@ -1419,13 +1461,18 @@ class Model {
                 'relation'       => $name,
                 'searchable'     => (bool) $valueFrom,
                 'valueFrom'      => $valueFrom, // Necessary for search to work, is removed in nested scenario
+                'readOnly'       => $relation->readOnly,
+                'fieldComment'   => $relation->fieldComment,
                 
                 // The relation decides about its presentation with fieldExclude
                 // Essentially, only for 1toX and XtoX final relations
                 // that need a relationmanager
-                'fieldExclude'   => $relation->fieldExclude,
+                // TODO: $relation->isToMany() ? 'relationmanager' : 'relation'
                 'fieldType'      => 'relationmanager',
-                'tab'            => 'INHERIT',
+                'fieldExclude'   => $relation->fieldExclude,
+                'hidden'         => $relation->hidden,
+                'span'           => $relation->span,
+                'tab'            => $tab,
                 'cssClasses'     => array('single-tab', 'nolabel', 'col-xs-12'),
                 'rlButtons'      => $relation->rlButtons,
                 'tabLocation'    => $relation->tabLocation,
@@ -1462,10 +1509,11 @@ class Model {
             $relationType  = $relation->type();
             $dependsOn     = array('_paste' => TRUE);
             // TODO: The tab should inherit the labels local key
-            $tab           = ($relation->isSelfReferencing()
+            $tab           = ($relation->tab ?: (
+                $relation->isSelfReferencing()
                 ? 'acorn::lang.models.general.children'
                 : $relation->to->translationKey(Model::PLURAL)
-            );
+            ));
             $comment       = '';
             $valueFrom     = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
             if ($relation->status == 'broken') continue;
@@ -1529,6 +1577,7 @@ class Model {
                 'readOnly'       => $relation->readOnly,
                 'multi'          => $relation->multi,
                 'nameObject'     => $relation->nameObject,
+                'span'           => $relation->span,
                 'tab'            => 'INHERIT',
 
                 // List
@@ -1562,13 +1611,14 @@ class Model {
         * TODO: This is just the same as 1fromX above at the moment
         */
         foreach ($this->relationsXfromXSemi() as $name => &$relation) {
-            $nameFrom      = 'fully_qualified_name';
-            $relationClass = get_class($relation);
-            $relationType  = $relation->type();
-            $tab           = $relation->pivotModel->translationKey(Model::PLURAL);
-            $dependsOn     = array('_paste' => TRUE);
-            $comment       = '';
-            $valueFrom     = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
+            $nameFrom       = 'fully_qualified_name';
+            $relationClass  = get_class($relation);
+            $relationType   = $relation->type();
+            $tab            = ($relation->tab ?: 'INHERIT'); 
+            $translationKey = $relation->pivotModel->translationKey(Model::PLURAL);
+            $dependsOn      = array('_paste' => TRUE);
+            $comment        = '';
+            $valueFrom      = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
             if ($relation->status == 'broken') continue;
 
             print("    {$indentString}Creating tab multi-select for {$YELLOW}$relation{$NC}\n");
@@ -1637,7 +1687,7 @@ class Model {
             $fieldObj       = new PseudoFromForeignIdField($this, array(
                 '#'              => "Tab multi-select for relationsXfromXSemi($relationClass($relationType) $relation)",
                 'name'           => $name,
-                'translationKey' => $tab,
+                'translationKey' => $translationKey,
                 'labels'         => $relation->labelsPlural, // Overrides translationKey
                 'fieldType'      => ($useRelationManager ? 'relationmanager' : 'relation'),
                 'hidden'         => $relation->hidden,
@@ -1659,6 +1709,7 @@ class Model {
                 'relatedModel'   => $relation->to->fullyQualifiedName(),
                 'canFilter'      => TRUE,
                 'readOnly'       => $relation->readOnly,
+                'span'           => $relation->span,
                 'tab'            => 'INHERIT',
                 'multi'          => $relation->multi,
                 'nameObject'     => $relation->nameObject,
@@ -1690,13 +1741,14 @@ class Model {
         *   relation list
         */
         foreach ($this->relationsXfromX() as $name => &$relation) {
-            $nameFrom      = 'fully_qualified_name';
-            $relationClass = get_class($relation);
-            $relationType  = $relation->type();
-            $tab           = $relation->to->translationKey(Model::PLURAL);
-            $dependsOn     = array('_paste' => TRUE);
-            $comment       = '';
-            $valueFrom     = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
+            $nameFrom       = 'fully_qualified_name';
+            $relationClass  = get_class($relation);
+            $relationType   = $relation->type();
+            $tab            = ($relation->tab ?: 'INHERIT'); 
+            $translationKey = $relation->to->translationKey(Model::PLURAL);
+            $dependsOn      = array('_paste' => TRUE);
+            $comment        = '';
+            $valueFrom      = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
             if ($relation->status == 'broken') continue;
 
             // TODO: Translatable "create new" comment
@@ -1761,7 +1813,7 @@ class Model {
             $fieldObj = new PseudoFromForeignIdField($this, array(
                 '#'              => "Tab multi-select for relationsXfromX($relationClass($relationType) $relation)",
                 'name'           => $name,
-                'translationKey' => $tab,
+                'translationKey' => $translationKey,
                 'labels'         => $relation->labelsPlural, // Overrides translationKey
                 'fieldType'      => ($useRelationManager ? 'relationmanager' : 'relation'),
                 'hidden'         => $relation->hidden,
@@ -1783,6 +1835,7 @@ class Model {
                 'relatedModel'   => $relation->to->fullyQualifiedName(),
                 'canFilter'      => TRUE,
                 'readOnly'       => $relation->readOnly,
+                'span'           => $relation->span,
                 'tab'            => $tab,
                 'multi'          => $relation->multi,
                 'nameObject'     => $relation->nameObject,

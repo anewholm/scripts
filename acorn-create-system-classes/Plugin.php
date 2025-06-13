@@ -140,14 +140,17 @@ class Plugin {
     public function otherPluginRelations(): array
     {
         $relations = array();
-        foreach ($this->models as &$model) {
-            foreach ($model->relations() as $name => &$relation) {
-                // Exclude Modules
-                if ($relation instanceof RelationHasManyDeep) {
-                    // These create deep circular relations
-                } else {
-                    if ($relation->to->plugin instanceof Plugin && $relation->to->plugin != $this) {
-                        $relations[$name] = &$relation;
+        // TODO: Support non-create-system plugins
+        if ($this->isCreateSystemPlugin()) {
+            foreach ($this->models as &$model) {
+                foreach ($model->relations() as $name => &$relation) {
+                    // Exclude Modules
+                    if ($relation instanceof RelationHasManyDeep) {
+                        // These create deep circular relations
+                    } else {
+                        if ($relation->to->plugin instanceof Plugin && $relation->to->plugin != $this) {
+                            $relations[$name] = &$relation;
+                        }
                     }
                 }
             }
@@ -226,6 +229,12 @@ class Plugin {
         return "$authorLower/$nameLower";
     }
 
+    public function permissionFQN(): string
+    {
+        $dotName = $this->dotName();
+        return "$dotName.plugin";
+    }
+
     public function absoluteFullyQualifiedName(): string
     {
         return '\\' . $this->fullyQualifiedName();
@@ -235,6 +244,14 @@ class Plugin {
     public function allPermissionNames(): array
     {
         $permissions = array();
+
+        // Standard view menu item
+        // acorn.university.entity
+        $view           = 'View';
+        $menuitemPlural = Str::title($this->name);
+        $permissions[$this->permissionFQN()] = array(
+            'labels' => array('en' => "$view $menuitemPlural plugin")
+        );
 
         foreach ($this->models as &$model) {
             $permissions = array_merge($permissions, $model->allPermissionNames());

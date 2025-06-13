@@ -516,11 +516,11 @@ class DB {
     }
 
     // --------------------------------------- Actions
-    public function addColumn(string $table, string $column, string $type, string $gen = NULL, bool $nullable = Column::NOT_NULL)
+    public function addColumn(string $table, string $column, string $type, string $gen = NULL, bool $nullable = Column::NOT_NULL, string $default = NULL)
     {
         global $YELLOW, $RED, $NC;
 
-        if (!$nullable) {
+        if (!$nullable && is_null($default)) {
             $sql     = "select count(*) from $table;";
             $reponse = $this->connection->query($sql);
             $results = $reponse->fetchAll(\PDO::FETCH_OBJ);
@@ -535,8 +535,9 @@ class DB {
         }
 
         $sql = "ALTER TABLE IF EXISTS $table ADD COLUMN $column $type";
-        if (!$nullable) $sql .= " NOT NULL";
-        if ($gen)       $sql .= " GENERATED ALWAYS AS ($gen) STORED";
+        if (!$nullable)                $sql .= " NOT NULL";
+        if (!is_null($default)) $sql .= " DEFAULT $default";
+        if ($gen)                      $sql .= " GENERATED ALWAYS AS ($gen) STORED";
         $statement = $this->connection->prepare($sql);
         $statement->execute();
     }

@@ -64,6 +64,16 @@ class Field {
     public $debugComment;
     public $fieldComment;
     public $permissions = array(); // Resultant Fields.yaml permissions: directive
+    // Assemble all field permission-settings directives names
+    // for Plugin registerPermissions()
+    // Permission names (keys) are fully-qualified
+    //   permission-settings:
+    //      NOT=legalcases__owner_user_group_id__update@update:
+    //         field:
+    //         readOnly: true
+    //         disabled: true
+    //         labels: 
+    //         en: Update owning Group
     public $permissionSettings;    // Database column Input settings
     public $commentHtml = TRUE;
     public $hierarchical;
@@ -78,7 +88,7 @@ class Field {
     public $tabLocation;  // primary|secondary|tertiary
     public $relatedModel; // For relationmanagers only
     // For type fileupload
-    public $mode;
+    public $mode; // And datetime
     public $imageHeight;
     public $imageWidth;
     public $thumbOptions;
@@ -192,12 +202,19 @@ class Field {
 
         // TODO: This listEditable should be somewhere else...
         if ($this->listEditable) {
-            $this->typeEditable = $this->columnType;
+            $this->typeEditable = $this->column->data_type;
             $this->columnType   = 'partial';
             if (!$this->partial) {
                 if ($this->jsonable) $this->columnPartial = 'record_list_editable';
                 else                 $this->columnPartial = 'list_editable';
             }
+        }
+
+        // All fields can be controlled by a permission
+        // permissions are expandable/collapsable in the list screen
+        if ($this->column && $this->column->isCustom()) {
+            $permissionNameStub = $this->permissionStub();
+            array_push($this->permissions, "{$permissionNameStub}_view");
         }
 
         // Checks
@@ -481,6 +498,20 @@ class Field {
         return $this->column->fullyQualifiedName();
     }
 
+    public function permissionStub(): string
+    {
+        if (!$this->column) 
+            throw new Exception("Field [$this->name] is not related to a column");
+        $plugin = $this->model->plugin->dotName();
+        $model  = $this->model->dirName();
+        $field  = $this->name;
+
+        // We only register permissions for this plugin
+        // acorn.university...
+        // end, local name, must be unique in the plugin
+        return "$plugin.{$model}_$field";
+    }
+
     public function cssClassesColumn(): array
     {
         $cssClassesColumn = ($this->cssClassesColumn ?: array());
@@ -529,19 +560,31 @@ class Field {
 
     public function allPermissionNames(): array
     {
-        // Assemble all field permission-settings directives names
-        // for Plugin registerPermissions()
-        // Permission names (keys) are fully-qualified
-        //   permission-settings:
-        //      NOT=legalcases__owner_user_group_id__update@update:
-        //         field:
-        //         readOnly: true
-        //         disabled: true
-        //         labels: 
-        //         en: Update owning Group
         $permissions = array();
 
+        if ($this->column && $this->column->isCustom()) {
+            $permissionNameStub = $this->permissionStub();
+            // TODO: Translation of permission names
+            $view               = 'View field';
+            $modelTitle         = Str::title($this->model->name);
+            $title              = Str::title($this->name);
+            $permissions["{$permissionNameStub}_view"] = array(
+                'labels' => array('en' => "$view $modelTitle $title")
+            );
+            // TODO: $permissions["{$permissionNameStub}_change"] = TRUE; 
+        }
+
         if ($this->permissionSettings) {
+            // Assemble all field permission-settings directives names
+            // for Plugin registerPermissions()
+            // Permission names (keys) are fully-qualified
+            //   permission-settings:
+            //      NOT=legalcases__owner_user_group_id__update@update:
+            //         field:
+            //         readOnly: true
+            //         disabled: true
+            //         labels: 
+            //           en: Update owning Group
             foreach ($this->permissionSettings as $permissionDirective => &$config) {
                 // Copied from Trait MorphConfig
                 $typeParts = explode('=', $permissionDirective);
@@ -561,6 +604,7 @@ class Field {
                 // Permission keys _can_ be qualified in this scenario
                 // because they can reference permissions from other plugins
                 // however, we default to the same model plugin that the field in attached to
+                // acorn.university... will be written to this plugin
                 $qualifiedPermissionName = $permissionDirective;
                 $isQualifiedName = (strstr($qualifiedPermissionName, '.') !== FALSE);
                 if (!$isQualifiedName) {
@@ -576,6 +620,7 @@ class Field {
                 }
 
                 // Only fully Qualified permission names
+                // acorn.university... will be written to this plugin
                 $permissions[$qualifiedPermissionName] = $config;
             }
         }
@@ -673,6 +718,8 @@ class ForeignIdField extends Field {
 
     protected function __construct(Model &$model, array $definition, Column &$column, array &$relations)
     {
+        global $YELLOW, $GREEN, $RED, $NC;
+
         parent::__construct($model, $definition, $column, $relations);
 
         // Always allow QR code scanning
@@ -757,7 +804,7 @@ class ForeignIdField extends Field {
                     //   permission-settings:
                     //      trials__access:
                     //         labels: 
-                    //         en: Create a Trial
+                    //           en: Create a Trial
                     $targetModel = &$this->relation1->to;
                     if ($targetModel->permissionSettings) {
                         foreach ($targetModel->permissionSettings as $localPermissionName => $permissionConfig) {
@@ -768,6 +815,7 @@ class ForeignIdField extends Field {
 
                             // Add the required permission to the Fields.yaml permissions: directive
                             // These must be local permission names
+                            print("      Added permission {$GREEN}$localPermissionName{$NC}\n");
                             array_push($this->permissions, $localPermissionName);
                         }
                     }

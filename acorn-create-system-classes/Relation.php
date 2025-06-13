@@ -11,10 +11,12 @@ class Relation {
     public $foreignKey;
 
     public $comment;
+    public $fieldComment;
     public $hidden;
     public $invisible;
     public $fieldExclude;
     public $columnExclude;
+    public $hasManyDeep; // HasManyDeep control
     public $status; // ok|exclude|broken
     public $multi;  // _multi.php config
     public $type;   // explicit typing
@@ -26,7 +28,9 @@ class Relation {
     public $placeholder = 'backend::lang.form.select';
     public $newRow;
     public $bootstraps;
+    public $tab;
     public $tabLocation; // primary|secondary|tertiary
+    public $span;
     public $rlButtons = array('create' => TRUE, 'delete' => TRUE);
 
     // Filter config_filter.yaml
@@ -45,7 +49,8 @@ class Relation {
         Model $to, 
         Column $column, 
         ForeignKey $foreignKey = NULL,
-        bool $isCount = FALSE
+        bool $isCount = FALSE,
+        string $conditions = NULL
     ) {
         // Relations are DIRECTIONAL, unlike FKs
         // That is, from Relations, like Relation1from1, is attached to its FK to ID column,
@@ -62,6 +67,7 @@ class Relation {
         $this->column     = &$column;
         $this->foreignKey = &$foreignKey;
         $this->isCount    = $isCount;
+        $this->conditions = $conditions;
 
         // Inherit FK comment values
         $this->comment = $this->foreignKey?->comment;
@@ -208,9 +214,10 @@ class RelationXto1 extends Relation {
         Model  $to, 
         Column $column, 
         ForeignKey $foreignKey = NULL,
-        bool $isCount = FALSE
+        bool $isCount = FALSE,
+        string $conditions = NULL
     ) {
-        parent::__construct($name, $from, $to, $column, $foreignKey, $isCount);
+        parent::__construct($name, $from, $to, $column, $foreignKey, $isCount, $conditions);
 
         // Do either of our Models indicate that the field canFilter?
         $relations = array($this);
@@ -240,9 +247,10 @@ class RelationXfromXSemi extends RelationFrom {
         Model  $pivotModel,    // LegalcaseProsecutor
         Column $keyColumn,     // pivot.user_group_id
         Column $throughColumn, // pivot.user_id
-        ForeignKey|NULL $foreignKey = NULL
+        ForeignKey|NULL $foreignKey = NULL,
+        string $conditions = NULL
     ) {
-        parent::__construct($name, $from, $to, $throughColumn, $foreignKey);
+        parent::__construct($name, $from, $to, $throughColumn, $foreignKey, FALSE, $conditions);
 
         $table            = $pivotModel->getTable();
         $this->pivotModel = &$pivotModel;
@@ -275,9 +283,10 @@ class RelationXfromX extends RelationFrom {
         Column $keyColumn,     // pivot.user_group_id
         Column $throughColumn, // pivot.user_id
         ForeignKey|NULL $foreignKey = NULL,
-        bool $isCount = FALSE
+        bool $isCount = FALSE,
+        string $conditions = NULL
     ) {
-        parent::__construct($name, $from, $to, $throughColumn, $foreignKey, $isCount);
+        parent::__construct($name, $from, $to, $throughColumn, $foreignKey, $isCount, $conditions);
 
         $this->pivot     = &$pivot;
         $this->keyColumn = &$keyColumn;
@@ -313,15 +322,19 @@ class RelationHasManyDeep extends Relation {
         array $throughRelations, // name => relation
         bool  $containsLeaf,
         bool  $nameObject,
-        string $type // Last relation type
+        string $type, // Last relation type
+        string $conditions = NULL
     ) {
-        $lastRelation = end($throughRelations);
-        $isCount      = $lastRelation->isCount;
-        // Includes RelationXfromXSemi
-        $isFromX      = ($lastRelation instanceof Relation1fromX || $lastRelation instanceof RelationXfromX);
-        $fieldAllow   = (!$isCount && $isFromX);
+        $firstRelation = current($throughRelations);
+        $lastRelation  = end($throughRelations);
+        $isCount       = $lastRelation->isCount;
+        $fieldAllow    = (!$isCount && (
+            $lastRelation instanceof Relation1fromX || 
+            $lastRelation instanceof RelationXfromX || // Includes RelationXfromXSemi
+            $lastRelation instanceof RelationXto1      // user_user_languages apparently... User::$hasMany
+        ));
 
-        parent::__construct($name, $from, $to, $column, $lastForeignKey, $isCount);
+        parent::__construct($name, $from, $to, $column, $lastForeignKey, $isCount, $conditions);
 
         // Check for Model repetition
         // which can cause duplicated tables in the from clause
@@ -344,6 +357,18 @@ class RelationHasManyDeep extends Relation {
         // 1toX, XtoX, XtoXSemi
         $this->fieldExclude     = !$fieldAllow;
         $this->rlButtons        = $lastRelation->rlButtons;
+
+        if ($firstRelation->hasManyDeep) {
+            if (isset($firstRelation->hasManyDeep[$this->name])) {
+                $settings = $firstRelation->hasManyDeep[$this->name];
+                foreach ($settings as $name => $value) {
+                    $nameCamel = Str::camel($name);
+                    if (!property_exists($this, $nameCamel)) 
+                        throw new Exception("Property [$nameCamel] does not exist on [$this]");
+                    $this->$nameCamel = $value;
+                }
+            }
+        }
     }
 
     protected function checkQualifier($fieldName, $otherModel, $baseName): string|NULL

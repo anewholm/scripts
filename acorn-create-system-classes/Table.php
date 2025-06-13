@@ -471,8 +471,8 @@ class Table {
                     print("{$RED}WARNING$NC: $error\n");
                     $yn = readline("Create [$columnCheck] (y) ?");
                     if ($yn != 'n') {
-                        $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'integer', NULL);
-                        print("Added [$columnCheck] NULLABLE\n");
+                        $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'integer', NULL, FALSE, 0);
+                        print("Added [$columnCheck]\n");
                         $changes = TRUE;
                     }
                 }
@@ -482,8 +482,8 @@ class Table {
                     print("{$RED}WARNING$NC: $error\n");
                     $yn = readline("Create [$columnCheck] (y) ?");
                     if ($yn != 'n') {
-                        $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'integer', NULL);
-                        print("Added [$columnCheck] NULLABLE\n");
+                        $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'integer', NULL, FALSE, 0);
+                        print("Added [$columnCheck]\n");
                         $changes = TRUE;
                     }
                 }
@@ -493,8 +493,8 @@ class Table {
                     print("{$RED}WARNING$NC: $error\n");
                     $yn = readline("Create [$columnCheck] (y) ?");
                     if ($yn != 'n') {
-                        $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'integer', NULL);
-                        print("Added [$columnCheck] NULLABLE\n");
+                        $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'integer', NULL, FALSE, 0);
+                        print("Added [$columnCheck]\n");
                         $changes = TRUE;
                     }
                 }

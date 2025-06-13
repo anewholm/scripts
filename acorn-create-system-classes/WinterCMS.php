@@ -380,20 +380,23 @@ class WinterCMS extends Framework
             // Check these permissions keys are fully qualified
             foreach ($permissions as $fullyQualifiedKey => &$config) {
                 $isQualifiedName = (strstr($fullyQualifiedKey, '.') !== FALSE);
-                if (!$isQualifiedName) throw new Exception("Permission [$fullyQualifiedKey] is not qualified");
+                if (!$isQualifiedName) 
+                    throw new Exception("Permission [$fullyQualifiedKey] is not qualified");
             }
 
             foreach ($permissions as $fullyQualifiedName => &$config) {
                 $permissionNameParts     = explode(".", $fullyQualifiedName);
                 $permissionPluginDotPath = implode(".", array_slice($permissionNameParts, 0, 2));
                 $permissionLocalName     = end($permissionNameParts);
+                // We only register permissions for this plugin
+                // acorn.university...
                 if ($permissionPluginDotPath == $pluginDotName) {
                     print("    Adding Permission: {$GREEN}$fullyQualifiedName{$NC}\n");
                     $pluginPermissionConfig = array(
                         'tab'   => "$translationDomain::lang.plugin.name",
                         'label' => "$translationDomain::lang.permissions.$permissionLocalName",
                     );
-                    $pluginPermissionsArray[$permissionLocalName] = $pluginPermissionConfig;
+                    $pluginPermissionsArray[$fullyQualifiedName] = $pluginPermissionConfig;
                     // Adorn the main config for the lang updates later
                     $config['plugin'] = $pluginPermissionConfig;
                 }
@@ -544,8 +547,9 @@ class WinterCMS extends Framework
                         if ($controller->menu) {
                             $icon = $controller->icon;
                             $url  = $controller->relativeUrl();
-                            $modelFQN = $model->absoluteFullyQualifiedName();
+                            $modelFQN        = $model->absoluteFullyQualifiedName();
                             $langSectionName = $model->langSectionName();
+                            $permissionFQN   = $model->permissionFQN();
 
                             print("    +Side-menu entry [$name] @{$YELLOW}$url{$NC}");
                             if ($icon) {
@@ -570,6 +574,7 @@ class WinterCMS extends Framework
                                 'url'     => $url,
                                 'icon'    => $icon,
                                 'counter' => "$modelFQN::menuitemCount",
+                                'permissions' => array($permissionFQN),
                             );
                             if (!$firstModelUrl) $firstModelUrl = $url;
 
@@ -585,12 +590,14 @@ class WinterCMS extends Framework
                     $icon = $this->getNextIcon();
                     print("  Auto-selected plugin icon {$YELLOW}$icon{$NC}\n");
                 }
+                $permissionFQN = $plugin->permissionFQN();
                 $navigationDefinition = array(
                     "$pluginMenuName-setup" => array(
-                        'label'    => "$translationDomain::lang.plugin.name",
-                        'url'      => ($plugin->pluginUrl ?: ($firstModelUrl ?: '#')),
-                        'icon'     => $icon,
-                        'sideMenu' => $sideMenu,
+                        'label'       => "$translationDomain::lang.plugin.name",
+                        'url'         => ($plugin->pluginUrl ?: ($firstModelUrl ?: '#')),
+                        'icon'        => $icon,
+                        'permissions' => array($permissionFQN),
+                        'sideMenu'    => $sideMenu,
                     ),
                 );
 
@@ -822,6 +829,7 @@ PHP
                     'global_scope' => ($relation->globalScope == 'to'),
                     'delete' => $relation->delete,
                     'count'  => $relation->isCount,
+                    'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
             }
             foreach ($model->relationsXto1() as $name => &$relation) {
@@ -834,6 +842,7 @@ PHP
                     'global_scope' => ($relation->globalScope == 'to'),
                     'delete' => $relation->delete,
                     'count'  => $relation->isCount,
+                    'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
             }
             $this->setPropertyInClassFile($modelFilePath, 'belongsTo', $relations);
@@ -858,6 +867,7 @@ PHP
                     // other (XfromX, etc.) indicates the LAST step only
                     'type'   => $relation->type(), 
                     'count'  => $relation->isCount,
+                    'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
             }
             $this->setPropertyInClassFile($modelFilePath, 'hasManyDeep', $relations, FALSE);
@@ -871,6 +881,7 @@ PHP
                     'global_scope' => ($relation->globalScope == 'from'),
                     'type'   => $relation->type(),
                     'count'  => $relation->isCount,
+                    'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
             }
             foreach ($model->relationsXfromXSemi() as $name => &$relation) {
@@ -884,6 +895,7 @@ PHP
                     'global_scope' => ($relation->globalScope == 'from'),
                     'type'     => $relation->type(),
                     'count'    => $relation->isCount,
+                    'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
             }
             $this->setPropertyInClassFile($modelFilePath, 'hasMany', $relations);
@@ -901,6 +913,7 @@ PHP
                     'global_scope' => ($relation->globalScope == 'from'),
                     'delete'   => $relation->delete,
                     'count'    => $relation->isCount,
+                    'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
             }
             foreach ($model->relationsXfromXSemi() as $name => &$relation) {
@@ -916,6 +929,7 @@ PHP
                     'global_scope' => ($relation->globalScope == 'from'),
                     'delete'   => $relation->delete,
                     'count'    => $relation->isCount,
+                    'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
             }
             $this->setPropertyInClassFile($modelFilePath, 'belongsToMany', $relations);
@@ -930,6 +944,7 @@ PHP
                     'global_scope' => ($relation->globalScope == 'from'),
                     'delete' => $relation->delete, // This can be done by a DELETE CASCADE FK
                     'count'  => $relation->isCount,
+                    'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
             }
             $this->setPropertyInClassFile($modelFilePath, 'hasOne', $relations);
@@ -1165,6 +1180,7 @@ PHP
                     'tab'          => $fieldTab,
 
                     // Pass through
+                    'mode'   => $field->mode,
                     'preset' => $field->preset,
                     'width'  => $field->width,
                     'height' => $field->height,
@@ -1664,6 +1680,7 @@ PHP
                     'prefix'     => $field->prefix,
                     'suffix'     => $field->suffix,
                     'qrcodeObject' => $field->qrcodeObject,
+                    'typeEditable' => $field->typeEditable,
 
                     // MorphConfig.php dynamic include
                     'include'      => $field->include,          // Only include: 1to1

@@ -358,6 +358,7 @@ php artisan user:create-user -c -s seeder QueenPool1@ # The lazy created backend
 php artisan user:create-user -c -d -s admin password  # Backend Admin should already be present
 php artisan user:create-user -c -d -s $outeruser QueenPool1@
 php artisan user:create-user -c -d demo password
+php artisan user:create-user -c -d frontend Fvv%#6nDFbR23
 
 # Set the default backend timezone to server timezone
 timezone_name=`cat /etc/timezone`
