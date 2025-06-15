@@ -573,10 +573,12 @@ class WinterCMS extends Framework
                                 'label'   => "$translationDomain::lang.models.$langSectionName.label_plural",
                                 'url'     => $url,
                                 'icon'    => $icon,
-                                'counter' => "$modelFQN::menuitemCount",
+                                
                                 'permissions' => array($permissionFQN),
                             );
                             if (!$firstModelUrl) $firstModelUrl = $url;
+                            // TODO: menuitemCount() adversely affects performance. Can it be cached?
+                            // $sideMenu[$name]['counter'] = "$modelFQN::menuitemCount";
 
                             print("\n");
                         }
@@ -968,9 +970,12 @@ PHP
             foreach ($model->fields() as $name => &$field) {
                 // listEditable can be a string or a boolean
                 // so we cannot use a switch
+                // TODO: Change listEditable settings to all strings to avoid errors
                 if      ($field->listEditable === 'delete-on-null') $listEditable[$name] = 2;
+                else if ($field->listEditable === 'false-on-null')  $listEditable[$name] = 3;
                 else if ($field->listEditable === 'validate')       $listEditable[$name] = TRUE;
                 else if ($field->listEditable === TRUE)             $listEditable[$name] = TRUE;
+                else if ($field->listEditable)                      $listEditable[$name] = $field->listEditable;
             }
             $this->setPropertyInClassFile($modelFilePath, 'listEditable', $listEditable, FALSE);
 
@@ -998,11 +1003,12 @@ PHP
             }
 
             // ----------------------------------------------------------------- Methods
+            // TODO: menuitemCount() adversely affects performance. Can it be cached?
             // menuitemCount() for plugins.yaml
             // Note that MATERIALIZED VIEWs can throw errors if not populated
             // so we try{}, otherwise we will take down the whole interface
-            print("  Adding menuitemCount()\n");
-            $this->addStaticMethod($modelFilePath, 'menuitemCount', 'try{return self::count();} catch (Exception $ex) {return NULL;}');
+            // print("  Adding menuitemCount()\n");
+            // $this->addStaticMethod($modelFilePath, 'menuitemCount', 'try{return self::count();} catch (Exception $ex) {return NULL;}');
 
             // get<Something>Attribute()s
             foreach ($model->attributeFunctions() as $funcName => &$body) {
@@ -1204,6 +1210,7 @@ PHP
                     // Complex permissions
                     'permissionSettings' => $field->permissionSettings,
                     'permissions'        => $field->permissions,
+                    'setting'            => $field->setting,
                     // Dynamic include
                     'include'      => $field->include,          // Only include: 1to1
                     'includeModel' => $field->includeModel,     // Required for include
@@ -1224,37 +1231,6 @@ PHP
                     else if ($field->tabLocation == 3) $this->yamlFileSet($fieldsPath, 'tertiaryTabs.icons',  $icon, TRUE,  $labelKey);
                     else if ($field->tab)              $this->yamlFileSet($fieldsPath, 'tabs.icons',          $icon, FALSE, $labelKey);
                 }
-
-                // -------------------------------------------------------- Special ButtonFields
-                /*
-                foreach ($field->buttons as $buttonName => &$buttonField) {
-                    if ($buttonField) { // Can be FALSE
-                        if ($buttonField->contexts) throw new Exception("Button field different contexts to main field is not supported yet on [$name]");
-                        $buttonDefinition = array(
-                            'name'         => $buttonField->name,
-                            'type'         => $buttonField->fieldType,
-                            'span'         => $buttonField->span,
-                            'cssClass'     => $buttonField->cssClass(),
-                            'context'      => array_keys($field->contexts),
-                            'dependsOn'    => array_keys($buttonField->dependsOn),
-                            'options'      => $buttonField->fieldOptions,      // Function call
-                            'optionsModel' => $buttonField->fieldOptionsModel, // Model name
-                            'path'         => $buttonField->partial,
-                            'comment'      => $buttonField->fieldComment,
-                            'commentHtml'  => ($buttonField->commentHtml && $buttonField->fieldComment),
-                            'controller'   => $buttonField->controller?->fullyQualifiedName(),
-                            'tab'          => $fieldTab, // Same tab as parent field
-                        );
-                        $buttonDefinition = $this->removeEmpty($buttonDefinition, TRUE);
-
-                        $dotPath = "fields.$buttonName";
-                        if      ($field->tabLocation == 2) $dotPath = "secondaryTabs.$dotPath";
-                        else if ($field->tabLocation == 3) $dotPath = "tertiaryTabs.$dotPath";
-                        else if ($field->tab)              $dotPath = "tabs.$dotPath";
-                        $this->yamlFileSet($fieldsPath, $dotPath, $buttonDefinition);
-                    }
-                }
-                */
             } else {
                 print("    $indentString{$YELLOW}WARNING{$NC}: Field [$name]($typeString) !canDisplayAs{$YELLOW}Field{$NC}() because fieldType($field->fieldType) is blank or fieldExclude($field->fieldExclude)\n");
             }

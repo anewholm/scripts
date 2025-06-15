@@ -12,6 +12,7 @@ class Field {
     public $relations; // Can be empty array()
     public $autoFKType;
     public $extraForeignKey;
+    public $fromYaml;
 
     public $comment;     // From column->comment
     public $name;        // => fieldName & columnName
@@ -39,7 +40,7 @@ class Field {
     public $fieldKeyQualifier; // Should always be added on to the fields.yaml name
     public $fieldType;
     public $descriptionFrom;
-    public $typeEditable;
+    public $typeEditable; // For list-editable row partial
     public $fieldExclude;
     public $columnExclude;
     public $default;
@@ -54,7 +55,7 @@ class Field {
     public $newRow       = FALSE; // From column comment
     public $noLabel      = FALSE; // From column comment
     public $contexts     = array();
-    public $span         = 'storm';
+    public $span;
     public $cssClasses;
     public $bootstraps   = array('xs' => 6);
     public $popupClasses;
@@ -195,14 +196,17 @@ class Field {
         if (!isset($this->searchable)) $this->searchable = TRUE;
         if (!isset($this->canFilter))  $this->canFilter  = FALSE;
         if (!isset($this->sortable))   $this->sortable   = FALSE;
-    
+        if (!isset($this->span))       $this->span       = 'storm';
+
         $classParts = explode('\\', get_class($this));
         $className  = end($classParts);
         $this->yamlComment = "$className: $this->yamlComment";
 
         // TODO: This listEditable should be somewhere else...
         if ($this->listEditable) {
-            $this->typeEditable = $this->column->data_type;
+            // json listEditable is not very helpful...
+            // So we rely on manual setting
+            if (!isset($this->typeEditable)) $this->typeEditable = $this->column->data_type;
             $this->columnType   = 'partial';
             if (!$this->partial) {
                 if ($this->jsonable) $this->columnPartial = 'record_list_editable';
@@ -222,7 +226,7 @@ class Field {
             throw new Exception("Field has no name");
     }
 
-    public static function createFromYamlConfigs(Model &$model, string $fieldName, string|NULL $context, array $fieldConfig, array $columnConfig = NULL, int $tabLocation = NULL): Field
+    public static function createFromYamlConfigs(Model &$model, string $fieldName, string|NULL $nameContext, array $fieldConfig, array $columnConfig = NULL, int $tabLocation = NULL): Field
     {
         global $YELLOW, $NC;
 
@@ -238,7 +242,7 @@ class Field {
             'name'        => $fieldName, // $column->nameWithoutId(), also => fieldKey
             'tabLocation' => $tabLocation,
         );
-        if ($context) $fieldDefinition['contexts'] = array($context);
+        if ($nameContext) $fieldDefinition['contexts'] = array($nameContext => TRUE);
 
         // --------------------------- fields.yaml => Field settings
         foreach ($fieldConfig as $yamlName => $yamlValue) {
@@ -251,8 +255,10 @@ class Field {
                 case 'select':  $targetName = 'sqlSelect'; break;
                 case 'options': $targetName = 'fieldOptions'; break;
                 case 'context': 
-                    $targetName = 'contexts'; 
-                    if (!is_array($yamlValue)) $yamlValue = array($yamlValue => TRUE);
+                    // Can be context: ['update', 'create'] or a string
+                    $targetName = 'contexts';
+                    if (is_array($yamlValue)) $yamlValue = array_flip($yamlValue);
+                    else                             $yamlValue = array($yamlValue => TRUE);
                     break;
                 case 'cssClass': 
                     $targetName = 'cssClasses'; 

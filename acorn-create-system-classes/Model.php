@@ -1138,9 +1138,9 @@ class Model {
         foreach ($fieldsConfigs as $fieldName => $fieldConfig) {
             $fieldNameParts = explode('@', $fieldName);
             $fieldName      = $fieldNameParts[0];
-            $context        = (isset($fieldNameParts[1]) ? $fieldNameParts[1] : NULL);
+            $nameContext    = (isset($fieldNameParts[1]) ? $fieldNameParts[1] : NULL);
             $columnConfig   = (isset($columnsConfigs[$fieldName]) ? $columnsConfigs[$fieldName] : NULL);
-            $fieldObjects[$fieldName] = Field::createFromYamlConfigs($this, $fieldName, $context, $fieldConfig, $columnConfig, $tabLocation);
+            $fieldObjects[$fieldName] = Field::createFromYamlConfigs($this, $fieldName, $nameContext, $fieldConfig, $columnConfig, $tabLocation);
         }
         return $fieldObjects;
     }
@@ -1410,7 +1410,8 @@ class Model {
                 $fields    = array_merge($fields, $subFields);
             }
             foreach ($fields as $name => $field) {
-                $typeString   = ($field->fieldType ?: '<no field type>') . ' / ' . ($field->columnType ?: '<no column type>');
+                $field->fromYaml = TRUE;
+                $typeString = ($field->fieldType ?: '<no field type>') . ' / ' . ($field->columnType ?: '<no column type>');
                 print("      $indentString+[{$YELLOW}$name{$NC}]($typeString)\n");
             }
         }
@@ -1442,6 +1443,7 @@ class Model {
             $valueFrom       = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
             $tab             = ($relation->tab ?: 'INHERIT'); 
             $translationKey  = $relation->to->translationKey(Model::PLURAL);
+            $cssClasses      = $relation->cssClasses($useRelationManager);
 
             print("    {$indentString}Creating column _multi for HasManyDeep({$YELLOW}$relation{$NC})\n");
             $thisIdRelation  = array($name => $relation);
@@ -1473,7 +1475,7 @@ class Model {
                 'hidden'         => $relation->hidden,
                 'span'           => $relation->span,
                 'tab'            => $tab,
-                'cssClasses'     => array('single-tab', 'nolabel', 'col-xs-12'),
+                'cssClasses'     => $cssClasses,
                 'rlButtons'      => $relation->rlButtons,
                 'tabLocation'    => $relation->tabLocation,
             );
@@ -1514,42 +1516,12 @@ class Model {
                 ? 'acorn::lang.models.general.children'
                 : $relation->to->translationKey(Model::PLURAL)
             ));
+            $cssClasses    = $relation->cssClasses($useRelationManager);
             $comment       = '';
             $valueFrom     = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
             if ($relation->status == 'broken') continue;
 
             print("    {$indentString}Creating tab multi-select for {$YELLOW}$relation{$NC}\n");
-            $buttons = array();
-
-            /*
-            if (!$useRelationManager) {
-                if ($controller = $relation->to->controller(Model::NULL_IF_NOT_ONLY_1)) {
-                    // Controller necessary for popup rendering
-                    // TODO: Translatable "create new" comment
-                    $dataFieldName = "_lc_$name";
-                    $title         = $relation->to->devEnTitle(Model::PLURAL);
-                    $controllerFQN = $controller->fullyQualifiedName();
-                    $controllerFQNEscaped = str_replace('\\', '\\\\', $controllerFQN);
-                    $comment       = "<span class='create-new action'>create new <a href='#' class='popup-add' data-field-name='$dataFieldName' data-handler='onPopupRoute' data-request-data=\"route:'$controllerFQNEscaped@create',fieldName:'$dataFieldName'\" data-control='popup' tabindex='-1'>$title</a></span>";
-                    $dependsOn[$dataFieldName] = TRUE;
-
-                    $buttonName = "_create_$name";
-                    $buttons[$buttonName] = new ButtonField($this, array(
-                        'name'       => $buttonName,
-                        'isStandard' => TRUE, // => models.general.create
-                        'fieldType'  => 'partial',
-                        'span'       => 'storm',
-                        'cssClasses' => array('p-0', 'hug-left', 'nolabel', 'popup-hide', 'interface-component'),
-                        'bootstraps' => array('xs' => 1, 'sm' => 1),
-                        'partial'    => 'create_button',
-                        'controller' => $controller,
-                        'tab'        => 'INHERIT',
-                    ));
-                    $dependsOn[$buttonName] = TRUE;
-                }
-            }
-            */
-
             $thisIdRelation = array($name => $relation);
             $fieldObj       = new PseudoFromForeignIdField($this, array(
                 '#'              => "Tab multi-select for relations1fromX($relationClass($relationType) $relation)",
@@ -1562,10 +1534,9 @@ class Model {
                 'fieldExclude'   => $relation->fieldExclude,
                 'columnExclude'  => $relation->columnExclude,
                 'nameFrom'       => $nameFrom,
-                'cssClasses'     => $relation->cssClass('single-tab-1fromX', $useRelationManager),
+                'cssClasses'     => $cssClasses,
                 'bootstraps'     => $relation->bootstraps,
                 'dependsOn'      => $dependsOn,
-                'buttons'        => $buttons,
                 'tabLocation'    => $relation->tabLocation,
                 'icon'           => $relation->to->icon,
                 'fieldComment'   => $comment,
@@ -1611,78 +1582,18 @@ class Model {
         * TODO: This is just the same as 1fromX above at the moment
         */
         foreach ($this->relationsXfromXSemi() as $name => &$relation) {
-            $nameFrom       = 'fully_qualified_name';
-            $relationClass  = get_class($relation);
-            $relationType   = $relation->type();
-            $tab            = ($relation->tab ?: 'INHERIT'); 
-            $translationKey = $relation->pivotModel->translationKey(Model::PLURAL);
-            $dependsOn      = array('_paste' => TRUE);
-            $comment        = '';
-            $valueFrom      = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
+            $nameFrom        = 'fully_qualified_name';
+            $relationClass   = get_class($relation);
+            $relationType    = $relation->type();
+            $tab             = ($relation->tab ?: 'INHERIT'); 
+            $translationKey  = $relation->pivotModel->translationKey(Model::PLURAL);
+            $dependsOn       = array('_paste' => TRUE);
+            $comment         = '';
+            $cssClasses      = $relation->cssClasses($useRelationManager);
+            $valueFrom       = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
             if ($relation->status == 'broken') continue;
 
             print("    {$indentString}Creating tab multi-select for {$YELLOW}$relation{$NC}\n");
-            $buttons = array();
-
-            /*
-            if (!$useRelationManager) {
-                if ($controller = $relation->to->controller(Model::NULL_IF_NOT_ONLY_1)) {
-                    // Controller necessary for popup rendering
-                    // TODO: Translatable "create new" comment
-                    $dataFieldName = "_lc_$name";
-                    $title         = $relation->to->devEnTitle(Model::PLURAL);
-                    $controllerFQN = $controller->fullyQualifiedName();
-                    $controllerFQNEscaped = str_replace('\\', '\\\\', $controllerFQN);
-                    $comment       = "<span class='create-new action'>create new <a href='#' class='popup-add' data-field-name='$dataFieldName' data-handler='onPopupRoute' data-request-data=\"route:'$controllerFQNEscaped@create',fieldName:'$dataFieldName'\" data-control='popup' tabindex='-1'>$title</a></span>";
-                    $dependsOn[$dataFieldName] = TRUE;
-
-                    $buttonName = "_$name";
-                    $buttons[$buttonName] = $dropdownField = new PseudoField($this, array(
-                        'name'         => $buttonName,
-                        'translationKey' => $tab,
-                        'fieldType'    => 'dropdown',
-                        'fieldOptions' => $relation->to->staticCallClause('dropdownOptions'),
-                        'nameFrom'     => 'fully_qualified_name',
-                        'cssClasses'   => array('interface-component'),
-                        'span'         => 'storm',
-                        'bootstraps'   => array('xs' => 11, 'sm' => 4),
-                        'placeholder'  => 'backend::lang.form.select',
-                        'tab'          => $tab,
-                    ));
-
-                    $buttonName = "_add_$name";
-                    $buttons[$buttonName] = new ButtonField($this, array(
-                        'name'       => $buttonName,
-                        'isStandard' => TRUE, // => models.general.create
-                        'fieldType'  => 'partial',
-                        'span'       => 'storm',
-                        'cssClasses' => array('p-0', 'hug-left', 'nolabel', 'popup-hide', 'interface-component'),
-                        'bootstraps' => array('xs' => 1, 'sm' => 1),
-                        'partial'    => 'add_button',
-                        'controller' => $controller,
-                        'tab'        => $tab,
-                    ));
-                    $dependsOn[$buttonName] = TRUE;
-
-                    $buttonName = "_create_$name";
-                    $buttons[$buttonName] = new ButtonField($this, array(
-                        'name'       => $buttonName,
-                        'isStandard' => TRUE, // => models.general.create
-                        'fieldType'  => 'partial',
-                        'span'       => 'storm',
-                        'cssClasses' => array('p-0', 'hug-left', 'nolabel', 'popup-hide', 'interface-component'),
-                        'bootstraps' => array('xs' => 1, 'sm' => 1),
-                        'partial'    => 'create_button',
-                        'controller' => $controller,
-                        'tab'        => 'INHERIT',
-                    ));
-                    $dependsOn[$buttonName] = TRUE;
-
-                    $dropdownField->dependsOn = $dependsOn;
-                }
-            }
-            */
-
             $thisIdRelation         = array($name => $relation);
             $fieldObj       = new PseudoFromForeignIdField($this, array(
                 '#'              => "Tab multi-select for relationsXfromXSemi($relationClass($relationType) $relation)",
@@ -1696,9 +1607,8 @@ class Model {
                 'columnExclude'  => $relation->columnExclude,
                 'recordsPerPage' => FALSE, // TODO: Currently does not work for XtoXSemi
                 'nameFrom'       => $nameFrom,
-                'cssClasses'     => $relation->cssClass('single-tab-1fromX', $useRelationManager),
+                'cssClasses'     => $cssClasses,
                 'bootstraps'     => $relation->bootstraps,
-                'buttons'        => $buttons,
                 'rlButtons'      => $relation->rlButtons,
                 'tabLocation'    => $relation->tabLocation,
                 'icon'           => $relation->to->icon,
@@ -1741,72 +1651,21 @@ class Model {
         *   relation list
         */
         foreach ($this->relationsXfromX() as $name => &$relation) {
-            $nameFrom       = 'fully_qualified_name';
-            $relationClass  = get_class($relation);
-            $relationType   = $relation->type();
-            $tab            = ($relation->tab ?: 'INHERIT'); 
-            $translationKey = $relation->to->translationKey(Model::PLURAL);
-            $dependsOn      = array('_paste' => TRUE);
-            $comment        = '';
-            $valueFrom      = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
+            $nameFrom        = 'fully_qualified_name';
+            $relationClass   = get_class($relation);
+            $relationType    = $relation->type();
+            $tab             = ($relation->tab ?: 'INHERIT'); 
+            $translationKey  = $relation->to->translationKey(Model::PLURAL);
+            $dependsOn       = array('_paste' => TRUE);
+            $comment         = '';
+            $cssClasses      = $relation->cssClasses($useRelationManager);
+            $valueFrom       = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
             if ($relation->status == 'broken') continue;
 
             // TODO: Translatable "create new" comment
             $dataFieldName = "_lc_$name";
             //$comment     = "create new <a href='#' class='popup-add' data-field-name='$dataFieldName' data-handler='onPopupRoute' data-request-data=\"route:'{$table_from_controller//\\/\\\\}@create',fieldName:'$dataFieldName'\" data-control='popup' tabindex='-1'>{$table_from_name_singular//_/-}</a>"
             $dependsOn[$dataFieldName] = TRUE;
-
-            $buttons = array();
-            /*
-            if (!$useRelationManager) {
-                if ($controller = $relation->to->controller(Model::NULL_IF_NOT_ONLY_1)) {
-                    // Controller necessary for popup rendering
-                    $buttonName = "_$name";
-                    $buttons[$buttonName] = $dropdownField = new PseudoField($this, array(
-                        'name'         => $buttonName,
-                        'translationKey' => $tab,
-                        'fieldType'    => 'dropdown',
-                        'fieldOptions' => $relation->to->staticCallClause('dropdownOptions'),
-                        'nameFrom'     => 'fully_qualified_name',
-                        'cssClasses'   => array('interface-component'),
-                        'span'         => 'storm',
-                        'bootstraps'   => array('xs' => 11, 'sm' => 4),
-                        'placeholder'  => 'backend::lang.form.select',
-                        'tab'          => $tab,
-                    ));
-
-                    $buttonName = "_add_$name";
-                    $buttons[$buttonName] = new ButtonField($this, array(
-                        'name'       => $buttonName,
-                        'isStandard' => TRUE, // => models.general.create
-                        'fieldType'  => 'partial',
-                        'span'       => 'storm',
-                        'cssClasses' => array('p-0', 'hug-left', 'nolabel', 'popup-hide', 'interface-component'),
-                        'bootstraps' => array('xs' => 1, 'sm' => 1),
-                        'partial'    => 'add_button',
-                        'controller' => $controller,
-                        'tab'        => $tab,
-                    ));
-                    $dependsOn[$buttonName] = TRUE;
-
-                    $buttonName = "_create_$name";
-                    $buttons[$buttonName] = new ButtonField($this, array(
-                        'name'       => $buttonName,
-                        'isStandard' => TRUE, // => models.general.create
-                        'fieldType'  => 'partial',
-                        'span'       => 'storm',
-                        'cssClasses' => array('p-0', 'hug-left', 'nolabel', 'popup-hide', 'interface-component'),
-                        'bootstraps' => array('xs' => 1, 'sm' => 1),
-                        'partial'    => 'create_button',
-                        'controller' => $controller,
-                        'tab'        => $tab,
-                    ));
-                    $dependsOn[$buttonName] = TRUE;
-
-                    $dropdownField->dependsOn = $dependsOn;
-                }
-            }
-            */
 
             print("    {$indentString}Creating tab multi-select with for {$YELLOW}$relation{$NC}\n");
             $thisIdRelation         = array($name => $relation);
@@ -1822,10 +1681,9 @@ class Model {
                 'columnExclude'  => $relation->columnExclude,
                 'recordsPerPage' => FALSE, // TODO: Currently does not work for XtoXSemi
                 'nameFrom'       => $nameFrom,
-                'cssClasses'     => $relation->cssClass('single-tab-XfromX', $useRelationManager),
+                'cssClasses'     => $cssClasses,
                 'bootstraps'     => $relation->bootstraps,
                 'placeholder'    => $relation->placeholder,
-                'buttons'        => $buttons,
                 'rlButtons'      => $relation->rlButtons,
                 'tabLocation'    => $relation->tabLocation,
                 'comment'        => $relation->comment,
@@ -1919,17 +1777,19 @@ class Model {
                 $disabled   = ($dbLangPath ? '' : 'disabled="disabled"');
                 $dbComment  = str_replace(" ", '&nbsp;', $field->comment); // Prevent YAML indentation normalization
 
-                $field->fieldComment .= <<<HTML
-                    <div class='debug debug-field'>
-                        <div class="title">$name</div>
-                        $field->debugComment
-                        <div class="create-system">
-                            <pre class="create-system-comment">$dbComment</pre>
-                            <div class="create-system-db-lang-path">$dbLangPath</div>
-                            <a class="create-system-comment-edit-link" $disabled href="#" title="$dbLangPath">edit</a>
+                if (!$field->fromYaml) { // Let's not overwrite YAML comments
+                    $field->fieldComment .= <<<HTML
+                        <div class='debug debug-field'>
+                            <div class="title">$name</div>
+                            $field->debugComment
+                            <div class="create-system">
+                                <pre class="create-system-comment">$dbComment</pre>
+                                <div class="create-system-db-lang-path">$dbLangPath</div>
+                                <a class="create-system-comment-edit-link" $disabled href="#" title="$dbLangPath">edit</a>
+                            </div>
                         </div>
-                    </div>
 HTML;
+                }
 
                 /*
                 if (is_array($field->buttons)) {

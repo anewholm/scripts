@@ -78,6 +78,7 @@ class Relation {
         if (!isset($this->nameObject)) $this->nameObject = $this->foreignKey?->nameObject;
         if (!isset($this->canFilter))  $this->canFilter  = TRUE;
         if (!isset($this->readOnly))   $this->readOnly   = $this->to->readOnly;
+        if (!isset($this->span))       $this->span       = 'storm';
     }
 
     public function __toString()
@@ -87,21 +88,37 @@ class Relation {
         return "$this->foreignKey$qualifierString";
     }
 
-    public function cssClass(array|string $defaultCssClasses = NULL, bool $useRelationManager = TRUE): string
+    public function cssClass(bool $useRelationManager = TRUE, bool $singleTab = TRUE, array $extraClasses = array()): string
     {
-        $cssClassesReturn = NULL;
+        return implode(' ', $this->cssClasses($useRelationManager, $singleTab, $extraClasses));
+    }
 
+    public function cssClasses(bool $useRelationManager = TRUE, bool $singleTab = TRUE, array $extraClasses = array()): array
+    {
+        // Adopt explicit extraClasses
+        $cssClassesReturn = $extraClasses;
+
+        // Merge in any $this->cssClasses setting
         if ($this->cssClasses) {
-            $cssClassesReturn = (is_array($this->cssClasses) ? $this->cssClasses : array($this->cssClasses));
-        } else if (is_array($defaultCssClasses)) {
-            $cssClassesReturn = $defaultCssClasses;
-        } else {
-            $cssClassesReturn = array('single-tab');
-            if (is_string($defaultCssClasses)) array_push($cssClassesReturn, $defaultCssClasses);
+            $cssClasses       = (is_array($this->cssClasses) ? $this->cssClasses : array($this->cssClasses));
+            $cssClassesReturn = array_merge($cssClassesReturn, $cssClasses);
         }
+
+        if ($singleTab) {
+            array_push($cssClassesReturn, 'single-tab');
+            if ($this->span == 'storm') array_push($cssClassesReturn, 'col-xs-12');
+        }
+        // Relation managers should always not have a label
+        array_push($cssClassesReturn, 'nolabel');
+
+        // single-tab-1fromX
+        $type = $this->type();
+        array_push($cssClassesReturn, "single-tab-$type");
+
+        // selected-only will cause checkbox lists to only display checked rows
         if (!$useRelationManager) array_push($cssClassesReturn, 'selected-only');
 
-        return implode(' ', $cssClassesReturn);
+        return array_unique($cssClassesReturn);
     }
 
     public function direction(): string
