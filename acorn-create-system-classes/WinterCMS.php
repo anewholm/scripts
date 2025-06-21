@@ -1010,6 +1010,13 @@ PHP
             // print("  Adding menuitemCount()\n");
             // $this->addStaticMethod($modelFilePath, 'menuitemCount', 'try{return self::count();} catch (Exception $ex) {return NULL;}');
 
+            // current scope
+            if ($model->hasField('current')) {
+                // Enable $query->current() calls like $user->languages->current()->first()
+                $this->addMethod($modelFilePath, 'scopeCurrent($query)', 'return $query->where(\'current\', true);');
+                $this->addMethod($modelFilePath, 'scopePrimary($query)', 'return $query->where(\'current\', true);');
+            }
+
             // get<Something>Attribute()s
             foreach ($model->attributeFunctions() as $funcName => &$body) {
                 $funcNamePascal = Str::studly($funcName);

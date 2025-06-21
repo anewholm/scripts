@@ -109,6 +109,7 @@ class Relation {
             if ($this->span == 'storm') array_push($cssClassesReturn, 'col-xs-12');
         }
         // Relation managers should always not have a label
+        // because the toolbar demonstrates which Model it operates on
         array_push($cssClassesReturn, 'nolabel');
 
         // single-tab-1fromX
