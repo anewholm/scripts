@@ -396,23 +396,29 @@ class Framework
         return isset($level[$name]);
     }
 
-    protected function yamlFileSet(string $path, string $dotPath, string|array|int|bool $newValue, bool $throwIfAlreadySet = TRUE, string $complexDotName = NULL)
+    protected function yamlFileSet(string $path, string|NULL $dotPath, string|array|int|bool $newValue, bool $throwIfAlreadySet = TRUE, string $complexDotName = NULL)
     {
         $array = &$this->yamlFileLoad($path);
-        $keys  = explode('.', $dotPath);
+        $keys  = explode('.', $dotPath); // Might be blank or NULL
         if ($complexDotName) $name = $complexDotName;
         else                 $name = array_pop($keys);
 
         $level = &$array;
-        foreach ($keys as $step) {
-            if (!isset($level[$step])) $level[$step] = array();
-            $level = &$level[$step];
-            if (!is_array($level)) 
-                throw new Exception("Pre-level [$step] in [$dotPath] is not array when trying to set [$name]");
+        if ($name) {
+            // Dot path
+            foreach ($keys as $step) {
+                if (!isset($level[$step])) $level[$step] = array();
+                $level = &$level[$step];
+                if (!is_array($level)) 
+                    throw new Exception("Pre-level [$step] in [$dotPath] is not array when trying to set [$name]");
+            }
+            if ($throwIfAlreadySet && isset($level[$name])) 
+                throw new Exception("[$dotPath] already set in [$path]");
+            $level[$name] = $newValue;
+        } else {
+            // Top level request
+            $level = $newValue;
         }
-        if ($throwIfAlreadySet && isset($level[$name])) 
-            throw new Exception("[$dotPath] already set in [$path]");
-        $level[$name] = $newValue;
 
         // Destructor will write cached arrays
     }

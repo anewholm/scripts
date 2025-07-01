@@ -37,7 +37,7 @@ class ForeignKey {
     public $fieldExclude;
     public $columnExclude;
     public $hasManyDeep; // HasManyDeep control
-    public $order;  // Appearance in tab pools
+    public $order;  // Appearance in tab pools. See DB::foreignKeys() SQL request
     public $type;
     public $multi;  // _multi.php config
     public $delete; // Relation delete: true will cause reverse cascade deletion of associated object
@@ -45,6 +45,7 @@ class ForeignKey {
     public $todo;   // TODO: This column structure has not been analysed / enabled yet
     public $status; // ok|exclude|broken
     public $include;
+    public $advanced;
     public $nameObject;
     public $readOnly;
     public $cssClasses;

@@ -578,7 +578,7 @@ class WinterCMS extends Framework
                             );
                             if (!$firstModelUrl) $firstModelUrl = $url;
                             // TODO: menuitemCount() adversely affects performance. Can it be cached?
-                            // $sideMenu[$name]['counter'] = "$modelFQN::menuitemCount";
+                            $sideMenu[$name]['counter'] = "$modelFQN::menuitemCount";
 
                             print("\n");
                         }
@@ -690,6 +690,8 @@ class WinterCMS extends Framework
             }
             if ($model->hasSelfReferencingRelations()) 
                 $model->traits['\\Winter\\Storm\\Database\\Traits\\NestedTree'] = TRUE;
+            if ($model->hasField('sort_order'))
+                 $model->traits['\\Winter\\Storm\\Database\\Traits\\Sortable'] = TRUE;
 
             $this->writeFileUses(   $modelFilePath, $model->uses);
             $this->writeClassTraits($modelFilePath, $model->traits);
@@ -828,7 +830,7 @@ PHP
                     'name'   => $relation->nameObject,
                     'type'   => $relation->type(),
                     'leaf'   => $isLeaf,
-                    'global_scope' => ($relation->globalScope == 'to'),
+                    'global_scope' => ($relation->globalScope === 'to'),
                     'delete' => $relation->delete,
                     'count'  => $relation->isCount,
                     'conditions' => $relation->conditions
@@ -841,7 +843,7 @@ PHP
                     'key'    => $relation->column->name,
                     'name'   => $relation->nameObject,
                     'type'   => $relation->type(),
-                    'global_scope' => ($relation->globalScope == 'to'),
+                    'global_scope' => ($relation->globalScope === 'to'),
                     'delete' => $relation->delete,
                     'count'  => $relation->isCount,
                     'conditions' => $relation->conditions
@@ -861,7 +863,7 @@ PHP
                     'containsLeaf'     => $relation->containsLeaf,
                     'name'             => $relation->nameObject,
                     'key'              => $relation->column->name,
-                    'global_scope'     => ($relation->globalScope == 'from'),
+                    'global_scope'     => ($relation->globalScope === 'from'),
                     // Type is important because we can immediately identify 
                     // fully 1to1 deep relations for embedding
                     // 1to1 means all steps are 1to1
@@ -880,7 +882,7 @@ PHP
                 if (isset($relations[$name])) throw new Exception("Conflicting relations with [$name] on [$model->name]");
                 $relations[$name] = $this->removeEmpty(array($relation->to,
                     'key'    => $relation->column->name,
-                    'global_scope' => ($relation->globalScope == 'from'),
+                    'global_scope' => ($relation->globalScope === 'from'),
                     'type'   => $relation->type(),
                     'count'  => $relation->isCount,
                     'conditions' => $relation->conditions
@@ -894,7 +896,7 @@ PHP
                     $relation->pivotModel,
                     'key'      => $relation->keyColumn->name,  // pivot.user_group_id
                     'otherKey' => $relation->column->name,     // pivot.user_id
-                    'global_scope' => ($relation->globalScope == 'from'),
+                    'global_scope' => ($relation->globalScope === 'from'),
                     'type'     => $relation->type(),
                     'count'    => $relation->isCount,
                     'conditions' => $relation->conditions
@@ -912,7 +914,7 @@ PHP
                     'key'      => $relation->keyColumn->name,  // pivot.user_group_id
                     'otherKey' => $relation->column->name,     // pivot.user_id
                     'type'     => $relation->type(),
-                    'global_scope' => ($relation->globalScope == 'from'),
+                    'global_scope' => ($relation->globalScope === 'from'),
                     'delete'   => $relation->delete,
                     'count'    => $relation->isCount,
                     'conditions' => $relation->conditions
@@ -928,7 +930,7 @@ PHP
                     'key'      => $relation->keyColumn->name,  // pivot.user_group_id
                     'otherKey' => $relation->column->name,     // pivot.user_id
                     'type'     => $relation->type(),
-                    'global_scope' => ($relation->globalScope == 'from'),
+                    'global_scope' => ($relation->globalScope === 'from'),
                     'delete'   => $relation->delete,
                     'count'    => $relation->isCount,
                     'conditions' => $relation->conditions
@@ -943,7 +945,7 @@ PHP
                 $relations[$name] = $this->removeEmpty(array($relation->to,
                     'key'    => $relation->column->name,
                     'type'   => $relation->type(),
-                    'global_scope' => ($relation->globalScope == 'from'),
+                    'global_scope' => ($relation->globalScope === 'from'),
                     'delete' => $relation->delete, // This can be done by a DELETE CASCADE FK
                     'count'  => $relation->isCount,
                     'conditions' => $relation->conditions
@@ -1003,18 +1005,26 @@ PHP
             }
 
             // ----------------------------------------------------------------- Methods
-            // TODO: menuitemCount() adversely affects performance. Can it be cached?
             // menuitemCount() for plugins.yaml
+            // TODO: menuitemCount() adversely affects performance. Can it be cached?
             // Note that MATERIALIZED VIEWs can throw errors if not populated
             // so we try{}, otherwise we will take down the whole interface
-            // print("  Adding menuitemCount()\n");
-            // $this->addStaticMethod($modelFilePath, 'menuitemCount', 'try{return self::count();} catch (Exception $ex) {return NULL;}');
+            print("  Adding menuitemCount()\n");
+            $this->addStaticMethod($modelFilePath, 'menuitemCount', 'try{return (isset($_GET["count"]) ? self::count() : NULL);} catch (Exception $ex) {return NULL;}');
+
+            // findByCode() static
+            if ($model->hasField('code')) {
+                print("  Adding findByCode()\n");
+                $this->addStaticMethod($modelFilePath, 'findByCode(string|int $code)', 'return self::where("code", "=", $code)->first();');
+            }
 
             // current scope
             if ($model->hasField('current')) {
                 // Enable $query->current() calls like $user->languages->current()->first()
                 $this->addMethod($modelFilePath, 'scopeCurrent($query)', 'return $query->where(\'current\', true);');
                 $this->addMethod($modelFilePath, 'scopePrimary($query)', 'return $query->where(\'current\', true);');
+                $this->addStaticMethod($modelFilePath, 'getCurrent()', 'return self::current()->first();');
+                $this->addStaticMethod($modelFilePath, 'getPrimary()', 'return self::getCurrent();');
             }
 
             // get<Something>Attribute()s
@@ -1108,16 +1118,10 @@ PHP
             
                 $namesSQL  = '"' . implode('","', $names) . '"';
                 $valuesSQL = implode(',', $values);
+                $insertSQL = "insert into $schema.$table($namesSQL) values($valuesSQL)";
+                if ($names[0] == 'id' && $values[0] != 'DEFAULT') $insertSQL .= ' ON CONFLICT(id) DO NOTHING';
                 
-                // Include a not exists if there is a specific id
-                if ($names[0] == 'id' && $values[0] != 'DEFAULT') {
-                    $id        = trim($values[0], "'");
-                    $insertSQL = "insert into $schema.$table($namesSQL) select $valuesSQL where not exists(select * from $schema.$table where id='$id')";
-                } else {
-                    $insertSQL = "insert into $schema.$table($namesSQL) values($valuesSQL)";
-                }
                 $insertSQL .= ';';
-
                 array_push($sqls, $insertSQL);
             }
         }
@@ -1321,6 +1325,8 @@ PHP
         $controllerDirPath   = "$pluginDirectoryPath/controllers/$controllerDirName";
         $configListPath      = "$controllerDirPath/config_list.yaml";
         $configFilterPath    = "$controllerDirPath/config_filter.yaml";
+        $configReorderPath   = "$controllerDirPath/config_reorder.yaml";
+        $configReorderView   = "$controllerDirPath/reorder.php";
         $configFormPath      = "$controllerDirPath/config_form.yaml";
         $configRelationPath  = "$controllerDirPath/config_relation.yaml";
         $configImExportPath  = "$controllerDirPath/config_import_export.yaml";
@@ -1348,6 +1354,8 @@ PHP
                 array_push($implements, "\Acorn\Behaviors\ImportExportController");
             if ($controller->model->batchPrint) 
                 array_push($implements, "\Acorn\Behaviors\BatchPrintController");
+            if ($controller->model->hasField('sort_order'))
+                array_push($implements, "\Backend\Behaviors\ReorderController");
             $this->setPropertyInClassFile($controllerFilePath, 'implement', $implements, Framework::OVERWRITE_EXISTING);
 
             // Explicit plural name injection
@@ -1497,6 +1505,19 @@ PHP
                 }                
             }
 
+            if ($controller->model->hasField('sort_order')) {
+                // config_reorder.yaml
+                $this->yamlFileSet($configReorderPath, '', array(
+                    'title'      => 'Reorder',
+                    'nameFrom'   => 'name',
+                    'modelClass' => $controller->model->fullyQualifiedName(),
+                    // 'toolbar'    => array(
+                    //     'buttons' => 'reorder_toolbar'
+                    // ),
+                ));
+                $this->appendToFile($configReorderView, '<?= $this->reorderRender() ?>', 0, FALSE, TRUE);
+            }
+
             // ---------------------------- Custom table filters
             // On the table comment:
             // filters:
@@ -1556,6 +1577,8 @@ PHP
                             'recordsPerPage' => $field->recordsPerPage,
                         ),
                     );
+                    if ($relationModel->hasField('sort_order')) $relationDefinition['view']['defaultSort'] = 'sort_order asc';
+                    if ($relationModel->hasField('ordinal'))    $relationDefinition['view']['defaultSort'] = 'ordinal asc';
                 }
                 
                 if ($relation1->conditions) $relationDefinition['view']['conditions'] = $relation1->conditions;

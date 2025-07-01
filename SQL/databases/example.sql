@@ -16,6 +16,1157 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+DROP POLICY IF EXISTS "IsSuperUser" ON public.acorn_criminal_legalcases;
+DROP POLICY IF EXISTS "IsInOwnerGroup" ON public.acorn_criminal_legalcases;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_warehouses DROP CONSTRAINT IF EXISTS warehouses_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicles DROP CONSTRAINT IF EXISTS vehicles_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicle_types DROP CONSTRAINT IF EXISTS vehicle_types_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicles DROP CONSTRAINT IF EXISTS vehicle_type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS vehicle_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS vehicle_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_notary_requests DROP CONSTRAINT IF EXISTS validated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_notary_requests DROP CONSTRAINT IF EXISTS validated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_employees DROP CONSTRAINT IF EXISTS user_role_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_version_user DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_people DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_language_user DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_prosecutor DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_version_user DROP CONSTRAINT IF EXISTS user_group_version_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_versions DROP CONSTRAINT IF EXISTS user_group_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS user_group_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_prosecutor DROP CONSTRAINT IF EXISTS user_group_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_periods DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_witness_statement DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summon_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_notary_requests DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_containers DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrant_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_categories DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_currencies DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_reasons DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_methods DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_attributes DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_brands DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_warehouses DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicles DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicle_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_scanned_documents DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_suppliers DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instances DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_category_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_categories DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_measurement_units DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_offices DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_employees DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_sentence_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_sentences DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_periods DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_witness_statement DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summon_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_notary_requests DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_containers DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrant_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_categories DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_currencies DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_reasons DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_methods DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_brands DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_warehouses DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicles DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicle_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_suppliers DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_scanned_documents DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instances DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_category_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_categories DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_attributes DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_measurement_units DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_offices DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_employees DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_sentence_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_sentences DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_legalcase_category DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_prosecutor DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_types DROP CONSTRAINT IF EXISTS types_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_user_groups DROP CONSTRAINT IF EXISTS type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_locations DROP CONSTRAINT IF EXISTS type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS trial_session_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_sessions DROP CONSTRAINT IF EXISTS trial_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS trial_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS transfers_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_detentions DROP CONSTRAINT IF EXISTS transfer_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_purchase DROP CONSTRAINT IF EXISTS transfer_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_invoice DROP CONSTRAINT IF EXISTS transfer_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_containers DROP CONSTRAINT IF EXISTS transfer_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instance_transfer DROP CONSTRAINT IF EXISTS transfer_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_container_product_instance DROP CONSTRAINT IF EXISTS transfer_container_product_instances_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_container_product_instance DROP CONSTRAINT IF EXISTS transfer_container_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_containers DROP CONSTRAINT IF EXISTS transfer_container_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_suppliers DROP CONSTRAINT IF EXISTS suppliers_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS sub_product_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_witness_statement DROP CONSTRAINT IF EXISTS statement_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_periods DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summon_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_notary_requests DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_product_category DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrant_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_categories DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_currencies DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_reasons DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_methods DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_scanned_documents DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_sentence_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_sentences DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_suppliers DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_warehouses DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instances DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_attributes DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_offices DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_employees DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_brands DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products_product_category DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_categories DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_category_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_container_product_instance DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_containers DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicles DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_containers DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicle_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_people DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instance_transfer DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_measurement_units DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcases DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_areas DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_area_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_addresses DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_gps DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_locations DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_sentences DROP CONSTRAINT IF EXISTS sentence_type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS sent_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_version_user DROP CONSTRAINT IF EXISTS role_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS revoked_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS revoked_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_detentions DROP CONSTRAINT IF EXISTS reason_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_purchase DROP CONSTRAINT IF EXISTS purchase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS purchase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_product_category DROP CONSTRAINT IF EXISTS products_product_categories_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products_product_category DROP CONSTRAINT IF EXISTS products_product_categories_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products DROP CONSTRAINT IF EXISTS products_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS product_products_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instances DROP CONSTRAINT IF EXISTS product_instances_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_container_product_instance DROP CONSTRAINT IF EXISTS product_instance_transfer_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instance_transfer DROP CONSTRAINT IF EXISTS product_instance_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_product_category DROP CONSTRAINT IF EXISTS product_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_attributes DROP CONSTRAINT IF EXISTS product_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS product_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instances DROP CONSTRAINT IF EXISTS product_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products_product_category DROP CONSTRAINT IF EXISTS product_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_category_types DROP CONSTRAINT IF EXISTS product_category_types_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_categories DROP CONSTRAINT IF EXISTS product_category_type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_product_category DROP CONSTRAINT IF EXISTS product_category_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products_product_category DROP CONSTRAINT IF EXISTS product_category_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_categories DROP CONSTRAINT IF EXISTS product_categories_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_attributes DROP CONSTRAINT IF EXISTS product_attributes_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_employees DROP CONSTRAINT IF EXISTS person_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS person_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS period_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_people DROP CONSTRAINT IF EXISTS people_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS payer_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS payer_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS payer_user_group_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS payer_user_group_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS payee_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS payee_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS payee_user_group_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS payee_user_group_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_types DROP CONSTRAINT IF EXISTS parent_type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_categories DROP CONSTRAINT IF EXISTS parent_product_category_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_categories DROP CONSTRAINT IF EXISTS parent_legalcase_category_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF EXISTS parent_crime_type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_areas DROP CONSTRAINT IF EXISTS parent_area_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS owner_user_group_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_offices DROP CONSTRAINT IF EXISTS offices_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS notary_request_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS notary_request_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_detentions DROP CONSTRAINT IF EXISTS method_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_measurement_units DROP CONSTRAINT IF EXISTS measurement_units_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products DROP CONSTRAINT IF EXISTS measurement_unit_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_locations DROP CONSTRAINT IF EXISTS locations_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_user_groups DROP CONSTRAINT IF EXISTS location_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_warehouses DROP CONSTRAINT IF EXISTS location_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS location_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_suppliers DROP CONSTRAINT IF EXISTS location_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_offices DROP CONSTRAINT IF EXISTS location_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_servers DROP CONSTRAINT IF EXISTS location_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_witness_statement DROP CONSTRAINT IF EXISTS legalcase_witness_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcases DROP CONSTRAINT IF EXISTS legalcase_type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_related_events DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_scanned_documents DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trials DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_prosecutor DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_appeals DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcases DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_legalcase_category DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_evidence DROP CONSTRAINT IF EXISTS legalcase_evidence_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_detentions DROP CONSTRAINT IF EXISTS legalcase_defendant_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS legalcase_defendant_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_legalcase_category DROP CONSTRAINT IF EXISTS legalcase_category_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS lawyer_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS lawyer_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_people DROP CONSTRAINT IF EXISTS last_transfer_location_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_people DROP CONSTRAINT IF EXISTS last_product_instance_location_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_language_user DROP CONSTRAINT IF EXISTS language_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcases DROP CONSTRAINT IF EXISTS judge_committee_user_group_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_invoice DROP CONSTRAINT IF EXISTS invoice_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS invoice_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_addresses DROP CONSTRAINT IF EXISTS gps_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_areas DROP CONSTRAINT IF EXISTS gps_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_gps DROP CONSTRAINT IF EXISTS gps_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_versions DROP CONSTRAINT IF EXISTS from_user_group_version_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_user_groups DROP CONSTRAINT IF EXISTS from_user_group_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_sessions DROP CONSTRAINT IF EXISTS event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_appeals DROP CONSTRAINT IF EXISTS event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trials DROP CONSTRAINT IF EXISTS event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_related_events DROP CONSTRAINT IF EXISTS event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_employees DROP CONSTRAINT IF EXISTS employees_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS drivers_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS driver_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS defendant_detention_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_sentences DROP CONSTRAINT IF EXISTS defendant_crime_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_evidence DROP CONSTRAINT IF EXISTS defendant_crime_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_user_groups DROP CONSTRAINT IF EXISTS default_group_version_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS currency_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS currency_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS currency_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS currency_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS crime_type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS crime_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_periods DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_witness_statement DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summon_types DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_notary_requests DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrant_types DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_categories DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_types DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_currencies DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_reasons DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_methods DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_related_events DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_scanned_documents DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trials DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_sessions DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_prosecutor DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_appeals DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_sentence_types DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_sentences DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_legalcase_category DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instance_transfer DROP CONSTRAINT IF EXISTS created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_periods DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_witness_statement DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summon_types DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_notary_requests DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_product_category DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrant_types DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_categories DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_types DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_currencies DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_reasons DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_methods DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_suppliers DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_warehouses DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicles DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicle_types DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products_product_category DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instances DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instance_transfer DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_category_types DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_categories DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_attributes DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_containers DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_people DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_offices DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_measurement_units DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_employees DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_brands DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_containers DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_container_product_instance DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_scanned_documents DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trials DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_sessions DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_prosecutor DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_appeals DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_sentence_types DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_sentences DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_legalcase_category DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS created_at;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_containers DROP CONSTRAINT IF EXISTS containers_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_containers DROP CONSTRAINT IF EXISTS container_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS closed_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_statuses DROP CONSTRAINT IF EXISTS calendar_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_types DROP CONSTRAINT IF EXISTS calendar_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_brands DROP CONSTRAINT IF EXISTS brands_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products DROP CONSTRAINT IF EXISTS brand_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS arrived_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_areas DROP CONSTRAINT IF EXISTS areas_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_area_types DROP CONSTRAINT IF EXISTS area_types_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_areas DROP CONSTRAINT IF EXISTS area_type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_addresses DROP CONSTRAINT IF EXISTS area_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_addresses DROP CONSTRAINT IF EXISTS addresses_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_locations DROP CONSTRAINT IF EXISTS address_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_detentions DROP CONSTRAINT IF EXISTS actual_release_transfer_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_user_message_status DROP CONSTRAINT IF EXISTS acorn_messaging_user_message_status_user_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_user_message_status DROP CONSTRAINT IF EXISTS acorn_messaging_user_message_status_status_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_user_message_status DROP CONSTRAINT IF EXISTS acorn_messaging_user_message_status_message_id_foreig;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_message_user DROP CONSTRAINT IF EXISTS acorn_messaging_message_user_user_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_message_user DROP CONSTRAINT IF EXISTS acorn_messaging_message_user_message_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_message_user_group DROP CONSTRAINT IF EXISTS acorn_messaging_message_user_group_user_group_id_fore;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_message_user_group DROP CONSTRAINT IF EXISTS acorn_messaging_message_user_group_message_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_message_instance DROP CONSTRAINT IF EXISTS acorn_messaging_message_instance_message_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_message_instance DROP CONSTRAINT IF EXISTS acorn_messaging_message_instance_instance_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_calendars DROP CONSTRAINT IF EXISTS acorn_calendar_owner_user_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_calendars DROP CONSTRAINT IF EXISTS acorn_calendar_owner_user_group_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_instances DROP CONSTRAINT IF EXISTS acorn_calendar_instance_event_part_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_part_user DROP CONSTRAINT IF EXISTS acorn_calendar_event_user_user_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_part_user DROP CONSTRAINT IF EXISTS acorn_calendar_event_user_role_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_part_user_group DROP CONSTRAINT IF EXISTS acorn_calendar_event_user_group_user_group_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_part_user_group DROP CONSTRAINT IF EXISTS acorn_calendar_event_user_group_event_part_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_part_user DROP CONSTRAINT IF EXISTS acorn_calendar_event_user_event_part_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_parts DROP CONSTRAINT IF EXISTS acorn_calendar_event_part_type_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_parts DROP CONSTRAINT IF EXISTS acorn_calendar_event_part_status_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_parts DROP CONSTRAINT IF EXISTS acorn_calendar_event_part_parent_event_part_id_foreig;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_parts DROP CONSTRAINT IF EXISTS acorn_calendar_event_part_locked_by_user_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_parts DROP CONSTRAINT IF EXISTS acorn_calendar_event_part_event_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_events DROP CONSTRAINT IF EXISTS acorn_calendar_event_owner_user_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_events DROP CONSTRAINT IF EXISTS acorn_calendar_event_owner_user_group_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_events DROP CONSTRAINT IF EXISTS acorn_calendar_event_calendar_id_foreign;
+ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_electronic_products DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_computer_products DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_electronic_products DROP CONSTRAINT IF EXISTS product_id;
+ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_electronic_products DROP CONSTRAINT IF EXISTS electronic_products_created_by_user;
+ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_computer_products DROP CONSTRAINT IF EXISTS electronic_product_id;
+ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_computer_products DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_electronic_products DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_computer_products DROP CONSTRAINT IF EXISTS computer_products_created_by_user;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_notary_requests;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_justice_warrants;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_justice_warrant_types;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_justice_summons;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_justice_summon_types;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_justice_statements;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_justice_scanned_documents;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_justice_periods;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_justice_legalcases;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_justice_legalcase_categories;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_finance_receipts;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_finance_purchases;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_finance_payments;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_finance_invoices;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_finance_currencies;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_criminal_trial_judges;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_criminal_session_recordings;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_criminal_sentence_types;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_criminal_legalcases;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_criminal_legalcase_witnesses;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_criminal_legalcase_types;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_criminal_legalcase_plaintiffs;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_criminal_legalcase_evidence;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_criminal_legalcase_defendants;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_criminal_detention_reasons;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_criminal_detention_periods;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_criminal_detention_methods;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_criminal_defendant_crimes;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_criminal_crimes;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_criminal_crime_types;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_criminal_crime_sentences;
+DROP TRIGGER IF EXISTS tr_acorn_notary_trigger_validate ON public.acorn_notary_requests;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_warehouses_server_id ON public.acorn_lojistiks_warehouses;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_warehouses_new_replicated_row ON public.acorn_lojistiks_warehouses;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_vehicles_server_id ON public.acorn_lojistiks_vehicles;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_vehicles_new_replicated_row ON public.acorn_lojistiks_vehicles;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_vehicle_types_server_id ON public.acorn_lojistiks_vehicle_types;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_vehicle_types_new_replicated_row ON public.acorn_lojistiks_vehicle_types;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_transfers_server_id ON public.acorn_lojistiks_transfers;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_transfers_new_replicated_row ON public.acorn_lojistiks_transfers;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_transfer_container_server_id ON public.acorn_lojistiks_transfer_containers;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_transfer_container_product_instanc ON public.acorn_lojistiks_transfer_container_product_instance;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_transfer_container_new_replicated_ ON public.acorn_lojistiks_transfer_containers;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_suppliers_server_id ON public.acorn_lojistiks_suppliers;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_suppliers_new_replicated_row ON public.acorn_lojistiks_suppliers;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_products_server_id ON public.acorn_lojistiks_products;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_products_product_categories_server ON public.acorn_lojistiks_products_product_category;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_products_product_categories_server ON public.acorn_lojistiks_product_product_category;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_products_product_categories_new_re ON public.acorn_lojistiks_products_product_category;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_products_product_categories_new_re ON public.acorn_lojistiks_product_product_category;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_products_new_replicated_row ON public.acorn_lojistiks_products;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_product_products_server_id ON public.acorn_lojistiks_product_products;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_product_products_new_replicated_ro ON public.acorn_lojistiks_product_products;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_product_instances_server_id ON public.acorn_lojistiks_product_instances;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_product_instances_new_replicated_r ON public.acorn_lojistiks_product_instances;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_product_instance_transfer_server_i ON public.acorn_lojistiks_product_instance_transfer;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_product_instance_transfer_new_repl ON public.acorn_lojistiks_product_instance_transfer;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_product_category_types_server_id ON public.acorn_lojistiks_product_category_types;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_product_category_types_new_replica ON public.acorn_lojistiks_product_category_types;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_product_categories_server_id ON public.acorn_lojistiks_product_categories;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_product_categories_new_replicated_ ON public.acorn_lojistiks_product_categories;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_product_attributes_server_id ON public.acorn_lojistiks_product_attributes;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_product_attributes_new_replicated_ ON public.acorn_lojistiks_product_attributes;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_people_server_id ON public.acorn_lojistiks_people;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_people_new_replicated_row ON public.acorn_lojistiks_people;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_offices_server_id ON public.acorn_lojistiks_offices;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_offices_new_replicated_row ON public.acorn_lojistiks_offices;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_measurement_units_server_id ON public.acorn_lojistiks_measurement_units;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_measurement_units_new_replicated_r ON public.acorn_lojistiks_measurement_units;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_employees_server_id ON public.acorn_lojistiks_employees;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_employees_new_replicated_row ON public.acorn_lojistiks_employees;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_drivers_server_id ON public.acorn_lojistiks_drivers;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_drivers_new_replicated_row ON public.acorn_lojistiks_drivers;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_containers_server_id ON public.acorn_lojistiks_containers;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_containers_new_replicated_row ON public.acorn_lojistiks_containers;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_brands_server_id ON public.acorn_lojistiks_brands;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_brands_new_replicated_row ON public.acorn_lojistiks_brands;
+DROP TRIGGER IF EXISTS tr_acorn_location_types_server_id ON public.acorn_location_types;
+DROP TRIGGER IF EXISTS tr_acorn_location_types_new_replicated_row ON public.acorn_location_types;
+DROP TRIGGER IF EXISTS tr_acorn_location_locations_server_id ON public.acorn_location_locations;
+DROP TRIGGER IF EXISTS tr_acorn_location_locations_new_replicated_row ON public.acorn_location_locations;
+DROP TRIGGER IF EXISTS tr_acorn_location_gps_server_id ON public.acorn_location_gps;
+DROP TRIGGER IF EXISTS tr_acorn_location_gps_new_replicated_row ON public.acorn_location_gps;
+DROP TRIGGER IF EXISTS tr_acorn_location_areas_server_id ON public.acorn_location_areas;
+DROP TRIGGER IF EXISTS tr_acorn_location_areas_new_replicated_row ON public.acorn_location_areas;
+DROP TRIGGER IF EXISTS tr_acorn_location_area_types_server_id ON public.acorn_location_area_types;
+DROP TRIGGER IF EXISTS tr_acorn_location_area_types_new_replicated_row ON public.acorn_location_area_types;
+DROP TRIGGER IF EXISTS tr_acorn_location_addresses_server_id ON public.acorn_location_addresses;
+DROP TRIGGER IF EXISTS tr_acorn_location_addresses_new_replicated_row ON public.acorn_location_addresses;
+DROP TRIGGER IF EXISTS tr_acorn_justice_legalcase_legalcase_category ON public.acorn_justice_legalcase_legalcase_category;
+DROP TRIGGER IF EXISTS tr_acorn_justice_created_at_event ON public.acorn_justice_legalcases;
+DROP TRIGGER IF EXISTS tr_acorn_criminal_witness_statement ON public.acorn_criminal_witness_statement;
+DROP TRIGGER IF EXISTS tr_acorn_criminal_legalcase_prosecutor ON public.acorn_criminal_legalcase_prosecutor;
+DROP TRIGGER IF EXISTS tr_acorn_criminal_crime_types ON public.acorn_criminal_crime_types;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_warehouses;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_vehicles;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_vehicle_types;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_transfers;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_suppliers;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_products;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_product_products;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_product_instances;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_product_category_types;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_product_categories;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_product_attributes;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_people;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_offices;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_measurement_units;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_employees;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_drivers;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_containers;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_lojistiks_brands;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_justice_warrants;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_justice_warrant_types;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_justice_summons;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_justice_summon_types;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_justice_statements;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_justice_scanned_documents;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_justice_legalcase_categories;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_finance_receipts;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_finance_purchases;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_finance_payments;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_finance_invoices;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_finance_currencies;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_criminal_trials;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_criminal_trial_sessions;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_criminal_trial_judges;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_criminal_session_recordings;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_criminal_sentence_types;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_criminal_legalcase_witnesses;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_criminal_legalcase_types;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_criminal_legalcase_plaintiffs;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_criminal_legalcase_evidence;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_criminal_legalcase_defendants;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_criminal_detention_reasons;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_criminal_detention_methods;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_criminal_defendant_crimes;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_criminal_crimes;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_criminal_crime_sentences;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON public.acorn_criminal_appeals;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_activity_event ON public.acorn_notary_requests;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_activity_event ON public.acorn_justice_periods;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_activity_event ON public.acorn_criminal_detention_periods;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_events_generate_event_instances ON public.acorn_calendar_event_parts;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_electronic_products_server_id ON product.acorn_lojistiks_electronic_products;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_electronic_products_new_replicated ON product.acorn_lojistiks_electronic_products;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_computer_products_server_id ON product.acorn_lojistiks_computer_products;
+DROP TRIGGER IF EXISTS tr_acorn_lojistiks_computer_products_new_replicated_r ON product.acorn_lojistiks_computer_products;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON product.acorn_lojistiks_electronic_products;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_created_at_event ON product.acorn_lojistiks_computer_products;
+DROP INDEX IF EXISTS public.winter_translate_messages_code_pre_2_1_0_index;
+DROP INDEX IF EXISTS public.user_item_index;
+DROP INDEX IF EXISTS public.system_settings_item_index;
+DROP INDEX IF EXISTS public.system_revisions_user_id_index;
+DROP INDEX IF EXISTS public.system_revisions_revisionable_id_revisionable_type_index;
+DROP INDEX IF EXISTS public.system_revisions_field_index;
+DROP INDEX IF EXISTS public.system_plugin_versions_code_index;
+DROP INDEX IF EXISTS public.system_plugin_history_type_index;
+DROP INDEX IF EXISTS public.system_plugin_history_code_index;
+DROP INDEX IF EXISTS public.system_mail_templates_layout_id_index;
+DROP INDEX IF EXISTS public.system_files_field_index;
+DROP INDEX IF EXISTS public.system_files_attachment_type_index;
+DROP INDEX IF EXISTS public.system_files_attachment_id_index;
+DROP INDEX IF EXISTS public.system_event_logs_level_index;
+DROP INDEX IF EXISTS public.sessions_user_id_index;
+DROP INDEX IF EXISTS public.sessions_last_activity_index;
+DROP INDEX IF EXISTS public.role_code_index;
+DROP INDEX IF EXISTS public.reset_code_index;
+DROP INDEX IF EXISTS public.rainlab_translate_messages_code_index;
+DROP INDEX IF EXISTS public.rainlab_translate_locales_name_index;
+DROP INDEX IF EXISTS public.rainlab_translate_locales_code_index;
+DROP INDEX IF EXISTS public.rainlab_translate_indexes_model_type_index;
+DROP INDEX IF EXISTS public.rainlab_translate_indexes_model_id_index;
+DROP INDEX IF EXISTS public.rainlab_translate_indexes_locale_index;
+DROP INDEX IF EXISTS public.rainlab_translate_indexes_item_index;
+DROP INDEX IF EXISTS public.rainlab_translate_attributes_model_type_index;
+DROP INDEX IF EXISTS public.rainlab_translate_attributes_model_id_index;
+DROP INDEX IF EXISTS public.rainlab_translate_attributes_locale_index;
+DROP INDEX IF EXISTS public.rainlab_location_states_name_index;
+DROP INDEX IF EXISTS public.rainlab_location_states_country_id_index;
+DROP INDEX IF EXISTS public.rainlab_location_countries_name_index;
+DROP INDEX IF EXISTS public.jobs_queue_reserved_at_index;
+DROP INDEX IF EXISTS public.item_index;
+DROP INDEX IF EXISTS public.fki_validated_by_user_id;
+DROP INDEX IF EXISTS public.fki_validated_at_event_id;
+DROP INDEX IF EXISTS public.fki_user_id;
+DROP INDEX IF EXISTS public.fki_user_group_version_id;
+DROP INDEX IF EXISTS public.fki_user_group_id;
+DROP INDEX IF EXISTS public.fki_updated_by_user_id;
+DROP INDEX IF EXISTS public.fki_updated_at_event_id;
+DROP INDEX IF EXISTS public.fki_type_id;
+DROP INDEX IF EXISTS public.fki_trial_session_id;
+DROP INDEX IF EXISTS public.fki_trial_id;
+DROP INDEX IF EXISTS public.fki_transfer_id;
+DROP INDEX IF EXISTS public.fki_summons_revoked_at_event_id;
+DROP INDEX IF EXISTS public.fki_summons_notary_request_id;
+DROP INDEX IF EXISTS public.fki_server_id;
+DROP INDEX IF EXISTS public.fki_sentence_type_id;
+DROP INDEX IF EXISTS public.fki_sent_at_event_id;
+DROP INDEX IF EXISTS public.fki_role_id;
+DROP INDEX IF EXISTS public.fki_revoked_at_event_id;
+DROP INDEX IF EXISTS public.fki_reason_id;
+DROP INDEX IF EXISTS public.fki_purchase_id;
+DROP INDEX IF EXISTS public.fki_period_id;
+DROP INDEX IF EXISTS public.fki_payee_user_id;
+DROP INDEX IF EXISTS public.fki_payee_user_group_id;
+DROP INDEX IF EXISTS public.fki_parent_product_category_id;
+DROP INDEX IF EXISTS public.fki_parent_legalcase_category_id;
+DROP INDEX IF EXISTS public.fki_owner_user_group_id;
+DROP INDEX IF EXISTS public.fki_notary_request_id;
+DROP INDEX IF EXISTS public.fki_method_id;
+DROP INDEX IF EXISTS public.fki_location_id;
+DROP INDEX IF EXISTS public.fki_legalcase_witness_id;
+DROP INDEX IF EXISTS public.fki_legalcase_type_id;
+DROP INDEX IF EXISTS public.fki_legalcase_id;
+DROP INDEX IF EXISTS public.fki_legalcase_defendant_id;
+DROP INDEX IF EXISTS public.fki_legalcase_category_id;
+DROP INDEX IF EXISTS public.fki_lawyer_user_id;
+DROP INDEX IF EXISTS public.fki_last_transfer_location_id;
+DROP INDEX IF EXISTS public.fki_last_transfer_destination_location_id;
+DROP INDEX IF EXISTS public.fki_last_product_instance_location_id;
+DROP INDEX IF EXISTS public.fki_last_product_instance_destination_location_id;
+DROP INDEX IF EXISTS public.fki_judge_committee_user_group_id;
+DROP INDEX IF EXISTS public.fki_invoice_id;
+DROP INDEX IF EXISTS public.fki_from_user_group_version_id;
+DROP INDEX IF EXISTS public.fki_from_user_group_id;
+DROP INDEX IF EXISTS public.fki_event_part_id;
+DROP INDEX IF EXISTS public.fki_event_id;
+DROP INDEX IF EXISTS public.fki_defendant_detention_id2;
+DROP INDEX IF EXISTS public.fki_defendant_detention_id;
+DROP INDEX IF EXISTS public.fki_defendant_crime_id;
+DROP INDEX IF EXISTS public.fki_default_group_version_id;
+DROP INDEX IF EXISTS public.fki_currency_id;
+DROP INDEX IF EXISTS public.fki_crime_id;
+DROP INDEX IF EXISTS public.fki_created_by_user_id;
+DROP INDEX IF EXISTS public.fki_created_at_event_id;
+DROP INDEX IF EXISTS public.fki_created_at;
+DROP INDEX IF EXISTS public.fki_closed_at_event_id;
+DROP INDEX IF EXISTS public.fki_calendar_id;
+DROP INDEX IF EXISTS public.fki_arrived_at_event_id;
+DROP INDEX IF EXISTS public.fki_actual_release_transfer_id;
+DROP INDEX IF EXISTS public.fki_acorn_lojistiks_warehouses_created_at_event_id;
+DROP INDEX IF EXISTS public.fki_acorn_lojistiks_vehicles_created_at_event_id;
+DROP INDEX IF EXISTS public.fki_acorn_lojistiks_vehicle_types_created_at_event_id;
+DROP INDEX IF EXISTS public.fki_acorn_lojistiks_suppliers_created_at_event_id;
+DROP INDEX IF EXISTS public.fki_acorn_lojistiks_products_product_categories_creat;
+DROP INDEX IF EXISTS public.fki_acorn_lojistiks_products_created_at_event_id;
+DROP INDEX IF EXISTS public.fki_acorn_lojistiks_product_products_created_at_event;
+DROP INDEX IF EXISTS public.fki_acorn_lojistiks_product_instances_created_at_even;
+DROP INDEX IF EXISTS public.fki_acorn_lojistiks_product_instance_transfer_created;
+DROP INDEX IF EXISTS public.fki_acorn_lojistiks_product_category_types_created_at;
+DROP INDEX IF EXISTS public.fki_acorn_lojistiks_product_categories_created_at_eve;
+DROP INDEX IF EXISTS public.fki_acorn_lojistiks_product_attributes_created_at_eve;
+DROP INDEX IF EXISTS public.fki_acorn_lojistiks_people_created_at_event_id;
+DROP INDEX IF EXISTS public.fki_acorn_lojistiks_offices_created_at_event_id;
+DROP INDEX IF EXISTS public.fki_acorn_lojistiks_drivers_created_at_event_id;
+DROP INDEX IF EXISTS public.fki_acorn_lojistiks_containers_created_at_event_id;
+DROP INDEX IF EXISTS public."fki_ALTER TABLE IF EXISTS public.acorn_criminal_crime";
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_warehouses_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_vehicles_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_vehicle_types_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_transfers_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_transfer_container_replica_identit;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_transfer_container_product_instanc;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_suppliers_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_products_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_products_product_categories_replic;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_product_products_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_product_instances_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_product_instance_transfer_replica_;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_product_category_types_replica_ide;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_product_categories_replica_identit;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_product_attributes_replica_identit;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_people_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_office_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_measurement_units_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_employees_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_drivers_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_containers_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_lojistiks_brands_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_location_types_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_location_location_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_location_gps_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_location_areas_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_location_area_types_replica_identity;
+DROP INDEX IF EXISTS public.dr_acorn_location_addresses_replica_identity;
+DROP INDEX IF EXISTS public.deferred_bindings_slave_type_index;
+DROP INDEX IF EXISTS public.deferred_bindings_slave_id_index;
+DROP INDEX IF EXISTS public.deferred_bindings_session_key_index;
+DROP INDEX IF EXISTS public.deferred_bindings_master_type_index;
+DROP INDEX IF EXISTS public.deferred_bindings_master_field_index;
+DROP INDEX IF EXISTS public.code_index;
+DROP INDEX IF EXISTS public.cms_theme_templates_source_index;
+DROP INDEX IF EXISTS public.cms_theme_templates_path_index;
+DROP INDEX IF EXISTS public.cms_theme_logs_user_id_index;
+DROP INDEX IF EXISTS public.cms_theme_logs_type_index;
+DROP INDEX IF EXISTS public.cms_theme_logs_theme_index;
+DROP INDEX IF EXISTS public.cms_theme_data_theme_index;
+DROP INDEX IF EXISTS public.backend_user_throttle_user_id_index;
+DROP INDEX IF EXISTS public.backend_user_throttle_ip_address_index;
+DROP INDEX IF EXISTS public.admin_role_index;
+DROP INDEX IF EXISTS public.act_code_index;
+DROP INDEX IF EXISTS public.acorn_user_users_reset_password_code_index;
+DROP INDEX IF EXISTS public.acorn_user_users_login_index;
+DROP INDEX IF EXISTS public.acorn_user_users_activation_code_index;
+DROP INDEX IF EXISTS public.acorn_user_user_groups_code_index;
+DROP INDEX IF EXISTS public.acorn_user_throttle_user_id_index;
+DROP INDEX IF EXISTS public.acorn_user_throttle_ip_address_index;
+DROP INDEX IF EXISTS public.acorn_user_mail_blockers_user_id_index;
+DROP INDEX IF EXISTS public.acorn_user_mail_blockers_template_index;
+DROP INDEX IF EXISTS public.acorn_user_mail_blockers_email_index;
+DROP INDEX IF EXISTS public.acorn_calendar_instance_date_event_part_id_instance_n;
+DROP INDEX IF EXISTS product.fki_server_id;
+DROP INDEX IF EXISTS product.fki_created_at_event_id;
+DROP INDEX IF EXISTS product.dr_acorn_lojistiks_electronic_products_replica_identi;
+DROP INDEX IF EXISTS product.dr_acorn_lojistiks_computer_products_replica_identity;
+ALTER TABLE IF EXISTS public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS verdict;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicles DROP CONSTRAINT IF EXISTS vehicles_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicle_types DROP CONSTRAINT IF EXISTS vehicle_types_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS transfers_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instance_transfer DROP CONSTRAINT IF EXISTS transfer_product_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_container_product_instance DROP CONSTRAINT IF EXISTS transfer_container_products_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_containers DROP CONSTRAINT IF EXISTS transfer_container_pkey;
+ALTER TABLE IF EXISTS ONLY public.system_settings DROP CONSTRAINT IF EXISTS system_settings_pkey;
+ALTER TABLE IF EXISTS ONLY public.system_revisions DROP CONSTRAINT IF EXISTS system_revisions_pkey;
+ALTER TABLE IF EXISTS ONLY public.system_request_logs DROP CONSTRAINT IF EXISTS system_request_logs_pkey;
+ALTER TABLE IF EXISTS ONLY public.system_plugin_versions DROP CONSTRAINT IF EXISTS system_plugin_versions_pkey;
+ALTER TABLE IF EXISTS ONLY public.system_plugin_history DROP CONSTRAINT IF EXISTS system_plugin_history_pkey;
+ALTER TABLE IF EXISTS ONLY public.system_parameters DROP CONSTRAINT IF EXISTS system_parameters_pkey;
+ALTER TABLE IF EXISTS ONLY public.system_mail_templates DROP CONSTRAINT IF EXISTS system_mail_templates_pkey;
+ALTER TABLE IF EXISTS ONLY public.system_mail_partials DROP CONSTRAINT IF EXISTS system_mail_partials_pkey;
+ALTER TABLE IF EXISTS ONLY public.system_mail_layouts DROP CONSTRAINT IF EXISTS system_mail_layouts_pkey;
+ALTER TABLE IF EXISTS ONLY public.system_files DROP CONSTRAINT IF EXISTS system_files_pkey;
+ALTER TABLE IF EXISTS ONLY public.system_event_logs DROP CONSTRAINT IF EXISTS system_event_logs_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_suppliers DROP CONSTRAINT IF EXISTS suppliers_pkey;
+ALTER TABLE IF EXISTS ONLY public.sessions DROP CONSTRAINT IF EXISTS sessions_id_unique;
+ALTER TABLE IF EXISTS ONLY public.backend_user_roles DROP CONSTRAINT IF EXISTS role_unique;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_mail_blockers DROP CONSTRAINT IF EXISTS rainlab_user_mail_blockers_pkey;
+ALTER TABLE IF EXISTS ONLY public.winter_translate_messages DROP CONSTRAINT IF EXISTS rainlab_translate_messages_pkey;
+ALTER TABLE IF EXISTS ONLY public.winter_translate_locales DROP CONSTRAINT IF EXISTS rainlab_translate_locales_pkey;
+ALTER TABLE IF EXISTS ONLY public.winter_translate_indexes DROP CONSTRAINT IF EXISTS rainlab_translate_indexes_pkey;
+ALTER TABLE IF EXISTS ONLY public.winter_translate_attributes DROP CONSTRAINT IF EXISTS rainlab_translate_attributes_pkey;
+ALTER TABLE IF EXISTS ONLY public.winter_location_states DROP CONSTRAINT IF EXISTS rainlab_location_states_pkey;
+ALTER TABLE IF EXISTS ONLY public.winter_location_countries DROP CONSTRAINT IF EXISTS rainlab_location_countries_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products_product_category DROP CONSTRAINT IF EXISTS products_product_categories_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products DROP CONSTRAINT IF EXISTS products_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instances DROP CONSTRAINT IF EXISTS product_instances_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_category_types DROP CONSTRAINT IF EXISTS product_category_types_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_categories DROP CONSTRAINT IF EXISTS product_categories_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_attributes DROP CONSTRAINT IF EXISTS product_attributes_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_people DROP CONSTRAINT IF EXISTS person_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_offices DROP CONSTRAINT IF EXISTS office_pkey;
+ALTER TABLE IF EXISTS ONLY public.backend_user_groups DROP CONSTRAINT IF EXISTS name_unique;
+ALTER TABLE IF EXISTS ONLY public.migrations DROP CONSTRAINT IF EXISTS migrations_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_measurement_units DROP CONSTRAINT IF EXISTS measurement_units_pkey;
+ALTER TABLE IF EXISTS ONLY public.backend_users DROP CONSTRAINT IF EXISTS login_unique;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_types DROP CONSTRAINT IF EXISTS location_types_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_locations DROP CONSTRAINT IF EXISTS location_locations_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_gps DROP CONSTRAINT IF EXISTS location_gps_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_areas DROP CONSTRAINT IF EXISTS location_areas_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_area_types DROP CONSTRAINT IF EXISTS location_area_types_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_addresses DROP CONSTRAINT IF EXISTS location_addresses_pkey;
+ALTER TABLE IF EXISTS ONLY public.jobs DROP CONSTRAINT IF EXISTS jobs_pkey;
+ALTER TABLE IF EXISTS ONLY public.job_batches DROP CONSTRAINT IF EXISTS job_batches_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_version_user DROP CONSTRAINT IF EXISTS id;
+ALTER TABLE IF EXISTS ONLY public.failed_jobs DROP CONSTRAINT IF EXISTS failed_jobs_uuid_unique;
+ALTER TABLE IF EXISTS ONLY public.failed_jobs DROP CONSTRAINT IF EXISTS failed_jobs_pkey;
+ALTER TABLE IF EXISTS ONLY public.backend_users DROP CONSTRAINT IF EXISTS email_unique;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS drivers_pkey;
+ALTER TABLE IF EXISTS ONLY public.deferred_bindings DROP CONSTRAINT IF EXISTS deferred_bindings_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_containers DROP CONSTRAINT IF EXISTS containers_pkey;
+ALTER TABLE IF EXISTS ONLY public.cms_theme_templates DROP CONSTRAINT IF EXISTS cms_theme_templates_pkey;
+ALTER TABLE IF EXISTS ONLY public.cms_theme_logs DROP CONSTRAINT IF EXISTS cms_theme_logs_pkey;
+ALTER TABLE IF EXISTS ONLY public.cms_theme_data DROP CONSTRAINT IF EXISTS cms_theme_data_pkey;
+ALTER TABLE IF EXISTS ONLY public.cache DROP CONSTRAINT IF EXISTS cache_key_unique;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_brands DROP CONSTRAINT IF EXISTS brands_pkey;
+ALTER TABLE IF EXISTS ONLY public.backend_users DROP CONSTRAINT IF EXISTS backend_users_pkey;
+ALTER TABLE IF EXISTS ONLY public.backend_users_groups DROP CONSTRAINT IF EXISTS backend_users_groups_pkey;
+ALTER TABLE IF EXISTS ONLY public.backend_user_throttle DROP CONSTRAINT IF EXISTS backend_user_throttle_pkey;
+ALTER TABLE IF EXISTS ONLY public.backend_user_roles DROP CONSTRAINT IF EXISTS backend_user_roles_pkey;
+ALTER TABLE IF EXISTS ONLY public.backend_user_preferences DROP CONSTRAINT IF EXISTS backend_user_preferences_pkey;
+ALTER TABLE IF EXISTS ONLY public.backend_user_groups DROP CONSTRAINT IF EXISTS backend_user_groups_pkey;
+ALTER TABLE IF EXISTS ONLY public.backend_access_log DROP CONSTRAINT IF EXISTS backend_access_log_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_users DROP CONSTRAINT IF EXISTS acorn_user_users_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_user_groups DROP CONSTRAINT IF EXISTS acorn_user_user_groups_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_versions DROP CONSTRAINT IF EXISTS acorn_user_user_group_versions_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_types DROP CONSTRAINT IF EXISTS acorn_user_user_group_types_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group DROP CONSTRAINT IF EXISTS acorn_user_user_group_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_throttle DROP CONSTRAINT IF EXISTS acorn_user_throttle_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_roles DROP CONSTRAINT IF EXISTS acorn_user_roles_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_languages DROP CONSTRAINT IF EXISTS acorn_user_languages_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_language_user DROP CONSTRAINT IF EXISTS acorn_user_language_user_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_servers DROP CONSTRAINT IF EXISTS acorn_servers_id_unique;
+ALTER TABLE IF EXISTS ONLY public.acorn_servers DROP CONSTRAINT IF EXISTS acorn_servers_hostname_unique;
+ALTER TABLE IF EXISTS ONLY public.acorn_notary_requests DROP CONSTRAINT IF EXISTS acorn_notary_requests_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_user_message_status DROP CONSTRAINT IF EXISTS acorn_messaging_user_message_status_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_status DROP CONSTRAINT IF EXISTS acorn_messaging_status_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_message_user DROP CONSTRAINT IF EXISTS acorn_messaging_message_user_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_message_user_group DROP CONSTRAINT IF EXISTS acorn_messaging_message_user_group_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_message DROP CONSTRAINT IF EXISTS acorn_messaging_message_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_message_message DROP CONSTRAINT IF EXISTS acorn_messaging_message_message_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_message_instance DROP CONSTRAINT IF EXISTS acorn_messaging_message_instance_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_message DROP CONSTRAINT IF EXISTS acorn_messaging_message_externalid_unique;
+ALTER TABLE IF EXISTS ONLY public.acorn_messaging_label DROP CONSTRAINT IF EXISTS acorn_messaging_label_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_warehouses DROP CONSTRAINT IF EXISTS acorn_lojistiks_warehouses_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS acorn_lojistiks_product_products_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_employees DROP CONSTRAINT IF EXISTS acorn_lojistiks_employees_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_lookup DROP CONSTRAINT IF EXISTS acorn_location_location_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS acorn_justice_warrants_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrant_types DROP CONSTRAINT IF EXISTS acorn_justice_warrant_types_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS acorn_justice_summons_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summon_types DROP CONSTRAINT IF EXISTS acorn_justice_summon_types_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS acorn_justice_statements_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_scanned_documents DROP CONSTRAINT IF EXISTS acorn_justice_scanned_documents_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_periods DROP CONSTRAINT IF EXISTS acorn_justice_periods_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS acorn_justice_legalcase_witnesses_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS acorn_justice_legalcase_victims_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_prosecutor DROP CONSTRAINT IF EXISTS acorn_justice_legalcase_prosecution_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS acorn_justice_legalcase_evidence_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS acorn_justice_defendant_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS acorn_justice_crimes_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF EXISTS acorn_justice_crime_types_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_sentences DROP CONSTRAINT IF EXISTS acorn_justice_crime_sentences_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_evidence DROP CONSTRAINT IF EXISTS acorn_justice_crime_evidence_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_legalcase_category DROP CONSTRAINT IF EXISTS acorn_justice_case_category_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_categories DROP CONSTRAINT IF EXISTS acorn_justice_case_categories_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS acorn_finance_receipts_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS acorn_finance_purchases_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS acorn_finance_payments_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS acorn_finance_invoices_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_currencies DROP CONSTRAINT IF EXISTS acorn_finance_currency_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_witness_statement DROP CONSTRAINT IF EXISTS acorn_criminal_witness_statement_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trials DROP CONSTRAINT IF EXISTS acorn_criminal_trials_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_sessions DROP CONSTRAINT IF EXISTS acorn_criminal_trial_sessions_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS acorn_criminal_trial_judge_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS acorn_criminal_session_recordings_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_sentence_types DROP CONSTRAINT IF EXISTS acorn_criminal_sentence_types_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcases DROP CONSTRAINT IF EXISTS acorn_criminal_legalcases_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_types DROP CONSTRAINT IF EXISTS acorn_criminal_legalcase_types_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_reasons DROP CONSTRAINT IF EXISTS acorn_criminal_detention_reasons_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS acorn_criminal_detention_periods_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_methods DROP CONSTRAINT IF EXISTS acorn_criminal_detention_methods_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_detentions DROP CONSTRAINT IF EXISTS acorn_criminal_defendant_detentions_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_appeals DROP CONSTRAINT IF EXISTS acorn_criminal_appeals_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_calendars DROP CONSTRAINT IF EXISTS acorn_calendar_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_instances DROP CONSTRAINT IF EXISTS acorn_calendar_instance_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_part_user DROP CONSTRAINT IF EXISTS acorn_calendar_event_user_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_part_user_group DROP CONSTRAINT IF EXISTS acorn_calendar_event_user_group_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_types DROP CONSTRAINT IF EXISTS acorn_calendar_event_type_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_statuses DROP CONSTRAINT IF EXISTS acorn_calendar_event_status_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_events DROP CONSTRAINT IF EXISTS acorn_calendar_event_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_parts DROP CONSTRAINT IF EXISTS acorn_calendar_event_part_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS acornassocaited_justice_defendant_crime_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS acornassocaited_justice_cases_pkey;
+ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_electronic_products DROP CONSTRAINT IF EXISTS office_products_pkey;
+ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_computer_products DROP CONSTRAINT IF EXISTS computer_products_pkey;
+ALTER TABLE IF EXISTS public.winter_translate_messages ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.winter_translate_locales ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.winter_translate_indexes ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.winter_translate_attributes ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.winter_location_states ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.winter_location_countries ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.system_settings ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.system_revisions ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.system_request_logs ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.system_plugin_versions ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.system_plugin_history ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.system_parameters ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.system_mail_templates ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.system_mail_partials ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.system_mail_layouts ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.system_files ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.system_event_logs ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.migrations ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.jobs ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.failed_jobs ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.deferred_bindings ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.cms_theme_templates ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.cms_theme_logs ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.cms_theme_data ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.backend_users ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.backend_user_throttle ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.backend_user_roles ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.backend_user_preferences ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.backend_user_groups ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.backend_access_log ALTER COLUMN id DROP DEFAULT;
+DROP SEQUENCE IF EXISTS public.system_settings_id_seq;
+DROP TABLE IF EXISTS public.system_settings;
+DROP SEQUENCE IF EXISTS public.system_revisions_id_seq;
+DROP TABLE IF EXISTS public.system_revisions;
+DROP SEQUENCE IF EXISTS public.system_request_logs_id_seq;
+DROP TABLE IF EXISTS public.system_request_logs;
+DROP SEQUENCE IF EXISTS public.system_plugin_versions_id_seq;
+DROP TABLE IF EXISTS public.system_plugin_versions;
+DROP SEQUENCE IF EXISTS public.system_plugin_history_id_seq;
+DROP TABLE IF EXISTS public.system_plugin_history;
+DROP SEQUENCE IF EXISTS public.system_parameters_id_seq;
+DROP TABLE IF EXISTS public.system_parameters;
+DROP SEQUENCE IF EXISTS public.system_mail_templates_id_seq;
+DROP TABLE IF EXISTS public.system_mail_templates;
+DROP SEQUENCE IF EXISTS public.system_mail_partials_id_seq;
+DROP TABLE IF EXISTS public.system_mail_partials;
+DROP SEQUENCE IF EXISTS public.system_mail_layouts_id_seq;
+DROP TABLE IF EXISTS public.system_mail_layouts;
+DROP SEQUENCE IF EXISTS public.system_files_id_seq;
+DROP TABLE IF EXISTS public.system_files;
+DROP SEQUENCE IF EXISTS public.system_event_logs_id_seq;
+DROP TABLE IF EXISTS public.system_event_logs;
+DROP TABLE IF EXISTS public.sessions;
+DROP SEQUENCE IF EXISTS public.rainlab_translate_messages_id_seq;
+DROP TABLE IF EXISTS public.winter_translate_messages;
+DROP SEQUENCE IF EXISTS public.rainlab_translate_locales_id_seq;
+DROP TABLE IF EXISTS public.winter_translate_locales;
+DROP SEQUENCE IF EXISTS public.rainlab_translate_indexes_id_seq;
+DROP TABLE IF EXISTS public.winter_translate_indexes;
+DROP SEQUENCE IF EXISTS public.rainlab_translate_attributes_id_seq;
+DROP TABLE IF EXISTS public.winter_translate_attributes;
+DROP SEQUENCE IF EXISTS public.rainlab_location_states_id_seq;
+DROP TABLE IF EXISTS public.winter_location_states;
+DROP SEQUENCE IF EXISTS public.rainlab_location_countries_id_seq;
+DROP TABLE IF EXISTS public.winter_location_countries;
+DROP SEQUENCE IF EXISTS public.migrations_id_seq;
+DROP TABLE IF EXISTS public.migrations;
+DROP SEQUENCE IF EXISTS public.jobs_id_seq;
+DROP TABLE IF EXISTS public.jobs;
+DROP TABLE IF EXISTS public.job_batches;
+DROP SEQUENCE IF EXISTS public.failed_jobs_id_seq;
+DROP TABLE IF EXISTS public.failed_jobs;
+DROP SEQUENCE IF EXISTS public.deferred_bindings_id_seq;
+DROP TABLE IF EXISTS public.deferred_bindings;
+DROP SEQUENCE IF EXISTS public.cms_theme_templates_id_seq;
+DROP TABLE IF EXISTS public.cms_theme_templates;
+DROP SEQUENCE IF EXISTS public.cms_theme_logs_id_seq;
+DROP TABLE IF EXISTS public.cms_theme_logs;
+DROP SEQUENCE IF EXISTS public.cms_theme_data_id_seq;
+DROP TABLE IF EXISTS public.cms_theme_data;
+DROP TABLE IF EXISTS public.cache;
+DROP SEQUENCE IF EXISTS public.backend_users_id_seq;
+DROP TABLE IF EXISTS public.backend_users_groups;
+DROP TABLE IF EXISTS public.backend_users;
+DROP SEQUENCE IF EXISTS public.backend_user_throttle_id_seq;
+DROP TABLE IF EXISTS public.backend_user_throttle;
+DROP SEQUENCE IF EXISTS public.backend_user_roles_id_seq;
+DROP TABLE IF EXISTS public.backend_user_roles;
+DROP SEQUENCE IF EXISTS public.backend_user_preferences_id_seq;
+DROP TABLE IF EXISTS public.backend_user_preferences;
+DROP SEQUENCE IF EXISTS public.backend_user_groups_id_seq;
+DROP TABLE IF EXISTS public.backend_user_groups;
+DROP SEQUENCE IF EXISTS public.backend_access_log_id_seq;
+DROP TABLE IF EXISTS public.backend_access_log;
+DROP TABLE IF EXISTS public.acorn_user_users;
+DROP TABLE IF EXISTS public.acorn_user_user_groups;
+DROP TABLE IF EXISTS public.acorn_user_user_group_versions;
+DROP TABLE IF EXISTS public.acorn_user_user_group_version_user;
+DROP VIEW IF EXISTS public.acorn_user_user_group_version_usages;
+DROP TABLE IF EXISTS public.acorn_user_user_group_types;
+DROP TABLE IF EXISTS public.acorn_user_user_group;
+DROP TABLE IF EXISTS public.acorn_user_throttle;
+DROP TABLE IF EXISTS public.acorn_user_roles;
+DROP TABLE IF EXISTS public.acorn_user_mail_blockers;
+DROP TABLE IF EXISTS public.acorn_user_languages;
+DROP TABLE IF EXISTS public.acorn_user_language_user;
+DROP TABLE IF EXISTS public.acorn_servers;
+DROP TABLE IF EXISTS public.acorn_notary_requests;
+DROP TABLE IF EXISTS public.acorn_messaging_user_message_status;
+DROP TABLE IF EXISTS public.acorn_messaging_status;
+DROP TABLE IF EXISTS public.acorn_messaging_message_user_group;
+DROP TABLE IF EXISTS public.acorn_messaging_message_user;
+DROP TABLE IF EXISTS public.acorn_messaging_message_message;
+DROP TABLE IF EXISTS public.acorn_messaging_message_instance;
+DROP TABLE IF EXISTS public.acorn_messaging_message;
+DROP TABLE IF EXISTS public.acorn_messaging_label;
+DROP TABLE IF EXISTS public.acorn_messaging_action;
+DROP TABLE IF EXISTS public.acorn_lojistiks_warehouses;
+DROP TABLE IF EXISTS public.acorn_lojistiks_vehicles;
+DROP TABLE IF EXISTS public.acorn_lojistiks_vehicle_types;
+DROP TABLE IF EXISTS public.acorn_lojistiks_transfers;
+DROP TABLE IF EXISTS public.acorn_lojistiks_transfer_purchase;
+DROP TABLE IF EXISTS public.acorn_lojistiks_transfer_invoice;
+DROP TABLE IF EXISTS public.acorn_lojistiks_transfer_containers;
+DROP TABLE IF EXISTS public.acorn_lojistiks_transfer_container_product_instance;
+DROP TABLE IF EXISTS public.acorn_lojistiks_suppliers;
+DROP TABLE IF EXISTS public.acorn_lojistiks_products_product_category;
+DROP TABLE IF EXISTS public.acorn_lojistiks_products;
+DROP TABLE IF EXISTS public.acorn_lojistiks_product_products;
+DROP TABLE IF EXISTS public.acorn_lojistiks_product_product_category;
+DROP TABLE IF EXISTS public.acorn_lojistiks_product_instances;
+DROP TABLE IF EXISTS public.acorn_lojistiks_product_instance_transfer;
+DROP TABLE IF EXISTS public.acorn_lojistiks_product_category_types;
+DROP TABLE IF EXISTS public.acorn_lojistiks_product_categories;
+DROP TABLE IF EXISTS public.acorn_lojistiks_product_attributes;
+DROP TABLE IF EXISTS public.acorn_lojistiks_people;
+DROP TABLE IF EXISTS public.acorn_lojistiks_offices;
+DROP TABLE IF EXISTS public.acorn_lojistiks_measurement_units;
+DROP TABLE IF EXISTS public.acorn_lojistiks_employees;
+DROP TABLE IF EXISTS public.acorn_lojistiks_drivers;
+DROP TABLE IF EXISTS public.acorn_lojistiks_containers;
+DROP TABLE IF EXISTS public.acorn_lojistiks_brands;
+DROP TABLE IF EXISTS public.acorn_location_types;
+DROP TABLE IF EXISTS public.acorn_location_lookup;
+DROP TABLE IF EXISTS public.acorn_location_locations;
+DROP TABLE IF EXISTS public.acorn_location_gps;
+DROP TABLE IF EXISTS public.acorn_location_areas;
+DROP TABLE IF EXISTS public.acorn_location_area_types;
+DROP TABLE IF EXISTS public.acorn_location_addresses;
+DROP TABLE IF EXISTS public.acorn_justice_warrants;
+DROP TABLE IF EXISTS public.acorn_justice_warrant_types;
+DROP TABLE IF EXISTS public.acorn_justice_summons;
+DROP TABLE IF EXISTS public.acorn_justice_summon_types;
+DROP TABLE IF EXISTS public.acorn_justice_statements;
+DROP TABLE IF EXISTS public.acorn_justice_scanned_documents;
+DROP TABLE IF EXISTS public.acorn_justice_periods;
+DROP TABLE IF EXISTS public.acorn_justice_legalcases;
+DROP TABLE IF EXISTS public.acorn_justice_legalcase_legalcase_category;
+DROP TABLE IF EXISTS public.acorn_justice_legalcase_categories;
+DROP TABLE IF EXISTS public.acorn_finance_receipts;
+DROP TABLE IF EXISTS public.acorn_finance_purchases;
+DROP TABLE IF EXISTS public.acorn_finance_payments;
+DROP TABLE IF EXISTS public.acorn_finance_invoices;
+DROP TABLE IF EXISTS public.acorn_finance_currencies;
+DROP TABLE IF EXISTS public.acorn_criminal_witness_statement;
+DROP TABLE IF EXISTS public.acorn_criminal_trials;
+DROP TABLE IF EXISTS public.acorn_criminal_trial_sessions;
+DROP TABLE IF EXISTS public.acorn_criminal_trial_judges;
+DROP TABLE IF EXISTS public.acorn_criminal_session_recordings;
+DROP TABLE IF EXISTS public.acorn_criminal_sentence_types;
+DROP TABLE IF EXISTS public.acorn_criminal_legalcases;
+DROP TABLE IF EXISTS public.acorn_criminal_legalcase_witnesses;
+DROP TABLE IF EXISTS public.acorn_criminal_legalcase_types;
+DROP TABLE IF EXISTS public.acorn_criminal_legalcase_related_events;
+DROP TABLE IF EXISTS public.acorn_criminal_legalcase_prosecutor;
+DROP TABLE IF EXISTS public.acorn_criminal_legalcase_plaintiffs;
+DROP TABLE IF EXISTS public.acorn_criminal_legalcase_evidence;
+DROP TABLE IF EXISTS public.acorn_criminal_legalcase_defendants;
+DROP TABLE IF EXISTS public.acorn_criminal_detention_reasons;
+DROP TABLE IF EXISTS public.acorn_criminal_detention_periods;
+DROP TABLE IF EXISTS public.acorn_criminal_detention_methods;
+DROP TABLE IF EXISTS public.acorn_criminal_defendant_detentions;
+DROP TABLE IF EXISTS public.acorn_criminal_defendant_crimes;
+DROP TABLE IF EXISTS public.acorn_criminal_crimes;
+DROP TABLE IF EXISTS public.acorn_criminal_crime_types;
+DROP TABLE IF EXISTS public.acorn_criminal_crime_sentences;
+DROP TABLE IF EXISTS public.acorn_criminal_crime_evidence;
+DROP TABLE IF EXISTS public.acorn_criminal_appeals;
+DROP TABLE IF EXISTS public.acorn_calendar_instances;
+DROP TABLE IF EXISTS public.acorn_calendar_events;
+DROP TABLE IF EXISTS public.acorn_calendar_event_types;
+DROP TABLE IF EXISTS public.acorn_calendar_event_statuses;
+DROP TABLE IF EXISTS public.acorn_calendar_event_parts;
+DROP TABLE IF EXISTS public.acorn_calendar_event_part_user_group;
+DROP TABLE IF EXISTS public.acorn_calendar_event_part_user;
+DROP TABLE IF EXISTS public.acorn_calendar_calendars;
+DROP TABLE IF EXISTS product.acorn_lojistiks_electronic_products;
+DROP TABLE IF EXISTS product.acorn_lojistiks_computer_products;
+DROP AGGREGATE IF EXISTS public.agg_acorn_last(anyelement);
+DROP AGGREGATE IF EXISTS public.agg_acorn_first(anyelement);
+DROP FUNCTION IF EXISTS public.fn_acorn_user_get_seed_user();
+DROP FUNCTION IF EXISTS public.fn_acorn_truncate_database(schema_like character varying, table_like character varying);
+DROP FUNCTION IF EXISTS public.fn_acorn_table_counts(_schema character varying);
+DROP FUNCTION IF EXISTS public.fn_acorn_server_id();
+DROP FUNCTION IF EXISTS public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying);
+DROP FUNCTION IF EXISTS public.fn_acorn_notary_trigger_validate();
+DROP FUNCTION IF EXISTS public.fn_acorn_new_replicated_row();
+DROP FUNCTION IF EXISTS public.fn_acorn_lojistiks_is_date(s character varying, d timestamp with time zone);
+DROP FUNCTION IF EXISTS public.fn_acorn_lojistiks_distance(source_location_id uuid, destination_location_id uuid);
+DROP FUNCTION IF EXISTS public.fn_acorn_last(anyelement, anyelement);
+DROP FUNCTION IF EXISTS public.fn_acorn_justice_warrants_state_indicator(warrant record);
+DROP FUNCTION IF EXISTS public.fn_acorn_justice_seed_groups();
+DROP FUNCTION IF EXISTS public.fn_acorn_justice_seed_calendar();
+DROP FUNCTION IF EXISTS public.fn_acorn_justice_action_warrants_revoke(model_id uuid, p_user_id uuid);
+DROP FUNCTION IF EXISTS public.fn_acorn_justice_action_warrants_request_notary(model_id uuid, user_id uuid);
+DROP FUNCTION IF EXISTS public.fn_acorn_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid);
+DROP FUNCTION IF EXISTS public.fn_acorn_justice_action_legalcases_close_case(model_id uuid, user_id uuid);
+DROP FUNCTION IF EXISTS public.fn_acorn_first(anyelement, anyelement);
+DROP FUNCTION IF EXISTS public.fn_acorn_criminal_action_legalcases_transfer_case(model_id uuid, user_id uuid, owner_user_group_id uuid);
+DROP FUNCTION IF EXISTS public.fn_acorn_criminal_action_legalcase_related_events_can(primary_id uuid, user_id uuid);
+DROP FUNCTION IF EXISTS public.fn_acorn_criminal_action_legalcase_defendants_cw(model_id uuid, user_id uuid);
+DROP FUNCTION IF EXISTS public.fn_acorn_criminal_action_legalcase_defendants_cs(model_id uuid, user_id uuid);
+DROP FUNCTION IF EXISTS public.fn_acorn_calendar_trigger_activity_event();
+DROP FUNCTION IF EXISTS public.fn_acorn_calendar_seed();
+DROP FUNCTION IF EXISTS public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying);
+DROP FUNCTION IF EXISTS public.fn_acorn_calendar_is_date(s character varying, d timestamp with time zone);
+DROP FUNCTION IF EXISTS public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record);
+DROP FUNCTION IF EXISTS public.fn_acorn_calendar_events_generate_event_instances();
+DROP FUNCTION IF EXISTS public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone);
+DROP FUNCTION IF EXISTS public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying);
+DROP FUNCTION IF EXISTS public.fn_acorn_calendar_create_activity_log_event(owner_user_id uuid, type_id uuid, status_id uuid, name character varying);
+DROP FUNCTION IF EXISTS public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying);
+DROP EXTENSION IF EXISTS http;
+DROP EXTENSION IF EXISTS hostname;
+DROP EXTENSION IF EXISTS earthdistance;
+DROP EXTENSION IF EXISTS cube;
+-- *not* dropping schema, since initdb creates it
+DROP SCHEMA IF EXISTS product;
 --
 -- Name: product; Type: SCHEMA; Schema: -; Owner: justice
 --
@@ -6714,3876 +7865,6 @@ ALTER TABLE ONLY public.winter_translate_locales ALTER COLUMN id SET DEFAULT nex
 --
 
 ALTER TABLE ONLY public.winter_translate_messages ALTER COLUMN id SET DEFAULT nextval('public.rainlab_translate_messages_id_seq'::regclass);
-
-
---
--- Data for Name: acorn_lojistiks_computer_products; Type: TABLE DATA; Schema: product; Owner: justice
---
-
-COPY product.acorn_lojistiks_computer_products (id, electronic_product_id, memory, "HDD_size", processor_version, server_id, created_at_event_id, created_by_user_id, processor_type, response) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_electronic_products; Type: TABLE DATA; Schema: product; Owner: justice
---
-
-COPY product.acorn_lojistiks_electronic_products (id, product_id, server_id, created_at_event_id, voltage, created_by_user_id, response) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_calendar_calendars; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_calendar_calendars (id, name, description, sync_file, sync_format, created_at, updated_at, owner_user_id, owner_user_group_id, permissions, system) FROM stdin;
-ceea8856-e4c8-11ef-8719-5f58c97885a2	Default	\N	\N	0	2024-10-19 13:37:23	\N	\N	\N	1	t
-f3bc49bc-eac7-11ef-9e4a-1740a039dada	Activity Log	\N	\N	0	2024-10-19 13:37:23	\N	\N	\N	1	t
-ec4360f9-11cc-4cb8-b1fc-f274f220da5f	Legal	\N	\N	0	2024-10-19 13:37:23	\N	\N	\N	1	f
-6faa432c-e3b5-11ef-ac7d-af7a8110175c	Entity create and update events	\N	\N	0	2024-10-19 13:37:23	\N	\N	\N	1	f
-\.
-
-
---
--- Data for Name: acorn_calendar_event_part_user; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_calendar_event_part_user (event_part_id, user_id, role_id, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_calendar_event_part_user_group; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_calendar_event_part_user_group (event_part_id, user_group_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_calendar_event_parts; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_calendar_event_parts (id, event_id, name, description, start, "end", until, mask, mask_type, type_id, status_id, repeat_frequency, parent_event_part_id, location_id, locked_by_user_id, created_at, updated_at, repeat, alarm, instances_deleted) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_calendar_event_statuses; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_calendar_event_statuses (id, name, description, style, created_at, updated_at, system, calendar_id) FROM stdin;
-27446472-e4c9-11ef-bde0-9b663c96a619	Normal	\N	\N	\N	\N	t	\N
-fb2392de-e62e-11ef-b202-5fe79ff1071f	Cancelled	\N	text-decoration:line-through;border:1px dotted #fff;	\N	\N	t	\N
-00fa4a3c-4403-4347-b885-e0d61e6ea8aa	Tentative	\N	opacity:0.7;	\N	\N	t	\N
-57211fdb-dc93-4cff-a205-695e4e9ddbc7	Conflict	\N	border:1px solid red;background-color:#fff;color:#000;font-weight:bold;	\N	\N	t	\N
-7b432540-eac8-11ef-a9bc-434841a9f67b	acorn.calendar::lang.models.general.insert	\N	color:#fff	\N	\N	t	\N
-7c18bb7e-eac8-11ef-b4f2-ffae3296f461	acorn.calendar::lang.models.general.update	\N	color:#fff	\N	\N	t	\N
-7ceca4c0-eac8-11ef-b685-f7f3f278f676	acorn.calendar::lang.models.general.soft_delete	\N	color:#fff	\N	\N	t	\N
-f9690600-eac9-11ef-8002-5b2cbe0c12c0	acorn.calendar::lang.models.general.soft_undelete	\N	color:#fff	\N	\N	t	\N
-5134c9db-a5b0-40ee-95f0-1e9b39331548	Validate	\N	\N	\N	\N	f	ec4360f9-11cc-4cb8-b1fc-f274f220da5f
-c4c3a3d0-e3b5-11ef-98b6-83c560e3d98a	Created	\N	color:#050	\N	\N	f	\N
-cb75aa34-e3b5-11ef-abf2-a7e3fb05f16a	Updated	\N	color:#005	\N	\N	f	\N
-\.
-
-
---
--- Data for Name: acorn_calendar_event_types; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_calendar_event_types (id, name, description, whole_day, colour, style, created_at, updated_at, system, activity_log_related_oid, calendar_id) FROM stdin;
-2f766546-e4c9-11ef-be8c-1f2daa98a10f	Normal	\N	f	#091386	color:#fff	2024-10-19 13:37:23	\N	t	\N	\N
-31754fae-ba9e-4aff-b538-b665422ad4b3	Meeting	\N	f	#C0392B	color:#fff	2024-10-19 13:37:23	\N	t	\N	\N
-20fe78d8-89ae-4fb6-af0b-60d74b750b7c	Criminal Crime Types	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22636	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-2ddb051a-eee9-4593-9cc8-388f1b6f77f6	Criminal Sentence Types	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22705	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-2e076a8c-72dd-4075-a5e0-72b0caeadb2a	Criminal Legalcase Types	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	52218	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-5a938465-f57a-49ed-a014-eb075aaab841	Criminal Detention Reasons	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22667	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-5b178909-04e5-4541-8bc6-edadb4d42145	Criminal Detention Methods	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22661	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-e454682c-406b-4326-b8fe-c917acb54d91	Criminal Crimes	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22644	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-84422eec-539a-45fe-aa97-e2542c95cebc	Justice Legalcases	\N	f	\N	\N	2024-10-19 13:37:23	\N	f	22794	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-ceafc66c-fea2-46f1-9a1c-94727b04c23c	Criminal Legalcase Defendants	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22673	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-55b41f84-d8c8-471f-94be-c7c052e80209	Justice Warrants	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22812	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-1f8c7822-eeff-4224-9fac-9ced71ec601b	Justice Warrant Types	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22806	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-112200db-595f-4a0f-896c-0cae51e45ec3	Notary Requests	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	72909	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-f3cfacba-d1ae-465d-95c9-eeb2a17e666f	NotaryRequest	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	\N	ec4360f9-11cc-4cb8-b1fc-f274f220da5f
-a19e753c-4065-4d5f-86f0-f9f4808df0b8	Justice Summon Types	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	73371	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-659cbdc7-5ae7-4c20-b5dd-dfd6137c7016	Justice Summons	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	73406	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-b6551199-16cd-484b-8680-6c5f36b52782	Justice Statements	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	73471	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-6fab1f3f-09c5-4838-8c8c-fd9b75e3b8ca	Criminal Legalcase Witnesses	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22697	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-76c3a8ca-9a82-477a-a740-61b9ddbf1bb5	Criminal Witness Statement	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	73516	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-1cbd0284-e902-4c6b-a0b3-f3a8d984f2f3	Justice Legalcase Categories	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22777	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-ea2060dc-a693-4b0b-bb25-f4c8fdeab585	Justice Legalcase Legalcase Category	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22789	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-4e41bdea-b869-4a57-977e-7d3bdee1972f	Justice Periods	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	73616	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-4bf19246-e53f-4d08-bc1f-bfbe1200212c	Lojistiks Transfers	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22985	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-bf2a1cda-1c5d-489e-bc88-e7b510f206af	Criminal Detention Periods	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	73601	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-dbe4954c-4e71-4d2b-843b-990604a4275b	Criminal Defendant Crimes	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22650	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-848e1e49-85c2-4e43-b054-2864a2973f59	Justice Scanned Documents	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22800	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-7754c714-e3b5-11ef-84f2-2bd5b1a61b38	Criminal Legalcase Related Events	\N	f	#dfdfdf		2024-10-19 13:37:23	\N	f	\N	\N
-f6477b0f-8bc3-4325-91ee-2e2f7c51b8a6	Finance Currencies	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22727	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-7b09199a-bb59-47e2-bb68-11aab8ecb8dd	Lojistiks Measurement Units	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22890	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-7b425bba-91d3-451e-a0be-e83bbd4ee1ab	Lojistiks Vehicle Types	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22992	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-0565f4c0-efbd-4f48-ac12-5e059364babc	Lojistiks Brands	\N	f	#333	\N	2024-10-19 13:37:23	\N	f	22866	f3bc49bc-eac7-11ef-9e4a-1740a039dada
-\.
-
-
---
--- Data for Name: acorn_calendar_events; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_calendar_events (id, calendar_id, external_url, created_at, updated_at, owner_user_id, owner_user_group_id, permissions) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_calendar_instances; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_calendar_instances (id, date, event_part_id, instance_num, instance_start, instance_end) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_appeals; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_appeals (id, legalcase_id, created_at_event_id, created_by_user_id, event_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_crime_evidence; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_crime_evidence (defendant_crime_id, legalcase_evidence_id, created_at) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_crime_sentences; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_crime_sentences (id, defendant_crime_id, sentence_type_id, amount, suspended, created_at_event_id, created_by_user_id, description, updated_at_event_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_crime_types; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_crime_types (id, name, parent_crime_type_id, created_at_event_id, created_by_user_id, description, updated_at_event_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_crimes; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_crimes (id, name, crime_type_id, created_at_event_id, created_by_user_id, description, updated_at_event_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_defendant_crimes; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_defendant_crimes (id, legalcase_defendant_id, crime_id, created_at_event_id, created_by_user_id, description, updated_at_event_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_defendant_detentions; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_defendant_detentions (id, transfer_id, detention_reason_id, detention_method_id, actual_release_transfer_id, legalcase_defendant_id, description, allowed_notes_total) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_detention_methods; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_detention_methods (id, name, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_detention_periods; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_detention_periods (id, defendant_detention_id, description, period_id, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_detention_reasons; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_detention_reasons (id, name, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_legalcase_defendants; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_legalcase_defendants (id, legalcase_id, user_id, created_at_event_id, created_by_user_id, description, updated_at_event_id, updated_by_user_id, server_id, lawyer_user_id, verdict) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_legalcase_evidence; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_legalcase_evidence (id, legalcase_id, name, created_at_event_id, created_by_user_id, description, updated_at_event_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_legalcase_plaintiffs; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_legalcase_plaintiffs (id, legalcase_id, user_id, created_at_event_id, created_by_user_id, description, updated_at_event_id, updated_by_user_id, server_id, lawyer_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_legalcase_prosecutor; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_legalcase_prosecutor (id, legalcase_id, user_id, user_group_id, created_at_event_id, created_by_user_id, description, updated_at_event_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_legalcase_related_events; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_legalcase_related_events (legalcase_id, id, created_by_user_id, event_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_legalcase_types; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_legalcase_types (id, name, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_legalcase_witnesses; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_legalcase_witnesses (id, user_id, legalcase_id, created_at_event_id, created_by_user_id, description, updated_at_event_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_legalcases; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_legalcases (id, legalcase_id, server_id, judge_committee_user_group_id, legalcase_type_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_sentence_types; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_sentence_types (id, name, created_at_event_id, created_by_user_id, description, updated_at_event_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_session_recordings; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_session_recordings (id, trial_session_id, created_at_event_id, created_by_user_id, description, name, updated_at_event_id, updated_by_user_id, server_id, audio_file) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_trial_judges; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_trial_judges (id, trial_id, user_id, user_group_id, created_at_event_id, created_by_user_id, description, updated_at_event_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_trial_sessions; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_trial_sessions (id, trial_id, created_at_event_id, created_by_user_id, event_id, description) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_trials; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_trials (id, legalcase_id, created_at_event_id, created_by_user_id, event_id, description) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_criminal_witness_statement; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_criminal_witness_statement (id, legalcase_witness_id, statement_id, description, created_at_event_id, created_by_user_id, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_finance_currencies; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_finance_currencies (id, name, shortname, symbol, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_finance_invoices; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_finance_invoices (id, number, currency_id, mark_paid, amount, payer_user_id, payer_user_group_id, payee_user_id, payee_user_group_id, created_event_id, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_finance_payments; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_finance_payments (id, invoice_id, currency_id, amount, number, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_finance_purchases; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_finance_purchases (id, number, mark_paid, currency_id, amount, payer_user_id, payer_user_group_id, payee_user_id, payee_user_group_id, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_finance_receipts; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_finance_receipts (id, purchase_id, number, currency_id, amount, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_justice_legalcase_categories; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_justice_legalcase_categories (id, name, parent_legalcase_category_id, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_justice_legalcase_legalcase_category; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_justice_legalcase_legalcase_category (legalcase_id, legalcase_category_id, created_at_event_id, created_by_user_id, description, updated_at_event_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_justice_legalcases; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_justice_legalcases (id, created_at_event_id, created_by_user_id, name, closed_at_event_id, owner_user_group_id, description, updated_at_event_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_justice_periods; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_justice_periods (id, description, period, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_justice_scanned_documents; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_justice_scanned_documents (id, name, document, created_by_user_id, created_at_event_id, legalcase_id, description, updated_at_event_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_justice_statements; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_justice_statements (id, created_at_event_id, created_by_user_id, user_id, legalcase_id, name, description, statement, updated_at_event_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_justice_summon_types; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_justice_summon_types (id, name, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_justice_summons; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_justice_summons (id, created_at_event_id, created_by_user_id, user_id, summon_type_id, legalcase_id, revoked_at_event_id, description, updated_at_event_id, updated_by_user_id, server_id, state_indicator, notary_request_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_justice_warrant_types; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_justice_warrant_types (id, name, description, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_justice_warrants; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_justice_warrants (id, created_at_event_id, created_by_user_id, user_id, warrant_type_id, legalcase_id, revoked_at_event_id, description, updated_at_event_id, updated_by_user_id, server_id, state_indicator, notary_request_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_location_addresses; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_location_addresses (id, name, number, image, area_id, gps_id, server_id, created_by_user_id, created_at, response, lookup_id, description) FROM stdin;
-9d6a4b02-b2d3-401a-bfe7-0b6768ea4f9a			\N	d6b3135a-972a-4fa2-b828-f3eb54233a9c	9d6a4b02-88cd-4dad-8f5d-e0a796e02932	385a4d85-31d0-415c-960d-defb9298b432	\N	2024-11-05 09:21:46	200 DataChange event for () Dispatched	\N	\N
-5792ec77-8e1d-4d8d-b480-ed1286ec2a03	Court buildings		\N	70ae737a-d840-48ce-b1e4-d38db5a85d6f	e804a8f7-db9c-4c69-ae04-2df706ab07e6	385a4d85-31d0-415c-960d-defb9298b432	\N	2024-11-04 06:30:06	200 DataChange event for () Dispatched	\N	\N
-9e7fc6ed-edd0-4c69-bf18-d4ef28bde8f8			\N	d6b3135a-972a-4fa2-b828-f3eb54233a9c	9e7fc6ed-b23d-4f08-ad92-a585f7a49535	a372d752-2d95-4830-896f-1c7a5bc9dd3c	\N	2025-03-23 07:52:35	200 <!DOCTYPE html>\n<html lang="en" class="no-js">\n    <head>\n        <meta charset="utf-8">\n        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=0">\n        <meta name="robots" content="noindex">\n        <meta name="apple-mobile-web-app-capable" content="yes">\n        <meta name="backend-base-path" content="/backend">\n        <meta name="csrf-token" content="oTqo81Em4xaCMwEfa8LIyktv9W41V44EbGQygcbx">\n        <link rel="icon" type="image/png" href="/modules/backend/assets/images/favicon.png">\n        <title>Administration Area</title>\n        <link href="/modules/system/assets/ui/storm.css?v=1" rel="stylesheet" importance="high">\n        <link href="/modules/system/assets/ui/storm.css?v=1" rel="preload" as="style" importance="high">\n        <link href="/modules/system/assets/ui/icons.css?v=1" rel="stylesheet" importance="high">\n        <link href="/modules/system/assets/ui/icons.css?v=1" rel="preload" as="style" importance="high">\n        <link href="/modules/backend/assets/css/winter.css?v=1" rel="stylesheet" importance="high">\n        <link href="/modules/backend/assets/css/winter.css?v=1" rel="preload" as="style" importance="high">\n    \n        <script>\n            "use strict";\n            /* Only run on HTTPS connections\n            * Block off Front-end Service Worker from running in the Backend allowing security injections, see GitHub #4384\n            */\n            if (location.protocol === 'https:') {\n                // Unregister all service workers before signing in to prevent cache issues, see github issue: #3707\n                navigator.serviceWorker.getRegistrations().then(\n                    function (registrations) {\n                        registrations.forEach(function (registration) {\n                            registration.unregister();\n                        });\n                    }\n                );\n            }\n        </script>\n\n        <style>\n            #layout-canvas .flash-message.fade {\n                display:block;\n                opacity:1;\n            }\n        </style>\n    </head>\n\n    <body class="outer signin preload">\n        <div id="layout-canvas">\n            <div class="layout">\n                <div class="layout-row min-size layout-head">\n                    <div class="layout-cell">\n                        <h1>Secure System</h1>\n                    </div>\n                </div>\n\n                <div class="layout-row">\n                    <div class="layout-cell">\n                        <div class="outer-form-container">\n                            <form method="POST" action="http://justice.laptop/backend/backend/auth/signin" accept-charset="UTF-8"><input name="_session_key" type="hidden" value="HQl8uGEdIhbkZqCNlRVxQls09GBLL1YBhpcflJBh"><input name="_token" type="hidden" value="oTqo81Em4xaCMwEfa8LIyktv9W41V44EbGQygcbx">                                <input type="hidden" name="postback" value="1" />\n\n                                <div class="form-elements" role="form">\n                                    <div class="form-group text-field horizontal-form">\n\n                                        <!-- Login -->\n                                        <input\n                                            type="text"\n                                            name="login"\n                                            value=""\n                                            class="form-control icon user"\n                                            placeholder="login"\n                                            autocomplete="off"\n                                            maxlength="255" />\n\n                                        <!-- Password -->\n                                        <input\n                                            type="password"\n                                            name="password"\n                                            value=""\n                                            class="form-control icon lock"\n                                            placeholder="password"\n                                            autocomplete="off"\n                                            maxlength="255" />\n\n                                        <!-- Submit Login -->\n                                        <button type="submit" class="btn btn-primary login-button">\n                                            Login\n                                        </button>\n                                    </div>\n\n                                    \n                                    <p class="wn-icon-lock pull-right forgot-password">\n                                        <!-- Forgot your password? -->\n                                        <a name="/backend/backend/auth/restore" class="text-muted">\n                                            Forgot your password?<br/>\n                                            Go suck an egg. \n                                            <!-- Please talk with a Systems Administrator. -->\n                                        </a>\n                                    </p>\n                                </div>\n                            </form>                        </div>\n\n                        <!-- Flash Messages -->\n                        <div id="layout-flash-messages">\n                                        \n                        </div>\n                \n                    </div>\n                </div>\n            </div>\n        </div>\n    </body>\n</html>\n	\N	\N
-\.
-
-
---
--- Data for Name: acorn_location_area_types; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_location_area_types (id, name, server_id, created_at, created_by_user_id, response, description) FROM stdin;
-b8f142f9-54c0-426c-81a8-23a9cdd17e59	Country	385a4d85-31d0-415c-960d-defb9298b432	2024-10-19 11:37:20	\N	500 <!DOCTYPE html>\n<html lang="en">\n    <head>\n        <meta charset="utf-8">\n        <title>Exception</title>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/css/styles.css" rel="stylesheet">\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shCore.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushPhp.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushXml.js"></script>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/styles/shCore.css">\n    </head>\n    <body>\n        <div class="container">\n\n            <h1><i class="icon-power-off warning"></i> Error</h1>\n\n            <p class="lead">We're sorry, but an unhandled error occurred. Please see the details below.</p>\n\n            <div class="exception-name-block">\n                <div>public.acorn_location_area_types =&gt; Acorn\\Location\\Models\\Area =&gt; acorn_location_areas does not match</div>\n                <p>/var/www/acorn-lojistiks/modules/acorn/traits/PathsHelper.php <span>line</span> 328</p>\n            </div>\n\n            <ul class="indicators">\n                <li>\n                    <h3>Type</h3>\n                    <p>Undefined</p>\n                </li>\n                <li>\n                    <h3>Exception</h3>\n                    <p>Exception</p>\n                </li>\n            </ul>\n\n            <pre class="brush: php">    {\n        $class = self::fullyQualifiedModelClassFromTableName($tableName);\n        $model = new $class;\n        $fullyQualifiedClassTableName = $model-&gt;getTable();\n        $unqualifiedClassTableName    = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $fullyQualifiedClassTableName);\n        $unqualifiedTableName         = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $tableName);\n        if ($unqualifiedClassTableName != $unqualifiedTableName) throw new Exception(&quot;$tableName =&gt; $class =&gt; $unqualifiedClassTableName does not match&quot;);\n        return $model;\n    }\n}\n</pre>\n\n            <h3><i class="icon-code-fork warning"></i> Stack trace</h3>\n\n            <table class="data-table">\n                <thead>\n                    <tr>\n                        <th class="right">#</th>\n                        <th>Called Code</th>\n                        <th>Document</th>\n                        <th class="right">Line</th>\n                    </tr>\n                </thead>\n                <tbody>\n                                            <tr>\n                            <td class="right">29</td>\n                            <td>\n                                Acorn\\Model::newModelFromTableName()\n                            </td>\n                            <td>~/modules/acorn/events/DataChange.php</td>\n                            <td class="right">42</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">28</td>\n                            <td>\n                                Acorn\\Events\\DataChange->__construct()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Events/Dispatchable.php</td>\n                            <td class="right">14</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">27</td>\n                            <td>\n                                Acorn\\Events\\DataChange::dispatch()\n                            </td>\n                            <td>~/modules/acorn/controllers/DB.php</td>\n                            <td class="right">36</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">26</td>\n                            <td>\n                                Acorn\\Controllers\\DB->datachange()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Controller.php</td>\n                            <td class="right">54</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">25</td>\n                            <td>\n                                Illuminate\\Routing\\Controller->callAction()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">24</td>\n                            <td>\n                                Illuminate\\Routing\\ControllerDispatcher->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">260</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">23</td>\n                            <td>\n                                Illuminate\\Routing\\Route->runController()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">205</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">22</td>\n                            <td>\n                                Illuminate\\Routing\\Route->run()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">798</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">21</td>\n                            <td>\n                                Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">20</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">19</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">799</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">18</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRouteWithinStack()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">776</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">17</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRoute()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">740</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">16</td>\n                            <td>\n                                Illuminate\\Routing\\Router->dispatchToRoute()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Router/CoreRouter.php</td>\n                            <td class="right">20</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">15</td>\n                            <td>\n                                Winter\\Storm\\Router\\CoreRouter->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">190</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">14</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">13</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php</td>\n                            <td class="right">86</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">12</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForMaintenanceMode.php</td>\n                            <td class="right">25</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">11</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">10</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php</td>\n                            <td class="right">49</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">9</td>\n                            <td>\n                                Illuminate\\Http\\Middleware\\HandleCors->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">8</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForTrustedProxies.php</td>\n                            <td class="right">56</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">7</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForTrustedProxies->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">6</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Http/Middleware/TrustHosts.php</td>\n                            <td class="right">46</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">5</td>\n                            <td>\n                                Winter\\Storm\\Http\\Middleware\\TrustHosts->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">4</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">3</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">165</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">2</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">134</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">1</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->handle()\n                            </td>\n                            <td>~/index.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                    </tbody>\n            </table>\n        </div>\n\n        <script>\n            SyntaxHighlighter.defaults['toolbar'] = false;\n            SyntaxHighlighter.defaults['quick-code'] = false;\n            SyntaxHighlighter.defaults['html-script'] = true;\n            SyntaxHighlighter.defaults['first-line'] = 322;\n            SyntaxHighlighter.defaults['highlight'] = 328;\n            SyntaxHighlighter.all()\n        </script>\n    </body>\n</html>\n	\N
-22a37692-30ab-4ece-a71f-10c8ba99844b	Canton	385a4d85-31d0-415c-960d-defb9298b432	2024-10-19 11:37:20	\N	500 <!DOCTYPE html>\n<html lang="en">\n    <head>\n        <meta charset="utf-8">\n        <title>Exception</title>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/css/styles.css" rel="stylesheet">\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shCore.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushPhp.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushXml.js"></script>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/styles/shCore.css">\n    </head>\n    <body>\n        <div class="container">\n\n            <h1><i class="icon-power-off warning"></i> Error</h1>\n\n            <p class="lead">We're sorry, but an unhandled error occurred. Please see the details below.</p>\n\n            <div class="exception-name-block">\n                <div>public.acorn_location_area_types =&gt; Acorn\\Location\\Models\\Area =&gt; acorn_location_areas does not match</div>\n                <p>/var/www/acorn-lojistiks/modules/acorn/traits/PathsHelper.php <span>line</span> 328</p>\n            </div>\n\n            <ul class="indicators">\n                <li>\n                    <h3>Type</h3>\n                    <p>Undefined</p>\n                </li>\n                <li>\n                    <h3>Exception</h3>\n                    <p>Exception</p>\n                </li>\n            </ul>\n\n            <pre class="brush: php">    {\n        $class = self::fullyQualifiedModelClassFromTableName($tableName);\n        $model = new $class;\n        $fullyQualifiedClassTableName = $model-&gt;getTable();\n        $unqualifiedClassTableName    = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $fullyQualifiedClassTableName);\n        $unqualifiedTableName         = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $tableName);\n        if ($unqualifiedClassTableName != $unqualifiedTableName) throw new Exception(&quot;$tableName =&gt; $class =&gt; $unqualifiedClassTableName does not match&quot;);\n        return $model;\n    }\n}\n</pre>\n\n            <h3><i class="icon-code-fork warning"></i> Stack trace</h3>\n\n            <table class="data-table">\n                <thead>\n                    <tr>\n                        <th class="right">#</th>\n                        <th>Called Code</th>\n                        <th>Document</th>\n                        <th class="right">Line</th>\n                    </tr>\n                </thead>\n                <tbody>\n                                            <tr>\n                            <td class="right">29</td>\n                            <td>\n                                Acorn\\Model::newModelFromTableName()\n                            </td>\n                            <td>~/modules/acorn/events/DataChange.php</td>\n                            <td class="right">42</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">28</td>\n                            <td>\n                                Acorn\\Events\\DataChange->__construct()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Events/Dispatchable.php</td>\n                            <td class="right">14</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">27</td>\n                            <td>\n                                Acorn\\Events\\DataChange::dispatch()\n                            </td>\n                            <td>~/modules/acorn/controllers/DB.php</td>\n                            <td class="right">36</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">26</td>\n                            <td>\n                                Acorn\\Controllers\\DB->datachange()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Controller.php</td>\n                            <td class="right">54</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">25</td>\n                            <td>\n                                Illuminate\\Routing\\Controller->callAction()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">24</td>\n                            <td>\n                                Illuminate\\Routing\\ControllerDispatcher->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">260</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">23</td>\n                            <td>\n                                Illuminate\\Routing\\Route->runController()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">205</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">22</td>\n                            <td>\n                                Illuminate\\Routing\\Route->run()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">798</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">21</td>\n                            <td>\n                                Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">20</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">19</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">799</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">18</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRouteWithinStack()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">776</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">17</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRoute()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">740</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">16</td>\n                            <td>\n                                Illuminate\\Routing\\Router->dispatchToRoute()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Router/CoreRouter.php</td>\n                            <td class="right">20</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">15</td>\n                            <td>\n                                Winter\\Storm\\Router\\CoreRouter->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">190</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">14</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">13</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php</td>\n                            <td class="right">86</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">12</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForMaintenanceMode.php</td>\n                            <td class="right">25</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">11</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">10</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php</td>\n                            <td class="right">49</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">9</td>\n                            <td>\n                                Illuminate\\Http\\Middleware\\HandleCors->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">8</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForTrustedProxies.php</td>\n                            <td class="right">56</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">7</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForTrustedProxies->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">6</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Http/Middleware/TrustHosts.php</td>\n                            <td class="right">46</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">5</td>\n                            <td>\n                                Winter\\Storm\\Http\\Middleware\\TrustHosts->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">4</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">3</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">165</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">2</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">134</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">1</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->handle()\n                            </td>\n                            <td>~/index.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                    </tbody>\n            </table>\n        </div>\n\n        <script>\n            SyntaxHighlighter.defaults['toolbar'] = false;\n            SyntaxHighlighter.defaults['quick-code'] = false;\n            SyntaxHighlighter.defaults['html-script'] = true;\n            SyntaxHighlighter.defaults['first-line'] = 322;\n            SyntaxHighlighter.defaults['highlight'] = 328;\n            SyntaxHighlighter.all()\n        </script>\n    </body>\n</html>\n	\N
-12ded268-507a-45ea-a3e2-058b3d76d4dc	City	385a4d85-31d0-415c-960d-defb9298b432	2024-10-19 11:37:20	\N	500 <!DOCTYPE html>\n<html lang="en">\n    <head>\n        <meta charset="utf-8">\n        <title>Exception</title>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/css/styles.css" rel="stylesheet">\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shCore.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushPhp.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushXml.js"></script>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/styles/shCore.css">\n    </head>\n    <body>\n        <div class="container">\n\n            <h1><i class="icon-power-off warning"></i> Error</h1>\n\n            <p class="lead">We're sorry, but an unhandled error occurred. Please see the details below.</p>\n\n            <div class="exception-name-block">\n                <div>public.acorn_location_area_types =&gt; Acorn\\Location\\Models\\Area =&gt; acorn_location_areas does not match</div>\n                <p>/var/www/acorn-lojistiks/modules/acorn/traits/PathsHelper.php <span>line</span> 328</p>\n            </div>\n\n            <ul class="indicators">\n                <li>\n                    <h3>Type</h3>\n                    <p>Undefined</p>\n                </li>\n                <li>\n                    <h3>Exception</h3>\n                    <p>Exception</p>\n                </li>\n            </ul>\n\n            <pre class="brush: php">    {\n        $class = self::fullyQualifiedModelClassFromTableName($tableName);\n        $model = new $class;\n        $fullyQualifiedClassTableName = $model-&gt;getTable();\n        $unqualifiedClassTableName    = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $fullyQualifiedClassTableName);\n        $unqualifiedTableName         = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $tableName);\n        if ($unqualifiedClassTableName != $unqualifiedTableName) throw new Exception(&quot;$tableName =&gt; $class =&gt; $unqualifiedClassTableName does not match&quot;);\n        return $model;\n    }\n}\n</pre>\n\n            <h3><i class="icon-code-fork warning"></i> Stack trace</h3>\n\n            <table class="data-table">\n                <thead>\n                    <tr>\n                        <th class="right">#</th>\n                        <th>Called Code</th>\n                        <th>Document</th>\n                        <th class="right">Line</th>\n                    </tr>\n                </thead>\n                <tbody>\n                                            <tr>\n                            <td class="right">29</td>\n                            <td>\n                                Acorn\\Model::newModelFromTableName()\n                            </td>\n                            <td>~/modules/acorn/events/DataChange.php</td>\n                            <td class="right">42</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">28</td>\n                            <td>\n                                Acorn\\Events\\DataChange->__construct()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Events/Dispatchable.php</td>\n                            <td class="right">14</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">27</td>\n                            <td>\n                                Acorn\\Events\\DataChange::dispatch()\n                            </td>\n                            <td>~/modules/acorn/controllers/DB.php</td>\n                            <td class="right">36</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">26</td>\n                            <td>\n                                Acorn\\Controllers\\DB->datachange()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Controller.php</td>\n                            <td class="right">54</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">25</td>\n                            <td>\n                                Illuminate\\Routing\\Controller->callAction()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">24</td>\n                            <td>\n                                Illuminate\\Routing\\ControllerDispatcher->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">260</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">23</td>\n                            <td>\n                                Illuminate\\Routing\\Route->runController()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">205</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">22</td>\n                            <td>\n                                Illuminate\\Routing\\Route->run()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">798</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">21</td>\n                            <td>\n                                Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">20</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">19</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">799</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">18</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRouteWithinStack()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">776</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">17</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRoute()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">740</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">16</td>\n                            <td>\n                                Illuminate\\Routing\\Router->dispatchToRoute()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Router/CoreRouter.php</td>\n                            <td class="right">20</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">15</td>\n                            <td>\n                                Winter\\Storm\\Router\\CoreRouter->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">190</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">14</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">13</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php</td>\n                            <td class="right">86</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">12</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForMaintenanceMode.php</td>\n                            <td class="right">25</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">11</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">10</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php</td>\n                            <td class="right">49</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">9</td>\n                            <td>\n                                Illuminate\\Http\\Middleware\\HandleCors->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">8</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForTrustedProxies.php</td>\n                            <td class="right">56</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">7</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForTrustedProxies->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">6</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Http/Middleware/TrustHosts.php</td>\n                            <td class="right">46</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">5</td>\n                            <td>\n                                Winter\\Storm\\Http\\Middleware\\TrustHosts->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">4</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">3</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">165</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">2</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">134</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">1</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->handle()\n                            </td>\n                            <td>~/index.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                    </tbody>\n            </table>\n        </div>\n\n        <script>\n            SyntaxHighlighter.defaults['toolbar'] = false;\n            SyntaxHighlighter.defaults['quick-code'] = false;\n            SyntaxHighlighter.defaults['html-script'] = true;\n            SyntaxHighlighter.defaults['first-line'] = 322;\n            SyntaxHighlighter.defaults['highlight'] = 328;\n            SyntaxHighlighter.all()\n        </script>\n    </body>\n</html>\n	\N
-0f26d439-1cf8-4c46-b218-3a10c18dbfa5	Village	385a4d85-31d0-415c-960d-defb9298b432	2024-10-19 11:37:20	\N	500 <!DOCTYPE html>\n<html lang="en">\n    <head>\n        <meta charset="utf-8">\n        <title>Exception</title>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/css/styles.css" rel="stylesheet">\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shCore.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushPhp.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushXml.js"></script>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/styles/shCore.css">\n    </head>\n    <body>\n        <div class="container">\n\n            <h1><i class="icon-power-off warning"></i> Error</h1>\n\n            <p class="lead">We're sorry, but an unhandled error occurred. Please see the details below.</p>\n\n            <div class="exception-name-block">\n                <div>public.acorn_location_area_types =&gt; Acorn\\Location\\Models\\Area =&gt; acorn_location_areas does not match</div>\n                <p>/var/www/acorn-lojistiks/modules/acorn/traits/PathsHelper.php <span>line</span> 328</p>\n            </div>\n\n            <ul class="indicators">\n                <li>\n                    <h3>Type</h3>\n                    <p>Undefined</p>\n                </li>\n                <li>\n                    <h3>Exception</h3>\n                    <p>Exception</p>\n                </li>\n            </ul>\n\n            <pre class="brush: php">    {\n        $class = self::fullyQualifiedModelClassFromTableName($tableName);\n        $model = new $class;\n        $fullyQualifiedClassTableName = $model-&gt;getTable();\n        $unqualifiedClassTableName    = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $fullyQualifiedClassTableName);\n        $unqualifiedTableName         = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $tableName);\n        if ($unqualifiedClassTableName != $unqualifiedTableName) throw new Exception(&quot;$tableName =&gt; $class =&gt; $unqualifiedClassTableName does not match&quot;);\n        return $model;\n    }\n}\n</pre>\n\n            <h3><i class="icon-code-fork warning"></i> Stack trace</h3>\n\n            <table class="data-table">\n                <thead>\n                    <tr>\n                        <th class="right">#</th>\n                        <th>Called Code</th>\n                        <th>Document</th>\n                        <th class="right">Line</th>\n                    </tr>\n                </thead>\n                <tbody>\n                                            <tr>\n                            <td class="right">29</td>\n                            <td>\n                                Acorn\\Model::newModelFromTableName()\n                            </td>\n                            <td>~/modules/acorn/events/DataChange.php</td>\n                            <td class="right">42</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">28</td>\n                            <td>\n                                Acorn\\Events\\DataChange->__construct()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Events/Dispatchable.php</td>\n                            <td class="right">14</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">27</td>\n                            <td>\n                                Acorn\\Events\\DataChange::dispatch()\n                            </td>\n                            <td>~/modules/acorn/controllers/DB.php</td>\n                            <td class="right">36</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">26</td>\n                            <td>\n                                Acorn\\Controllers\\DB->datachange()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Controller.php</td>\n                            <td class="right">54</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">25</td>\n                            <td>\n                                Illuminate\\Routing\\Controller->callAction()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">24</td>\n                            <td>\n                                Illuminate\\Routing\\ControllerDispatcher->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">260</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">23</td>\n                            <td>\n                                Illuminate\\Routing\\Route->runController()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">205</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">22</td>\n                            <td>\n                                Illuminate\\Routing\\Route->run()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">798</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">21</td>\n                            <td>\n                                Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">20</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">19</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">799</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">18</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRouteWithinStack()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">776</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">17</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRoute()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">740</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">16</td>\n                            <td>\n                                Illuminate\\Routing\\Router->dispatchToRoute()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Router/CoreRouter.php</td>\n                            <td class="right">20</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">15</td>\n                            <td>\n                                Winter\\Storm\\Router\\CoreRouter->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">190</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">14</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">13</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php</td>\n                            <td class="right">86</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">12</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForMaintenanceMode.php</td>\n                            <td class="right">25</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">11</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">10</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php</td>\n                            <td class="right">49</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">9</td>\n                            <td>\n                                Illuminate\\Http\\Middleware\\HandleCors->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">8</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForTrustedProxies.php</td>\n                            <td class="right">56</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">7</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForTrustedProxies->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">6</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Http/Middleware/TrustHosts.php</td>\n                            <td class="right">46</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">5</td>\n                            <td>\n                                Winter\\Storm\\Http\\Middleware\\TrustHosts->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">4</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">3</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">165</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">2</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">134</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">1</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->handle()\n                            </td>\n                            <td>~/index.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                    </tbody>\n            </table>\n        </div>\n\n        <script>\n            SyntaxHighlighter.defaults['toolbar'] = false;\n            SyntaxHighlighter.defaults['quick-code'] = false;\n            SyntaxHighlighter.defaults['html-script'] = true;\n            SyntaxHighlighter.defaults['first-line'] = 322;\n            SyntaxHighlighter.defaults['highlight'] = 328;\n            SyntaxHighlighter.all()\n        </script>\n    </body>\n</html>\n	\N
-25ca35f1-10b7-4307-ac5b-311f03f9eb51	Town	385a4d85-31d0-415c-960d-defb9298b432	2024-10-19 11:37:20	\N	500 <!DOCTYPE html>\n<html lang="en">\n    <head>\n        <meta charset="utf-8">\n        <title>Exception</title>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/css/styles.css" rel="stylesheet">\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shCore.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushPhp.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushXml.js"></script>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/styles/shCore.css">\n    </head>\n    <body>\n        <div class="container">\n\n            <h1><i class="icon-power-off warning"></i> Error</h1>\n\n            <p class="lead">We're sorry, but an unhandled error occurred. Please see the details below.</p>\n\n            <div class="exception-name-block">\n                <div>public.acorn_location_area_types =&gt; Acorn\\Location\\Models\\Area =&gt; acorn_location_areas does not match</div>\n                <p>/var/www/acorn-lojistiks/modules/acorn/traits/PathsHelper.php <span>line</span> 328</p>\n            </div>\n\n            <ul class="indicators">\n                <li>\n                    <h3>Type</h3>\n                    <p>Undefined</p>\n                </li>\n                <li>\n                    <h3>Exception</h3>\n                    <p>Exception</p>\n                </li>\n            </ul>\n\n            <pre class="brush: php">    {\n        $class = self::fullyQualifiedModelClassFromTableName($tableName);\n        $model = new $class;\n        $fullyQualifiedClassTableName = $model-&gt;getTable();\n        $unqualifiedClassTableName    = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $fullyQualifiedClassTableName);\n        $unqualifiedTableName         = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $tableName);\n        if ($unqualifiedClassTableName != $unqualifiedTableName) throw new Exception(&quot;$tableName =&gt; $class =&gt; $unqualifiedClassTableName does not match&quot;);\n        return $model;\n    }\n}\n</pre>\n\n            <h3><i class="icon-code-fork warning"></i> Stack trace</h3>\n\n            <table class="data-table">\n                <thead>\n                    <tr>\n                        <th class="right">#</th>\n                        <th>Called Code</th>\n                        <th>Document</th>\n                        <th class="right">Line</th>\n                    </tr>\n                </thead>\n                <tbody>\n                                            <tr>\n                            <td class="right">29</td>\n                            <td>\n                                Acorn\\Model::newModelFromTableName()\n                            </td>\n                            <td>~/modules/acorn/events/DataChange.php</td>\n                            <td class="right">42</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">28</td>\n                            <td>\n                                Acorn\\Events\\DataChange->__construct()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Events/Dispatchable.php</td>\n                            <td class="right">14</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">27</td>\n                            <td>\n                                Acorn\\Events\\DataChange::dispatch()\n                            </td>\n                            <td>~/modules/acorn/controllers/DB.php</td>\n                            <td class="right">36</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">26</td>\n                            <td>\n                                Acorn\\Controllers\\DB->datachange()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Controller.php</td>\n                            <td class="right">54</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">25</td>\n                            <td>\n                                Illuminate\\Routing\\Controller->callAction()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">24</td>\n                            <td>\n                                Illuminate\\Routing\\ControllerDispatcher->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">260</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">23</td>\n                            <td>\n                                Illuminate\\Routing\\Route->runController()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">205</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">22</td>\n                            <td>\n                                Illuminate\\Routing\\Route->run()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">798</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">21</td>\n                            <td>\n                                Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">20</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">19</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">799</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">18</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRouteWithinStack()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">776</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">17</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRoute()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">740</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">16</td>\n                            <td>\n                                Illuminate\\Routing\\Router->dispatchToRoute()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Router/CoreRouter.php</td>\n                            <td class="right">20</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">15</td>\n                            <td>\n                                Winter\\Storm\\Router\\CoreRouter->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">190</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">14</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">13</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php</td>\n                            <td class="right">86</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">12</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForMaintenanceMode.php</td>\n                            <td class="right">25</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">11</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">10</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php</td>\n                            <td class="right">49</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">9</td>\n                            <td>\n                                Illuminate\\Http\\Middleware\\HandleCors->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">8</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForTrustedProxies.php</td>\n                            <td class="right">56</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">7</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForTrustedProxies->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">6</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Http/Middleware/TrustHosts.php</td>\n                            <td class="right">46</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">5</td>\n                            <td>\n                                Winter\\Storm\\Http\\Middleware\\TrustHosts->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">4</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">3</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">165</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">2</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">134</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">1</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->handle()\n                            </td>\n                            <td>~/index.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                    </tbody>\n            </table>\n        </div>\n\n        <script>\n            SyntaxHighlighter.defaults['toolbar'] = false;\n            SyntaxHighlighter.defaults['quick-code'] = false;\n            SyntaxHighlighter.defaults['html-script'] = true;\n            SyntaxHighlighter.defaults['first-line'] = 322;\n            SyntaxHighlighter.defaults['highlight'] = 328;\n            SyntaxHighlighter.all()\n        </script>\n    </body>\n</html>\n	\N
-3997fe17-fca7-499e-afa6-2ed45afaf4b8	Comune	385a4d85-31d0-415c-960d-defb9298b432	2024-10-19 11:37:20	\N	500 <!DOCTYPE html>\n<html lang="en">\n    <head>\n        <meta charset="utf-8">\n        <title>Exception</title>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/css/styles.css" rel="stylesheet">\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shCore.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushPhp.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushXml.js"></script>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/styles/shCore.css">\n    </head>\n    <body>\n        <div class="container">\n\n            <h1><i class="icon-power-off warning"></i> Error</h1>\n\n            <p class="lead">We're sorry, but an unhandled error occurred. Please see the details below.</p>\n\n            <div class="exception-name-block">\n                <div>public.acorn_location_area_types =&gt; Acorn\\Location\\Models\\Area =&gt; acorn_location_areas does not match</div>\n                <p>/var/www/acorn-lojistiks/modules/acorn/traits/PathsHelper.php <span>line</span> 328</p>\n            </div>\n\n            <ul class="indicators">\n                <li>\n                    <h3>Type</h3>\n                    <p>Undefined</p>\n                </li>\n                <li>\n                    <h3>Exception</h3>\n                    <p>Exception</p>\n                </li>\n            </ul>\n\n            <pre class="brush: php">    {\n        $class = self::fullyQualifiedModelClassFromTableName($tableName);\n        $model = new $class;\n        $fullyQualifiedClassTableName = $model-&gt;getTable();\n        $unqualifiedClassTableName    = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $fullyQualifiedClassTableName);\n        $unqualifiedTableName         = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $tableName);\n        if ($unqualifiedClassTableName != $unqualifiedTableName) throw new Exception(&quot;$tableName =&gt; $class =&gt; $unqualifiedClassTableName does not match&quot;);\n        return $model;\n    }\n}\n</pre>\n\n            <h3><i class="icon-code-fork warning"></i> Stack trace</h3>\n\n            <table class="data-table">\n                <thead>\n                    <tr>\n                        <th class="right">#</th>\n                        <th>Called Code</th>\n                        <th>Document</th>\n                        <th class="right">Line</th>\n                    </tr>\n                </thead>\n                <tbody>\n                                            <tr>\n                            <td class="right">29</td>\n                            <td>\n                                Acorn\\Model::newModelFromTableName()\n                            </td>\n                            <td>~/modules/acorn/events/DataChange.php</td>\n                            <td class="right">42</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">28</td>\n                            <td>\n                                Acorn\\Events\\DataChange->__construct()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Events/Dispatchable.php</td>\n                            <td class="right">14</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">27</td>\n                            <td>\n                                Acorn\\Events\\DataChange::dispatch()\n                            </td>\n                            <td>~/modules/acorn/controllers/DB.php</td>\n                            <td class="right">36</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">26</td>\n                            <td>\n                                Acorn\\Controllers\\DB->datachange()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Controller.php</td>\n                            <td class="right">54</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">25</td>\n                            <td>\n                                Illuminate\\Routing\\Controller->callAction()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">24</td>\n                            <td>\n                                Illuminate\\Routing\\ControllerDispatcher->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">260</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">23</td>\n                            <td>\n                                Illuminate\\Routing\\Route->runController()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">205</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">22</td>\n                            <td>\n                                Illuminate\\Routing\\Route->run()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">798</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">21</td>\n                            <td>\n                                Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">20</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">19</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">799</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">18</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRouteWithinStack()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">776</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">17</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRoute()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">740</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">16</td>\n                            <td>\n                                Illuminate\\Routing\\Router->dispatchToRoute()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Router/CoreRouter.php</td>\n                            <td class="right">20</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">15</td>\n                            <td>\n                                Winter\\Storm\\Router\\CoreRouter->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">190</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">14</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">13</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php</td>\n                            <td class="right">86</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">12</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForMaintenanceMode.php</td>\n                            <td class="right">25</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">11</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">10</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php</td>\n                            <td class="right">49</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">9</td>\n                            <td>\n                                Illuminate\\Http\\Middleware\\HandleCors->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">8</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForTrustedProxies.php</td>\n                            <td class="right">56</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">7</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForTrustedProxies->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">6</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Http/Middleware/TrustHosts.php</td>\n                            <td class="right">46</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">5</td>\n                            <td>\n                                Winter\\Storm\\Http\\Middleware\\TrustHosts->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">4</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">3</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">165</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">2</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">134</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">1</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->handle()\n                            </td>\n                            <td>~/index.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                    </tbody>\n            </table>\n        </div>\n\n        <script>\n            SyntaxHighlighter.defaults['toolbar'] = false;\n            SyntaxHighlighter.defaults['quick-code'] = false;\n            SyntaxHighlighter.defaults['html-script'] = true;\n            SyntaxHighlighter.defaults['first-line'] = 322;\n            SyntaxHighlighter.defaults['highlight'] = 328;\n            SyntaxHighlighter.all()\n        </script>\n    </body>\n</html>\n	\N
-\.
-
-
---
--- Data for Name: acorn_location_areas; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_location_areas (id, name, area_type_id, parent_area_id, gps_id, server_id, version, is_current_version, created_at, created_by_user_id, response, description) FROM stdin;
-97e78c76-c815-44ad-b11a-117cd8414655	Syria	b8f142f9-54c0-426c-81a8-23a9cdd17e59	\N	\N	385a4d85-31d0-415c-960d-defb9298b432	1	t	2024-10-19 11:37:20	\N	200 DataChange event for () Dispatched	\N
-d6b3135a-972a-4fa2-b828-f3eb54233a9c	Cezîra	22a37692-30ab-4ece-a71f-10c8ba99844b	97e78c76-c815-44ad-b11a-117cd8414655	\N	385a4d85-31d0-415c-960d-defb9298b432	1	t	2024-10-19 11:37:20	\N	200 DataChange event for () Dispatched	\N
-70ae737a-d840-48ce-b1e4-d38db5a85d6f	Qamişlo	12ded268-507a-45ea-a3e2-058b3d76d4dc	d6b3135a-972a-4fa2-b828-f3eb54233a9c	e804a8f7-db9c-4c69-ae04-2df706ab07e6	385a4d85-31d0-415c-960d-defb9298b432	1	t	2024-10-19 11:37:20	\N	200 DataChange event for () Dispatched	\N
-f44bac7c-c679-4a9d-965e-96daa5c3662b	Al Hêseke	12ded268-507a-45ea-a3e2-058b3d76d4dc	d6b3135a-972a-4fa2-b828-f3eb54233a9c	faddec10-6fbf-47ca-b97a-165cfb8070c5	385a4d85-31d0-415c-960d-defb9298b432	1	t	2024-10-19 11:37:20	\N	200 DataChange event for () Dispatched	\N
-\.
-
-
---
--- Data for Name: acorn_location_gps; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_location_gps (id, longitude, latitude, server_id, created_at, created_by_user_id, response) FROM stdin;
-e804a8f7-db9c-4c69-ae04-2df706ab07e6	37.0343936	41.2146239	385a4d85-31d0-415c-960d-defb9298b432	2024-10-19 11:37:20	\N	500 <!DOCTYPE html>\n<html lang="en">\n    <head>\n        <meta charset="utf-8">\n        <title>Exception</title>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/css/styles.css" rel="stylesheet">\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shCore.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushPhp.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushXml.js"></script>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/styles/shCore.css">\n    </head>\n    <body>\n        <div class="container">\n\n            <h1><i class="icon-power-off warning"></i> Error</h1>\n\n            <p class="lead">We're sorry, but an unhandled error occurred. Please see the details below.</p>\n\n            <div class="exception-name-block">\n                <div>Class &quot;Acorn\\Location\\Models\\Gp&quot; not found</div>\n                <p>/var/www/acorn-lojistiks/modules/acorn/traits/PathsHelper.php <span>line</span> 324</p>\n            </div>\n\n            <ul class="indicators">\n                <li>\n                    <h3>Type</h3>\n                    <p>Undefined</p>\n                </li>\n                <li>\n                    <h3>Exception</h3>\n                    <p>Error</p>\n                </li>\n            </ul>\n\n            <pre class="brush: php">        return &quot;$authorPascalCase\\\\$pluginPascalCase\\\\Models\\\\$unqualifiedPascalClassName&quot;;\n    }\n&nbsp;\n    public static function newModelFromTableName(string $tableName): Model\n    {\n        $class = self::fullyQualifiedModelClassFromTableName($tableName);\n        $model = new $class;\n        $fullyQualifiedClassTableName = $model-&gt;getTable();\n        $unqualifiedClassTableName    = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $fullyQualifiedClassTableName);\n        $unqualifiedTableName         = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $tableName);\n        if ($unqualifiedClassTableName != $unqualifiedTableName) throw new Exception(&quot;$tableName =&gt; $class =&gt; $unqualifiedClassTableName does not match&quot;);\n        return $model;\n    }\n</pre>\n\n            <h3><i class="icon-code-fork warning"></i> Stack trace</h3>\n\n            <table class="data-table">\n                <thead>\n                    <tr>\n                        <th class="right">#</th>\n                        <th>Called Code</th>\n                        <th>Document</th>\n                        <th class="right">Line</th>\n                    </tr>\n                </thead>\n                <tbody>\n                                            <tr>\n                            <td class="right">29</td>\n                            <td>\n                                Acorn\\Model::newModelFromTableName()\n                            </td>\n                            <td>~/modules/acorn/events/DataChange.php</td>\n                            <td class="right">42</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">28</td>\n                            <td>\n                                Acorn\\Events\\DataChange->__construct()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Events/Dispatchable.php</td>\n                            <td class="right">14</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">27</td>\n                            <td>\n                                Acorn\\Events\\DataChange::dispatch()\n                            </td>\n                            <td>~/modules/acorn/controllers/DB.php</td>\n                            <td class="right">36</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">26</td>\n                            <td>\n                                Acorn\\Controllers\\DB->datachange()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Controller.php</td>\n                            <td class="right">54</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">25</td>\n                            <td>\n                                Illuminate\\Routing\\Controller->callAction()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">24</td>\n                            <td>\n                                Illuminate\\Routing\\ControllerDispatcher->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">260</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">23</td>\n                            <td>\n                                Illuminate\\Routing\\Route->runController()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">205</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">22</td>\n                            <td>\n                                Illuminate\\Routing\\Route->run()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">798</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">21</td>\n                            <td>\n                                Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">20</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">19</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">799</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">18</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRouteWithinStack()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">776</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">17</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRoute()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">740</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">16</td>\n                            <td>\n                                Illuminate\\Routing\\Router->dispatchToRoute()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Router/CoreRouter.php</td>\n                            <td class="right">20</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">15</td>\n                            <td>\n                                Winter\\Storm\\Router\\CoreRouter->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">190</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">14</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">13</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php</td>\n                            <td class="right">86</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">12</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForMaintenanceMode.php</td>\n                            <td class="right">25</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">11</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">10</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php</td>\n                            <td class="right">49</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">9</td>\n                            <td>\n                                Illuminate\\Http\\Middleware\\HandleCors->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">8</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForTrustedProxies.php</td>\n                            <td class="right">56</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">7</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForTrustedProxies->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">6</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Http/Middleware/TrustHosts.php</td>\n                            <td class="right">46</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">5</td>\n                            <td>\n                                Winter\\Storm\\Http\\Middleware\\TrustHosts->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">4</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">3</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">165</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">2</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">134</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">1</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->handle()\n                            </td>\n                            <td>~/index.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                    </tbody>\n            </table>\n        </div>\n\n        <script>\n            SyntaxHighlighter.defaults['toolbar'] = false;\n            SyntaxHighlighter.defaults['quick-code'] = false;\n            SyntaxHighlighter.defaults['html-script'] = true;\n            SyntaxHighlighter.defaults['first-line'] = 318;\n            SyntaxHighlighter.defaults['highlight'] = 324;\n            SyntaxHighlighter.all()\n        </script>\n    </body>\n</html>\n
-faddec10-6fbf-47ca-b97a-165cfb8070c5	36.5166478	40.7416334	385a4d85-31d0-415c-960d-defb9298b432	2024-10-19 11:37:20	\N	500 <!DOCTYPE html>\n<html lang="en">\n    <head>\n        <meta charset="utf-8">\n        <title>Exception</title>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/css/styles.css" rel="stylesheet">\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shCore.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushPhp.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushXml.js"></script>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/styles/shCore.css">\n    </head>\n    <body>\n        <div class="container">\n\n            <h1><i class="icon-power-off warning"></i> Error</h1>\n\n            <p class="lead">We're sorry, but an unhandled error occurred. Please see the details below.</p>\n\n            <div class="exception-name-block">\n                <div>Class &quot;Acorn\\Location\\Models\\Gp&quot; not found</div>\n                <p>/var/www/acorn-lojistiks/modules/acorn/traits/PathsHelper.php <span>line</span> 324</p>\n            </div>\n\n            <ul class="indicators">\n                <li>\n                    <h3>Type</h3>\n                    <p>Undefined</p>\n                </li>\n                <li>\n                    <h3>Exception</h3>\n                    <p>Error</p>\n                </li>\n            </ul>\n\n            <pre class="brush: php">        return &quot;$authorPascalCase\\\\$pluginPascalCase\\\\Models\\\\$unqualifiedPascalClassName&quot;;\n    }\n&nbsp;\n    public static function newModelFromTableName(string $tableName): Model\n    {\n        $class = self::fullyQualifiedModelClassFromTableName($tableName);\n        $model = new $class;\n        $fullyQualifiedClassTableName = $model-&gt;getTable();\n        $unqualifiedClassTableName    = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $fullyQualifiedClassTableName);\n        $unqualifiedTableName         = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $tableName);\n        if ($unqualifiedClassTableName != $unqualifiedTableName) throw new Exception(&quot;$tableName =&gt; $class =&gt; $unqualifiedClassTableName does not match&quot;);\n        return $model;\n    }\n</pre>\n\n            <h3><i class="icon-code-fork warning"></i> Stack trace</h3>\n\n            <table class="data-table">\n                <thead>\n                    <tr>\n                        <th class="right">#</th>\n                        <th>Called Code</th>\n                        <th>Document</th>\n                        <th class="right">Line</th>\n                    </tr>\n                </thead>\n                <tbody>\n                                            <tr>\n                            <td class="right">29</td>\n                            <td>\n                                Acorn\\Model::newModelFromTableName()\n                            </td>\n                            <td>~/modules/acorn/events/DataChange.php</td>\n                            <td class="right">42</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">28</td>\n                            <td>\n                                Acorn\\Events\\DataChange->__construct()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Events/Dispatchable.php</td>\n                            <td class="right">14</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">27</td>\n                            <td>\n                                Acorn\\Events\\DataChange::dispatch()\n                            </td>\n                            <td>~/modules/acorn/controllers/DB.php</td>\n                            <td class="right">36</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">26</td>\n                            <td>\n                                Acorn\\Controllers\\DB->datachange()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Controller.php</td>\n                            <td class="right">54</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">25</td>\n                            <td>\n                                Illuminate\\Routing\\Controller->callAction()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">24</td>\n                            <td>\n                                Illuminate\\Routing\\ControllerDispatcher->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">260</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">23</td>\n                            <td>\n                                Illuminate\\Routing\\Route->runController()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">205</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">22</td>\n                            <td>\n                                Illuminate\\Routing\\Route->run()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">798</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">21</td>\n                            <td>\n                                Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">20</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">19</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">799</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">18</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRouteWithinStack()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">776</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">17</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRoute()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">740</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">16</td>\n                            <td>\n                                Illuminate\\Routing\\Router->dispatchToRoute()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Router/CoreRouter.php</td>\n                            <td class="right">20</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">15</td>\n                            <td>\n                                Winter\\Storm\\Router\\CoreRouter->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">190</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">14</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">13</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php</td>\n                            <td class="right">86</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">12</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForMaintenanceMode.php</td>\n                            <td class="right">25</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">11</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">10</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php</td>\n                            <td class="right">49</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">9</td>\n                            <td>\n                                Illuminate\\Http\\Middleware\\HandleCors->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">8</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForTrustedProxies.php</td>\n                            <td class="right">56</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">7</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForTrustedProxies->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">6</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Http/Middleware/TrustHosts.php</td>\n                            <td class="right">46</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">5</td>\n                            <td>\n                                Winter\\Storm\\Http\\Middleware\\TrustHosts->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">4</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">3</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">165</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">2</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">134</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">1</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->handle()\n                            </td>\n                            <td>~/index.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                    </tbody>\n            </table>\n        </div>\n\n        <script>\n            SyntaxHighlighter.defaults['toolbar'] = false;\n            SyntaxHighlighter.defaults['quick-code'] = false;\n            SyntaxHighlighter.defaults['html-script'] = true;\n            SyntaxHighlighter.defaults['first-line'] = 318;\n            SyntaxHighlighter.defaults['highlight'] = 324;\n            SyntaxHighlighter.all()\n        </script>\n    </body>\n</html>\n
-9d6a4b02-88cd-4dad-8f5d-e0a796e02932	\N	\N	385a4d85-31d0-415c-960d-defb9298b432	2024-11-05 09:21:46	\N	500 <!DOCTYPE html>\n<html lang="en">\n    <head>\n        <meta charset="utf-8">\n        <title>Exception</title>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/css/styles.css" rel="stylesheet">\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shCore.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushPhp.js"></script>\n        <script src="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/scripts/shBrushXml.js"></script>\n        <link href="http://acorn-lojistiks.laptop/modules/system/assets/vendor/syntaxhighlighter/styles/shCore.css">\n    </head>\n    <body>\n        <div class="container">\n\n            <h1><i class="icon-power-off warning"></i> Error</h1>\n\n            <p class="lead">We're sorry, but an unhandled error occurred. Please see the details below.</p>\n\n            <div class="exception-name-block">\n                <div>Class &quot;Acorn\\Location\\Models\\Gp&quot; not found</div>\n                <p>/var/www/acorn-lojistiks/modules/acorn/traits/PathsHelper.php <span>line</span> 324</p>\n            </div>\n\n            <ul class="indicators">\n                <li>\n                    <h3>Type</h3>\n                    <p>Undefined</p>\n                </li>\n                <li>\n                    <h3>Exception</h3>\n                    <p>Error</p>\n                </li>\n            </ul>\n\n            <pre class="brush: php">        return &quot;$authorPascalCase\\\\$pluginPascalCase\\\\Models\\\\$unqualifiedPascalClassName&quot;;\n    }\n&nbsp;\n    public static function newModelFromTableName(string $tableName): Model\n    {\n        $class = self::fullyQualifiedModelClassFromTableName($tableName);\n        $model = new $class;\n        $fullyQualifiedClassTableName = $model-&gt;getTable();\n        $unqualifiedClassTableName    = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $fullyQualifiedClassTableName);\n        $unqualifiedTableName         = preg_replace(&#039;/^[^.]+\\./&#039;, &#039;&#039;, $tableName);\n        if ($unqualifiedClassTableName != $unqualifiedTableName) throw new Exception(&quot;$tableName =&gt; $class =&gt; $unqualifiedClassTableName does not match&quot;);\n        return $model;\n    }\n</pre>\n\n            <h3><i class="icon-code-fork warning"></i> Stack trace</h3>\n\n            <table class="data-table">\n                <thead>\n                    <tr>\n                        <th class="right">#</th>\n                        <th>Called Code</th>\n                        <th>Document</th>\n                        <th class="right">Line</th>\n                    </tr>\n                </thead>\n                <tbody>\n                                            <tr>\n                            <td class="right">29</td>\n                            <td>\n                                Acorn\\Model::newModelFromTableName()\n                            </td>\n                            <td>~/modules/acorn/events/DataChange.php</td>\n                            <td class="right">42</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">28</td>\n                            <td>\n                                Acorn\\Events\\DataChange->__construct()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Events/Dispatchable.php</td>\n                            <td class="right">14</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">27</td>\n                            <td>\n                                Acorn\\Events\\DataChange::dispatch()\n                            </td>\n                            <td>~/modules/acorn/controllers/DB.php</td>\n                            <td class="right">36</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">26</td>\n                            <td>\n                                Acorn\\Controllers\\DB->datachange()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Controller.php</td>\n                            <td class="right">54</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">25</td>\n                            <td>\n                                Illuminate\\Routing\\Controller->callAction()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">24</td>\n                            <td>\n                                Illuminate\\Routing\\ControllerDispatcher->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">260</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">23</td>\n                            <td>\n                                Illuminate\\Routing\\Route->runController()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Route.php</td>\n                            <td class="right">205</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">22</td>\n                            <td>\n                                Illuminate\\Routing\\Route->run()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">798</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">21</td>\n                            <td>\n                                Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">20</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">19</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">799</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">18</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRouteWithinStack()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">776</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">17</td>\n                            <td>\n                                Illuminate\\Routing\\Router->runRoute()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Routing/Router.php</td>\n                            <td class="right">740</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">16</td>\n                            <td>\n                                Illuminate\\Routing\\Router->dispatchToRoute()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Router/CoreRouter.php</td>\n                            <td class="right">20</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">15</td>\n                            <td>\n                                Winter\\Storm\\Router\\CoreRouter->dispatch()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">190</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">14</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">141</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">13</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php</td>\n                            <td class="right">86</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">12</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForMaintenanceMode.php</td>\n                            <td class="right">25</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">11</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">10</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php</td>\n                            <td class="right">49</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">9</td>\n                            <td>\n                                Illuminate\\Http\\Middleware\\HandleCors->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">8</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Foundation/Http/Middleware/CheckForTrustedProxies.php</td>\n                            <td class="right">56</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">7</td>\n                            <td>\n                                Winter\\Storm\\Foundation\\Http\\Middleware\\CheckForTrustedProxies->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">6</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/winter/storm/src/Http/Middleware/TrustHosts.php</td>\n                            <td class="right">46</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">5</td>\n                            <td>\n                                Winter\\Storm\\Http\\Middleware\\TrustHosts->handle()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">180</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">4</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php</td>\n                            <td class="right">116</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">3</td>\n                            <td>\n                                Illuminate\\Pipeline\\Pipeline->then()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">165</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">2</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter()\n                            </td>\n                            <td>~/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php</td>\n                            <td class="right">134</td>\n                        </tr>\n                                            <tr>\n                            <td class="right">1</td>\n                            <td>\n                                Illuminate\\Foundation\\Http\\Kernel->handle()\n                            </td>\n                            <td>~/index.php</td>\n                            <td class="right">43</td>\n                        </tr>\n                                    </tbody>\n            </table>\n        </div>\n\n        <script>\n            SyntaxHighlighter.defaults['toolbar'] = false;\n            SyntaxHighlighter.defaults['quick-code'] = false;\n            SyntaxHighlighter.defaults['html-script'] = true;\n            SyntaxHighlighter.defaults['first-line'] = 318;\n            SyntaxHighlighter.defaults['highlight'] = 324;\n            SyntaxHighlighter.all()\n        </script>\n    </body>\n</html>\n
-9e7fc6ed-b23d-4f08-ad92-a585f7a49535	\N	\N	a372d752-2d95-4830-896f-1c7a5bc9dd3c	2025-03-23 07:52:35	\N	200 <!DOCTYPE html>\n<html lang="en" class="no-js">\n    <head>\n        <meta charset="utf-8">\n        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=0">\n        <meta name="robots" content="noindex">\n        <meta name="apple-mobile-web-app-capable" content="yes">\n        <meta name="backend-base-path" content="/backend">\n        <meta name="csrf-token" content="UEyVRS2fnJAeI8D3zSdxhStK35HH7jj8qc5L9Efo">\n        <link rel="icon" type="image/png" href="/modules/backend/assets/images/favicon.png">\n        <title>Administration Area</title>\n        <link href="/modules/system/assets/ui/storm.css?v=1" rel="stylesheet" importance="high">\n        <link href="/modules/system/assets/ui/storm.css?v=1" rel="preload" as="style" importance="high">\n        <link href="/modules/system/assets/ui/icons.css?v=1" rel="stylesheet" importance="high">\n        <link href="/modules/system/assets/ui/icons.css?v=1" rel="preload" as="style" importance="high">\n        <link href="/modules/backend/assets/css/winter.css?v=1" rel="stylesheet" importance="high">\n        <link href="/modules/backend/assets/css/winter.css?v=1" rel="preload" as="style" importance="high">\n    \n        <script>\n            "use strict";\n            /* Only run on HTTPS connections\n            * Block off Front-end Service Worker from running in the Backend allowing security injections, see GitHub #4384\n            */\n            if (location.protocol === 'https:') {\n                // Unregister all service workers before signing in to prevent cache issues, see github issue: #3707\n                navigator.serviceWorker.getRegistrations().then(\n                    function (registrations) {\n                        registrations.forEach(function (registration) {\n                            registration.unregister();\n                        });\n                    }\n                );\n            }\n        </script>\n\n        <style>\n            #layout-canvas .flash-message.fade {\n                display:block;\n                opacity:1;\n            }\n        </style>\n    </head>\n\n    <body class="outer signin preload">\n        <div id="layout-canvas">\n            <div class="layout">\n                <div class="layout-row min-size layout-head">\n                    <div class="layout-cell">\n                        <h1>Secure System</h1>\n                    </div>\n                </div>\n\n                <div class="layout-row">\n                    <div class="layout-cell">\n                        <div class="outer-form-container">\n                            <form method="POST" action="http://justice.laptop/backend/backend/auth/signin" accept-charset="UTF-8"><input name="_session_key" type="hidden" value="f32ooHfIQYb7yDxt2YiTsMIBqwUNbMjIsrXyVZbp"><input name="_token" type="hidden" value="UEyVRS2fnJAeI8D3zSdxhStK35HH7jj8qc5L9Efo">                                <input type="hidden" name="postback" value="1" />\n\n                                <div class="form-elements" role="form">\n                                    <div class="form-group text-field horizontal-form">\n\n                                        <!-- Login -->\n                                        <input\n                                            type="text"\n                                            name="login"\n                                            value=""\n                                            class="form-control icon user"\n                                            placeholder="login"\n                                            autocomplete="off"\n                                            maxlength="255" />\n\n                                        <!-- Password -->\n                                        <input\n                                            type="password"\n                                            name="password"\n                                            value=""\n                                            class="form-control icon lock"\n                                            placeholder="password"\n                                            autocomplete="off"\n                                            maxlength="255" />\n\n                                        <!-- Submit Login -->\n                                        <button type="submit" class="btn btn-primary login-button">\n                                            Login\n                                        </button>\n                                    </div>\n\n                                    \n                                    <p class="wn-icon-lock pull-right forgot-password">\n                                        <!-- Forgot your password? -->\n                                        <a name="/backend/backend/auth/restore" class="text-muted">\n                                            Forgot your password?<br/>\n                                            Go suck an egg. \n                                            <!-- Please talk with a Systems Administrator. -->\n                                        </a>\n                                    </p>\n                                </div>\n                            </form>                        </div>\n\n                        <!-- Flash Messages -->\n                        <div id="layout-flash-messages">\n                                        \n                        </div>\n                \n                    </div>\n                </div>\n            </div>\n        </div>\n    </body>\n</html>\n
-\.
-
-
---
--- Data for Name: acorn_location_locations; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_location_locations (id, address_id, name, image, server_id, created_at, created_by_user_id, response, type_id, description) FROM stdin;
-9d6a4b02-c5ae-467a-9749-c077820b4986	9d6a4b02-b2d3-401a-bfe7-0b6768ea4f9a	Test	/parcel.jpeg	385a4d85-31d0-415c-960d-defb9298b432	2024-11-05 09:21:46	\N	200 DataChange event for () Dispatched	ad1f8d2e-da3e-4d03-8bba-4d8ac72bc7a5	\N
-e5aa0d61-8c70-4c74-99e6-4312ea063912	5792ec77-8e1d-4d8d-b480-ed1286ec2a03	Court Buildings	/logo.png	385a4d85-31d0-415c-960d-defb9298b432	2024-11-04 06:30:29	\N	200 DataChange event for () Dispatched	98eb8925-57ad-4646-bef4-4929f4d90191	\N
-9e7fc6ee-2c81-4eb6-b010-f4333ad0f6a2	9e7fc6ed-edd0-4c69-bf18-d4ef28bde8f8	Test2		a372d752-2d95-4830-896f-1c7a5bc9dd3c	2025-03-23 07:52:35	\N	200 <!DOCTYPE html>\n<html lang="en" class="no-js">\n    <head>\n        <meta charset="utf-8">\n        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=0">\n        <meta name="robots" content="noindex">\n        <meta name="apple-mobile-web-app-capable" content="yes">\n        <meta name="backend-base-path" content="/backend">\n        <meta name="csrf-token" content="CjxPsoUk2eG419D2bPSEWz6xodTZIaRX9I3QT4wU">\n        <link rel="icon" type="image/png" href="/modules/backend/assets/images/favicon.png">\n        <title>Administration Area</title>\n        <link href="/modules/system/assets/ui/storm.css?v=1" rel="stylesheet" importance="high">\n        <link href="/modules/system/assets/ui/storm.css?v=1" rel="preload" as="style" importance="high">\n        <link href="/modules/system/assets/ui/icons.css?v=1" rel="stylesheet" importance="high">\n        <link href="/modules/system/assets/ui/icons.css?v=1" rel="preload" as="style" importance="high">\n        <link href="/modules/backend/assets/css/winter.css?v=1" rel="stylesheet" importance="high">\n        <link href="/modules/backend/assets/css/winter.css?v=1" rel="preload" as="style" importance="high">\n    \n        <script>\n            "use strict";\n            /* Only run on HTTPS connections\n            * Block off Front-end Service Worker from running in the Backend allowing security injections, see GitHub #4384\n            */\n            if (location.protocol === 'https:') {\n                // Unregister all service workers before signing in to prevent cache issues, see github issue: #3707\n                navigator.serviceWorker.getRegistrations().then(\n                    function (registrations) {\n                        registrations.forEach(function (registration) {\n                            registration.unregister();\n                        });\n                    }\n                );\n            }\n        </script>\n\n        <style>\n            #layout-canvas .flash-message.fade {\n                display:block;\n                opacity:1;\n            }\n        </style>\n    </head>\n\n    <body class="outer signin preload">\n        <div id="layout-canvas">\n            <div class="layout">\n                <div class="layout-row min-size layout-head">\n                    <div class="layout-cell">\n                        <h1>Secure System</h1>\n                    </div>\n                </div>\n\n                <div class="layout-row">\n                    <div class="layout-cell">\n                        <div class="outer-form-container">\n                            <form method="POST" action="http://justice.laptop/backend/backend/auth/signin" accept-charset="UTF-8"><input name="_session_key" type="hidden" value="pOhjNJA2myhloBs5t68q2upIhNyiNVjNNmuiLJQe"><input name="_token" type="hidden" value="CjxPsoUk2eG419D2bPSEWz6xodTZIaRX9I3QT4wU">                                <input type="hidden" name="postback" value="1" />\n\n                                <div class="form-elements" role="form">\n                                    <div class="form-group text-field horizontal-form">\n\n                                        <!-- Login -->\n                                        <input\n                                            type="text"\n                                            name="login"\n                                            value=""\n                                            class="form-control icon user"\n                                            placeholder="login"\n                                            autocomplete="off"\n                                            maxlength="255" />\n\n                                        <!-- Password -->\n                                        <input\n                                            type="password"\n                                            name="password"\n                                            value=""\n                                            class="form-control icon lock"\n                                            placeholder="password"\n                                            autocomplete="off"\n                                            maxlength="255" />\n\n                                        <!-- Submit Login -->\n                                        <button type="submit" class="btn btn-primary login-button">\n                                            Login\n                                        </button>\n                                    </div>\n\n                                    \n                                    <p class="wn-icon-lock pull-right forgot-password">\n                                        <!-- Forgot your password? -->\n                                        <a name="/backend/backend/auth/restore" class="text-muted">\n                                            Forgot your password?<br/>\n                                            Go suck an egg. \n                                            <!-- Please talk with a Systems Administrator. -->\n                                        </a>\n                                    </p>\n                                </div>\n                            </form>                        </div>\n\n                        <!-- Flash Messages -->\n                        <div id="layout-flash-messages">\n                                        \n                        </div>\n                \n                    </div>\n                </div>\n            </div>\n        </div>\n    </body>\n</html>\n	\N	\N
-\.
-
-
---
--- Data for Name: acorn_location_lookup; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_location_lookup (id, address, city, zip, country_code, state_code, latitude, longitude, vicinity, created_at) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_location_types; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_location_types (id, name, parent_type_id, server_id, created_at, created_by_user_id, response, colour, image, description) FROM stdin;
-98eb8925-57ad-4646-bef4-4929f4d90191	Office	\N	385a4d85-31d0-415c-960d-defb9298b432	2024-10-19 11:37:20	\N	200 DataChange event for () Dispatched	\N	\N	\N
-d062abea-105d-4726-a6e8-e27aa6cd5d08	Warehouse	ad1f8d2e-da3e-4d03-8bba-4d8ac72bc7a5	385a4d85-31d0-415c-960d-defb9298b432	2024-10-19 11:37:20	\N	200 DataChange event for () Dispatched	#101CA5	\N	\N
-ad1f8d2e-da3e-4d03-8bba-4d8ac72bc7a5	Supplier	\N	385a4d85-31d0-415c-960d-defb9298b432	2024-10-19 11:37:20	\N	200 DataChange event for () Dispatched	#F1C40F	\N	\N
-\.
-
-
---
--- Data for Name: acorn_lojistiks_brands; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_brands (id, name, image, response, server_id, created_at_event_id, created_by_user_id, description, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_containers; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_containers (id, server_id, created_at_event_id, name, created_by_user_id, response, description, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_drivers; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_drivers (id, person_id, server_id, created_at_event_id, vehicle_id, created_by_user_id, response, description, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_employees; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_employees (id, person_id, user_role_id, server_id, created_at_event_id, created_by_user_id, response, description, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_measurement_units; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_measurement_units (id, name, short_name, uses_quantity, server_id, created_at_event_id, created_by_user_id, response, description, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_offices; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_offices (id, location_id, server_id, created_at_event_id, created_by_user_id, response, description, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_people; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_people (id, user_id, image, server_id, created_at_event_id, created_by_user_id, response, last_transfer_location_id, last_product_instance_location_id, description) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_product_attributes; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_product_attributes (id, product_id, name, value, server_id, created_at_event_id, created_by_user_id, response, description, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_product_categories; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_product_categories (id, name, product_category_type_id, parent_product_category_id, server_id, created_at_event_id, created_by_user_id, response, description, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_product_category_types; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_product_category_types (id, name, server_id, created_at_event_id, created_by_user_id, response, description, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_product_instance_transfer; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_product_instance_transfer (id, transfer_id, product_instance_id, server_id, created_at_event_id, created_by_user_id, response, description) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_product_instances; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_product_instances (id, product_id, quantity, external_identifier, asset_class, server_id, created_at_event_id, created_by_user_id, response, image, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_product_product_category; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_product_product_category (id, product_id, product_category_id, server_id, created_at_event_id, created_by_user_id, response) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_product_products; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_product_products (id, product_id, sub_product_id, quantity, server_id, created_at_event_id, created_by_user_id, response, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_products; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_products (id, name, measurement_unit_id, brand_id, model_name, server_id, created_at_event_id, created_by_user_id, response, image, description, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_products_product_category; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_products_product_category (id, product_id, product_category_id, server_id, created_at_event_id, created_by_user_id, response) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_suppliers; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_suppliers (id, location_id, server_id, created_at_event_id, created_by_user_id, response, description, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_transfer_container_product_instance; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_transfer_container_product_instance (id, transfer_container_id, product_instance_transfer_id, server_id, created_at_event_id, created_by_user_id, response, description) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_transfer_containers; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_transfer_containers (id, transfer_id, container_id, server_id, created_at_event_id, created_by_user_id, response, description) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_transfer_invoice; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_transfer_invoice (id, transfer_id, invoice_id, description) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_transfer_purchase; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_transfer_purchase (id, transfer_id, purchase_id, description) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_transfers; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_transfers (id, location_id, driver_id, server_id, vehicle_id, created_by_user_id, created_at_event_id, response, pre_marked_arrived, sent_at_event_id, arrived_at_event_id, description, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_vehicle_types; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_vehicle_types (id, name, server_id, created_at_event_id, created_by_user_id, response, description, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_vehicles; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_vehicles (id, vehicle_type_id, registration, server_id, created_at_event_id, created_by_user_id, response, image, description, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_lojistiks_warehouses; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_lojistiks_warehouses (id, location_id, server_id, created_at_event_id, created_by_user_id, response, description, updated_at_event_id, updated_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_messaging_action; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_messaging_action (message_id, action, settings, status, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_messaging_label; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_messaging_label (id, name, description, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_messaging_message; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_messaging_message (id, user_from_id, subject, body, labels, "externalID", source, mime_type, created_at, updated_at) FROM stdin;
-9d6c39d7-9645-492e-9558-4e6a3ad69629	d57f552e-4ad2-4e9b-9055-d78bb377d1d6	test		\N	\N	\N	\N	2024-11-06 08:25:24	\N
-9d6c5069-076e-4e68-9cd5-e062d6caf59b	d57f552e-4ad2-4e9b-9055-d78bb377d1d6	test		\N	\N	\N	\N	2024-11-06 09:28:30	\N
-\.
-
-
---
--- Data for Name: acorn_messaging_message_instance; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_messaging_message_instance (message_id, instance_id, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_messaging_message_message; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_messaging_message_message (message1_id, message2_id, relationship, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_messaging_message_user; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_messaging_message_user (message_id, user_id, created_at, updated_at) FROM stdin;
-9d6c39d7-9645-492e-9558-4e6a3ad69629	d57f552e-4ad2-4e9b-9055-d78bb377d1d6	\N	\N
-9d6c5069-076e-4e68-9cd5-e062d6caf59b	9d50b9ce-e930-4945-a674-dace41b30aff	\N	\N
-9d6c5069-076e-4e68-9cd5-e062d6caf59b	d57f552e-4ad2-4e9b-9055-d78bb377d1d6	\N	\N
-\.
-
-
---
--- Data for Name: acorn_messaging_message_user_group; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_messaging_message_user_group (message_id, user_group_id, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_messaging_status; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_messaging_status (id, name, description, created_at, updated_at) FROM stdin;
-943d4f2e-ee73-4a6c-9d16-17144700dfd5	Arrived	For external messages only, like email.	\N	\N
-a1958ec2-b684-4189-8eb9-2d58192e9c5d	Seen	In a list	\N	\N
-1a05f53e-d7bb-43d5-81e4-a87668796840	Read	In full view, or if not truncated in a list	\N	\N
-28cb0a37-ad9c-4726-a8d0-fe91582fe08c	Important	User Action	\N	\N
-66e5f1b1-9c4d-41a2-8673-b74c1f187c0c	Hidden	User Action	\N	\N
-\.
-
-
---
--- Data for Name: acorn_messaging_user_message_status; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_messaging_user_message_status (user_id, message_id, status_id, value, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_notary_requests; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_notary_requests (id, description, validated_by_notary_user_id, validated_at_event_id, created_at_event_id, updated_at_event_id, created_by_user_id, updated_by_user_id, server_id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_servers; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_servers (id, hostname, response, created_at, location_id, domain) FROM stdin;
-385a4d85-31d0-415c-960d-defb9298b432	acorn-LOQ-15IRH8	\N	2024-10-19 13:37:18	\N	justice.laptop
-a372d752-2d95-4830-896f-1c7a5bc9dd3c	laptop	\N	2024-10-19 13:37:18	\N	justice.laptop
-\.
-
-
---
--- Data for Name: acorn_user_language_user; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_user_language_user (user_id, language_id) FROM stdin;
-9d50c308-dcde-415d-b36e-4553ea3f99c9	5b8cd54d-fa39-4125-b6a7-ee6c80a2fa2e
-9d50c308-dcde-415d-b36e-4553ea3f99c9	9d9a9514-c136-43fa-b05d-c769b27b00fe
-9d82aca1-b7de-4f82-a65e-b1d0ea0edcc9	5b8cd54d-fa39-4125-b6a7-ee6c80a2fa2e
-9da0c3f6-367a-402b-8d49-ef11333612e8	5b8cd54d-fa39-4125-b6a7-ee6c80a2fa2e
-9da0c3f6-367a-402b-8d49-ef11333612e8	9d9a9514-c136-43fa-b05d-c769b27b00fe
-9d4a923f-a606-4a03-ab05-1aeaf4877fec	5b8cd54d-fa39-4125-b6a7-ee6c80a2fa2e
-9d4a94b1-7932-4ec9-8e86-84a9265eff47	5b8cd54d-fa39-4125-b6a7-ee6c80a2fa2e
-9d4a94b1-7932-4ec9-8e86-84a9265eff47	9d9a9514-c136-43fa-b05d-c769b27b00fe
-9d82aca1-b7de-4f82-a65e-b1d0ea0edcc9	9d9a9514-c136-43fa-b05d-c769b27b00fe
-d57f552e-4ad2-4e9b-9055-d78bb377d1d6	5b8cd54d-fa39-4125-b6a7-ee6c80a2fa2e
-\.
-
-
---
--- Data for Name: acorn_user_languages; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_user_languages (id, name) FROM stdin;
-5b8cd54d-fa39-4125-b6a7-ee6c80a2fa2e	Kurdish
-9d9a9514-c136-43fa-b05d-c769b27b00fe	Arabic
-\.
-
-
---
--- Data for Name: acorn_user_mail_blockers; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_user_mail_blockers (id, email, template, user_id, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_user_roles; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_user_roles (id, name, permissions, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_user_throttle; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_user_throttle (id, user_id, ip_address, attempts, last_attempt_at, is_suspended, suspended_at, is_banned, banned_at) FROM stdin;
-9d49e60c-dfed-495d-90ad-0a5eb3393a9d	2bc29c8f-e9b0-4bd4-8aff-e691b084a255	\N	0	\N	f	\N	f	\N
-9d4afcce-0b67-4f83-81c6-af7f3211d363	9d4a923f-a606-4a03-ab05-1aeaf4877fec	\N	0	\N	f	\N	f	\N
-9d4afd70-70b6-4a1e-8f4b-57833bceab1a	9d4aab74-a3e0-4fa6-bdd4-01e616d67db7	\N	0	\N	f	\N	f	\N
-9d4bef59-a824-49fd-9a9e-b9d55d4916ce	9d4aa408-bcf3-4629-a1ae-cb1046a10e08	\N	0	\N	f	\N	f	\N
-9d50c45a-0a34-45f8-80a6-c38e112a0806	9d4ff7a3-0307-478d-a884-4d7449a04f13	\N	0	\N	f	\N	f	\N
-9d5e55a5-2fd5-4c47-8c21-19d9d55305cc	9d50c308-dcde-415d-b36e-4553ea3f99c9	\N	0	\N	f	\N	f	\N
-9d68043b-26b9-49d9-ba95-d67faad4165e	9d5e9251-d614-4fb9-87ac-f6569efe465b	\N	0	\N	f	\N	f	\N
-9d6c3358-819b-4587-bd8e-d04ddbe181c9	d57f552e-4ad2-4e9b-9055-d78bb377d1d6	\N	0	\N	f	\N	f	\N
-9d729266-6c6f-4805-ab49-efad72bd5455	9d4a94b1-7932-4ec9-8e86-84a9265eff47	\N	0	\N	f	\N	f	\N
-9d9d8120-5bb7-4e0b-b70f-9f1e73c8c8ae	9d82aca1-b7de-4f82-a65e-b1d0ea0edcc9	\N	0	\N	f	\N	f	\N
-9df3017a-e752-45a0-8a83-b311380f1c42	9d8a48dc-d519-44bf-a93b-76d09934f059	\N	0	\N	f	\N	f	\N
-9e221c68-427d-4b8f-90ea-e0d8711b5c4c	9e1d45eb-c9f6-4403-8fb9-27503e293a2c	\N	0	\N	f	\N	f	\N
-9e2c0c73-25db-42be-8995-6824bd31ee9a	9e197206-4838-45f3-8714-42a8f029ab5b	\N	0	\N	f	\N	f	\N
-9e4b5ca8-2777-4d83-aa99-f3f918228199	9e4b5ca2-3d58-423a-9355-3eb53462fce3	\N	0	\N	f	\N	f	\N
-9e804f3c-8be5-4a01-b3c7-1525a9dd2930	9e804f0d-db81-4764-8f40-efe9c8c92721	\N	0	\N	f	\N	f	\N
-\.
-
-
---
--- Data for Name: acorn_user_user_group; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_user_user_group (user_id, user_group_id) FROM stdin;
-d57f552e-4ad2-4e9b-9055-d78bb377d1d6	b67909bf-af9c-44e6-9354-77b25f777aa7
-d57f552e-4ad2-4e9b-9055-d78bb377d1d6	ec893bb1-27da-43ac-a4b4-a8960bba3dde
-9d4a94b1-7932-4ec9-8e86-84a9265eff47	30d93c8e-ee66-44ea-8c73-fd0d032af319
-9e197206-4838-45f3-8714-42a8f029ab5b	30d93c8e-ee66-44ea-8c73-fd0d032af319
-9e197206-4838-45f3-8714-42a8f029ab5b	5ed0afd7-f025-43ef-82d7-a8229ca0d4af
-2bc29c8f-e9b0-4bd4-8aff-e691b084a255	9e43ad93-4969-4655-9d8b-669ff0c8df9a
-\.
-
-
---
--- Data for Name: acorn_user_user_group_types; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_user_user_group_types (id, name, colour, image) FROM stdin;
-9d6d277e-0cbd-4a8c-8483-04fadefd0a06	Weeee	#2980B9	/logo.png
-\.
-
-
---
--- Data for Name: acorn_user_user_group_version_user; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_user_user_group_version_user (user_group_version_id, user_id, role_id, id) FROM stdin;
-\.
-
-
---
--- Data for Name: acorn_user_user_group_versions; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_user_user_group_versions (id, user_group_id, created_at_event_id, from_user_group_version_id) FROM stdin;
-cf0386e6-9782-4383-be26-3eac2e90bd16	01b4bb49-1df8-47a9-abae-0ceaf1a07b43	\N	\N
-\.
-
-
---
--- Data for Name: acorn_user_user_groups; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_user_user_groups (id, name, code, description, created_at, updated_at, parent_user_group_id, nest_left, nest_right, nest_depth, type_id, colour, image, default_user_group_version_id, from_user_group_id, location_id) FROM stdin;
-9d48334c-3138-48d1-b576-ccb7b90c30eb	Registered	registered	Default group for registered users.	2024-10-19 10:37:18	2024-11-06 19:41:46	9d48334c-300c-4970-9c35-be5206270507	2	2	0	\N	\N	\N	\N	\N	\N
-9d6d2bbb-447a-411f-99e3-72d2c1707f90	reg2	reg2		2024-11-06 19:41:46	2024-11-14 10:31:03	9d48334c-3138-48d1-b576-ccb7b90c30eb	0	1	0	9d6d277e-0cbd-4a8c-8483-04fadefd0a06	#E74C3C	/parcel.jpeg	\N	\N	\N
-3b91acb1-1db8-4b07-9720-51f884623bc3	Encumena Dadgeriya Civakî û Encumena Jinê Ya Dadgeriya Civakî Li Efrînê	\N	\N	\N	\N	a20378bc-17a3-46f3-bb9a-0909df637985	\N	\N	\N	\N	\N	\N	\N	\N	\N
-def87161-ead8-4846-b1b0-fd3413f1c84e	Encumena Dadgeriya Civakî û Encumena Jinê Ya Dadgeriya Civakî Li Tebqê	\N	\N	\N	\N	3b91acb1-1db8-4b07-9720-51f884623bc3	\N	\N	\N	\N	\N	\N	\N	\N	\N
-6af83dd7-0238-49dd-a168-9eaf14145b9b	Encumena Jinê Ya Dadgeriya Civakî Li Cizîrê	\N	\N	\N	\N	def87161-ead8-4846-b1b0-fd3413f1c84e	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2a94894a-43d6-4132-b832-e52cabc35205	Encumena Dadgeriya Civakî Li Cizîrê, ji van beşan pêk tê	\N	\N	\N	\N	6af83dd7-0238-49dd-a168-9eaf14145b9b	\N	\N	\N	\N	\N	\N	\N	\N	\N
-94f996bb-985a-4203-9423-d517730ea9b4	Serokatiya Encumenê	\N	\N	\N	\N	2a94894a-43d6-4132-b832-e52cabc35205	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2cfa6092-aef5-4d48-a8d4-c182407d7b40	Komîteya Cêgratiyan	\N	\N	\N	\N	2a94894a-43d6-4132-b832-e52cabc35205	\N	\N	\N	\N	\N	\N	\N	\N	\N
-589ad749-a607-4f09-a899-8bb5f764e06e	Komîteya Çavnêrî Ya Dadwerî	\N	\N	\N	\N	2a94894a-43d6-4132-b832-e52cabc35205	\N	\N	\N	\N	\N	\N	\N	\N	\N
-6bc95789-5381-46a2-b783-1b807ef06362	Komîteya Aştbûnê	\N	\N	\N	\N	2a94894a-43d6-4132-b832-e52cabc35205	\N	\N	\N	\N	\N	\N	\N	\N	\N
-3195e5a8-e5cd-4531-8dfc-a7ae7e7942aa	Komîteya Bi cihanînê	\N	\N	\N	\N	2a94894a-43d6-4132-b832-e52cabc35205	\N	\N	\N	\N	\N	\N	\N	\N	\N
-d8890e2a-0e58-4b72-a4be-764e620989e8	Nivîsgeha Darayî û Rêveberî	\N	\N	\N	\N	2a94894a-43d6-4132-b832-e52cabc35205	\N	\N	\N	\N	\N	\N	\N	\N	\N
-bfac0673-ff5c-46b7-9c7e-ff7e133a9a62	Dîwan û Cêgratiyên girêdayî Encumena Dadageriya Civakî li Cizîrê	\N	\N	\N	\N	2a94894a-43d6-4132-b832-e52cabc35205	\N	\N	\N	\N	\N	\N	\N	\N	\N
-e6b2d42c-9cdf-46d8-b672-007c0438a772	Dîwana Dadgeriya Civakî li Qamişlo	\N	\N	\N	\N	2a94894a-43d6-4132-b832-e52cabc35205	\N	\N	\N	\N	\N	\N	\N	\N	\N
-08572666-8bcf-4ea4-8c8b-5aee6bbecf04	Dîwana Dadgeriya Civakî li Hesîça	\N	\N	\N	\N	2a94894a-43d6-4132-b832-e52cabc35205	\N	\N	\N	\N	\N	\N	\N	\N	\N
-15bff36f-cc1b-4ff4-8a78-417588fcdd61	Dîwana Dadgeriya Civakî li Tirbespiyê	\N	\N	\N	\N	2a94894a-43d6-4132-b832-e52cabc35205	\N	\N	\N	\N	\N	\N	\N	\N	\N
-86a38003-65a7-4e8e-96e0-6b6adac7f733	Dîwana Dadgeriya Civakî li Derbasiyê	\N	\N	\N	\N	2a94894a-43d6-4132-b832-e52cabc35205	\N	\N	\N	\N	\N	\N	\N	\N	\N
-699149d6-28f5-4f81-a412-6b5103abb89c	Dîwana Dadgeriya Civakî li Amûdê	\N	\N	\N	\N	2a94894a-43d6-4132-b832-e52cabc35205	\N	\N	\N	\N	\N	\N	\N	\N	\N
-8c07673f-9824-4af2-807a-678613c6292d	Dîwana Dadgeriya Civakî li Til Temir	\N	\N	\N	\N	2a94894a-43d6-4132-b832-e52cabc35205	\N	\N	\N	\N	\N	\N	\N	\N	\N
-9b1f93c4-424b-4ec4-9cf5-43e23583ab0f	Dîwana Dadgeriya Civakî li Şedadê	\N	\N	\N	\N	2a94894a-43d6-4132-b832-e52cabc35205	\N	\N	\N	\N	\N	\N	\N	\N	\N
-6523c683-5873-463e-8995-9ebc153e2f0d	Dîwana Dadgeriya Civakî li Girkê Legê	\N	\N	\N	\N	2a94894a-43d6-4132-b832-e52cabc35205	\N	\N	\N	\N	\N	\N	\N	\N	\N
-d9209dd1-4769-41bd-ab05-9e2d4d4612e9	Dîwana Dadgeriya Civakî li Dêrikê	\N	\N	\N	\N	2a94894a-43d6-4132-b832-e52cabc35205	\N	\N	\N	\N	\N	\N	\N	\N	\N
-f95d1881-7959-4de3-93d6-f72aabfc73fd	Cêgratiya Giştî li Zerganê	\N	\N	\N	\N	d9209dd1-4769-41bd-ab05-9e2d4d4612e9	\N	\N	\N	\N	\N	\N	\N	\N	\N
-ce3e70e9-c093-4b40-896d-e2b779c62096	Cêgratiya Giştî li Til Birakê	\N	\N	\N	\N	d9209dd1-4769-41bd-ab05-9e2d4d4612e9	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1d0759f7-6d6f-4fc2-b538-093db412cdd7	Cêgratiya Giştî li Holê	\N	\N	\N	\N	d9209dd1-4769-41bd-ab05-9e2d4d4612e9	\N	\N	\N	\N	\N	\N	\N	\N	\N
-022a1e97-b3a1-4eb8-857e-22a7baf0b8c8	Cêgratiya Giştî li Til Hemîsê	\N	\N	\N	\N	d9209dd1-4769-41bd-ab05-9e2d4d4612e9	\N	\N	\N	\N	\N	\N	\N	\N	\N
-9663e48b-0f3b-4ba3-b393-87dcc205e2ef	Cêgratiya Giştî li Çelaxa	\N	\N	\N	\N	d9209dd1-4769-41bd-ab05-9e2d4d4612e9	\N	\N	\N	\N	\N	\N	\N	\N	\N
-6f85ac3c-912d-433a-b539-57261b4c901c	Cêgratiya Giştî li Til Koçerê	\N	\N	\N	\N	d9209dd1-4769-41bd-ab05-9e2d4d4612e9	\N	\N	\N	\N	\N	\N	\N	\N	\N
-fcd0ba88-28d5-4e91-92dd-cbb133efab80	Serokatiya Encumenê	\N	\N	\N	\N	2d5a8b54-033a-40fc-8502-85b738aea2e8	\N	\N	\N	\N	\N	\N	\N	\N	\N
-0d352f4a-f1b0-4b1d-a61f-1228b0bc46ca	Komîteya Cêgratiyan	\N	\N	\N	\N	2d5a8b54-033a-40fc-8502-85b738aea2e8	\N	\N	\N	\N	\N	\N	\N	\N	\N
-51052b50-a5d8-46e5-8b88-b25fead94c78	Komîteya Çavnêrî Ya Dadwerî	\N	\N	\N	\N	2d5a8b54-033a-40fc-8502-85b738aea2e8	\N	\N	\N	\N	\N	\N	\N	\N	\N
-bdc5d5c8-81f5-484a-9c49-0ab85bbb7426	Komîteya Aştbûnê	\N	\N	\N	\N	2d5a8b54-033a-40fc-8502-85b738aea2e8	\N	\N	\N	\N	\N	\N	\N	\N	\N
-e8e7a6b7-4009-4c55-985c-e57d013f9858	Komîteya Bi cihanînê	\N	\N	\N	\N	2d5a8b54-033a-40fc-8502-85b738aea2e8	\N	\N	\N	\N	\N	\N	\N	\N	\N
-f352f32b-0268-432f-8384-66db09e0f5a1	Nivîsgeha Darayî û Rêveberî	\N	\N	\N	\N	2d5a8b54-033a-40fc-8502-85b738aea2e8	\N	\N	\N	\N	\N	\N	\N	\N	\N
-328f15a2-e416-4b9a-9482-492e1dcf57be	Dîwan û Cêgratiyên girêdayî Encumena Dadageriya Civakî li Cizîrê	\N	\N	\N	\N	2d5a8b54-033a-40fc-8502-85b738aea2e8	\N	\N	\N	\N	\N	\N	\N	\N	\N
-ba36ee58-3d57-4522-8698-0f38d79a3eb2	Dîwana Dadgeriya Civakî li Qamişlo	\N	\N	\N	\N	2d5a8b54-033a-40fc-8502-85b738aea2e8	\N	\N	\N	\N	\N	\N	\N	\N	\N
-5fc9a7df-e885-40d3-b93b-93068911cc06	Dîwana Dadgeriya Civakî li Hesîça	\N	\N	\N	\N	2d5a8b54-033a-40fc-8502-85b738aea2e8	\N	\N	\N	\N	\N	\N	\N	\N	\N
-b9c99550-52a5-4eca-acf2-212b39f657a7	Dîwana Dadgeriya Civakî li Tirbespiyê	\N	\N	\N	\N	2d5a8b54-033a-40fc-8502-85b738aea2e8	\N	\N	\N	\N	\N	\N	\N	\N	\N
-5c9fdd8a-de3f-4603-b845-f19f7487b84f	Dîwana Dadgeriya Civakî li Derbasiyê	\N	\N	\N	\N	2d5a8b54-033a-40fc-8502-85b738aea2e8	\N	\N	\N	\N	\N	\N	\N	\N	\N
-b914dc60-52c0-4ce5-a27f-2971a99a1010	Dîwana Dadgeriya Civakî li Amûdê	\N	\N	\N	\N	2d5a8b54-033a-40fc-8502-85b738aea2e8	\N	\N	\N	\N	\N	\N	\N	\N	\N
-c68e2584-5d57-483e-b992-daf5461d456d	Dîwana Dadgeriya Civakî li Til Temir	\N	\N	\N	\N	2d5a8b54-033a-40fc-8502-85b738aea2e8	\N	\N	\N	\N	\N	\N	\N	\N	\N
-85eb99c3-990a-4383-836d-1aca4b896cda	Dîwana Dadgeriya Civakî li Şedadê	\N	\N	\N	\N	2d5a8b54-033a-40fc-8502-85b738aea2e8	\N	\N	\N	\N	\N	\N	\N	\N	\N
-20bfb872-eac9-47cc-890c-7590529c4fca	Dîwana Dadgeriya Civakî li Girkê Legê	\N	\N	\N	\N	2d5a8b54-033a-40fc-8502-85b738aea2e8	\N	\N	\N	\N	\N	\N	\N	\N	\N
-fd835492-6a72-4dfd-a4c4-1762f41efb50	Dîwana Dadgeriya Civakî li Dêrikê	\N	\N	\N	\N	2d5a8b54-033a-40fc-8502-85b738aea2e8	\N	\N	\N	\N	\N	\N	\N	\N	\N
-59dc2b48-348b-403b-9015-4026e94265fe	Cêgratiya Giştî li Zerganê	\N	\N	\N	\N	fd835492-6a72-4dfd-a4c4-1762f41efb50	\N	\N	\N	\N	\N	\N	\N	\N	\N
-7664a7c3-fb5d-4fb9-8920-3245779f4878	Cêgratiya Giştî li Til Birakê	\N	\N	\N	\N	fd835492-6a72-4dfd-a4c4-1762f41efb50	\N	\N	\N	\N	\N	\N	\N	\N	\N
-01b4bb49-1df8-47a9-abae-0ceaf1a07b43	Cêgratiya Giştî li Holê	\N	\N	\N	\N	fd835492-6a72-4dfd-a4c4-1762f41efb50	\N	\N	\N	\N	\N	\N	\N	\N	\N
-6a3b3023-0a7c-4436-931a-0f9f8873d9ae	Cêgratiya Giştî li Til Hemîsê	\N	\N	\N	\N	fd835492-6a72-4dfd-a4c4-1762f41efb50	\N	\N	\N	\N	\N	\N	\N	\N	\N
-6a0c79c5-b2a8-423c-9ff7-69e439bddff9	Cêgratiya Giştî li Çelaxa	\N	\N	\N	\N	fd835492-6a72-4dfd-a4c4-1762f41efb50	\N	\N	\N	\N	\N	\N	\N	\N	\N
-053d6688-555e-478a-ac94-a67700a5781b	Cêgratiya Giştî li Til Koçerê	\N	\N	\N	\N	fd835492-6a72-4dfd-a4c4-1762f41efb50	\N	\N	\N	\N	\N	\N	\N	\N	\N
-30d93c8e-ee66-44ea-8c73-fd0d032af319	Encumena Dadgeriya Civakî ya Rêveberiya Xweser Li Bakur û Rojhilatê Sûriyê	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-5ed0afd7-f025-43ef-82d7-a8229ca0d4af	Encumena Jinê a Dadgeriya Civakî Ya Rêveberiya Xweser Li Bakur û Rojhilatê Sûriyê	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-96fd3444-424c-4348-8aee-b6037e98cd3f	Encumena Dadgeriya Civakî û Encumena Jinê Ya Dadgeriya Civakî Li Cizîrê	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-4491670f-b9c1-44df-a8cd-f47b85464625	Encumena Dadgeriya Civakî û Encumena Jinê Ya Dadgeriya Civakî Li Reqayê	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1e382fe2-7d64-4398-aa5d-e7444c8b9fe6	Encumena Dadgeriya Civakî û Encumena Jinê Ya Dadgeriya Civakî Li Feratê	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-f2e202b2-62a5-46aa-bfdd-98b7806a558c	Encumena Dadgeriya Civakî û Encumena Jinê Ya Dadgeriya Civakî Li Dêra Zorê	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-4d4e0670-f7f4-4ab9-95b6-74e1a3bac1ad	Encumena Dadgeriya Civakî û Encumena Jinê Ya Dadgeriya Civakî Li Munbicê	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-8d7d0361-2e9f-40bc-8aa4-559d8f70c605	Encumena Dadgeriya Civakî û Encumena Jinê Ya Dadgeriya Civakî Li Efrînê	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-8c832e96-70ab-40b2-bbba-01c6cb6695c1	Encumena Dadgeriya Civakî û Encumena Jinê Ya Dadgeriya Civakî Li Tebqê	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-cc8e599e-f8e1-4467-9125-d4e1020d284c	Encumena Jinê Ya Dadgeriya Civakî Li Cizîrê	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-b67909bf-af9c-44e6-9354-77b25f777aa7	Encumena Dadgeriya Civakî Li Cizîrê, ji van beşan pêk tê	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-0952d96e-0392-4f82-9687-44b88d2f71c3	Serokatiya Encumenê	\N	\N	\N	\N	b67909bf-af9c-44e6-9354-77b25f777aa7	\N	\N	\N	\N	\N	\N	\N	\N	\N
-edd91c15-116c-4b81-ba18-5095b355bcad	Komîteya Cêgratiyan	\N	\N	\N	\N	b67909bf-af9c-44e6-9354-77b25f777aa7	\N	\N	\N	\N	\N	\N	\N	\N	\N
-89adc57e-be52-4af6-8282-1c5d8bc2f103	Komîteya Çavnêrî Ya Dadwerî	\N	\N	\N	\N	b67909bf-af9c-44e6-9354-77b25f777aa7	\N	\N	\N	\N	\N	\N	\N	\N	\N
-e6f8a708-c4d3-4396-bef8-8d81eed86ea0	Komîteya Aştbûnê	\N	\N	\N	\N	b67909bf-af9c-44e6-9354-77b25f777aa7	\N	\N	\N	\N	\N	\N	\N	\N	\N
-0a556562-dc1e-4370-bf07-1ba41c22bd18	Komîteya Bi cihanînê	\N	\N	\N	\N	b67909bf-af9c-44e6-9354-77b25f777aa7	\N	\N	\N	\N	\N	\N	\N	\N	\N
-9999365c-34b7-4ff4-a36b-646405a9d947	Nivîsgeha Darayî û Rêveberî	\N	\N	\N	\N	b67909bf-af9c-44e6-9354-77b25f777aa7	\N	\N	\N	\N	\N	\N	\N	\N	\N
-3f5517b1-7a35-40c8-88ba-fd86811c7a31	Dîwan û Cêgratiyên girêdayî Encumena Dadageriya Civakî li Cizîrê	\N	\N	\N	\N	b67909bf-af9c-44e6-9354-77b25f777aa7	\N	\N	\N	\N	\N	\N	\N	\N	\N
-78bdd172-5173-4bf3-a044-85f67c74a990	Dîwana Dadgeriya Civakî li Qamişlo	\N	\N	\N	\N	b67909bf-af9c-44e6-9354-77b25f777aa7	\N	\N	\N	\N	\N	\N	\N	\N	\N
-20983187-a73f-4c7d-ae18-af363cb3b80f	Dîwana Dadgeriya Civakî li Hesîça	\N	\N	\N	\N	b67909bf-af9c-44e6-9354-77b25f777aa7	\N	\N	\N	\N	\N	\N	\N	\N	\N
-6dddede5-0ef6-4f33-b9dd-ca1295d8247c	Dîwana Dadgeriya Civakî li Tirbespiyê	\N	\N	\N	\N	b67909bf-af9c-44e6-9354-77b25f777aa7	\N	\N	\N	\N	\N	\N	\N	\N	\N
-ec893bb1-27da-43ac-a4b4-a8960bba3dde	Dîwana Dadgeriya Civakî li Derbasiyê	\N	\N	\N	\N	b67909bf-af9c-44e6-9354-77b25f777aa7	\N	\N	\N	\N	\N	\N	\N	\N	\N
-f689895a-9c43-4ba6-8459-3c60dfbf8b56	Dîwana Dadgeriya Civakî li Amûdê	\N	\N	\N	\N	b67909bf-af9c-44e6-9354-77b25f777aa7	\N	\N	\N	\N	\N	\N	\N	\N	\N
-e5e95b8f-dffd-4ed5-9c17-c87f62bebd0d	Dîwana Dadgeriya Civakî li Til Temir	\N	\N	\N	\N	b67909bf-af9c-44e6-9354-77b25f777aa7	\N	\N	\N	\N	\N	\N	\N	\N	\N
-19546528-f290-4a40-94d1-f886609a8b94	Dîwana Dadgeriya Civakî li Şedadê	\N	\N	\N	\N	b67909bf-af9c-44e6-9354-77b25f777aa7	\N	\N	\N	\N	\N	\N	\N	\N	\N
-9d3ad872-fc19-47fa-b51b-6262c77aeaaf	Dîwana Dadgeriya Civakî li Girkê Legê	\N	\N	\N	\N	b67909bf-af9c-44e6-9354-77b25f777aa7	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2a849d98-35b5-4d84-9890-89a02efd49c6	Dîwana Dadgeriya Civakî li Dêrikê	\N	\N	\N	\N	b67909bf-af9c-44e6-9354-77b25f777aa7	\N	\N	\N	\N	\N	\N	\N	\N	\N
-56ebd118-2837-479e-a052-4b3b721b7083	Cêgratiya Giştî li Zerganê	\N	\N	\N	\N	2a849d98-35b5-4d84-9890-89a02efd49c6	\N	\N	\N	\N	\N	\N	\N	\N	\N
-3bbf645a-8e02-4c28-88a3-f386567fe2be	Cêgratiya Giştî li Til Birakê	\N	\N	\N	\N	2a849d98-35b5-4d84-9890-89a02efd49c6	\N	\N	\N	\N	\N	\N	\N	\N	\N
-93e4bc76-377e-4f0b-a57a-4a14518fa93e	Cêgratiya Giştî li Holê	\N	\N	\N	\N	2a849d98-35b5-4d84-9890-89a02efd49c6	\N	\N	\N	\N	\N	\N	\N	\N	\N
-c5adb730-1968-400e-af3d-37c8d32d8433	Cêgratiya Giştî li Til Hemîsê	\N	\N	\N	\N	2a849d98-35b5-4d84-9890-89a02efd49c6	\N	\N	\N	\N	\N	\N	\N	\N	\N
-9617afcd-11c8-481b-95ba-112f600eef3b	Cêgratiya Giştî li Çelaxa	\N	\N	\N	\N	2a849d98-35b5-4d84-9890-89a02efd49c6	\N	\N	\N	\N	\N	\N	\N	\N	\N
-738b0e85-0214-42e4-88fa-b6649e2d0a47	Cêgratiya Giştî li Til Koçerê	\N	\N	\N	\N	2a849d98-35b5-4d84-9890-89a02efd49c6	\N	\N	\N	\N	\N	\N	\N	\N	\N
-9e43ad93-4969-4655-9d8b-669ff0c8df9a	Weeeee	weeeee		2025-02-21 10:52:01	2025-03-29 14:08:47	\N	1	2	0	\N	#F1C40F		\N	\N	e5aa0d61-8c70-4c74-99e6-4312ea063912
-9e8c601e-7443-4d95-ad90-5a249056fe6e	test	test		2025-03-29 14:10:52	2025-03-29 14:10:52	\N	1	2	0	9d6d277e-0cbd-4a8c-8483-04fadefd0a06	\N		\N	\N	9e7fc6ee-2c81-4eb6-b010-f4333ad0f6a2
-\.
-
-
---
--- Data for Name: acorn_user_users; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.acorn_user_users (id, name, email, password, activation_code, persist_code, reset_password_code, permissions, is_activated, activated_at, last_login, created_at, updated_at, username, surname, deleted_at, last_seen, is_guest, is_superuser, created_ip_address, last_ip_address, acorn_imap_username, acorn_imap_password, acorn_imap_server, acorn_imap_port, acorn_imap_protocol, acorn_imap_encryption, acorn_imap_authentication, acorn_imap_validate_cert, acorn_smtp_server, acorn_smtp_port, acorn_smtp_encryption, acorn_smtp_authentication, acorn_smtp_username, acorn_smtp_password, acorn_messaging_sounds, acorn_messaging_email_notifications, acorn_messaging_autocreated, acorn_imap_last_fetch, acorn_default_calendar, acorn_start_of_week, acorn_default_event_time_from, acorn_default_event_time_to, is_system_user) FROM stdin;
-9d4aa2bc-d139-4fb7-8764-c847acf8a62f	p99		\N	\N	\N	\N	\N	f	\N	\N	2024-10-20 15:40:34	2024-10-20 15:40:34			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-20	2024-10-20	\N
-9d4aab74-a3e0-4fa6-bdd4-01e616d67db7	fgdfg		\N	\N	\N	\N	\N	f	\N	\N	2024-10-20 16:04:56	2024-10-20 16:04:56			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-20	2024-10-20	\N
-9d4ab604-841e-4f10-9774-493ac4bed052	44		\N	\N	\N	\N	\N	f	\N	\N	2024-10-20 16:34:28	2024-10-20 16:34:28			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-20	2024-10-20	\N
-9d4e6d31-b500-4570-9e27-c6ce7d32b927	sdfsdf		\N	\N	\N	\N	\N	f	\N	\N	2024-10-22 12:54:09	2024-10-22 12:54:09			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-22	2024-10-22	\N
-9d4ff6c3-6f79-4965-8339-6916096b6455	rt		\N	\N	\N	\N	\N	f	\N	\N	2024-10-23 07:14:39	2024-10-23 07:14:39			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-23	2024-10-23	\N
-9d4ff750-42d4-4929-b71f-5a27578f1973	sdsd		\N	\N	\N	\N	\N	f	\N	\N	2024-10-23 07:16:12	2024-10-23 07:16:12			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-23	2024-10-23	\N
-9d4ff772-b2f7-47e4-8060-6a0654307e2f	w44		\N	\N	\N	\N	\N	f	\N	\N	2024-10-23 07:16:34	2024-10-23 07:16:34			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-23	2024-10-23	\N
-9d4ff7a3-0307-478d-a884-4d7449a04f13	w446		\N	\N	\N	\N	\N	f	\N	\N	2024-10-23 07:17:06	2024-10-23 07:17:06			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-23	2024-10-23	\N
-9d5036f3-669b-4790-afea-d7bd8f013db6	gggg		\N	\N	\N	\N	\N	f	\N	\N	2024-10-23 10:14:08	2024-10-23 10:14:08			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-23	2024-10-23	\N
-9d5045c9-f43f-48c6-aed6-6e65d0cd84d6	weeeeeeeeee		\N	\N	\N	\N	\N	f	\N	\N	2024-10-23 10:55:38	2024-10-23 10:55:38			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-23	2024-10-23	\N
-9d5074ca-f5a6-4231-afd4-9ee5e5e19b97	jj		\N	\N	\N	\N	\N	f	\N	\N	2024-10-23 13:07:04	2024-10-23 13:07:04			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-23	2024-10-23	\N
-9d50b904-7777-4afc-90fc-c8f07d73f5c7	yankee		\N	\N	\N	\N	\N	f	\N	\N	2024-10-23 16:17:50	2024-10-23 16:17:50			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-23	2024-10-23	\N
-9d50b9ce-e930-4945-a674-dace41b30aff	24		\N	\N	\N	\N	\N	f	\N	\N	2024-10-23 16:20:02	2024-10-23 16:20:02			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-23	2024-10-23	\N
-9d50ba26-de7a-4c3a-8e2b-cfc959b8ccc7	67		\N	\N	\N	\N	\N	f	\N	\N	2024-10-23 16:21:00	2024-10-23 16:21:00			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-23	2024-10-23	\N
-9d523e58-92c0-4c6b-856c-7c3ed3df95c8	hhhhhhhhhhhhh		\N	\N	\N	\N	\N	f	\N	\N	2024-10-24 10:26:28	2024-10-24 10:26:28			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-24	2024-10-24	\N
-9d547101-5afb-4d3f-9fb4-3a97eea83915	bbbb		\N	\N	\N	\N	\N	f	\N	\N	2024-10-25 12:39:47	2024-10-25 12:39:47			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-25	2024-10-25	\N
-9d58bde5-99f2-49a2-a281-3e805bb01224	b		\N	\N	\N	\N	\N	f	\N	\N	2024-10-27 15:58:06	2024-10-27 15:58:06			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-27	2024-10-27	\N
-9d58bed9-1c00-4aef-9af7-d0ab54ce9489	kk		\N	\N	\N	\N	\N	f	\N	\N	2024-10-27 16:00:45	2024-10-27 16:00:45			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-27	2024-10-27	\N
-9d4aa408-bcf3-4629-a1ae-cb1046a10e08	u8		\N	\N	\N	\N	\N	f	\N	\N	2024-10-20 15:44:11	2024-10-30 10:41:59			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-20	2024-10-20	\N
-9d5e9251-d614-4fb9-87ac-f6569efe465b	ya		\N	\N	\N	\N	\N	f	\N	\N	2024-10-30 13:31:13	2024-10-30 13:31:13			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-30	2024-10-30	\N
-9d8c5e62-84e1-4654-9619-d7c2ac04d3c3	hhhhhhhhhhhh			\N	\N	\N	\N	f	\N	\N	2024-11-22 07:54:04	2024-11-22 07:54:04			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-9d626095-4ac7-42ee-a9df-020710ba9b36	weeeeeeeeeee			\N	\N	\N	\N	f	\N	\N	2024-11-01 10:55:27	2024-11-01 10:55:27			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-9d4a94b1-7932-4ec9-8e86-84a9265eff47	p35		\N	\N	\N	\N	\N	f	\N	\N	2024-10-20 15:01:17	2024-11-09 12:08:08			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-20	2024-10-20	\N
-9d8d2abf-aa1c-4fd1-9153-a90273180632	gggg			\N	\N	\N	\N	f	\N	\N	2024-11-22 17:25:31	2024-11-22 17:25:31			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-9d7c7e22-de3b-4ecc-9bce-782634fac5a5	hhhh			\N	\N	\N	\N	f	\N	\N	2024-11-14 10:29:37	2024-11-14 10:29:37			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-9d8a48dc-d519-44bf-a93b-76d09934f059	yay22			\N	\N	\N	\N	f	\N	\N	2024-11-21 07:02:14	2024-11-21 07:02:14			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-9d7c791c-51ad-45ee-8f22-5bfa6a06139d	weeeeeeeeeee33			\N	\N	\N	\N	f	\N	\N	2024-11-14 10:15:34	2024-11-21 07:13:38			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-9d8c5e5a-7572-4be9-a814-e3b7aeb72b28	hhhhhhhhhhhh			\N	\N	\N	\N	f	\N	\N	2024-11-22 07:53:59	2024-11-22 07:53:59			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-9d8d3ad8-4d5d-44e6-85e8-e961c06ef53d	ert		\N	\N	\N	\N	\N	f	\N	\N	2024-11-22 18:10:32	2024-11-22 18:10:32			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-d57f552e-4ad2-4e9b-9055-d78bb377d1d6	admin		\N	\N	\N	\N	\N	f	\N	\N	\N	2024-11-26 18:24:13			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	\N	\N	\N
-9d50c308-dcde-415d-b36e-4553ea3f99c9	yankee doodle		\N	\N	\N	\N	\N	f	\N	\N	2024-10-23 16:45:50	2024-11-29 09:46:47			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-23	2024-10-23	\N
-9d82aca1-b7de-4f82-a65e-b1d0ea0edcc9	Test		\N	\N	\N	\N	\N	f	\N	\N	2024-11-17 12:14:35	2024-11-30 20:20:29			\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	\N	\N	f
-9d4a923f-a606-4a03-ab05-1aeaf4877fec	p1		\N	\N	\N	\N	\N	f	\N	\N	2024-10-20 14:54:27	2024-12-02 11:11:09		w	\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-20	2024-10-20	\N
-9da0c3f6-367a-402b-8d49-ef11333612e8	fff		\N	\N	\N	\N	\N	f	\N	\N	2024-12-02 11:14:40	2024-12-02 11:14:40		f	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-9e197206-4838-45f3-8714-42a8f029ab5b	yay		$2y$10$SPgyly09h98tg4YE96ioAO99HXq3brZSAC6hBSB0rzNItYvrFFzMO	\N	\N	\N	\N	f	\N	\N	2025-01-31 11:00:43	2025-01-31 11:00:43			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-9e1d409b-3a31-469e-92d9-b7d7c02cf51d	t			\N	\N	\N	\N	f	\N	\N	2025-02-02 08:25:51	2025-02-02 08:25:51			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-9e1d45eb-c9f6-4403-8fb9-27503e293a2c	yy			\N	\N	\N	\N	f	\N	\N	2025-02-02 08:40:43	2025-02-02 08:40:43			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-9e1d4614-059d-4e51-ad40-ef30deaad16c	yy			\N	\N	\N	\N	f	\N	\N	2025-02-02 08:41:09	2025-02-02 08:41:09			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-9e1d46fa-9e3f-495b-b6e2-547b0ee7a5b0	u			\N	\N	\N	\N	f	\N	\N	2025-02-02 08:43:40	2025-02-02 08:43:40			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-9e1d4a13-41fa-4571-99eb-7fd0758b3fa3	u			\N	\N	\N	\N	f	\N	\N	2025-02-02 08:52:20	2025-02-02 08:52:20			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-9e1d4ab4-e547-4551-b4c8-83b37d6ca06f	yy			\N	\N	\N	\N	f	\N	\N	2025-02-02 08:54:06	2025-02-02 08:54:06			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-9e1d5088-228e-44bb-aac3-1a86d7524e28	j			\N	\N	\N	\N	f	\N	\N	2025-02-02 09:10:23	2025-02-02 09:10:23			\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-9d50b920-64ca-4e51-b8ad-bbc4e489e90c	2		\N	\N	\N	\N	\N	f	\N	\N	2024-10-23 16:18:08	2025-02-04 08:41:46			2025-02-04 08:41:46	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	37b605c0-6ed6-49ac-9a77-53901a051d3b	1	2024-10-23	2024-10-23	\N
-9e4b5ca2-3d58-423a-9355-3eb53462fce3	justice	justice@nowhere.com	\N	\N	\N	\N	\N	f	\N	\N	2025-02-25 06:32:18	2025-02-25 06:32:18	justice@nowhere.com		\N	\N	f	f	\N	\N			imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal			f	N	\N	\N	436bb16e-3be1-4fe2-8786-ba018219d266	1	2025-02-25	2025-02-25	f
-2bc29c8f-e9b0-4bd4-8aff-e691b084a255	DEMO user	demo@user.com	password	\N	\N	\N	\N	f	\N	\N	\N	2025-02-25 10:27:23	demo@user.com		\N	\N	f	f	\N	\N	demo@user.com		imap.stackmail.com	993	imap	ssl		t	smtp.stackmail.com	465	ssl	normal	demo@user.com		f	N	\N	\N	436bb16e-3be1-4fe2-8786-ba018219d266	1	\N	\N	\N
-9e808f04-ad37-453e-83c3-70ec6521a495	Admin	admin@nowhere	$2y$10$MMN7bZiRcj2QVN.5BjRnruYtDiKsxLQiJ6Vyr7Od2Oo5vWbr59fN6	\N	\N	\N	\N	f	\N	\N	2025-03-23 17:12:04	2025-03-23 17:12:04	admin	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-9e80984a-f90d-4907-b35e-d2a6188ac8f1	Test	test@nowhere	$2y$10$T31Ym6zyCFUQwcebv6Cu0e4PNeKtGm3dr1KKySUy6Xhh68.qi.fOe	\N	\N	\N	\N	f	\N	\N	2025-03-23 17:38:00	2025-03-23 17:38:00	test	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-9e82808b-c561-4a41-b2b8-4e08dfe78800	Demo	demo@nowhere.org	$2y$10$R7R0ZpYVwF2wY5ntQAxXi.beoGXPHUFodm/2OHupxiXF0MJJ4GbFW	\N	\N	\N	\N	f	\N	\N	2025-03-24 16:23:15	2025-03-24 16:23:15	demo	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-a1a43a0b-8d21-4b0f-ba0d-123d6b754ce4	seeder	\N	\N	\N	\N	\N	\N	f	\N	\N	\N	\N	\N	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-d9067fce-ee60-4912-aadf-c6c4c92a89ed	seeder	\N	\N	\N	\N	\N	\N	f	\N	\N	\N	\N	\N	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-892ffcc7-7538-4910-b851-b6ca349b045d	seeder	\N	\N	\N	\N	\N	\N	f	\N	\N	\N	\N	\N	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
-385f0adc-940c-4424-9575-45e947e32b4b	seeder	\N	\N	\N	\N	\N	\N	f	\N	\N	\N	\N	\N	\N	\N	\N	f	f	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t
-\.
-
-
---
--- Data for Name: backend_access_log; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.backend_access_log (id, user_id, ip_address, created_at, updated_at) FROM stdin;
-1	1	127.0.0.1	2024-10-19 10:38:02	2024-10-19 10:38:02
-2	1	127.0.0.1	2024-10-20 14:31:40	2024-10-20 14:31:40
-3	1	127.0.0.1	2024-10-20 16:55:16	2024-10-20 16:55:16
-4	1	127.0.0.1	2024-10-23 06:29:22	2024-10-23 06:29:22
-5	1	127.0.0.1	2024-10-23 06:37:10	2024-10-23 06:37:10
-6	1	127.0.0.1	2024-10-23 06:40:57	2024-10-23 06:40:57
-7	1	127.0.0.1	2024-10-23 06:41:35	2024-10-23 06:41:35
-8	1	127.0.0.1	2024-10-23 06:46:49	2024-10-23 06:46:49
-9	1	127.0.0.1	2024-10-23 06:47:21	2024-10-23 06:47:21
-10	1	127.0.0.1	2024-10-23 10:14:55	2024-10-23 10:14:55
-11	1	127.0.0.1	2024-10-23 16:48:59	2024-10-23 16:48:59
-12	1	127.0.0.1	2024-10-23 18:24:01	2024-10-23 18:24:01
-13	1	127.0.0.1	2024-10-24 08:52:18	2024-10-24 08:52:18
-14	1	127.0.0.1	2024-10-24 18:14:24	2024-10-24 18:14:24
-15	1	127.0.0.1	2024-10-24 19:48:17	2024-10-24 19:48:17
-16	1	127.0.0.1	2024-10-25 07:09:15	2024-10-25 07:09:15
-17	1	127.0.0.1	2024-10-25 09:53:37	2024-10-25 09:53:37
-18	1	127.0.0.1	2024-10-25 14:31:17	2024-10-25 14:31:17
-19	1	127.0.0.1	2024-10-27 16:05:16	2024-10-27 16:05:16
-20	1	127.0.0.1	2024-10-27 17:17:32	2024-10-27 17:17:32
-21	1	127.0.0.1	2024-10-28 09:31:48	2024-10-28 09:31:48
-22	1	127.0.0.1	2024-10-30 08:07:32	2024-10-30 08:07:32
-23	1	127.0.0.1	2024-10-30 12:49:42	2024-10-30 12:49:42
-24	1	127.0.0.1	2024-10-31 14:08:20	2024-10-31 14:08:20
-25	1	127.0.0.1	2024-11-03 07:19:06	2024-11-03 07:19:06
-26	1	127.0.0.1	2024-11-04 10:31:58	2024-11-04 10:31:58
-27	1	127.0.0.1	2024-11-05 11:00:57	2024-11-05 11:00:57
-28	1	127.0.0.1	2024-11-19 14:17:18	2024-11-19 14:17:18
-29	1	127.0.0.1	2024-11-21 12:24:38	2024-11-21 12:24:38
-30	1	127.0.0.1	2024-11-23 13:39:44	2024-11-23 13:39:44
-31	1	127.0.0.1	2024-11-25 12:16:41	2024-11-25 12:16:41
-32	1	127.0.0.1	2024-11-26 14:43:34	2024-11-26 14:43:34
-33	1	127.0.0.1	2024-11-29 09:42:33	2024-11-29 09:42:33
-34	1	127.0.0.1	2024-12-03 09:27:05	2024-12-03 09:27:05
-35	1	127.0.0.1	2024-12-05 10:07:51	2024-12-05 10:07:51
-36	1	127.0.0.1	2024-12-31 15:21:10	2024-12-31 15:21:10
-37	1	127.0.0.1	2025-01-10 14:21:59	2025-01-10 14:21:59
-38	1	127.0.0.1	2025-01-24 10:26:27	2025-01-24 10:26:27
-39	1	127.0.0.1	2025-01-24 10:38:57	2025-01-24 10:38:57
-40	1	127.0.0.1	2025-02-07 10:51:06	2025-02-07 10:51:06
-41	1	127.0.0.1	2025-02-08 09:08:12	2025-02-08 09:08:12
-42	2	127.0.0.1	2025-02-18 08:47:10	2025-02-18 08:47:10
-43	1	127.0.0.1	2025-02-18 09:35:32	2025-02-18 09:35:32
-44	1	127.0.0.1	2025-02-24 16:35:16	2025-02-24 16:35:16
-45	2	127.0.0.1	2025-02-25 08:23:09	2025-02-25 08:23:09
-46	2	127.0.0.1	2025-02-25 08:26:36	2025-02-25 08:26:36
-47	1	127.0.0.1	2025-02-27 12:45:20	2025-02-27 12:45:20
-48	1	127.0.0.1	2025-02-27 12:47:04	2025-02-27 12:47:04
-49	1	127.0.0.1	2025-02-27 12:49:50	2025-02-27 12:49:50
-50	1	127.0.0.1	2025-03-08 08:52:44	2025-03-08 08:52:44
-51	1	127.0.0.1	2025-03-08 09:10:00	2025-03-08 09:10:00
-52	1	127.0.0.1	2025-03-11 09:23:53	2025-03-11 09:23:53
-53	1	127.0.0.1	2025-03-23 08:11:33	2025-03-23 08:11:33
-54	1	127.0.0.1	2025-03-23 17:31:26	2025-03-23 17:31:26
-55	1	127.0.0.1	2025-03-23 17:35:23	2025-03-23 17:35:23
-56	1	127.0.0.1	2025-03-23 17:37:01	2025-03-23 17:37:01
-57	8	127.0.0.1	2025-03-23 17:42:27	2025-03-23 17:42:27
-58	1	127.0.0.1	2025-03-23 17:42:47	2025-03-23 17:42:47
-59	8	127.0.0.1	2025-03-23 17:47:05	2025-03-23 17:47:05
-60	1	127.0.0.1	2025-03-24 16:30:22	2025-03-24 16:30:22
-61	1	127.0.0.1	2025-03-28 12:45:25	2025-03-28 12:45:25
-62	1	127.0.0.1	2025-03-28 12:52:50	2025-03-28 12:52:50
-63	1	127.0.0.1	2025-03-28 12:56:31	2025-03-28 12:56:31
-64	1	127.0.0.1	2025-03-29 14:04:40	2025-03-29 14:04:40
-\.
-
-
---
--- Data for Name: backend_user_groups; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.backend_user_groups (id, name, created_at, updated_at, code, description, is_new_user_default) FROM stdin;
-1	Owners	2024-10-19 10:37:18	2024-10-19 10:37:18	owners	Default group for website owners.	f
-\.
-
-
---
--- Data for Name: backend_user_preferences; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.backend_user_preferences (id, user_id, namespace, "group", item, value) FROM stdin;
-9	1	acorn_criminal	legalcases	lists-relationlegalcasejusticescanneddocumentslegalcaseviewlist	{"visible":["name","legalcase","_actions"],"order":["id","name","document","created_by_user","created_at_event","legalcase","_qrcode","_actions"],"per_page":"10"}
-3	1	acorn_houseofpeace	legalcases	lists	{"visible":["legalcase_name","legalcase_closed_at_event","legalcase[justice_scanned_documents_legalcase]","legalcase[justice_legalcase_legalcase_category_legalcases]","houseofpeace_events_legalcase","_actions"],"order":["id","created_at_event","created_by_user","legalcase_name","legalcase_closed_at_event","legalcase[justice_scanned_documents_legalcase]","legalcase[justice_legalcase_identifiers_legalcase]","legalcase[justice_legalcase_legalcase_category_legalcases]","_qrcode","houseofpeace_events_legalcase","_actions"],"per_page":"20"}
-4	1	acorn_criminal	appeals	lists	{"visible":["created_at_event","event","name"],"order":["id","legalcase","created_at_event","created_by_user","event","name","_qrcode"],"per_page":"20"}
-6	1	acorn_criminal	legalcases	lists-relationcriminallegalcaseprosecutorlegalcasesviewlist	{"visible":["name","surname","email","created_at","last_seen","groups","languages"],"order":["id","username","name","surname","email","created_at","last_seen","is_guest","created_ip_address","last_ip_address","groups","languages"],"per_page":false}
-12	1	acorn_criminal	legalcases	lists-relationcriminallegalcasedefendantslegalcaseviewlist	{"visible":["user","created_at_event","criminal_defendant_detentions_legalcase_defendant","criminal_defendant_crimes_legalcase_defendant","_actions","updated_at_event","updated_by_user","lawyer_user","verdict"],"order":["id","legalcase","user","created_at_event","created_by_user","criminal_defendant_detentions_legalcase_defendant","criminal_defendant_crimes_legalcase_defendant","_qrcode","_actions","description","updated_at_event","updated_by_user","server","lawyer_user","verdict"],"per_page":"10"}
-10	1	acorn_criminal	legalcases	lists-relationcriminaltrialslegalcaseviewlist	{"visible":["legalcase","criminal_trial_judges_trial","criminal_trial_sessions_trial","_actions","calendar[name]","first_event_part[start]","first_event_part[repeat]","first_event_part[status][name]"],"order":["id","legalcase","created_at_event","created_by_user","criminal_trial_judges_trial","criminal_trial_sessions_trial","_qrcode","_actions","calendar[name]","first_event_part[type][name]","first_event_part[name]","first_event_part[start]","first_event_part[end]","first_event_part[alarm]","first_event_part[description]","first_event_part[repeat]","first_event_part[mask]","first_event_part[repeat_frequency]","first_event_part[mask_type]","first_event_part[parentEventPart][name]","first_event_part[until]","first_event_part[users]","first_event_part[groups]","first_event_part[status][name]","first_event_part[location][name]","owner_user_id","owner_user_group_id","permissions","created_at","updated_at"],"per_page":"10"}
-5	1	backend	backend	preferences	{"locale":"en","fallback_locale":"en","timezone":"Europe\\/Istanbul","editor_font_size":"12","editor_word_wrap":"fluid","editor_code_folding":"manual","editor_tab_size":"4","editor_theme":"twilight","editor_show_invisibles":"0","editor_highlight_active_line":"1","editor_use_hard_tabs":"0","editor_show_gutter":"1","editor_auto_closing":"0","editor_autocompletion":"manual","editor_enable_snippets":"0","editor_display_indent_guides":"0","editor_show_print_margin":"0","dark_mode":"light","menu_location":"top","icon_location":"inline","user_id":1}
-2	1	backend	reportwidgets	dashboard	{"welcome":{"class":"Backend\\\\ReportWidgets\\\\Welcome","sortOrder":50,"configuration":{"ocWidgetWidth":7}},"systemStatus":{"class":"System\\\\ReportWidgets\\\\Status","sortOrder":60,"configuration":{"title":"System status","ocWidgetWidth":7,"ocWidgetNewRow":null}}}
-8	1	acorn_user	usergroups	lists	{"visible":["name","type","type_colour","type_image","colour","code","users_count","created_at","auth_is_member","location"],"order":["id","name","type","type_colour","type_image","colour","image","parent_user_group","code","users_count","created_at","auth_is_member","location"],"per_page":20}
-7	1	acorn_calendar	months	calendars-instance	{"visible":["eventPart[location][name]","instance_start","instance_end","eventPart[name]","name","eventPart[repeatWithFrequency()]","eventPart[attendees()]","eventPart[isLocked()]","eventPart[alarm]","name"],"order":["id","date","event_part_id","eventPart[location][name]","instance_num","instance_start","instance_end","eventPart[name]","name","eventPart[repeatWithFrequency()]","eventPart[attendees()]","created_at","updated_at","eventPart[canWrite()]","eventPart[isLocked()]","eventPart[alarm]","name"],"per_page":null}
-11	1	acorn_user	languages	lists	{"visible":["name"],"order":["id","name"],"per_page":"20"}
-14	1	acorn_criminal	legalcases	lists-relationlegalcasejusticewarrantslegalcaseviewlist	{"visible":["user","warrant_type","revoked_at_event","description","state_indicator","_actions"],"order":["id","created_at_event","created_by_user","user","warrant_type","legalcase","revoked_at_event","description","updated_at_event","updated_by_user","server","state_indicator","notary_request","_qrcode","_actions"],"per_page":"10"}
-18	8	backend	backend	preferences	{"locale":"ar","fallback_locale":"es","timezone":"Europe\\/Istanbul","editor_font_size":"12","editor_word_wrap":"fluid","editor_code_folding":"manual","editor_tab_size":"4","editor_theme":"twilight","editor_show_invisibles":"0","editor_highlight_active_line":"1","editor_use_hard_tabs":"0","editor_show_gutter":"1","editor_auto_closing":"0","editor_autocompletion":"manual","editor_enable_snippets":"0","editor_display_indent_guides":"0","editor_show_print_margin":"0","dark_mode":"light","menu_location":"topi","icon_location":"tiler","user_id":8}
-13	1	acorn_criminal	legalcases	lists-relationcriminallegalcaserelatedeventslegalcaseviewlist	{"visible":["first_event_part[name]","first_event_part[start]","first_event_part[end]","first_event_part[alarm]","first_event_part[repeat]","first_event_part[repeat_frequency]","first_event_part[status][name]","first_event_part[location][name]","_actions"],"order":["legalcase","id","created_at","created_by_user","updated_at","owner_user_id","owner_user_group_id","permissions","_qrcode","calendar[name]","first_event_part[name]","first_event_part[type][name]","first_event_part[start]","first_event_part[end]","first_event_part[alarm]","first_event_part[description]","first_event_part[repeat]","first_event_part[mask]","first_event_part[repeat_frequency]","first_event_part[mask_type]","first_event_part[parentEventPart][name]","first_event_part[until]","first_event_part[status][name]","first_event_part[location][name]","_actions","first_event_part[users]","first_event_part[groups]"],"per_page":"10"}
-16	2	acorn_criminal	legalcases	lists-relationlegalcasejusticewarrantslegalcaseviewlist	{"visible":["user","warrant_type","legalcase","revoked_at_event","description","state_indicator","_actions"],"order":["id","created_at_event","created_by_user","user","warrant_type","legalcase","revoked_at_event","description","updated_at_event","updated_by_user","server","state_indicator","notary_request","_qrcode","_actions"],"per_page":"10"}
-15	2	acorn_criminal	legalcases	lists-relationcriminallegalcasewitnesseslegalcaseviewlist	{"visible":["user","legalcase","description","criminal_witness_statement_legalcase_witnesses","_actions"],"order":["id","user","legalcase","created_at_event","created_by_user","description","updated_at_event","updated_by_user","server","criminal_witness_statement_legalcase_witnesses","_qrcode","_actions"],"per_page":"10"}
-17	1	acorn_location	locations	lists	{"visible":["name","image","type[colour]","type[fully_qualified_name]","address[fully_qualified_name]","address[area][fully_qualified_name]","city","zip","country_code","vicinity"],"order":["id","name","image","type[colour]","type[fully_qualified_name]","address[fully_qualified_name]","address[area][fully_qualified_name]","address[gps][latitude]","address[gps][longitude]","city","zip","country_code","state_code","vicinity"],"per_page":"20"}
-1	1	acorn_criminal	legalcases	lists	{"visible":["legalcase_name","legalcase[owner_user_group][name]","criminal_legalcase_prosecutor_legalcases","criminal_legalcase_evidence_legalcase","criminal_trials_legalcase","legalcase_closed_at_event","legalcase[justice_scanned_documents_legalcase][name]","legalcase[justice_legalcase_legalcase_category_legalcases][name]","criminal_legalcase_plaintiffs_legalcase","legalcase_created_at_event","legalcase_type","_actions"],"order":["id","_qrcode","legalcase_name","legalcase[owner_user_group][name]","criminal_legalcase_prosecutor_legalcases","criminal_appeals_legalcase","criminal_legalcase_defendants_legalcase","criminal_legalcase_related_events_legalcase","criminal_legalcase_witnesses_legalcase","criminal_legalcase_evidence_legalcase","criminal_trials_legalcase","server","legalcase_closed_at_event","legalcase[justice_scanned_documents_legalcase][name]","legalcase[justice_warrants_legalcase][name]","legalcase[justice_legalcase_legalcase_category_legalcases][name]","judge_committee_user_group","criminal_legalcase_plaintiffs_legalcase","legalcase_created_at_event","legalcase_created_by_user","legalcase_description","legalcase_updated_at_event","legalcase_type","legalcase_updated_by_user","_actions","legalcase[justice_summons_legalcase][name]","legalcase[justice_statements_legalcase][name]"],"per_page":"20"}
-24	1	acorn_criminal	legalcases	lists-relationcriminaldefendantcrimeslegalcasedefendantviewlist	{"visible":["crime","description","criminal_crime_sentences_defendant_crime","criminal_crime_evidence_defendant_crimes","_actions"],"order":["id","legalcase_defendant","crime","created_at_event","created_by_user","description","updated_at_event","updated_by_user","server","criminal_crime_sentences_defendant_crime","criminal_crime_evidence_defendant_crimes","_qrcode","_actions"],"per_page":"10"}
-19	2	backend	backend	preferences	{"locale":"ku","fallback_locale":"en","timezone":"Europe\\/Istanbul","icon_location":"inline","menu_location":"top"}
-\.
-
-
---
--- Data for Name: backend_user_roles; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.backend_user_roles (id, name, code, description, permissions, is_system, created_at, updated_at) FROM stdin;
-1	Publisher	publisher	Site editor with access to publishing tools.		t	2024-10-19 10:37:18	2024-10-19 10:37:18
-2	Developer	developer	Site administrator with access to developer tools.		t	2024-10-19 10:37:18	2024-10-19 10:37:18
-\.
-
-
---
--- Data for Name: backend_user_throttle; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.backend_user_throttle (id, user_id, ip_address, attempts, last_attempt_at, is_suspended, suspended_at, is_banned, banned_at) FROM stdin;
-1	1	127.0.0.1	0	\N	f	\N	f	\N
-2	2	\N	0	\N	f	\N	f	\N
-3	7	\N	0	\N	f	\N	f	\N
-4	8	\N	0	\N	f	\N	f	\N
-\.
-
-
---
--- Data for Name: backend_users; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.backend_users (id, first_name, last_name, login, email, password, activation_code, persist_code, reset_password_code, permissions, is_activated, role_id, activated_at, last_login, created_at, updated_at, deleted_at, is_superuser, metadata, acorn_url, acorn_user_user_id) FROM stdin;
-1	Admin	Person	admin	admin@example.com	$2y$10$A487JegVfo9RmI9gD89kiuU0RHuj2sNKSAvu4ZXkMwA42JWAnecoS	\N	$2y$10$84EKulF6YSh.yragWLf.qeOKIJMYyeJOvNNDPnZpk.WXn.yMiTA2q	\N		t	2	\N	2025-03-29 14:04:40	2024-10-19 10:37:18	2025-03-29 14:04:40	\N	t	\N	\N	9e808f04-ad37-453e-83c3-70ec6521a495
-7			justice	justice@nowhere.com	$2y$10$H4YHv/Dyj4Od5i5RRMEbGOvbudWq4QFfSKk3hQvALelR.CXKE5NUa	\N	\N	\N		f	\N	\N	\N	2025-02-25 07:35:08	2025-02-25 07:35:08	\N	t	\N	\N	\N
-8			test	test@b.com	$2y$10$vygcmKdVLO1r2WzFmm21jOT9dbbRB2R0azZj5/hs46KX2p7nj0UTe	\N	\N	\N	{"reporting":1}	f	1	\N	2025-03-23 17:47:05	2025-03-23 17:27:35	2025-03-27 08:54:06	\N	f	\N	\N	\N
-2	Demo		demo	demo@example.com	$2y$10$qXppZYCFKO3PBwI2JUZ0mORjrR/eOhLIkCdKe2U5aPsAWys.sr.Qy		\N		{"cms.manage_content":-1,"cms.manage_assets":-1,"cms.manage_pages":-1,"cms.manage_layouts":-1,"cms.manage_partials":-1,"cms.manage_themes":-1,"cms.manage_theme_options":-1,"backend.access_dashboard":1,"backend.manage_default_dashboard":-1,"backend.manage_users":-1,"backend.impersonate_users":-1,"backend.manage_preferences":1,"backend.manage_editor":-1,"backend.manage_own_editor":-1,"backend.manage_branding":1,"media.manage_media":-1,"backend.allow_unsafe_markdown":-1,"system.manage_updates":-1,"system.access_logs":-1,"system.manage_mail_settings":-1,"system.manage_mail_templates":-1,"acorn.rtler.change_settings":1,"acorn.users.access_users":1,"acorn.users.access_groups":1,"acorn.users.access_settings":1,"acorn.users.impersonate_user":-1,"winter.location.access_settings":1,"winter.tailwindui.manage_own_appearance.dark_mode":1,"winter.tailwindui.manage_own_appearance.menu_location":1,"winter.tailwindui.manage_own_appearance.item_location":1,"winter.translate.manage_locales":1,"winter.translate.manage_messages":1,"acorn_location":1,"acorn_messaging":-1,"calendar_view":1,"change_the_past":1,"access_settings":1,"legalcases__legalcase_name__update":-1,"legalcases__owner_user_group_id__update":-1,"notary":1,"legalcase_type__create_criminal_only":1,"legalcase_type__create_civil_only":-1,"legalcase_type__create_any":-1,"legalcases__legalcase_type_id__update":-1,"trials__access":-1,"appeals__access":-1}	t	\N	\N	2025-02-25 08:26:36	\N	2025-03-24 16:23:15	\N	f			9e82808b-c561-4a41-b2b8-4e08dfe78800
-\.
-
-
---
--- Data for Name: backend_users_groups; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.backend_users_groups (user_id, user_group_id, deleted_at) FROM stdin;
-1	1	\N
-7	1	\N
-8	1	\N
-\.
-
-
---
--- Data for Name: cache; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.cache (key, value, expiration) FROM stdin;
-\.
-
-
---
--- Data for Name: cms_theme_data; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.cms_theme_data (id, theme, data, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: cms_theme_logs; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.cms_theme_logs (id, type, theme, template, old_template, content, old_content, user_id, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: cms_theme_templates; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.cms_theme_templates (id, source, path, content, file_size, updated_at, deleted_at) FROM stdin;
-\.
-
-
---
--- Data for Name: deferred_bindings; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.deferred_bindings (id, master_type, master_field, slave_type, slave_id, session_key, is_bind, created_at, updated_at, pivot_data) FROM stdin;
-\.
-
-
---
--- Data for Name: failed_jobs; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.failed_jobs (id, connection, queue, payload, failed_at, exception, uuid) FROM stdin;
-\.
-
-
---
--- Data for Name: job_batches; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.job_batches (id, name, total_jobs, pending_jobs, failed_jobs, failed_job_ids, options, cancelled_at, created_at, finished_at) FROM stdin;
-\.
-
-
---
--- Data for Name: jobs; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.jobs (id, queue, payload, attempts, reserved_at, available_at, created_at) FROM stdin;
-\.
-
-
---
--- Data for Name: migrations; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.migrations (id, migration, batch) FROM stdin;
-1	2013_10_01_000001_Db_Deferred_Bindings	1
-2	2013_10_01_000002_Db_System_Files	1
-3	2013_10_01_000003_Db_System_Plugin_Versions	1
-4	2013_10_01_000004_Db_System_Plugin_History	1
-5	2013_10_01_000005_Db_System_Settings	1
-6	2013_10_01_000006_Db_System_Parameters	1
-7	2013_10_01_000007_Db_System_Add_Disabled_Flag	1
-8	2013_10_01_000008_Db_System_Mail_Templates	1
-9	2013_10_01_000009_Db_System_Mail_Layouts	1
-10	2014_10_01_000010_Db_Jobs	1
-11	2014_10_01_000011_Db_System_Event_Logs	1
-12	2014_10_01_000012_Db_System_Request_Logs	1
-13	2014_10_01_000013_Db_System_Sessions	1
-14	2015_10_01_000014_Db_System_Mail_Layout_Rename	1
-15	2015_10_01_000015_Db_System_Add_Frozen_Flag	1
-16	2015_10_01_000016_Db_Cache	1
-17	2015_10_01_000017_Db_System_Revisions	1
-18	2015_10_01_000018_Db_FailedJobs	1
-19	2016_10_01_000019_Db_System_Plugin_History_Detail_Text	1
-20	2016_10_01_000020_Db_System_Timestamp_Fix	1
-21	2017_08_04_121309_Db_Deferred_Bindings_Add_Index_Session	1
-22	2017_10_01_000021_Db_System_Sessions_Update	1
-23	2017_10_01_000022_Db_Jobs_FailedJobs_Update	1
-24	2017_10_01_000023_Db_System_Mail_Partials	1
-25	2017_10_23_000024_Db_System_Mail_Layouts_Add_Options_Field	1
-26	2021_10_01_000025_Db_Add_Pivot_Data_To_Deferred_Bindings	1
-27	2022_08_06_000026_Db_System_Add_App_Birthday_Date	1
-28	2022_10_14_000027_Db_Jobs_FailedJobs_Update	1
-29	2023_09_24_000028_Db_System_Sessions_Indexes	1
-30	2023_10_20_000029_Db_Jobs_Batches	1
-31	2013_10_01_000001_Db_Backend_Users	2
-32	2013_10_01_000002_Db_Backend_User_Groups	2
-33	2013_10_01_000003_Db_Backend_Users_Groups	2
-34	2013_10_01_000004_Db_Backend_User_Throttle	2
-35	2014_01_04_000005_Db_Backend_User_Preferences	2
-36	2014_10_01_000006_Db_Backend_Access_Log	2
-37	2014_10_01_000007_Db_Backend_Add_Description_Field	2
-38	2015_10_01_000008_Db_Backend_Add_Superuser_Flag	2
-39	2016_10_01_000009_Db_Backend_Timestamp_Fix	2
-40	2017_10_01_000010_Db_Backend_User_Roles	2
-41	2018_12_16_000011_Db_Backend_Add_Deleted_At	2
-42	2023_02_16_000012_Db_Backend_Add_User_Metadata	2
-43	2023_09_09_000013_Db_Backend_Add_Users_Groups_Delete_At	2
-44	2014_10_01_000001_Db_Cms_Theme_Data	3
-45	2016_10_01_000002_Db_Cms_Timestamp_Fix	3
-46	2017_10_01_000003_Db_Cms_Theme_Logs	3
-47	2018_11_01_000001_Db_Cms_Theme_Templates	3
-48	2024_01_01_000001_Db_Backend_Users_Url	4
-49	2024_01_01_000001_Db_Functions	4
-50	2024_01_01_000001_Db_Servers	4
-\.
-
-
---
--- Data for Name: sessions; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.sessions (id, payload, last_activity, user_id, ip_address, user_agent) FROM stdin;
-\.
-
-
---
--- Data for Name: system_event_logs; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.system_event_logs (id, level, message, details, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: system_files; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.system_files (id, disk_name, file_name, file_size, content_type, title, description, field, attachment_id, attachment_type, is_public, sort_order, created_at, updated_at) FROM stdin;
-1	671546902aaa4525429965.png	rtl.png	18920	image/png	\N	\N	\N	\N	\N	t	1	2024-10-20 18:06:08	2024-10-20 18:06:08
-33	671e790163b0e669805409.jpg	clowns.jpg	110069	image/jpeg	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	33	2024-10-27 17:31:45	2024-10-27 17:31:45
-43	672086d293e26262276061.jpg	world.jpg	106551	image/jpeg	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	43	2024-10-29 06:55:14	2024-10-29 06:55:14
-34	671e7b05cb157672682907.png	rtl.png	18920	image/png	\N	\N	document	9d58e27e-b01e-4bdc-94c9-c63f5850f8b4	Acorn\\Justice\\Models\\ScannedDocument	t	34	2024-10-27 17:40:21	2024-10-27 17:40:26
-20	671e6615cae58692184608.jpg	cat.jpg	990881	image/jpeg	\N	\N	image	\N	Acorn\\Justice\\Models\\ScannedDocument	t	20	2024-10-27 16:11:01	2024-10-27 16:11:01
-35	671e7c0e3ae79147611799.png	padlock.png	103003	image/png	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	35	2024-10-27 17:44:46	2024-10-27 17:44:46
-5	671897a1a2709654378369.png	logo.png	1853297	image/png	\N	\N	logo	1	Backend\\Models\\BrandSetting	t	5	2024-10-23 06:28:49	2024-10-23 06:29:02
-52	6723ab1d997df696935298.png	logo.png	1853297	image/png	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	52	2024-10-31 16:06:53	2024-10-31 16:06:53
-36	671e93d6e46f6203098906.jpg	foundation-arrows.jpg	72760	image/jpeg	\N	\N	document	9d59085b-1de7-46cd-907e-0880f58a7bd5	Acorn\\Justice\\Models\\ScannedDocument	t	36	2024-10-27 19:26:14	2024-10-27 19:26:18
-44	672088442bd8b260439232.jpg	world.jpg	106551	image/jpeg	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	44	2024-10-29 07:01:24	2024-10-29 07:01:24
-21	671e665098cfd973633481.jpg	cat.jpg	990881	image/jpeg	\N	\N	image	\N	Acorn\\Justice\\Models\\ScannedDocument	t	21	2024-10-27 16:12:00	2024-10-27 16:12:00
-37	671f87d9d7a46271013954.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	37	2024-10-28 12:47:21	2024-10-28 12:47:21
-38	671f8ad4aa2c3704830849.png	reporting.png	86111	image/png	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	38	2024-10-28 13:00:04	2024-10-28 13:00:04
-49	6722360387dbd719123179.png	transfer.png	5784	image/png	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	49	2024-10-30 13:34:59	2024-10-30 13:34:59
-39	671f8afc20f27687012476.png	reporting.png	86111	image/png	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	39	2024-10-28 13:00:44	2024-10-28 13:00:44
-22	671e67a169bd5746748209.jpg	cat.jpg	990881	image/jpeg	\N	\N	image	\N	Acorn\\Justice\\Models\\ScannedDocument	t	22	2024-10-27 16:17:37	2024-10-27 16:17:37
-10	67189a8801112450785006.jpg	background.jpg	119963	image/jpeg	\N	\N	background_image	1	Backend\\Models\\BrandSetting	t	10	2024-10-23 06:41:12	2024-10-23 06:41:15
-45	6720885fdeeb6262831406.jpg	world.jpg	106551	image/jpeg	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	45	2024-10-29 07:01:51	2024-10-29 07:01:51
-40	671f8b0e8df76165862877.png	translate.png	90146	image/png	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	40	2024-10-28 13:01:02	2024-10-28 13:01:02
-12	67189bbe3aa75579314823.png	favicon2.png	27291	image/png	\N	\N	favicon	1	Backend\\Models\\BrandSetting	t	12	2024-10-23 06:46:22	2024-10-23 06:46:24
-41	671fd41b9b3dd707844395.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	41	2024-10-28 18:12:43	2024-10-28 18:12:43
-23	671e67bb83c5f343380682.jpg	cat.jpg	990881	image/jpeg	\N	\N	image	\N	Acorn\\Justice\\Models\\ScannedDocument	t	23	2024-10-27 16:18:03	2024-10-27 16:18:03
-42	671fd430a5f84907822236.jpg	world.jpg	106551	image/jpeg	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	42	2024-10-28 18:13:04	2024-10-28 18:13:04
-46	672088f95e43a762838987.png	rtl.png	18920	image/png	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	46	2024-10-29 07:04:25	2024-10-29 07:04:25
-47	67220d89ae8ba322800654.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	47	2024-10-30 10:42:17	2024-10-30 10:42:17
-24	671e68332e8a7622372660.jpg	cat.jpg	990881	image/jpeg	\N	\N	image	\N	Acorn\\Justice\\Models\\ScannedDocument	t	24	2024-10-27 16:20:03	2024-10-27 16:20:03
-50	6722363102238000694288.png	crime_type.png	6417	image/png	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	50	2024-10-30 13:35:45	2024-10-30 13:35:45
-48	6722355dd5edd689847118.png	transfer.png	5784	image/png	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	48	2024-10-30 13:32:13	2024-10-30 13:32:13
-25	671e6a684e676216446254.jpg	cat.jpg	990881	image/jpeg	\N	\N	\N	\N	\N	t	25	2024-10-27 16:29:28	2024-10-27 16:29:28
-54	6724e0539571e036876416.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d62a4ce-fd35-4fda-afaf-c76d6dc0a04b	Acorn\\Justice\\Models\\ScannedDocument	t	54	2024-11-01 14:06:11	2024-11-01 14:06:13
-51	67238915d1cab238732191.png	logo.png	1853297	image/png	\N	\N	avatar	1	Backend\\Models\\User	t	51	2024-10-31 13:41:41	2024-10-31 13:41:44
-19	671a1f05ea0f1601944623.png	logo.png	1853297	image/png	\N	\N	image	9d4aab3a-4f6c-475b-9588-b04e35175d2f	Acorn\\Criminal\\Models\\Legalcase	t	19	2024-10-24 10:18:45	2024-10-24 10:18:45
-26	671e6af347cd1920215136.jpg	cat.jpg	990881	image/jpeg	\N	\N	\N	\N	\N	t	26	2024-10-27 16:31:47	2024-10-27 16:31:47
-27	671e75c5105e6330182577.jpg	cat.jpg	990881	image/jpeg	\N	\N	document	9d58da7f-dc4f-48a7-bb82-0667aaa076ca	Acorn\\Justice\\Models\\ScannedDocument	t	27	2024-10-27 17:17:57	2024-10-27 17:18:04
-53	6723b3aab0c33851058099.png	logo.png	1853297	image/png	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	53	2024-10-31 16:43:22	2024-10-31 16:43:22
-28	671e76b191d59947531993.jpg	cat.jpg	990881	image/jpeg	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	28	2024-10-27 17:21:53	2024-10-27 17:21:53
-55	67286302662fe270142590.png	rtl.png	18920	image/png	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	55	2024-11-04 06:00:34	2024-11-04 06:00:34
-29	671e76cc4e706977933285.jpg	cat.jpg	990881	image/jpeg	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	29	2024-10-27 17:22:20	2024-10-27 17:22:20
-56	672868ce62f8d382453000.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	avatar	2	Backend\\Models\\User	t	56	2024-11-04 06:25:18	2024-11-04 06:25:21
-30	671e76e64fc22482794743.jpg	cat.jpg	990881	image/jpeg	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	30	2024-10-27 17:22:46	2024-10-27 17:22:46
-57	67347d9070caf046849030.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d7a7820-e037-42f1-8e2a-4abeabddcb13	Acorn\\Justice\\Models\\ScannedDocument	t	57	2024-11-13 10:21:04	2024-11-13 10:21:09
-31	671e78a576008043299364.jpg	cat.jpg	990881	image/jpeg	\N	\N	document	9d58dede-2691-4ab7-b3e9-a8f608fe9a4f	Acorn\\Justice\\Models\\ScannedDocument	t	31	2024-10-27 17:30:13	2024-10-27 17:30:17
-58	67347dd4b4555597372634.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d7a788d-0408-4e8d-97b5-da8dd5a0ab73	Acorn\\Justice\\Models\\ScannedDocument	t	58	2024-11-13 10:22:12	2024-11-13 10:22:20
-32	671e78b7cdc31145953831.jpg	cat.jpg	990881	image/jpeg	\N	\N	document	\N	Acorn\\Justice\\Models\\ScannedDocument	t	32	2024-10-27 17:30:31	2024-10-27 17:30:31
-59	67347e8be6445676279963.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d7a79a0-3fa2-41b1-9923-f3927189531a	Acorn\\Justice\\Models\\ScannedDocument	t	59	2024-11-13 10:25:15	2024-11-13 10:25:21
-60	67347ef68ce3b609635179.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d7a7a40-60b4-48ca-818d-85cbe2341f36	Acorn\\Justice\\Models\\ScannedDocument	t	60	2024-11-13 10:27:02	2024-11-13 10:27:06
-61	673485dbe3a99042604637.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d7a84c9-38c3-4de0-9c1f-ccea266347e0	Acorn\\Justice\\Models\\ScannedDocument	t	61	2024-11-13 10:56:27	2024-11-13 10:56:33
-62	673486cf95173667576419.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d7a8639-f9cd-4876-9b8c-e0c6d1d041a7	Acorn\\Justice\\Models\\ScannedDocument	t	62	2024-11-13 11:00:31	2024-11-13 11:00:35
-77	673edd70bef3d416478586.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d8a4cae-0dc1-48d9-97f6-d6dca0e82ff9	Acorn\\Justice\\Models\\ScannedDocument	t	77	2024-11-21 07:12:48	2024-11-21 07:12:55
-63	673487195676a276267396.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d7a86aa-78a1-4fe6-8a60-0657dfce6b04	Acorn\\Justice\\Models\\ScannedDocument	t	63	2024-11-13 11:01:45	2024-11-13 11:01:48
-64	673489bb121c7220763957.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d7a8aaf-f97c-480e-b072-86a09074f0ee	Acorn\\Justice\\Models\\ScannedDocument	t	64	2024-11-13 11:12:59	2024-11-13 11:13:03
-65	67348a4c15405771865257.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d7a8b92-a801-416e-a3eb-bca47e0250cd	Acorn\\Justice\\Models\\ScannedDocument	t	65	2024-11-13 11:15:24	2024-11-13 11:15:32
-78	6740c96f195c9593186790.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d8d3b6e-1131-402f-9955-b7317b4beb4b	Acorn\\Justice\\Models\\ScannedDocument	t	78	2024-11-22 18:11:59	2024-11-22 18:12:10
-66	67348b76868ba384275996.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d7a8d4f-c85b-4630-bcbd-27f7ff3a586a	Acorn\\Justice\\Models\\ScannedDocument	t	66	2024-11-13 11:20:22	2024-11-13 11:20:23
-67	67348bdf54edf819637078.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d7a8df3-e043-4859-9cd4-3f50e446f4d1	Acorn\\Justice\\Models\\ScannedDocument	t	67	2024-11-13 11:22:07	2024-11-13 11:22:11
-68	673494ba76e13548051383.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d7a9b7b-39e7-48c1-a4d5-080308d08f1b	Acorn\\Justice\\Models\\ScannedDocument	t	68	2024-11-13 11:59:54	2024-11-13 12:00:01
-79	6741adbd86c87956650353.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d8e97c3-363b-458b-8f43-664f20234a56	Acorn\\Justice\\Models\\ScannedDocument	t	79	2024-11-23 10:26:05	2024-11-23 10:26:10
-69	6735afeba2d9d040851026.png	background.png	462101	image/png	\N	\N	document	9d7c4b98-3077-4f8b-8c3e-b4620ca060d2	Acorn\\Justice\\Models\\ScannedDocument	t	69	2024-11-14 08:08:11	2024-11-14 08:08:17
-70	6735cecd90ec8766796006.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d7c7ab0-69bb-4ef4-a59c-4152ca7361c8	Acorn\\Justice\\Models\\ScannedDocument	t	70	2024-11-14 10:19:57	2024-11-14 10:19:58
-71	6735cee0cd264673106852.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d7c7acd-9e73-46cd-a042-9af239ce5181	Acorn\\Justice\\Models\\ScannedDocument	t	71	2024-11-14 10:20:16	2024-11-14 10:20:18
-80	67498d8448e24281886961.png	dadgeh.png	136156	image/png	\N	\N	avatar	9d50c308-dcde-415d-b36e-4553ea3f99c9	Acorn\\User\\Models\\User	t	80	2024-11-29 09:46:44	2024-11-29 09:46:47
-72	6738925607fe9616883685.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d80b254-cdbe-4060-8611-9727a3abe982	Acorn\\Justice\\Models\\ScannedDocument	t	72	2024-11-16 12:38:46	2024-11-16 12:38:52
-73	6739ccc20fac1226497665.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	avatar	2bc29c8f-e9b0-4bd4-8aff-e691b084a255	Acorn\\User\\Models\\User	t	73	2024-11-17 11:00:18	2024-11-17 11:00:20
-74	6739de307badb479252604.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	avatar	9d82aca1-b7de-4f82-a65e-b1d0ea0edcc9	Acorn\\User\\Models\\User	t	74	2024-11-17 12:14:40	2024-11-17 12:14:42
-81	6750a353648f7282201372.png	67189bbe3aa75579314823.png	27291	image/png	\N	\N	avatar	9d4a94b1-7932-4ec9-8e86-84a9265eff47	Acorn\\User\\Models\\User	t	81	2024-12-04 18:45:39	2024-12-04 18:45:41
-75	673ed6f6bf931920353133.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d7c7ab6-1a72-4515-8a4a-9f0df0166324	Acorn\\Justice\\Models\\ScannedDocument	t	75	2024-11-21 06:45:10	2024-11-21 06:45:12
-76	673ed7a5de9f1107108467.jpeg	parcel.jpeg	191278	image/jpeg	\N	\N	document	9d8a43d7-c284-4d84-b5f4-13577207a728	Acorn\\Justice\\Models\\ScannedDocument	t	76	2024-11-21 06:48:05	2024-11-21 06:48:12
-82	676e6e3e234dd136192115.jpeg	park gates.jpeg	336305	image/jpeg	\N	\N	\N	\N	\N	t	82	2024-12-27 09:07:10	2024-12-27 09:07:10
-83	676e820178d8f512635353.jpeg	park gates.jpeg	336305	image/jpeg	\N	\N	image	9dd2ff0e-aedd-47d6-80c6-0105effc416e	Acorn\\Lojistiks\\Models\\Product	t	83	2024-12-27 10:31:29	2024-12-27 10:31:31
-84	676e82b0f1f6c263879977.jpeg	park gates.jpeg	336305	image/jpeg	\N	\N	image	9dd3001e-7c18-41e4-8eec-55b4d6494090	Acorn\\Lojistiks\\Models\\Vehicle	t	84	2024-12-27 10:34:24	2024-12-27 10:34:27
-85	676e95f76d86c557348634.jpeg	pew pew.jpeg	67236	image/jpeg	\N	\N	document	9dd31d9f-875e-4588-a9e3-8be4a963eb41	Acorn\\Justice\\Models\\ScannedDocument	t	85	2024-12-27 11:56:39	2024-12-27 11:56:46
-86	679fbcbfdbccb031522514.png	Screenshot_20250126_104822.png	266674	image/png	\N	\N	document	9e1e1d65-ac22-4bec-9453-b7a045d764ec	Acorn\\Justice\\Models\\ScannedDocument	t	86	2025-02-02 18:43:11	2025-02-02 18:43:14
-87	67a1fc50844db286760186.png	Screenshot_20250126_104822.png	266674	image/png	\N	\N	document	9e218bb3-d452-4d6b-ad8b-8988ecf813b8	Acorn\\Justice\\Models\\ScannedDocument	t	87	2025-02-04 11:38:56	2025-02-04 11:39:09
-91	67a3a87784a30077021952.png	Screenshot_20250127_122814.png	591126	image/png	\N	\N	document	9e2418f9-7d0d-4513-b1ad-d274015c84d0	Acorn\\Justice\\Models\\ScannedDocument	t	91	2025-02-05 18:05:43	2025-02-05 18:05:50
-88	67a205745195a696626352.png	Screenshot_20250129_133506.png	681699	image/png	\N	\N	image	9e219c12-83d5-43f5-a4a8-35a411e4b00d	Acorn\\Lojistiks\\Models\\ProductInstance	t	88	2025-02-04 12:17:56	2025-02-04 12:24:55
-89	67a25b918240d268174722.png	Screenshot_20250131_131806.png	580012	image/png	\N	\N	avatar	9e197206-4838-45f3-8714-42a8f029ab5b	Acorn\\User\\Models\\User	t	89	2025-02-04 18:25:21	2025-02-04 18:25:24
-90	67a3752dd5f73846185380.png	Screenshot_20250126_104822.png	266674	image/png	\N	\N	\N	\N	\N	t	90	2025-02-05 14:26:53	2025-02-05 14:26:53
-92	67adc22e67ac7927120941.png	Screenshot_20250131_131806.png	580012	image/png	\N	\N	document	9e338274-2698-41db-aeac-69394a8036b2	Acorn\\Justice\\Models\\ScannedDocument	t	92	2025-02-13 09:58:06	2025-02-13 09:58:11
-95	67dfe5ab821ac685253967.png	Screenshot_20250317_231933.png	1174067	image/png	\N	\N	document	9e8003e2-c056-44dc-bc32-11a0a81c61f1	Acorn\\Justice\\Models\\ScannedDocument	t	95	2025-03-23 10:42:51	2025-03-23 10:43:01
-94	67af179107b3e598174817.png	Screenshot_20250210_193154.png	241592	image/png	\N	\N	document	9e358b5a-e79d-4eaf-8b9e-7af1162a8a59	Acorn\\Justice\\Models\\ScannedDocument	t	94	2025-02-14 10:14:41	2025-02-14 10:14:44
-96	67dfe71157882465139680.png	Screenshot_20250225_173737.png	250713	image/png	\N	\N	\N	\N	\N	t	96	2025-03-23 10:48:49	2025-03-23 10:48:49
-97	67dfe826db948814155693.png	Screenshot_20250313_125330.png	423331	image/png	\N	\N	document	9e8007a3-0a5a-4b17-a457-b5eed813cd76	Acorn\\Justice\\Models\\ScannedDocument	t	97	2025-03-23 10:53:26	2025-03-23 10:53:31
-\.
-
-
---
--- Data for Name: system_mail_layouts; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.system_mail_layouts (id, name, code, content_html, content_text, content_css, is_locked, created_at, updated_at, options) FROM stdin;
-1	Default layout	default	<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n<html xmlns="http://www.w3.org/1999/xhtml">\n<head>\n    <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />\n    <style type="text/css" media="screen">\n        {{ brandCss|raw }}\n        {{ css|raw }}\n    </style>\n</head>\n<body>\n    <table class="wrapper layout-default" width="100%" cellpadding="0" cellspacing="0">\n\n        <!-- Header -->\n        {% partial 'header' body %}\n            {{ subject|raw }}\n        {% endpartial %}\n\n        <tr>\n            <td align="center">\n                <table class="content" width="100%" cellpadding="0" cellspacing="0">\n                    <!-- Email Body -->\n                    <tr>\n                        <td class="body" width="100%" cellpadding="0" cellspacing="0">\n                            <table class="inner-body" align="center" width="570" cellpadding="0" cellspacing="0">\n                                <!-- Body content -->\n                                <tr>\n                                    <td class="content-cell">\n                                        {{ content|raw }}\n                                    </td>\n                                </tr>\n                            </table>\n                        </td>\n                    </tr>\n                </table>\n            </td>\n        </tr>\n\n        <!-- Footer -->\n        {% partial 'footer' body %}\n            &copy; {{ "now"|date("Y") }} {{ appName }}. All rights reserved.\n        {% endpartial %}\n\n    </table>\n\n</body>\n</html>	{{ content|raw }}	@media only screen and (max-width: 600px) {\n    .inner-body {\n        width: 100% !important;\n    }\n\n    .footer {\n        width: 100% !important;\n    }\n}\n\n@media only screen and (max-width: 500px) {\n    .button {\n        width: 100% !important;\n    }\n}	t	2024-10-19 10:37:18	2024-10-19 10:37:18	\N
-2	System layout	system	<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n<html xmlns="http://www.w3.org/1999/xhtml">\n<head>\n    <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />\n    <style type="text/css" media="screen">\n        {{ brandCss|raw }}\n        {{ css|raw }}\n    </style>\n</head>\n<body>\n    <table class="wrapper layout-system" width="100%" cellpadding="0" cellspacing="0">\n        <tr>\n            <td align="center">\n                <table class="content" width="100%" cellpadding="0" cellspacing="0">\n                    <!-- Email Body -->\n                    <tr>\n                        <td class="body" width="100%" cellpadding="0" cellspacing="0">\n                            <table class="inner-body" align="center" width="570" cellpadding="0" cellspacing="0">\n                                <!-- Body content -->\n                                <tr>\n                                    <td class="content-cell">\n                                        {{ content|raw }}\n\n                                        <!-- Subcopy -->\n                                        {% partial 'subcopy' body %}\n                                            **This is an automatic message. Please do not reply to it.**\n                                        {% endpartial %}\n                                    </td>\n                                </tr>\n                            </table>\n                        </td>\n                    </tr>\n                </table>\n            </td>\n        </tr>\n    </table>\n\n</body>\n</html>	{{ content|raw }}\n\n\n---\nThis is an automatic message. Please do not reply to it.	@media only screen and (max-width: 600px) {\n    .inner-body {\n        width: 100% !important;\n    }\n\n    .footer {\n        width: 100% !important;\n    }\n}\n\n@media only screen and (max-width: 500px) {\n    .button {\n        width: 100% !important;\n    }\n}	t	2024-10-19 10:37:18	2024-10-19 10:37:18	\N
-\.
-
-
---
--- Data for Name: system_mail_partials; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.system_mail_partials (id, name, code, content_html, content_text, is_custom, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: system_mail_templates; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.system_mail_templates (id, code, subject, description, content_html, content_text, layout_id, is_custom, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: system_parameters; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.system_parameters (id, namespace, "group", item, value) FROM stdin;
-1	system	app	birthday	"2024-10-19T10:37:18.076727Z"
-2	system	update	count	0
-4	system	core	build	"1.2.6"
-5	system	core	modified	true
-3	system	update	retry	1743340377
-\.
-
-
---
--- Data for Name: system_plugin_history; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.system_plugin_history (id, code, type, version, detail, created_at) FROM stdin;
-1	Acorn.Rtler	comment	1.0.1	First version of Rtler	2024-10-19 10:37:18
-2	Acorn.Rtler	comment	1.0.2	Fix some bug	2024-10-19 10:37:18
-3	Acorn.User	script	1.0.1	v1.0.1/create_users_table.php	2024-10-19 10:37:18
-4	Acorn.User	script	1.0.1	v1.0.1/create_throttle_table.php	2024-10-19 10:37:18
-5	Acorn.User	comment	1.0.1	Initialize plugin.	2024-10-19 10:37:18
-6	Acorn.User	comment	1.0.2	Seed tables.	2024-10-19 10:37:18
-7	Acorn.User	comment	1.0.3	Translated hard-coded text to language strings.	2024-10-19 10:37:18
-8	Acorn.User	comment	1.0.4	Improvements to user-interface for Location manager.	2024-10-19 10:37:18
-9	Acorn.User	comment	1.0.5	Added contact details for users.	2024-10-19 10:37:18
-10	Acorn.User	script	1.0.6	v1.0.6/create_mail_blockers_table.php	2024-10-19 10:37:18
-11	Acorn.User	comment	1.0.6	Added Mail Blocker utility so users can block specific mail templates.	2024-10-19 10:37:18
-12	Acorn.User	comment	1.0.7	Add back-end Settings page.	2024-10-19 10:37:18
-13	Acorn.User	comment	1.0.8	Updated the Settings page.	2024-10-19 10:37:18
-14	Acorn.User	comment	1.0.9	Adds new welcome mail message for users and administrators.	2024-10-19 10:37:18
-15	Acorn.User	comment	1.0.10	Adds administrator-only activation mode.	2024-10-19 10:37:18
-16	Acorn.User	script	1.0.11	v1.0.11/users_add_login_column.php	2024-10-19 10:37:18
-17	Acorn.User	comment	1.0.11	Users now have an optional login field that defaults to the email field.	2024-10-19 10:37:18
-18	Acorn.User	script	1.0.12	v1.0.12/users_rename_login_to_username.php	2024-10-19 10:37:18
-19	Acorn.User	comment	1.0.12	Create a dedicated setting for choosing the login mode.	2024-10-19 10:37:18
-20	Acorn.User	comment	1.0.13	Minor fix to the Account sign in logic.	2024-10-19 10:37:18
-21	Acorn.User	comment	1.0.14	Minor improvements to the code.	2024-10-19 10:37:18
-22	Acorn.User	script	1.0.15	v1.0.15/users_add_surname.php	2024-10-19 10:37:18
-23	Acorn.User	comment	1.0.15	Adds last name column to users table (surname).	2024-10-19 10:37:18
-24	Acorn.User	comment	1.0.16	Require permissions for settings page too.	2024-10-19 10:37:18
-25	Acorn.User	comment	1.1.0	!!! Profile fields and Locations have been removed.	2024-10-19 10:37:18
-26	Acorn.User	script	1.1.1	v1.1.1/create_user_groups_table.php	2024-10-19 10:37:18
-27	Acorn.User	script	1.1.1	v1.1.1/seed_user_groups_table.php	2024-10-19 10:37:18
-28	Acorn.User	comment	1.1.1	Users can now be added to groups.	2024-10-19 10:37:18
-29	Acorn.User	comment	1.1.2	A raw URL can now be passed as the redirect property in the Account component.	2024-10-19 10:37:18
-30	Acorn.User	comment	1.1.3	Adds a super user flag to the users table, reserved for future use.	2024-10-19 10:37:18
-31	Acorn.User	comment	1.1.4	User list can be filtered by the group they belong to.	2024-10-19 10:37:18
-32	Acorn.User	comment	1.1.5	Adds a new permission to hide the User settings menu item.	2024-10-19 10:37:18
-33	Acorn.User	script	1.2.0	v1.2.0/users_add_deleted_at.php	2024-10-19 10:37:18
-34	Acorn.User	comment	1.2.0	Users can now deactivate their own accounts.	2024-10-19 10:37:18
-35	Acorn.User	comment	1.2.1	New feature for checking if a user is recently active/online.	2024-10-19 10:37:18
-36	Acorn.User	comment	1.2.2	Add bulk action button to user list.	2024-10-19 10:37:18
-37	Acorn.User	comment	1.2.3	Included some descriptive paragraphs in the Reset Password component markup.	2024-10-19 10:37:18
-38	Acorn.User	comment	1.2.4	Added a checkbox for blocking all mail sent to the user.	2024-10-19 10:37:18
-39	Acorn.User	script	1.2.5	v1.2.5/update_timestamp_nullable.php	2024-10-19 10:37:18
-40	Acorn.User	comment	1.2.5	Database maintenance. Updated all timestamp columns to be nullable.	2024-10-19 10:37:18
-41	Acorn.User	script	1.2.6	v1.2.6/users_add_last_seen.php	2024-10-19 10:37:18
-42	Acorn.User	comment	1.2.6	Add a dedicated last seen column for users.	2024-10-19 10:37:18
-43	Acorn.User	comment	1.2.7	Minor fix to user timestamp attributes.	2024-10-19 10:37:18
-44	Acorn.User	comment	1.2.8	Add date range filter to users list. Introduced a logout event.	2024-10-19 10:37:18
-45	Acorn.User	comment	1.2.9	Add invitation mail for new accounts created in the back-end.	2024-10-19 10:37:18
-46	Acorn.User	script	1.3.0	v1.3.0/users_add_guest_flag.php	2024-10-19 10:37:18
-47	Acorn.User	script	1.3.0	v1.3.0/users_add_superuser_flag.php	2024-10-19 10:37:18
-48	Acorn.User	comment	1.3.0	Introduced guest user accounts.	2024-10-19 10:37:18
-49	Acorn.User	comment	1.3.1	User notification variables can now be extended.	2024-10-19 10:37:18
-50	Acorn.User	comment	1.3.2	Minor fix to the Auth::register method.	2024-10-19 10:37:18
-51	Acorn.User	comment	1.3.3	Allow prevention of concurrent user sessions via the user settings.	2024-10-19 10:37:18
-52	Acorn.User	comment	1.3.4	Added force secure protocol property to the account component.	2024-10-19 10:37:18
-53	Acorn.User	comment	1.4.0	!!! The Notifications tab in User settings has been removed.	2024-10-19 10:37:18
-54	Acorn.User	comment	1.4.1	Added support for user impersonation.	2024-10-19 10:37:18
-55	Acorn.User	comment	1.4.2	Fixes security bug in Password Reset component.	2024-10-19 10:37:18
-56	Acorn.User	comment	1.4.3	Fixes session handling for AJAX requests.	2024-10-19 10:37:18
-57	Acorn.User	comment	1.4.4	Fixes bug where impersonation touches the last seen timestamp.	2024-10-19 10:37:18
-58	Acorn.User	comment	1.4.5	Added token fallback process to Account / Reset Password components when parameter is missing.	2024-10-19 10:37:18
-59	Acorn.User	comment	1.4.6	Fixes Auth::register method signature mismatch with core Winter CMS Auth library	2024-10-19 10:37:18
-60	Acorn.User	comment	1.4.7	Fixes redirect bug in Account component / Update translations and separate user and group management.	2024-10-19 10:37:18
-61	Acorn.User	comment	1.4.8	Fixes a bug where calling MailBlocker::removeBlock could remove all mail blocks for the user.	2024-10-19 10:37:18
-62	Acorn.User	comment	1.5.0	!!! Required password length is now a minimum of 8 characters. Previous passwords will not be affected until the next password change.	2024-10-19 10:37:18
-63	Acorn.User	script	1.5.1	v1.5.1/users_add_ip_address.php	2024-10-19 10:37:18
-64	Acorn.User	comment	1.5.1	User IP addresses are now logged. Introduce registration throttle.	2024-10-19 10:37:18
-65	Acorn.User	comment	1.5.2	Whitespace from usernames is now trimmed, allowed for username to be added to Reset Password mail templates.	2024-10-19 10:37:18
-66	Acorn.User	comment	1.5.3	Fixes a bug in the user update functionality if password is not changed. Added highlighting for banned users in user list.	2024-10-19 10:37:18
-67	Acorn.User	comment	1.5.4	Multiple translation improvements. Added view events to extend user preview and user listing toolbars.	2024-10-19 10:37:18
-68	Acorn.User	script	2.0.0	v2.0.0/rename_tables.php	2024-10-19 10:37:18
-69	Acorn.User	comment	2.0.0	Rebrand to Acorn.User	2024-10-19 10:37:18
-70	Acorn.User	comment	2.0.0	Update Russian language	2024-10-19 10:37:18
-71	Acorn.User	script	2.0.1	v2.0.1/rename_indexes.php	2024-10-19 10:37:18
-72	Acorn.User	comment	2.0.1	Rebrand table indexes	2024-10-19 10:37:18
-73	Acorn.User	comment	2.1.0	Enforce password length rules on sign in. Compatibility fixes.	2024-10-19 10:37:18
-74	Acorn.User	comment	2.2.0	Add avatar removal. Password resets will activate users if User activation mode is enabled.	2024-10-19 10:37:18
-75	Acorn.User	comment	2.2.1	Fixes a bug introduced by the adoption of symfony/mime required since Laravel 7.x where sending an email to a blocked email address would not be prevented.	2024-10-19 10:37:18
-76	Acorn.User	comment	2.2.2	Improved French translation, updated plugin icons, fixed migrations for Laravel 9	2024-10-19 10:37:18
-77	Acorn.User	script	3.0.0	v3.0.0/create_user_roles_table.php	2024-10-19 10:37:18
-78	Acorn.User	script	3.0.0	v3.0.0/add_backend_user_column.php	2024-10-19 10:37:18
-79	Acorn.User	comment	3.0.0	User Roles	2024-10-19 10:37:18
-80	Acorn.User	comment	3.0.0	Add Backend User column	2024-10-19 10:37:18
-81	Winter.Demo	comment	1.0.1	First version of Demo	2024-10-19 10:37:18
-82	Winter.Location	comment	1.0.1	Initialize plugin.	2024-10-19 10:37:18
-83	Winter.Location	script	1.0.2	v1.0.2/create_states_table.php	2024-10-19 10:37:18
-84	Winter.Location	script	1.0.2	v1.0.2/create_countries_table.php	2024-10-19 10:37:18
-85	Winter.Location	comment	1.0.2	Create database tables.	2024-10-19 10:37:18
-86	Winter.Location	script	1.0.3	v1.0.3/seed_all_tables.php	2024-10-19 10:37:19
-87	Winter.Location	comment	1.0.3	Add seed data for countries and states.	2024-10-19 10:37:19
-88	Winter.Location	comment	1.0.4	Satisfy the new Google API key requirement.	2024-10-19 10:37:19
-89	Winter.Location	script	1.0.5	v1.0.5/add_country_pinned_flag.php	2024-10-19 10:37:19
-90	Winter.Location	comment	1.0.5	Countries can now be pinned to make them appear at the top of the list.	2024-10-19 10:37:19
-91	Winter.Location	comment	1.0.6	Added support for defining a default country and state.	2024-10-19 10:37:19
-92	Winter.Location	comment	1.0.7	Added basic geocoding method to the Country model.	2024-10-19 10:37:19
-93	Winter.Location	comment	1.0.8	Include Mexico states	2024-10-19 10:37:19
-94	Winter.Location	comment	1.1.0	!!! Update requires Build 447. Fixed AddressFinder formwidget not working correctly in repeaters.	2024-10-19 10:37:19
-95	Winter.Location	comment	1.1.1	Minor fix to AddressFinder formwidget for the change to the FormField API	2024-10-19 10:37:19
-96	Winter.Location	comment	1.1.2	Yet another change to the AddressFinder for changes to the FormField API	2024-10-19 10:37:19
-97	Winter.Location	script	1.1.3	v1.1.3/seed_ar_states.php	2024-10-19 10:37:19
-98	Winter.Location	comment	1.1.3	Include Argentina states	2024-10-19 10:37:19
-99	Winter.Location	comment	1.1.4	Added support for UK counties	2024-10-19 10:37:19
-100	Winter.Location	script	1.1.5	v1.1.5/seed_it_states.php	2024-10-19 10:37:19
-101	Winter.Location	comment	1.1.5	Include Italian states (province)	2024-10-19 10:37:19
-102	Winter.Location	script	1.1.6	v1.1.6/add_enabled_states.php	2024-10-19 10:37:19
-103	Winter.Location	comment	1.1.6	Added ability to disable specific states	2024-10-19 10:37:19
-104	Winter.Location	script	2.0.0	v2.0.0/rename_tables.php	2024-10-19 10:37:19
-105	Winter.Location	comment	2.0.0	Rebrand to Winter.location	2024-10-19 10:37:19
-106	Winter.Location	script	2.0.1	v2.0.1/rename_indexes.php	2024-10-19 10:37:19
-107	Winter.Location	script	2.0.1	v2.0.1/fix_translate_records.php	2024-10-19 10:37:19
-108	Winter.Location	comment	2.0.1	Rebrand table indexes	2024-10-19 10:37:19
-109	Winter.Location	comment	2.0.1	Add migrations for translate plugin attributes and indexes tables	2024-10-19 10:37:19
-110	Winter.Location	script	2.0.2	v2.0.2/seed_ru_states.php	2024-10-19 10:37:19
-111	Winter.Location	comment	2.0.2	Include Russian states (subjects)	2024-10-19 10:37:19
-112	Winter.TailwindUI	comment	1.0.1	First version of TailwindUI	2024-10-19 10:37:19
-113	Winter.Translate	script	1.0.1	v1.0.1/create_messages_table.php	2024-10-19 10:37:19
-114	Winter.Translate	script	1.0.1	v1.0.1/create_attributes_table.php	2024-10-19 10:37:19
-115	Winter.Translate	script	1.0.1	v1.0.1/create_locales_table.php	2024-10-19 10:37:19
-116	Winter.Translate	comment	1.0.1	First version of Translate	2024-10-19 10:37:19
-117	Winter.Translate	comment	1.0.2	Languages and Messages can now be deleted.	2024-10-19 10:37:19
-118	Winter.Translate	comment	1.0.3	Minor updates for latest Winter CMS release.	2024-10-19 10:37:19
-119	Winter.Translate	comment	1.0.4	Locale cache will clear when updating a language.	2024-10-19 10:37:19
-120	Winter.Translate	comment	1.0.5	Add Spanish language and fix plugin config.	2024-10-19 10:37:19
-121	Winter.Translate	comment	1.0.6	Minor improvements to the code.	2024-10-19 10:37:19
-122	Winter.Translate	comment	1.0.7	Fixes major bug where translations are skipped entirely!	2024-10-19 10:37:19
-123	Winter.Translate	comment	1.0.8	Minor bug fixes.	2024-10-19 10:37:19
-124	Winter.Translate	comment	1.0.9	Fixes an issue where newly created models lose their translated values.	2024-10-19 10:37:19
-125	Winter.Translate	comment	1.0.10	Minor fix for latest build.	2024-10-19 10:37:19
-126	Winter.Translate	comment	1.0.11	Fix multilingual rich editor when used in stretch mode.	2024-10-19 10:37:19
-127	Winter.Translate	comment	1.1.0	Introduce compatibility with Winter.Pages plugin.	2024-10-19 10:37:19
-128	Winter.Translate	comment	1.1.1	Minor UI fix to the language picker.	2024-10-19 10:37:19
-129	Winter.Translate	comment	1.1.2	Add support for translating Static Content files.	2024-10-19 10:37:19
-130	Winter.Translate	comment	1.1.3	Improved support for the multilingual rich editor.	2024-10-19 10:37:19
-131	Winter.Translate	comment	1.1.4	Adds new multilingual markdown editor.	2024-10-19 10:37:19
-132	Winter.Translate	comment	1.1.5	Minor update to the multilingual control API.	2024-10-19 10:37:19
-133	Winter.Translate	comment	1.1.6	Minor improvements in the message editor.	2024-10-19 10:37:19
-134	Winter.Translate	comment	1.1.7	Fixes bug not showing content when first loading multilingual textarea controls.	2024-10-19 10:37:19
-135	Winter.Translate	comment	1.2.0	CMS pages now support translating the URL.	2024-10-19 10:37:19
-136	Winter.Translate	comment	1.2.1	Minor update in the rich editor and code editor language control position.	2024-10-19 10:37:19
-137	Winter.Translate	comment	1.2.2	Static Pages now support translating the URL.	2024-10-19 10:37:19
-138	Winter.Translate	comment	1.2.3	Fixes Rich Editor when inserting a page link.	2024-10-19 10:37:19
-139	Winter.Translate	script	1.2.4	v1.2.4/create_indexes_table.php	2024-10-19 10:37:19
-140	Winter.Translate	comment	1.2.4	Translatable attributes can now be declared as indexes.	2024-10-19 10:37:19
-141	Winter.Translate	comment	1.2.5	Adds new multilingual repeater form widget.	2024-10-19 10:37:19
-142	Winter.Translate	comment	1.2.6	Fixes repeater usage with static pages plugin.	2024-10-19 10:37:19
-143	Winter.Translate	comment	1.2.7	Fixes placeholder usage with static pages plugin.	2024-10-19 10:37:19
-144	Winter.Translate	comment	1.2.8	Improvements to code for latest Winter CMS build compatibility.	2024-10-19 10:37:19
-145	Winter.Translate	comment	1.2.9	Fixes context for translated strings when used with Static Pages.	2024-10-19 10:37:19
-146	Winter.Translate	comment	1.2.10	Minor UI fix to the multilingual repeater.	2024-10-19 10:37:19
-147	Winter.Translate	comment	1.2.11	Fixes translation not working with partials loaded via AJAX.	2024-10-19 10:37:19
-148	Winter.Translate	comment	1.2.12	Add support for translating the new grouped repeater feature.	2024-10-19 10:37:19
-149	Winter.Translate	comment	1.3.0	Added search to the translate messages page.	2024-10-19 10:37:19
-150	Winter.Translate	script	1.3.1	v1.3.1/add_sort_order.php	2024-10-19 10:37:19
-151	Winter.Translate	script	1.3.1	v1.3.1/seed_all_tables.php	2024-10-19 10:37:19
-152	Winter.Translate	comment	1.3.1	Added reordering to languages	2024-10-19 10:37:19
-153	Winter.Translate	comment	1.3.2	Improved compatibility with Winter.Pages, added ability to scan Mail Messages for translatable variables.	2024-10-19 10:37:19
-154	Winter.Translate	comment	1.3.3	Fix to the locale picker session handling in Build 420 onwards.	2024-10-19 10:37:19
-155	Winter.Translate	comment	1.3.4	Add alternate hreflang elements and adds prefixDefaultLocale setting.	2024-10-19 10:37:19
-156	Winter.Translate	comment	1.3.5	Fix MLRepeater bug when switching locales.	2024-10-19 10:37:19
-157	Winter.Translate	comment	1.3.6	Fix Middleware to use the prefixDefaultLocale setting introduced in 1.3.4	2024-10-19 10:37:19
-158	Winter.Translate	comment	1.3.7	Fix config reference in LocaleMiddleware	2024-10-19 10:37:19
-159	Winter.Translate	comment	1.3.8	Keep query string when switching locales	2024-10-19 10:37:19
-160	Winter.Translate	comment	1.4.0	Add importer and exporter for messages	2024-10-19 10:37:19
-161	Winter.Translate	comment	1.4.1	Updated Hungarian translation. Added Arabic translation. Fixed issue where default texts are overwritten by import. Fixed issue where the language switcher for repeater fields would overlap with the first repeater row.	2024-10-19 10:37:19
-162	Winter.Translate	comment	1.4.2	Add multilingual MediaFinder	2024-10-19 10:37:19
-163	Winter.Translate	comment	1.4.3	!!! Please update Winter CMS to Build 444 before updating this plugin. Added ability to translate CMS Pages fields (e.g. title, description, meta-title, meta-description)	2024-10-19 10:37:19
-164	Winter.Translate	comment	1.4.4	Minor improvements to compatibility with Laravel framework.	2024-10-19 10:37:19
-165	Winter.Translate	comment	1.4.5	Fixed issue when using the language switcher	2024-10-19 10:37:19
-166	Winter.Translate	comment	1.5.0	Compatibility fix with Build 451	2024-10-19 10:37:19
-167	Winter.Translate	comment	1.6.0	Make File Upload widget properties translatable. Merge Repeater core changes into MLRepeater widget. Add getter method to retrieve original translate data.	2024-10-19 10:37:19
-168	Winter.Translate	comment	1.6.1	Add ability for models to provide translated computed data, add option to disable locale prefix routing	2024-10-19 10:37:19
-169	Winter.Translate	comment	1.6.2	Implement localeUrl filter, add per-locale theme configuration support	2024-10-19 10:37:19
-170	Winter.Translate	comment	1.6.3	Add eager loading for translations, restore support for accessors & mutators	2024-10-19 10:37:19
-171	Winter.Translate	comment	1.6.4	Fixes PHP 7.4 compatibility	2024-10-19 10:37:19
-172	Winter.Translate	comment	1.6.5	Fixes compatibility issue when other plugins use a custom model morph map	2024-10-19 10:37:19
-173	Winter.Translate	script	1.6.6	v1.6.6/migrate_morphed_attributes.php	2024-10-19 10:37:19
-174	Winter.Translate	comment	1.6.6	Introduce migration to patch existing translations using morph map	2024-10-19 10:37:19
-175	Winter.Translate	script	1.6.7	v1.6.7/migrate_morphed_indexes.php	2024-10-19 10:37:19
-176	Winter.Translate	comment	1.6.7	Introduce migration to patch existing indexes using morph map	2024-10-19 10:37:19
-177	Winter.Translate	comment	1.6.8	Add support for transOrderBy; Add translation support for ThemeData; Update russian localization.	2024-10-19 10:37:19
-178	Winter.Translate	comment	1.6.9	Clear Static Page menu cache after saving the model; CSS fix for Text/Textarea input fields language selector.	2024-10-19 10:37:19
-179	Winter.Translate	script	1.6.10	v1.6.10/update_messages_table.php	2024-10-19 10:37:19
-180	Winter.Translate	comment	1.6.10	Add option to purge deleted messages when scanning messages	2024-10-19 10:37:19
-181	Winter.Translate	comment	1.6.10	Add Scan error column on Messages page	2024-10-19 10:37:19
-182	Winter.Translate	comment	1.6.10	Fix translations that were lost when clicking locale twice while holding ctrl key	2024-10-19 10:37:19
-183	Winter.Translate	comment	1.6.10	Fix error with nested fields default locale value	2024-10-19 10:37:19
-184	Winter.Translate	comment	1.6.10	Escape Message translate params value	2024-10-19 10:37:19
-185	Winter.Translate	comment	1.7.0	!!! Breaking change for the Message::trans() method (params are now escaped)	2024-10-19 10:37:19
-186	Winter.Translate	comment	1.7.0	fix message translation documentation	2024-10-19 10:37:19
-187	Winter.Translate	comment	1.7.0	fix string translation key for scan errors column header	2024-10-19 10:37:19
-188	Winter.Translate	comment	1.7.1	Fix YAML issue with previous tag/release.	2024-10-19 10:37:19
-189	Winter.Translate	comment	1.7.2	Fix regex when "|_" filter is followed by another filter	2024-10-19 10:37:19
-190	Winter.Translate	comment	1.7.2	Try locale without country before returning default translation	2024-10-19 10:37:19
-191	Winter.Translate	comment	1.7.2	Allow exporting default locale	2024-10-19 10:37:19
-192	Winter.Translate	comment	1.7.2	Fire 'winter.translate.themeScanner.afterScan' event in the theme scanner for extendability	2024-10-19 10:37:19
-193	Winter.Translate	comment	1.7.3	Make plugin ready for Laravel 6 update	2024-10-19 10:37:19
-194	Winter.Translate	comment	1.7.3	Add support for translating Winter.Pages MenuItem properties (requires Winter.Pages v1.3.6)	2024-10-19 10:37:19
-195	Winter.Translate	comment	1.7.3	Restore multilingual button position for textarea	2024-10-19 10:37:19
-196	Winter.Translate	comment	1.7.3	Fix translatableAttributes	2024-10-19 10:37:19
-197	Winter.Translate	comment	1.7.4	Faster version of transWhere	2024-10-19 10:37:19
-198	Winter.Translate	comment	1.7.4	Mail templates/views can now be localized	2024-10-19 10:37:19
-199	Winter.Translate	comment	1.7.4	Fix messages table layout on mobile	2024-10-19 10:37:19
-200	Winter.Translate	comment	1.7.4	Fix scopeTransOrderBy duplicates	2024-10-19 10:37:19
-201	Winter.Translate	comment	1.7.4	Polish localization updates	2024-10-19 10:37:19
-202	Winter.Translate	comment	1.7.4	Turkish localization updates	2024-10-19 10:37:19
-203	Winter.Translate	comment	1.7.4	Add Greek language localization	2024-10-19 10:37:19
-204	Winter.Translate	comment	1.8.0	Adds initial support for October v2.0	2024-10-19 10:37:19
-205	Winter.Translate	comment	1.8.1	Minor bugfix	2024-10-19 10:37:19
-206	Winter.Translate	comment	1.8.2	Fixes translated file models and theme data for v2.0. The parent model must implement translatable behavior for their related file models to be translated.	2024-10-19 10:37:19
-207	Winter.Translate	script	2.0.0	v2.0.0/rename_tables.php	2024-10-19 10:37:19
-208	Winter.Translate	comment	2.0.0	Rebrand to Winter.Translate	2024-10-19 10:37:19
-209	Winter.Translate	comment	2.0.0	Fix location for dropdown-to in css file	2024-10-19 10:37:19
-210	Winter.Translate	script	2.0.1	v2.0.1/rename_indexes.php	2024-10-19 10:37:19
-211	Winter.Translate	comment	2.0.1	Rebrand table indexes	2024-10-19 10:37:19
-212	Winter.Translate	comment	2.0.1	Remove deprecated methods (setTranslateAttribute/getTranslateAttribute)	2024-10-19 10:37:19
-213	Winter.Translate	comment	2.0.2	Added Latvian translation. Fixed plugin replacement issues.	2024-10-19 10:37:19
-214	Winter.Translate	script	2.1.0	v2.1.0/migrate_message_code.php	2024-10-19 10:37:19
-215	Winter.Translate	comment	2.1.0	!!! Potential breaking change: Message codes are now MD5 hashed versions of the original string. See https://github.com/wintercms/wn-translate-plugin/pull/2	2024-10-19 10:37:19
-216	Winter.Translate	comment	2.1.1	Added support for Winter CMS 1.2.	2024-10-19 10:37:19
-217	Winter.Translate	comment	2.1.2	Add Vietnamese translations	2024-10-19 10:37:19
-218	Winter.Translate	comment	2.1.2	Add composer replace config.	2024-10-19 10:37:19
-219	Winter.Translate	comment	2.1.2	Add MultiLang capability to Winter.Sitemap.	2024-10-19 10:37:19
-220	Winter.Translate	comment	2.1.2	Add addTranslatableAttributes() method to TranslatableBehavior.	2024-10-19 10:37:19
-221	Winter.Translate	comment	2.1.2	Fix dynamically adding fields to non-existent tab.	2024-10-19 10:37:19
-222	Winter.Translate	comment	2.1.2	Fix translations conflicting between nested fields and translatable root fields of the same name.	2024-10-19 10:37:19
-223	Winter.Translate	comment	2.1.3	Fixed issue with translatable models	2024-10-19 10:37:19
-224	Winter.Translate	comment	2.1.4	Fixed issue with broken imports in the backend Locales controller.	2024-10-19 10:37:19
-225	Winter.Translate	comment	2.1.5	Add support for translatable nested forms	2024-10-19 10:37:19
-226	Winter.Translate	comment	2.1.5	Add validation for translated string	2024-10-19 10:37:19
-227	Winter.Translate	comment	2.1.5	Add setTranslatableUseFallback() / deprecate noFallbackLocale()	2024-10-19 10:37:19
-228	Winter.Translate	comment	2.1.5	Only extend cms page if cms module is enabled	2024-10-19 10:37:19
-229	Winter.Translate	comment	2.1.5	Prevent browser autofill for hidden locale inputs	2024-10-19 10:37:19
-230	Winter.Translate	comment	2.1.5	System MailTemplate model is now translatable	2024-10-19 10:37:19
-231	Winter.Translate	comment	2.1.5	Make fields using @context translatable	2024-10-19 10:37:19
-232	Winter.Translate	comment	2.1.6	Improve ML button styling	2024-10-19 10:37:19
-233	Winter.Translate	comment	2.1.6	Fix TranslatableBehavior::lang method signature	2024-10-19 10:37:19
-234	Acorn.BackendLocalization	script	1.0.0	v1.1/seed_locale_backend.php	2024-10-19 10:37:19
-235	Acorn.BackendLocalization	comment	1.0.0	Create special languages ​​for the backend 	2024-10-19 10:37:19
-236	Acorn.Location	script	4.0.0	create_from_sql.php	2024-10-19 10:37:23
-237	Acorn.Location	comment	4.0.0	Create from DB & seeder.sql	2024-10-19 10:37:23
-238	Acorn.Messaging	script	1.0.1	builder_table_create_acorn_messaging_message.php	2024-10-19 10:37:23
-239	Acorn.Messaging	script	1.0.1	builder_table_create_acorn_messaging_message_user.php	2024-10-19 10:37:23
-240	Acorn.Messaging	script	1.0.1	builder_table_create_acorn_messaging_message_user_group.php	2024-10-19 10:37:23
-241	Acorn.Messaging	script	1.0.1	builder_table_create_acorn_messaging_message_message.php	2024-10-19 10:37:23
-242	Acorn.Messaging	script	1.0.1	builder_table_create_acorn_messaging_action.php	2024-10-19 10:37:23
-243	Acorn.Messaging	script	1.0.1	builder_table_create_acorn_messaging_label.php	2024-10-19 10:37:23
-244	Acorn.Messaging	script	1.0.1	builder_table_create_acorn_messaging_status.php	2024-10-19 10:37:23
-245	Acorn.Messaging	script	1.0.1	seed_status.php	2024-10-19 10:37:23
-246	Acorn.Messaging	comment	1.0.1	Initialize plugin.	2024-10-19 10:37:23
-247	Acorn.Messaging	comment	1.0.1	Created table acorn_messaging_message	2024-10-19 10:37:23
-248	Acorn.Messaging	comment	1.0.1	Created table acorn_messaging_message_user	2024-10-19 10:37:23
-249	Acorn.Messaging	comment	1.0.1	Created table acorn_messaging_message_user_group	2024-10-19 10:37:23
-250	Acorn.Messaging	comment	1.0.1	Created table acorn_messaging_message_message	2024-10-19 10:37:23
-251	Acorn.Messaging	comment	1.0.1	Created table acorn_messaging_action	2024-10-19 10:37:23
-252	Acorn.Messaging	comment	1.0.1	Created table acorn_messaging_label	2024-10-19 10:37:23
-253	Acorn.Messaging	comment	1.0.1	Created table acorn_messaging_status	2024-10-19 10:37:23
-254	Acorn.Messaging	comment	1.0.1	Seeding message status	2024-10-19 10:37:23
-255	Acorn.Messaging	script	2.0.0	create_acorn_users_extra_fields.php	2024-10-19 10:37:23
-256	Acorn.Messaging	comment	2.0.0	Create acorn users extra fields	2024-10-19 10:37:23
-257	Acorn.Calendar	script	2.0.1	builder_table_create_acorn_calendar.php	2024-10-19 10:37:23
-258	Acorn.Calendar	script	2.0.1	builder_table_create_acorn_calendar_event_type.php	2024-10-19 10:37:23
-259	Acorn.Calendar	script	2.0.1	builder_table_create_acorn_calendar_event_status.php	2024-10-19 10:37:23
-260	Acorn.Calendar	script	2.0.1	builder_table_create_acorn_calendar_event.php	2024-10-19 10:37:23
-261	Acorn.Calendar	script	2.0.1	builder_table_create_acorn_calendar_event_part.php	2024-10-19 10:37:23
-262	Acorn.Calendar	script	2.0.1	builder_table_create_acorn_calendar_instance.php	2024-10-19 10:37:23
-263	Acorn.Calendar	script	2.0.1	create_acorn_calendar_event_trigger.php	2024-10-19 10:37:23
-264	Acorn.Calendar	script	2.0.1	builder_table_create_acorn_calendar_event_user.php	2024-10-19 10:37:23
-265	Acorn.Calendar	script	2.0.1	builder_table_create_acorn_calendar_event_user_group.php	2024-10-19 10:37:23
-266	Acorn.Calendar	script	2.0.1	table_create_acorn_messaging_instance.php	2024-10-19 10:37:23
-267	Acorn.Calendar	script	2.0.1	seed_type_status.php	2024-10-19 10:37:23
-268	Acorn.Calendar	script	2.0.1	seed_calendar.php	2024-10-19 10:37:23
-269	Acorn.Calendar	comment	2.0.1	Initialize plugin.	2024-10-19 10:37:23
-270	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar	2024-10-19 10:37:23
-271	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar_event_type	2024-10-19 10:37:23
-272	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar_event_status	2024-10-19 10:37:23
-273	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar_event	2024-10-19 10:37:23
-274	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar_event_part	2024-10-19 10:37:23
-275	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar_instance	2024-10-19 10:37:23
-276	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar_event_trigger	2024-10-19 10:37:23
-277	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar_event_user	2024-10-19 10:37:23
-278	Acorn.Calendar	comment	2.0.1	Created table acorn_calendar_event_usergroup	2024-10-19 10:37:23
-279	Acorn.Calendar	comment	2.0.1	Created table acorn_messaging_message_instance	2024-10-19 10:37:23
-280	Acorn.Calendar	comment	2.0.1	Seeding Type and Status defaults	2024-10-19 10:37:23
-281	Acorn.Calendar	comment	2.0.1	Seeding default Calendar	2024-10-19 10:37:23
-282	Acorn.Calendar	script	3.0.0	create_acorn_users_extra_fields.php	2024-10-19 10:37:23
-283	Acorn.Calendar	comment	3.0.0	create_acorn_users_extra_fields	2024-10-19 10:37:23
-284	Acorn.Justice	script	4.0.0	create_from_sql.php	2024-10-19 10:37:23
-285	Acorn.Justice	comment	4.0.0	Create from DB & seeder.sql	2024-10-19 10:37:23
-286	Acorn.Civil	script	4.0.0	create_from_sql.php	2024-10-19 10:37:23
-287	Acorn.Civil	comment	4.0.0	Create from DB & seeder.sql	2024-10-19 10:37:23
-288	Acorn.Criminal	script	4.0.0	create_from_sql.php	2024-10-19 10:37:23
-289	Acorn.Criminal	comment	4.0.0	Create from DB & seeder.sql	2024-10-19 10:37:23
-290	Acorn.Houseofpeace	script	4.0.0	create_from_sql.php	2024-10-19 10:37:23
-291	Acorn.Houseofpeace	comment	4.0.0	Create from DB & seeder.sql	2024-10-19 10:37:23
-292	Acorn.Lojistiks	auto-registration	1.0.0	acorn-create-system	\N
-\.
-
-
---
--- Data for Name: system_plugin_versions; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.system_plugin_versions (id, code, version, created_at, is_disabled, is_frozen, acorn_infrastructure) FROM stdin;
-1	Acorn.Rtler	1.0.2	2024-10-19 10:37:18	f	f	f
-14	Acorn.Houseofpeace	4.0.0	2024-10-19 10:37:23	t	f	f
-12	Acorn.Civil	4.0.0	2024-10-19 10:37:23	t	f	f
-16	Acorn.University	1.0.0	2024-12-05 09:57:00	t	f	f
-13	Acorn.Criminal	4.0.0	2024-10-19 10:37:23	f	f	f
-2	Acorn.User	3.0.0	2024-10-19 10:37:18	f	f	f
-3	Winter.Demo	1.0.1	2024-10-19 10:37:18	f	f	f
-6	Winter.Translate	2.1.6	2024-10-19 10:37:19	f	f	f
-7	Acorn.BackendLocalization	1.0.0	2024-10-19 10:37:19	f	f	f
-8	Acorn.Location	4.0.0	2024-10-19 10:37:23	f	f	f
-9	Acorn.Messaging	2.0.0	2024-10-19 10:37:23	f	f	f
-10	Acorn.Calendar	3.0.0	2024-10-19 10:37:23	f	f	f
-11	Acorn.Justice	4.0.0	2024-10-19 10:37:23	f	f	f
-4	Winter.Location	2.0.2	2024-10-19 10:37:19	f	f	f
-5	Winter.TailwindUI	1.0.1	2024-10-19 10:37:19	f	f	f
-17	Acorn.Finance	1.0.0	2024-12-05 09:57:18	f	f	t
-18	Acorn.Notary	1.0.0	2025-02-27 12:45:08	f	f	f
-15	Acorn.Lojistiks	1.0.0	2024-12-05 09:55:56	f	f	t
-\.
-
-
---
--- Data for Name: system_request_logs; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.system_request_logs (id, status_code, url, referer, count, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: system_revisions; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.system_revisions (id, user_id, field, "cast", old_value, new_value, revisionable_type, revisionable_id, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: system_settings; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.system_settings (id, item, value) FROM stdin;
-1	backend_brand_settings	{"app_name":"Justice","app_tagline":"Peace & Love","primary_color":"#34495E","secondary_color":"#E67E22","accent_color":"#3498DB","default_colors":[{"color":"#1ABC9C"},{"color":"#16A085"},{"color":"#2ECC71"},{"color":"#27AE60"},{"color":"#3498DB"},{"color":"#2980B9"},{"color":"#9B59B6"},{"color":"#8E44AD"},{"color":"#34495E"},{"color":"#2B3E50"},{"color":"#F1C40F"},{"color":"#F39C12"},{"color":"#E67E22"},{"color":"#D35400"},{"color":"#E74C3C"},{"color":"#C0392B"},{"color":"#ECF0F1"},{"color":"#BDC3C7"},{"color":"#95A5A6"},{"color":"#7F8C8D"}],"menu_mode":"inline","auth_layout":"split","menu_location":"top","icon_location":"inline","custom_css":""}
-2	acorn_rtler	{"layout_mode":"never","editor_mode":"language","markdown_editor_mode":"language"}
-3	user_settings	{"require_activation":"0","activate_mode":"auto","use_throttle":"0","block_persistence":"0","allow_registration":"0","login_attribute":"email","remember_login":"always","use_register_throttle":"0","has_front_end":"0"}
-4	acorn_calendar_settings	{"days_before":"1 year","days_after":"1 year","default_event_time_from":"2024-11-12 09:00:00","default_event_time_to":"2024-11-12 10:00:00","default_time_zone":"AD","daylight_savings":"1"}
-5	system_mail_settings	{"send_mode":"log","sender_name":"intranet","sender_email":"noreply@example.com","sendmail_path":"\\/usr\\/sbin\\/sendmail -t -i","smtp_address":"","smtp_port":null,"smtp_user":null,"smtp_password":null,"smtp_authorization":"0"}
-6	acorn_interface_settings	{"multi_max_items":null,"enable_websockets":"0"}
-7	acorn_location_settings	{"google-address-lookup":"0"}
-\.
-
-
---
--- Data for Name: winter_location_countries; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.winter_location_countries (id, is_enabled, name, code, is_pinned) FROM stdin;
-5	f	Afghanistan	AF	f
-6	f	Aland Islands 	AX	f
-7	f	Albania	AL	f
-8	f	Algeria	DZ	f
-9	f	American Samoa	AS	f
-10	f	Andorra	AD	f
-11	f	Angola	AO	f
-12	f	Anguilla	AI	f
-13	f	Antarctica	AQ	f
-14	f	Antigua and Barbuda	AG	f
-15	f	Argentina	AR	f
-16	f	Armenia	AM	f
-17	f	Aruba	AW	f
-18	f	Austria	AT	f
-19	f	Azerbaijan	AZ	f
-20	f	Bahamas	BS	f
-21	f	Bahrain	BH	f
-22	f	Bangladesh	BD	f
-23	f	Barbados	BB	f
-24	f	Belarus	BY	f
-25	f	Belgium	BE	f
-26	f	Belize	BZ	f
-27	f	Benin	BJ	f
-28	f	Bermuda	BM	f
-29	f	Bhutan	BT	f
-30	f	Bolivia, Plurinational State of	BO	f
-31	f	Bonaire, Sint Eustatius and Saba	BQ	f
-32	f	Bosnia and Herzegovina	BA	f
-33	f	Botswana	BW	f
-34	f	Bouvet Island	BV	f
-35	f	Brazil	BR	f
-36	f	British Indian Ocean Territory	IO	f
-37	f	Brunei Darussalam	BN	f
-38	f	Bulgaria	BG	f
-39	f	Burkina Faso	BF	f
-40	f	Burundi	BI	f
-41	f	Cambodia	KH	f
-42	f	Cameroon	CM	f
-43	f	Cape Verde	CV	f
-44	f	Cayman Islands	KY	f
-45	f	Central African Republic	CF	f
-46	f	Chad	TD	f
-47	f	Chile	CL	f
-48	f	China	CN	f
-49	f	Christmas Island	CX	f
-50	f	Cocos (Keeling) Islands	CC	f
-51	f	Colombia	CO	f
-52	f	Comoros	KM	f
-53	f	Congo	CG	f
-54	f	Congo, the Democratic Republic of the	CD	f
-55	f	Cook Islands	CK	f
-56	f	Costa Rica	CR	f
-57	f	Cote d'Ivoire	CI	f
-58	f	Croatia	HR	f
-59	f	Cuba	CU	f
-60	f	Curaçao	CW	f
-61	f	Cyprus	CY	f
-62	f	Czech Republic	CZ	f
-63	f	Denmark	DK	f
-64	f	Djibouti	DJ	f
-65	f	Dominica	DM	f
-66	f	Dominican Republic	DO	f
-67	f	Ecuador	EC	f
-68	f	Egypt	EG	f
-69	f	El Salvador	SV	f
-70	f	Equatorial Guinea	GQ	f
-71	f	Eritrea	ER	f
-72	f	Estonia	EE	f
-73	f	Ethiopia	ET	f
-74	f	Falkland Islands (Malvinas)	FK	f
-75	f	Faroe Islands	FO	f
-76	f	Finland	FI	f
-77	f	Fiji	FJ	f
-78	t	France	FR	f
-79	f	French Guiana	GF	f
-80	f	French Polynesia	PF	f
-81	f	French Southern Territories	TF	f
-82	f	Gabon	GA	f
-83	f	Gambia	GM	f
-84	f	Georgia	GE	f
-85	f	Germany	DE	f
-86	f	Ghana	GH	f
-87	f	Gibraltar	GI	f
-88	f	Greece	GR	f
-89	f	Greenland	GL	f
-90	f	Grenada	GD	f
-91	f	Guadeloupe	GP	f
-92	f	Guam	GU	f
-93	f	Guatemala	GT	f
-94	f	Guernsey	GG	f
-95	f	Guinea	GN	f
-96	f	Guinea-Bissau	GW	f
-97	f	Guyana	GY	f
-98	f	Haiti	HT	f
-99	f	Heard Island and McDonald Islands	HM	f
-100	f	Holy See (Vatican City State)	VA	f
-101	f	Honduras	HN	f
-102	f	Hong Kong	HK	f
-104	f	Iceland	IS	f
-105	t	India	IN	f
-106	f	Indonesia	ID	f
-107	f	Iran, Islamic Republic of	IR	f
-109	t	Ireland	IE	f
-110	f	Isle of Man	IM	f
-111	f	Israel	IL	f
-112	f	Italy	IT	f
-113	f	Jamaica	JM	f
-114	f	Japan	JP	f
-115	f	Jersey	JE	f
-116	f	Jordan	JO	f
-117	f	Kazakhstan	KZ	f
-118	f	Kenya	KE	f
-119	f	Kiribati	KI	f
-120	f	Korea, Democratic People's Republic of	KP	f
-121	f	Korea, Republic of	KR	f
-122	f	Kuwait	KW	f
-123	f	Kyrgyzstan	KG	f
-124	f	Lao People's Democratic Republic	LA	f
-125	f	Latvia	LV	f
-126	f	Lebanon	LB	f
-127	f	Lesotho	LS	f
-128	f	Liberia	LR	f
-129	f	Libyan Arab Jamahiriya	LY	f
-130	f	Liechtenstein	LI	f
-131	f	Lithuania	LT	f
-132	f	Luxembourg	LU	f
-133	f	Macao	MO	f
-134	f	Macedonia	MK	f
-135	f	Madagascar	MG	f
-136	f	Malawi	MW	f
-137	f	Malaysia	MY	f
-138	f	Maldives	MV	f
-139	f	Mali	ML	f
-140	f	Malta	MT	f
-141	f	Marshall Islands	MH	f
-142	f	Martinique	MQ	f
-143	f	Mauritania	MR	f
-144	f	Mauritius	MU	f
-145	f	Mayotte	YT	f
-146	f	Mexico	MX	f
-147	f	Micronesia, Federated States of	FM	f
-148	f	Moldova, Republic of	MD	f
-149	f	Monaco	MC	f
-150	f	Mongolia	MN	f
-151	f	Montenegro	ME	f
-152	f	Montserrat	MS	f
-153	f	Morocco	MA	f
-154	f	Mozambique	MZ	f
-155	f	Myanmar	MM	f
-156	f	Namibia	NA	f
-157	f	Nauru	NR	f
-158	f	Nepal	NP	f
-159	t	Netherlands	NL	f
-160	f	New Caledonia	NC	f
-108	t	Iraq	IQ	f
-161	t	New Zealand	NZ	f
-2	t	Canada	CA	t
-162	f	Nicaragua	NI	f
-163	f	Niger	NE	f
-164	f	Nigeria	NG	f
-165	f	Niue	NU	f
-166	f	Norfolk Island	NF	f
-167	f	Northern Mariana Islands	MP	f
-168	f	Norway	NO	f
-169	f	Oman	OM	f
-170	f	Pakistan	PK	f
-171	f	Palau	PW	f
-172	f	Palestine	PS	f
-173	f	Panama	PA	f
-174	f	Papua New Guinea	PG	f
-175	f	Paraguay	PY	f
-176	f	Peru	PE	f
-177	f	Philippines	PH	f
-178	f	Pitcairn	PN	f
-179	f	Poland	PL	f
-180	f	Portugal	PT	f
-181	f	Puerto Rico	PR	f
-182	f	Qatar	QA	f
-183	f	Reunion	RE	f
-184	t	Romania	RO	f
-185	f	Russian Federation	RU	f
-186	f	Rwanda	RW	f
-187	f	Saint Barthélemy	BL	f
-188	f	Saint Helena	SH	f
-189	f	Saint Kitts and Nevis	KN	f
-190	f	Saint Lucia	LC	f
-191	f	Saint Martin (French part)	MF	f
-192	f	Saint Pierre and Miquelon	PM	f
-193	f	Saint Vincent and the Grenadines	VC	f
-194	f	Samoa	WS	f
-195	f	San Marino	SM	f
-196	f	Sao Tome and Principe	ST	f
-197	f	Saudi Arabia	SA	f
-198	f	Senegal	SN	f
-199	f	Serbia	RS	f
-200	f	Seychelles	SC	f
-201	f	Sierra Leone	SL	f
-202	f	Singapore	SG	f
-203	f	Sint Maarten (Dutch part)	SX	f
-204	f	Slovakia	SK	f
-205	f	Slovenia	SI	f
-206	f	Solomon Islands	SB	f
-207	f	Somalia	SO	f
-208	f	South Africa	ZA	f
-209	f	South Georgia and the South Sandwich Islands	GS	f
-210	t	Spain	ES	f
-211	f	Sri Lanka	LK	f
-212	f	Sudan	SD	f
-213	f	Suriname	SR	f
-214	f	Svalbard and Jan Mayen	SJ	f
-215	f	Swaziland	SZ	f
-216	f	Sweden	SE	f
-217	f	Switzerland	CH	f
-219	f	Taiwan, Province of China	TW	f
-220	f	Tajikistan	TJ	f
-221	f	Tanzania, United Republic of	TZ	f
-222	f	Thailand	TH	f
-223	f	Timor-Leste	TL	f
-224	f	Togo	TG	f
-225	f	Tokelau	TK	f
-226	f	Tonga	TO	f
-227	f	Trinidad and Tobago	TT	f
-228	f	Tunisia	TN	f
-230	f	Turkmenistan	TM	f
-231	f	Turks and Caicos Islands	TC	f
-232	f	Tuvalu	TV	f
-233	f	Uganda	UG	f
-234	f	Ukraine	UA	f
-235	f	United Arab Emirates	AE	f
-236	f	United States Minor Outlying Islands	UM	f
-237	f	Uruguay	UY	f
-238	f	Uzbekistan	UZ	f
-239	f	Vanuatu	VU	f
-240	f	Venezuela, Bolivarian Republic of	VE	f
-241	f	Viet Nam	VN	f
-242	f	Virgin Islands, British	VG	f
-243	f	Virgin Islands, U.S.	VI	f
-244	f	Wallis and Futuna	WF	f
-245	f	Western Sahara	EH	f
-246	f	Yemen	YE	f
-247	f	Zambia	ZM	f
-248	f	Zimbabwe	ZW	f
-218	t	Syrian Arab Republic	SY	t
-103	f	Hungary	HU	f
-1	f	Australia	AU	f
-229	t	Turkey	TR	f
-3	f	United Kingdom	GB	f
-4	f	United States	US	f
-\.
-
-
---
--- Data for Name: winter_location_states; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.winter_location_states (id, country_id, name, code, is_enabled) FROM stdin;
-1	4	Alabama	AL	t
-2	4	Alaska	AK	t
-3	4	American Samoa	AS	t
-4	4	Arizona	AZ	t
-5	4	Arkansas	AR	t
-6	4	California	CA	t
-7	4	Colorado	CO	t
-8	4	Connecticut	CT	t
-9	4	Delaware	DE	t
-10	4	Dist. of Columbia	DC	t
-11	4	Florida	FL	t
-12	4	Georgia	GA	t
-13	4	Guam	GU	t
-14	4	Hawaii	HI	t
-15	4	Idaho	ID	t
-16	4	Illinois	IL	t
-17	4	Indiana	IN	t
-18	4	Iowa	IA	t
-19	4	Kansas	KS	t
-20	4	Kentucky	KY	t
-21	4	Louisiana	LA	t
-22	4	Maine	ME	t
-23	4	Maryland	MD	t
-24	4	Marshall Islands	MH	t
-25	4	Massachusetts	MA	t
-26	4	Michigan	MI	t
-27	4	Micronesia	FM	t
-28	4	Minnesota	MN	t
-29	4	Mississippi	MS	t
-30	4	Missouri	MO	t
-31	4	Montana	MT	t
-32	4	Nebraska	NE	t
-33	4	Nevada	NV	t
-34	4	New Hampshire	NH	t
-35	4	New Jersey	NJ	t
-36	4	New Mexico	NM	t
-37	4	New York	NY	t
-38	4	North Carolina	NC	t
-39	4	North Dakota	ND	t
-40	4	Northern Marianas	MP	t
-41	4	Ohio	OH	t
-42	4	Oklahoma	OK	t
-43	4	Oregon	OR	t
-44	4	Palau	PW	t
-45	4	Pennsylvania	PA	t
-46	4	Puerto Rico	PR	t
-47	4	Rhode Island	RI	t
-48	4	South Carolina	SC	t
-49	4	South Dakota	SD	t
-50	4	Tennessee	TN	t
-51	4	Texas	TX	t
-52	4	Utah	UT	t
-53	4	Vermont	VT	t
-54	4	Virginia	VA	t
-55	4	Virgin Islands	VI	t
-56	4	Washington	WA	t
-57	4	West Virginia	WV	t
-58	4	Wisconsin	WI	t
-59	4	Wyoming	WY	t
-60	35	Acre	AC	t
-61	35	Alagoas	AL	t
-62	35	Amapá	AP	t
-63	35	Amazonas	AM	t
-64	35	Bahia	BA	t
-65	35	Ceará	CE	t
-66	35	Distrito Federal	DF	t
-67	35	Espírito Santo	ES	t
-68	35	Goiás	GO	t
-69	35	Maranhão	MA	t
-70	35	Mato Grosso	MT	t
-71	35	Mato Grosso do Sul	MS	t
-72	35	Minas Gerais	MG	t
-73	35	Pará	PA	t
-74	35	Paraíba	PB	t
-75	35	Paraná	PR	t
-76	35	Pernambuco	PE	t
-77	35	Piauí	PI	t
-78	35	Rio de Janeiro	RJ	t
-79	35	Rio Grande do Norte	RN	t
-80	35	Rio Grande do Sul	RS	t
-81	35	Rondônia	RO	t
-82	35	Roraima	RR	t
-83	35	Santa Catarina	SC	t
-84	35	São Paulo	SP	t
-85	35	Sergipe	SE	t
-86	35	Tocantins	TO	t
-87	2	Alberta	AB	t
-88	2	British Columbia	BC	t
-89	2	Manitoba	MB	t
-90	2	New Brunswick	NB	t
-91	2	Newfoundland and Labrador	NL	t
-92	2	Northwest Territories	NT	t
-93	2	Nova Scotia	NS	t
-94	2	Nunavut	NU	t
-95	2	Ontario	ON	t
-96	2	Prince Edward Island	PE	t
-97	2	Quebec	QC	t
-98	2	Saskatchewan	SK	t
-99	2	Yukon	YT	t
-100	217	Aargau	AG	t
-101	217	Appenzell Innerrhoden	AI	t
-102	217	Appenzell Ausserrhoden	AR	t
-103	217	Bern	BE	t
-104	217	Basel-Landschaft	BL	t
-105	217	Basel-Stadt	BS	t
-106	217	Fribourg	FR	t
-107	217	Genève	GE	t
-108	217	Glarus	GL	t
-109	217	Graubünden	GR	t
-110	217	Jura	JU	t
-111	217	Luzern	LU	t
-112	217	Neuchâtel	NE	t
-113	217	Nidwalden	NW	t
-114	217	Obwalden	OW	t
-115	217	St. Gallen	SG	t
-116	217	Solothurn	SO	t
-117	217	Schwyz	SZ	t
-118	217	Thurgau	TG	t
-119	217	Ticino	TI	t
-120	217	Uri	UR	t
-121	217	Vaud	VD	t
-122	217	Valais	VS	t
-123	217	Zug	ZG	t
-124	217	Zürich	ZH	t
-125	1	New South Wales	NSW	t
-126	1	Queensland	QLD	t
-127	1	South Australia	SA	t
-128	1	Tasmania	TAS	t
-129	1	Victoria	VIC	t
-130	1	Western Australia	WA	t
-131	1	Northern Territory	NT	t
-132	1	Australian Capital Territory	ACT	t
-133	85	Baden-Württemberg	BW	t
-134	85	Bayern	BY	t
-135	85	Berlin	BE	t
-136	85	Brandenburg	BB	t
-137	85	Bremen	HB	t
-138	85	Hamburg	HH	t
-139	85	Hessen	HE	t
-140	85	Mecklenburg-Vorpommern	MV	t
-141	85	Niedersachsen	NI	t
-142	85	Nordrhein-Westfalen	NW	t
-143	85	Rheinland-Pfalz	RP	t
-144	85	Saarland	SL	t
-145	85	Sachsen	SN	t
-146	85	Sachsen-Anhalt	ST	t
-147	85	Schleswig-Holstein	SH	t
-148	85	Thüringen	TH	t
-149	72	Harju	HA	t
-150	72	Hiiu	HI	t
-151	72	Ida-Viru	IV	t
-152	72	Jõgeva	JR	t
-153	72	Järva	JN	t
-154	72	Lääne	LN	t
-155	72	Lääne-Viru	LV	t
-156	72	Põlva	PL	t
-157	72	Pärnu	PR	t
-158	72	Rapla	RA	t
-159	72	Saare	SA	t
-160	72	Tartu	TA	t
-161	72	Valga	VG	t
-162	72	Viljandi	VD	t
-163	72	Võru	VR	t
-164	109	Dublin	D	t
-165	109	Wicklow	WW	t
-166	109	Wexford	WX	t
-167	109	Carlow	CW	t
-168	109	Kildare	KE	t
-169	109	Meath	MH	t
-170	109	Louth	LH	t
-171	109	Monaghan	MN	t
-172	109	Cavan	CN	t
-173	109	Longford	LD	t
-174	109	Westmeath	WH	t
-175	109	Offaly	OY	t
-176	109	Laois	LS	t
-177	109	Kilkenny	KK	t
-178	109	Waterford	WD	t
-179	109	Cork	C	t
-180	109	Kerry	KY	t
-181	109	Limerick	LK	t
-182	109	North Tipperary	TN	t
-183	109	South Tipperary	TS	t
-184	109	Clare	CE	t
-185	109	Galway	G	t
-186	109	Mayo	MO	t
-187	109	Roscommon	RN	t
-188	109	Sligo	SO	t
-189	109	Leitrim	LM	t
-190	109	Donegal	DL	t
-191	159	Drenthe	DR	t
-192	159	Flevoland	FL	t
-193	159	Friesland	FR	t
-194	159	Gelderland	GE	t
-195	159	Groningen	GR	t
-196	159	Limburg	LI	t
-197	159	Noord-Brabant	NB	t
-198	159	Noord-Holland	NH	t
-199	159	Overijssel	OV	t
-200	159	Utrecht	UT	t
-201	159	Zeeland	ZE	t
-202	159	Zuid-Holland	ZH	t
-203	3	Aberdeenshire	ABE	t
-204	3	Anglesey	ALY	t
-205	3	Angus	ANG	t
-206	3	Argyll	ARG	t
-207	3	Ayrshire	AYR	t
-208	3	Banffshire	BAN	t
-209	3	Bedfordshire	BED	t
-210	3	Berkshire	BER	t
-211	3	Berwickshire	BWS	t
-212	3	Brecknockshire	BRE	t
-213	3	Buckinghamshire	BUC	t
-214	3	Bute	BUT	t
-215	3	Caernarfonshire	CAE	t
-216	3	Caithness	CAI	t
-217	3	Cambridgeshire	CAM	t
-218	3	Cardiganshire	CAR	t
-219	3	Carmarthenshire	CMS	t
-220	3	Cheshire	CHE	t
-221	3	Clackmannanshire	CLA	t
-222	3	Cleveland	CLE	t
-223	3	Cornwall	COR	t
-224	3	Cromartyshire	CRO	t
-225	3	Cumberland	CBR	t
-226	3	Cumbria	CUM	t
-227	3	Denbighshire	DEN	t
-228	3	Derbyshire	DER	t
-229	3	Devon	DEV	t
-230	3	Dorset	DOR	t
-231	3	Dumbartonshire	DBS	t
-232	3	Dumfriesshire	DUM	t
-233	3	Durham	DUR	t
-234	3	East Lothian	ELO	t
-235	3	Essex	ESS	t
-236	3	Flintshire	FLI	t
-237	3	Fife	FIF	t
-238	3	Glamorgan	GLA	t
-239	3	Gloucestershire	GLO	t
-240	3	Hampshire	HAM	t
-241	3	Herefordshire	HER	t
-242	3	Hertfordshire	HTF	t
-243	3	Huntingdonshire	HUN	t
-244	3	Inverness	INV	t
-245	3	Kent	KEN	t
-246	3	Kincardineshire	KCD	t
-247	3	Kinross-shire	KIN	t
-248	3	Kirkcudbrightshire	KIR	t
-249	3	Lanarkshire	LKS	t
-250	3	Lancashire	LAN	t
-251	3	Leicestershire	LEI	t
-252	3	Lincolnshire	LIN	t
-253	3	London	LON	t
-254	3	Manchester	MAN	t
-255	3	Merionethshire	MER	t
-256	3	Merseyside	MSY	t
-257	3	Middlesex	MDX	t
-258	3	Midlands	MID	t
-259	3	Midlothian	MLT	t
-260	3	Monmouthshire	MON	t
-261	3	Montgomeryshire	MGY	t
-262	3	Moray	MOR	t
-263	3	Nairnshire	NAI	t
-264	3	Norfolk	NOR	t
-265	3	Northamptonshire	NMP	t
-266	3	Northumberland	NUM	t
-267	3	Nottinghamshire	NOT	t
-268	3	Orkney	ORK	t
-269	3	Oxfordshire	OXF	t
-270	3	Peebleshire	PEE	t
-271	3	Pembrokeshire	PEM	t
-272	3	Perthshire	PER	t
-273	3	Radnorshire	RAD	t
-274	3	Renfrewshire	REN	t
-275	3	Ross & Cromarty	ROS	t
-276	3	Roxburghshire	ROX	t
-277	3	Rutland	RUT	t
-278	3	Selkirkshire	SEL	t
-279	3	Shetland	SHE	t
-280	3	Shropshire	SHR	t
-281	3	Somerset	SOM	t
-282	3	Staffordshire	STA	t
-283	3	Stirlingshire	STI	t
-284	3	Suffolk	SUF	t
-285	3	Surrey	SUR	t
-286	3	Sussex	SUS	t
-287	3	Sutherland	SUT	t
-288	3	Tyne & Wear	TYN	t
-289	3	Warwickshire	WAR	t
-290	3	West Lothian	WLO	t
-291	3	Westmorland	WES	t
-292	3	Wigtownshire	WIG	t
-293	3	Wiltshire	WIL	t
-294	3	Worcestershire	WOR	t
-295	3	Yorkshire	YOR	t
-296	184	Alba	AB	t
-297	184	Arad	AR	t
-298	184	Arges	AG	t
-299	184	Bacău	BC	t
-300	184	Bihor	BH	t
-301	184	Bistrita - Nasaud Bistrita	BN	t
-302	184	Botosani	BT	t
-303	184	Brasov	BV	t
-304	184	Braila	BR	t
-305	184	Bucuresti	B	t
-306	184	Buzau	BZ	t
-307	184	Caras - Severin	CS	t
-308	184	Calarasi	CL	t
-309	184	Cluj	CJ	t
-310	184	Constanta	CT	t
-311	184	Covasna Sfantu Gheorghe	CV	t
-312	184	Dambovita	DB	t
-313	184	Dolj	DJ	t
-314	184	Galati	GL	t
-315	184	Giurgiu	GR	t
-316	184	Gorj	GJ	t
-317	184	Harghita	HR	t
-318	184	Hunedoara	HD	t
-319	184	Ialomita	IL	t
-320	184	Iasi	IS	t
-321	184	Ilfov	IF	t
-322	184	Maramures	MM	t
-323	184	Mehedinti	MH	t
-324	184	Mures	MS	t
-325	184	Neamt	NT	t
-326	184	Olt	OT	t
-327	184	Prahova Ploiesti	PH	t
-328	184	Satu Mare	SM	t
-329	184	Salaj	SJ	t
-330	184	Sibiu	SB	t
-331	184	Suceava	SV	t
-332	184	Teleorman	TR	t
-333	184	Timis	TM	t
-334	184	Tulcea	TL	t
-335	184	Vaslui	VS	t
-336	184	Valcea	VL	t
-337	184	Vrancea	VN	t
-338	103	Budapest	BUD	t
-339	103	Baranya	BAR	t
-340	103	Bács-Kiskun	BKM	t
-341	103	Békés	BEK	t
-342	103	Borsod-Abaúj-Zemplén	BAZ	t
-343	103	Csongrád	CSO	t
-344	103	Fejér	FEJ	t
-345	103	Győr-Moson-Sopron	GMS	t
-346	103	Hajdú-Bihar	HBM	t
-347	103	Heves	HEV	t
-348	103	Jász-Nagykun-Szolnok	JNS	t
-349	103	Komárom-Esztergom	KEM	t
-350	103	Nógrád	NOG	t
-351	103	Pest	PES	t
-352	103	Somogy	SOM	t
-353	103	Szabolcs-Szatmár-Bereg	SSB	t
-354	103	Tolna	TOL	t
-355	103	Vas	VAS	t
-356	103	Veszprém	VES	t
-357	103	Zala	ZAL	t
-358	105	Andhra Pradesh	AP	t
-359	105	Arunachal Pradesh	AR	t
-360	105	Assam	AS	t
-361	105	Bihar	BR	t
-362	105	Chhattisgarh	CT	t
-363	105	Goa	GA	t
-364	105	Gujarat	GJ	t
-365	105	Haryana	HR	t
-366	105	Himachal Pradesh	HP	t
-367	105	Jammu and Kashmir	JK	t
-368	105	Jharkhand	JH	t
-369	105	Karnataka	KA	t
-370	105	Kerala	KL	t
-371	105	Madhya Pradesh	MP	t
-372	105	Maharashtra	MH	t
-373	105	Manipur	MN	t
-374	105	Meghalaya	ML	t
-375	105	Mizoram	MZ	t
-376	105	Nagaland	NL	t
-377	105	Odisha	OR	t
-378	105	Punjab	PB	t
-379	105	Rajasthan	RJ	t
-380	105	Sikkim	SK	t
-381	105	Tamil Nadu	TN	t
-382	105	Telangana	TG	t
-383	105	Tripura	TR	t
-384	105	Uttarakhand	UT	t
-385	105	Uttar Pradesh	UP	t
-386	105	West Bengal	WB	t
-387	105	Andaman and Nicobar Islands	AN	t
-388	105	Chandigarh	CH	t
-389	105	Dadra and Nagar Haveli	DN	t
-390	105	Daman and Diu	DD	t
-391	105	Delhi	DL	t
-392	105	Lakshadweep	LD	t
-393	105	Puducherry	PY	t
-394	78	Auvergne-Rhône-Alpes	ARA	t
-395	78	Bourgogne-Franche-Comté	BFC	t
-396	78	Bretagne	BZH	t
-397	78	Centre–Val-de-Loire	CVL	t
-398	78	Corse	COR	t
-399	78	Guadeloupe	GP	t
-400	78	Guyane	GF	t
-401	78	Grand-Est	GE	t
-402	78	Hauts-de-France	HF	t
-403	78	Île-de-France	IDF	t
-404	78	Martinique	MQ	t
-405	78	Mayotte	YT	t
-406	78	Normandie	NOR	t
-407	78	Pays-de-la-Loire	PL	t
-408	78	Nouvelle-Aquitaine	NA	t
-409	78	Occitanie	OCC	t
-410	78	Provence-Alpes-Côte-d'Azur	PACA	t
-411	78	Réunion	RE	t
-412	161	Northland	NTL	t
-413	161	Auckland	AUK	t
-414	161	Waikato	WKO	t
-415	161	Bay of Plenty	BOP	t
-416	161	Gisborne	GIS	t
-417	161	Hawke's Bay	HKB	t
-418	161	Taranaki	TKI	t
-419	161	Manawatu-Wanganui	MWT	t
-420	161	Wellington	WGN	t
-421	161	Tasman	TAS	t
-422	161	Nelson	NSN	t
-423	161	Marlborough	MBH	t
-424	161	West Coast	WTC	t
-425	161	Canterbury	CAN	t
-426	161	Otago Otago	OTA	t
-427	161	Southland	STL	t
-428	210	A Coruña (gl) [La Coruña]	ES-C	t
-429	210	Araba (eu)	ES-VI	t
-430	210	Albacete	ES-AB	t
-431	210	Alacant (ca)	ES-A	t
-432	210	Almería	ES-AL	t
-433	210	Asturias	ES-O	t
-434	210	Ávila	ES-AV	t
-435	210	Badajoz	ES-BA	t
-436	210	Balears (ca) [Baleares]	ES-PM	t
-437	210	Barcelona [Barcelona]	ES-B	t
-438	210	Burgos	ES-BU	t
-439	210	Cáceres	ES-CC	t
-440	210	Cádiz	ES-CA	t
-441	210	Cantabria	ES-S	t
-442	210	Castelló (ca)	ES-CS	t
-443	210	Ciudad Real	ES-CR	t
-444	210	Córdoba	ES-CO	t
-445	210	Cuenca	ES-CU	t
-446	210	Girona (ca) [Gerona]	ES-GI	t
-447	210	Granada	ES-GR	t
-448	210	Guadalajara	ES-GU	t
-449	210	Gipuzkoa (eu)	ES-SS	t
-450	210	Huelva	ES-H	t
-451	210	Huesca	ES-HU	t
-452	210	Jaén	ES-J	t
-453	210	La Rioja	ES-LO	t
-454	210	Las Palmas	ES-GC	t
-455	210	León	ES-LE	t
-456	210	Lleida (ca) [Lérida]	ES-L	t
-457	210	Lugo (gl) [Lugo]	ES-LU	t
-458	210	Madrid	ES-M	t
-459	210	Málaga	ES-MA	t
-460	210	Murcia	ES-MU	t
-461	210	Nafarroa (eu)	ES-NA	t
-462	210	Ourense (gl) [Orense]	ES-OR	t
-463	210	Palencia	ES-P	t
-464	210	Pontevedra (gl) [Pontevedra]	ES-PO	t
-465	210	Salamanca	ES-SA	t
-466	210	Santa Cruz de Tenerife	ES-TF	t
-467	210	Segovia	ES-SG	t
-468	210	Sevilla	ES-SE	t
-469	210	Soria	ES-SO	t
-470	210	Tarragona (ca) [Tarragona]	ES-T	t
-471	210	Teruel	ES-TE	t
-472	210	Toledo	ES-TO	t
-473	210	València (ca)	ES-V	t
-474	210	Valladolid	ES-VA	t
-475	210	Bizkaia (eu)	ES-BI	t
-476	210	Zamora	ES-ZA	t
-477	210	Zaragoza	ES-Z	t
-478	146	Aguascalientes	MX-AGU	t
-479	146	Baja California	MX-BCN	t
-480	146	Baja California Sur	MX-BCS	t
-481	146	Campeche	MX-CAM	t
-482	146	Chiapas	MX-CHP	t
-483	146	Chihuahua	MX-CHH	t
-484	146	Coahuila	MX-COA	t
-485	146	Colima	MX-COL	t
-486	146	Ciudad de México	MX-CMX​	t
-487	146	Durango	MX-DUR	t
-488	146	Guanajuato	MX-GUA	t
-489	146	Guerrero	MX-GRO	t
-490	146	Hidalgo	MX-HID	t
-491	146	Jalisco	MX-JAL	t
-492	146	Estado de México	MX-MEX	t
-493	146	Michoacán	MX-MIC	t
-494	146	Morelos	MX-MOR	t
-495	146	Nayarit	MX-NAY	t
-496	146	Nuevo León	MX-NLE	t
-497	146	Oaxaca	MX-OAX	t
-498	146	Puebla	MX-PUE	t
-499	146	Querétaro	MX-QUE	t
-500	146	Quintana Roo	MX-ROO	t
-501	146	San Luis Potosí	MX-SLP	t
-502	146	Sinaloa	MX-SIN	t
-503	146	Sonora	MX-SON	t
-504	146	Tabasco	MX-TAB	t
-505	146	Tamaulipas	MX-TAM	t
-506	146	Tlaxcala	MX-TLA	t
-507	146	Veracruz	MX-VER	t
-508	146	Yucatán	MX-YUC	t
-509	146	Zacatecas	MX-ZAC	t
-510	15	Buenos Aires	BA	t
-511	15	Catamarca	CA	t
-512	15	Chaco	CH	t
-513	15	Chubut	CT	t
-514	15	Córdoba	CB	t
-515	15	Corrientes	CR	t
-516	15	Entre Ríos	ER	t
-517	15	Formosa	FO	t
-518	15	Jujuy	JY	t
-519	15	La Pampa	LP	t
-520	15	La Rioja	LR	t
-521	15	Mendoza	MZ	t
-522	15	Misiones	MI	t
-523	15	Neuquén	NQ	t
-524	15	Río Negro	RN	t
-525	15	Salta	SA	t
-526	15	San Juan	SJ	t
-527	15	San Luis	SL	t
-528	15	Santa Cruz	SC	t
-529	15	Santa Fe	SF	t
-530	15	Santiago del Estero	SE	t
-531	15	Tierra del Fuego	TF	t
-532	15	Tucumán	TU	t
-533	112	Agrigento	AG	t
-534	112	Alessandria	AL	t
-535	112	Ancona	AN	t
-536	112	Aosta	AO	t
-537	112	Arezzo	AR	t
-538	112	Ascoli Piceno	AP	t
-539	112	Asti	AT	t
-540	112	Avellino	AV	t
-541	112	Bari	BA	t
-542	112	Belluno	BL	t
-543	112	Benevento	BN	t
-544	112	Bergamo	BG	t
-545	112	Biella	BI	t
-546	112	Bologna	BO	t
-547	112	Bolzano	BZ	t
-548	112	Brescia	BS	t
-549	112	Brindisi	BR	t
-550	112	Cagliari	CA	t
-551	112	Caltanissetta	CL	t
-552	112	Campobasso	CB	t
-553	112	Caserta	CE	t
-554	112	Catania	CT	t
-555	112	Catanzaro	CZ	t
-556	112	Chieti	CH	t
-557	112	Como	CO	t
-558	112	Cosenza	CS	t
-559	112	Cremona	CR	t
-560	112	Crotone	KR	t
-561	112	Cuneo	CN	t
-562	112	Enna	EN	t
-563	112	Ferrara	FE	t
-564	112	Firenze	FI	t
-565	112	Foggia	FG	t
-566	112	Forli'-Cesena	FO	t
-567	112	Frosinone	FR	t
-568	112	Genova	GE	t
-569	112	Gorizia	GO	t
-570	112	Grosseto	GR	t
-571	112	Imperia	IM	t
-572	112	Isernia	IS	t
-573	112	La Spezia	SP	t
-574	112	L'Aquila	AQ	t
-575	112	Latina	LT	t
-576	112	Lecce	LE	t
-577	112	Lecco	LC	t
-578	112	Livorno	LI	t
-579	112	Lodi	LO	t
-580	112	Lucca	LU	t
-581	112	Macerata	MC	t
-582	112	Mantova	MN	t
-583	112	Massa-Carrara	MS	t
-584	112	Matera	MT	t
-585	112	Messina	ME	t
-586	112	Milano	MI	t
-587	112	Modena	MO	t
-588	112	Napoli	NA	t
-589	112	Novara	NO	t
-590	112	Nuoro	NU	t
-591	112	Oristano	OR	t
-592	112	Padova	PD	t
-593	112	Palermo	PA	t
-594	112	Parma	PR	t
-595	112	Pavia	PV	t
-596	112	Perugia	PG	t
-597	112	Pesaro e Urbino	PS	t
-598	112	Pescara	PE	t
-599	112	Piacenza	PC	t
-600	112	Pisa	PI	t
-601	112	Pistoia	PT	t
-602	112	Pordenone	PN	t
-603	112	Potenza	PZ	t
-604	112	Prato	PO	t
-605	112	Ragusa	RG	t
-606	112	Ravenna	RA	t
-607	112	Reggio di Calabria	RC	t
-608	112	Reggio nell'Emilia	RE	t
-609	112	Rieti	RI	t
-610	112	Rimini	RN	t
-611	112	Roma	RM	t
-612	112	Rovigo	RO	t
-613	112	Salerno	SA	t
-614	112	Sassari	SS	t
-615	112	Savona	SV	t
-616	112	Siena	SI	t
-617	112	Siracusa	SR	t
-618	112	Sondrio	SO	t
-619	112	Taranto	TA	t
-620	112	Teramo	TE	t
-621	112	Terni	TR	t
-622	112	Torino	TO	t
-623	112	Trapani	TP	t
-624	112	Trento	TN	t
-625	112	Treviso	TV	t
-626	112	Trieste	TS	t
-627	112	Udine	UD	t
-628	112	Varese	VA	t
-629	112	Venezia	VE	t
-630	112	Verbano-Cusio-Ossola	VB	t
-631	112	Vercelli	VC	t
-632	112	Verona	VR	t
-633	112	Vibo Valentia	VV	t
-634	112	Vicenza	VI	t
-635	112	Viterbo	VT	t
-636	185	Адыгея	RU-AD	t
-637	185	Башкортостан	RU-BA	t
-638	185	Бурятия	RU-BU	t
-639	185	Республика Алтай	RU-AL	t
-640	185	Дагестан	RU-DA	t
-641	185	Ингушетия	RU-IN	t
-642	185	Кабардино-Балкария	RU-KB	t
-643	185	Калмыкия	RU-KL	t
-644	185	Карачаево-Черкесия	RU-KC	t
-645	185	Карелия	RU-KR	t
-646	185	Республика Коми	RU-KO	t
-647	185	Марий Эл	RU-ME	t
-648	185	Мордовия	RU-MO	t
-649	185	Якутия	RU-SA	t
-650	185	Северная Осетия	RU-SE	t
-651	185	Татарстан	RU-TA	t
-652	185	Тыва	RU-TY	t
-653	185	Удмуртия	RU-UD	t
-654	185	Хакасия	RU-KK	t
-655	185	Чувашия	RU-CU	t
-656	185	Алтайский край	RU-ALT	t
-657	185	Краснодарский край	RU-KDA	t
-658	185	Красноярский край	RU-KYA	t
-659	185	Приморский край	RU-PRI	t
-660	185	Ставропольский край	RU-STA	t
-661	185	Хабаровский край	RU-KHA	t
-662	185	Амурская область	RU-AMU	t
-663	185	Архангельская область	RU-ARK	t
-664	185	Астраханская область	RU-AST	t
-665	185	Белгородская область	RU-BEL	t
-666	185	Брянская область	RU-BRY	t
-667	185	Владимирская область	RU-VLA	t
-668	185	Волгоградская область	RU-VGG	t
-669	185	Вологодская область	RU-VLG	t
-670	185	Воронежская область	RU-VOR	t
-671	185	Ивановская область	RU-IVA	t
-672	185	Иркутская область	RU-IRK	t
-673	185	Калининградская область	RU-KGD	t
-674	185	Калужская область	RU-KLU	t
-675	185	Камчатский край	RU-KAM	t
-676	185	Кемеровская область	RU-KEM	t
-677	185	Кировская область	RU-KIR	t
-678	185	Костромская область	RU-KOS	t
-679	185	Курганская область	RU-KGN	t
-680	185	Курская область	RU-KRS	t
-681	185	Ленинградская область	RU-LEN	t
-682	185	Липецкая область	RU-LIP	t
-683	185	Магаданская область	RU-MAG	t
-684	185	Московская область	RU-MOS	t
-685	185	Мурманская область	RU-MUR	t
-686	185	Нижегородская область	RU-NIZ	t
-687	185	Новгородская область	RU-NGR	t
-688	185	Новосибирская область	RU-NVS	t
-689	185	Омская область	RU-OMS	t
-690	185	Оренбургская область	RU-ORE	t
-691	185	Орловская область	RU-ORL	t
-692	185	Пензенская область	RU-PNZ	t
-693	185	Пермский край	RU-PER	t
-694	185	Псковская область	RU-PSK	t
-695	185	Ростовская область	RU-ROS	t
-696	185	Рязанская область	RU-RYA	t
-697	185	Самарская область	RU-SAM	t
-698	185	Саратовская область	RU-SAR	t
-699	185	Сахалинская область	RU-SAK	t
-700	185	Свердловская область	RU-SVE	t
-701	185	Смоленская область	RU-SMO	t
-702	185	Тамбовская область	RU-TAM	t
-703	185	Тверская область	RU-TVE	t
-704	185	Томская область	RU-TOM	t
-705	185	Тульская область	RU-TUL	t
-706	185	Тюменская область	RU-TYU	t
-707	185	Ульяновская область	RU-ULY	t
-708	185	Челябинская область	RU-CHE	t
-709	185	Забайкальский край	RU-ZAB	t
-710	185	Ярославская область	RU-YAR	t
-711	185	Москва	RU-MOW	t
-712	185	Санкт-Петербург	RU-SPE	t
-713	185	Еврейская автономная область	RU-YEV	t
-714	185	Крым	UA-43	t
-715	185	Ненецкий автономный округ	RU-NEN	t
-716	185	Ханты-Мансийский автономный округ - Югра	RU-KHM	t
-717	185	Чукотский автономный округ	RU-CHU	t
-718	185	Ямало-Ненецкий автономный округ	RU-YAN	t
-719	185	Севастополь	UA-40	t
-720	185	Чечня	RU-CE	t
-\.
-
-
---
--- Data for Name: winter_translate_attributes; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.winter_translate_attributes (id, locale, model_id, model_type, attribute_data) FROM stdin;
-1	ar	f7f8504d-7b6e-4083-b0f9-df0203c39d77	Acorn\\Criminal\\Models\\CrimeType	{"name":""}
-2	ku	f7f8504d-7b6e-4083-b0f9-df0203c39d77	Acorn\\Criminal\\Models\\CrimeType	{"name":""}
-3	ar	9d4a8a4c-93b5-4f0d-87b6-b428b24d47f5	Acorn\\Criminal\\Models\\Crime	{"name":""}
-4	ku	9d4a8a4c-93b5-4f0d-87b6-b428b24d47f5	Acorn\\Criminal\\Models\\Crime	{"name":""}
-5	ar	9d4a8d98-a8bd-4d4b-8ead-5317908869e8	Acorn\\Criminal\\Models\\Crime	{"name":""}
-6	ku	9d4a8d98-a8bd-4d4b-8ead-5317908869e8	Acorn\\Criminal\\Models\\Crime	{"name":""}
-7	ar	9d4a965a-f94e-4587-b270-da162e52db98	Acorn\\Criminal\\Models\\SentenceType	{"name":""}
-8	ku	9d4a965a-f94e-4587-b270-da162e52db98	Acorn\\Criminal\\Models\\SentenceType	{"name":""}
-9	ar	9d4a96d7-769f-435c-a6ca-f4870040ecc8	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-10	ku	9d4a96d7-769f-435c-a6ca-f4870040ecc8	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-11	ar	9d4aa211-34bd-4653-85b6-5ddb164440fe	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-12	ku	9d4aa211-34bd-4653-85b6-5ddb164440fe	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-13	ar	9d4c5b36-75b9-4123-acea-c85a306810ba	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-14	ku	9d4c5b36-75b9-4123-acea-c85a306810ba	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-15	ar	9d4c64fa-99c0-414f-af79-cc0eab861157	Acorn\\Criminal\\Models\\CrimeType	{"name":""}
-16	ku	9d4c64fa-99c0-414f-af79-cc0eab861157	Acorn\\Criminal\\Models\\CrimeType	{"name":""}
-17	ar	9d50329d-e584-4745-9407-e48082a25205	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-18	ku	9d50329d-e584-4745-9407-e48082a25205	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-19	ar	80e841e9-27f9-492b-abb7-bf5985aca118	Acorn\\Criminal\\Models\\CrimeType	{"name":""}
-20	ku	80e841e9-27f9-492b-abb7-bf5985aca118	Acorn\\Criminal\\Models\\CrimeType	{"name":""}
-21	ar	9d506cb4-c01e-43f0-8852-5e25e3b11910	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-22	ku	9d506cb4-c01e-43f0-8852-5e25e3b11910	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-23	ar	9d50b964-67d7-482a-b65b-bf0249124169	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-24	ku	9d50b964-67d7-482a-b65b-bf0249124169	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-25	ar	9d50ba9d-f66d-40df-b69c-6af31eb1b89e	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-26	ku	9d50ba9d-f66d-40df-b69c-6af31eb1b89e	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-27	ar	9d50bacd-e491-41e7-bc04-c709fc19a744	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-28	ku	9d50bacd-e491-41e7-bc04-c709fc19a744	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-29	ar	9d50baec-23b1-4b61-8227-73f40cc76717	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-30	ku	9d50baec-23b1-4b61-8227-73f40cc76717	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-31	ar	9d50bb79-4d26-4211-ae10-22e86b0fbfa3	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-32	ku	9d50bb79-4d26-4211-ae10-22e86b0fbfa3	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-33	ar	9d50c379-b23d-40ee-95b5-1f5f3e7ba223	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-34	ku	9d50c379-b23d-40ee-95b5-1f5f3e7ba223	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-35	ar	9d523e2f-5d41-417e-9339-9032cbaea5af	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-36	ku	9d523e2f-5d41-417e-9339-9032cbaea5af	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-37	ar	9d54363d-4c9a-4863-b82d-87c3c7f28300	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-38	ku	9d54363d-4c9a-4863-b82d-87c3c7f28300	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-39	ar	9d5470f2-844c-452f-8ec2-2476e872a56c	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-40	ku	9d5470f2-844c-452f-8ec2-2476e872a56c	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-41	ar	9d587bb4-3a40-461d-ad98-925e7fa0ea3a	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-42	ku	9d587bb4-3a40-461d-ad98-925e7fa0ea3a	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-43	ar	9d588269-47a6-4b73-93e0-28167637e584	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-44	ku	9d588269-47a6-4b73-93e0-28167637e584	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-45	ar	9d58838d-8508-49c3-b161-a515352e4c34	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-46	ku	9d58838d-8508-49c3-b161-a515352e4c34	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-47	ar	9d5883a8-5ef8-4019-a9dd-74c524b8e1a5	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-48	ku	9d5883a8-5ef8-4019-a9dd-74c524b8e1a5	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-49	ar	9d5884f8-14c3-4c54-b4bd-a5852df92969	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-50	ku	9d5884f8-14c3-4c54-b4bd-a5852df92969	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-51	ar	9d58bd5f-a462-4041-8ed3-338e5c480f8b	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-52	ku	9d58bd5f-a462-4041-8ed3-338e5c480f8b	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-53	ar	9d58bdb8-4fe3-43d5-8a24-2750e9df2371	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-54	ku	9d58bdb8-4fe3-43d5-8a24-2750e9df2371	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-55	ar	9d58bf06-b792-45d0-b39f-2114f3ed3915	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-56	ku	9d58bf06-b792-45d0-b39f-2114f3ed3915	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-57	ar	9d58bf1d-5987-4b45-9537-51375d9bee2c	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-58	ku	9d58bf1d-5987-4b45-9537-51375d9bee2c	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-59	ar	9d58bf2d-6225-4391-942f-901e10706b78	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-60	ku	9d58bf2d-6225-4391-942f-901e10706b78	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-61	ar	9d58da7f-dc4f-48a7-bb82-0667aaa076ca	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-62	ku	9d58da7f-dc4f-48a7-bb82-0667aaa076ca	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-63	ar	9d58dc36-8be7-43f7-8e94-78d57df57bec	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-64	ku	9d58dc36-8be7-43f7-8e94-78d57df57bec	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-65	ar	9d58dede-2691-4ab7-b3e9-a8f608fe9a4f	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-66	ku	9d58dede-2691-4ab7-b3e9-a8f608fe9a4f	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-67	ar	9d58defc-43b1-412f-970d-57d51da6d3da	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-68	ku	9d58defc-43b1-412f-970d-57d51da6d3da	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-69	ar	9d58df6e-7dca-4e28-8870-6e4b1136b422	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-70	ku	9d58df6e-7dca-4e28-8870-6e4b1136b422	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-71	ar	9d58e27e-b01e-4bdc-94c9-c63f5850f8b4	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-72	ku	9d58e27e-b01e-4bdc-94c9-c63f5850f8b4	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-73	ar	9d58e412-d52f-4ee1-8872-1f2c9a0735eb	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-74	ku	9d58e412-d52f-4ee1-8872-1f2c9a0735eb	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-75	ar	9d58e432-1a07-4f72-a293-4459a602352b	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-76	ku	9d58e432-1a07-4f72-a293-4459a602352b	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-77	ar	9d59085b-1de7-46cd-907e-0880f58a7bd5	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-78	ku	9d59085b-1de7-46cd-907e-0880f58a7bd5	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-79	ar	9d5a7cb4-e228-4785-9b5d-8a6a83a24092	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-80	ku	9d5a7cb4-e228-4785-9b5d-8a6a83a24092	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-81	ar	9d5a7cc6-f44b-45f5-b861-9236d89a233e	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-82	ku	9d5a7cc6-f44b-45f5-b861-9236d89a233e	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-83	ar	9d5a813e-3214-4323-b999-2b9529105e73	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-84	ku	9d5a813e-3214-4323-b999-2b9529105e73	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-85	ar	9d5a8196-9586-4985-bf49-176f5286c289	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-86	ku	9d5a8196-9586-4985-bf49-176f5286c289	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-87	ar	9d5aeee9-912d-49de-a1d0-8386c030bbe5	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-88	ku	9d5aeee9-912d-49de-a1d0-8386c030bbe5	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-89	ar	9d5af110-cf6c-429f-9891-e9a8af95f7e0	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-90	ku	9d5af110-cf6c-429f-9891-e9a8af95f7e0	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-91	ar	9d5af133-2abf-48ac-90bd-72fd196397c0	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-92	ku	9d5af133-2abf-48ac-90bd-72fd196397c0	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-93	ar	9d5c01c3-5d7f-463c-8ebd-01a1ec113358	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-94	ku	9d5c01c3-5d7f-463c-8ebd-01a1ec113358	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-95	ar	9d5c03d4-7563-42cb-8e57-0042e53848f1	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-96	ku	9d5c03d4-7563-42cb-8e57-0042e53848f1	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-97	ar	9d5c040b-9aa4-4c17-a74e-9d42c8541573	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-98	ku	9d5c040b-9aa4-4c17-a74e-9d42c8541573	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-99	ar	9d5c041d-5a51-4670-926b-c24dec20fe72	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-100	ku	9d5c041d-5a51-4670-926b-c24dec20fe72	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-101	ar	9d5c04a1-c7b6-453e-ac31-e585a3340cd5	Acorn\\Criminal\\Models\\CrimeType	{"name":""}
-102	ku	9d5c04a1-c7b6-453e-ac31-e585a3340cd5	Acorn\\Criminal\\Models\\CrimeType	{"name":""}
-103	ar	9d5c04b4-2638-4c3f-9291-41005324b9e9	Acorn\\Criminal\\Models\\CrimeType	{"name":""}
-104	ku	9d5c04b4-2638-4c3f-9291-41005324b9e9	Acorn\\Criminal\\Models\\CrimeType	{"name":""}
-105	ar	9d5c0506-f51f-4a8f-a9e5-100968302444	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-106	ku	9d5c0506-f51f-4a8f-a9e5-100968302444	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-107	ar	9d5c058c-1fc0-4d5c-b5d0-35dd6599b2d7	Acorn\\Houseofpeace\\Models\\Event	{"name":""}
-108	ku	9d5c058c-1fc0-4d5c-b5d0-35dd6599b2d7	Acorn\\Houseofpeace\\Models\\Event	{"name":""}
-109	ar	9d5c0600-bcf5-4cbe-8a54-b1ce50e6a833	Acorn\\Criminal\\Models\\Crime	{"name":""}
-110	ku	9d5c0600-bcf5-4cbe-8a54-b1ce50e6a833	Acorn\\Criminal\\Models\\Crime	{"name":""}
-111	ar	9d5c0627-63c5-434e-88f3-1eb4f1561982	Acorn\\Criminal\\Models\\SentenceType	{"name":""}
-112	ku	9d5c0627-63c5-434e-88f3-1eb4f1561982	Acorn\\Criminal\\Models\\SentenceType	{"name":""}
-113	ar	9d5d1527-90aa-4645-973b-2e5b39da18af	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-114	ku	9d5d1527-90aa-4645-973b-2e5b39da18af	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-115	ar	9d5e40a3-6dc2-464d-a41a-45163bcad32d	Acorn\\Justice\\Models\\Legalcase	{"name":""}
-116	ku	9d5e40a3-6dc2-464d-a41a-45163bcad32d	Acorn\\Justice\\Models\\Legalcase	{"name":""}
-117	ar	9d5e40d5-a867-4484-b557-f9d78f775b5c	Acorn\\Houseofpeace\\Models\\Event	{"name":""}
-118	ku	9d5e40d5-a867-4484-b557-f9d78f775b5c	Acorn\\Houseofpeace\\Models\\Event	{"name":""}
-119	ar	9d5e55f2-c221-4e46-9dff-d297e448c590	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-120	ku	9d5e55f2-c221-4e46-9dff-d297e448c590	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-121	ar	9d5e92b8-607b-4b8b-9d5d-708d19c49b55	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-122	ku	9d5e92b8-607b-4b8b-9d5d-708d19c49b55	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-123	ar	9d5e9327-1837-4518-8670-62b61d43465b	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-124	ku	9d5e9327-1837-4518-8670-62b61d43465b	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-125	ar	9d5e93b6-ac95-45a7-921a-6aad75673f2d	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-126	ku	9d5e93b6-ac95-45a7-921a-6aad75673f2d	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-127	ar	9d5e93f8-b29c-4f2b-9a4e-ef9dce629961	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-128	ku	9d5e93f8-b29c-4f2b-9a4e-ef9dce629961	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-129	ar	9d60da11-ba48-4055-89cd-be9a00c5db39	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-130	ku	9d60da11-ba48-4055-89cd-be9a00c5db39	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-131	ar	9d62a48f-1ca6-4295-98b5-42fb6a27efe0	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-132	ku	9d62a48f-1ca6-4295-98b5-42fb6a27efe0	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-133	ar	9d62a4ce-fd35-4fda-afaf-c76d6dc0a04b	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-134	ku	9d62a4ce-fd35-4fda-afaf-c76d6dc0a04b	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-135	ar	9d62a7b6-5e0a-441e-b732-d13e8460e59e	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-136	ku	9d62a7b6-5e0a-441e-b732-d13e8460e59e	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-137	ar	ddfe9196-9426-4e59-baa3-fd2eb62bf93f	Acorn\\Calendar\\Models\\Type	{"name":"Normal ar"}
-138	ku	ddfe9196-9426-4e59-baa3-fd2eb62bf93f	Acorn\\Calendar\\Models\\Type	{"name":""}
-139	ar	9d680027-1145-4be4-975c-ff085afbce34	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-140	ku	9d680027-1145-4be4-975c-ff085afbce34	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-141	ar	9d6a4b02-c5ae-467a-9749-c077820b4986	Acorn\\Location\\Models\\Location	{"name":""}
-142	ku	9d6a4b02-c5ae-467a-9749-c077820b4986	Acorn\\Location\\Models\\Location	{"name":""}
-145	ar	9d6c45dc-89a6-4f30-9374-2be4e7a2fa8a	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
-146	ku	9d6c45dc-89a6-4f30-9374-2be4e7a2fa8a	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
-147	ar	9d6c45f7-4377-4c4b-8bba-a11a6f5e0a62	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
-148	ku	9d6c45f7-4377-4c4b-8bba-a11a6f5e0a62	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
-149	ar	9d6d277e-0cbd-4a8c-8483-04fadefd0a06	Acorn\\User\\Models\\UserGroupType	{"name":""}
-150	ku	9d6d277e-0cbd-4a8c-8483-04fadefd0a06	Acorn\\User\\Models\\UserGroupType	{"name":""}
-151	ar	9d48334c-300c-4970-9c35-be5206270507	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
-152	ku	9d48334c-300c-4970-9c35-be5206270507	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
-153	ar	9d6d2bbb-447a-411f-99e3-72d2c1707f90	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
-155	ar	d062abea-105d-4726-a6e8-e27aa6cd5d08	Acorn\\Location\\Models\\Type	{"name":""}
-156	ku	d062abea-105d-4726-a6e8-e27aa6cd5d08	Acorn\\Location\\Models\\Type	{"name":""}
-157	ar	ad1f8d2e-da3e-4d03-8bba-4d8ac72bc7a5	Acorn\\Location\\Models\\Type	{"name":""}
-158	ku	ad1f8d2e-da3e-4d03-8bba-4d8ac72bc7a5	Acorn\\Location\\Models\\Type	{"name":""}
-154	ku	9d6d2bbb-447a-411f-99e3-72d2c1707f90	Acorn\\User\\Models\\UserGroup	{"name":"Berx","description":""}
-159	ar	9d763c8a-dc75-4ff3-ab51-125320eefb7d	Acorn\\Calendar\\Models\\Calendar	{"name":"","description":""}
-160	ku	9d763c8a-dc75-4ff3-ab51-125320eefb7d	Acorn\\Calendar\\Models\\Calendar	{"name":"","description":""}
-161	ar	9d7a7820-e037-42f1-8e2a-4abeabddcb13	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-162	ku	9d7a7820-e037-42f1-8e2a-4abeabddcb13	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-163	ar	9d7a788d-0408-4e8d-97b5-da8dd5a0ab73	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-164	ku	9d7a788d-0408-4e8d-97b5-da8dd5a0ab73	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-165	ar	9d7a79a0-3fa2-41b1-9923-f3927189531a	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-166	ku	9d7a79a0-3fa2-41b1-9923-f3927189531a	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-167	ar	9d7a7a40-60b4-48ca-818d-85cbe2341f36	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-168	ku	9d7a7a40-60b4-48ca-818d-85cbe2341f36	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-169	ar	9d7a7a4e-22c3-4cd5-ab7a-1bf9dde4e307	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-170	ku	9d7a7a4e-22c3-4cd5-ab7a-1bf9dde4e307	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-171	ar	9d7a7a63-7bb9-4000-839f-9e08b6f9f571	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-172	ku	9d7a7a63-7bb9-4000-839f-9e08b6f9f571	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-173	ar	9d7a8403-aaa6-4713-a7b6-aec1be0ff20e	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-174	ku	9d7a8403-aaa6-4713-a7b6-aec1be0ff20e	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-175	ar	9d7a84c9-38c3-4de0-9c1f-ccea266347e0	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-176	ku	9d7a84c9-38c3-4de0-9c1f-ccea266347e0	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-177	ar	9d7a8520-3f5e-4743-a853-c5a43c487d31	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-178	ku	9d7a8520-3f5e-4743-a853-c5a43c487d31	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-179	ar	9d7a8567-fbed-4859-882a-1a90c6638f7c	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-180	ku	9d7a8567-fbed-4859-882a-1a90c6638f7c	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-181	ar	9d7a8639-f9cd-4876-9b8c-e0c6d1d041a7	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-182	ku	9d7a8639-f9cd-4876-9b8c-e0c6d1d041a7	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-183	ar	9d7a86aa-78a1-4fe6-8a60-0657dfce6b04	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-184	ku	9d7a86aa-78a1-4fe6-8a60-0657dfce6b04	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-185	ar	9d7a8aaf-f97c-480e-b072-86a09074f0ee	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-186	ku	9d7a8aaf-f97c-480e-b072-86a09074f0ee	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-187	ar	9d7a8b92-a801-416e-a3eb-bca47e0250cd	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-188	ku	9d7a8b92-a801-416e-a3eb-bca47e0250cd	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-189	ar	9d7a8d4f-c85b-4630-bcbd-27f7ff3a586a	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-190	ku	9d7a8d4f-c85b-4630-bcbd-27f7ff3a586a	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-191	ar	9d7a8df3-e043-4859-9cd4-3f50e446f4d1	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-192	ku	9d7a8df3-e043-4859-9cd4-3f50e446f4d1	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-193	ar	9d7a9b7b-39e7-48c1-a4d5-080308d08f1b	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-194	ku	9d7a9b7b-39e7-48c1-a4d5-080308d08f1b	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-195	ar	9d7c4b98-3077-4f8b-8c3e-b4620ca060d2	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-196	ku	9d7c4b98-3077-4f8b-8c3e-b4620ca060d2	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-197	ar	9d7c7ab0-69bb-4ef4-a59c-4152ca7361c8	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-198	ku	9d7c7ab0-69bb-4ef4-a59c-4152ca7361c8	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-199	ar	9d7c7ab6-1a72-4515-8a4a-9f0df0166324	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-200	ku	9d7c7ab6-1a72-4515-8a4a-9f0df0166324	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-201	ar	9d7c7ab8-25bf-4045-b7a7-e0182bdf1770	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-202	ku	9d7c7ab8-25bf-4045-b7a7-e0182bdf1770	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-203	ar	9d7c7ab9-87f2-4895-ae5d-044866b6a139	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-204	ku	9d7c7ab9-87f2-4895-ae5d-044866b6a139	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-205	ar	9d7c7abb-31fb-461e-8418-39bee4b6c098	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-206	ku	9d7c7abb-31fb-461e-8418-39bee4b6c098	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-207	ar	9d7c7acd-9e73-46cd-a042-9af239ce5181	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-208	ku	9d7c7acd-9e73-46cd-a042-9af239ce5181	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-209	ar	9d7c7acf-03fb-4211-af6a-c64887cbb6e1	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-210	ku	9d7c7acf-03fb-4211-af6a-c64887cbb6e1	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-211	ar	9d7c7ad0-b310-4b2a-8520-8acaadf2fea9	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-212	ku	9d7c7ad0-b310-4b2a-8520-8acaadf2fea9	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-213	ar	9d7c7ad2-4939-4466-92fb-ed6c93386370	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-214	ku	9d7c7ad2-4939-4466-92fb-ed6c93386370	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-215	ar	9d7c7e64-3ea7-4cec-af7a-228ad81d3049	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-216	ku	9d7c7e64-3ea7-4cec-af7a-228ad81d3049	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-217	ar	e5aa0d61-8c70-4c74-99e6-4312ea063912	Acorn\\Location\\Models\\Location	{"name":""}
-218	ku	e5aa0d61-8c70-4c74-99e6-4312ea063912	Acorn\\Location\\Models\\Location	{"name":""}
-219	ar	9d80b254-cdbe-4060-8611-9727a3abe982	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-220	ku	9d80b254-cdbe-4060-8611-9727a3abe982	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-221	ar	9d80bc1a-4d9f-4ac3-bb7d-06982a68c566	Acorn\\University\\Models\\Course	{"name":""}
-222	ku	9d80bc1a-4d9f-4ac3-bb7d-06982a68c566	Acorn\\University\\Models\\Course	{"name":""}
-223	ar	9d8441a0-47b5-4a8e-8a74-519a4130d20e	Acorn\\University\\Models\\Course	{"name":""}
-224	ku	9d8441a0-47b5-4a8e-8a74-519a4130d20e	Acorn\\University\\Models\\Course	{"name":""}
-225	ar	9d844689-28e1-41ff-a588-9332ce953366	Acorn\\University\\Models\\Course	{"name":""}
-226	ku	9d844689-28e1-41ff-a588-9332ce953366	Acorn\\University\\Models\\Course	{"name":""}
-227	ar	9d8469c1-afee-4260-b9d5-73f716a5e76f	Acorn\\University\\Models\\Course	{"name":""}
-228	ku	9d8469c1-afee-4260-b9d5-73f716a5e76f	Acorn\\University\\Models\\Course	{"name":""}
-229	ar	9d8a43d7-c284-4d84-b5f4-13577207a728	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-230	ku	9d8a43d7-c284-4d84-b5f4-13577207a728	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-231	ar	9d8a4cae-0dc1-48d9-97f6-d6dca0e82ff9	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-233	ar	9d8a4cc4-0c6b-4eea-9807-3e3bc54ecec4	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-234	ku	9d8a4cc4-0c6b-4eea-9807-3e3bc54ecec4	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-235	ar	9d8a4dd2-2157-4bbd-b00f-31311d89854f	Acorn\\University\\Models\\Course	{"name":""}
-236	ku	9d8a4dd2-2157-4bbd-b00f-31311d89854f	Acorn\\University\\Models\\Course	{"name":""}
-232	ku	9d8a4cae-0dc1-48d9-97f6-d6dca0e82ff9	Acorn\\Justice\\Models\\ScannedDocument	{"name":"vvk"}
-237	ar	9d8d3b6e-1131-402f-9955-b7317b4beb4b	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-238	ku	9d8d3b6e-1131-402f-9955-b7317b4beb4b	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-239	ar	9d8e97c3-363b-458b-8f43-664f20234a56	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-240	ku	9d8e97c3-363b-458b-8f43-664f20234a56	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-241	ar	9d907043-6ca9-4616-a9a7-56a7b35700db	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-242	ku	9d907043-6ca9-4616-a9a7-56a7b35700db	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-243	ar	dbf276c2-cdf9-44b6-97b0-14c5a8065c9f	"Acorn\\User\\Models\\UserGroup	{"name":"ايروس قزشو لامشل ةيتاذلا ةرادلإا يف ةيعامتجلاا ةلادعلا سلجم"}
-244	ar	a2168564-34e2-4a09-a3eb-3a806f08e437	"Acorn\\User\\Models\\UserGroup	{"name":"ايرىس قزشو لامشن تيتاذنا ةرادلإا يف تيعامتجلاا تنادعهن ةأزمنا سهجم"}
-245	ar	7aac8fe4-09cc-439f-8b70-3861dbfd79f4	"Acorn\\User\\Models\\UserGroup	{"name":"ةزيشجنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-246	ar	5b54136d-a4a2-4f02-a5bb-723c92252d6f	"Acorn\\User\\Models\\UserGroup	{"name":"تقزنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-247	ar	ad4a6dbe-fb58-4a5f-9297-5d604b36537c	"Acorn\\User\\Models\\UserGroup	{"name":"ثازفنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-248	ar	2f6ef2be-246c-48f7-9f83-b62b8eae7e39	"Acorn\\User\\Models\\UserGroup	{"name":"روشنا زيد يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-249	ar	a20378bc-17a3-46f3-bb9a-0909df637985	"Acorn\\User\\Models\\UserGroup	{"name":"جبنم يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-250	ar	3b91acb1-1db8-4b07-9720-51f884623bc3	"Acorn\\User\\Models\\UserGroup	{"name":"هيزفع يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-251	ar	def87161-ead8-4846-b1b0-fd3413f1c84e	"Acorn\\User\\Models\\UserGroup	{"name":"تقبطنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-252	ar	6af83dd7-0238-49dd-a168-9eaf14145b9b	"Acorn\\User\\Models\\UserGroup	{"name":"ةزيشجنا يف تيعامتجلاا تنادعهن ةأزمنا سهجم"}
-253	ar	2a94894a-43d6-4132-b832-e52cabc35205	"Acorn\\User\\Models\\UserGroup	{"name":"هم فنأتي ،ةزيشجنا يف تيعامتجلاا تنادعنا سهجم"}
-254	ar	2a94894a-43d6-4132-b832-e52cabc35205	"Acorn\\User\\Models\\UserGroup	{"name":"سهجمنا تسائر"}
-255	ar	2a94894a-43d6-4132-b832-e52cabc35205	"Acorn\\User\\Models\\UserGroup	{"name":"ثابايننا تنجن"}
-256	ar	2a94894a-43d6-4132-b832-e52cabc35205	"Acorn\\User\\Models\\UserGroup	{"name":"يئاضقنا شيتفتنا تنجن"}
-257	ar	2a94894a-43d6-4132-b832-e52cabc35205	"Acorn\\User\\Models\\UserGroup	{"name":"حهصنا تنجن"}
-258	ar	2a94894a-43d6-4132-b832-e52cabc35205	"Acorn\\User\\Models\\UserGroup	{"name":"ذيفنتنا تنجن"}
-259	ar	2a94894a-43d6-4132-b832-e52cabc35205	"Acorn\\User\\Models\\UserGroup	{"name":"يرادلإاو ينامنا بتكمنا"}
-260	ar	2a94894a-43d6-4132-b832-e52cabc35205	"Acorn\\User\\Models\\UserGroup	{"name":"ةزيشجنا يف تيعامتجلاا تنادعنا سهجمن تعباتنا ثاباينناو هيواودنا"}
-261	ar	2a94894a-43d6-4132-b832-e52cabc35205	"Acorn\\User\\Models\\UserGroup	{"name":"ىهشماق يف تيعامتجلاا تنادعنا ناىيد"}
-262	ar	2a94894a-43d6-4132-b832-e52cabc35205	"Acorn\\User\\Models\\UserGroup	{"name":"تكسحنا يف تيعامتجلاا تنادعنا ناىيد"}
-263	ar	2a94894a-43d6-4132-b832-e52cabc35205	"Acorn\\User\\Models\\UserGroup	{"name":"هيبسبزت يف تيعامتجلاا تنادعنا ناىيد"}
-264	ar	2a94894a-43d6-4132-b832-e52cabc35205	"Acorn\\User\\Models\\UserGroup	{"name":"هيسابرد يف تيعامتجلاا تنادعنا ناىيد"}
-265	ar	2a94894a-43d6-4132-b832-e52cabc35205	"Acorn\\User\\Models\\UserGroup	{"name":"ادىماع يف تيعامتجلاا تنادعنا ناىيد"}
-266	ar	2a94894a-43d6-4132-b832-e52cabc35205	"Acorn\\User\\Models\\UserGroup	{"name":"زمت مت يف تيعامتجلاا تنادعنا ناىيد"}
-267	ar	2a94894a-43d6-4132-b832-e52cabc35205	"Acorn\\User\\Models\\UserGroup	{"name":"يدادشنا يف تيعامتجلاا تنادعنا ناىيد"}
-268	ar	2a94894a-43d6-4132-b832-e52cabc35205	"Acorn\\User\\Models\\UserGroup	{"name":"يكن يكزك يف تيعامتجلاا تنادعنا ناىيد"}
-269	ar	d9209dd1-4769-41bd-ab05-9e2d4d4612e9	"Acorn\\User\\Models\\UserGroup	{"name":"كزيد يف تيعامتجلاا تنادعنا ناىيد"}
-270	ar	d9209dd1-4769-41bd-ab05-9e2d4d4612e9	"Acorn\\User\\Models\\UserGroup	{"name":"ناكرس يف تماعنا تبايننا"}
-271	ar	d9209dd1-4769-41bd-ab05-9e2d4d4612e9	"Acorn\\User\\Models\\UserGroup	{"name":"كازب مت يف تماعنا تبايننا"}
-272	ar	d9209dd1-4769-41bd-ab05-9e2d4d4612e9	"Acorn\\User\\Models\\UserGroup	{"name":"لىهنا يف تماعنا تبايننا"}
-273	ar	d9209dd1-4769-41bd-ab05-9e2d4d4612e9	"Acorn\\User\\Models\\UserGroup	{"name":"سيمح مت يف تماعنا تبايننا"}
-274	ar	d9209dd1-4769-41bd-ab05-9e2d4d4612e9	"Acorn\\User\\Models\\UserGroup	{"name":"اغآ مج يف تماعنا تبايننا"}
-275	ar	d9209dd1-4769-41bd-ab05-9e2d4d4612e9	"Acorn\\User\\Models\\UserGroup	{"name":"زجىك مت يف تماعنا تبايننا"}
-276	ar	80adc0a9-905d-41ce-9b81-27f3fdb74061	"Acorn\\User\\Models\\UserGroup	{"name":"ايروس قزشو لامشل ةيتاذلا ةرادلإا يف ةيعامتجلاا ةلادعلا سلجم"}
-277	ar	fa982c23-4402-4e07-a7d4-c9314249feb4	"Acorn\\User\\Models\\UserGroup	{"name":"ايرىس قزشو لامشن تيتاذنا ةرادلإا يف تيعامتجلاا تنادعهن ةأزمنا سهجم"}
-278	ar	6d345b4f-204e-4e42-af1f-8c9b4caff78f	"Acorn\\User\\Models\\UserGroup	{"name":"ةزيشجنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-279	ar	2208815c-9803-4260-9b32-bed1a5b0fe26	"Acorn\\User\\Models\\UserGroup	{"name":"تقزنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-280	ar	fb84a457-f6f2-450c-bb25-d7aa101147b7	"Acorn\\User\\Models\\UserGroup	{"name":"ثازفنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-281	ar	31e74742-5445-4d76-ae44-c2cd37395f41	"Acorn\\User\\Models\\UserGroup	{"name":"روشنا زيد يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-282	ar	224a0c53-d5b2-4ab7-847b-343e432b94b6	"Acorn\\User\\Models\\UserGroup	{"name":"جبنم يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-283	ar	989b56ae-52b5-43ea-887d-758d93ef8bb3	"Acorn\\User\\Models\\UserGroup	{"name":"هيزفع يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-284	ar	128e17da-ffda-4a49-b0a5-901d20a90ae7	"Acorn\\User\\Models\\UserGroup	{"name":"تقبطنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-285	ar	fa0d70c3-4427-42df-8943-d09eb2ec343d	"Acorn\\User\\Models\\UserGroup	{"name":"ةزيشجنا يف تيعامتجلاا تنادعهن ةأزمنا سهجم"}
-286	ar	2d5a8b54-033a-40fc-8502-85b738aea2e8	"Acorn\\User\\Models\\UserGroup	{"name":"هم فنأتي ،ةزيشجنا يف تيعامتجلاا تنادعنا سهجم"}
-287	ar	2d5a8b54-033a-40fc-8502-85b738aea2e8	"Acorn\\User\\Models\\UserGroup	{"name":"سهجمنا تسائر"}
-288	ar	2d5a8b54-033a-40fc-8502-85b738aea2e8	"Acorn\\User\\Models\\UserGroup	{"name":"ثابايننا تنجن"}
-289	ar	2d5a8b54-033a-40fc-8502-85b738aea2e8	"Acorn\\User\\Models\\UserGroup	{"name":"يئاضقنا شيتفتنا تنجن"}
-290	ar	2d5a8b54-033a-40fc-8502-85b738aea2e8	"Acorn\\User\\Models\\UserGroup	{"name":"حهصنا تنجن"}
-291	ar	2d5a8b54-033a-40fc-8502-85b738aea2e8	"Acorn\\User\\Models\\UserGroup	{"name":"ذيفنتنا تنجن"}
-292	ar	2d5a8b54-033a-40fc-8502-85b738aea2e8	"Acorn\\User\\Models\\UserGroup	{"name":"يرادلإاو ينامنا بتكمنا"}
-293	ar	2d5a8b54-033a-40fc-8502-85b738aea2e8	"Acorn\\User\\Models\\UserGroup	{"name":"ةزيشجنا يف تيعامتجلاا تنادعنا سهجمن تعباتنا ثاباينناو هيواودنا"}
-294	ar	2d5a8b54-033a-40fc-8502-85b738aea2e8	"Acorn\\User\\Models\\UserGroup	{"name":"ىهشماق يف تيعامتجلاا تنادعنا ناىيد"}
-295	ar	2d5a8b54-033a-40fc-8502-85b738aea2e8	"Acorn\\User\\Models\\UserGroup	{"name":"تكسحنا يف تيعامتجلاا تنادعنا ناىيد"}
-296	ar	2d5a8b54-033a-40fc-8502-85b738aea2e8	"Acorn\\User\\Models\\UserGroup	{"name":"هيبسبزت يف تيعامتجلاا تنادعنا ناىيد"}
-297	ar	2d5a8b54-033a-40fc-8502-85b738aea2e8	"Acorn\\User\\Models\\UserGroup	{"name":"هيسابرد يف تيعامتجلاا تنادعنا ناىيد"}
-298	ar	2d5a8b54-033a-40fc-8502-85b738aea2e8	"Acorn\\User\\Models\\UserGroup	{"name":"ادىماع يف تيعامتجلاا تنادعنا ناىيد"}
-299	ar	2d5a8b54-033a-40fc-8502-85b738aea2e8	"Acorn\\User\\Models\\UserGroup	{"name":"زمت مت يف تيعامتجلاا تنادعنا ناىيد"}
-300	ar	2d5a8b54-033a-40fc-8502-85b738aea2e8	"Acorn\\User\\Models\\UserGroup	{"name":"يدادشنا يف تيعامتجلاا تنادعنا ناىيد"}
-301	ar	2d5a8b54-033a-40fc-8502-85b738aea2e8	"Acorn\\User\\Models\\UserGroup	{"name":"يكن يكزك يف تيعامتجلاا تنادعنا ناىيد"}
-302	ar	fd835492-6a72-4dfd-a4c4-1762f41efb50	"Acorn\\User\\Models\\UserGroup	{"name":"كزيد يف تيعامتجلاا تنادعنا ناىيد"}
-303	ar	fd835492-6a72-4dfd-a4c4-1762f41efb50	"Acorn\\User\\Models\\UserGroup	{"name":"ناكرس يف تماعنا تبايننا"}
-304	ar	fd835492-6a72-4dfd-a4c4-1762f41efb50	"Acorn\\User\\Models\\UserGroup	{"name":"كازب مت يف تماعنا تبايننا"}
-305	ar	fd835492-6a72-4dfd-a4c4-1762f41efb50	"Acorn\\User\\Models\\UserGroup	{"name":"لىهنا يف تماعنا تبايننا"}
-306	ar	fd835492-6a72-4dfd-a4c4-1762f41efb50	"Acorn\\User\\Models\\UserGroup	{"name":"سيمح مت يف تماعنا تبايننا"}
-307	ar	fd835492-6a72-4dfd-a4c4-1762f41efb50	"Acorn\\User\\Models\\UserGroup	{"name":"اغآ مج يف تماعنا تبايننا"}
-308	ar	fd835492-6a72-4dfd-a4c4-1762f41efb50	"Acorn\\User\\Models\\UserGroup	{"name":"زجىك مت يف تماعنا تبايننا"}
-309	ar	64a9f07a-80d7-40aa-aa5f-33bf0f049535	"Acorn\\User\\Models\\UserGroup	{"name":"ايروس قزشو لامشل ةيتاذلا ةرادلإا يف ةيعامتجلاا ةلادعلا سلجم"}
-310	ar	0758f618-eeee-4313-b4b2-ed386351b0c7	"Acorn\\User\\Models\\UserGroup	{"name":"ايرىس قزشو لامشن تيتاذنا ةرادلإا يف تيعامتجلاا تنادعهن ةأزمنا سهجم"}
-311	ar	c693f0cd-db03-463b-bba2-ed99333aa3ee	"Acorn\\User\\Models\\UserGroup	{"name":"ةزيشجنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-312	ar	05423cb7-cb03-4f5a-961e-ce40d40f687a	"Acorn\\User\\Models\\UserGroup	{"name":"تقزنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-313	ar	2f29c8ec-6224-4a29-bf82-a0ec26e3f07e	"Acorn\\User\\Models\\UserGroup	{"name":"ثازفنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-314	ar	4f801d1f-43e3-4dfc-bab3-27c3c6cc3d3b	"Acorn\\User\\Models\\UserGroup	{"name":"روشنا زيد يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-315	ar	7da813ab-6bd9-481a-b1e7-bd214a23c2ad	"Acorn\\User\\Models\\UserGroup	{"name":"جبنم يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-316	ar	39b70dc8-ad16-478a-86dc-6f22596ab6d6	"Acorn\\User\\Models\\UserGroup	{"name":"هيزفع يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-317	ar	51730a78-5d8a-4d35-9721-7b2d5de315b5	"Acorn\\User\\Models\\UserGroup	{"name":"تقبطنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-318	ar	e2715cc6-dc09-4546-be62-6c6bdd68dcc8	"Acorn\\User\\Models\\UserGroup	{"name":"ةزيشجنا يف تيعامتجلاا تنادعهن ةأزمنا سهجم"}
-319	ar	3f351fc9-aea2-4dfb-b41f-2cbd3374f8fe	"Acorn\\User\\Models\\UserGroup	{"name":"هم فنأتي ،ةزيشجنا يف تيعامتجلاا تنادعنا سهجم"}
-320	ar	3f351fc9-aea2-4dfb-b41f-2cbd3374f8fe	"Acorn\\User\\Models\\UserGroup	{"name":"سهجمنا تسائر"}
-321	ar	3f351fc9-aea2-4dfb-b41f-2cbd3374f8fe	"Acorn\\User\\Models\\UserGroup	{"name":"ثابايننا تنجن"}
-322	ar	3f351fc9-aea2-4dfb-b41f-2cbd3374f8fe	"Acorn\\User\\Models\\UserGroup	{"name":"يئاضقنا شيتفتنا تنجن"}
-323	ar	3f351fc9-aea2-4dfb-b41f-2cbd3374f8fe	"Acorn\\User\\Models\\UserGroup	{"name":"حهصنا تنجن"}
-324	ar	3f351fc9-aea2-4dfb-b41f-2cbd3374f8fe	"Acorn\\User\\Models\\UserGroup	{"name":"ذيفنتنا تنجن"}
-325	ar	3f351fc9-aea2-4dfb-b41f-2cbd3374f8fe	"Acorn\\User\\Models\\UserGroup	{"name":"يرادلإاو ينامنا بتكمنا"}
-326	ar	3f351fc9-aea2-4dfb-b41f-2cbd3374f8fe	"Acorn\\User\\Models\\UserGroup	{"name":"ةزيشجنا يف تيعامتجلاا تنادعنا سهجمن تعباتنا ثاباينناو هيواودنا"}
-327	ar	3f351fc9-aea2-4dfb-b41f-2cbd3374f8fe	"Acorn\\User\\Models\\UserGroup	{"name":"ىهشماق يف تيعامتجلاا تنادعنا ناىيد"}
-328	ar	3f351fc9-aea2-4dfb-b41f-2cbd3374f8fe	"Acorn\\User\\Models\\UserGroup	{"name":"تكسحنا يف تيعامتجلاا تنادعنا ناىيد"}
-329	ar	3f351fc9-aea2-4dfb-b41f-2cbd3374f8fe	"Acorn\\User\\Models\\UserGroup	{"name":"هيبسبزت يف تيعامتجلاا تنادعنا ناىيد"}
-330	ar	3f351fc9-aea2-4dfb-b41f-2cbd3374f8fe	"Acorn\\User\\Models\\UserGroup	{"name":"هيسابرد يف تيعامتجلاا تنادعنا ناىيد"}
-331	ar	3f351fc9-aea2-4dfb-b41f-2cbd3374f8fe	"Acorn\\User\\Models\\UserGroup	{"name":"ادىماع يف تيعامتجلاا تنادعنا ناىيد"}
-332	ar	3f351fc9-aea2-4dfb-b41f-2cbd3374f8fe	"Acorn\\User\\Models\\UserGroup	{"name":"زمت مت يف تيعامتجلاا تنادعنا ناىيد"}
-333	ar	3f351fc9-aea2-4dfb-b41f-2cbd3374f8fe	"Acorn\\User\\Models\\UserGroup	{"name":"يدادشنا يف تيعامتجلاا تنادعنا ناىيد"}
-334	ar	3f351fc9-aea2-4dfb-b41f-2cbd3374f8fe	"Acorn\\User\\Models\\UserGroup	{"name":"يكن يكزك يف تيعامتجلاا تنادعنا ناىيد"}
-335	ar	07f887d9-13c7-49fa-b3d3-2fe42f9a0ca6	"Acorn\\User\\Models\\UserGroup	{"name":"كزيد يف تيعامتجلاا تنادعنا ناىيد"}
-336	ar	07f887d9-13c7-49fa-b3d3-2fe42f9a0ca6	"Acorn\\User\\Models\\UserGroup	{"name":"ناكرس يف تماعنا تبايننا"}
-337	ar	07f887d9-13c7-49fa-b3d3-2fe42f9a0ca6	"Acorn\\User\\Models\\UserGroup	{"name":"كازب مت يف تماعنا تبايننا"}
-338	ar	07f887d9-13c7-49fa-b3d3-2fe42f9a0ca6	"Acorn\\User\\Models\\UserGroup	{"name":"لىهنا يف تماعنا تبايننا"}
-339	ar	07f887d9-13c7-49fa-b3d3-2fe42f9a0ca6	"Acorn\\User\\Models\\UserGroup	{"name":"سيمح مت يف تماعنا تبايننا"}
-340	ar	07f887d9-13c7-49fa-b3d3-2fe42f9a0ca6	"Acorn\\User\\Models\\UserGroup	{"name":"اغآ مج يف تماعنا تبايننا"}
-341	ar	07f887d9-13c7-49fa-b3d3-2fe42f9a0ca6	"Acorn\\User\\Models\\UserGroup	{"name":"زجىك مت يف تماعنا تبايننا"}
-342	ar	30d93c8e-ee66-44ea-8c73-fd0d032af319	Acorn\\User\\Models\\UserGroup	{"name":"ايروس قزشو لامشل ةيتاذلا ةرادلإا يف ةيعامتجلاا ةلادعلا سلجم"}
-343	ar	5ed0afd7-f025-43ef-82d7-a8229ca0d4af	Acorn\\User\\Models\\UserGroup	{"name":"ايرىس قزشو لامشن تيتاذنا ةرادلإا يف تيعامتجلاا تنادعهن ةأزمنا سهجم"}
-344	ar	96fd3444-424c-4348-8aee-b6037e98cd3f	Acorn\\User\\Models\\UserGroup	{"name":"ةزيشجنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-345	ar	4491670f-b9c1-44df-a8cd-f47b85464625	Acorn\\User\\Models\\UserGroup	{"name":"تقزنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-346	ar	1e382fe2-7d64-4398-aa5d-e7444c8b9fe6	Acorn\\User\\Models\\UserGroup	{"name":"ثازفنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-347	ar	f2e202b2-62a5-46aa-bfdd-98b7806a558c	Acorn\\User\\Models\\UserGroup	{"name":"روشنا زيد يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-348	ar	4d4e0670-f7f4-4ab9-95b6-74e1a3bac1ad	Acorn\\User\\Models\\UserGroup	{"name":"جبنم يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-349	ar	8d7d0361-2e9f-40bc-8aa4-559d8f70c605	Acorn\\User\\Models\\UserGroup	{"name":"هيزفع يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-350	ar	8c832e96-70ab-40b2-bbba-01c6cb6695c1	Acorn\\User\\Models\\UserGroup	{"name":"تقبطنا يف تيعامتجلاا تنادعهن ةأزمنا سهجمو تيعامتجلاا تنادعنا سهجم"}
-351	ar	cc8e599e-f8e1-4467-9125-d4e1020d284c	Acorn\\User\\Models\\UserGroup	{"name":"ةزيشجنا يف تيعامتجلاا تنادعهن ةأزمنا سهجم"}
-352	ar	b67909bf-af9c-44e6-9354-77b25f777aa7	Acorn\\User\\Models\\UserGroup	{"name":"هم فنأتي ،ةزيشجنا يف تيعامتجلاا تنادعنا سهجم"}
-353	ar	0952d96e-0392-4f82-9687-44b88d2f71c3	Acorn\\User\\Models\\UserGroup	{"name":"سهجمنا تسائر"}
-354	ar	edd91c15-116c-4b81-ba18-5095b355bcad	Acorn\\User\\Models\\UserGroup	{"name":"ثابايننا تنجن"}
-355	ar	89adc57e-be52-4af6-8282-1c5d8bc2f103	Acorn\\User\\Models\\UserGroup	{"name":"يئاضقنا شيتفتنا تنجن"}
-356	ar	e6f8a708-c4d3-4396-bef8-8d81eed86ea0	Acorn\\User\\Models\\UserGroup	{"name":"حهصنا تنجن"}
-357	ar	0a556562-dc1e-4370-bf07-1ba41c22bd18	Acorn\\User\\Models\\UserGroup	{"name":"ذيفنتنا تنجن"}
-358	ar	9999365c-34b7-4ff4-a36b-646405a9d947	Acorn\\User\\Models\\UserGroup	{"name":"يرادلإاو ينامنا بتكمنا"}
-359	ar	3f5517b1-7a35-40c8-88ba-fd86811c7a31	Acorn\\User\\Models\\UserGroup	{"name":"ةزيشجنا يف تيعامتجلاا تنادعنا سهجمن تعباتنا ثاباينناو هيواودنا"}
-360	ar	78bdd172-5173-4bf3-a044-85f67c74a990	Acorn\\User\\Models\\UserGroup	{"name":"ىهشماق يف تيعامتجلاا تنادعنا ناىيد"}
-361	ar	20983187-a73f-4c7d-ae18-af363cb3b80f	Acorn\\User\\Models\\UserGroup	{"name":"تكسحنا يف تيعامتجلاا تنادعنا ناىيد"}
-362	ar	6dddede5-0ef6-4f33-b9dd-ca1295d8247c	Acorn\\User\\Models\\UserGroup	{"name":"هيبسبزت يف تيعامتجلاا تنادعنا ناىيد"}
-363	ar	ec893bb1-27da-43ac-a4b4-a8960bba3dde	Acorn\\User\\Models\\UserGroup	{"name":"هيسابرد يف تيعامتجلاا تنادعنا ناىيد"}
-364	ar	f689895a-9c43-4ba6-8459-3c60dfbf8b56	Acorn\\User\\Models\\UserGroup	{"name":"ادىماع يف تيعامتجلاا تنادعنا ناىيد"}
-365	ar	e5e95b8f-dffd-4ed5-9c17-c87f62bebd0d	Acorn\\User\\Models\\UserGroup	{"name":"زمت مت يف تيعامتجلاا تنادعنا ناىيد"}
-366	ar	19546528-f290-4a40-94d1-f886609a8b94	Acorn\\User\\Models\\UserGroup	{"name":"يدادشنا يف تيعامتجلاا تنادعنا ناىيد"}
-367	ar	9d3ad872-fc19-47fa-b51b-6262c77aeaaf	Acorn\\User\\Models\\UserGroup	{"name":"يكن يكزك يف تيعامتجلاا تنادعنا ناىيد"}
-368	ar	2a849d98-35b5-4d84-9890-89a02efd49c6	Acorn\\User\\Models\\UserGroup	{"name":"كزيد يف تيعامتجلاا تنادعنا ناىيد"}
-369	ar	56ebd118-2837-479e-a052-4b3b721b7083	Acorn\\User\\Models\\UserGroup	{"name":"ناكرس يف تماعنا تبايننا"}
-370	ar	3bbf645a-8e02-4c28-88a3-f386567fe2be	Acorn\\User\\Models\\UserGroup	{"name":"كازب مت يف تماعنا تبايننا"}
-371	ar	93e4bc76-377e-4f0b-a57a-4a14518fa93e	Acorn\\User\\Models\\UserGroup	{"name":"لىهنا يف تماعنا تبايننا"}
-372	ar	c5adb730-1968-400e-af3d-37c8d32d8433	Acorn\\User\\Models\\UserGroup	{"name":"سيمح مت يف تماعنا تبايننا"}
-373	ar	9617afcd-11c8-481b-95ba-112f600eef3b	Acorn\\User\\Models\\UserGroup	{"name":"اغآ مج يف تماعنا تبايننا"}
-374	ar	738b0e85-0214-42e4-88fa-b6649e2d0a47	Acorn\\User\\Models\\UserGroup	{"name":"زجىك مت يف تماعنا تبايننا"}
-375	ar	9d948d82-68ae-46f0-94bb-3b2ef6604909	Acorn\\Criminal\\Models\\Crime	{"name":""}
-376	ku	9d948d82-68ae-46f0-94bb-3b2ef6604909	Acorn\\Criminal\\Models\\Crime	{"name":""}
-377	ar	9d969994-90cd-493b-a412-61a12d036667	Acorn\\Criminal\\Models\\SentenceType	{"name":""}
-378	ku	9d969994-90cd-493b-a412-61a12d036667	Acorn\\Criminal\\Models\\SentenceType	{"name":""}
-379	ar	9d9cdf96-9067-4f77-ab1a-662a8bf279be	Acorn\\Criminal\\Models\\DetentionReason	{"name":"","description":""}
-380	ku	9d9cdf96-9067-4f77-ab1a-662a8bf279be	Acorn\\Criminal\\Models\\DetentionReason	{"name":"","description":""}
-381	ar	9d9cdfa9-4611-4cc1-b2f1-e97a7b40b2b7	Acorn\\Criminal\\Models\\DetentionMethod	{"name":"","description":""}
-382	ku	9d9cdfa9-4611-4cc1-b2f1-e97a7b40b2b7	Acorn\\Criminal\\Models\\DetentionMethod	{"name":"","description":""}
-383	ar	9d9d3099-ce01-4042-9913-96c66b2aa2ef	Acorn\\Criminal\\Models\\Crime	{"name":""}
-384	ku	9d9d3099-ce01-4042-9913-96c66b2aa2ef	Acorn\\Criminal\\Models\\Crime	{"name":""}
-385	ar	9da6bd4b-890c-4051-87a1-0f92f5a2c0ed	Acorn\\Justice\\Models\\WarrantType	{"name":"","description":""}
-386	ku	9da6bd4b-890c-4051-87a1-0f92f5a2c0ed	Acorn\\Justice\\Models\\WarrantType	{"name":"","description":""}
-390	ar	9dc8c49d-5929-415e-9895-4303868845a7	Acorn\\Criminal\\Models\\CrimeType	{"name":""}
-391	ku	9dc8c49d-5929-415e-9895-4303868845a7	Acorn\\Criminal\\Models\\CrimeType	{"name":""}
-392	ar	9dd0efee-d27e-455a-b976-28a5eb9e9c98	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-393	ku	9dd0efee-d27e-455a-b976-28a5eb9e9c98	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-394	ar	9dd10958-54be-486c-965c-413696946e89	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-395	ku	9dd10958-54be-486c-965c-413696946e89	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-396	ar	9dd10a38-cef5-456e-8c76-c86eb1ff453e	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-397	ku	9dd10a38-cef5-456e-8c76-c86eb1ff453e	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-398	ar	9dd140ca-6e64-4ed2-a53f-dedf06753dd5	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-399	ku	9dd140ca-6e64-4ed2-a53f-dedf06753dd5	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-400	ar	9dd1a197-ac8a-4469-a6da-e57250c63aae	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-401	ku	9dd1a197-ac8a-4469-a6da-e57250c63aae	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-402	ar	9dd2ff0e-aedd-47d6-80c6-0105effc416e	Acorn\\Lojistiks\\Models\\Product	{"name":""}
-403	ku	9dd2ff0e-aedd-47d6-80c6-0105effc416e	Acorn\\Lojistiks\\Models\\Product	{"name":""}
-404	ar	9dd30203-f755-4a28-9dea-db9b2fafe4a8	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-405	ku	9dd30203-f755-4a28-9dea-db9b2fafe4a8	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-406	ar	9dd30556-2c17-4c79-a54d-db6f5e017ab6	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-407	ku	9dd30556-2c17-4c79-a54d-db6f5e017ab6	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-408	ar	9dd3057d-620c-4a12-b2df-72f2578cad7a	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-409	ku	9dd3057d-620c-4a12-b2df-72f2578cad7a	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-410	ar	9dd30591-7e88-4565-9f33-325297ff4bc6	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-411	ku	9dd30591-7e88-4565-9f33-325297ff4bc6	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-412	ar	9dd305dc-2bf2-46aa-a73e-fce8ab7c0610	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-413	ku	9dd305dc-2bf2-46aa-a73e-fce8ab7c0610	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-414	ar	9dd30757-898e-4a42-b5bc-7434f9c80197	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-415	ku	9dd30757-898e-4a42-b5bc-7434f9c80197	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-416	ar	9dd30846-d17e-4e62-aa0f-13a82b1e133b	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-417	ku	9dd30846-d17e-4e62-aa0f-13a82b1e133b	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-418	ar	9dd30bfe-b21c-4f87-9dca-cc2da7ad6d3d	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-419	ku	9dd30bfe-b21c-4f87-9dca-cc2da7ad6d3d	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-420	ar	9dd30c2c-237d-402a-9d2a-9b5c8a933f52	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-421	ku	9dd30c2c-237d-402a-9d2a-9b5c8a933f52	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-422	ar	9dd31d9f-875e-4588-a9e3-8be4a963eb41	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-423	ku	9dd31d9f-875e-4588-a9e3-8be4a963eb41	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-424	ar	9dd31dbe-a2cd-4e4e-8719-d1a4c9391ecd	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-425	ku	9dd31dbe-a2cd-4e4e-8719-d1a4c9391ecd	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-426	ar	9dd31dc8-a4e4-46bf-b5cc-2ed7c2b20094	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-427	ku	9dd31dc8-a4e4-46bf-b5cc-2ed7c2b20094	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-428	ar	9dd31e00-e5d8-434d-bf61-0ee63b1eb0ca	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-429	ku	9dd31e00-e5d8-434d-bf61-0ee63b1eb0ca	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-430	ar	9dd31e83-32ed-490d-9100-da68362e83ca	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-431	ku	9dd31e83-32ed-490d-9100-da68362e83ca	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-432	ar	9dd31e95-b2bb-4ddb-9838-26132d7b9867	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-433	ku	9dd31e95-b2bb-4ddb-9838-26132d7b9867	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-434	ar	9dd31f90-4aba-48ad-a580-328a5e2fc0a0	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-435	ku	9dd31f90-4aba-48ad-a580-328a5e2fc0a0	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-436	ar	9dd32085-7f82-480d-be30-bfcaa04c1f03	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-437	ku	9dd32085-7f82-480d-be30-bfcaa04c1f03	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-438	ar	9de732bc-ef2c-417c-b625-4431e9c7d76a	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-439	ku	9de732bc-ef2c-417c-b625-4431e9c7d76a	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-440	ar	9de733ed-9e70-4567-9579-7d2aa8f18246	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-441	ku	9de733ed-9e70-4567-9579-7d2aa8f18246	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-442	ar	9df2fe7e-85e2-4fa8-bb09-ae31ffa3ea1e	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-443	ku	9df2fe7e-85e2-4fa8-bb09-ae31ffa3ea1e	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-444	ar	9df3078f-b876-48fb-9c86-059106e6298d	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-445	ku	9df3078f-b876-48fb-9c86-059106e6298d	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-446	ar	9e0d3832-6e6b-4e4e-b0d1-152951861b80	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-447	ku	9e0d3832-6e6b-4e4e-b0d1-152951861b80	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-448	ar	9e13629c-70a7-4a58-b9b1-01990fcee59f	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-449	ku	9e13629c-70a7-4a58-b9b1-01990fcee59f	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-450	ar	9e136f6d-be1f-4627-8d5a-71b831b00c7b	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-451	ku	9e136f6d-be1f-4627-8d5a-71b831b00c7b	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-452	ar	9e137a78-b870-4461-b5a9-dcebc6472ee8	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-453	ku	9e137a78-b870-4461-b5a9-dcebc6472ee8	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-454	ar	9e137abb-6768-42b7-9e95-eeece838d961	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-455	ku	9e137abb-6768-42b7-9e95-eeece838d961	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-456	ar	9e137b09-2d83-4aa0-8fa9-8c3dcb464143	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-457	ku	9e137b09-2d83-4aa0-8fa9-8c3dcb464143	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-458	ar	9e137e94-72b8-40f2-8808-b9c9b711af31	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-459	ku	9e137e94-72b8-40f2-8808-b9c9b711af31	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-460	ar	9e138105-d410-4cad-be90-2f5d9a01b0f3	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-461	ku	9e138105-d410-4cad-be90-2f5d9a01b0f3	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-462	ar	9e13810c-c00e-40e9-8602-99a2d51dbfc3	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-463	ku	9e13810c-c00e-40e9-8602-99a2d51dbfc3	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-464	ar	9e194c73-49a4-456c-9cac-3207a16ed36f	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-465	ku	9e194c73-49a4-456c-9cac-3207a16ed36f	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-466	ar	9e1961fa-711e-46b0-904f-312dfdcb3b82	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-467	ku	9e1961fa-711e-46b0-904f-312dfdcb3b82	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-468	ar	9e1971ac-aff4-4495-a67c-6ec1cd1d05a5	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-469	ku	9e1971ac-aff4-4495-a67c-6ec1cd1d05a5	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-470	ar	9e199ee7-6c1f-422c-a68d-e0f5f0ee93ea	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-471	ku	9e199ee7-6c1f-422c-a68d-e0f5f0ee93ea	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-474	ar	9e19a766-221d-4f83-94d1-5445a86e0e4d	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-475	ku	9e19a766-221d-4f83-94d1-5445a86e0e4d	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-472	ar	9e199f12-774c-4131-9d6c-a68e1aac5f42	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-473	ku	9e199f12-774c-4131-9d6c-a68e1aac5f42	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-476	ar	9e19a980-a2f6-4f49-b430-a403b3a07794	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-477	ku	9e19a980-a2f6-4f49-b430-a403b3a07794	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-478	ar	9e19aa54-0410-4d4f-8686-b3b946b1707d	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-479	ku	9e19aa54-0410-4d4f-8686-b3b946b1707d	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-481	ku	9e19aa80-99ed-4023-b728-9f559adc7b10	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-480	ar	9e19aa80-99ed-4023-b728-9f559adc7b10	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-482	ar	9e19aae0-21a1-44d4-b3f8-09e79cb752bc	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-483	ku	9e19aae0-21a1-44d4-b3f8-09e79cb752bc	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-484	ar	9e19b1ea-6d08-4c2d-af71-c6f9744ded75	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-485	ku	9e19b1ea-6d08-4c2d-af71-c6f9744ded75	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-486	ar	9e19b1f7-6388-406f-9527-3435d1148874	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-487	ku	9e19b1f7-6388-406f-9527-3435d1148874	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-488	ar	9e19b899-66e7-4e55-810d-ee74a5ee962b	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-489	ku	9e19b899-66e7-4e55-810d-ee74a5ee962b	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-490	ar	9e1a0319-6cd8-4208-8d3a-95a3834cd70b	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-491	ku	9e1a0319-6cd8-4208-8d3a-95a3834cd70b	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-492	ar	9e1a048e-f5d8-46a2-98ae-2a261f1e8168	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-493	ku	9e1a048e-f5d8-46a2-98ae-2a261f1e8168	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-494	ar	9e1a0bca-4f20-4d41-a4f4-c7375dec9e28	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-495	ku	9e1a0bca-4f20-4d41-a4f4-c7375dec9e28	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-496	ar	9e1a0c39-e273-4ff1-871f-322b6e11570e	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-497	ku	9e1a0c39-e273-4ff1-871f-322b6e11570e	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-498	ar	9e1a0cab-d6f8-44b4-aabe-5a036a2f5b71	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-499	ku	9e1a0cab-d6f8-44b4-aabe-5a036a2f5b71	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-500	ar	9e1d2e8b-e775-492a-b3be-b9574c84dbd1	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-501	ku	9e1d2e8b-e775-492a-b3be-b9574c84dbd1	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-502	ar	9e1d31a9-02dd-4cdc-b72e-1da5a71f4505	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-503	ku	9e1d31a9-02dd-4cdc-b72e-1da5a71f4505	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-504	ar	9e1d3326-5693-48ad-b84a-2d6fe7c59540	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-505	ku	9e1d3326-5693-48ad-b84a-2d6fe7c59540	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-506	ar	9e1d33f6-7475-45ef-a261-95034706d93d	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-507	ku	9e1d33f6-7475-45ef-a261-95034706d93d	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-508	ar	9e1d36d9-bb73-4321-98a7-68793a8a8a80	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-509	ku	9e1d36d9-bb73-4321-98a7-68793a8a8a80	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-510	ar	9e1d3a02-2366-4c30-a0cc-4f0eabfc26e0	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-511	ku	9e1d3a02-2366-4c30-a0cc-4f0eabfc26e0	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-512	ar	9e1d4047-68ec-4e27-aa62-20e7eabde552	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-513	ku	9e1d4047-68ec-4e27-aa62-20e7eabde552	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-514	ar	9e1d4387-8569-4e57-b022-cbab7660bc94	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-515	ku	9e1d4387-8569-4e57-b022-cbab7660bc94	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-516	ar	9e1d43be-e992-47c0-a9bd-2d8599a0d51b	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-517	ku	9e1d43be-e992-47c0-a9bd-2d8599a0d51b	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-518	ar	9e1d4491-4224-4dea-b99c-62d1c58600fe	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-519	ku	9e1d4491-4224-4dea-b99c-62d1c58600fe	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-520	ar	9e1d4b87-a6b6-48f6-a5e3-e1e5a99082da	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-521	ku	9e1d4b87-a6b6-48f6-a5e3-e1e5a99082da	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-522	ar	9e1d578e-0b29-4b38-9be6-daa31913873c	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-523	ku	9e1d578e-0b29-4b38-9be6-daa31913873c	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-524	ar	9e1d5e1b-c447-460c-afa5-b4e32876875e	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-525	ku	9e1d5e1b-c447-460c-afa5-b4e32876875e	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-526	ar	9e1d68f8-6293-4c8b-b72e-def4f489deee	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-527	ku	9e1d68f8-6293-4c8b-b72e-def4f489deee	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-528	ar	9e1d6cb6-3529-45c2-9fe3-deea66909d3a	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-529	ku	9e1d6cb6-3529-45c2-9fe3-deea66909d3a	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-530	ar	9e1d780f-a8fe-41a1-af9b-3c9aaeb88c07	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-531	ku	9e1d780f-a8fe-41a1-af9b-3c9aaeb88c07	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-532	ar	9e1d7d3c-6891-4555-ac5b-2143d085d7a3	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-533	ku	9e1d7d3c-6891-4555-ac5b-2143d085d7a3	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-534	ar	9e1d7f6a-eb79-4c4a-bdf3-cdae2d8d7b8f	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-535	ku	9e1d7f6a-eb79-4c4a-bdf3-cdae2d8d7b8f	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-536	ar	9e1d8393-fceb-45b7-b77a-eacaa4bab971	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-537	ku	9e1d8393-fceb-45b7-b77a-eacaa4bab971	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-538	ar	9e1d860e-2a4c-44d5-ab81-3ee000e7a368	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-539	ku	9e1d860e-2a4c-44d5-ab81-3ee000e7a368	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-540	ar	9e1d8678-ac95-4b2a-93cf-067635745063	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-541	ku	9e1d8678-ac95-4b2a-93cf-067635745063	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-542	ar	9e1d8890-2439-4f29-bac4-dfa1e1e75620	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-543	ku	9e1d8890-2439-4f29-bac4-dfa1e1e75620	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-544	ar	9e1d88ee-2c0e-4398-b8a8-d0c390eb917b	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-545	ku	9e1d88ee-2c0e-4398-b8a8-d0c390eb917b	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-546	ar	9e1d895b-ba2d-4740-8d7b-5056102baff6	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-547	ku	9e1d895b-ba2d-4740-8d7b-5056102baff6	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-548	ar	9e1df121-6258-4226-99c5-63035635ca3d	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-549	ku	9e1df121-6258-4226-99c5-63035635ca3d	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-550	ar	9e1e0f47-e8a2-4b36-b904-ce2a9613a69f	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-551	ku	9e1e0f47-e8a2-4b36-b904-ce2a9613a69f	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-552	ar	9e1e116b-b8f9-4b67-aaef-cb272da4efb9	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-553	ku	9e1e116b-b8f9-4b67-aaef-cb272da4efb9	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-554	ar	9e1e1445-de5e-4d4f-8962-e850df21afb5	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-555	ku	9e1e1445-de5e-4d4f-8962-e850df21afb5	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-556	ar	9e1e1808-4d06-41ae-9600-ac0a043ab80c	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-557	ku	9e1e1808-4d06-41ae-9600-ac0a043ab80c	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-558	ar	9e1e18f9-e64b-424b-ac0a-7addf1355c71	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-559	ku	9e1e18f9-e64b-424b-ac0a-7addf1355c71	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-560	ar	9e1e1982-5e15-4ef9-ad22-b922692d2af9	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-561	ku	9e1e1982-5e15-4ef9-ad22-b922692d2af9	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-562	ar	9e1e1b2f-3ab7-41cc-a85a-4b3c64ba82e7	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-563	ku	9e1e1b2f-3ab7-41cc-a85a-4b3c64ba82e7	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-564	ar	9e1e1b63-6d37-42db-a793-55d56bb39b5e	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-565	ku	9e1e1b63-6d37-42db-a793-55d56bb39b5e	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-566	ar	9e1e1b9d-16f4-46a5-b0e5-7055661ae0cb	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-567	ku	9e1e1b9d-16f4-46a5-b0e5-7055661ae0cb	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-568	ar	9e1e1bf3-3595-4e9a-995d-eb08519d510c	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-569	ku	9e1e1bf3-3595-4e9a-995d-eb08519d510c	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-570	ar	9e1e1c29-539c-40b5-859f-e8d6ab348f97	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-571	ku	9e1e1c29-539c-40b5-859f-e8d6ab348f97	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-572	ar	9e1e1d00-933a-4cad-bbd8-879926757a5a	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-573	ku	9e1e1d00-933a-4cad-bbd8-879926757a5a	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-574	ar	9e1e1d0e-9f6a-4812-9bc3-f36c613a8aa2	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-575	ku	9e1e1d0e-9f6a-4812-9bc3-f36c613a8aa2	Acorn\\Justice\\Models\\LegalcaseIdentifier	{"name":""}
-576	ar	9e1e1d1a-ee26-4ca5-859f-156a2ea2288a	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-577	ku	9e1e1d1a-ee26-4ca5-859f-156a2ea2288a	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-578	ar	9e1e1d65-ac22-4bec-9453-b7a045d764ec	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-579	ku	9e1e1d65-ac22-4bec-9453-b7a045d764ec	Acorn\\Justice\\Models\\ScannedDocument	{"name":""}
-580	ar	9d6e2cee-16f6-4e6b-beaf-c2c4d2677f75	Acorn\\Criminal\\Models\\Legalcase	{"description":""}
-581	ku	9d6e2cee-16f6-4e6b-beaf-c2c4d2677f75	Acorn\\Criminal\\Models\\Legalcase	{"description":""}
-582	ar	9e1f4c64-b19c-4d3c-a192-b0dda9156305	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-583	ku	9e1f4c64-b19c-4d3c-a192-b0dda9156305	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-584	ar	9d8c5e72-ca3e-43e8-9a70-aee628487f06	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-585	ku	9d8c5e72-ca3e-43e8-9a70-aee628487f06	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-586	ar	9e1f8600-cb85-4b1d-b9ab-88e27ca9166f	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-587	ku	9e1f8600-cb85-4b1d-b9ab-88e27ca9166f	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-588	ar	9e1f88e3-8a24-4b89-a09c-14beabc76319	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-589	ku	9e1f88e3-8a24-4b89-a09c-14beabc76319	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-590	ar	9e1f8bfb-ea3b-4335-b65e-0c92c603473a	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-591	ku	9e1f8bfb-ea3b-4335-b65e-0c92c603473a	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-592	ar	9e1f8c58-f150-4a1b-be7d-3e2fee746311	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-593	ku	9e1f8c58-f150-4a1b-be7d-3e2fee746311	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-594	ar	9da0814a-858c-4db6-a642-dbd207749636	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
-595	ku	9da0814a-858c-4db6-a642-dbd207749636	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
-596	ar	9e1fa3c3-55d4-4f28-84a2-4356919a380e	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-597	ku	9e1fa3c3-55d4-4f28-84a2-4356919a380e	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-598	ar	9e1fa592-7694-4f20-b41e-ee601e1641bd	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-599	ku	9e1fa592-7694-4f20-b41e-ee601e1641bd	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-600	ar	9e1fa5e8-5949-418d-aff8-e8ee3ce2b224	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-601	ku	9e1fa5e8-5949-418d-aff8-e8ee3ce2b224	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-602	ar	9e1fa639-47c8-4a6f-8b0c-39d2b5518d2d	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-603	ku	9e1fa639-47c8-4a6f-8b0c-39d2b5518d2d	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-604	ar	9e212d4f-06f9-4b42-8aa8-042f5ed5eae4	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-605	ku	9e212d4f-06f9-4b42-8aa8-042f5ed5eae4	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-606	ar	9e214b4b-1580-494b-9ab9-499912d8d700	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-607	ku	9e214b4b-1580-494b-9ab9-499912d8d700	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":""}
-608	ar	9e214b95-dbd2-4dd2-90e8-e3a89516bd32	Acorn\\Criminal\\Models\\CrimeSentence	{"description":""}
-609	ku	9e214b95-dbd2-4dd2-90e8-e3a89516bd32	Acorn\\Criminal\\Models\\CrimeSentence	{"description":""}
-610	ar	9e214b9d-9a54-4563-b23a-c2ffef05dfed	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
-611	ku	9e214b9d-9a54-4563-b23a-c2ffef05dfed	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
-612	ar	9e214bfb-5721-4117-a08c-fbe0282ce0e7	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-613	ku	9e214bfb-5721-4117-a08c-fbe0282ce0e7	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-614	ar	9e218a8b-579f-4afb-b0fa-66a2570bf4b4	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-615	ku	9e218a8b-579f-4afb-b0fa-66a2570bf4b4	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-618	ar	9da4c03e-bc54-4f7d-87e3-d2a0d8c0519d	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
-619	ku	9da4c03e-bc54-4f7d-87e3-d2a0d8c0519d	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
-620	ar	9da4d23d-defb-46e5-917b-43e732bcec6f	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
-621	ku	9da4d23d-defb-46e5-917b-43e732bcec6f	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
-616	ar	9e218bb3-d452-4d6b-ad8b-8988ecf813b8	Acorn\\Justice\\Models\\ScannedDocument	{"name":"arab","description":""}
-617	ku	9e218bb3-d452-4d6b-ad8b-8988ecf813b8	Acorn\\Justice\\Models\\ScannedDocument	{"name":"","description":""}
-622	ar	9d8447c4-05b8-43b7-8151-34e2dbaaa286	Acorn\\Criminal\\Models\\LegalcaseRelatedEvent	{"description":""}
-623	ku	9d8447c4-05b8-43b7-8151-34e2dbaaa286	Acorn\\Criminal\\Models\\LegalcaseRelatedEvent	{"description":""}
-624	ar	9e23cac5-8e35-410f-a7b3-66de83db2a53	Acorn\\Criminal\\Models\\Legalcase	{"description":""}
-625	ku	9e23cac5-8e35-410f-a7b3-66de83db2a53	Acorn\\Criminal\\Models\\Legalcase	{"description":""}
-626	ar	9e23caeb-45ff-4f3f-9adc-247ba1041523	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-627	ku	9e23caeb-45ff-4f3f-9adc-247ba1041523	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-628	ar	9e2418d8-c254-4d1f-8dc4-d8b6224acc9c	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
-629	ku	9e2418d8-c254-4d1f-8dc4-d8b6224acc9c	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
-630	ar	9e2418f9-7d0d-4513-b1ad-d274015c84d0	Acorn\\Justice\\Models\\ScannedDocument	{"name":"","description":""}
-631	ku	9e2418f9-7d0d-4513-b1ad-d274015c84d0	Acorn\\Justice\\Models\\ScannedDocument	{"name":"","description":""}
-632	ar	9e242335-5944-4f3f-a8f2-0bf8400d304d	Acorn\\Criminal\\Models\\Crime	{"name":"","description":""}
-633	ku	9e242335-5944-4f3f-a8f2-0bf8400d304d	Acorn\\Criminal\\Models\\Crime	{"name":"","description":""}
-634	ar	9e242396-12a9-4387-ab25-f428b87115fc	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-635	ku	9e242396-12a9-4387-ab25-f428b87115fc	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-636	ar	9e2423a2-258d-481e-96f8-7b582e0fe533	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
-637	ku	9e2423a2-258d-481e-96f8-7b582e0fe533	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
-638	ar	9e2423d2-2541-43fb-999f-68ebf0c8c71f	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-639	ku	9e2423d2-2541-43fb-999f-68ebf0c8c71f	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-640	ar	9e2423d9-0e49-43a5-a432-c66d746f12ab	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
-641	ku	9e2423d9-0e49-43a5-a432-c66d746f12ab	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
-642	ar	9e255bf7-063b-42e4-a4c3-40c7d15051af	Acorn\\Calendar\\Models\\EventStatus	{"name":""}
-643	ku	9e255bf7-063b-42e4-a4c3-40c7d15051af	Acorn\\Calendar\\Models\\EventStatus	{"name":""}
-644	ar	9e255e16-9917-4e1e-9735-9bc828b1a255	Acorn\\Calendar\\Models\\EventType	{"name":""}
-645	ku	9e255e16-9917-4e1e-9735-9bc828b1a255	Acorn\\Calendar\\Models\\EventType	{"name":""}
-646	ar	9e279359-2e87-4dc6-93d6-d7637a2e8ad2	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-647	ku	9e279359-2e87-4dc6-93d6-d7637a2e8ad2	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-648	ar	9e279389-b66d-43c2-9665-243936bab3ee	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-649	ku	9e279389-b66d-43c2-9665-243936bab3ee	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-650	ar	9e27942d-52dc-40c8-9c9e-51342e385251	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-651	ku	9e27942d-52dc-40c8-9c9e-51342e385251	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-652	ar	9e27946f-ca70-419a-8d6e-cdd04b25efea	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-653	ku	9e27946f-ca70-419a-8d6e-cdd04b25efea	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-654	ar	9e279793-1359-419e-b38e-90ebfbf70e80	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-655	ku	9e279793-1359-419e-b38e-90ebfbf70e80	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-656	ar	9e279894-8fcb-4c7b-8ca8-84846229febc	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-657	ku	9e279894-8fcb-4c7b-8ca8-84846229febc	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-658	ar	9e27990d-351d-4173-a739-7903f497f27c	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-659	ku	9e27990d-351d-4173-a739-7903f497f27c	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-660	ar	9e279964-5602-4bc2-8497-49c19f5e2e86	Acorn\\Criminal\\Models\\Legalcase	{"description":""}
-661	ku	9e279964-5602-4bc2-8497-49c19f5e2e86	Acorn\\Criminal\\Models\\Legalcase	{"description":""}
-662	ar	9e27a134-3fcc-42c4-9437-3c291f1da4b8	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-663	ku	9e27a134-3fcc-42c4-9437-3c291f1da4b8	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-664	ar	9e27a15f-e34c-44c1-8d74-1d7592052656	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-665	ku	9e27a15f-e34c-44c1-8d74-1d7592052656	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-666	ar	9e27a223-c1be-48c1-9c7c-5f4023233ec7	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-667	ku	9e27a223-c1be-48c1-9c7c-5f4023233ec7	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-668	ar	9e27a312-e758-4261-847a-f9d4a7849f7e	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-669	ku	9e27a312-e758-4261-847a-f9d4a7849f7e	Acorn\\Criminal\\Models\\CrimeType	{"name":"","description":""}
-670	ar	9e2bc3de-c248-414a-ae83-9be0e4d704f6	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
-671	ku	9e2bc3de-c248-414a-ae83-9be0e4d704f6	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
-672	ar	9e2bc3e9-3418-4004-b902-78e98645c761	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-673	ku	9e2bc3e9-3418-4004-b902-78e98645c761	Acorn\\Criminal\\Models\\LegalcaseEvidence	{"name":"","description":""}
-674	ar	9e2fe19a-61cf-447e-8e74-ec309cad6ba3	Acorn\\Criminal\\Models\\Legalcase	{"description":""}
-675	ku	9e2fe19a-61cf-447e-8e74-ec309cad6ba3	Acorn\\Criminal\\Models\\Legalcase	{"description":""}
-676	ar	9e321198-a0bd-4e24-8f7f-c38507ae2df7	Acorn\\Criminal\\Models\\Legalcase	{"description":""}
-677	ku	9e321198-a0bd-4e24-8f7f-c38507ae2df7	Acorn\\Criminal\\Models\\Legalcase	{"description":""}
-678	ar	9e33822e-00b1-4795-9bbf-e1014e6b94e4	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
-679	ku	9e33822e-00b1-4795-9bbf-e1014e6b94e4	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
-680	ar	9e338252-a631-459e-a7d9-056087ab5819	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-681	ku	9e338252-a631-459e-a7d9-056087ab5819	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-682	ar	9e33825e-ba79-419d-b25c-62ebeb4ad2a9	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-683	ku	9e33825e-ba79-419d-b25c-62ebeb4ad2a9	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-684	ar	9e338274-2698-41db-aeac-69394a8036b2	Acorn\\Justice\\Models\\ScannedDocument	{"name":"","description":""}
-685	ku	9e338274-2698-41db-aeac-69394a8036b2	Acorn\\Justice\\Models\\ScannedDocument	{"name":"","description":""}
-686	ar	9e358b5a-e79d-4eaf-8b9e-7af1162a8a59	Acorn\\Justice\\Models\\ScannedDocument	{"name":"","description":""}
-687	ku	9e358b5a-e79d-4eaf-8b9e-7af1162a8a59	Acorn\\Justice\\Models\\ScannedDocument	{"name":"","description":""}
-688	ar	9e365652-a30f-4661-8c21-cea84eb1a4f3	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
-689	ku	9e365652-a30f-4661-8c21-cea84eb1a4f3	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
-690	ar	9e3b6085-ea36-4cc4-bf0b-47bfca163baf	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-691	ku	9e3b6085-ea36-4cc4-bf0b-47bfca163baf	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-692	ar	9e3bbb14-124a-45d4-bbf0-cf547755a1e0	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
-693	ku	9e3bbb14-124a-45d4-bbf0-cf547755a1e0	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
-694	ar	9e3bc5ab-0166-455e-83ed-326c80a67d6c	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
-695	ku	9e3bc5ab-0166-455e-83ed-326c80a67d6c	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
-696	ar	9e3bc5fe-8e51-444c-b68a-a5ed0ce5f317	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
-697	ku	9e3bc5fe-8e51-444c-b68a-a5ed0ce5f317	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
-698	ar	9e3bc62c-0d06-4a9b-8fe4-7bba50c51074	Acorn\\Criminal\\Models\\CrimeSentence	{"description":""}
-699	ku	9e3bc62c-0d06-4a9b-8fe4-7bba50c51074	Acorn\\Criminal\\Models\\CrimeSentence	{"description":""}
-700	ar	9e3fba82-c5df-4791-918c-50f6a393f0ff	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-701	ku	9e3fba82-c5df-4791-918c-50f6a393f0ff	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-702	ar	9e3fba90-3644-4e0c-900f-f7dd437ad66d	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
-703	ku	9e3fba90-3644-4e0c-900f-f7dd437ad66d	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
-704	ar	9e3fbaa3-42b9-4783-840e-d270e2a4f2d2	Acorn\\Criminal\\Models\\LegalcaseWitness	{"description":""}
-705	ku	9e3fbaa3-42b9-4783-840e-d270e2a4f2d2	Acorn\\Criminal\\Models\\LegalcaseWitness	{"description":""}
-706	ar	9e3fdfb0-aede-4e43-954b-43fb35151657	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
-707	ku	9e3fdfb0-aede-4e43-954b-43fb35151657	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
-708	ar	9e3fdfe0-8ebf-4990-bd29-df6f01382bea	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
-709	ku	9e3fdfe0-8ebf-4990-bd29-df6f01382bea	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
-710	ar	9e43ad93-4969-4655-9d8b-669ff0c8df9a	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
-711	ku	9e43ad93-4969-4655-9d8b-669ff0c8df9a	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
-712	ar	9e45b608-025f-4114-a436-e11bf579524d	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
-713	ku	9e45b608-025f-4114-a436-e11bf579524d	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
-714	ar	e9563816-d1b3-4b91-b947-e5cbbdf9efc6	Acorn\\Criminal\\Models\\LegalcaseType	{"name":"","description":""}
-715	ku	e9563816-d1b3-4b91-b947-e5cbbdf9efc6	Acorn\\Criminal\\Models\\LegalcaseType	{"name":"Emelxirab","description":""}
-716	ar	87fa7389-af67-4cdf-b225-be96341331f0	Acorn\\Criminal\\Models\\LegalcaseType	{"name":"","description":""}
-717	ku	87fa7389-af67-4cdf-b225-be96341331f0	Acorn\\Criminal\\Models\\LegalcaseType	{"name":"Sifîl","description":""}
-718	ar	9e479903-b8e5-4c5d-8b3c-381e59c1328d	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
-719	ku	9e479903-b8e5-4c5d-8b3c-381e59c1328d	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
-720	ar	9e479927-78c1-4a46-8313-98b8bcfe726f	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
-721	ku	9e479927-78c1-4a46-8313-98b8bcfe726f	Acorn\\Criminal\\Models\\LegalcasePlaintiff	{"description":""}
-722	ar	9e4fc8d0-5dfa-4886-a0c4-ba00adc7f6da	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-723	ku	9e4fc8d0-5dfa-4886-a0c4-ba00adc7f6da	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-724	ar	9e4feff4-2cdf-45ba-af38-2d357b2bc9cc	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-725	ku	9e4feff4-2cdf-45ba-af38-2d357b2bc9cc	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-726	ar	9e4ff01f-c38b-410a-8009-6e7a8d8b5558	Acorn\\Notary\\Models\\Request	{"description":""}
-727	ku	9e4ff01f-c38b-410a-8009-6e7a8d8b5558	Acorn\\Notary\\Models\\Request	{"description":""}
-728	ar	ff8d1163-61b6-4614-9fc3-a5a2d7944cca	Acorn\\Justice\\Models\\Warrant	{"description":""}
-729	ku	ff8d1163-61b6-4614-9fc3-a5a2d7944cca	Acorn\\Justice\\Models\\Warrant	{"description":""}
-732	ar	e09ac636-1a74-4a73-b735-e4126493621f	Acorn\\Notary\\Models\\Request	{"description":""}
-733	ku	e09ac636-1a74-4a73-b735-e4126493621f	Acorn\\Notary\\Models\\Request	{"description":""}
-734	ar	9e5780b5-2a7e-4b5b-9c73-cf9885751b5e	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-735	ku	9e5780b5-2a7e-4b5b-9c73-cf9885751b5e	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-736	ar	2d4faca9-108e-4663-b75d-85496bba421d	Acorn\\Notary\\Models\\Request	{"description":""}
-737	ku	2d4faca9-108e-4663-b75d-85496bba421d	Acorn\\Notary\\Models\\Request	{"description":""}
-738	ar	9e57c722-72b7-4682-adb2-aab820eb8be6	Acorn\\Justice\\Models\\Statement	{"name":"","description":""}
-739	ku	9e57c722-72b7-4682-adb2-aab820eb8be6	Acorn\\Justice\\Models\\Statement	{"name":"","description":""}
-740	ar	9e57c734-c99d-4bcb-ba71-67d405d1c9cb	Acorn\\Criminal\\Models\\LegalcaseWitness	{"description":""}
-741	ku	9e57c734-c99d-4bcb-ba71-67d405d1c9cb	Acorn\\Criminal\\Models\\LegalcaseWitness	{"description":""}
-742	ar	9e57ce20-67ae-473a-91a2-59af9fd2cd74	Acorn\\Justice\\Models\\Statement	{"name":"","description":""}
-743	ku	9e57ce20-67ae-473a-91a2-59af9fd2cd74	Acorn\\Justice\\Models\\Statement	{"name":"","description":""}
-744	ar	9e597616-1e43-4a84-b7eb-90e3f5a6263f	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
-745	ku	9e597616-1e43-4a84-b7eb-90e3f5a6263f	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
-746	ar	9e5ba379-9ce3-43b6-a985-05b30c8b12b1	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
-747	ku	9e5ba379-9ce3-43b6-a985-05b30c8b12b1	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
-748	ar	9e5ba38d-d0d0-483e-adb9-5410b1c51a06	Acorn\\Criminal\\Models\\DetentionPeriod	{"description":""}
-749	ku	9e5ba38d-d0d0-483e-adb9-5410b1c51a06	Acorn\\Criminal\\Models\\DetentionPeriod	{"description":""}
-750	ar	9e5ba3a2-b00d-41ff-9f8c-12f1538a455e	Acorn\\Criminal\\Models\\DetentionPeriod	{"description":""}
-751	ku	9e5ba3a2-b00d-41ff-9f8c-12f1538a455e	Acorn\\Criminal\\Models\\DetentionPeriod	{"description":""}
-752	ar	9e5bbd40-a9c7-42b5-a934-0cf95009b796	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
-753	ku	9e5bbd40-a9c7-42b5-a934-0cf95009b796	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
-754	ar	9e5bbd61-53ae-49c6-b2e5-e17ddef6072d	Acorn\\Criminal\\Models\\DetentionPeriod	{"description":""}
-755	ku	9e5bbd61-53ae-49c6-b2e5-e17ddef6072d	Acorn\\Criminal\\Models\\DetentionPeriod	{"description":""}
-756	ar	9e5bbd67-c259-4a2d-86a6-f99040234657	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
-757	ku	9e5bbd67-c259-4a2d-86a6-f99040234657	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
-758	ar	9e5bbd79-4b55-486b-b383-35bf5a0e5bca	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-759	ku	9e5bbd79-4b55-486b-b383-35bf5a0e5bca	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-760	ar	9e5bbdce-1ee4-4487-b626-ad0a244e1f90	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
-761	ku	9e5bbdce-1ee4-4487-b626-ad0a244e1f90	Acorn\\Criminal\\Models\\DefendantDetention	{"description":""}
-762	ar	9e5bbdfb-f5bc-46c3-b060-7ab77d454dd7	Acorn\\Criminal\\Models\\DetentionPeriod	{"description":""}
-763	ku	9e5bbdfb-f5bc-46c3-b060-7ab77d454dd7	Acorn\\Criminal\\Models\\DetentionPeriod	{"description":""}
-764	ar	9e5c5f85-5ef3-49f1-8b28-90a872eb4a31	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
-765	ku	9e5c5f85-5ef3-49f1-8b28-90a872eb4a31	Acorn\\Criminal\\Models\\DefendantCrime	{"description":""}
-766	ar	9e619671-38cb-4964-97b9-f76cd3fa6d33	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
-767	ku	9e619671-38cb-4964-97b9-f76cd3fa6d33	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
-768	ar	9e7e7dbf-5cdf-4170-b3ae-3c565c25afcc	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
-769	ku	9e7e7dbf-5cdf-4170-b3ae-3c565c25afcc	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
-770	ar	9e7e7ef1-c2d6-474a-a307-c855e7e590f4	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
-771	ku	9e7e7ef1-c2d6-474a-a307-c855e7e590f4	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
-772	ar	1	Winter\\Location\\Models\\Country	{"name":""}
-773	ku	1	Winter\\Location\\Models\\Country	{"name":""}
-774	ar	218	Winter\\Location\\Models\\Country	{"name":""}
-775	ku	218	Winter\\Location\\Models\\Country	{"name":""}
-776	ar	9e7fc6ee-2c81-4eb6-b010-f4333ad0f6a2	Acorn\\Location\\Models\\Location	{"name":""}
-777	ku	9e7fc6ee-2c81-4eb6-b010-f4333ad0f6a2	Acorn\\Location\\Models\\Location	{"name":""}
-778	ar	9e8003e2-c056-44dc-bc32-11a0a81c61f1	Acorn\\Justice\\Models\\ScannedDocument	{"name":"","description":""}
-779	ku	9e8003e2-c056-44dc-bc32-11a0a81c61f1	Acorn\\Justice\\Models\\ScannedDocument	{"name":"","description":""}
-780	ar	9e80040d-234e-4c10-957b-95d5d7e3d6b4	Acorn\\Justice\\Models\\ScannedDocument	{"name":"","description":""}
-781	ku	9e80040d-234e-4c10-957b-95d5d7e3d6b4	Acorn\\Justice\\Models\\ScannedDocument	{"name":"","description":""}
-782	ar	9e800434-fd01-4d5e-863f-1a97070d7b0a	Acorn\\Justice\\Models\\ScannedDocument	{"name":"","description":""}
-783	ku	9e800434-fd01-4d5e-863f-1a97070d7b0a	Acorn\\Justice\\Models\\ScannedDocument	{"name":"","description":""}
-784	ar	9e8007a3-0a5a-4b17-a457-b5eed813cd76	Acorn\\Justice\\Models\\ScannedDocument	{"name":"","description":""}
-785	ku	9e8007a3-0a5a-4b17-a457-b5eed813cd76	Acorn\\Justice\\Models\\ScannedDocument	{"name":"","description":""}
-786	ar	9e80080b-cdb4-4eec-90be-5d482ccafc98	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
-787	ku	9e80080b-cdb4-4eec-90be-5d482ccafc98	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
-788	ar	9e80082e-c6cd-43c6-8b8a-cebb2d40332d	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
-789	ku	9e80082e-c6cd-43c6-8b8a-cebb2d40332d	Acorn\\Justice\\Models\\LegalcaseCategory	{"name":"","description":""}
-790	ar	9e80087f-8036-4180-b3d0-12871a8b158a	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-791	ku	9e80087f-8036-4180-b3d0-12871a8b158a	Acorn\\Criminal\\Models\\LegalcaseDefendant	{"description":""}
-792	ar	9e8c601e-7443-4d95-ad90-5a249056fe6e	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
-793	ku	9e8c601e-7443-4d95-ad90-5a249056fe6e	Acorn\\User\\Models\\UserGroup	{"name":"","description":""}
-\.
-
-
---
--- Data for Name: winter_translate_indexes; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.winter_translate_indexes (id, locale, model_id, model_type, item, value) FROM stdin;
-\.
-
-
---
--- Data for Name: winter_translate_locales; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.winter_translate_locales (id, code, name, is_default, is_enabled, sort_order) FROM stdin;
-1	en	English	t	t	1
-2	ar	Arabic	f	t	2
-3	ku	Kurdish	f	t	3
-\.
-
-
---
--- Data for Name: winter_translate_messages; Type: TABLE DATA; Schema: public; Owner: justice
---
-
-COPY public.winter_translate_messages (id, code, message_data, found, code_pre_2_1_0) FROM stdin;
-\.
-
-
---
--- Name: backend_access_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.backend_access_log_id_seq', 64, true);
-
-
---
--- Name: backend_user_groups_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.backend_user_groups_id_seq', 1, true);
-
-
---
--- Name: backend_user_preferences_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.backend_user_preferences_id_seq', 24, true);
-
-
---
--- Name: backend_user_roles_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.backend_user_roles_id_seq', 2, true);
-
-
---
--- Name: backend_user_throttle_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.backend_user_throttle_id_seq', 4, true);
-
-
---
--- Name: backend_users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.backend_users_id_seq', 8, true);
-
-
---
--- Name: cms_theme_data_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.cms_theme_data_id_seq', 1, false);
-
-
---
--- Name: cms_theme_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.cms_theme_logs_id_seq', 1, false);
-
-
---
--- Name: cms_theme_templates_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.cms_theme_templates_id_seq', 1, false);
-
-
---
--- Name: deferred_bindings_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.deferred_bindings_id_seq', 96, true);
-
-
---
--- Name: failed_jobs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.failed_jobs_id_seq', 1, false);
-
-
---
--- Name: jobs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.jobs_id_seq', 1, false);
-
-
---
--- Name: migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.migrations_id_seq', 50, true);
-
-
---
--- Name: rainlab_location_countries_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.rainlab_location_countries_id_seq', 248, true);
-
-
---
--- Name: rainlab_location_states_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.rainlab_location_states_id_seq', 720, true);
-
-
---
--- Name: rainlab_translate_attributes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.rainlab_translate_attributes_id_seq', 793, true);
-
-
---
--- Name: rainlab_translate_indexes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.rainlab_translate_indexes_id_seq', 1, false);
-
-
---
--- Name: rainlab_translate_locales_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.rainlab_translate_locales_id_seq', 3, true);
-
-
---
--- Name: rainlab_translate_messages_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.rainlab_translate_messages_id_seq', 1, false);
-
-
---
--- Name: system_event_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.system_event_logs_id_seq', 12351, true);
-
-
---
--- Name: system_files_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.system_files_id_seq', 97, true);
-
-
---
--- Name: system_mail_layouts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.system_mail_layouts_id_seq', 2, true);
-
-
---
--- Name: system_mail_partials_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.system_mail_partials_id_seq', 1, false);
-
-
---
--- Name: system_mail_templates_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.system_mail_templates_id_seq', 1, false);
-
-
---
--- Name: system_parameters_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.system_parameters_id_seq', 5, true);
-
-
---
--- Name: system_plugin_history_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.system_plugin_history_id_seq', 292, true);
-
-
---
--- Name: system_plugin_versions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.system_plugin_versions_id_seq', 18, true);
-
-
---
--- Name: system_request_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.system_request_logs_id_seq', 1, false);
-
-
---
--- Name: system_revisions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.system_revisions_id_seq', 1, false);
-
-
---
--- Name: system_settings_id_seq; Type: SEQUENCE SET; Schema: public; Owner: justice
---
-
-SELECT pg_catalog.setval('public.system_settings_id_seq', 7, true);
 
 
 --

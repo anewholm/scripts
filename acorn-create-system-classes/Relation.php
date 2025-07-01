@@ -29,6 +29,7 @@ class Relation {
     public $newRow;
     public $bootstraps;
     public $tab;
+    public $advanced;
     public $tabLocation; // primary|secondary|tertiary
     public $span;
     public $rlButtons = array('create' => TRUE, 'delete' => TRUE);
@@ -79,6 +80,7 @@ class Relation {
         if (!isset($this->canFilter))  $this->canFilter  = TRUE;
         if (!isset($this->readOnly))   $this->readOnly   = $this->to->readOnly;
         if (!isset($this->span))       $this->span       = 'storm';
+        if (!isset($this->advanced))   $this->advanced   = $this->foreignKey?->advanced;
     }
 
     public function __toString()
