@@ -1,6 +1,6 @@
 -- drop function fn_acorn_lojistiks_table_counts(_schema varchar(1024));
 
-CREATE OR REPLACE FUNCTION fn_acorn_lojistiks_table_counts(_schema varchar(1024))
+CREATE OR REPLACE FUNCTION fn_acorn_university_table_counts(_schema varchar(1024))
   RETURNS table("table" text, "count" bigint)
   LANGUAGE plpgsql AS
 $BODY$
@@ -23,4 +23,6 @@ BEGIN
 END
 $BODY$;
 
-select * from fn_acorn_lojistiks_table_counts('public');
+select * from fn_acorn_university_table_counts('public')
+where "table" like('acorn%')
+order by "table";

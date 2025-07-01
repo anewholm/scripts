@@ -7,20 +7,34 @@ NC="$(tput sgr0)"
 TICK="${GREEN}✓${NC}"
 CROSS="${RED}✘${NC}"
 
-version=`psql --version | cut -d ' ' -f 3`
+port=5432
+if [ -n "$1" ]; then port=$1; fi
+version=`psql -p $port -d postgres -c "select version()" | head -n 3 | tail -n -1 | cut -d ' ' -f 3 | cut -d ' ' -f 3`
 
-# ------------------------------------------------- DB
-latest=`ls -t1 *.sql | head -n 1`
+# ------------------------------------------------- DB .sql backups
+latest=`ls -t1 *.sql 2> /dev/null | head -n 1`
 db=`echo "$latest" | cut -d '-' -f 1 | cut -d '.' -f 1`
 if [ -n "$latest" ]; then
-	read -p "Restore ${GREEN}$latest${NC} into ${GREEN}$db${NC} server version [$version] (yn)? [y]" yn
+	read -p "Restore ${GREEN}$latest${NC} into ${GREEN}$db${NC} server version [${GREEN}$version${NC}] (yn)? [y]" yn
 	if [ "$yn" != 'n' ]; then
-		sudo -u postgres psql "$db" < "$latest"
+		sudo -u postgres psql -p $port -d "$db" -c "drop schema if exists public cascade; drop schema if exists product cascade; create schema public;"
+		sudo -u postgres psql -p $port "$db" < "$latest"
+	fi
+fi
+
+# ------------------------------------------------- DB .backup backups
+latest=`ls -t1 *.backup 2> /dev/null | head -n 1`
+db=`echo "$latest" | cut -d '-' -f 1 | cut -d '.' -f 1`
+if [ -n "$latest" ]; then
+	read -p "Restore ${GREEN}$latest${NC} into ${GREEN}$db${NC} server version [${GREEN}$version${NC}] (yn)? [y]" yn
+	if [ "$yn" != 'n' ]; then
+		sudo -u postgres psql -p $port -d "$db" -c "drop schema if exists public cascade; drop schema if exists product cascade; create schema public;"
+		sudo -u postgres pg_restore -p $port -d $db $latest
 	fi
 fi
 
 # ------------------------------------------------- Filesytem
-latest=`ls -t1 *.tar.gz | head -n 1`
+latest=`ls -t1 *.tar.gz 2> /dev/null | head -n 1`
 dir=`echo "$latest" | cut -d '-' -f 1 | cut -d '.' -f 1`
 if [ -n "$latest" ]; then
 	read -p "Restore ${GREEN}$latest${NC} into /var/www/${GREEN}$dir${NC}/ (yn)? [y]" yn
