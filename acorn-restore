@@ -8,7 +8,14 @@ TICK="${GREEN}✓${NC}"
 CROSS="${RED}✘${NC}"
 
 port=5432
-if [ -n "$1" ]; then port=$1; fi
+if [ -n "$1" ]; then
+	port=$1; 
+elif [ -f .env ]; then
+	port=`grep DB_PORT .env | cut -d '=' -f 2`
+	if [ -n "$port" ]; then
+		echo "Port $port selected from Laravel .env"
+	fi
+fi
 version=`psql -p $port -d postgres -c "select version()" | head -n 3 | tail -n -1 | cut -d ' ' -f 3 | cut -d ' ' -f 3`
 
 # ------------------------------------------------- DB .sql backups
