@@ -13,6 +13,7 @@ class Controller {
     public $menuSplitter = FALSE;
     public $icon;
     public $url;
+    public $qrCodeScan;
 
     // Output arrays
     protected $filters = array();

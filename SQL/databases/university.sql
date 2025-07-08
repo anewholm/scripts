@@ -29,6 +29,7 @@ ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_versions DROP CONSTRAINT
 ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group DROP CONSTRAINT IF EXISTS user_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_entities DROP CONSTRAINT IF EXISTS user_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_project_students DROP CONSTRAINT IF EXISTS user_group_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_settings DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_centres DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_instances DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_desires DROP CONSTRAINT IF EXISTS updated_by_user_id;
@@ -64,6 +65,7 @@ ALTER TABLE IF EXISTS ONLY public.acorn_university_materials DROP CONSTRAINT IF 
 ALTER TABLE IF EXISTS ONLY public.acorn_university_material_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_years DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_settings DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_centres DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_instances DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_desires DROP CONSTRAINT IF EXISTS updated_at_event_id;
@@ -113,6 +115,7 @@ ALTER TABLE IF EXISTS ONLY public.acorn_university_student_codes DROP CONSTRAINT
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_scores DROP CONSTRAINT IF EXISTS student_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_status DROP CONSTRAINT IF EXISTS student_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS student_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_settings DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_centres DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_instances DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_desires DROP CONSTRAINT IF EXISTS server_id;
@@ -203,6 +206,7 @@ ALTER TABLE IF EXISTS ONLY public.acorn_university_departments DROP CONSTRAINT I
 ALTER TABLE IF EXISTS ONLY public.acorn_university_courses DROP CONSTRAINT IF EXISTS entity_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_education_authorities DROP CONSTRAINT IF EXISTS entity_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_materials DROP CONSTRAINT IF EXISTS enrollment_year_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_settings DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_centres DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_instances DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_desires DROP CONSTRAINT IF EXISTS created_by_user_id;
@@ -238,6 +242,7 @@ ALTER TABLE IF EXISTS ONLY public.acorn_university_materials DROP CONSTRAINT IF 
 ALTER TABLE IF EXISTS ONLY public.acorn_university_material_types DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_years DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_settings DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_centres DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_instances DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_desires DROP CONSTRAINT IF EXISTS created_at_event_id;
@@ -282,6 +287,7 @@ ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_materials DROP C
 ALTER TABLE IF EXISTS ONLY public.acorn_university_lectures DROP CONSTRAINT IF EXISTS course_material_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_project_students DROP CONSTRAINT IF EXISTS course_material_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS course_material_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_settings DROP CONSTRAINT IF EXISTS course_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_course_entry_requirements DROP CONSTRAINT IF EXISTS course_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS course_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_courses DROP CONSTRAINT IF EXISTS course_id;
@@ -335,6 +341,7 @@ ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_part_user DROP CONSTRAINT
 ALTER TABLE IF EXISTS ONLY public.acorn_calendar_calendars DROP CONSTRAINT IF EXISTS acorn_calendar_calendars_owner_user_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.acorn_calendar_calendars DROP CONSTRAINT IF EXISTS acorn_calendar_calendars_owner_user_group_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_materials DROP CONSTRAINT IF EXISTS academic_year_semester_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_settings DROP CONSTRAINT IF EXISTS academic_year_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculations DROP CONSTRAINT IF EXISTS academic_year_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_centres DROP CONSTRAINT IF EXISTS academic_year_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_desires DROP CONSTRAINT IF EXISTS academic_year_id;
@@ -351,6 +358,7 @@ DROP TRIGGER IF EXISTS tr_acorn_user_user_group_version_current ON public.acorn_
 DROP TRIGGER IF EXISTS tr_acorn_user_user_group_first_version ON public.acorn_user_user_groups;
 DROP TRIGGER IF EXISTS tr_acorn_university_student_identities_current ON public.acorn_university_student_identities;
 DROP TRIGGER IF EXISTS tr_acorn_university_student_codes_current ON public.acorn_university_student_codes;
+DROP TRIGGER IF EXISTS tr_acorn_university_import_source_empty ON public.acorn_university_entities;
 DROP TRIGGER IF EXISTS tr_acorn_university_hierarchies_update_version ON public.acorn_university_hierarchies;
 DROP TRIGGER IF EXISTS tr_acorn_university_hierarchies_new_version ON public.acorn_university_hierarchies;
 DROP TRIGGER IF EXISTS tr_acorn_university_hierarchies_descendants_update ON public.acorn_user_user_group_version;
@@ -371,6 +379,7 @@ DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_identity_ty
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_hierarchies;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_entities;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_course_years;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_course_year_settings;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_course_types;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_course_materials;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_academic_years;
@@ -419,6 +428,7 @@ DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_activity_event ON public.acorn_
 DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_activity_event ON public.acorn_university_hierarchies;
 DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_activity_event ON public.acorn_university_entities;
 DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_activity_event ON public.acorn_university_course_years;
+DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_activity_event ON public.acorn_university_course_year_settings;
 DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_activity_event ON public.acorn_university_course_types;
 DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_activity_event ON public.acorn_university_course_materials;
 DROP TRIGGER IF EXISTS tr_acorn_calendar_trigger_activity_event ON public.acorn_university_academic_years;
@@ -459,12 +469,17 @@ SELECT
     NULL::uuid AS exam_id,
     NULL::json AS scores,
     NULL::json AS score_names,
+    NULL::bigint AS attendance,
     NULL::double precision AS result,
     NULL::double precision AS minimum,
     NULL::double precision AS maximum,
+    NULL::double precision AS bakeloria_final_mark,
     NULL::boolean AS bakeloria_passed,
+    NULL::character varying(2048) AS bakeloria_passed_resolved_expression,
     NULL::boolean AS passed,
     NULL::double precision AS legacy_import_the_total,
+    NULL::double precision AS legacy_import_final_avg,
+    NULL::character varying(1024) AS legacy_import_result,
     NULL::double precision AS legacy_import_avg,
     NULL::boolean AS legacy_import_correct,
     NULL::boolean AS legacy_import_passed,
@@ -617,6 +632,8 @@ ALTER TABLE IF EXISTS ONLY public.backend_user_groups DROP CONSTRAINT IF EXISTS 
 ALTER TABLE IF EXISTS ONLY public.acorn_location_area_types DROP CONSTRAINT IF EXISTS name;
 ALTER TABLE IF EXISTS ONLY public.winter_translate_attributes DROP CONSTRAINT IF EXISTS model_locale;
 ALTER TABLE IF EXISTS ONLY public.migrations DROP CONSTRAINT IF EXISTS migrations_pkey;
+ALTER TABLE IF EXISTS ONLY public.winter_translate_messages DROP CONSTRAINT IF EXISTS messages_data;
+ALTER TABLE IF EXISTS ONLY public.winter_translate_messages DROP CONSTRAINT IF EXISTS messages_code;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_materials DROP CONSTRAINT IF EXISTS material_name;
 ALTER TABLE IF EXISTS ONLY public.backend_users DROP CONSTRAINT IF EXISTS login_unique;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_types DROP CONSTRAINT IF EXISTS location_types_pkey;
@@ -642,6 +659,7 @@ ALTER TABLE IF EXISTS ONLY public.deferred_bindings DROP CONSTRAINT IF EXISTS de
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_types DROP CONSTRAINT IF EXISTS course_type_name;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_types DROP CONSTRAINT IF EXISTS "course_type-calculation-academic_year";
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_materials DROP CONSTRAINT IF EXISTS course_semester_year_course_year_material;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_settings DROP CONSTRAINT IF EXISTS course_academic_year_unique;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_user_groups DROP CONSTRAINT IF EXISTS code;
 ALTER TABLE IF EXISTS ONLY public.cms_theme_templates DROP CONSTRAINT IF EXISTS cms_theme_templates_pkey;
 ALTER TABLE IF EXISTS ONLY public.cms_theme_logs DROP CONSTRAINT IF EXISTS cms_theme_logs_pkey;
@@ -695,6 +713,7 @@ ALTER TABLE IF EXISTS ONLY public.acorn_university_entities DROP CONSTRAINT IF E
 ALTER TABLE IF EXISTS ONLY public.acorn_university_education_authorities DROP CONSTRAINT IF EXISTS acorn_university_education_authorities_pkey;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_departments DROP CONSTRAINT IF EXISTS acorn_university_departments_pkey;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_courses DROP CONSTRAINT IF EXISTS acorn_university_courses_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_settings DROP CONSTRAINT IF EXISTS acorn_university_course_year_settings_pkey;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_materials DROP CONSTRAINT IF EXISTS acorn_university_course_material_pkey;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_language DROP CONSTRAINT IF EXISTS acorn_university_course_language_pkey;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_years DROP CONSTRAINT IF EXISTS acorn_university_academic_years_pkey;
@@ -915,6 +934,7 @@ DROP TABLE IF EXISTS public.acorn_university_material_types;
 DROP TABLE IF EXISTS public.acorn_university_hierarchies;
 DROP TABLE IF EXISTS public.acorn_university_entities;
 DROP TABLE IF EXISTS public.acorn_university_courses;
+DROP TABLE IF EXISTS public.acorn_university_course_year_settings;
 DROP TABLE IF EXISTS public.acorn_university_course_types;
 DROP TABLE IF EXISTS public.acorn_university_course_materials;
 DROP TABLE IF EXISTS public.acorn_university_academic_years;
@@ -929,6 +949,7 @@ DROP TABLE IF EXISTS public.acorn_exam_interview_students;
 DROP TABLE IF EXISTS public.acorn_exam_instances;
 DROP TABLE IF EXISTS public.acorn_exam_exams;
 DROP TABLE IF EXISTS public.acorn_exam_exam_materials;
+DROP VIEW IF EXISTS public.acorn_exam_certificates;
 DROP VIEW IF EXISTS public.acorn_exam_data_entry_scores;
 DROP TABLE IF EXISTS public.acorn_exam_centres;
 DROP TABLE IF EXISTS public.acorn_exam_calculations;
@@ -965,8 +986,9 @@ DROP FUNCTION IF EXISTS public.fn_acorn_university_student_codes_current();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying);
-DROP FUNCTION IF EXISTS public.fn_acorn_university_legacy_import_bakeloria_v2(p_messages boolean);
-DROP FUNCTION IF EXISTS public.fn_acorn_university_legacy_import_bakeloria_v1(p_messages boolean);
+DROP FUNCTION IF EXISTS public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean);
+DROP FUNCTION IF EXISTS public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean);
+DROP FUNCTION IF EXISTS public.fn_acorn_university_import_source_empty();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_update_version();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_new_version();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid);
@@ -980,9 +1002,10 @@ DROP FUNCTION IF EXISTS public.fn_acorn_university_courses_unique_name_type();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean);
-DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_import2526b(p_confirm boolean);
+DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid);
+DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean);
-DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_import2425b(p_confirm boolean);
+DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid);
@@ -1002,13 +1025,13 @@ DROP FUNCTION IF EXISTS public.fn_acorn_max(VARIADIC ints double precision[]);
 DROP FUNCTION IF EXISTS public.fn_acorn_max();
 DROP FUNCTION IF EXISTS public.fn_acorn_last(anyelement, anyelement);
 DROP FUNCTION IF EXISTS public.fn_acorn_first(anyelement, anyelement);
-DROP FUNCTION IF EXISTS public.fn_acorn_exam_tokenize(p_expr character varying, level integer, p_messages boolean);
+DROP FUNCTION IF EXISTS public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_token_name_internal(p_titles character varying[]);
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]);
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]);
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray);
-DROP FUNCTION IF EXISTS public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_messages boolean);
+DROP FUNCTION IF EXISTS public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_enrollment_desires_ordinal();
 DROP FUNCTION IF EXISTS public.fn_acorn_count(VARIADIC ints double precision[]);
 DROP FUNCTION IF EXISTS public.fn_acorn_count();
@@ -1664,17 +1687,22 @@ $$;
 ALTER FUNCTION public.fn_acorn_enrollment_desires_ordinal() OWNER TO university;
 
 --
--- Name: fn_acorn_exam_action_results_refresh(uuid, boolean); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_exam_action_results_refresh(uuid, uuid, boolean); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid DEFAULT NULL::uuid, p_messages boolean DEFAULT false) RETURNS void
+CREATE FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid DEFAULT NULL::uuid, p_academic_year_id uuid DEFAULT NULL::uuid, p_messages boolean DEFAULT false) RETURNS void
     LANGUAGE plpgsql
     AS $$
 begin
-	if p_student_id is null then
-		truncate acorn_exam_result_internal2s;
-	else
+	-- Delete rows first
+	if not p_student_id is null and not p_academic_year_id is null then
+		delete from acorn_exam_result_internal2s where student_id = p_student_id and academic_year_id = p_academic_year_id;
+	elsif not p_student_id is null then
 		delete from acorn_exam_result_internal2s where student_id = p_student_id;
+	elsif not p_academic_year_id is null then
+		delete from acorn_exam_result_internal2s where academic_year_id = p_academic_year_id;
+	else 
+		truncate acorn_exam_result_internal2s;
 	end if;
 	
 	insert into acorn_exam_result_internal2s(name, student_id, academic_year_id, exam_id, course_material_id, course_id, material_id, calculation_id, calculation_type_id, calculation_type_name, project_id, interview_id, expression, minimum, maximum, required, expression_type, needs_evaluate, resolved_expression, result)
@@ -1700,20 +1728,22 @@ begin
 		    fn_acorn_exam_tokenize(et.expression::character varying, 0, p_messages) AS resolved_expression,
 		    fn_acorn_exam_eval(fn_acorn_exam_tokenize(et.expression::character varying), 0, p_messages) AS result
 		   FROM acorn_exam_token2s et
+			 inner join acorn_university_academic_years ays on et.academic_year_id = ays.id
 		     LEFT JOIN acorn_exam_calculations c ON et.calculation_id = c.id
 		     LEFT JOIN acorn_exam_calculation_types ct ON c.calculation_type_id = ct.id
-		where (et.student_id = p_student_id or p_student_id is NULL);
+		where (et.student_id = p_student_id or p_student_id is NULL)
+		and   (et.academic_year_id = p_academic_year_id or (p_academic_year_id is NULL and ays.enabled));
 end;
 $$;
 
 
-ALTER FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_messages boolean) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) OWNER TO university;
 
 --
--- Name: FUNCTION fn_acorn_exam_action_results_refresh(p_student_id uuid, p_messages boolean); Type: COMMENT; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean); Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_messages boolean) IS 'labels:
+COMMENT ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) IS 'labels:
   en: Refresh all
 type: list';
 
@@ -1834,9 +1864,9 @@ ALTER FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varyi
 -- Name: fn_acorn_exam_tokenize(character varying, integer, boolean); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, level integer DEFAULT 0, p_messages boolean DEFAULT false) RETURNS character varying
+CREATE FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer DEFAULT 0, p_messages boolean DEFAULT false) RETURNS character varying
     LANGUAGE plpgsql
-    AS $$
+    AS $_$
 declare
 	p_etype character varying(1024);
 	p_sub_expression character varying(4096);
@@ -1846,6 +1876,9 @@ declare
 	p_default character varying(1024);
 	p_results character varying(1024)[];
 	p_results_string character varying;
+	p_level_string character varying(1024);
+	p_num_results int;
+	p_num_results_removed int;
 
 	-- Elements
 	p_student_number character varying(1024);
@@ -1863,13 +1896,6 @@ declare
 	p_project        character varying(1024);
 	p_interview      character varying(1024);
 	p_required       boolean;
-
-	-- Modes and results
-	-- expression_record acorn_exam_expression_detail;
-	--is_multiple bool;
-	--result1 double precision;
-	--passed int;
-	--results double precision[];
 begin
 	-- Expression analysis
 	-- Expressions are essentially a different, text based, recursive way to refer to data in the database
@@ -1879,7 +1905,8 @@ begin
 	-- TODO: Characters :/ in names are escaped to &#<x>;
 	-- .* indicates any
 	-- :etype/student_number/year/.* stub is always required
-	if p_messages then raise notice 'Expression: %', p_expr; end if;
+	p_level_string = repeat(' ', 4 * p_level);
+	if p_messages then raise notice '% %: Expression: %', p_level_string, p_level, p_expr; end if;
 	for p_token_record in select 
 			regexp_matches[1] as "match", 
 			regexp_matches[2] as passed,
@@ -1896,12 +1923,11 @@ begin
 		p_passed         := (p_token_record.passed = '?'); -- Always capture group
 		p_student_number := p_token_record.student_number;
 		p_academic_year  := p_token_record.academic_year;
-		p_default        := case when p_token_record.default = '' then NULL else p_token_record.default end; -- Always capture group
-		if regexp_like(p_default, '[^0-9.-]') then 
-			p_default := '''' || p_default || ''''; 
-			if p_messages then raise notice 'String default detected: %', p_default; end if;
-		end if;
-		if p_messages then raise notice 'Sub-Expression: %?%/%/%...=%', p_passed, p_etype, p_student_number, p_academic_year, p_default; end if;
+		p_default        := case   -- Always capture group
+			when p_token_record.default = '' then NULL 
+			else p_token_record.default 
+		end;
+		if p_messages then raise notice '% %: Sub-Expression: %?%/%/%...=%', p_level_string, p_level, p_passed, p_etype, p_student_number, p_academic_year, p_default; end if;
 		p_results := '{}';
 		
 		case
@@ -1912,7 +1938,7 @@ begin
 				p_regexp_matches := regexp_matches(p_sub_expression, '([^/]+)(/([^/]+))?');
 				p_attribute      := p_regexp_matches[1];
 				p_check          := p_regexp_matches[3]; -- Optional, can be NULL
-				if p_messages then raise notice '%: Student data point(Data:%, Check:%)', level, p_attribute, p_check; end if;
+				if p_messages then raise notice '% %: Student data point(Data:%, Check:%)', p_level_string, p_level, p_attribute, p_check; end if;
 				case
 					when p_attribute = 'age' then
 					    select array_agg(EXTRACT(year FROM age(ay.start, u.birth_date))) into p_results 
@@ -1948,7 +1974,7 @@ begin
 				p_material_type  := p_regexp_matches[3];
 				p_exam           := p_regexp_matches[4];
 				p_exam_type      := p_regexp_matches[5];
-				if p_messages then raise notice '%: Score data point(Course:%, Material:%(%), Exam:%(%))', level, p_course, p_material, p_material_type, p_exam, p_exam_type; end if;
+				if p_messages then raise notice '% %: Score data point(Course:%, Material:%(%), Exam:%(%))', p_level_string, p_level, p_course, p_material, p_material_type, p_exam, p_exam_type; end if;
 				
 				select array_agg(score) into p_results -- score NOT NULL
 				   FROM acorn_exam_scores sc
@@ -1980,7 +2006,7 @@ begin
 				-- default is only relevant if there are no scores at all
 				p_regexp_matches := regexp_matches(p_sub_expression, '([^/]+)');
 				p_project        := p_regexp_matches[1];
-				if p_messages then raise notice '%: Project data point(Project:%)', level, p_project; end if;
+				if p_messages then raise notice '% %: Project data point(Project:%)', p_level_string, p_level, p_project; end if;
 				
 				select array_agg(
 					case 
@@ -2008,7 +2034,7 @@ begin
 				-- default is only relevant if there are no scores at all
 				p_regexp_matches := regexp_matches(p_sub_expression, '([^/]+)');
 				p_interview      := p_regexp_matches[1];
-				if p_messages then raise notice '%: Interview data point(Project:%)', level, p_interview; end if;
+				if p_messages then raise notice '% %: Interview data point(Project:%)', p_level_string, p_level, p_interview; end if;
 				
 				select array_agg(
 					case 
@@ -2040,7 +2066,7 @@ begin
 				p_algorithm      := p_regexp_matches[5];
 				p_algorithm_type := p_regexp_matches[6];
 				p_required       := (not p_regexp_matches[7] is null); -- Optional capture group (NULL if not present)
-				if p_messages then raise notice '%: Material result(Course:%(%), Material:%(%), Algorithm:%(%), Required:%)', level, p_course, p_course_type, p_material, p_material_type, p_algorithm, p_algorithm_type, p_required; end if;
+				if p_messages then raise notice '% %: Material result(Course:%(%), Material:%(%), Algorithm:%(%), Required:%)', p_level_string, p_level, p_course, p_course_type, p_material, p_material_type, p_algorithm, p_algorithm_type, p_required; end if;
 
 				-- array_agg will collect NULLs
 				select array_agg(
@@ -2059,7 +2085,7 @@ begin
 										'<material-type>', mt.name), 
 										'<year>',          ay.name), 
 										'<student>',       s.number::text),
-								level+1, p_messages)::text, ' between '::text, cm.minimum::text, ' and '::text, cm.maximum::text, ')::int'::text)
+								p_level+1, p_messages)::text, ' between '::text, cm.minimum::text, ' and '::text, cm.maximum::text, ')::int'::text)
 							else fn_acorn_exam_tokenize(
 								replace(replace(replace(replace(replace(replace(
 										coalesce(camt.expression, cacm.expression), 
@@ -2069,7 +2095,7 @@ begin
 									'<material-type>', mt.name), 
 									'<year>',          ay.name), 
 									'<student>',       s.number::text),
-								level+1, p_messages)
+								p_level+1, p_messages)
 						end,
 						p_default) -- NULL if not set
 					) into p_results
@@ -2116,7 +2142,7 @@ begin
 				p_algorithm      := p_regexp_matches[3];
 				p_algorithm_type := p_regexp_matches[4];
 				p_required       := (not p_regexp_matches[5] is null); -- Optional capture group (NULL if not present)
-				if p_messages then raise notice '%: Course result(Course:%(%), Algorithm:%(%), Required:%)', level, p_course, p_course_type, p_algorithm, p_algorithm_type, p_required; end if;
+				if p_messages then raise notice '% %: Course result(Course:%(%), Algorithm:%(%), Required:%)', p_level_string, p_level, p_course, p_course_type, p_algorithm, p_algorithm_type, p_required; end if;
 
 				-- array_agg will collect NULLs
 				select array_agg(
@@ -2133,9 +2159,9 @@ begin
 										'<course-type>',  ct.name), 
 										'<year>',    ay.name), 
 										'<student>', s.number::text),
-								level+1, p_messages)::text, ' between '::text, 
-								coalesce(cac.minimum, cact.minimum)::text, ' and '::text, 
-								coalesce(cac.maximum, cact.maximum)::text, ')::int'::text)
+								p_level+1, p_messages)::text, ' between '::text, 
+								coalesce(cys.minimum, cac.minimum, cact.minimum)::text, ' and '::text, 
+								coalesce(cys.maximum, cac.maximum, cact.maximum)::text, ')::int'::text)
 							else fn_acorn_exam_tokenize(
 								replace(replace(replace(replace(
 										coalesce(cac.expression, cact.expression), 
@@ -2143,7 +2169,7 @@ begin
 									'<course-type>',  ct.name), 
 									'<year>',    ay.name), 
 									'<student>', s.number::text),
-								level+1, p_messages)
+								p_level+1, p_messages)
 						end,
 						p_default) -- NULL if not set
 					) into p_results
@@ -2157,6 +2183,8 @@ begin
 				     JOIN acorn_user_user_group_version ug ON ugv.id = ug.user_group_version_id
 				     JOIN acorn_university_students s ON ug.user_id = s.user_id
 
+					 LEFT JOIN acorn_university_course_year_settings cys on c.id = cys.course_id and ay.id = cys.academic_year_id
+
 					 -- 2 Failover alternative expression settings
 				     LEFT JOIN acorn_exam_calculation_courses cc ON c.id = cc.course_id AND cc.academic_year_id = ay.id
 				     LEFT JOIN acorn_exam_calculations cac ON cc.calculation_id = cac.id
@@ -2168,10 +2196,18 @@ begin
 					WHERE   (p_student_number  = '.*' or s.number = p_student_number::integer)
 						and (ay.name   = p_academic_year  or p_academic_year = '.*')
 						and (ugs.name  = p_course         or p_course = '.*')
-						and (ct.name   = p_course_type    or p_course_type = '.*')
+						and (  ct.name = p_course_type    
+							or ct.code = p_course_type 
+							or p_course_type = '.*'
+							-- TODO: Expensive, maybe require a leading !?
+							-- TODO: Also great risk of accidental matches without ^...$
+							-- string, pattern
+							or regexp_like(ct.name, p_course_type) 
+							or regexp_like(ct.code, p_course_type) 
+						)
 						and (coalesce(cac.name, cact.name) = p_algorithm      or p_algorithm = '.*')
 						and (coalesce(ect.name, ectt.name) = p_algorithm_type or p_algorithm_type = '.*')
-						and (coalesce(cac.required, cact.required) or not p_required)
+						and (coalesce(cys.required, cac.required, cact.required) or not p_required)
 						and not (cac.expression is null and cact.expression is null);
 			when p_etype = 'calculation' then
 				-- ########################################################## Pure Calculations
@@ -2181,7 +2217,7 @@ begin
 				p_regexp_matches := regexp_matches(p_sub_expression, '([^/]+)/([^/]+)');
 				p_algorithm      := p_regexp_matches[1];
 				p_algorithm_type := p_regexp_matches[2];
-				if p_messages then raise notice '%: Calculation result(Algorithm:%(%))', level, p_algorithm, p_algorithm_type; end if;
+				if p_messages then raise notice '% %: Calculation result(Algorithm:%(%))', p_level_string, p_level, p_algorithm, p_algorithm_type; end if;
 
 				-- array_agg will collect NULLs
 				select array_agg(
@@ -2195,16 +2231,17 @@ begin
 									replace(replace(c.expression,
 										'<year>',    ay.name), 
 										'<student>', s.number::text),
-								level+1, p_messages)::text, ' between '::text, c.minimum::text, ' and '::text, c.maximum::text, ')::int'::text)
+								p_level+1, p_messages)::text, ' between '::text, c.minimum::text, ' and '::text, c.maximum::text, ')::int'::text)
 							else fn_acorn_exam_tokenize(
 								replace(replace(c.expression, 
 									'<year>',    ay.name), 
 									'<student>', s.number::text),
-								level+1, p_messages)
+								p_level+1, p_messages)
 						end,
 						p_default) -- NULL if not set
 					) into p_results
-				   FROM acorn_exam_calculations c JOIN acorn_exam_calculation_types ect ON c.calculation_type_id = ect.id,
+				   FROM acorn_exam_calculations c 
+				   		JOIN acorn_exam_calculation_types ect ON c.calculation_type_id = ect.id,
 					    acorn_university_students s,
 					    acorn_university_academic_years ay
 					WHERE   (p_student_number  = '.*' or s.number = p_student_number::integer)
@@ -2216,17 +2253,28 @@ begin
 
 		-- Evaluate this sub-level
 		-- so that we can assess expression NULL results and replace them with defaults
+		-- has also the advantage the resolved_expression is the top level only
+		p_num_results = coalesce(array_length(p_results, 1), 0);
 		select array_agg(fn_acorn_exam_eval(unnest)) into p_results 
 			from unnest(p_results) 
 			where not unnest is NULL;
+		p_num_results_removed := p_num_results - coalesce(array_length(p_results, 1), 0);
+		if p_num_results_removed > 0 then 
+			if p_messages then raise notice '% %: % evaluated to NULL and removed', p_level_string, p_level, p_num_results_removed; end if;
+		end if;
 
 		-- Replace individual NULLs with the default
 		-- sum|avg|count() should ignore NULLs
+		p_num_results = coalesce(array_length(p_results, 1), 0);
 		if p_default is NULL then
 			select array_agg(unnest) into p_results from unnest(p_results) where not unnest is NULL;
 		else
-			if p_messages then raise notice 'Replacing individual NULLs with %', p_default; end if;
+			if p_messages then raise notice '% %: Replacing individual NULLs with %', p_level_string, p_level, p_default; end if;
 			select array_agg(coalesce(unnest, p_default)) into p_results from unnest(p_results);
+		end if;
+		p_num_results_removed := p_num_results - coalesce(array_length(p_results, 1), 0);
+		if p_num_results_removed > 0 then 
+			if p_messages then raise notice '% %: % NULLs removed', p_level_string, p_level, p_num_results_removed; end if;
 		end if;
 
 		-- Replace overall result with the default
@@ -2234,15 +2282,20 @@ begin
 		if array_length(p_results, 1) is null then
 			-- Empty multi-set default replacement
 			-- The replace() below will nullify the entire output if p_results_string is NULL
-			p_results_string := case 
-				when p_default is NULL then ''
-				else p_default
-			end;
-			if p_messages then raise notice 'Using default %', p_results_string; end if;
+			if p_default is NULL then 
+				p_results_string := '';
+			else
+				p_results_string := p_default;
+				if p_messages then raise notice '% %: Using default %', p_level_string, p_level, p_results_string; end if;
+			end if;
 		else
 			p_results_string := array_to_string(p_results, ',');
 		end if;
-		if p_messages then raise notice 'Replacing % with %', p_token_record.match, p_results_string; end if;
+		if p_messages then raise notice '% %: Replacing % with %', p_level_string, p_level, p_token_record.match, case 
+				when p_results_string = '' then '<empty string>'
+				else p_results_string
+			end;
+		end if;
 		-- If p_results_string is NULL, result will always be NULL
 		p_expr := replace(p_expr, p_token_record.match, p_results_string);
 	end loop;
@@ -2250,16 +2303,16 @@ begin
 	-- We want to trigger coalesce() clauses properly
 	if trim(p_expr) = '' then 
 		p_expr := NULL; 
-		if p_messages then raise notice 'Changed empty string to NULL'; end if;
+		if p_messages then raise notice '% %: Changed empty string to NULL', p_level_string, p_level; end if;
 	end if;
 
-	if p_messages then raise notice 'Returning %', p_expr; end if;
+	if p_messages then raise notice '% %: Returning %', p_level_string, p_level, p_expr; end if;
 	return p_expr;
 end;
-$$;
+$_$;
 
 
-ALTER FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, level integer, p_messages boolean) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) OWNER TO university;
 
 --
 -- Name: fn_acorn_first(anyelement, anyelement); Type: FUNCTION; Schema: public; Owner: university
@@ -2723,27 +2776,27 @@ condition: exists(select * from acorn_university_hierarchies where academic_year
 
 
 --
--- Name: fn_acorn_university_action_academic_years_import2425b(boolean); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_university_action_academic_years_import2425b(boolean, boolean); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_confirm boolean) RETURNS void
+CREATE FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean DEFAULT true, p_confirm boolean DEFAULT false) RETURNS void
     LANGUAGE plpgsql
     AS $$
 begin
 	if p_confirm then
-		perform fn_acorn_university_legacy_import_bakeloria_v1();
+		perform fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous);
 	end if;
 end;
 $$;
 
 
-ALTER FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_confirm boolean) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) OWNER TO university;
 
 --
--- Name: FUNCTION fn_acorn_university_action_academic_years_import2425b(p_confirm boolean); Type: COMMENT; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean); Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_confirm boolean) IS 'result-action: refresh
+COMMENT ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) IS 'result-action: refresh
 condition: (id = ''543d0928-1b6c-11f0-abc1-8bd8fff1240d'')
 labels:
   en: Import Legacy High School (v1)
@@ -2791,27 +2844,27 @@ comment:
 
 
 --
--- Name: fn_acorn_university_action_academic_years_import2526b(boolean); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_university_action_academic_years_import2526b(boolean, boolean); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_confirm boolean) RETURNS void
+CREATE FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean DEFAULT true, p_confirm boolean DEFAULT false) RETURNS void
     LANGUAGE plpgsql
     AS $$
 begin
 	if p_confirm then
-		perform fn_acorn_university_legacy_import_bakeloria_v2();
+		perform fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous);
 	end if;
 end;
 $$;
 
 
-ALTER FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_confirm boolean) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) OWNER TO university;
 
 --
--- Name: FUNCTION fn_acorn_university_action_academic_years_import2526b(p_confirm boolean); Type: COMMENT; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean); Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_confirm boolean) IS 'result-action: refresh
+COMMENT ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) IS 'result-action: refresh
 condition: (id = ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'')
 labels:
   en: Import Legacy High School (v2)
@@ -2820,6 +2873,35 @@ comment:
   en: >
     Schools results happened end of 2024-2025.
     Data will be imported from linked university-acceptance database.';
+
+
+--
+-- Name: fn_acorn_university_action_academic_years_res_ref(uuid, uuid); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+begin
+	perform fn_acorn_exam_action_results_refresh(NULL, model_id);
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) OWNER TO university;
+
+--
+-- Name: FUNCTION fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid); Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) IS 'labels:
+  en: Refresh results
+result-action: refresh
+condition: enabled
+comment:
+  en: >
+    The final results are calculated and cached. 
+	If scores and data has changed, the results can be refreshed here.';
 
 
 --
@@ -3271,10 +3353,26 @@ $$;
 ALTER FUNCTION public.fn_acorn_university_hierarchies_update_version() OWNER TO university;
 
 --
--- Name: fn_acorn_university_legacy_import_bakeloria_v1(boolean); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_university_import_source_empty(); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_messages boolean DEFAULT false) RETURNS void
+CREATE FUNCTION public.fn_acorn_university_import_source_empty() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+	begin
+        if new.import_source = '' then new.import_source = NULL; end if;
+        return new;
+	end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_university_import_source_empty() OWNER TO university;
+
+--
+-- Name: fn_acorn_university_legacy_import_bakeloria_v1(boolean, boolean); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean DEFAULT true, p_messages boolean DEFAULT false) RETURNS void
     LANGUAGE plpgsql
     AS $_$
 declare
@@ -3377,18 +3475,20 @@ begin
 		and sem.ordinal = 1;
 	if p_bakeloria_semester1 is null then raise exception 'Bakeloria target year % has no semester 1', p_bakeloria_academic_year_name; end if;
 
-	-- ######################################### DELETE PREVIOUS
-	-- This will cascade to entities, leafs and hierarchies
-	if p_messages then raise notice 'Begin delete of previously imported data for %...', p_imported_like; end if;
-	delete from acorn_user_users             where import_source like(p_imported_like);
-	delete from acorn_user_user_groups       where import_source like(p_imported_like);
-	delete from acorn_location_addresses     where import_source like(p_imported_like);
-	update      acorn_location_areas set parent_area_id = NULL where import_source like(p_imported_like);
-	delete from acorn_location_areas         where import_source like(p_imported_like);
-	-- Remove the persistent Year 9,10,11 course materials for this year
-	delete from acorn_university_course_materials where academic_year_semester_id = p_bakeloria_semester1 
-		and course_id in(select id from acorn_university_courses where entity_id in(p_year_10_entity_id, p_year_11_entity_id, p_year_9_entity_id));
-	if p_messages then raise notice 'Deleted previously imported data for %', p_imported_like; end if;
+	if p_delete_previous then
+		-- ######################################### DELETE PREVIOUS
+		-- This will cascade to entities, leafs and hierarchies
+		if p_messages then raise notice 'Begin delete of previously imported data for %...', p_imported_like; end if;
+		delete from acorn_user_users             where import_source like(p_imported_like);
+		delete from acorn_user_user_groups       where import_source like(p_imported_like);
+		delete from acorn_location_addresses     where import_source like(p_imported_like);
+		update      acorn_location_areas set parent_area_id = NULL where import_source like(p_imported_like);
+		delete from acorn_location_areas         where import_source like(p_imported_like);
+		-- Remove the persistent Year 9,10,11 course materials for this year
+		delete from acorn_university_course_materials where academic_year_semester_id = p_bakeloria_semester1 
+			and course_id in(select id from acorn_university_courses where entity_id in(p_year_10_entity_id, p_year_11_entity_id, p_year_9_entity_id));
+		if p_messages then raise notice 'Deleted previously imported data for %', p_imported_like; end if;
+	end if;
 
 	-- ######################################### Top Level Node EA for Rojava
 	-- no parent
@@ -3693,11 +3793,35 @@ begin
 		insert into acorn_university_students(
 				user_id, import_source,
 				-- Legacy & from university_mofadala_baccalaureate_marks
-				legacy_import_result, legacy_import_avg, legacy_import_total_mark
+				legacy_import_id, legacy_import_result, legacy_import_avg, legacy_import_total_mark,
+				-- Legacy & from new university_mofadala_baccalaureate_marks columns
+				legacy_import_final_avg, legacy_import_passed_primaries, legacy_import_passed_secondaries, legacy_import_attendance,
+				-- TODO: for later
+				import_school, import_qeyd, import_student_type
 			)
 			select u.id, u.import_source,
 				-- Legacy & from university_mofadala_baccalaureate_marks
-				bm.result, bm.avg, bm.total_mark
+				bm.id, bm.result, bm.avg, bm.total_mark,
+				-- Legacy & from new university_mofadala_baccalaureate_marks columns
+				bm.avg, NULL, NULL, 
+					(select sum(unnest) from
+						unnest(ARRAY[
+							(coalesce(kurdish_language, 0) != 0)::int,
+							(coalesce(english_language, 0) != 0)::int,
+							(coalesce(arabic_language, 0) != 0)::int,
+							(coalesce(science_of_woman, 0) != 0)::int,
+							(coalesce(history, 0) != 0)::int,
+							(coalesce(geography, 0) != 0)::int,
+							(coalesce(philosophy, 0) != 0)::int,
+							(coalesce(sociology, 0) != 0)::int,
+							(coalesce(math, 0) != 0)::int,
+							(coalesce(biology, 0) != 0)::int,
+							(coalesce(chemistry, 0) != 0)::int,
+							(coalesce(physics, 0) != 0)::int,
+							(coalesce(community_language, 0) != 0)::int
+						]))::int as attendance,
+				-- TODO: for later
+				NULL, NULL, 'irregular'
 			from acorn_user_users u,
 				university_mofadala_baccalaureate_marks bm
 				where u.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
@@ -4426,15 +4550,15 @@ end;
 $_$;
 
 
-ALTER FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_messages boolean) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) OWNER TO university;
 
 --
--- Name: fn_acorn_university_legacy_import_bakeloria_v2(boolean); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_university_legacy_import_bakeloria_v2(boolean, boolean); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_messages boolean DEFAULT false) RETURNS void
+CREATE FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean DEFAULT true, p_messages boolean DEFAULT false) RETURNS void
     LANGUAGE plpgsql
-    AS $$
+    AS $_$
 declare
 	-- Import Bakeloria students from a legacy university-acceptance database
 	-- for a given source-target year
@@ -4490,17 +4614,17 @@ begin
 
 	-- Check course types are seeded
 	if not exists(select * from public.acorn_university_course_types where id = p_course_type_high_school) then
-		raise exception 'Course type High School does not exist';
+		raise exception 'Course type High School does not exist' using ERRCODE = 'CIM02';
 	end if;
 	if not exists(select * from public.acorn_university_course_types where id = p_course_type_high_school_year) then
-		raise exception 'Course type High School Year does not exist';
+		raise exception 'Course type High School Year does not exist' using ERRCODE = 'CIM03';
 	end if;
 
 	-- Let's check we have registered source data!
 	if exists(
 		select * from university_mofadala_baccalaureate_marks bm where not certificate_language in('Arabic', 'Kurdish')
 	) then 
-		raise exception 'Un-registered certificate languages';
+		raise exception 'Un-registered certificate languages' using ERRCODE = 'CIM04';
 	end if;
 	if exists(
 		select * from university_mofadala_baccalaureate_marks bm
@@ -4508,7 +4632,7 @@ begin
 				select * from university_mofadala_type_certificates ct where bm.certificate = ct.name
 			)
 	) then 
-		raise exception 'Un-registered certificate names(university_mofadala_type_certificates) in university_mofadala_baccalaureate_marks';
+		raise exception 'Un-registered certificate names(university_mofadala_type_certificates) in university_mofadala_baccalaureate_marks' using ERRCODE = 'CIM05';
 	end if;
 
 	-- Bakeloria target processing years from university-acceptance database
@@ -4518,15 +4642,15 @@ begin
 		into p_bakeloria_source_year_simple_name, p_bakeloria_source_year_name
 		from university_mofadala_mofadala_years my
 		where my.is_active;
-	if p_bakeloria_source_year_name is null then raise exception 'Active Source Bakeloria year not found'; end if;
+	if p_bakeloria_source_year_name is null then raise exception 'Active Source Bakeloria year not found' using ERRCODE = 'CIM07'; end if;
 	-- This procedure only really runs for 2025 
 	-- and is then discarded
-	if p_bakeloria_source_year_simple_name != '2025' then raise exception 'Source Bakeloria year: % => % does not = 2025??', p_bakeloria_source_year_simple_name, p_bakeloria_source_year_name; end if;
+	if p_bakeloria_source_year_simple_name != '2025' then raise exception 'Source Bakeloria year: % => % does not = 2025??', p_bakeloria_source_year_simple_name, p_bakeloria_source_year_name using ERRCODE = 'CIM06'; end if;
 	if p_messages then raise notice 'Source Bakeloria year: % => %', p_bakeloria_source_year_simple_name, p_bakeloria_source_year_name; end if;
 	select id, name into p_bakeloria_academic_year_id, p_bakeloria_academic_year_name
 		from acorn_university_academic_years ay
 		where ay.name = p_bakeloria_source_year_name;
-	if p_bakeloria_academic_year_id is null then raise exception 'Bakeloria target year % not found', p_bakeloria_source_year_name; end if;
+	if p_bakeloria_academic_year_id is null then raise exception 'Bakeloria target year % not found', p_bakeloria_source_year_name using ERRCODE = 'CIM08'; end if;
 	if p_messages then raise notice 'Bakeloria year: %', p_bakeloria_academic_year_name; end if;
 
 	p_imported      := 'Import-v1 from Bakeloria year ' || p_bakeloria_academic_year_name;
@@ -4537,20 +4661,22 @@ begin
 		inner join acorn_university_semesters sem on ays.semester_id = sem.id
 		where academic_year_id = p_bakeloria_academic_year_id
 		and sem.ordinal = 1;
-	if p_bakeloria_semester1 is null then raise exception 'Bakeloria target year % has no semester 1', p_bakeloria_academic_year_name; end if;
+	if p_bakeloria_semester1 is null then raise exception 'Bakeloria target year % has no semester 1', p_bakeloria_academic_year_name using ERRCODE = 'CIM09'; end if;
 
 	-- ######################################### DELETE PREVIOUS
 	-- This will cascade to entities, leafs and hierarchies
-	if p_messages then raise notice 'Begin delete of previously imported data for %...', p_imported_like; end if;
-	delete from acorn_user_users             where import_source like(p_imported_like);
-	delete from acorn_user_user_groups       where import_source like(p_imported_like);
-	delete from acorn_location_addresses     where import_source like(p_imported_like);
-	update      acorn_location_areas set parent_area_id = NULL where import_source like(p_imported_like);
-	delete from acorn_location_areas         where import_source like(p_imported_like);
-	-- Remove the persistent Year 9,10,11 course materials for this year
-	delete from acorn_university_course_materials where academic_year_semester_id = p_bakeloria_semester1 
-		and course_id in(select id from acorn_university_courses where entity_id in(p_year_10_entity_id, p_year_11_entity_id, p_year_9_entity_id));
-	if p_messages then raise notice 'Deleted previously imported data for %', p_imported_like; end if;
+	if p_delete_previous then
+		if p_messages then raise notice 'Begin delete of previously imported data for %...', p_imported_like; end if;
+		delete from acorn_user_users             where import_source like(p_imported_like);
+		delete from acorn_user_user_groups       where import_source like(p_imported_like);
+		delete from acorn_location_addresses     where import_source like(p_imported_like);
+		update      acorn_location_areas set parent_area_id = NULL where import_source like(p_imported_like);
+		delete from acorn_location_areas         where import_source like(p_imported_like);
+		-- Remove the persistent Year 9,10,11 course materials for this year
+		delete from acorn_university_course_materials where academic_year_semester_id = p_bakeloria_semester1 
+			and course_id in(select id from acorn_university_courses where entity_id in(p_year_10_entity_id, p_year_11_entity_id, p_year_9_entity_id));
+		if p_messages then raise notice 'Deleted previously imported data for %', p_imported_like; end if;
+	end if;
 
 	-- ######################################### Top Level Node EA for Rojava
 	-- no parent
@@ -4599,6 +4725,35 @@ begin
 	-- ######################################### Schools (counties/schools)
 	if p_use_counties_as_schools then
 		-- School for each county only
+		-- Update existing schools for this import
+		with updated as (
+			update acorn_user_user_groups ugs set import_source = (select 
+					p_imported || ' university_mofadala_baccalaureate_marks(county school):' || initcap(bm.name)
+					from (
+						select distinct(county) as name
+						from university_mofadala_baccalaureate_marks
+					) bm
+					where ugs.name = bm.name
+				)
+				where exists(
+					select * from public.acorn_university_entities en
+					inner join public.acorn_university_schools sc on sc.entity_id = en.id
+					where en.user_group_id = ugs.id
+				)
+				and not import_source = (select 
+					p_imported || ' university_mofadala_baccalaureate_marks(county school):' || initcap(bm.name)
+					from (
+						select distinct(county) as name
+						from university_mofadala_baccalaureate_marks
+					) bm
+					where ugs.name = bm.name
+				)
+				returning id, name
+		)
+			select array_agg(updated.id), array_agg(updated.name) into p_uuids, p_names from updated;
+		if p_messages then raise notice '% School (counties) User Groups import_source updated: %', array_upper(p_uuids, 1), array_to_string(p_names, ','); end if;
+		
+		-- Insert missing schools
 		with inserted as (
 			insert into acorn_user_user_groups(name, code, import_source)
 				select initcap(bm.name), fn_acorn_user_code(name), 
@@ -4607,12 +4762,19 @@ begin
 					select distinct(county) as name
 					from university_mofadala_baccalaureate_marks
 				) bm
+				-- Assume import_source was correctly re-named for this import above
+				where not exists(
+					select * from acorn_user_user_groups 
+					where import_source = p_imported || ' university_mofadala_baccalaureate_marks(county school):' || initcap(bm.name)
+				)
 				on conflict(code) do nothing
-				returning id
+				returning id, name
 		)
-			select array_agg(inserted.id) into p_uuids from inserted;
-		if p_messages then raise notice '% School (counties) User Groups inserted', array_upper(p_uuids, 1); end if;
-		if array_upper(p_uuids, 1) < 5 then raise exception 'Suspicious incomplete feed of region schools %', array_upper(p_uuids, 1); end if;
+			select array_agg(inserted.id), array_agg(inserted.name) into p_uuids, p_names from inserted;
+		if p_messages then raise notice '% School (counties) User Groups inserted: %', array_upper(p_uuids, 1), array_to_string(p_names, ','); end if;
+		if array_upper(p_uuids, 1) < 5 and p_delete_previous then 
+			raise exception 'Suspicious incomplete feed of region schools %', array_upper(p_uuids, 1) using ERRCODE = 'CIM10'; 
+		end if;
 		if array_upper(p_uuids, 1) is null then raise warning 'Region Schools already exist'; 
 		else
 			-- Entities
@@ -4641,6 +4803,44 @@ begin
 		-- so we run off the source data, rather than p_uuids
 		-- being careful to set the import_source for this year
 		-- TODO: Place them under the correct EA
+		with updated as (
+			update acorn_university_hierarchies hi set import_source = (select 
+					p_imported || ' university_mofadala_baccalaureate_marks(county school):' || initcap(bm.name)
+					from acorn_university_entities en
+					inner join acorn_university_schools sch on sch.entity_id = en.id
+					inner join acorn_user_user_groups ugs on en.user_group_id = ugs.id
+					inner join (
+						select distinct(county) as name
+						from university_mofadala_baccalaureate_marks
+					) bm on ugs.code = fn_acorn_user_code(bm.name)
+					where hi.entity_id = en.id
+				)
+				where exists(
+					select *
+					from acorn_university_entities en
+					inner join acorn_university_schools sch on sch.entity_id = en.id
+					inner join acorn_user_user_groups ugs on en.user_group_id = ugs.id
+					inner join (
+						select distinct(county) as name
+						from university_mofadala_baccalaureate_marks
+					) bm on ugs.code = fn_acorn_user_code(bm.name)
+					where hi.entity_id = en.id
+				) and not import_source = (select 
+					p_imported || ' university_mofadala_baccalaureate_marks(county school):' || initcap(bm.name)
+					from acorn_university_entities en
+					inner join acorn_university_schools sch on sch.entity_id = en.id
+					inner join acorn_user_user_groups ugs on en.user_group_id = ugs.id
+					inner join (
+						select distinct(county) as name
+						from university_mofadala_baccalaureate_marks
+					) bm on ugs.code = fn_acorn_user_code(bm.name)
+					where hi.entity_id = en.id
+				) and academic_year_id = p_bakeloria_academic_year_id
+				returning id
+		)
+			select array_agg(updated.id) into p_hi_uuids from updated;
+		if p_messages then raise notice '% Schools updated in % hierarchy', array_upper(p_hi_uuids, 1), p_bakeloria_academic_year_name; end if;
+
 		with inserted as (
 			insert into acorn_university_hierarchies(entity_id, academic_year_id, parent_id, import_source, created_by_user_id)
 				select en.id, p_bakeloria_academic_year_id, p_bakeloria_hi_top_level_node, 
@@ -4652,6 +4852,7 @@ begin
 					select distinct(county) as name
 					from university_mofadala_baccalaureate_marks
 				) bm on ugs.code = fn_acorn_user_code(bm.name)
+				on conflict on constraint import_source_hierarchies do nothing -- Dealt with above
 				returning id
 		)
 			select array_agg(inserted.id) into p_hi_uuids from inserted;
@@ -4690,7 +4891,7 @@ begin
 			)
 			select array_agg(inserted.id) into p_uuids from inserted;
 		if p_messages then raise notice '% Bakeloria Course User Groups inserted (for each county)', array_upper(p_uuids, 1); end if;
-		if array_upper(p_uuids, 1) < 9 then raise exception 'Suspicious incomplete feed of bakeloria courses %', array_upper(p_uuids, 1); end if;
+		if array_upper(p_uuids, 1) < 9 then raise exception 'Suspicious incomplete feed of bakeloria courses %', array_upper(p_uuids, 1) using ERRCODE = 'CIM11'; end if;
 		if array_upper(p_uuids, 1) is null then raise warning 'Bakeloria courses for region schools already exist'; 
 		else
 			-- Translation (UserGroup::name level)
@@ -4788,6 +4989,7 @@ begin
 				-- Where the course(cs) is for the school(sc)
 				where en_cs.import_source like('% county:' || ugs_sc.name) 
 					and hi.academic_year_id = p_bakeloria_academic_year_id
+				on conflict(import_source) do nothing
 				returning id
 		)
 			select array_agg(inserted.id) into p_uuids from inserted;
@@ -4800,16 +5002,19 @@ begin
 			('6805488a-5190-11f0-bc01-dbc094fbb388'::uuid, 'Year 11', 'Y11', '2nd year of High School'),
 			('680548d0-5190-11f0-bc02-fff4f307a4bb'::uuid, 'Year 9',  'Y09', 'Last year of Middle School')
 			on conflict(id) do nothing;
+		if p_messages then raise notice 'Year 9,10,11 user groups Checked/inserted'; end if;
 		insert into acorn_university_entities(id, user_group_id, created_by_user_id) values
 			(p_year_10_entity_id, '680546dc-5190-11f0-bc00-2b9974d04458'::uuid, p_created_by_user_id),
 			(p_year_11_entity_id, '6805488a-5190-11f0-bc01-dbc094fbb388'::uuid, p_created_by_user_id),
 			(p_year_9_entity_id,  '680548d0-5190-11f0-bc02-fff4f307a4bb'::uuid, p_created_by_user_id)  
 			on conflict(id) do nothing;
+		if p_messages then raise notice 'Year 9,10,11 entities Checked/inserted'; end if;
 		insert into acorn_university_courses(id, entity_id, course_type_id) values
 			('680549ca-5190-11f0-bc06-3b2810ca3733'::uuid, p_year_10_entity_id, p_course_type_high_school_year),
 			('68054a1a-5190-11f0-bc07-5b0366195244'::uuid, p_year_11_entity_id, p_course_type_high_school_year),
 			('68054a56-5190-11f0-bc08-57f3e412fee2'::uuid, p_year_9_entity_id,  p_course_type_middle_school) -- *** Middle School!
 			on conflict(id) do nothing;
+		if p_messages then raise notice 'Year 9,10,11 courses Checked/inserted'; end if;
 		-- Translation (UserGroup::name level)
 		insert into winter_translate_attributes(locale, model_id, model_type, attribute_data) values
 			('ku', '680546dc-5190-11f0-bc00-2b9974d04458'::uuid, 'Acorn\User\Models\UserGroup', '{"name":"Salê 10","description":""}'),
@@ -4821,6 +5026,8 @@ begin
 			('ar', '6805488a-5190-11f0-bc01-dbc094fbb388'::uuid, 'Acorn\User\Models\UserGroup', '{"name":"11 سالي","description":""}'),
 			('ar', '680548d0-5190-11f0-bc02-fff4f307a4bb'::uuid, 'Acorn\User\Models\UserGroup', '{"name":"9 سالي","description":""}')
 			on conflict on constraint model_locale do nothing;
+		if p_messages then raise notice 'Year 9,10,11 translations Checked/inserted'; end if;
+		
 		-- Place these single courses under every school
 		with inserted as (
 			insert into acorn_university_hierarchies(academic_year_id, entity_id, parent_id, created_by_user_id, import_source)
@@ -4840,13 +5047,14 @@ begin
 					
 					where hi_sc.academic_year_id = p_bakeloria_academic_year_id
 					and en_cs.id in(p_year_10_entity_id, p_year_11_entity_id, p_year_9_entity_id)
+					on conflict(import_source) do nothing
 				returning id
 		)
 			select array_agg(inserted.id) into p_uuids from inserted;
 		if p_messages then raise notice '% Year 9,10,11 courses attatched to schools in hierarchy', array_upper(p_uuids, 1); end if;
 	else
 		-- school column
-		raise exception 'Not supported';
+		raise exception 'Not supported' using ERRCODE = 'CIM12';
 
 		/*
 		with inserted as (
@@ -4912,33 +5120,45 @@ begin
 					-- Exception if not above
 				end
 	)) then
-		raise exception 'Duplicate users will violate the unique_user constraint';
+		raise exception 'Duplicate users will violate the unique_user constraint' using ERRCODE = 'CIM13';
 	end if;
 
 	-- Check religions exist
-	select array_agg(bm.religion) into p_names from university_mofadala_baccalaureate_marks bm
-		where not exists(select * from acorn_user_religions r where position(lower(r.name) in lower(bm.religion))  != 0);
+	select array_agg(bm.religion) into p_names 
+		from university_mofadala_baccalaureate_marks bm
+		where not bm.religion is null and not bm.religion = ''
+		and not exists(select * from acorn_user_religions r where position(lower(r.name) in lower(bm.religion))  != 0);
 	if not array_upper(p_names, 1) is null then
-		raise exception 'Religions missing: %', array_to_string(p_names);
+		raise exception 'Religions missing: %', array_to_string(p_names, ',') using ERRCODE = 'CIM14';
 	end if;
+	if p_messages then raise notice 'Religions verified'; end if;
 	-- Check ethnicities exist
-	select array_agg(bm.ethnicity) into p_names from university_mofadala_baccalaureate_marks bm
-		where not exists(select * from acorn_user_ethnicities e where position(lower(e.name) in lower(bm.ethnicity)) != 0);
+	select array_agg(bm.ethnicity) into p_names 
+		from university_mofadala_baccalaureate_marks bm
+		where not bm.ethnicity is null and not bm.ethnicity = ''
+		and not exists(select * from acorn_user_ethnicities e where position(lower(e.name) in lower(regexp_replace(bm.ethnicity, 'ish$|ic$', '', 'g'))) != 0);
 	if not array_upper(p_names, 1) is null then
-		raise exception 'Religions missing: %', array_to_string(p_names);
+		raise exception 'Ethnicities missing: %', array_to_string(p_names, ',') using ERRCODE = 'CIM15';
 	end if;
+	if p_messages then raise notice 'Ethnicities verified'; end if;
 	-- Check languages exist
-	select array_agg(bm.certificate_language) into p_names from university_mofadala_baccalaureate_marks bm
-		where not exists(select * from acorn_user_languages e where position(lower(l.name) in lower(bm.certificate_language)) != 0);
+	select array_agg(bm.certificate_language) into p_names 
+		from university_mofadala_baccalaureate_marks bm
+		where not bm.certificate_language is null and not bm.certificate_language = ''
+		and not exists(select * from acorn_user_languages l where position(lower(l.name) in lower(bm.certificate_language)) != 0);
 	if not array_upper(p_names, 1) is null then
-		raise exception 'Languages missing: %', array_to_string(p_names);
+		raise exception 'Languages missing: %', array_to_string(p_names, ',') using ERRCODE = 'CIM16';
 	end if;
+	if p_messages then raise notice 'Languages verified'; end if;
 	-- Check other languages exist
-	select array_agg(bm.other_language) into p_names from university_mofadala_baccalaureate_marks bm
-		where not exists(select * from acorn_user_languages e where position(lower(l.name) in lower(bm.other_language)) != 0);
+	select array_agg(bm.other_language) into p_names 
+		from university_mofadala_baccalaureate_marks bm
+		where not bm.other_language is null and not bm.other_language = ''
+		and not exists(select * from acorn_user_languages l where position(lower(l.name) in lower(bm.other_language)) != 0);
 	if not array_upper(p_names, 1) is null then
-		raise exception 'Other languages missing: %', array_to_string(p_names);
+		raise exception 'Other languages missing: %', array_to_string(p_names, ',') using ERRCODE = 'CIM17';
 	end if;
+	if p_messages then raise notice 'Other languages verified'; end if;
 
 	-- INSERT
 	WITH inserted as (
@@ -4973,7 +5193,7 @@ begin
 				end,
 				bm.father_name, bm.mother_name, 
 				(select id from acorn_user_religions   r where position(lower(r.name) in lower(bm.religion))  != 0),
-				(select id from acorn_user_ethnicities e where position(lower(e.name) in lower(bm.ethnicity)) != 0), -- "community"
+				(select id from acorn_user_ethnicities e where position(lower(e.name) in lower(regexp_replace(bm.ethnicity, 'ish$|ic$', '', 'g'))) != 0), -- "community"
 				p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
 			from university_mofadala_baccalaureate_marks bm
 			returning id
@@ -4985,15 +5205,15 @@ begin
 		insert into acorn_university_students(
 				user_id, import_source,
 				-- Legacy & from university_mofadala_baccalaureate_marks
-				legacy_import_result, legacy_import_avg, legacy_import_total_mark,
+				legacy_import_id, legacy_import_result, legacy_import_avg, legacy_import_total_mark,
 				-- Legacy & from new university_mofadala_baccalaureate_marks columns
 				legacy_import_final_avg, legacy_import_passed_primaries, legacy_import_passed_secondaries, legacy_import_attendance,
 				-- TODO: for later
-				import_school, import_qeyd, import_student_type
+				legacy_import_school, legacy_import_qeyd, legacy_import_student_type
 			)
 			select u.id, u.import_source,
 				-- Legacy & from university_mofadala_baccalaureate_marks
-				bm.result, bm.avg, bm.total_mark,
+				bm.id, bm.result, bm.avg, bm.total_mark,
 				-- Legacy & from new university_mofadala_baccalaureate_marks columns
 				bm.final_avg, bm.passed_primaries = 'P', bm.passed_secondaries = 'P', bm.attendance,
 				school, qeyd, student_type
@@ -5134,7 +5354,7 @@ begin
 			returning user_id
 		)
 		select array_agg(inserted.user_id) into p_uuids from inserted;
-	if array_upper(p_uuids, 1) is null then raise exception 'No students placed on courses!'; end if;
+	if array_upper(p_uuids, 1) is null then raise exception 'No students placed on courses!' using ERRCODE = 'CIM18'; end if;
 	if p_messages then raise notice '% Students-placements on to Year 12 distributed and 11,10,9 static Bakeloria courses in schools', array_upper(p_uuids, 1); end if;
 
 	-- ######################################### Materials & Course materials
@@ -5230,6 +5450,7 @@ begin
 				acorn_university_courses cs
 				where m.id = 'ee22cafe-502e-11f0-90c2-3702c192c6ec'::uuid
 				and cs.entity_id = p_year_9_entity_id
+			on conflict do nothing
 			returning id
 		)
 		select array_agg(inserted.id) into p_uuids from inserted;
@@ -5745,10 +5966,10 @@ begin
 		select array_agg(inserted.id) into p_uuids from inserted;
 	if p_messages then raise notice '% Baccalaureate Community Language Marks inserted', array_upper(p_uuids, 1); end if;
 end;
-$$;
+$_$;
 
 
-ALTER FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_messages boolean) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) OWNER TO university;
 
 --
 -- Name: fn_acorn_university_legacy_import_branche_to_course(character varying, character varying); Type: FUNCTION; Schema: public; Owner: sz
@@ -6969,6 +7190,7 @@ ALTER TABLE public.acorn_enrollment_course_entry_requirements OWNER TO universit
 COMMENT ON TABLE public.acorn_enrollment_course_entry_requirements IS 'plugin-names:
   en: Enrollment
   ku: Mofadala
+qr-code-scan: true
 labels:
   en: Course Entry Requirement
 labels-plural:
@@ -7261,13 +7483,13 @@ COMMENT ON TABLE public.acorn_exam_calculations IS 'order: 40
 seeding:
   # acorn_exam_calculations
   # id, name, description, expression, created_by_user_id, minimum, maximum, required, calculation_type_id, parent_id, owner_entity_id, academic_year_id, code
-  - [''15f02b5c-2bff-11f0-8074-4bf737ba6a74'', ''Avg of material exams'', ''<p>For course &lt;course&gt;/&lt;material&gt;</p>'', ''avg(:score/<student>/<year>/<course>/<material>/material/.*/.*:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', NULL, NULL, , ''56013d6e-3247-11f0-8e96-2f232943abf8'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', NULL, NULL]
-  - [''958b952c-2e7f-11f0-b4b6-0f8c2c07f33e'', ''Bakeloria final mark'', '''', ''avg(:course/<student>/<year>/.*/High School/.*/score/required/result=0:) + avg(:course/<student>/<year>/.*/High School Year/.*/score/required/result=0:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', 40, 100, NULL, ''56013d6e-3247-11f0-8e96-2f232943abf8'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', NULL, ''BKFM'']
+  - [''958b952c-2e7f-11f0-b4b6-0f8c2c07f33e'', ''Bakeloria final mark'', '''', ''avg(:course/<student>/<year>/.*/High School/.*/score/required/result:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', 40, 100, NULL, ''56013d6e-3247-11f0-8e96-2f232943abf8'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', NULL, ''BKFM'']
+  - [''15f02b5c-2bff-11f0-8074-4bf737ba6a74'', ''Avg of material exams'', ''<p>For course &lt;course&gt;/&lt;material&gt;</p>'', ''avg(:score/<student>/<year>/<course>/<material>/material/.*/.*:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', NULL, NULL, false, ''56013d6e-3247-11f0-8e96-2f232943abf8'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', NULL, NULL]
   - [''958b8af0-2e7f-11f0-b4b4-9f4a22fbe4eb'', ''Avg of materials'', ''<p>For course &lt;course&gt;</p>'', ''avg(:material/<student>/<year>/<course>/<course-type>/.*/material/.*/score/result:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', 40, 100, NULL, ''56013d6e-3247-11f0-8e96-2f232943abf8'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', NULL, ''BKCRS'']
+  - [''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''Bakeloria pass'', '''', ''sum(:?course/<student>/<year>/.*/High School/Count of required materials failed/count/required/result=1:, :?course/<student>/<year>/.*/High School/Count of optional materials failed/count/required/result=1:, :?calculation/<student>/<year>/Bakeloria final mark/score=0:, :?calculation/<student>/<year>/Mother language passed/boolean/required/result=0:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', 4, 4, NULL, ''56013ed6-3247-11f0-8e98-478677b2ee2a'', NULL, ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', ''BKPS'']
   - [''9f30f314-4c4c-4a4c-bfe8-9cc4f25b1593'', ''Mother language passed'', '''', ''case when :student/<student>/<year>/locale/ku=0: = 1 then :?material/<student>/<year>/.*/High School/Kurdish/material/.*/score/result=0: when :student/<student>/<year>/locale/ar=0: = 1 then :?material/<student>/<year>/.*/High School/Arabic/material/.*/score/result=0: else 0 end'', ''9e95e479-9690-4091-a730-aecdf51f9258'', 1, 1, NULL, ''56013ed6-3247-11f0-8e98-478677b2ee2a'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', NULL]
   - [''9ee46f13-b23e-4ab7-998a-b2585f1a41ad'', ''Count of required materials failed'', ''<p>For course &lt;course&gt;</p>'', ''count(:material/<student>/<year>/<course>/<course-type>/.*/material/.*/score/required/result:) - sum(:?material/<student>/<year>/<course>/<course-type>/.*/material/.*/score/required/result:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', 0, 0, NULL, ''56013e90-3247-11f0-8e97-9b91890119b6'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', NULL, NULL]
-  - [''9ee52bda-2631-48db-ac33-44630c76e83c'', ''Count of optional materials failed'', ''<p>For course &lt;course&gt;</p>'', ''count(:material/<student>/<year>/<course>/<course-type>/.*/material/.*/score/result:) - sum(:?material/<student>/<year>/<course>/<course-type>/.*/material/.*/score/result:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', 0, 1, NULL, ''56013e90-3247-11f0-8e97-9b91890119b6'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', NULL, NULL]
-  - [''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''Bakeloria pass'', '''', ''sum(:?course/<student>/<year>/.*/High School/Count of required materials failed/count/required/result=1:, :?course/<student>/<year>/.*/High School/Count of optional materials failed/count/required/result=1:, :?calculation/<student>/<year>/Bakeloria final mark/score:, :?calculation/<student>/<year>/Mother language passed/boolean/required/result=0:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', 4, 4, NULL, ''56013ed6-3247-11f0-8e98-478677b2ee2a'', NULL, ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', ''BKPS'']
+  - [''9ee52bda-2631-48db-ac33-44630c76e83c'', ''Count of optional materials failed'', ''<p>For course &lt;course&gt;</p>'', ''count(:material/<student>/<year>/<course>/<course-type>/.*/material/.*/score/result:) - sum(:?material/<student>/<year>/<course>/<course-type>/.*/material/.*/score/result:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', 0, 3, NULL, ''56013e90-3247-11f0-8e97-9b91890119b6'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', NULL, NULL]
 labels:
   en: Calculation
   ku: Algoritum
@@ -7366,12 +7588,17 @@ SELECT
     NULL::uuid AS exam_id,
     NULL::json AS scores,
     NULL::json AS score_names,
+    NULL::bigint AS attendance,
     NULL::double precision AS result,
     NULL::double precision AS minimum,
     NULL::double precision AS maximum,
+    NULL::double precision AS bakeloria_final_mark,
     NULL::boolean AS bakeloria_passed,
+    NULL::character varying(2048) AS bakeloria_passed_resolved_expression,
     NULL::boolean AS passed,
     NULL::double precision AS legacy_import_the_total,
+    NULL::double precision AS legacy_import_final_avg,
+    NULL::character varying(1024) AS legacy_import_result,
     NULL::double precision AS legacy_import_avg,
     NULL::boolean AS legacy_import_correct,
     NULL::boolean AS legacy_import_passed,
@@ -7596,6 +7823,23 @@ labels-plural:
 
 
 --
+-- Name: COLUMN acorn_exam_data_entry_scores.bakeloria_final_mark; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.bakeloria_final_mark IS 'column-partial: number
+column-type: partial
+format: "%.2f%%"
+bar: true
+labels:
+  en: High School Final Mark
+  ku: Bakeloria Ortê dawî
+labels-plural:
+  en: High School Final Mark
+  ku: Bakeloria Ortên dawî
+';
+
+
+--
 -- Name: COLUMN acorn_exam_data_entry_scores.bakeloria_passed; Type: COMMENT; Schema: public; Owner: university
 --
 
@@ -7622,6 +7866,21 @@ labels:
 labels-plural:
   en: High-School Passes
   ku: Bakeloria Serketên
+';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.bakeloria_passed_resolved_expression; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.bakeloria_passed_resolved_expression IS 'column-partial: expression
+column-type: partial
+labels:
+  en: High-School Passed resolved expression
+  ku: Bakeloria Serket algorithm hasabkir
+labels-plural:
+  en: High-School Pass resolved expressions
+  ku: Bakeloria Serket algorithmên hasabkir
 ';
 
 
@@ -7659,6 +7918,23 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.legacy_import_the_total IS
 column-type: partial
 format: "%.2f%%"
 bar: true';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.legacy_import_final_avg; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.legacy_import_final_avg IS 'column-partial: number
+column-type: partial
+format: "%.2f%%"
+bar: true
+labels:
+  en: Legacy Import Final Average
+  ku: Barkirine kevin Ortê dawî
+labels-plural:
+  en: Legacy Import Final Averages
+  ku: Barkirine kevin Ortên dawî
+';
 
 
 --
@@ -7722,6 +7998,461 @@ labels-plural:
   en: Legacy Import Passes
   ku: Barkirine kevin Serketên
 ';
+
+
+--
+-- Name: acorn_exam_certificates; Type: VIEW; Schema: public; Owner: university
+--
+
+CREATE VIEW public.acorn_exam_certificates AS
+ SELECT id,
+    student_user_id,
+    student_id,
+    student_code,
+    academic_year_semester_id,
+    academic_year_id,
+    filename,
+    primary_language_id,
+    course_user_group_id,
+    course_id,
+    course_code,
+    course_type_id,
+    qrcode,
+    exam_id,
+    scores,
+    score_names,
+    attendance,
+    result,
+    minimum,
+    maximum,
+    bakeloria_final_mark,
+    bakeloria_passed,
+    bakeloria_passed_resolved_expression,
+    passed,
+    legacy_import_the_total,
+    legacy_import_final_avg,
+    legacy_import_result,
+    legacy_import_avg,
+    legacy_import_correct,
+    legacy_import_passed,
+    username,
+    password,
+    email,
+    birth_date,
+    fathers_name,
+    mothers_name,
+    gender,
+    marital_status
+   FROM public.acorn_exam_data_entry_scores;
+
+
+ALTER VIEW public.acorn_exam_certificates OWNER TO university;
+
+--
+-- Name: VIEW acorn_exam_certificates; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON VIEW public.acorn_exam_certificates IS 'batch-print: true
+show-sorting: false
+default-sort: id
+labels:
+  en: Certificate Information
+  ku: Bawername agahî
+labels-plural:
+  en: Certificate Informations
+  ku: Bawername agahîyên
+';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.id IS 'sortable: true';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.student_user_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.student_user_id IS 'sortable: false
+extra-foreign-key: 
+  table: acorn_user_users
+  comment:
+    tab-location: 2
+labels:
+  en: Student User
+labels-plural:
+  en: Student Users
+sql-select: acorn_user_users.name
+searchable: true';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.student_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.student_id IS 'extra-foreign-key: 
+  table: acorn_university_students
+  comment:
+    tab-location: 2
+    name-object: true
+labels:
+  en: Student
+labels-plural:
+  en: Students
+invisible: true
+qrcode-object: true';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.student_code; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.student_code IS 'sortable: false
+sql-select: acorn_exam_certificates.student_code';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.academic_year_semester_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.academic_year_semester_id IS 'extra-foreign-key: 
+  table: acorn_university_academic_year_semesters
+  comment:
+    tab-location: 2
+    name-object: true
+labels:
+  en: Academic Year Semester
+labels-plural:
+  en: Academic Year Semesters
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.academic_year_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.academic_year_id IS 'extra-foreign-key: 
+  table: acorn_university_academic_years
+  comment:
+    tab-location: 2
+    name-object: true
+labels:
+  en: Academic Year
+labels-plural:
+  en: Academic Years
+css-classes-column:
+  - tablet
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.primary_language_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.primary_language_id IS 'extra-foreign-key: 
+  table: acorn_user_languages
+  comment:
+    tab-location: 2
+labels:
+  en: Primary Language
+labels-plural:
+  en: Primary Languages
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.course_user_group_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.course_user_group_id IS 'extra-foreign-key: 
+  table: acorn_user_user_groups
+  comment:
+    tab-location: 2
+    name-object: true
+labels:
+  en: Course
+labels-plural:
+  en: Courses
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.course_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.course_id IS 'extra-foreign-key: 
+  table: acorn_university_courses
+  comment:
+    tab-location: 2
+    hidden: true
+labels:
+  en: Course
+labels-plural:
+  en: Courses
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.course_code; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.course_code IS 'sortable: false
+sql-select: acorn_exam_certificates.course_code
+labels:
+  en: Course Code
+  ku: Kode kors
+labels-plural:
+  en: Courses
+  ku: Kode korsên
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.course_type_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.course_type_id IS 'extra-foreign-key: 
+  table: acorn_university_course_types
+  comment:
+    tab-location: 2
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.exam_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.exam_id IS 'extra-foreign-key: 
+  table: acorn_exam_exams
+  comment:
+    tab-location: 2
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.scores; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.scores IS 'list-editable: delete-on-null
+type-editable: number
+labels:
+  en: Material Score
+labels-plural:
+  en: Materials Scores
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.score_names; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.score_names IS 'read-only: true
+column-type: partial
+column-partial: record_list_editable
+invisible: true
+labels:
+  en: Material Score name
+labels-plural:
+  en: Materials Score names
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.result; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.result IS 'column-partial: number
+column-type: partial
+format: "%.2f%%"
+bar: true
+labels:
+  en: Result
+  ku: Encam
+labels-plural:
+  en: Results
+  ku: Encamên
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.bakeloria_final_mark; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.bakeloria_final_mark IS 'column-partial: number
+column-type: partial
+format: "%.2f%%"
+bar: true
+labels:
+  en: High School Final Mark
+  ku: Bakeloria Ortê dawî
+labels-plural:
+  en: High School Final Mark
+  ku: Bakeloria Ortên dawî
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.bakeloria_passed; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.bakeloria_passed IS 'column-partial: tick
+column-type: partial
+css-classes-column:
+  - show-cross
+filters:
+  bakeloria_passed:
+    label: acorn.exam::lang.models.dataentryscore.bakeloria_passed
+    type: checkbox
+    conditions: bakeloria_passed
+  bakeloria_not_passed:
+    label: acorn.exam::lang.models.dataentryscore.bakeloria_not_passed
+    type: checkbox
+    conditions: not bakeloria_passed
+extra-translations:
+  bakeloria_not_passed:
+    en: High-School failed
+    ku: Bakeloria binket
+labels:
+  en: High-School Passed
+  ku: Bakeloria Serket
+labels-plural:
+  en: High-School Passes
+  ku: Bakeloria Serketên
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.bakeloria_passed_resolved_expression; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.bakeloria_passed_resolved_expression IS 'column-partial: expression
+column-type: partial
+labels:
+  en: High-School Passed resolved expression
+  ku: Bakeloria Serket algorithm hasabkir
+labels-plural:
+  en: High-School Pass resolved expressions
+  ku: Bakeloria Serket algorithmên hasabkir
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.passed; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.passed IS 'column-partial: tick
+column-type: partial
+css-classes-column:
+  - show-cross
+filters:
+  passed:
+    label: acorn.exam::lang.models.result.passed
+    type: checkbox
+    conditions: passed
+  failed:
+    label: acorn.exam::lang.models.result.not_passed
+    type: checkbox
+    conditions: not passed
+labels:
+  en: Course Passed
+  ku: Kors Serket
+labels-plural:
+  en: Course Passes
+  ku: Kors Serketên
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.legacy_import_the_total; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_the_total IS 'column-partial: number
+column-type: partial
+format: "%.2f%%"
+bar: true
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.legacy_import_final_avg; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_final_avg IS 'column-partial: number
+column-type: partial
+format: "%.2f%%"
+bar: true
+labels:
+  en: Legacy Import Final Average
+  ku: Barkirine kevin Ortê dawî
+labels-plural:
+  en: Legacy Import Final Averages
+  ku: Barkirine kevin Ortên dawî
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.legacy_import_avg; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_avg IS 'column-partial: number
+column-type: partial
+format: "%.2f%%"
+bar: true
+labels:
+  en: Legacy Import Average
+  ku: Barkirine kevin Ort
+labels-plural:
+  en: Legacy Import Averages
+  ku: Barkirine kevin Ortên
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.legacy_import_correct; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_correct IS 'column-partial: tick
+column-type: partial
+css-classes-column:
+  - show-cross
+filters:
+  legacy_import_correct:
+    label: acorn.exam::lang.models.dataentryscore.legacy_import_correct
+    type: checkbox
+    conditions: legacy_import_correct
+  legacy_import_incorrect:
+    label: acorn.exam::lang.models.dataentryscore.legacy_import_incorrect
+    type: checkbox
+    conditions: not legacy_import_correct
+extra-translations:
+  legacy_import_incorrect:
+    en: Legacy Import Incorrect
+labels:
+  en: Legacy Import Correct
+  ku: Barkirine kevin Rast
+labels-plural:
+  en: Legacy Import Correct
+  ku: Barkirine kevin Rastên
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.legacy_import_passed; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_passed IS 'column-partial: tick
+column-type: partial
+css-classes-column:
+  - show-cross
+labels:
+  en: Legacy Import Passed
+  ku: Barkirine kevin Serket
+labels-plural:
+  en: Legacy Import Passes
+  ku: Barkirine kevin Serketên
+sortable: false';
 
 
 --
@@ -8636,7 +9367,8 @@ CREATE TABLE public.acorn_university_academic_years (
     updated_by_user_id uuid,
     server_id uuid NOT NULL,
     name character varying(1024) DEFAULT ''::character varying NOT NULL,
-    ordinal integer DEFAULT nextval('public.acorn_university_year_seq'::regclass)
+    ordinal integer DEFAULT nextval('public.acorn_university_year_seq'::regclass),
+    enabled boolean DEFAULT true NOT NULL
 );
 
 
@@ -8828,6 +9560,49 @@ labels:
 labels-plural:
   en: Course types
   ku: Curên kors';
+
+
+--
+-- Name: acorn_university_course_year_settings; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_university_course_year_settings (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    course_id uuid NOT NULL,
+    academic_year_id uuid NOT NULL,
+    minimum double precision,
+    maximum double precision,
+    women_only boolean DEFAULT false,
+    created_at_event_id uuid NOT NULL,
+    updated_at_event_id uuid,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL,
+    required boolean DEFAULT false
+);
+
+
+ALTER TABLE public.acorn_university_course_year_settings OWNER TO university;
+
+--
+-- Name: TABLE acorn_university_course_year_settings; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_university_course_year_settings IS 'menu: false';
+
+
+--
+-- Name: COLUMN acorn_university_course_year_settings.minimum; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_year_settings.minimum IS 'list-editable: true';
+
+
+--
+-- Name: COLUMN acorn_university_course_year_settings.maximum; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_year_settings.maximum IS 'list-editable: true';
 
 
 --
@@ -9147,9 +9922,10 @@ CREATE TABLE public.acorn_university_students (
     legacy_import_passed_secondaries boolean,
     legacy_import_attendance integer,
     number integer DEFAULT nextval('public.acorn_university_students_number'::regclass) NOT NULL,
-    import_school character varying(1024),
-    import_qeyd character varying(1024),
-    import_student_type character varying(1024)
+    legacy_import_school character varying(1024),
+    legacy_import_qeyd character varying(1024),
+    legacy_import_student_type character varying(1024),
+    legacy_import_id integer
 );
 
 
@@ -9278,10 +10054,10 @@ tab: acorn.university::lang.models.student.university_student_codes__student';
 
 
 --
--- Name: COLUMN acorn_university_students.import_school; Type: COMMENT; Schema: public; Owner: university
+-- Name: COLUMN acorn_university_students.legacy_import_school; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_students.import_school IS 'tab: Legacy
+COMMENT ON COLUMN public.acorn_university_students.legacy_import_school IS 'tab: Legacy
 tabLocation: 2
 advanced: true
 readOnly: true
@@ -9289,10 +10065,10 @@ comment: Actual school, to be processed later';
 
 
 --
--- Name: COLUMN acorn_university_students.import_qeyd; Type: COMMENT; Schema: public; Owner: university
+-- Name: COLUMN acorn_university_students.legacy_import_qeyd; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_students.import_qeyd IS 'tab: Legacy
+COMMENT ON COLUMN public.acorn_university_students.legacy_import_qeyd IS 'tab: Legacy
 tabLocation: 2
 advanced: true
 readOnly: true
@@ -9300,14 +10076,30 @@ comment: School enrollment place. To be processed later on';
 
 
 --
--- Name: COLUMN acorn_university_students.import_student_type; Type: COMMENT; Schema: public; Owner: university
+-- Name: COLUMN acorn_university_students.legacy_import_student_type; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_students.import_student_type IS 'tab: Legacy
+COMMENT ON COLUMN public.acorn_university_students.legacy_import_student_type IS 'tab: Legacy
 tabLocation: 2
 advanced: true
 readOnly: true
 comment: Regular or Irregular, concerning Year 10 and 11';
+
+
+--
+-- Name: COLUMN acorn_university_students.legacy_import_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_students.legacy_import_id IS 'columnClass: normal # Not _id FK field
+tab: Legacy
+tabLocation: 2
+advanced: true
+readOnly: true
+comment: Legacy import ID
+labels:
+  en: Legacy Import ID
+labels-plural:
+  en: Legacy Import IDs';
 
 
 --
@@ -9482,12 +10274,12 @@ UNION ALL
     NULL::uuid AS project_id,
     NULL::uuid AS interview_id,
     replace(replace(replace(replace((cac.expression)::text, ('<course>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[ugs.name]))::text), ('<course-type>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[ct.name]))::text), ('<year>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[ay.name]))::text), ('<student>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[(s.number)::character varying]))::text) AS expression,
-    cac.minimum,
-    cac.maximum,
-    cac.required,
+    COALESCE(cys.minimum, cac.minimum) AS minimum,
+    COALESCE(cys.maximum, cac.maximum) AS maximum,
+    COALESCE(cys.required, cac.required) AS required,
     'expression'::text AS expression_type,
     true AS needs_evaluate
-   FROM (((((((((((public.acorn_university_courses c
+   FROM ((((((((((((public.acorn_university_courses c
      JOIN public.acorn_university_course_types ct ON ((c.course_type_id = ct.id)))
      JOIN public.acorn_university_entities en ON ((c.entity_id = en.id)))
      JOIN public.acorn_university_hierarchies hi ON ((hi.entity_id = en.id)))
@@ -9499,6 +10291,7 @@ UNION ALL
      JOIN public.acorn_exam_calculation_courses cc ON (((c.id = cc.course_id) AND (cc.academic_year_id = ay.id))))
      JOIN public.acorn_exam_calculations cac ON ((cc.calculation_id = cac.id)))
      JOIN public.acorn_exam_calculation_types ect ON ((cac.calculation_type_id = ect.id)))
+     LEFT JOIN public.acorn_university_course_year_settings cys ON (((c.id = cys.course_id) AND (ay.id = cys.academic_year_id))))
 UNION ALL
  SELECT (concat(s.id, '::', public.fn_acorn_exam_token_name(VARIADIC ARRAY['course'::character varying, (s.number)::character varying, ay.name, ugs.name, cact.name, ect.name, (
         CASE
@@ -9520,12 +10313,12 @@ UNION ALL
     NULL::uuid AS project_id,
     NULL::uuid AS interview_id,
     replace(replace(replace(replace((cact.expression)::text, ('<course>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[ugs.name]))::text), ('<course-type>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[ct.name]))::text), ('<year>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[ay.name]))::text), ('<student>'::character varying)::text, (public.fn_acorn_exam_token_name(VARIADIC ARRAY[(s.number)::character varying]))::text) AS expression,
-    cact.minimum,
-    cact.maximum,
-    cact.required,
+    COALESCE(cys.minimum, cact.minimum) AS minimum,
+    COALESCE(cys.maximum, cact.maximum) AS maximum,
+    COALESCE(cys.required, cact.required) AS required,
     'expression'::text AS expression_type,
     true AS needs_evaluate
-   FROM (((((((((((public.acorn_university_courses c
+   FROM ((((((((((((public.acorn_university_courses c
      JOIN public.acorn_university_course_types ct ON ((c.course_type_id = ct.id)))
      JOIN public.acorn_university_entities en ON ((c.entity_id = en.id)))
      JOIN public.acorn_university_hierarchies hi ON ((hi.entity_id = en.id)))
@@ -9537,6 +10330,7 @@ UNION ALL
      JOIN public.acorn_exam_calculation_course_types cct ON (((cct.course_type_id = c.course_type_id) AND (cct.academic_year_id = ay.id))))
      JOIN public.acorn_exam_calculations cact ON ((cct.calculation_id = cact.id)))
      JOIN public.acorn_exam_calculation_types ect ON ((cact.calculation_type_id = ect.id)))
+     LEFT JOIN public.acorn_university_course_year_settings cys ON (((c.id = cys.course_id) AND (ay.id = cys.academic_year_id))))
 UNION ALL
  SELECT (concat(s.id, '::', public.fn_acorn_exam_token_name(VARIADIC ARRAY['calculation'::character varying, (s.number)::character varying, ay.name, c.name, ect.name])))::character varying AS id,
     public.fn_acorn_exam_token_name(VARIADIC ARRAY['calculation'::character varying, (s.number)::character varying, ay.name, c.name, ect.name]) AS name,
@@ -9602,7 +10396,7 @@ COMMENT ON COLUMN public.acorn_exam_token2s.academic_year_id IS 'extra-foreign-k
   table: acorn_university_academic_years
   comment:
     tab-location: 2
-	hidden: true';
+    hidden: true';
 
 
 --
@@ -9613,7 +10407,7 @@ COMMENT ON COLUMN public.acorn_exam_token2s.exam_id IS 'extra-foreign-key:
   table: acorn_exam_exams
   comment:
     tab-location: 2
-	hidden: true';
+    hidden: true';
 
 
 --
@@ -9624,7 +10418,7 @@ COMMENT ON COLUMN public.acorn_exam_token2s.course_material_id IS 'extra-foreign
   table: acorn_university_course_materials
   comment:
     tab-location: 2
-	hidden: true';
+    hidden: true';
 
 
 --
@@ -9635,7 +10429,7 @@ COMMENT ON COLUMN public.acorn_exam_token2s.course_id IS 'extra-foreign-key:
   table: acorn_university_courses
   comment:
     tab-location: 2
-	hidden: true';
+    hidden: true';
 
 
 --
@@ -9646,7 +10440,7 @@ COMMENT ON COLUMN public.acorn_exam_token2s.material_id IS 'extra-foreign-key:
   table: acorn_university_materials
   comment:
     tab-location: 2
-	hidden: true';
+    hidden: true';
 
 
 --
@@ -9657,7 +10451,7 @@ COMMENT ON COLUMN public.acorn_exam_token2s.calculation_id IS 'extra-foreign-key
   table: acorn_exam_calculations
   comment:
     tab-location: 2
-	hidden: true';
+    hidden: true';
 
 
 --
@@ -9668,7 +10462,7 @@ COMMENT ON COLUMN public.acorn_exam_token2s.project_id IS 'extra-foreign-key:
   table: acorn_university_projects
   comment:
     tab-location: 2
-	hidden: true';
+    hidden: true';
 
 
 --
@@ -10509,6 +11303,13 @@ CREATE TABLE public.acorn_university_student_codes (
 ALTER TABLE public.acorn_university_student_codes OWNER TO university;
 
 --
+-- Name: TABLE acorn_university_student_codes; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_university_student_codes IS 'menu: false';
+
+
+--
 -- Name: COLUMN acorn_university_student_codes.current; Type: COMMENT; Schema: public; Owner: university
 --
 
@@ -10536,6 +11337,13 @@ CREATE TABLE public.acorn_university_student_identities (
 
 
 ALTER TABLE public.acorn_university_student_identities OWNER TO university;
+
+--
+-- Name: TABLE acorn_university_student_identities; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_university_student_identities IS 'menu: false';
+
 
 --
 -- Name: COLUMN acorn_university_student_identities.current; Type: COMMENT; Schema: public; Owner: university
@@ -10599,7 +11407,8 @@ COMMENT ON COLUMN public.acorn_university_student_lookups.course_id IS 'extra-fo
   table: acorn_university_courses
   comment:
     tab-location: 2
-    invisible: true';
+    invisible: true
+    hidden: true';
 
 
 --
@@ -10632,6 +11441,13 @@ CREATE TABLE public.acorn_university_student_notes (
 
 
 ALTER TABLE public.acorn_university_student_notes OWNER TO university;
+
+--
+-- Name: TABLE acorn_university_student_notes; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_university_student_notes IS 'menu: false';
+
 
 --
 -- Name: COLUMN acorn_university_student_notes.description; Type: COMMENT; Schema: public; Owner: university
@@ -13857,6 +14673,14 @@ ALTER TABLE ONLY public.acorn_university_course_materials
 
 
 --
+-- Name: acorn_university_course_year_settings acorn_university_course_year_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_year_settings
+    ADD CONSTRAINT acorn_university_course_year_settings_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: acorn_university_courses acorn_university_courses_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -14281,6 +15105,14 @@ ALTER TABLE ONLY public.acorn_user_user_groups
 
 
 --
+-- Name: acorn_university_course_year_settings course_academic_year_unique; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_year_settings
+    ADD CONSTRAINT course_academic_year_unique UNIQUE (course_id, academic_year_id);
+
+
+--
 -- Name: acorn_university_course_materials course_semester_year_course_year_material; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -14478,6 +15310,22 @@ ALTER TABLE ONLY public.backend_users
 
 ALTER TABLE ONLY public.acorn_university_materials
     ADD CONSTRAINT material_name UNIQUE (name);
+
+
+--
+-- Name: winter_translate_messages messages_code; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.winter_translate_messages
+    ADD CONSTRAINT messages_code UNIQUE (code);
+
+
+--
+-- Name: winter_translate_messages messages_data; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.winter_translate_messages
+    ADD CONSTRAINT messages_data UNIQUE (message_data);
 
 
 --
@@ -15517,7 +16365,7 @@ CREATE OR REPLACE VIEW public.acorn_exam_data_entry_scores AS
     c.id AS course_id,
     ugs.code AS course_code,
     c.course_type_id,
-    ((('https://university.acorn.org/student/login/id/'::text || s.id) || '/?code='::text) || lower((sc.code)::text)) AS qrcode,
+    ((('https://university.acorn.org/student/login/id/'::text || (s.id)::text) || '/?bm='::text) || (s.legacy_import_id)::text) AS qrcode,
     em.exam_id,
     json_object_agg(public.fn_acorn_exam_token_name(VARIADIC ARRAY[m.name]), json_build_object('id', es.id, 'exam_material_id', em.id, 'title', ( SELECT json_object_agg(labels.locale, labels.label) AS json_object_agg
            FROM ( SELECT winter_translate_attributes.locale,
@@ -15535,18 +16383,23 @@ CREATE OR REPLACE VIEW public.acorn_exam_data_entry_scores AS
                 UNION ALL
                  SELECT 'en'::character varying AS locale,
                     sn.name AS label) labels))) AS score_names,
+    count(es.id) AS attendance,
     xr.result,
     xr.minimum,
     xr.maximum,
+    xrfa.result AS bakeloria_final_mark,
     xrp.passed AS bakeloria_passed,
+    xrp.resolved_expression AS bakeloria_passed_resolved_expression,
     xr.passed,
     s.legacy_import_the_total,
+    s.legacy_import_final_avg,
+    s.legacy_import_result,
         CASE
             WHEN (ct.id = 'a5d8016a-78ad-4296-aac7-fc5332045764'::uuid) THEN s.legacy_import_avg
             ELSE NULL::double precision
         END AS legacy_import_avg,
         CASE
-            WHEN (ct.id = 'a5d8016a-78ad-4296-aac7-fc5332045764'::uuid) THEN ((abs((xr.result - s.legacy_import_avg)) < (0.5)::double precision) AND (xrp.passed = ((s.legacy_import_result)::text = ANY (ARRAY[('P'::character varying)::text, ('serket'::character varying)::text, ('Serket'::character varying)::text, ('Serkeftî'::character varying)::text]))))
+            WHEN (ct.id = 'a5d8016a-78ad-4296-aac7-fc5332045764'::uuid) THEN (((s.legacy_import_avg IS NULL) OR (abs((xr.result - s.legacy_import_avg)) < (0.5)::double precision)) AND ((s.legacy_import_final_avg IS NULL) OR (abs((xrfa.result - s.legacy_import_final_avg)) < (0.5)::double precision)) AND (xrp.passed = ((s.legacy_import_result)::text = ANY (ARRAY[('P'::character varying)::text, ('serket'::character varying)::text, ('Serket'::character varying)::text, ('Serkeftî'::character varying)::text]))))
             ELSE NULL::boolean
         END AS legacy_import_correct,
         CASE
@@ -15564,7 +16417,7 @@ CREATE OR REPLACE VIEW public.acorn_exam_data_entry_scores AS
     u.mothers_name,
     u.gender,
     u.marital_status
-   FROM ((((((((((((((((((((((public.acorn_university_courses c
+   FROM (((((((((((((((((((((((public.acorn_university_courses c
      JOIN public.acorn_university_course_types ct ON ((c.course_type_id = ct.id)))
      JOIN public.acorn_university_course_materials cm ON ((cm.course_id = c.id)))
      JOIN public.acorn_university_academic_year_semesters ays ON ((cm.academic_year_semester_id = ays.id)))
@@ -15586,8 +16439,9 @@ CREATE OR REPLACE VIEW public.acorn_exam_data_entry_scores AS
      LEFT JOIN public.acorn_exam_score_names sn ON ((es.score = (sn.score)::double precision)))
      LEFT JOIN public.acorn_exam_results xr ON (((xr.student_id = s.id) AND (xr.academic_year_id = ay.id) AND (xr.course_id = c.id) AND (xr.course_material_id IS NULL) AND (xr.calculation_type_id = '56013d6e-3247-11f0-8e96-2f232943abf8'::uuid))))
      LEFT JOIN public.acorn_exam_results xrp ON (((xrp.student_id = s.id) AND (xrp.academic_year_id = ay.id) AND (xrp.calculation_id = '9ee52f50-d22a-471e-bdeb-b13d81b1afb2'::uuid))))
+     LEFT JOIN public.acorn_exam_results xrfa ON (((xrfa.student_id = s.id) AND (xrfa.academic_year_id = ay.id) AND (xrfa.calculation_id = '958b952c-2e7f-11f0-b4b6-0f8c2c07f33e'::uuid))))
      LEFT JOIN public.acorn_exam_results xrm ON (((xrm.student_id = s.id) AND (xrm.academic_year_id = ay.id) AND (xrm.course_id = c.id) AND (xrm.material_id = m.id) AND (xrm.calculation_type_id = '56013d6e-3247-11f0-8e96-2f232943abf8'::uuid))))
-  GROUP BY u.id, s.id, c.id, uul.language_id, sc.code, ct.id, xr.minimum, xr.maximum, cm.academic_year_semester_id, ays.academic_year_id, en.user_group_id, ugs.code, c.course_type_id, em.exam_id, xr.result, xr.passed, xrp.passed;
+  GROUP BY u.id, s.id, c.id, xrp.resolved_expression, xrfa.result, uul.language_id, sc.code, ct.id, xr.minimum, xr.maximum, cm.academic_year_semester_id, ays.academic_year_id, en.user_group_id, ugs.code, c.course_type_id, em.exam_id, xr.result, xr.passed, xrp.passed;
 
 
 --
@@ -15742,6 +16596,13 @@ CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE 
 --
 
 CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_university_course_types FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
+
+
+--
+-- Name: acorn_university_course_year_settings tr_acorn_calendar_trigger_activity_event; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_calendar_trigger_activity_event BEFORE INSERT OR UPDATE ON public.acorn_university_course_year_settings FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_calendar_trigger_activity_event();
 
 
 --
@@ -16093,6 +16954,13 @@ CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_cours
 
 
 --
+-- Name: acorn_university_course_year_settings tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_course_year_settings FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
+
+
+--
 -- Name: acorn_university_course_years tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
@@ -16230,6 +17098,13 @@ CREATE TRIGGER tr_acorn_university_hierarchies_new_version BEFORE INSERT ON publ
 --
 
 CREATE TRIGGER tr_acorn_university_hierarchies_update_version BEFORE UPDATE ON public.acorn_university_hierarchies FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_university_hierarchies_update_version();
+
+
+--
+-- Name: acorn_university_entities tr_acorn_university_import_source_empty; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_university_import_source_empty BEFORE INSERT OR UPDATE ON public.acorn_university_entities FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_university_import_source_empty();
 
 
 --
@@ -16413,6 +17288,21 @@ ALTER TABLE ONLY public.acorn_exam_calculations
 --
 
 COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculations IS 'global-scope: to';
+
+
+--
+-- Name: acorn_university_course_year_settings academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_year_settings
+    ADD CONSTRAINT academic_year_id FOREIGN KEY (academic_year_id) REFERENCES public.acorn_university_academic_years(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT academic_year_id ON acorn_university_course_year_settings; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT academic_year_id ON public.acorn_university_course_year_settings IS 'name-object: true';
 
 
 --
@@ -16894,7 +17784,12 @@ ALTER TABLE ONLY public.acorn_exam_calculation_courses
 -- Name: CONSTRAINT course_id ON acorn_exam_calculation_courses; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT course_id ON public.acorn_exam_calculation_courses IS 'name-object: true';
+COMMENT ON CONSTRAINT course_id ON public.acorn_exam_calculation_courses IS 'name-object: true
+tab-location: 2
+labels:
+  en: Calculation
+labels-plural:
+  en: Calculations';
 
 
 --
@@ -16926,7 +17821,31 @@ ALTER TABLE ONLY public.acorn_enrollment_course_entry_requirements
 -- Name: CONSTRAINT course_id ON acorn_enrollment_course_entry_requirements; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT course_id ON public.acorn_enrollment_course_entry_requirements IS 'name-object: true';
+COMMENT ON CONSTRAINT course_id ON public.acorn_enrollment_course_entry_requirements IS 'name-object: true
+labels:
+  en: Entry requirement
+labels-plural:
+  en: Entry requirements';
+
+
+--
+-- Name: acorn_university_course_year_settings course_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_year_settings
+    ADD CONSTRAINT course_id FOREIGN KEY (course_id) REFERENCES public.acorn_university_courses(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT course_id ON acorn_university_course_year_settings; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT course_id ON public.acorn_university_course_year_settings IS 'name-object: true
+tab-location: 2
+labels:
+  en: Year Setting
+labels-plural:
+  en: Year Settings';
 
 
 --
@@ -17319,6 +18238,14 @@ ALTER TABLE ONLY public.acorn_exam_centres
 
 
 --
+-- Name: acorn_university_course_year_settings created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_year_settings
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
 -- Name: acorn_university_academic_years created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -17599,6 +18526,14 @@ ALTER TABLE ONLY public.acorn_exam_centres
 
 
 --
+-- Name: acorn_university_course_year_settings created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_year_settings
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
 -- Name: acorn_university_course_materials enrollment_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -17642,7 +18577,20 @@ ALTER TABLE ONLY public.acorn_university_courses
 --
 
 COMMENT ON CONSTRAINT entity_id ON public.acorn_university_courses IS 'type: leaf
-global-scope: to';
+global-scope: to
+has-many-deep-settings:
+  entity_user_group_children:
+    field-exclude: true
+  entity_user_group_versions:
+    field-exclude: true
+  entity_user_group_users:
+    field-exclude: true
+  entity_user_group_users_count:
+    field-exclude: true
+  entity_user_group_locations:
+    field-exclude: true
+  entity_user_group_eventParts:
+    field-exclude: true';
 
 
 --
@@ -17739,11 +18687,25 @@ ALTER TABLE ONLY public.acorn_university_student_notes
 
 
 --
+-- Name: CONSTRAINT entity_id ON acorn_university_student_notes; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT entity_id ON public.acorn_university_student_notes IS 'field-exclude: true';
+
+
+--
 -- Name: acorn_university_student_codes entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_university_student_codes
     ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE;
+
+
+--
+-- Name: CONSTRAINT entity_id ON acorn_university_student_codes; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT entity_id ON public.acorn_university_student_codes IS 'field-exclude: true';
 
 
 --
@@ -17877,7 +18839,9 @@ ALTER TABLE ONLY public.acorn_enrollment_course_entry_requirements
 -- Name: CONSTRAINT high_school_course_id ON acorn_enrollment_course_entry_requirements; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT high_school_course_id ON public.acorn_enrollment_course_entry_requirements IS 'name-object: true';
+COMMENT ON CONSTRAINT high_school_course_id ON public.acorn_enrollment_course_entry_requirements IS 'name-object: true
+field-exclude: true
+column-exclude: true';
 
 
 --
@@ -18014,6 +18978,13 @@ COMMENT ON CONSTRAINT material_type_id ON public.acorn_exam_calculation_material
 
 ALTER TABLE ONLY public.acorn_exam_calculations
     ADD CONSTRAINT owner_entity_id FOREIGN KEY (owner_entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE SET NULL NOT VALID;
+
+
+--
+-- Name: CONSTRAINT owner_entity_id ON acorn_exam_calculations; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT owner_entity_id ON public.acorn_exam_calculations IS 'field-exclude: true';
 
 
 --
@@ -18486,6 +19457,14 @@ ALTER TABLE ONLY public.acorn_exam_instances
 --
 
 ALTER TABLE ONLY public.acorn_exam_centres
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_course_year_settings server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_year_settings
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
@@ -18973,6 +19952,14 @@ ALTER TABLE ONLY public.acorn_exam_centres
 
 
 --
+-- Name: acorn_university_course_year_settings updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_year_settings
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
 -- Name: acorn_university_academic_years updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -19253,6 +20240,14 @@ ALTER TABLE ONLY public.acorn_exam_centres
 
 
 --
+-- Name: acorn_university_course_year_settings updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_year_settings
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
 -- Name: acorn_university_project_students user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -19375,7 +20370,7 @@ ALTER TABLE ONLY public.acorn_university_students
 --
 
 COMMENT ON CONSTRAINT user_id ON public.acorn_university_students IS 'type: leaf
-has-many-deep:
+has-many-deep-settings:
   user_user_group_versions:
     read-only: true
     field-comment: Add users to groups through the Relations screen
@@ -20073,13 +21068,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO
 
 
 --
--- Name: FUNCTION fn_acorn_exam_action_results_refresh(p_student_id uuid, p_messages boolean); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_enrollment_desires_ordinal(); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_messages boolean) TO frontend;
-GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_messages boolean) TO sz WITH GRANT OPTION;
-GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_messages boolean) TO token_1 WITH GRANT OPTION;
-GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_messages boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO token_5;
 
 
 --
@@ -20089,6 +21092,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id u
 GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -20136,14 +21140,14 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles characte
 
 
 --
--- Name: FUNCTION fn_acorn_exam_tokenize(p_expr character varying, level integer, p_messages boolean); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, level integer, p_messages boolean) TO admin WITH GRANT OPTION;
-GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, level integer, p_messages boolean) TO frontend;
-GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, level integer, p_messages boolean) TO sz WITH GRANT OPTION;
-GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, level integer, p_messages boolean) TO token_1 WITH GRANT OPTION;
-GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, level integer, p_messages boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO admin WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO token_5;
 
 
 --
@@ -20353,6 +21357,38 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(m
 
 
 --
+-- Name: FUNCTION fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) TO token_1 WITH GRANT OPTION;
+
+
+--
 -- Name: FUNCTION fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean); Type: ACL; Schema: public; Owner: university
 --
 
@@ -20377,6 +21413,15 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(mode
 --
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_courses_unique_name_type(); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -20388,6 +21433,22 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO token_1 WI
 GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO token_5;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_hierarchies_ascendants(p_id uuid); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_hierarchies_counts(p_id uuid, p_messages boolean); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_messages boolean) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_messages boolean) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -20422,6 +21483,14 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_update(
 
 
 --
+-- Name: FUNCTION fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid) TO token_1 WITH GRANT OPTION;
+
+
+--
 -- Name: FUNCTION fn_acorn_university_hierarchies_new_version(); Type: ACL; Schema: public; Owner: university
 --
 
@@ -20433,10 +21502,59 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO to
 
 
 --
+-- Name: FUNCTION fn_acorn_university_hierarchies_update_version(); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean) TO token_1 WITH GRANT OPTION;
+
+
+--
 -- Name: FUNCTION fn_acorn_university_student_codes_current(); Type: ACL; Schema: public; Owner: university
 --
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -20444,6 +21562,15 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO fron
 --
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_table_counts(_schema character varying); Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -20495,6 +21622,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO token_5
 --
 
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -20502,6 +21630,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO front
 --
 
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -21257,6 +22386,7 @@ GRANT ALL ON TABLE public.acorn_calendar_calendars TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_calendar_calendars TO frontend;
 GRANT ALL ON TABLE public.acorn_calendar_calendars TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_calendars TO token_5;
+GRANT SELECT ON TABLE public.acorn_calendar_calendars TO PUBLIC;
 
 
 --
@@ -21268,6 +22398,7 @@ GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO admin WITH GRANT OPT
 GRANT SELECT,TRIGGER ON TABLE public.acorn_calendar_event_part_user TO frontend;
 GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO token_5;
+GRANT SELECT ON TABLE public.acorn_calendar_event_part_user TO PUBLIC;
 
 
 --
@@ -21279,6 +22410,7 @@ GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO admin WITH GRA
 GRANT SELECT,TRIGGER ON TABLE public.acorn_calendar_event_part_user_group TO frontend;
 GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO token_5;
+GRANT SELECT ON TABLE public.acorn_calendar_event_part_user_group TO PUBLIC;
 
 
 --
@@ -21290,6 +22422,7 @@ GRANT ALL ON TABLE public.acorn_calendar_event_parts TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_calendar_event_parts TO frontend;
 GRANT ALL ON TABLE public.acorn_calendar_event_parts TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_event_parts TO token_5;
+GRANT SELECT ON TABLE public.acorn_calendar_event_parts TO PUBLIC;
 
 
 --
@@ -21301,6 +22434,7 @@ GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO admin WITH GRANT OPTI
 GRANT SELECT,TRIGGER ON TABLE public.acorn_calendar_event_statuses TO frontend;
 GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO token_5;
+GRANT SELECT ON TABLE public.acorn_calendar_event_statuses TO PUBLIC;
 
 
 --
@@ -21312,6 +22446,7 @@ GRANT ALL ON TABLE public.acorn_calendar_event_types TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_calendar_event_types TO frontend;
 GRANT ALL ON TABLE public.acorn_calendar_event_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_event_types TO token_5;
+GRANT SELECT ON TABLE public.acorn_calendar_event_types TO PUBLIC;
 
 
 --
@@ -21323,6 +22458,7 @@ GRANT ALL ON TABLE public.acorn_calendar_events TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_calendar_events TO frontend;
 GRANT ALL ON TABLE public.acorn_calendar_events TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_events TO token_5;
+GRANT SELECT ON TABLE public.acorn_calendar_events TO PUBLIC;
 
 
 --
@@ -21334,6 +22470,25 @@ GRANT ALL ON TABLE public.acorn_calendar_instances TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_calendar_instances TO frontend;
 GRANT ALL ON TABLE public.acorn_calendar_instances TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_instances TO token_5;
+GRANT SELECT ON TABLE public.acorn_calendar_instances TO PUBLIC;
+
+
+--
+-- Name: TABLE acorn_enrollment_course_entry_requirements; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT SELECT ON TABLE public.acorn_enrollment_course_entry_requirements TO frontend;
+GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.acorn_enrollment_course_entry_requirements TO PUBLIC;
+
+
+--
+-- Name: TABLE acorn_enrollment_desires; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT SELECT ON TABLE public.acorn_enrollment_desires TO frontend;
+GRANT ALL ON TABLE public.acorn_enrollment_desires TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.acorn_enrollment_desires TO PUBLIC;
 
 
 --
@@ -21345,6 +22500,7 @@ GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO token_1 WIT
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_calculation_course_materials TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO token_5;
+GRANT SELECT ON TABLE public.acorn_exam_calculation_course_materials TO PUBLIC;
 
 
 --
@@ -21356,6 +22512,7 @@ GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO token_1 WITH GR
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_calculation_course_types TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO token_5;
+GRANT SELECT ON TABLE public.acorn_exam_calculation_course_types TO PUBLIC;
 
 
 --
@@ -21367,6 +22524,7 @@ GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO admin WITH GRANT OPT
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_calculation_courses TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO token_5;
+GRANT SELECT ON TABLE public.acorn_exam_calculation_courses TO PUBLIC;
 
 
 --
@@ -21378,6 +22536,7 @@ GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO token_1 WITH 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_calculation_material_types TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO token_5;
+GRANT SELECT ON TABLE public.acorn_exam_calculation_material_types TO PUBLIC;
 
 
 --
@@ -21389,6 +22548,7 @@ GRANT ALL ON TABLE public.acorn_exam_calculation_types TO admin WITH GRANT OPTIO
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_calculation_types TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_calculation_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculation_types TO token_5;
+GRANT SELECT ON TABLE public.acorn_exam_calculation_types TO PUBLIC;
 
 
 --
@@ -21400,6 +22560,16 @@ GRANT ALL ON TABLE public.acorn_exam_calculations TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_calculations TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_calculations TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculations TO token_5;
+GRANT SELECT ON TABLE public.acorn_exam_calculations TO PUBLIC;
+
+
+--
+-- Name: TABLE acorn_exam_centres; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT SELECT ON TABLE public.acorn_exam_centres TO frontend;
+GRANT ALL ON TABLE public.acorn_exam_centres TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.acorn_exam_centres TO PUBLIC;
 
 
 --
@@ -21411,6 +22581,14 @@ GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_data_entry_scores TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_5;
+GRANT SELECT ON TABLE public.acorn_exam_data_entry_scores TO PUBLIC;
+
+
+--
+-- Name: TABLE acorn_exam_certificates; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT SELECT ON TABLE public.acorn_exam_certificates TO PUBLIC;
 
 
 --
@@ -21422,6 +22600,7 @@ GRANT ALL ON TABLE public.acorn_exam_exam_materials TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_exam_materials TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_exam_materials TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_exam_materials TO token_5;
+GRANT SELECT ON TABLE public.acorn_exam_exam_materials TO PUBLIC;
 
 
 --
@@ -21433,6 +22612,16 @@ GRANT ALL ON TABLE public.acorn_exam_exams TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_exams TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_exams TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_exams TO token_5;
+GRANT SELECT ON TABLE public.acorn_exam_exams TO PUBLIC;
+
+
+--
+-- Name: TABLE acorn_exam_instances; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT SELECT ON TABLE public.acorn_exam_instances TO frontend;
+GRANT ALL ON TABLE public.acorn_exam_instances TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.acorn_exam_instances TO PUBLIC;
 
 
 --
@@ -21444,6 +22633,7 @@ GRANT ALL ON TABLE public.acorn_exam_interview_students TO admin WITH GRANT OPTI
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_interview_students TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_interview_students TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_interview_students TO token_5;
+GRANT SELECT ON TABLE public.acorn_exam_interview_students TO PUBLIC;
 
 
 --
@@ -21455,6 +22645,7 @@ GRANT ALL ON TABLE public.acorn_exam_interviews TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_interviews TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_interviews TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_interviews TO token_5;
+GRANT SELECT ON TABLE public.acorn_exam_interviews TO PUBLIC;
 
 
 --
@@ -21466,6 +22657,7 @@ GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_result_internal2s TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO token_5;
+GRANT SELECT ON TABLE public.acorn_exam_result_internal2s TO PUBLIC;
 
 
 --
@@ -21477,6 +22669,7 @@ GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_results TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_results TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_results TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_results TO token_5;
+GRANT SELECT ON TABLE public.acorn_exam_results TO PUBLIC;
 
 
 --
@@ -21487,6 +22680,7 @@ GRANT ALL ON TABLE public.acorn_exam_score_names TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_score_names TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_score_names TO token_5;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_score_names TO frontend;
+GRANT SELECT ON TABLE public.acorn_exam_score_names TO PUBLIC;
 
 
 --
@@ -21498,6 +22692,7 @@ GRANT ALL ON TABLE public.acorn_exam_scores TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_scores TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_scores TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_scores TO token_5;
+GRANT SELECT ON TABLE public.acorn_exam_scores TO PUBLIC;
 
 
 --
@@ -21509,6 +22704,7 @@ GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO admin WITH
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_academic_year_semesters TO frontend;
 GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_academic_year_semesters TO PUBLIC;
 
 
 --
@@ -21519,6 +22715,7 @@ GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO token_1 WITH GRANT OPT
 GRANT SELECT,USAGE ON SEQUENCE public.acorn_university_year_seq TO frontend;
 GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.acorn_university_year_seq TO PUBLIC;
 
 
 --
@@ -21530,6 +22727,7 @@ GRANT ALL ON TABLE public.acorn_university_academic_years TO admin WITH GRANT OP
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_academic_years TO frontend;
 GRANT ALL ON TABLE public.acorn_university_academic_years TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_academic_years TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_academic_years TO PUBLIC;
 
 
 --
@@ -21541,6 +22739,7 @@ GRANT ALL ON TABLE public.acorn_university_course_materials TO admin WITH GRANT 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_course_materials TO frontend;
 GRANT ALL ON TABLE public.acorn_university_course_materials TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_materials TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_course_materials TO PUBLIC;
 
 
 --
@@ -21552,6 +22751,7 @@ GRANT SELECT,TRIGGER ON TABLE public.acorn_university_course_types TO frontend;
 GRANT ALL ON TABLE public.acorn_university_course_types TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_types TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_course_types TO PUBLIC;
 
 
 --
@@ -21563,6 +22763,7 @@ GRANT ALL ON TABLE public.acorn_university_courses TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_courses TO frontend;
 GRANT ALL ON TABLE public.acorn_university_courses TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_courses TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_courses TO PUBLIC;
 
 
 --
@@ -21574,6 +22775,7 @@ GRANT ALL ON TABLE public.acorn_university_entities TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_entities TO frontend;
 GRANT ALL ON TABLE public.acorn_university_entities TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_entities TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_entities TO PUBLIC;
 
 
 --
@@ -21585,6 +22787,7 @@ GRANT ALL ON TABLE public.acorn_university_hierarchies TO admin WITH GRANT OPTIO
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_hierarchies TO frontend;
 GRANT ALL ON TABLE public.acorn_university_hierarchies TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_hierarchies TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_hierarchies TO PUBLIC;
 
 
 --
@@ -21596,6 +22799,7 @@ GRANT ALL ON TABLE public.acorn_university_material_types TO admin WITH GRANT OP
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_material_types TO frontend;
 GRANT ALL ON TABLE public.acorn_university_material_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_material_types TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_material_types TO PUBLIC;
 
 
 --
@@ -21607,6 +22811,16 @@ GRANT ALL ON TABLE public.acorn_university_materials TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_materials TO frontend;
 GRANT ALL ON TABLE public.acorn_university_materials TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_materials TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_materials TO PUBLIC;
+
+
+--
+-- Name: SEQUENCE acorn_university_students_number; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT SELECT ON SEQUENCE public.acorn_university_students_number TO frontend;
+GRANT ALL ON SEQUENCE public.acorn_university_students_number TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON SEQUENCE public.acorn_university_students_number TO PUBLIC;
 
 
 --
@@ -21618,6 +22832,7 @@ GRANT ALL ON TABLE public.acorn_university_students TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_students TO frontend;
 GRANT ALL ON TABLE public.acorn_university_students TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_students TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_students TO PUBLIC;
 
 
 --
@@ -21629,6 +22844,7 @@ GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_group_version TO frontend;
 GRANT ALL ON TABLE public.acorn_user_user_group_version TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_group_version TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_group_version TO token_5;
+GRANT SELECT ON TABLE public.acorn_user_user_group_version TO PUBLIC;
 
 
 --
@@ -21639,6 +22855,7 @@ GRANT ALL ON TABLE public.acorn_user_user_group_versions TO token_1 WITH GRANT O
 GRANT ALL ON TABLE public.acorn_user_user_group_versions TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_group_versions TO token_5;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_group_versions TO frontend;
+GRANT SELECT ON TABLE public.acorn_user_user_group_versions TO PUBLIC;
 
 
 --
@@ -21650,6 +22867,7 @@ GRANT ALL ON TABLE public.acorn_user_user_groups TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_groups TO frontend;
 GRANT ALL ON TABLE public.acorn_user_user_groups TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_groups TO token_5;
+GRANT SELECT ON TABLE public.acorn_user_user_groups TO PUBLIC;
 
 
 --
@@ -21657,6 +22875,8 @@ GRANT ALL ON TABLE public.acorn_user_user_groups TO token_5;
 --
 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_token2s TO frontend;
+GRANT ALL ON TABLE public.acorn_exam_token2s TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.acorn_exam_token2s TO PUBLIC;
 
 
 --
@@ -21668,6 +22888,7 @@ GRANT ALL ON TABLE public.acorn_exam_types TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_types TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_types TO token_5;
+GRANT SELECT ON TABLE public.acorn_exam_types TO PUBLIC;
 
 
 --
@@ -21679,6 +22900,7 @@ GRANT ALL ON TABLE public.acorn_location_addresses TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_addresses TO frontend;
 GRANT ALL ON TABLE public.acorn_location_addresses TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_addresses TO token_5;
+GRANT SELECT ON TABLE public.acorn_location_addresses TO PUBLIC;
 
 
 --
@@ -21690,6 +22912,7 @@ GRANT ALL ON TABLE public.acorn_location_area_types TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_area_types TO frontend;
 GRANT ALL ON TABLE public.acorn_location_area_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_area_types TO token_5;
+GRANT SELECT ON TABLE public.acorn_location_area_types TO PUBLIC;
 
 
 --
@@ -21701,6 +22924,7 @@ GRANT ALL ON TABLE public.acorn_location_areas TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_areas TO frontend;
 GRANT ALL ON TABLE public.acorn_location_areas TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_areas TO token_5;
+GRANT SELECT ON TABLE public.acorn_location_areas TO PUBLIC;
 
 
 --
@@ -21712,6 +22936,7 @@ GRANT ALL ON TABLE public.acorn_location_gps TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_gps TO frontend;
 GRANT ALL ON TABLE public.acorn_location_gps TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_gps TO token_5;
+GRANT SELECT ON TABLE public.acorn_location_gps TO PUBLIC;
 
 
 --
@@ -21723,6 +22948,7 @@ GRANT ALL ON TABLE public.acorn_location_locations TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_locations TO frontend;
 GRANT ALL ON TABLE public.acorn_location_locations TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_locations TO token_5;
+GRANT SELECT ON TABLE public.acorn_location_locations TO PUBLIC;
 
 
 --
@@ -21734,6 +22960,7 @@ GRANT ALL ON TABLE public.acorn_location_lookup TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_lookup TO frontend;
 GRANT ALL ON TABLE public.acorn_location_lookup TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_lookup TO token_5;
+GRANT SELECT ON TABLE public.acorn_location_lookup TO PUBLIC;
 
 
 --
@@ -21745,6 +22972,7 @@ GRANT ALL ON TABLE public.acorn_location_types TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_types TO frontend;
 GRANT ALL ON TABLE public.acorn_location_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_types TO token_5;
+GRANT SELECT ON TABLE public.acorn_location_types TO PUBLIC;
 
 
 --
@@ -21752,6 +22980,8 @@ GRANT ALL ON TABLE public.acorn_location_types TO token_5;
 --
 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_user_address TO frontend;
+GRANT ALL ON TABLE public.acorn_location_user_address TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.acorn_location_user_address TO PUBLIC;
 
 
 --
@@ -21759,6 +22989,8 @@ GRANT SELECT,TRIGGER ON TABLE public.acorn_location_user_address TO frontend;
 --
 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_user_group_location TO frontend;
+GRANT ALL ON TABLE public.acorn_location_user_group_location TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.acorn_location_user_group_location TO PUBLIC;
 
 
 --
@@ -21770,6 +23002,7 @@ GRANT ALL ON TABLE public.acorn_messaging_action TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_action TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_action TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_action TO token_5;
+GRANT SELECT ON TABLE public.acorn_messaging_action TO PUBLIC;
 
 
 --
@@ -21781,6 +23014,7 @@ GRANT ALL ON TABLE public.acorn_messaging_label TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_label TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_label TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_label TO token_5;
+GRANT SELECT ON TABLE public.acorn_messaging_label TO PUBLIC;
 
 
 --
@@ -21792,6 +23026,7 @@ GRANT ALL ON TABLE public.acorn_messaging_message TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_message TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_message TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_message TO token_5;
+GRANT SELECT ON TABLE public.acorn_messaging_message TO PUBLIC;
 
 
 --
@@ -21803,6 +23038,7 @@ GRANT ALL ON TABLE public.acorn_messaging_message_instance TO admin WITH GRANT O
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_message_instance TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_message_instance TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_message_instance TO token_5;
+GRANT SELECT ON TABLE public.acorn_messaging_message_instance TO PUBLIC;
 
 
 --
@@ -21814,6 +23050,7 @@ GRANT ALL ON TABLE public.acorn_messaging_message_message TO admin WITH GRANT OP
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_message_message TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_message_message TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_message_message TO token_5;
+GRANT SELECT ON TABLE public.acorn_messaging_message_message TO PUBLIC;
 
 
 --
@@ -21825,6 +23062,7 @@ GRANT ALL ON TABLE public.acorn_messaging_message_user TO admin WITH GRANT OPTIO
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_message_user TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_message_user TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_message_user TO token_5;
+GRANT SELECT ON TABLE public.acorn_messaging_message_user TO PUBLIC;
 
 
 --
@@ -21836,6 +23074,7 @@ GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO admin WITH GRANT
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_message_user_group TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO token_5;
+GRANT SELECT ON TABLE public.acorn_messaging_message_user_group TO PUBLIC;
 
 
 --
@@ -21847,6 +23086,7 @@ GRANT ALL ON TABLE public.acorn_messaging_status TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_status TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_status TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_status TO token_5;
+GRANT SELECT ON TABLE public.acorn_messaging_status TO PUBLIC;
 
 
 --
@@ -21858,6 +23098,7 @@ GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO admin WITH GRAN
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_user_message_status TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO token_5;
+GRANT SELECT ON TABLE public.acorn_messaging_user_message_status TO PUBLIC;
 
 
 --
@@ -21869,6 +23110,7 @@ GRANT ALL ON TABLE public.acorn_reporting_reports TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_reporting_reports TO frontend;
 GRANT ALL ON TABLE public.acorn_reporting_reports TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_reporting_reports TO token_5;
+GRANT SELECT ON TABLE public.acorn_reporting_reports TO PUBLIC;
 
 
 --
@@ -21880,6 +23122,7 @@ GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO admin WITH GRANT 
 GRANT SELECT,USAGE ON SEQUENCE public.acorn_reporting_reports_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.acorn_reporting_reports_id_seq TO PUBLIC;
 
 
 --
@@ -21891,6 +23134,7 @@ GRANT ALL ON TABLE public.acorn_servers TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_servers TO frontend;
 GRANT ALL ON TABLE public.acorn_servers TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_servers TO token_5;
+GRANT SELECT ON TABLE public.acorn_servers TO PUBLIC;
 
 
 --
@@ -21902,6 +23146,7 @@ GRANT ALL ON TABLE public.acorn_university_course_language TO admin WITH GRANT O
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_course_language TO frontend;
 GRANT ALL ON TABLE public.acorn_university_course_language TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_language TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_course_language TO PUBLIC;
 
 
 --
@@ -21913,6 +23158,7 @@ GRANT ALL ON TABLE public.acorn_university_course_years TO admin WITH GRANT OPTI
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_course_years TO frontend;
 GRANT ALL ON TABLE public.acorn_university_course_years TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_years TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_course_years TO PUBLIC;
 
 
 --
@@ -21924,6 +23170,7 @@ GRANT ALL ON TABLE public.acorn_university_departments TO admin WITH GRANT OPTIO
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_departments TO frontend;
 GRANT ALL ON TABLE public.acorn_university_departments TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_departments TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_departments TO PUBLIC;
 
 
 --
@@ -21935,6 +23182,7 @@ GRANT ALL ON TABLE public.acorn_university_education_authorities TO admin WITH G
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_education_authorities TO frontend;
 GRANT ALL ON TABLE public.acorn_university_education_authorities TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_education_authorities TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_education_authorities TO PUBLIC;
 
 
 --
@@ -21946,6 +23194,7 @@ GRANT ALL ON TABLE public.acorn_university_faculties TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_faculties TO frontend;
 GRANT ALL ON TABLE public.acorn_university_faculties TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_faculties TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_faculties TO PUBLIC;
 
 
 --
@@ -21953,6 +23202,8 @@ GRANT ALL ON TABLE public.acorn_university_faculties TO token_5;
 --
 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_identity_types TO frontend;
+GRANT ALL ON TABLE public.acorn_university_identity_types TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.acorn_university_identity_types TO PUBLIC;
 
 
 --
@@ -21963,6 +23214,7 @@ GRANT ALL ON TABLE public.acorn_university_lectures TO token_1 WITH GRANT OPTION
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_lectures TO frontend;
 GRANT ALL ON TABLE public.acorn_university_lectures TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_lectures TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_lectures TO PUBLIC;
 
 
 --
@@ -21974,6 +23226,7 @@ GRANT ALL ON TABLE public.acorn_university_project_students TO admin WITH GRANT 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_project_students TO frontend;
 GRANT ALL ON TABLE public.acorn_university_project_students TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_project_students TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_project_students TO PUBLIC;
 
 
 --
@@ -21985,6 +23238,7 @@ GRANT ALL ON TABLE public.acorn_university_projects TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_projects TO frontend;
 GRANT ALL ON TABLE public.acorn_university_projects TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_projects TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_projects TO PUBLIC;
 
 
 --
@@ -21996,6 +23250,7 @@ GRANT ALL ON TABLE public.acorn_university_schools TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_schools TO frontend;
 GRANT ALL ON TABLE public.acorn_university_schools TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_schools TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_schools TO PUBLIC;
 
 
 --
@@ -22007,6 +23262,7 @@ GRANT ALL ON TABLE public.acorn_university_semesters TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_semesters TO frontend;
 GRANT ALL ON TABLE public.acorn_university_semesters TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_semesters TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_semesters TO PUBLIC;
 
 
 --
@@ -22017,6 +23273,7 @@ GRANT ALL ON TABLE public.acorn_university_student_codes TO token_1 WITH GRANT O
 GRANT ALL ON TABLE public.acorn_university_student_codes TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_codes TO token_5;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_student_codes TO frontend;
+GRANT SELECT ON TABLE public.acorn_university_student_codes TO PUBLIC;
 
 
 --
@@ -22024,6 +23281,17 @@ GRANT SELECT,TRIGGER ON TABLE public.acorn_university_student_codes TO frontend;
 --
 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_student_identities TO frontend;
+GRANT ALL ON TABLE public.acorn_university_student_identities TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.acorn_university_student_identities TO PUBLIC;
+
+
+--
+-- Name: TABLE acorn_university_student_lookups; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT SELECT ON TABLE public.acorn_university_student_lookups TO frontend;
+GRANT ALL ON TABLE public.acorn_university_student_lookups TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.acorn_university_student_lookups TO PUBLIC;
 
 
 --
@@ -22031,6 +23299,8 @@ GRANT SELECT,TRIGGER ON TABLE public.acorn_university_student_identities TO fron
 --
 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_student_notes TO frontend;
+GRANT ALL ON TABLE public.acorn_university_student_notes TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.acorn_university_student_notes TO PUBLIC;
 
 
 --
@@ -22041,6 +23311,7 @@ GRANT ALL ON TABLE public.acorn_university_student_status TO token_1 WITH GRANT 
 GRANT ALL ON TABLE public.acorn_university_student_status TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_status TO token_5;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_student_status TO frontend;
+GRANT SELECT ON TABLE public.acorn_university_student_status TO PUBLIC;
 
 
 --
@@ -22051,6 +23322,7 @@ GRANT ALL ON TABLE public.acorn_university_student_statuses TO token_1 WITH GRAN
 GRANT ALL ON TABLE public.acorn_university_student_statuses TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_statuses TO token_5;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_student_statuses TO frontend;
+GRANT SELECT ON TABLE public.acorn_university_student_statuses TO PUBLIC;
 
 
 --
@@ -22062,6 +23334,7 @@ GRANT ALL ON TABLE public.acorn_university_teachers TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_teachers TO frontend;
 GRANT ALL ON TABLE public.acorn_university_teachers TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_teachers TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_teachers TO PUBLIC;
 
 
 --
@@ -22073,6 +23346,7 @@ GRANT ALL ON TABLE public.acorn_university_universities TO admin WITH GRANT OPTI
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_universities TO frontend;
 GRANT ALL ON TABLE public.acorn_university_universities TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_universities TO token_5;
+GRANT SELECT ON TABLE public.acorn_university_universities TO PUBLIC;
 
 
 --
@@ -22082,6 +23356,8 @@ GRANT ALL ON TABLE public.acorn_university_universities TO token_5;
 GRANT ALL ON TABLE public.acorn_user_ethnicities TO admin WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_ethnicities TO sz WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_ethnicities TO frontend;
+GRANT ALL ON TABLE public.acorn_user_ethnicities TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.acorn_user_ethnicities TO PUBLIC;
 
 
 --
@@ -22093,6 +23369,7 @@ GRANT ALL ON TABLE public.acorn_user_languages TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_languages TO frontend;
 GRANT ALL ON TABLE public.acorn_user_languages TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_languages TO token_5;
+GRANT SELECT ON TABLE public.acorn_user_languages TO PUBLIC;
 
 
 --
@@ -22104,6 +23381,7 @@ GRANT ALL ON TABLE public.acorn_user_mail_blockers TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_mail_blockers TO frontend;
 GRANT ALL ON TABLE public.acorn_user_mail_blockers TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_mail_blockers TO token_5;
+GRANT SELECT ON TABLE public.acorn_user_mail_blockers TO PUBLIC;
 
 
 --
@@ -22113,6 +23391,8 @@ GRANT ALL ON TABLE public.acorn_user_mail_blockers TO token_5;
 GRANT ALL ON TABLE public.acorn_user_religions TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_religions TO frontend;
 GRANT ALL ON TABLE public.acorn_user_religions TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_religions TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.acorn_user_religions TO PUBLIC;
 
 
 --
@@ -22124,6 +23404,7 @@ GRANT ALL ON TABLE public.acorn_user_role_user TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_role_user TO frontend;
 GRANT ALL ON TABLE public.acorn_user_role_user TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_role_user TO token_5;
+GRANT SELECT ON TABLE public.acorn_user_role_user TO PUBLIC;
 
 
 --
@@ -22135,6 +23416,7 @@ GRANT ALL ON TABLE public.acorn_user_roles TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_roles TO frontend;
 GRANT ALL ON TABLE public.acorn_user_roles TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_roles TO token_5;
+GRANT SELECT ON TABLE public.acorn_user_roles TO PUBLIC;
 
 
 --
@@ -22146,6 +23428,7 @@ GRANT ALL ON TABLE public.acorn_user_throttle TO admin WITH GRANT OPTION;
 GRANT SELECT,INSERT,DELETE,TRIGGER,UPDATE ON TABLE public.acorn_user_throttle TO frontend;
 GRANT ALL ON TABLE public.acorn_user_throttle TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_throttle TO token_5;
+GRANT SELECT ON TABLE public.acorn_user_throttle TO PUBLIC;
 
 
 --
@@ -22157,6 +23440,7 @@ GRANT ALL ON TABLE public.acorn_user_user_group TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_group TO frontend;
 GRANT ALL ON TABLE public.acorn_user_user_group TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_group TO token_5;
+GRANT SELECT ON TABLE public.acorn_user_user_group TO PUBLIC;
 
 
 --
@@ -22168,6 +23452,7 @@ GRANT ALL ON TABLE public.acorn_user_user_group_types TO admin WITH GRANT OPTION
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_group_types TO frontend;
 GRANT ALL ON TABLE public.acorn_user_user_group_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_group_types TO token_5;
+GRANT SELECT ON TABLE public.acorn_user_user_group_types TO PUBLIC;
 
 
 --
@@ -22179,6 +23464,7 @@ GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO admin WITH GRA
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_group_version_usages TO frontend;
 GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO token_5;
+GRANT SELECT ON TABLE public.acorn_user_user_group_version_usages TO PUBLIC;
 
 
 --
@@ -22190,6 +23476,7 @@ GRANT ALL ON TABLE public.acorn_user_user_languages TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_languages TO frontend;
 GRANT ALL ON TABLE public.acorn_user_user_languages TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_languages TO token_5;
+GRANT SELECT ON TABLE public.acorn_user_user_languages TO PUBLIC;
 
 
 --
@@ -22201,6 +23488,7 @@ GRANT ALL ON TABLE public.acorn_user_users TO admin WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_users TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_users TO token_5;
 GRANT SELECT,INSERT,TRIGGER,UPDATE ON TABLE public.acorn_user_users TO frontend;
+GRANT SELECT ON TABLE public.acorn_user_users TO PUBLIC;
 
 
 --
@@ -22212,6 +23500,7 @@ GRANT ALL ON TABLE public.backend_access_log TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.backend_access_log TO frontend;
 GRANT ALL ON TABLE public.backend_access_log TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_access_log TO token_5;
+GRANT SELECT ON TABLE public.backend_access_log TO PUBLIC;
 
 
 --
@@ -22223,6 +23512,7 @@ GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO admin WITH GRANT OPTIO
 GRANT SELECT,USAGE ON SEQUENCE public.backend_access_log_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.backend_access_log_id_seq TO PUBLIC;
 
 
 --
@@ -22234,6 +23524,7 @@ GRANT ALL ON TABLE public.backend_user_groups TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.backend_user_groups TO frontend;
 GRANT ALL ON TABLE public.backend_user_groups TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_user_groups TO token_5;
+GRANT SELECT ON TABLE public.backend_user_groups TO PUBLIC;
 
 
 --
@@ -22245,6 +23536,7 @@ GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO admin WITH GRANT OPTI
 GRANT SELECT,USAGE ON SEQUENCE public.backend_user_groups_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.backend_user_groups_id_seq TO PUBLIC;
 
 
 --
@@ -22256,6 +23548,7 @@ GRANT ALL ON TABLE public.backend_user_preferences TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.backend_user_preferences TO frontend;
 GRANT ALL ON TABLE public.backend_user_preferences TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_user_preferences TO token_5;
+GRANT SELECT ON TABLE public.backend_user_preferences TO PUBLIC;
 
 
 --
@@ -22267,6 +23560,7 @@ GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO admin WITH GRANT
 GRANT SELECT,USAGE ON SEQUENCE public.backend_user_preferences_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.backend_user_preferences_id_seq TO PUBLIC;
 
 
 --
@@ -22278,6 +23572,7 @@ GRANT ALL ON TABLE public.backend_user_roles TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.backend_user_roles TO frontend;
 GRANT ALL ON TABLE public.backend_user_roles TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_user_roles TO token_5;
+GRANT SELECT ON TABLE public.backend_user_roles TO PUBLIC;
 
 
 --
@@ -22289,6 +23584,7 @@ GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO admin WITH GRANT OPTIO
 GRANT SELECT,USAGE ON SEQUENCE public.backend_user_roles_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.backend_user_roles_id_seq TO PUBLIC;
 
 
 --
@@ -22300,6 +23596,7 @@ GRANT ALL ON TABLE public.backend_user_throttle TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.backend_user_throttle TO frontend;
 GRANT ALL ON TABLE public.backend_user_throttle TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_user_throttle TO token_5;
+GRANT SELECT ON TABLE public.backend_user_throttle TO PUBLIC;
 
 
 --
@@ -22311,6 +23608,7 @@ GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO admin WITH GRANT OP
 GRANT SELECT,USAGE ON SEQUENCE public.backend_user_throttle_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.backend_user_throttle_id_seq TO PUBLIC;
 
 
 --
@@ -22322,6 +23620,7 @@ GRANT ALL ON TABLE public.backend_users TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.backend_users TO frontend;
 GRANT ALL ON TABLE public.backend_users TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_users TO token_5;
+GRANT SELECT ON TABLE public.backend_users TO PUBLIC;
 
 
 --
@@ -22333,6 +23632,7 @@ GRANT ALL ON TABLE public.backend_users_groups TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.backend_users_groups TO frontend;
 GRANT ALL ON TABLE public.backend_users_groups TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_users_groups TO token_5;
+GRANT SELECT ON TABLE public.backend_users_groups TO PUBLIC;
 
 
 --
@@ -22344,6 +23644,7 @@ GRANT ALL ON SEQUENCE public.backend_users_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.backend_users_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.backend_users_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_users_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.backend_users_id_seq TO PUBLIC;
 
 
 --
@@ -22355,6 +23656,7 @@ GRANT ALL ON TABLE public.cache TO admin WITH GRANT OPTION;
 GRANT SELECT,INSERT,DELETE,TRIGGER,UPDATE ON TABLE public.cache TO frontend;
 GRANT ALL ON TABLE public.cache TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.cache TO token_5;
+GRANT SELECT ON TABLE public.cache TO PUBLIC;
 
 
 --
@@ -22366,6 +23668,7 @@ GRANT ALL ON TABLE public.cms_theme_data TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.cms_theme_data TO frontend;
 GRANT ALL ON TABLE public.cms_theme_data TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.cms_theme_data TO token_5;
+GRANT SELECT ON TABLE public.cms_theme_data TO PUBLIC;
 
 
 --
@@ -22377,6 +23680,7 @@ GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.cms_theme_data_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.cms_theme_data_id_seq TO PUBLIC;
 
 
 --
@@ -22388,6 +23692,7 @@ GRANT ALL ON TABLE public.cms_theme_logs TO admin WITH GRANT OPTION;
 GRANT SELECT,INSERT,DELETE,TRIGGER,UPDATE ON TABLE public.cms_theme_logs TO frontend;
 GRANT ALL ON TABLE public.cms_theme_logs TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.cms_theme_logs TO token_5;
+GRANT SELECT ON TABLE public.cms_theme_logs TO PUBLIC;
 
 
 --
@@ -22399,6 +23704,7 @@ GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.cms_theme_logs_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.cms_theme_logs_id_seq TO PUBLIC;
 
 
 --
@@ -22410,6 +23716,7 @@ GRANT ALL ON TABLE public.cms_theme_templates TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.cms_theme_templates TO frontend;
 GRANT ALL ON TABLE public.cms_theme_templates TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.cms_theme_templates TO token_5;
+GRANT SELECT ON TABLE public.cms_theme_templates TO PUBLIC;
 
 
 --
@@ -22421,6 +23728,7 @@ GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO admin WITH GRANT OPTI
 GRANT SELECT,USAGE ON SEQUENCE public.cms_theme_templates_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.cms_theme_templates_id_seq TO PUBLIC;
 
 
 --
@@ -22432,6 +23740,7 @@ GRANT ALL ON TABLE public.deferred_bindings TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.deferred_bindings TO frontend;
 GRANT ALL ON TABLE public.deferred_bindings TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.deferred_bindings TO token_5;
+GRANT SELECT ON TABLE public.deferred_bindings TO PUBLIC;
 
 
 --
@@ -22443,6 +23752,7 @@ GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO admin WITH GRANT OPTION
 GRANT SELECT,USAGE ON SEQUENCE public.deferred_bindings_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.deferred_bindings_id_seq TO PUBLIC;
 
 
 --
@@ -22454,6 +23764,7 @@ GRANT ALL ON TABLE public.failed_jobs TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.failed_jobs TO frontend;
 GRANT ALL ON TABLE public.failed_jobs TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.failed_jobs TO token_5;
+GRANT SELECT ON TABLE public.failed_jobs TO PUBLIC;
 
 
 --
@@ -22465,6 +23776,7 @@ GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.failed_jobs_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.failed_jobs_id_seq TO PUBLIC;
 
 
 --
@@ -22476,6 +23788,7 @@ GRANT ALL ON TABLE public.job_batches TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.job_batches TO frontend;
 GRANT ALL ON TABLE public.job_batches TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.job_batches TO token_5;
+GRANT SELECT ON TABLE public.job_batches TO PUBLIC;
 
 
 --
@@ -22487,6 +23800,7 @@ GRANT ALL ON TABLE public.jobs TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.jobs TO frontend;
 GRANT ALL ON TABLE public.jobs TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.jobs TO token_5;
+GRANT SELECT ON TABLE public.jobs TO PUBLIC;
 
 
 --
@@ -22498,6 +23812,7 @@ GRANT ALL ON SEQUENCE public.jobs_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.jobs_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.jobs_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.jobs_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.jobs_id_seq TO PUBLIC;
 
 
 --
@@ -22509,6 +23824,7 @@ GRANT ALL ON TABLE public.migrations TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.migrations TO frontend;
 GRANT ALL ON TABLE public.migrations TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.migrations TO token_5;
+GRANT SELECT ON TABLE public.migrations TO PUBLIC;
 
 
 --
@@ -22520,6 +23836,7 @@ GRANT ALL ON SEQUENCE public.migrations_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.migrations_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.migrations_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.migrations_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.migrations_id_seq TO PUBLIC;
 
 
 --
@@ -22531,6 +23848,7 @@ GRANT ALL ON TABLE public.winter_location_countries TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.winter_location_countries TO frontend;
 GRANT ALL ON TABLE public.winter_location_countries TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_location_countries TO token_5;
+GRANT SELECT ON TABLE public.winter_location_countries TO PUBLIC;
 
 
 --
@@ -22542,6 +23860,7 @@ GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO admin WITH GRA
 GRANT SELECT,USAGE ON SEQUENCE public.rainlab_location_countries_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.rainlab_location_countries_id_seq TO PUBLIC;
 
 
 --
@@ -22553,6 +23872,7 @@ GRANT ALL ON TABLE public.winter_location_states TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.winter_location_states TO frontend;
 GRANT ALL ON TABLE public.winter_location_states TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_location_states TO token_5;
+GRANT SELECT ON TABLE public.winter_location_states TO PUBLIC;
 
 
 --
@@ -22564,6 +23884,7 @@ GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO admin WITH GRANT 
 GRANT SELECT,USAGE ON SEQUENCE public.rainlab_location_states_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.rainlab_location_states_id_seq TO PUBLIC;
 
 
 --
@@ -22575,6 +23896,7 @@ GRANT ALL ON TABLE public.winter_translate_attributes TO admin WITH GRANT OPTION
 GRANT SELECT,TRIGGER ON TABLE public.winter_translate_attributes TO frontend;
 GRANT ALL ON TABLE public.winter_translate_attributes TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_translate_attributes TO token_5;
+GRANT SELECT ON TABLE public.winter_translate_attributes TO PUBLIC;
 
 
 --
@@ -22586,6 +23908,7 @@ GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO admin WITH G
 GRANT SELECT,USAGE ON SEQUENCE public.rainlab_translate_attributes_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.rainlab_translate_attributes_id_seq TO PUBLIC;
 
 
 --
@@ -22597,6 +23920,7 @@ GRANT ALL ON TABLE public.winter_translate_indexes TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.winter_translate_indexes TO frontend;
 GRANT ALL ON TABLE public.winter_translate_indexes TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_translate_indexes TO token_5;
+GRANT SELECT ON TABLE public.winter_translate_indexes TO PUBLIC;
 
 
 --
@@ -22608,6 +23932,7 @@ GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO admin WITH GRAN
 GRANT SELECT,USAGE ON SEQUENCE public.rainlab_translate_indexes_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.rainlab_translate_indexes_id_seq TO PUBLIC;
 
 
 --
@@ -22619,6 +23944,7 @@ GRANT ALL ON TABLE public.winter_translate_locales TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.winter_translate_locales TO frontend;
 GRANT ALL ON TABLE public.winter_translate_locales TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_translate_locales TO token_5;
+GRANT SELECT ON TABLE public.winter_translate_locales TO PUBLIC;
 
 
 --
@@ -22630,6 +23956,7 @@ GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO admin WITH GRAN
 GRANT SELECT,USAGE ON SEQUENCE public.rainlab_translate_locales_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.rainlab_translate_locales_id_seq TO PUBLIC;
 
 
 --
@@ -22641,6 +23968,7 @@ GRANT ALL ON TABLE public.winter_translate_messages TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.winter_translate_messages TO frontend;
 GRANT ALL ON TABLE public.winter_translate_messages TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_translate_messages TO token_5;
+GRANT SELECT ON TABLE public.winter_translate_messages TO PUBLIC;
 
 
 --
@@ -22652,6 +23980,7 @@ GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO admin WITH GRA
 GRANT SELECT,USAGE ON SEQUENCE public.rainlab_translate_messages_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.rainlab_translate_messages_id_seq TO PUBLIC;
 
 
 --
@@ -22663,6 +23992,7 @@ GRANT ALL ON TABLE public.sessions TO admin WITH GRANT OPTION;
 GRANT SELECT,INSERT,DELETE,TRIGGER,UPDATE ON TABLE public.sessions TO frontend;
 GRANT ALL ON TABLE public.sessions TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.sessions TO token_5;
+GRANT SELECT ON TABLE public.sessions TO PUBLIC;
 
 
 --
@@ -22674,6 +24004,7 @@ GRANT ALL ON TABLE public.system_event_logs TO admin WITH GRANT OPTION;
 GRANT SELECT,INSERT,DELETE,TRIGGER,UPDATE ON TABLE public.system_event_logs TO frontend;
 GRANT ALL ON TABLE public.system_event_logs TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_event_logs TO token_5;
+GRANT SELECT ON TABLE public.system_event_logs TO PUBLIC;
 
 
 --
@@ -22685,6 +24016,7 @@ GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO admin WITH GRANT OPTION
 GRANT SELECT,USAGE ON SEQUENCE public.system_event_logs_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.system_event_logs_id_seq TO PUBLIC;
 
 
 --
@@ -22696,6 +24028,7 @@ GRANT ALL ON TABLE public.system_files TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_files TO frontend;
 GRANT ALL ON TABLE public.system_files TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_files TO token_5;
+GRANT SELECT ON TABLE public.system_files TO PUBLIC;
 
 
 --
@@ -22707,6 +24040,7 @@ GRANT ALL ON SEQUENCE public.system_files_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.system_files_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_files_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_files_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.system_files_id_seq TO PUBLIC;
 
 
 --
@@ -22718,6 +24052,7 @@ GRANT ALL ON TABLE public.system_mail_layouts TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_mail_layouts TO frontend;
 GRANT ALL ON TABLE public.system_mail_layouts TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_mail_layouts TO token_5;
+GRANT SELECT ON TABLE public.system_mail_layouts TO PUBLIC;
 
 
 --
@@ -22729,6 +24064,7 @@ GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO admin WITH GRANT OPTI
 GRANT SELECT,USAGE ON SEQUENCE public.system_mail_layouts_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.system_mail_layouts_id_seq TO PUBLIC;
 
 
 --
@@ -22740,6 +24076,7 @@ GRANT ALL ON TABLE public.system_mail_partials TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_mail_partials TO frontend;
 GRANT ALL ON TABLE public.system_mail_partials TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_mail_partials TO token_5;
+GRANT SELECT ON TABLE public.system_mail_partials TO PUBLIC;
 
 
 --
@@ -22751,6 +24088,7 @@ GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO admin WITH GRANT OPT
 GRANT SELECT,USAGE ON SEQUENCE public.system_mail_partials_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.system_mail_partials_id_seq TO PUBLIC;
 
 
 --
@@ -22762,6 +24100,7 @@ GRANT ALL ON TABLE public.system_mail_templates TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_mail_templates TO frontend;
 GRANT ALL ON TABLE public.system_mail_templates TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_mail_templates TO token_5;
+GRANT SELECT ON TABLE public.system_mail_templates TO PUBLIC;
 
 
 --
@@ -22773,6 +24112,7 @@ GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO admin WITH GRANT OP
 GRANT SELECT,USAGE ON SEQUENCE public.system_mail_templates_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.system_mail_templates_id_seq TO PUBLIC;
 
 
 --
@@ -22784,6 +24124,7 @@ GRANT ALL ON TABLE public.system_parameters TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_parameters TO frontend;
 GRANT ALL ON TABLE public.system_parameters TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_parameters TO token_5;
+GRANT SELECT ON TABLE public.system_parameters TO PUBLIC;
 
 
 --
@@ -22795,6 +24136,7 @@ GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO admin WITH GRANT OPTION
 GRANT SELECT,USAGE ON SEQUENCE public.system_parameters_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.system_parameters_id_seq TO PUBLIC;
 
 
 --
@@ -22806,6 +24148,7 @@ GRANT ALL ON TABLE public.system_plugin_history TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_plugin_history TO frontend;
 GRANT ALL ON TABLE public.system_plugin_history TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_plugin_history TO token_5;
+GRANT SELECT ON TABLE public.system_plugin_history TO PUBLIC;
 
 
 --
@@ -22817,6 +24160,7 @@ GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO admin WITH GRANT OP
 GRANT SELECT,USAGE ON SEQUENCE public.system_plugin_history_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.system_plugin_history_id_seq TO PUBLIC;
 
 
 --
@@ -22828,6 +24172,7 @@ GRANT ALL ON TABLE public.system_plugin_versions TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_plugin_versions TO frontend;
 GRANT ALL ON TABLE public.system_plugin_versions TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_plugin_versions TO token_5;
+GRANT SELECT ON TABLE public.system_plugin_versions TO PUBLIC;
 
 
 --
@@ -22839,6 +24184,7 @@ GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO admin WITH GRANT O
 GRANT SELECT,USAGE ON SEQUENCE public.system_plugin_versions_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.system_plugin_versions_id_seq TO PUBLIC;
 
 
 --
@@ -22850,6 +24196,7 @@ GRANT ALL ON TABLE public.system_request_logs TO admin WITH GRANT OPTION;
 GRANT SELECT,INSERT,DELETE,TRIGGER,UPDATE ON TABLE public.system_request_logs TO frontend;
 GRANT ALL ON TABLE public.system_request_logs TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_request_logs TO token_5;
+GRANT SELECT ON TABLE public.system_request_logs TO PUBLIC;
 
 
 --
@@ -22861,6 +24208,7 @@ GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO admin WITH GRANT OPTI
 GRANT SELECT,USAGE ON SEQUENCE public.system_request_logs_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.system_request_logs_id_seq TO PUBLIC;
 
 
 --
@@ -22872,6 +24220,7 @@ GRANT ALL ON TABLE public.system_revisions TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_revisions TO frontend;
 GRANT ALL ON TABLE public.system_revisions TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_revisions TO token_5;
+GRANT SELECT ON TABLE public.system_revisions TO PUBLIC;
 
 
 --
@@ -22883,6 +24232,7 @@ GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.system_revisions_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.system_revisions_id_seq TO PUBLIC;
 
 
 --
@@ -22894,6 +24244,7 @@ GRANT ALL ON TABLE public.system_settings TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_settings TO frontend;
 GRANT ALL ON TABLE public.system_settings TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_settings TO token_5;
+GRANT SELECT ON TABLE public.system_settings TO PUBLIC;
 
 
 --
@@ -22905,6 +24256,16 @@ GRANT ALL ON SEQUENCE public.system_settings_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.system_settings_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_settings_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_settings_id_seq TO token_5;
+GRANT SELECT ON SEQUENCE public.system_settings_id_seq TO PUBLIC;
+
+
+--
+-- Name: TABLE university_mofadala_baccalaureate_marks; Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT SELECT ON TABLE public.university_mofadala_baccalaureate_marks TO frontend;
+GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.university_mofadala_baccalaureate_marks TO PUBLIC;
 
 
 --
@@ -22916,6 +24277,61 @@ GRANT ALL ON TABLE public.university_mofadala_branches TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_branches TO token_1 WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.university_mofadala_branches TO frontend;
 GRANT ALL ON TABLE public.university_mofadala_branches TO token_5;
+GRANT SELECT ON TABLE public.university_mofadala_branches TO PUBLIC;
+
+
+--
+-- Name: TABLE university_mofadala_candidate_exam_material_marks; Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT SELECT ON TABLE public.university_mofadala_candidate_exam_material_marks TO frontend;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.university_mofadala_candidate_exam_material_marks TO PUBLIC;
+
+
+--
+-- Name: TABLE university_mofadala_candidate_exam_materials; Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT SELECT ON TABLE public.university_mofadala_candidate_exam_materials TO frontend;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.university_mofadala_candidate_exam_materials TO PUBLIC;
+
+
+--
+-- Name: TABLE university_mofadala_candidate_exams; Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT SELECT ON TABLE public.university_mofadala_candidate_exams TO frontend;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.university_mofadala_candidate_exams TO PUBLIC;
+
+
+--
+-- Name: TABLE university_mofadala_certificate_languages; Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT SELECT ON TABLE public.university_mofadala_certificate_languages TO frontend;
+GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.university_mofadala_certificate_languages TO PUBLIC;
+
+
+--
+-- Name: TABLE university_mofadala_cities; Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT SELECT ON TABLE public.university_mofadala_cities TO frontend;
+GRANT ALL ON TABLE public.university_mofadala_cities TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.university_mofadala_cities TO PUBLIC;
+
+
+--
+-- Name: TABLE university_mofadala_department_details; Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT SELECT ON TABLE public.university_mofadala_department_details TO frontend;
+GRANT ALL ON TABLE public.university_mofadala_department_details TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.university_mofadala_department_details TO PUBLIC;
 
 
 --
@@ -22927,6 +24343,34 @@ GRANT ALL ON TABLE public.university_mofadala_departments TO sz WITH GRANT OPTIO
 GRANT ALL ON TABLE public.university_mofadala_departments TO token_1 WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.university_mofadala_departments TO frontend;
 GRANT ALL ON TABLE public.university_mofadala_departments TO token_5;
+GRANT SELECT ON TABLE public.university_mofadala_departments TO PUBLIC;
+
+
+--
+-- Name: TABLE university_mofadala_exam_centers; Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT SELECT ON TABLE public.university_mofadala_exam_centers TO frontend;
+GRANT ALL ON TABLE public.university_mofadala_exam_centers TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.university_mofadala_exam_centers TO PUBLIC;
+
+
+--
+-- Name: TABLE university_mofadala_mofadala_years; Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT SELECT ON TABLE public.university_mofadala_mofadala_years TO frontend;
+GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.university_mofadala_mofadala_years TO PUBLIC;
+
+
+--
+-- Name: TABLE university_mofadala_student_desire_details; Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT SELECT ON TABLE public.university_mofadala_student_desire_details TO frontend;
+GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.university_mofadala_student_desire_details TO PUBLIC;
 
 
 --
@@ -22938,6 +24382,16 @@ GRANT ALL ON TABLE public.university_mofadala_students TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_students TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_students TO token_5;
 GRANT SELECT,TRIGGER ON TABLE public.university_mofadala_students TO frontend;
+GRANT SELECT ON TABLE public.university_mofadala_students TO PUBLIC;
+
+
+--
+-- Name: TABLE university_mofadala_type_certificates; Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT SELECT ON TABLE public.university_mofadala_type_certificates TO frontend;
+GRANT ALL ON TABLE public.university_mofadala_type_certificates TO token_1 WITH GRANT OPTION;
+GRANT SELECT ON TABLE public.university_mofadala_type_certificates TO PUBLIC;
 
 
 --
@@ -22949,6 +24403,7 @@ GRANT ALL ON TABLE public.university_mofadala_universities TO sz WITH GRANT OPTI
 GRANT ALL ON TABLE public.university_mofadala_universities TO token_1 WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.university_mofadala_universities TO frontend;
 GRANT ALL ON TABLE public.university_mofadala_universities TO token_5;
+GRANT SELECT ON TABLE public.university_mofadala_universities TO PUBLIC;
 
 
 --
@@ -22960,6 +24415,7 @@ GRANT ALL ON TABLE public.university_mofadala_university_categories TO sz WITH G
 GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_5;
 GRANT SELECT,TRIGGER ON TABLE public.university_mofadala_university_categories TO frontend;
+GRANT SELECT ON TABLE public.university_mofadala_university_categories TO PUBLIC;
 
 
 --

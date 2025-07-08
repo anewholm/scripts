@@ -64,6 +64,8 @@ class Table {
     public $methods            = array();
     public $staticMethods      = array();
 
+    public $defaultSort;
+    public $showSorting;
     public $columns;
     public $actionFunctions;
     public $triggers;
@@ -71,6 +73,7 @@ class Table {
     public $import;
     public $export;
     public $batchPrint;
+    public $qrCodeScan;
 
     public $filters = array();
 

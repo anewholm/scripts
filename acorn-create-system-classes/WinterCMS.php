@@ -551,6 +551,16 @@ class WinterCMS extends Framework
                             $langSectionName = $model->langSectionName();
                             $permissionFQN   = $model->permissionFQN();
 
+                            if ($controller->qrCodeScan) {
+                                $sideMenu['qrcodescan'] = array(
+                                    'label'   => 'acorn::lang.models.general.scan_qrcode',
+                                    'url'     => "$url/qrcodescan",
+                                    'icon'    => 'icon-qrcode',
+                                    
+                                    'permissions' => array($permissionFQN),
+                                );
+                            }
+
                             print("    +Side-menu entry [$name] @{$YELLOW}$url{$NC}");
                             if ($icon) {
                                 if (substr($icon, 0, 5) != 'icon-') $icon = "icon-$icon";
@@ -577,7 +587,8 @@ class WinterCMS extends Framework
                                 'permissions' => array($permissionFQN),
                             );
                             if (!$firstModelUrl) $firstModelUrl = $url;
-                            // TODO: menuitemCount() adversely affects performance. Can it be cached?
+                            // menuitemCount() adversely affects performance. Can it be cached?
+                            // use ?count on URL to show
                             $sideMenu[$name]['counter'] = "$modelFQN::menuitemCount";
 
                             print("\n");
@@ -989,6 +1000,14 @@ PHP
             }
             $this->setPropertyInClassFile($modelFilePath, 'jsonable', $jsonable, TRUE, 'protected');
 
+            // ----------------------------------------------------------------- JSONable
+            $translatable = array();
+            foreach ($model->fields() as $name => &$field) {
+                if ($field->translatable)
+                    array_push($translatable, $name);
+            }
+            $this->setPropertyInClassFile($modelFilePath, 'translatable', $translatable, FALSE);
+
             // ----------------------------------------------------------------- Advanced
             $advanced = array();
             foreach ($model->fields() as $name => &$field) {
@@ -1151,7 +1170,7 @@ PHP
         foreach ($fields as $name => &$field) {
             $indentString = str_repeat(' ', ($field->nestLevel ?: 0) * 2);
             $typeString   = ($field->fieldType ?: '<no field type>') . ' / ' . ($field->columnType ?: '<no column type>');
-            if ($field->canDisplayAsField()) {
+            if ($field->canDisplayAsField()) { // fieldExclude
                 print("    $indentString+{$YELLOW}$name{$NC}($typeString): to {$YELLOW}fields.yaml{$NC}\n");
                 $dotPath = "fields.$field->fieldKey$field->fieldKeyQualifier";
                 if (!$field->include) {
@@ -1368,6 +1387,12 @@ PHP
             if ($controller->model->readOnly) {
                 $this->yamlFileSet($configListPath, 'showCheckboxes', false, Framework::NO_THROW);
                 $this->yamlFileUnSet($configListPath, 'recordUrl');
+            }
+            if ($controller->model->defaultSort) {
+                $this->yamlFileSet($configListPath, 'defaultSort', $controller->model->defaultSort);
+            }
+            if (isset($controller->model->showSorting)) {
+                $this->yamlFileSet($configListPath, 'showSorting', $controller->model->showSorting, Framework::NO_THROW);
             }
 
             // -------------------------------- Import / Export

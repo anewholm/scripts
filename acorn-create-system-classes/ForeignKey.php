@@ -36,7 +36,7 @@ class ForeignKey {
     public $invisible;
     public $fieldExclude;
     public $columnExclude;
-    public $hasManyDeep; // HasManyDeep control
+    public $hasManyDeepSettings; // HasManyDeep control
     public $order;  // Appearance in tab pools. See DB::foreignKeys() SQL request
     public $type;
     public $multi;  // _multi.php config

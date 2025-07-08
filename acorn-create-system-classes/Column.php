@@ -47,6 +47,10 @@ class Column {
         'nest_right',
         'nest_depth'
     );
+    protected const TRANSLATABLE_COLUMNS = array(
+        'name',
+        'description'
+    );
     public    const DATA_COLUMN_ONLY = TRUE;
     public    const INCLUDE_CONTENT_COLUMNS = FALSE;
     public    const INCLUDE_SCHEMA   = TRUE;
@@ -121,6 +125,7 @@ class Column {
     // --------------------- Column comment accepted values
     // These flow through to Field
     public $comment; // YAML comment
+    public $columnClass; // Useful when *_id fields are not FK fields
     public $format; // text, date, number, etc. Includes suffix & prefix
     public $bar;
     public $parsedComment; // array
@@ -185,6 +190,7 @@ class Column {
     public $labels;
     public $labelsPlural;
     public $extraTranslations; // array
+    public $translatable;
 
     public static function fromRow(Table &$table, array $row): Column
     {
@@ -220,7 +226,11 @@ class Column {
 
         // TODO: This needs to be moved to the standardTargetModelFieldDefinitions()
         foreach ($this->standardFieldDefinitions($this->name) as $name => $value) {
-            if (property_exists($this, $name)) $this->$name = $value;
+            if (property_exists($this, $name)
+                && !isset($this->$name)
+            ) {
+                $this->$name = $value;
+            }
         }
 
         $this->parsedComment = \Spyc::YAMLLoadString($this->comment);
@@ -253,6 +263,10 @@ class Column {
             $definition = array(
                 'system'     => TRUE,   // Do not process at all
             );
+        }
+        
+        if ($this->isTranslatable()) {
+            $definition['translatable'] = TRUE;
         }
 
         return $definition;
@@ -429,6 +443,11 @@ class Column {
         return (array_search($this->name, self::STANDARD_SYSTEM_COLUMNS) !== FALSE);
     }
 
+    public function isTranslatable(): bool
+    {
+        return (array_search($this->name, self::TRANSLATABLE_COLUMNS) !== FALSE);
+    }
+
     public function isCustom(): bool
     {
         return !$this->isStandard();
@@ -437,8 +456,10 @@ class Column {
     public function isForeignID(): bool
     {
         // id != isForeignID
+        // Set YAML columnClass: normal for *_id fields that are not FK fields
         $nameParts = explode('_', $this->name);
-        return (count($nameParts) > 1 && end($nameParts) == 'id');
+        return (!$this->columnClass || $this->columnClass == 'foreign-id') 
+            && (count($nameParts) > 1 && end($nameParts) == 'id');
     }
 
     public function isGenerated(): bool

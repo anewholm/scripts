@@ -29,6 +29,9 @@ class Model {
     public $actionFunctions;
     public $printable;
     public $readOnly;
+    public $defaultSort;
+    public $showSorting;
+    public $qrCodeScan;
 
     public $plugin;
     protected $table; // To mimick Winter Models. See getTable()

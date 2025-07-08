@@ -34,6 +34,8 @@ class Field {
     // whereas columns.yaml name we want to use this_that: with a relation:
     // to enable sorting and searching wherever possible
     public $oid; // From column or FK or the like
+    public $columnClass; // Useful when *_id fields are not FK fields
+    public $translatable;
 
     // ------------------------- Forms fields.yaml
     public $fieldKey;
@@ -192,11 +194,11 @@ class Field {
                     $this->default = preg_replace("/^'|'\$/", '', $defaultStripped);
             }
         }
-        if (!isset($this->invisible))  $this->invisible  = FALSE;
-        if (!isset($this->searchable)) $this->searchable = TRUE;
-        if (!isset($this->canFilter))  $this->canFilter  = FALSE;
-        if (!isset($this->sortable))   $this->sortable   = FALSE;
-        if (!isset($this->span))       $this->span       = 'storm';
+        if (!isset($this->invisible))     $this->invisible  = FALSE;
+        if (!isset($this->searchable))    $this->searchable = TRUE;
+        if (!isset($this->canFilter))     $this->canFilter  = FALSE;
+        if (!isset($this->sortable))      $this->sortable   = FALSE;
+        if (!isset($this->span))          $this->span       = 'storm';
 
         $classParts = explode('\\', get_class($this));
         $className  = end($classParts);
@@ -320,7 +322,7 @@ class Field {
     {
         $fieldDefinition = array(
             '#'          => "From $column",
-            'name'       => $column->nameWithoutId(),
+            'name'       => $column->name, // Will override with nameWithoutId() if ForeignIdField()
             'hidden'     => $column->isStandard(Column::DATA_COLUMN_ONLY), // Doesn't include name
             'invisible'  => $column->isStandard(Column::DATA_COLUMN_ONLY),
             'sqlSelect'  => $column->sqlSelect,
@@ -725,6 +727,10 @@ class ForeignIdField extends Field {
     protected function __construct(Model &$model, array $definition, Column &$column, array &$relations)
     {
         global $YELLOW, $GREEN, $RED, $NC;
+
+        // Unconditionally override the static create setting
+        // TODO: This prevents YAML comment setting of the value
+        $definition['name'] = $column->nameWithoutId();
 
         parent::__construct($model, $definition, $column, $relations);
 

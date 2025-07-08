@@ -16,7 +16,7 @@ class Relation {
     public $invisible;
     public $fieldExclude;
     public $columnExclude;
-    public $hasManyDeep; // HasManyDeep control
+    public $hasManyDeepSettings; // HasManyDeep control
     public $status; // ok|exclude|broken
     public $multi;  // _multi.php config
     public $type;   // explicit typing
@@ -348,7 +348,15 @@ class RelationHasManyDeep extends Relation {
         $firstRelation = current($throughRelations);
         $lastRelation  = end($throughRelations);
         $isCount       = $lastRelation->isCount;
-        $fieldAllow    = (!$isCount && (
+        $fieldAllow    = TRUE;
+        
+        // Any relation in the chain can exclude
+        foreach ($throughRelations as &$relation) {
+            $fieldAllow = !$relation->fieldExclude;
+            if (!$fieldAllow) break;
+        }
+        // Last relation requirements
+        $fieldAllow = ($fieldAllow && !$lastRelation->isCount && (
             $lastRelation instanceof Relation1fromX || 
             $lastRelation instanceof RelationXfromX || // Includes RelationXfromXSemi
             $lastRelation instanceof RelationXto1      // user_user_languages apparently... User::$hasMany
@@ -375,12 +383,13 @@ class RelationHasManyDeep extends Relation {
         $this->nameObject       = $nameObject;
         $this->repeatingModels  = $repeatingModels;
         // 1toX, XtoX, XtoXSemi
-        $this->fieldExclude     = !$fieldAllow;
+        if (!isset($this->fieldExclude))  $this->fieldExclude     = !$fieldAllow;
+        if (!isset($this->columnExclude)) $this->columnExclude    = !$fieldAllow;
         $this->rlButtons        = $lastRelation->rlButtons;
 
-        if ($firstRelation->hasManyDeep) {
-            if (isset($firstRelation->hasManyDeep[$this->name])) {
-                $settings = $firstRelation->hasManyDeep[$this->name];
+        if ($firstRelation->hasManyDeepSettings) {
+            if (isset($firstRelation->hasManyDeepSettings[$this->name])) {
+                $settings = $firstRelation->hasManyDeepSettings[$this->name];
                 foreach ($settings as $name => $value) {
                     $nameCamel = Str::camel($name);
                     if (!property_exists($this, $nameCamel)) 
