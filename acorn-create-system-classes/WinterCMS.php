@@ -552,9 +552,13 @@ class WinterCMS extends Framework
                             $permissionFQN   = $model->permissionFQN();
 
                             if ($controller->qrCodeScan) {
+                                $qrUrl = "$url/qrcodescan";
+                                $buttons = json_encode([
+                                    'acorn::lang.models.general.save_and_scan_qrcode' => $qrUrl
+                                ]);
                                 $sideMenu['qrcodescan'] = array(
                                     'label'   => 'acorn::lang.models.general.scan_qrcode',
-                                    'url'     => "$url/qrcodescan",
+                                    'url'     => "$qrUrl?buttons=$buttons",
                                     'icon'    => 'icon-qrcode',
                                     
                                     'permissions' => array($permissionFQN),
@@ -1003,7 +1007,7 @@ PHP
             // ----------------------------------------------------------------- JSONable
             $translatable = array();
             foreach ($model->fields() as $name => &$field) {
-                if ($field->translatable)
+                if ($field->canDisplayAsField() && $field->translatable)
                     array_push($translatable, $name);
             }
             $this->setPropertyInClassFile($modelFilePath, 'translatable', $translatable, FALSE);

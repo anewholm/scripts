@@ -1468,6 +1468,7 @@ class Model {
                 'valueFrom'      => $valueFrom, // Necessary for search to work, is removed in nested scenario
                 'readOnly'       => $relation->readOnly,
                 'fieldComment'   => $relation->fieldComment,
+                'commentHtml'    => $relation->commentHtml,
                 
                 // The relation decides about its presentation with fieldExclude
                 // Essentially, only for 1toX and XtoX final relations

@@ -1029,6 +1029,7 @@ DROP FUNCTION IF EXISTS public.fn_acorn_exam_tokenize(p_expr character varying, 
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_token_name_internal(p_titles character varying[]);
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]);
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]);
+DROP FUNCTION IF EXISTS public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray);
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean);
@@ -1705,7 +1706,7 @@ begin
 		truncate acorn_exam_result_internal2s;
 	end if;
 	
-	insert into acorn_exam_result_internal2s(name, student_id, academic_year_id, exam_id, course_material_id, course_id, material_id, calculation_id, calculation_type_id, calculation_type_name, project_id, interview_id, expression, minimum, maximum, required, expression_type, needs_evaluate, resolved_expression, result)
+	insert into acorn_exam_result_internal2s(name, student_id, academic_year_id, exam_id, course_material_id, course_id, material_id, calculation_id, calculation_type_id, calculation_type_name, project_id, interview_id, expression, minimum, maximum, required, expression_type, needs_evaluate, resolved_expression, result, explanation)
 		 SELECT 
 		    et.name,
 		    et.student_id,
@@ -1726,7 +1727,8 @@ begin
 		    et.expression_type,
 		    et.needs_evaluate,
 		    fn_acorn_exam_tokenize(et.expression::character varying, 0, p_messages) AS resolved_expression,
-		    fn_acorn_exam_eval(fn_acorn_exam_tokenize(et.expression::character varying), 0, p_messages) AS result
+		    fn_acorn_exam_eval(fn_acorn_exam_tokenize(et.expression::character varying), 0, p_messages) AS result,
+			fn_acorn_exam_explain(et.expression) as explanation
 		   FROM acorn_exam_token2s et
 			 inner join acorn_university_academic_years ays on et.academic_year_id = ays.id
 		     LEFT JOIN acorn_exam_calculations c ON et.calculation_id = c.id
@@ -1803,6 +1805,59 @@ $_$;
 
 
 ALTER FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean) OWNER TO sz;
+
+--
+-- Name: fn_acorn_exam_explain(character varying, boolean); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean DEFAULT false) RETURNS character varying[]
+    LANGUAGE plpgsql
+    AS $$
+declare
+	p_sub_expression character varying(4096);
+	p_token_record record;
+	p_regexp_matches character varying(1024)[];
+	p_passed boolean;
+	p_passed_string character varying(1024);
+	p_algorithm_name_position int;
+	p_parts character varying(1024)[];
+	p_explanations character varying(1024)[];
+begin
+	-- Expression explanation(s)
+	if p_messages then raise notice 'Expression: %', p_expr; end if;
+	for p_token_record in select regexp_matches[1] as "match"
+		from regexp_matches(p_expr, '(:\?[^:]+:)', 'g')
+	loop
+		p_sub_expression := p_token_record.match;
+		select array_agg(regexp_matches) into p_parts from regexp_matches(p_sub_expression, '[^/:]+', 'g');
+		if p_messages then raise notice 'Sub-Expression: %', p_sub_expression; end if;
+
+		-- Evaluate this sub-level to a boolean
+		p_passed := fn_acorn_exam_eval(
+			fn_acorn_exam_tokenize(p_sub_expression, 0, p_messages)
+		);
+		if p_messages then raise notice '  => %', p_passed; end if;
+
+		p_passed_string := case 
+				when p_passed is null then 'NULL' 
+				when p_passed then 'Passed' 
+				else 'Failed' 
+			end;
+			
+		p_algorithm_name_position := case
+			when p_parts[1][1] = '?course' then 6
+			when p_parts[1][1] = '?calculation' then 4
+		end case;
+		
+		p_explanations := array_append(p_explanations, p_passed_string || ': ' || p_parts[p_algorithm_name_position][1]);
+	end loop;
+
+	return p_explanations;
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) OWNER TO university;
 
 --
 -- Name: fn_acorn_exam_token_name(character varying[]); Type: FUNCTION; Schema: public; Owner: university
@@ -4725,34 +4780,6 @@ begin
 	-- ######################################### Schools (counties/schools)
 	if p_use_counties_as_schools then
 		-- School for each county only
-		-- Update existing schools for this import
-		with updated as (
-			update acorn_user_user_groups ugs set import_source = (select 
-					p_imported || ' university_mofadala_baccalaureate_marks(county school):' || initcap(bm.name)
-					from (
-						select distinct(county) as name
-						from university_mofadala_baccalaureate_marks
-					) bm
-					where ugs.name = bm.name
-				)
-				where exists(
-					select * from public.acorn_university_entities en
-					inner join public.acorn_university_schools sc on sc.entity_id = en.id
-					where en.user_group_id = ugs.id
-				)
-				and not import_source = (select 
-					p_imported || ' university_mofadala_baccalaureate_marks(county school):' || initcap(bm.name)
-					from (
-						select distinct(county) as name
-						from university_mofadala_baccalaureate_marks
-					) bm
-					where ugs.name = bm.name
-				)
-				returning id, name
-		)
-			select array_agg(updated.id), array_agg(updated.name) into p_uuids, p_names from updated;
-		if p_messages then raise notice '% School (counties) User Groups import_source updated: %', array_upper(p_uuids, 1), array_to_string(p_names, ','); end if;
-		
 		-- Insert missing schools
 		with inserted as (
 			insert into acorn_user_user_groups(name, code, import_source)
@@ -4767,80 +4794,46 @@ begin
 					select * from acorn_user_user_groups 
 					where import_source = p_imported || ' university_mofadala_baccalaureate_marks(county school):' || initcap(bm.name)
 				)
-				on conflict(code) do nothing
+				on conflict(code) do update 
+					-- These rows id will still be returned
+					set import_source = p_imported || ' university_mofadala_baccalaureate_marks(county school):' || initcap(bm.name)
 				returning id, name
 		)
 			select array_agg(inserted.id), array_agg(inserted.name) into p_uuids, p_names from inserted;
-		if p_messages then raise notice '% School (counties) User Groups inserted: %', array_upper(p_uuids, 1), array_to_string(p_names, ','); end if;
-		if array_upper(p_uuids, 1) < 5 and p_delete_previous then 
+		if p_messages then raise notice '% School (counties) User Groups inserted/updated: %', array_upper(p_uuids, 1), array_to_string(p_names, ','); end if;
+		if coalesce(array_upper(p_uuids, 1), 0) < 5 then 
 			raise exception 'Suspicious incomplete feed of region schools %', array_upper(p_uuids, 1) using ERRCODE = 'CIM10'; 
 		end if;
-		if array_upper(p_uuids, 1) is null then raise warning 'Region Schools already exist'; 
-		else
-			-- Entities
-			with inserted as (
-				insert into acorn_university_entities(user_group_id, created_by_user_id, import_source)
-					select ugs.id, p_created_by_user_id, ugs.import_source
-					from acorn_user_user_groups ugs
-					inner join unnest(p_uuids) on ugs.id = unnest
-					returning id
-			)
-				select array_agg(inserted.id) into p_uuids from inserted;
-			if p_messages then raise notice '% School (counties) Entities inserted', array_upper(p_uuids, 1); end if;
-	
-			-- Schools
-			with inserted as (
-				insert into acorn_university_schools(entity_id)
-					select unnest from unnest(p_uuids)
-					returning id
-			)
-				select array_agg(inserted.id) into p_hi_uuids from inserted;
-			if p_messages then raise notice '% Schools inserted', array_upper(p_hi_uuids, 1); end if;
-		end if;
+
+		-- Entities
+		with inserted as (
+			insert into acorn_university_entities(user_group_id, created_by_user_id, import_source)
+				select ugs.id, p_created_by_user_id, ugs.import_source
+				from acorn_user_user_groups ugs
+				inner join unnest(p_uuids) on ugs.id = unnest
+				on conflict on constraint unique_user_group_id 
+					-- These id will NOT be returned
+					do nothing
+				returning id
+		)
+			select array_agg(inserted.id) into p_uuids from inserted;
+		if p_messages then raise notice '% School (counties) Entities inserted', array_upper(p_uuids, 1); end if;
+
+		-- Schools
+		-- This will not trigger if no new entities were inserted
+		with inserted as (
+			insert into acorn_university_schools(entity_id)
+				select unnest from unnest(p_uuids)
+				returning id
+		)
+			select array_agg(inserted.id) into p_hi_uuids from inserted;
+		if p_messages then raise notice '% Schools inserted', array_upper(p_hi_uuids, 1); end if;
 
 		-- Place them under the  top level for now
 		-- There may have been none inserted if the schools are already present from last years import
 		-- so we run off the source data, rather than p_uuids
 		-- being careful to set the import_source for this year
 		-- TODO: Place them under the correct EA
-		with updated as (
-			update acorn_university_hierarchies hi set import_source = (select 
-					p_imported || ' university_mofadala_baccalaureate_marks(county school):' || initcap(bm.name)
-					from acorn_university_entities en
-					inner join acorn_university_schools sch on sch.entity_id = en.id
-					inner join acorn_user_user_groups ugs on en.user_group_id = ugs.id
-					inner join (
-						select distinct(county) as name
-						from university_mofadala_baccalaureate_marks
-					) bm on ugs.code = fn_acorn_user_code(bm.name)
-					where hi.entity_id = en.id
-				)
-				where exists(
-					select *
-					from acorn_university_entities en
-					inner join acorn_university_schools sch on sch.entity_id = en.id
-					inner join acorn_user_user_groups ugs on en.user_group_id = ugs.id
-					inner join (
-						select distinct(county) as name
-						from university_mofadala_baccalaureate_marks
-					) bm on ugs.code = fn_acorn_user_code(bm.name)
-					where hi.entity_id = en.id
-				) and not import_source = (select 
-					p_imported || ' university_mofadala_baccalaureate_marks(county school):' || initcap(bm.name)
-					from acorn_university_entities en
-					inner join acorn_university_schools sch on sch.entity_id = en.id
-					inner join acorn_user_user_groups ugs on en.user_group_id = ugs.id
-					inner join (
-						select distinct(county) as name
-						from university_mofadala_baccalaureate_marks
-					) bm on ugs.code = fn_acorn_user_code(bm.name)
-					where hi.entity_id = en.id
-				) and academic_year_id = p_bakeloria_academic_year_id
-				returning id
-		)
-			select array_agg(updated.id) into p_hi_uuids from updated;
-		if p_messages then raise notice '% Schools updated in % hierarchy', array_upper(p_hi_uuids, 1), p_bakeloria_academic_year_name; end if;
-
 		with inserted as (
 			insert into acorn_university_hierarchies(entity_id, academic_year_id, parent_id, import_source, created_by_user_id)
 				select en.id, p_bakeloria_academic_year_id, p_bakeloria_hi_top_level_node, 
@@ -4852,7 +4845,9 @@ begin
 					select distinct(county) as name
 					from university_mofadala_baccalaureate_marks
 				) bm on ugs.code = fn_acorn_user_code(bm.name)
-				on conflict on constraint import_source_hierarchies do nothing -- Dealt with above
+				on conflict do update
+					-- These id will still be included
+					set import_source = p_imported || ' university_mofadala_baccalaureate_marks(county school):' || initcap(bm.name)
 				returning id
 		)
 			select array_agg(inserted.id) into p_hi_uuids from inserted;
@@ -4886,11 +4881,13 @@ begin
 					select distinct(county) as name
 					from university_mofadala_baccalaureate_marks
 				) county
-				on conflict(code) do nothing
+				on conflict do update
+					-- These id will still be included
+					set import_source = p_imported || ' university_mofadala_type_certificates:' || ct.id || ' county:' || initcap(county.name)
 				returning id
 			)
 			select array_agg(inserted.id) into p_uuids from inserted;
-		if p_messages then raise notice '% Bakeloria Course User Groups inserted (for each county)', array_upper(p_uuids, 1); end if;
+		if p_messages then raise notice '% Bakeloria Course User Groups inserted/updated (for each county)', array_upper(p_uuids, 1); end if;
 		if array_upper(p_uuids, 1) < 9 then raise exception 'Suspicious incomplete feed of bakeloria courses %', array_upper(p_uuids, 1) using ERRCODE = 'CIM11'; end if;
 		if array_upper(p_uuids, 1) is null then raise warning 'Bakeloria courses for region schools already exist'; 
 		else
@@ -8097,6 +8094,7 @@ COMMENT ON COLUMN public.acorn_exam_certificates.student_id IS 'extra-foreign-ke
   comment:
     tab-location: 2
     name-object: true
+    field-exclude: true
 labels:
   en: Student
 labels-plural:
@@ -8667,7 +8665,8 @@ CREATE TABLE public.acorn_exam_result_internal2s (
     expression_type character varying(1024),
     needs_evaluate boolean,
     resolved_expression character varying(2048),
-    result double precision
+    result double precision,
+    explanation character varying[]
 );
 
 
@@ -8790,7 +8789,8 @@ CREATE VIEW public.acorn_exam_results AS
     needs_evaluate,
     resolved_expression,
     result,
-    ((result >= COALESCE(minimum, (0)::double precision)) AND (result <= COALESCE(maximum, (100000)::double precision))) AS passed
+    ((result >= COALESCE(minimum, (0)::double precision)) AND (result <= COALESCE(maximum, (100000)::double precision))) AS passed,
+    to_json(explanation) AS explanation
    FROM public.acorn_exam_result_internal2s;
 
 
@@ -11385,7 +11385,8 @@ COMMENT ON COLUMN public.acorn_university_student_lookups.student_id IS 'extra-f
   table: acorn_university_students
   comment:
     tab-location: 2
-    invisible: true';
+    invisible: true
+    advanced: true';
 
 
 --
@@ -19033,7 +19034,13 @@ COMMENT ON CONSTRAINT parent_id ON public.acorn_university_hierarchies IS 'name-
 multi:
   valueFrom: htmlName
   html: true
-';
+labels:
+  en: Child relation
+  ku: Zarok Têkliy 
+labels-plural:
+  en: Child relations
+  ku: Zarok Têkliyên
+tab-location: 3';
 
 
 --
@@ -19508,7 +19515,7 @@ labels-plural:
   en: Statuses
   ku: Rewşên
 tab: acorn.user::lang.models.user.statuses
-order: 2';
+order: 20';
 
 
 --
@@ -19597,9 +19604,10 @@ ALTER TABLE ONLY public.acorn_university_student_identities
 -- Name: CONSTRAINT student_id ON acorn_university_student_identities; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_identities IS 'order: 1
-tab: acorn.user::lang.models.user.identity
-span: right';
+COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_identities IS 'tab: acorn.user::lang.models.user.identity
+span: right
+order: 10
+';
 
 
 --
@@ -20307,6 +20315,21 @@ ALTER TABLE ONLY public.acorn_university_hierarchies
 --
 
 COMMENT ON CONSTRAINT user_group_version_id ON public.acorn_university_hierarchies IS 'type: 1to1
+has-many-deep-settings:
+  user_group_version_users:
+    labels:
+      en: Student
+      ku: Xwendekar
+    labels-plural:
+      en: Students
+      ku: Xwendekarên
+  user_group_version_users_count:
+    labels:
+      en: Çend Student
+      ku: Çend Xwendekar
+    labels-plural:
+      en: Çend Students
+      ku: Çend Xwendekarên
 ';
 
 
@@ -20373,11 +20396,15 @@ COMMENT ON CONSTRAINT user_id ON public.acorn_university_students IS 'type: leaf
 has-many-deep-settings:
   user_user_group_versions:
     read-only: true
-    field-comment: Add users to groups through the Relations screen
+    field-comment: Add users to groups through the <a href="/backend/acorn/university/hierarchies">Relations</a> screen
+    comment-html: true
+    tab: acorn.university::lang.models.course.label_plural
+    order: 40
   user_groups:
     hidden: true
   user_addresses:
     tab: acorn.location::lang.models.address.label_plural
+    order: 30
   user_languages:
     hidden: true
   user_eventParts:
@@ -20387,8 +20414,7 @@ has-many-deep-settings:
     tab: acorn.user::lang.models.role.label_plural
   user_user_languages:
     tab: acorn.user::lang.models.language.label_plural
-  user_user_group_versions:
-    tab: acorn.university::lang.models.course.label_plural';
+';
 
 
 --
@@ -21107,6 +21133,13 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_leve
 
 
 --
+-- Name: FUNCTION fn_acorn_exam_explain(p_expr character varying, p_messages boolean); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) TO token_1 WITH GRANT OPTION;
+
+
+--
 -- Name: FUNCTION fn_acorn_exam_token_name(VARIADIC p_titles character varying[]); Type: ACL; Schema: public; Owner: university
 --
 
@@ -21507,6 +21540,13 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO to
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_import_source_empty(); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_import_source_empty() TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -22576,12 +22616,12 @@ GRANT SELECT ON TABLE public.acorn_exam_centres TO PUBLIC;
 -- Name: TABLE acorn_exam_data_entry_scores; Type: ACL; Schema: public; Owner: university
 --
 
+GRANT SELECT ON TABLE public.acorn_exam_data_entry_scores TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_data_entry_scores TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_5;
-GRANT SELECT ON TABLE public.acorn_exam_data_entry_scores TO PUBLIC;
 
 
 --
@@ -22589,6 +22629,7 @@ GRANT SELECT ON TABLE public.acorn_exam_data_entry_scores TO PUBLIC;
 --
 
 GRANT SELECT ON TABLE public.acorn_exam_certificates TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_certificates TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -22664,12 +22705,12 @@ GRANT SELECT ON TABLE public.acorn_exam_result_internal2s TO PUBLIC;
 -- Name: TABLE acorn_exam_results; Type: ACL; Schema: public; Owner: university
 --
 
+GRANT SELECT ON TABLE public.acorn_exam_results TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_results TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_results TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_results TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_results TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_results TO token_5;
-GRANT SELECT ON TABLE public.acorn_exam_results TO PUBLIC;
 
 
 --
@@ -22752,6 +22793,13 @@ GRANT ALL ON TABLE public.acorn_university_course_types TO token_1 WITH GRANT OP
 GRANT ALL ON TABLE public.acorn_university_course_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_types TO token_5;
 GRANT SELECT ON TABLE public.acorn_university_course_types TO PUBLIC;
+
+
+--
+-- Name: TABLE acorn_university_course_year_settings; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_university_course_year_settings TO token_1 WITH GRANT OPTION;
 
 
 --

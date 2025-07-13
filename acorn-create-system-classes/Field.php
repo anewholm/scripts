@@ -36,6 +36,7 @@ class Field {
     public $oid; // From column or FK or the like
     public $columnClass; // Useful when *_id fields are not FK fields
     public $translatable;
+    public $system;
 
     // ------------------------- Forms fields.yaml
     public $fieldKey;
@@ -194,6 +195,9 @@ class Field {
                     $this->default = preg_replace("/^'|'\$/", '', $defaultStripped);
             }
         }
+        if (!isset($this->translatable))  $this->translatable = $this->column?->translatable;
+        if (!isset($this->system))        $this->system = $this->column?->system;
+        
         if (!isset($this->invisible))     $this->invisible  = FALSE;
         if (!isset($this->searchable))    $this->searchable = TRUE;
         if (!isset($this->canFilter))     $this->canFilter  = FALSE;

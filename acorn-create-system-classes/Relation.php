@@ -12,6 +12,7 @@ class Relation {
 
     public $comment;
     public $fieldComment;
+    public $commentHtml;
     public $hidden;
     public $invisible;
     public $fieldExclude;
@@ -39,6 +40,7 @@ class Relation {
     public $globalScope; // Chaining from|to
     public $conditions;  // config_relation.yaml conditions
     public $isCount;
+    public $order;
 
     // Translation arrays
     public $labels;
