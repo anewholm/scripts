@@ -60,6 +60,7 @@ class ForeignKey {
     public $labels;
     public $labelsPlural;
     public $globalScope; // Chaining from|to
+    public $hasManyDeepInclude; // Process this non 1-1 has many deep link
 
     public static function fromRow(Column &$column, bool $to, array $row)
     {

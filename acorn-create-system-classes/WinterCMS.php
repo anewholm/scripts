@@ -553,8 +553,11 @@ class WinterCMS extends Framework
 
                             if ($controller->qrCodeScan) {
                                 $qrUrl = "$url/qrcodescan";
+                                // Provide an extra Create and Scan button
+                                // that comes back to here
+                                // TODO: This does not work because the redirect will not include the buttons again
                                 $buttons = json_encode([
-                                    'acorn::lang.models.general.save_and_scan_qrcode' => $qrUrl
+                                    'acorn::lang.models.general.save_and_scan_qrcode' => "/backend/$qrUrl"
                                 ]);
                                 $sideMenu['qrcodescan'] = array(
                                     'label'   => 'acorn::lang.models.general.scan_qrcode',
@@ -752,6 +755,10 @@ class WinterCMS extends Framework
                 $modelFQN   = $model->fullyQualifiedName();
                 $scopeFQN   = "$modelFQN\\$scopeName";
                 $path       = "$modelDirPath/$scopeName.php";
+                $scopingFunction = (is_string($model->globalScope) 
+                    ? "public static \$scopingFunction = '$model->globalScope';"
+                    : NULL
+                );
 
                 $this->appendToFile($path, <<<PHP
 <?php
@@ -764,9 +771,11 @@ use Acorn\Scopes\GlobalChainScope;
 
 class $scopeName extends GlobalChainScope
 {
-    public function shouldApply(Builder \$builder, Model \$model): bool
+    $scopingFunction
+
+    public function shouldApply(Model \$model, bool \$isThis = FALSE): bool
     {
-        return self::hasSession(\$model);
+        return self::hasSessionFor(\$model, \$isThis);
     }
 
     public function apply(Builder \$builder, Model \$model): void 

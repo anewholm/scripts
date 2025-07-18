@@ -38,6 +38,7 @@ class Relation {
     // Filter config_filter.yaml
     public $canFilter;
     public $globalScope; // Chaining from|to
+    public $hasManyDeepInclude; // Process this non 1-1 has many deep link
     public $conditions;  // config_relation.yaml conditions
     public $isCount;
     public $order;

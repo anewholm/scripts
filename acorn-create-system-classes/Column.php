@@ -121,6 +121,7 @@ class Column {
     public $name; // = column_name
     public $prefix; // Supported by _some_ partials
     public $suffix; // Supported by _some_ partials
+    public $multi;
 
     // --------------------- Column comment accepted values
     // These flow through to Field

@@ -24,6 +24,7 @@ class Model {
     public const NO_HAS_MANY_DEEP     = FALSE;
     public const WITH_FROMS = TRUE;
     public const NO_FROMS = FALSE;
+    public const HAS_MANY_DEEP_INCLUDE = TRUE;
 
     public $controllers = array();
     public $actionFunctions;
@@ -368,9 +369,13 @@ class Model {
         return "$pluginDirName.$dirName";
     }
 
-    public function permissionFQN(): string
+    public function permissionFQN(string|array $qualifier = NULL): string
     {
-        return $this->fullyQualifiedDotName();
+        if (is_array($qualifier)) $qualifier = implode('_', $qualifier);
+
+        $permissionFQN = $this->fullyQualifiedDotName();
+        if ($qualifier) $permissionFQN .= "_$qualifier";
+        return $permissionFQN;
     }
 
     public function fullyQualifiedName(bool $withClassString = FALSE): string
@@ -512,6 +517,15 @@ class Model {
             $permissions = array_merge($permissions, $field->allPermissionNames());
         }
 
+        if ($this->globalScope) {
+            $permissions[$this->permissionFQN(['globalscope', 'view'])] = array(
+                'labels' => array('en' => "View $menuitemPlural Global Scope")
+            );
+            $permissions[$this->permissionFQN(['globalscope', 'change'])] = array(
+                'labels' => array('en' => "Change $menuitemPlural Global Scope")
+            );
+        }
+
         // Check these permissions keys are fully qualified
         foreach ($permissions as $fullyQualifiedKey => $config) {
             $isQualifiedName = (strstr($fullyQualifiedKey, '.') !== FALSE);
@@ -638,7 +652,7 @@ class Model {
         return $relationsName;
     }
 
-    public function relations1to1(Column &$forColumn = NULL): array
+    public function relations1to1(Column &$forColumn = NULL, bool $hasManyDeepInclude = FALSE): array
     {
         // 1-1 & leaf relations
         // $foreignKeysFrom this column: All $this->table's ($tableFrom) ForeignIdField(*_id) $columns 
@@ -654,7 +668,11 @@ class Model {
                 foreach ($column->foreignKeysFrom as &$foreignKeyFrom) {
                     if ($foreignKeyFrom->shouldProcess()) {
                         // Returns true also if isLeaf()
-                        if ($foreignKeyFrom->is1to1() && (is_null($forColumn) || $forColumn->name == $column->name)) {
+                        if ((      $foreignKeyFrom->is1to1() 
+                                || ($hasManyDeepInclude && $foreignKeyFrom->hasManyDeepInclude)
+                            )
+                            && (is_null($forColumn) || $forColumn->name == $column->name)
+                        ) {
                             $finalContentTable = &$foreignKeyFrom->tableTo;
                             $finalColumnTo     = &$foreignKeyFrom->columnTo;
                             if (!$finalContentTable->isContentTable()) throw new Exception("Final Content Table of [$foreignKeyFrom] on [$this->table.$column] is not type content");
@@ -696,7 +714,9 @@ class Model {
 
         $relations = array();
         // relations1to1() returns empty for non-Create-System models
-        foreach ($stepModel->relations1to1($forColumn) as $name => $relation) {
+        // because their foreign keys & relations are not adorned
+        $relations1to1 = $stepModel->relations1to1($forColumn, self::HAS_MANY_DEEP_INCLUDE);
+        foreach ($relations1to1 as $name => $relation) {
             $isLeaf       = ($relation instanceof RelationLeaf);
             $nameObject   = $relation->nameObject;
             $modelTo      = &$relation->to;
