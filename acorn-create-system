@@ -65,6 +65,12 @@ $framework     = Framework::detect($cwd, $scriptDirPath, __FILE__, $version);
 if (!$framework) throw new \Exception("No framework found at [$cwd]");
 $framework->show();
 
+// ------------------------------------------- Auto viewa
+file_put_contents('date_tables_view.sql', "DROP VIEW IF EXISTS acorn_calendar_upcreated_ats;\n");
+file_put_contents('date_tables_view.sql', "CREATE OR REPLACE VIEW acorn_calendar_upcreated_ats as\n", FILE_APPEND);
+file_put_contents('name_tables_view.sql', "DROP VIEW IF EXISTS acorn_names;\n");
+file_put_contents('name_tables_view.sql', "CREATE OR REPLACE VIEW acorn_names as\n", FILE_APPEND);
+
 // ------------------------------------------- Read DB
 $nc      = new AcornNamingConvention();
 $db      = new DB($nc, $framework); // TODO: Also db->comment => properties heye
@@ -94,6 +100,9 @@ print("$heading: Modules\n");
 foreach ($modules as $module) $module->show();
 print("$heading: Plugins\n");
 foreach ($plugins as $plugin) $plugin->show();
+
+$db->runSQLFile('date_tables_view.sql');
+$db->runSQLFile('name_tables_view.sql');
 
 // ------------------------------------------- Choose which plugin to create()
 if ($installPlugins == '*') {

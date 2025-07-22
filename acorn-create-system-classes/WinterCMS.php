@@ -556,12 +556,9 @@ class WinterCMS extends Framework
                                 // Provide an extra Create and Scan button
                                 // that comes back to here
                                 // TODO: This does not work because the redirect will not include the buttons again
-                                $buttons = json_encode([
-                                    'acorn::lang.models.general.save_and_scan_qrcode' => "/backend/$qrUrl"
-                                ]);
                                 $sideMenu['qrcodescan'] = array(
                                     'label'   => 'acorn::lang.models.general.scan_qrcode',
-                                    'url'     => "$qrUrl?buttons=$buttons",
+                                    'url'     => $qrUrl,
                                     'icon'    => 'icon-qrcode',
                                     
                                     'permissions' => array($permissionFQN),
@@ -1243,6 +1240,7 @@ PHP
                     'relatedModel' => $field->relatedModel,      // Model name
                     'nameFrom'     => $field->nameFrom,
                     'dependsOn'    => array_keys($field->dependsOn),
+                    'attributes'   => $field->attributes,
 
                     // Extended info
                     'nested'       => ($field->nested    ?: NULL),

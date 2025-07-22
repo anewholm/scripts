@@ -87,6 +87,7 @@ class Field {
     public $fieldOptionsModel;
     public $dependsOn = array();
     public $containerAttributes;
+    public $attributes;
     public $tab;
     public $icon;
     public $tabLocation;  // primary|secondary|tertiary
@@ -286,10 +287,15 @@ class Field {
             foreach ($columnConfig as $yamlName => $yamlValue) {
                 $targetName = $yamlName;
                 switch ($yamlName) {
-                    case 'label':   $targetName = 'explicitLabelKey'; break;
-                    case 'type':    $targetName = 'columnType'; break;
-                    case 'select':  $targetName = 'sqlSelect'; break;
-                    case 'path':    $targetName = 'columnPartial'; break;
+                    case 'label':    $targetName = 'explicitLabelKey'; break;
+                    case 'type':     $targetName = 'columnType'; break;
+                    case 'select':   $targetName = 'sqlSelect'; break;
+                    case 'path':     $targetName = 'columnPartial'; break;
+                    case 'cssClass': {
+                        $targetName = 'cssClassesColumn'; 
+                        if (!is_array($yamlValue)) $yamlValue = explode(' ', $yamlValue);
+                        break;
+                    }
                     /*
                     multi
                     'hidden'      => $column->isStandard(Column::DATA_COLUMN_ONLY), // Doesn't include name

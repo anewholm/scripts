@@ -618,9 +618,8 @@ SQL;
         // TODO: appendCommentValue
     }
 
-    public function runSQLFile(string $filePath, array $prepare = array(), int $indent = 4)
+    public function runSQLFile(string $filePath, array $prepare = array())
     {
-        $indentString = str_repeat(' ', $indent * 2);
         $sql = file_get_contents($filePath);
         if (!$sql) throw new \Exception("SQL file [$filePath] is empty");
 

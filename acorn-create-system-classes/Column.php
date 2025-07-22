@@ -169,6 +169,7 @@ class Column {
     public $noLabel;      // css-classes: nolabel
     public $bootstraps;   // bootstrap: xs: 12 sm: 4
     public $popupClasses; // popup-classes: h
+    public $attributes;
     public $containerAttributes;
     // Assemble all field permission-settings directives names
     // for Plugin registerPermissions()

@@ -259,85 +259,71 @@ class Table {
                     }
                 }
 
-                // ----------------------- created_at[_event_id]
-                $columnCheck = 'created_at_event_id';
+                // ----------------------- up|created_at
+                $columnCheck = 'created_at';
                 if (!$this->hasColumn($columnCheck) && !$this->hasCustom1to1FK()) {
                     $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] column";
                     print("{$RED}WARNING$NC: $error\n");
                     $yn = readline("Create [$columnCheck] (y) ?");
                     if ($yn != 'n') {
-                        $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'uuid');
-                        $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_calendar_events');
+                        // timestamp(0) => seconds only, not seconds.milliseconds, for Laravel standard date format
+                        $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'timestamp(0) without time zone', NULL, Column::NOT_NULL, 'now()');
                         print("Added [$columnCheck] with FK\n");
                         $changes = TRUE;
                     }
                 }
-                if ($this->hasColumn($columnCheck) && !$this->getColumnFK($columnCheck)) {
-                    $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] FK";
-                    print("{$RED}WARNING$NC: $error\n");
-                    $yn = readline("Create [$columnCheck] FK (y) ?");
-                    if ($yn != 'n') {
-                        $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_calendar_events');
-                        print("Added [$columnCheck] FK\n");
-                        $changes = TRUE;
-                    }
-                }
-                $triggerCheck = 'fn_acorn_calendar_trigger_activity_event';
-                if ($this->hasColumn($columnCheck) && !$this->hasTrigger($triggerCheck)) {
-                    $error = "Content table [$YELLOW$this->name$NC] has [$YELLOW$columnCheck$NC] column but no trigger [$YELLOW$triggerCheck$NC]";
-                    print("{$RED}WARNING$NC: $error\n");
-                    $yn = readline("Create [$triggerCheck] (y) ?");
-                    if ($yn != 'n') {
-                        $this->db->addTrigger($this->fullyQualifiedName(), $triggerCheck, 'BEFORE');
-                        print("Added [$triggerCheck]\n");
-                        $changes = TRUE;
-                    }
-                }
-                $columnCheck = 'created_at';
-                if ($this->hasColumn($columnCheck)) {
-                    $error = "Content table [$YELLOW$this->name$NC] has a depreceated [$YELLOW$columnCheck$NC] column";
-                    print("{$RED}WARNING$NC: $error\n");
-                    $yn = readline("Remove [$columnCheck] (y) ?");
-                    if ($yn != 'n') {
-                        $this->db->deleteColumn($this->fullyQualifiedName(), $columnCheck);
-                        print("Deleted [$columnCheck]\n");
-                        $changes = TRUE;
-                    }
-                }
-                
-                // ----------------------- updated_at[_event_id]
-                $columnCheck = 'updated_at_event_id';
+                $columnCheck = 'updated_at';
                 if (!$this->hasColumn($columnCheck) && !$this->hasCustom1to1FK()) {
                     $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] column";
                     print("{$RED}WARNING$NC: $error\n");
                     $yn = readline("Create [$columnCheck] (y) ?");
                     if ($yn != 'n') {
-                        $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'uuid', NULL, Column::NULLABLE);
-                        $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_calendar_events');
-                        print("Added [$columnCheck] NULLABLE with FK\n");
+                        // timestamp(0) => seconds only, not seconds.milliseconds, for Laravel standard date format
+                        $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'timestamp(0) without time zone');
+                        print("Added [$columnCheck] with FK\n");
                         $changes = TRUE;
                     }
                 }
-                if ($this->hasColumn($columnCheck) && !$this->getColumnFK($columnCheck)) {
-                    $error = "Content table [$YELLOW$this->name$NC] has no [$YELLOW$columnCheck$NC] FK";
-                    print("{$RED}WARNING$NC: $error\n");
-                    $yn = readline("Create [$columnCheck] FK (y) ?");
-                    if ($yn != 'n') {
-                        $this->db->addForeignKey($this->fullyQualifiedName(), $columnCheck, 'acorn_calendar_events');
-                        print("Added [$columnCheck] FK\n");
-                        $changes = TRUE;
-                    }
+
+                // -------------------- compile names view
+                static $firstNameTablesViewEntry = TRUE;
+                $tablesView = array();
+                $modelClass     = $this->fullyQualifiedModelName();
+                $nameColumn     = ($this->hasColumn('name') ? 'name::character varying(1024)' : 'NULL');
+                $standardFields = "'$modelClass' as model_type, id as model_id, '$this->name' as \"table\"";
+
+                if ($this->hasColumn('name'))        array_push($tablesView, "select $standardFields, 'name' as \"field\", name::text as content from $this->name");
+                if ($this->hasColumn('description')) array_push($tablesView, "select $standardFields, 'description' as \"field\", description::text as content from $this->name");
+                
+                if ($tablesView) {
+                    $tablesViewString = implode("\nunion all\n", $tablesView);
+                    if (!$firstNameTablesViewEntry) $tablesViewString = "\nunion all\n$tablesViewString";
+                    file_put_contents('name_tables_view.sql', $tablesViewString, FILE_APPEND);
+                    $firstNameTablesViewEntry = FALSE;
                 }
-                $columnCheck = 'updated_at';
-                if ($this->hasColumn($columnCheck)) {
-                    $error = "Content table [$YELLOW$this->name$NC] has a depreceated [$YELLOW$columnCheck$NC] column";
-                    print("{$RED}WARNING$NC: $error\n");
-                    $yn = readline("Remove [$columnCheck] (y) ?");
-                    if ($yn != 'n') {
-                        $this->db->deleteColumn($this->fullyQualifiedName(), $columnCheck);
-                        print("Deleted [$columnCheck]\n");
-                        $changes = TRUE;
-                    }
+
+                // -------------------- compile created|updated_at[_event_id] fields for calendar
+                // to use in its special activity event instance view
+                // TODO: Should this date_tables_view.sql be in the Model instead? We need the external_url from the Controller facade
+                static $firstDateTablesViewEntry = TRUE;
+                $tablesView = array();
+                $modelClass     = $this->fullyQualifiedModelName();
+                $nameColumn     = ($this->hasColumn('name') ? 'name::character varying(1024)' : 'NULL');
+                $standardFields = "'$modelClass' as model_type, id as model_id, '$this->name' as \"table\", $nameColumn as \"name\"";
+
+                // TODO: Old system: remove *_event_id (revert_timestamps.sql)
+                // table name, create|update, event_id
+                if ($this->hasColumn('created_at_event_id')) array_push($tablesView, "select $standardFields, 0 as \"update\", created_at_event_id as event_id from $this->name");
+                if ($this->hasColumn('updated_at_event_id')) array_push($tablesView, "select $standardFields, 1 as \"update\", updated_at_event_id as event_id from $this->name");
+                // TODO: New system, normal timestamps
+                if ($this->hasColumn('created_at')) array_push($tablesView, "select $standardFields, 0 as \"update\", created_at as datetime from $this->name");
+                if ($this->hasColumn('updated_at')) array_push($tablesView, "select $standardFields, 1 as \"update\", updated_at as datetime from $this->name");
+                
+                if ($tablesView) {
+                    $tablesViewString = implode("\nunion all\n", $tablesView);
+                    if (!$firstDateTablesViewEntry) $tablesViewString = "\nunion all\n$tablesViewString";
+                    file_put_contents('date_tables_view.sql', $tablesViewString, FILE_APPEND);
+                    $firstDateTablesViewEntry = FALSE;
                 }
 
                 // -------------------- created_by[_user_id]
@@ -934,6 +920,7 @@ class Table {
     public function pluginName(): string|NULL
     {
         // Pascal case
+        // e.g. University
         $tableNameParts = explode('_', $this->name);
         $firstName      = ucfirst($tableNameParts[0]);
 
@@ -965,6 +952,7 @@ class Table {
 
     public function modelName(): string
     {
+        // e.g. Exam
         $tableNameParts = explode('_', $this->name);
         if ($this->isModule()) {
             if ($this->isFrameworkTable()) {
@@ -986,6 +974,14 @@ class Table {
         // print("$subName => $singular => $modelName\n");
 
         return $modelName;
+    }
+
+    public function fullyQualifiedModelName(): string
+    {
+        $author = $this->authorName();
+        $plugin = $this->pluginName();
+        $model  = $this->modelName();
+        return "$author\\$plugin\\Models\\$model";
     }
 
     public function crudControllerName(): string
