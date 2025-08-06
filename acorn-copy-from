@@ -1,0 +1,46 @@
+#!/bin/bash
+
+rm -rf scripts/*
+cp -rL /var/www/scripts/* scripts/
+
+# ------------------------------ From general
+plugins=/var/www/university/plugins/acorn
+modules=/var/www/university/modules
+
+rm -rf dbauth/*
+cp -rL $modules/dbauth/* dbauth/
+
+rm -rf infrastructure/*
+cp -rL $modules/acorn/* infrastructure/
+
+rm -rf location/*
+cp -rL $plugins/location/* location/
+
+rm -rf reporting/*
+cp -rL $plugins/reporting/* reporting/
+
+rm -rf messaging/*
+cp -rL $plugins/messaging/* messaging/
+
+rm -rf user/*
+cp -rL $plugins/user/* user/
+
+rm -rf calendar/*
+cp -rL $plugins/calendar/* calendar/
+
+rm -rf rtler/*
+cp -rL $plugins/rtler/* rtler/
+
+rm -rf backendlocalization/*
+cp -rL $plugins/backendlocalization/* backendlocalization/
+
+# ------------------------------- Databases
+database=justice
+#psql $database -c "delete from system_event_logs;" 2> /dev/null
+#psql $database -c "truncate acorn_calendar_events cascade;" 2> /dev/null
+pg_dump --schema-only --clean --if-exists $database > scripts/SQL/databases/example.sql
+
+database=university
+#psql $database -c "delete from system_event_logs;" 2> /dev/null
+#psql $database -c "delete from acorn_messaging_message_instance;delete from acorn_calendar_instances;truncate acorn_calendar_event_part_user;truncate acorn_calendar_event_part_user_group;ALTER TABLE public.acorn_calendar_event_parts    DISABLE TRIGGER tr_acorn_calendar_events_generate_event_instances;delete from acorn_calendar_event_parts;ALTER TABLE public.acorn_calendar_event_parts ENABLE TRIGGER tr_acorn_calendar_events_generate_event_instances;" 2> /dev/null
+pg_dump --schema-only --clean --if-exists $database > scripts/SQL/databases/$database.sql

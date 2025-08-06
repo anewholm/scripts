@@ -1,0 +1,8 @@
+#!/bin/bash
+find ./*/ -not -path '*/.git/*' -type f -exec sed -i -r 's/Acorn ?[Aa]ssociated/Acorn/g' {} \;
+find ./*/ -not -path '*/.git/*' -type f -exec sed -i -r 's/acorn ?[Aa]ssociated/acorn/g' {} \;
+find ./*/ -not -path '*/.git/*' -type f -exec sed -i -r 's/@corn ?[Aa]ssociated/@corn/g' {} \;
+find ./*/ -not -path '*/.git/*' -type f -exec sed -i -r 's/@corn ?[Aa]ssociated/@corn/g' {} \;
+find ./*/ -not -path '*/.git/*' -type f -exec sed -i -r 's/\.\.\.n?associated/acorn/g' {} \; # database logs
+find ./*/ -not -path '*/.git/*' -type f -exec sed -i -r 's/[Ss]anchez/sz/g' {} \;
+grep -rioE --exclude-dir=.git --color acorn.?associated
