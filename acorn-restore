@@ -16,7 +16,7 @@ elif [ -f .env ]; then
 		echo "Port $port selected from Laravel .env"
 	fi
 fi
-version=`psql -p $port -d postgres -c "select version()" | head -n 3 | tail -n -1 | cut -d ' ' -f 3 | cut -d ' ' -f 3`
+version=`sudo -u postgres psql -p $port -d postgres -c "select version()" | head -n 3 | tail -n -1 | cut -d ' ' -f 3 | cut -d ' ' -f 3`
 
 # ------------------------------------------------- DB .sql backups
 latest=`ls -t1 *.sql 2> /dev/null | head -n 1`

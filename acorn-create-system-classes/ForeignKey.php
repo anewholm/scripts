@@ -59,8 +59,14 @@ class ForeignKey {
     // Translation arrays
     public $labels;
     public $labelsPlural;
+
     public $globalScope; // Chaining from|to
     public $hasManyDeepInclude; // Process this non 1-1 has many deep link
+    public $showFilter; // In relationmanager, default: TRUE
+    public $showSearch; // In relationmanager, default: TRUE
+    public $dependsOn;  // Array of field names
+    public $flags; // e.g. hierarchy flag for global scope
+
 
     public static function fromRow(Column &$column, bool $to, array $row)
     {

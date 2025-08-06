@@ -188,6 +188,14 @@ class Column {
     public $tabLocation; // primary|secondary|tertiary
     public $advanced; // Toggle advanced to show
 
+    // DataTable field type
+    public $adding;
+    public $searching;
+    public $deleting;
+    public $columns;
+    public $height;
+    public $keyFrom;
+
     // Translation arrays
     public $labels;
     public $labelsPlural;

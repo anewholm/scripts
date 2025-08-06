@@ -151,6 +151,8 @@ ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_course_entry_requirements DRO
 ALTER TABLE IF EXISTS ONLY public.acorn_location_addresses DROP CONSTRAINT IF EXISTS gps_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_areas DROP CONSTRAINT IF EXISTS gps_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_gps DROP CONSTRAINT IF EXISTS gps_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_users DROP CONSTRAINT IF EXISTS global_scope_entity_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_users DROP CONSTRAINT IF EXISTS global_scope_academic_year_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_scores DROP CONSTRAINT IF EXISTS exam_material_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_instances DROP CONSTRAINT IF EXISTS exam_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS exam_id;
@@ -358,9 +360,10 @@ SELECT
     NULL::character varying(1024) AS student_code,
     NULL::uuid AS academic_year_semester_id,
     NULL::uuid AS academic_year_id,
-    NULL::character varying(1024) AS filename,
+    NULL::character varying AS filename,
     NULL::uuid AS primary_language_id,
     NULL::uuid AS course_user_group_id,
+    NULL::uuid AS organisation_user_group_id,
     NULL::uuid AS course_id,
     NULL::character varying(255) AS course_code,
     NULL::uuid AS course_type_id,
@@ -368,6 +371,7 @@ SELECT
     NULL::uuid AS exam_id,
     NULL::json AS scores,
     NULL::json AS score_names,
+    NULL::double precision AS sum,
     NULL::bigint AS attendance,
     NULL::double precision AS result,
     NULL::double precision AS minimum,
@@ -376,6 +380,8 @@ SELECT
     NULL::boolean AS bakeloria_passed,
     NULL::character varying(2048) AS bakeloria_passed_resolved_expression,
     NULL::boolean AS passed,
+    NULL::character varying(1024) AS legacy_import_student_type,
+    NULL::character varying(20248) AS legacy_import_birth_place,
     NULL::double precision AS legacy_import_the_total,
     NULL::double precision AS legacy_import_final_avg,
     NULL::character varying(1024) AS legacy_import_result,
@@ -386,10 +392,27 @@ SELECT
     NULL::character varying(255) AS password,
     NULL::character varying(255) AS email,
     NULL::timestamp without time zone AS birth_date,
+    NULL::character varying(255) AS name,
+    NULL::character varying(255) AS surname,
     NULL::character varying(1024) AS fathers_name,
     NULL::character varying(1024) AS mothers_name,
     NULL::"char" AS gender,
-    NULL::"char" AS marital_status;
+    NULL::"char" AS marital_status,
+    NULL::json AS printed;
+CREATE OR REPLACE VIEW public.acorn_university_student_lookups AS
+SELECT
+    NULL::uuid AS id,
+    NULL::uuid AS student_id,
+    NULL::uuid AS school_id,
+    NULL::uuid AS course_id,
+    NULL::json AS course_year_ids,
+    NULL::character varying(1024) AS legacy_import_student_type,
+    NULL::character varying(1024) AS code,
+    NULL::uuid AS academic_year_id,
+    NULL::character varying(255) AS name,
+    NULL::character varying(255) AS surname,
+    NULL::text AS full_name,
+    NULL::character varying(1024) AS fathers_name;
 DROP INDEX IF EXISTS public.winter_translate_messages_code_pre_2_1_0_index;
 DROP INDEX IF EXISTS public.winter_translate_messages_code_index;
 DROP INDEX IF EXISTS public.winter_translate_locales_name_index;
@@ -416,7 +439,9 @@ DROP INDEX IF EXISTS public.system_files_attachment_id_index;
 DROP INDEX IF EXISTS public.system_event_logs_level_index;
 DROP INDEX IF EXISTS public.sessions_user_id_index;
 DROP INDEX IF EXISTS public.sessions_last_activity_index;
+DROP INDEX IF EXISTS public.score;
 DROP INDEX IF EXISTS public.role_code_index;
+DROP INDEX IF EXISTS public.result_name_btree;
 DROP INDEX IF EXISTS public.reset_code_index;
 DROP INDEX IF EXISTS public.rainlab_location_states_name_index;
 DROP INDEX IF EXISTS public.rainlab_location_states_country_id_index;
@@ -450,6 +475,8 @@ DROP INDEX IF EXISTS public.fki_language_id;
 DROP INDEX IF EXISTS public.fki_interview_id;
 DROP INDEX IF EXISTS public.fki_identity_type_id;
 DROP INDEX IF EXISTS public.fki_high_school_course_id;
+DROP INDEX IF EXISTS public.fki_global_scope_entity_id;
+DROP INDEX IF EXISTS public.fki_global_scope_academic_year_id;
 DROP INDEX IF EXISTS public.fki_exam_material_id;
 DROP INDEX IF EXISTS public.fki_exam_id;
 DROP INDEX IF EXISTS public.fki_exam_centre_id;
@@ -768,6 +795,7 @@ DROP SEQUENCE IF EXISTS public.backend_user_groups_id_seq;
 DROP TABLE IF EXISTS public.backend_user_groups;
 DROP SEQUENCE IF EXISTS public.backend_access_log_id_seq;
 DROP TABLE IF EXISTS public.backend_access_log;
+DROP TABLE IF EXISTS public.acorn_user_users;
 DROP TABLE IF EXISTS public.acorn_user_user_languages;
 DROP VIEW IF EXISTS public.acorn_user_user_group_version_usages;
 DROP TABLE IF EXISTS public.acorn_user_user_group_types;
@@ -777,15 +805,12 @@ DROP TABLE IF EXISTS public.acorn_user_roles;
 DROP TABLE IF EXISTS public.acorn_user_role_user;
 DROP TABLE IF EXISTS public.acorn_user_religions;
 DROP TABLE IF EXISTS public.acorn_user_mail_blockers;
-DROP TABLE IF EXISTS public.acorn_user_languages;
 DROP TABLE IF EXISTS public.acorn_user_ethnicities;
 DROP TABLE IF EXISTS public.acorn_university_universities;
 DROP TABLE IF EXISTS public.acorn_university_teachers;
 DROP TABLE IF EXISTS public.acorn_university_student_status;
 DROP VIEW IF EXISTS public.acorn_university_student_lookups;
-DROP TABLE IF EXISTS public.acorn_user_users;
 DROP TABLE IF EXISTS public.acorn_university_schools;
-DROP VIEW IF EXISTS public.acorn_university_qualified_courses;
 DROP TABLE IF EXISTS public.acorn_university_faculties;
 DROP TABLE IF EXISTS public.acorn_university_education_authorities;
 DROP TABLE IF EXISTS public.acorn_university_departments;
@@ -822,7 +847,9 @@ DROP TABLE IF EXISTS public.acorn_university_courses;
 DROP VIEW IF EXISTS public.acorn_exam_results;
 DROP TABLE IF EXISTS public.acorn_exam_result_internal2s;
 DROP VIEW IF EXISTS public.acorn_exam_certificates;
+DROP TABLE IF EXISTS public.acorn_user_languages;
 DROP VIEW IF EXISTS public.acorn_exam_data_entry_scores;
+DROP VIEW IF EXISTS public.acorn_created_bys;
 DROP VIEW IF EXISTS public.acorn_calendar_upcreated_ats;
 DROP TABLE IF EXISTS public.acorn_university_student_statuses;
 DROP TABLE IF EXISTS public.acorn_university_student_notes;
@@ -884,7 +911,7 @@ DROP FUNCTION IF EXISTS public.fn_acorn_user_code(name character varying, word i
 DROP FUNCTION IF EXISTS public.fn_acorn_university_table_counts(_schema character varying);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_student_identities_current();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_student_codes_current();
-DROP FUNCTION IF EXISTS public.fn_acorn_university_scope_entities(p_entity_id uuid, p_setting character varying);
+DROP FUNCTION IF EXISTS public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_legacy_import_county(p_county character varying);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying);
@@ -951,7 +978,6 @@ DROP FUNCTION IF EXISTS public.fn_acorn_calendar_create_event(calendar_id uuid, 
 DROP FUNCTION IF EXISTS public.fn_acorn_avg(VARIADIC ints double precision[]);
 DROP FUNCTION IF EXISTS public.fn_acorn_avg();
 DROP FUNCTION IF EXISTS public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying);
-DROP TYPE IF EXISTS public.acorn_exam_expression_detail;
 DROP EXTENSION IF EXISTS postgres_fdw;
 DROP EXTENSION IF EXISTS pg_trgm;
 DROP EXTENSION IF EXISTS http;
@@ -1066,20 +1092,6 @@ CREATE EXTENSION IF NOT EXISTS postgres_fdw WITH SCHEMA public;
 
 COMMENT ON EXTENSION postgres_fdw IS 'foreign-data wrapper for remote PostgreSQL servers';
 
-
---
--- Name: acorn_exam_expression_detail; Type: TYPE; Schema: public; Owner: sz
---
-
-CREATE TYPE public.acorn_exam_expression_detail AS (
-	expression text,
-	minimum double precision,
-	maximum double precision,
-	required boolean
-);
-
-
-ALTER TYPE public.acorn_exam_expression_detail OWNER TO sz;
 
 --
 -- Name: fn_acorn_add_websockets_triggers(character varying, character varying); Type: FUNCTION; Schema: public; Owner: university
@@ -1802,6 +1814,14 @@ begin
 						 JOIN acorn_user_users u ON s.user_id = u.id
 						 LEFT JOIN acorn_user_user_languages ul on ul.user_id = u.id and ul.current
 						 LEFT JOIN acorn_user_languages l on ul.language_id = l.id
+						where (p_student_number = '.*' or s.number = p_student_number::integer);
+					when p_attribute = 'type' then
+						-- :student/345/2023-2024/type/regular: => 1|0
+						-- p_check required
+						-- returns 1 if check compares, 0 otherwise
+						-- Default still dictates the result if there is no student locale
+					    select array_agg((s.legacy_import_student_type = p_check)::int) into p_results 
+					     FROM acorn_university_students s
 						where (p_student_number = '.*' or s.number = p_student_number::integer);
 					else 
 						NULL;
@@ -2825,6 +2845,7 @@ ALTER FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid,
 COMMENT ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) IS 'labels:
   en: Refresh results
 result-action: refresh
+advanced: true
 comment:
   en: >
     The final results are calculated and cached. 
@@ -4478,6 +4499,10 @@ declare
 	p_year_11_entity_id uuid := '68054952-5190-11f0-bc04-73801473724c'::uuid;
 	p_year_9_entity_id uuid := '6805498e-5190-11f0-bc05-f77ff88dbc17'::uuid;
 
+	p_standard text[] := ARRAY['Maths', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Philosophy', 'Sociology', 'Jineologi', 'Sport', 'Art'];
+	p_language text[] := ARRAY['Community Language', 'Kurdish', 'English', 'Arabic'];
+	p_normal_certificates text[] := ARRAY['Science', 'Literature'];
+
 	-- Inserting
 	p_uuid uuid;
 	p_uuids uuid[];
@@ -4528,10 +4553,18 @@ begin
 	if exists(
 		select * from university_mofadala_baccalaureate_marks bm
 			where not exists(
-				select * from university_mofadala_type_certificates ct where bm.certificate = ct.name
+				select * from university_mofadala_type_certificates ct where initcap(bm.certificate) = ct.name
 			)
 	) then 
 		raise exception 'Un-registered certificate names(university_mofadala_type_certificates) in university_mofadala_baccalaureate_marks' using ERRCODE = 'CIM05';
+	end if;
+
+	-- Check legacy_import_student_type validity
+	if exists(
+		select * from university_mofadala_baccalaureate_marks bm
+			where not student_type in('regular', 'irregular') or student_type is null
+	) then 
+		raise exception 'Un-registered student types in university_mofadala_baccalaureate_marks' using ERRCODE = 'CIM06';
 	end if;
 
 	-- Bakeloria target processing years from university-acceptance database
@@ -4584,6 +4617,33 @@ begin
 		if p_messages then raise notice 'Spurious User Group name attribute translations removed'; end if;
 	end if;
 
+	-- ######################################### Check add location info
+	-- p_area_type_city|canton|country
+	insert into acorn_location_area_types(id, name, created_by_user_id)
+		values(p_area_type_city, 'City', p_created_by_user_id) on conflict on constraint name do nothing;
+	insert into acorn_location_area_types(id, name, created_by_user_id)
+		values(p_area_type_canton, 'Canton', p_created_by_user_id) on conflict on constraint name do nothing;
+	insert into acorn_location_area_types(id, name, created_by_user_id)
+		values(p_area_type_country, 'Country', p_created_by_user_id) on conflict on constraint name do nothing;
+	-- CONSTRAINT: acorn_location_areas.area_area_type: name-area_type_id
+	insert into acorn_location_areas(name, area_type_id, parent_area_id, gps_id, created_by_user_id)
+		values('Syria', p_area_type_country, NULL, NULL, p_created_by_user_id) on conflict on constraint area_area_type do nothing
+		returning id into p_uuid;
+	-- 5 x cantons (Same as School names)
+	-- Add translations manually
+	insert into acorn_location_areas(name, area_type_id, parent_area_id, gps_id, created_by_user_id)
+		values('Cizîrê', p_area_type_canton, p_uuid, NULL, p_created_by_user_id) on conflict on constraint area_area_type do nothing;
+	insert into acorn_location_areas(name, area_type_id, parent_area_id, gps_id, created_by_user_id)
+		values('Tebqa', p_area_type_canton, p_uuid, NULL, p_created_by_user_id) on conflict on constraint area_area_type do nothing;
+	insert into acorn_location_areas(name, area_type_id, parent_area_id, gps_id, created_by_user_id)
+		values('Efrîn û şehba', p_area_type_canton, p_uuid, NULL, p_created_by_user_id) on conflict on constraint area_area_type do nothing;
+	insert into acorn_location_areas(name, area_type_id, parent_area_id, gps_id, created_by_user_id)
+		values('Fûrat', p_area_type_canton, p_uuid, NULL, p_created_by_user_id) on conflict on constraint area_area_type do nothing;
+	insert into acorn_location_areas(name, area_type_id, parent_area_id, gps_id, created_by_user_id)
+		values('Reqa', p_area_type_canton, p_uuid, NULL, p_created_by_user_id) on conflict on constraint area_area_type do nothing;
+	insert into acorn_location_areas(name, area_type_id, parent_area_id, gps_id, created_by_user_id)
+		values('DêrElzor', p_area_type_canton, p_uuid, NULL, p_created_by_user_id) on conflict on constraint area_area_type do nothing;
+	
 	-- ######################################### Top Level Node EA for Rojava
 	-- no parent
 	if not exists(select * from acorn_university_entities where id = p_top_node_entity_id) then 
@@ -4714,9 +4774,6 @@ begin
 					select distinct(fn_acorn_university_legacy_import_county(county)) as name
 					from university_mofadala_baccalaureate_marks
 				) bm on ugs.code = fn_acorn_user_code(bm.name)
-				on conflict(import_source) do update
-					-- These id will still be included
-					set import_source = regexp_replace(acorn_university_hierarchies.import_source, '^[^ ]+', p_imported)
 				returning id
 		)
 			select array_agg(inserted.id) into p_hi_uuids from inserted;
@@ -4729,35 +4786,35 @@ begin
 		-- Science, Literature, etc.
 		-- p_course_type_middle_school uuid := '65ddc034-4e96-11f0-91c1-3f7ba40fcde3'::uuid;
 		-- p_course_type_high_school := 'a5d8016a-78ad-4296-aac7-fc5332045764'::uuid;
-		-- Example: 
-		--   "Science"
-		--   "Literature"
-		--   "Economics"
-		--   "Agriculture"
-		--   "Medical"
-		--   "Apprentice - Computer"
-		--   "Apprentice - Mechanical"
-		--   "Apprentice - Electronic"
-		--   "Apprentice - Electrical"
+		-- Example: 2023-2024 Name => 2024-2025 Name
+		--   Science => Science
+		--   Literature  => Literature
+		-- New in 2025
+		-- FROM university_mofadala_type_certificates!!
+		--   Economics => Commerce
+		--   Agriculture => Agriculture
+		--   Medical => Medicine
+		--   Apprentice - Computer => Computer
+		--   Apprentice - Mechanical => Mechanics
+		--   Apprentice - Electrical => Electricity
+		--   Apprentice - Electronic => Electronics
 		WITH inserted as (
+		    -- Each certificate(type_certificate) under each school(county)
 			insert into acorn_user_user_groups(name, code, description, import_source)
-				select initcap(ct.name), 
-					fn_acorn_university_legacy_import_certificate_code(county.name, ct.name), 
-					ct.name || ' course ' || ' for ' || county.name,
-					p_imported || ' university_mofadala_type_certificates:' || ct.id || ' county:' || initcap(county.name)
-				from university_mofadala_type_certificates ct,
+				select initcap(cert.name), 
+					fn_acorn_university_legacy_import_certificate_code(county.name, cert.name), 
+					cert.name || ' course ' || ' for ' || county.name, -- Description
+					p_imported || ' university_mofadala_type_certificates:' || cert.id || ' county:' || initcap(county.name)
+				from university_mofadala_type_certificates cert,
 				(
 					select distinct(fn_acorn_university_legacy_import_county(county)) as name
 					from university_mofadala_baccalaureate_marks
 				) county
-				on conflict(code) do update
-					-- These id will still be included
-					set import_source = regexp_replace(acorn_user_user_groups.import_source, '^[^ ]+', p_imported)
 				returning id
 			)
 			select array_agg(inserted.id) into p_uuids from inserted;
 		if p_messages then raise notice '% Bakeloria Course User Groups inserted/updated (for each county)', array_upper(p_uuids, 1); end if;
-		if array_upper(p_uuids, 1) < 9 then raise exception 'Suspicious incomplete feed of bakeloria courses %', array_upper(p_uuids, 1) using ERRCODE = 'CIM11'; end if;
+		if array_upper(p_uuids, 1) < 8 then raise exception 'Suspicious incomplete feed of bakeloria courses %', array_upper(p_uuids, 1) using ERRCODE = 'CIM11'; end if;
 		if array_upper(p_uuids, 1) is null then raise warning 'Bakeloria courses for region schools already exist'; 
 		else
 			-- Translation (UserGroup::name level)
@@ -4768,21 +4825,35 @@ begin
 					'Acorn\User\Models\UserGroup' as model_type, 
 					'{"name":"' || 
 						case
+						    -- Always
 							when ugs.name = 'Science'     then 'Zanistî'
 							when ugs.name = 'Literature'  then 'Wejê'
+							-- Old names just in case
 							when ugs.name = 'Economics'   then 'Aborî'
-							when ugs.name = 'Agriculture' then 'Erdnasî'
 							when ugs.name = 'Medical'     then 'Pizişkî'
 							when ugs.name = 'Apprentice - Computer'   then 'Şagird - Hasabî'
 							when ugs.name = 'Apprentice - Mechanical' then 'Şagird - Mekanîkî'
 							when ugs.name = 'Apprentice - Electronic' then 'Şagird - Elektronîkî'
 							when ugs.name = 'Apprentice - Electrical' then 'Şagird - Elektrîkî'
+							-- New in 2025
+							when ugs.name = 'Commerce'    then 'Aborî'
+							when ugs.name = 'Agriculture' then 'Erdnasî'
+							when ugs.name = 'Medicine'    then 'Pizişkî'
+							when ugs.name = 'Computer'    then 'Hasabî'
+							when ugs.name = 'Mechanics'   then 'Mekanîkî'
+							when ugs.name = 'Electricity' then 'Elektrîkî'
+							when ugs.name = 'Electronic'  then 'Elektronîkî'
+							when ugs.name = 'Electronics' then 'Elektronîkî'
 							else ''
 						end
 					|| '","description":""}' as attribute_data
 				FROM acorn_user_user_groups ugs
 				-- Actually we translate anything with these names, if not already translated
-				where ugs.name in('Science', 'Literature', 'Economics', 'Agriculture', 'Medical', 'Apprentice - Computer', 'Apprentice - Mechanical', 'Apprentice - Electronic', 'Apprentice - Electrical')
+				where ugs.name in('Science', 'Literature', 
+					'Economics', 'Agriculture', 'Medical', 
+					'Apprentice - Computer', 'Apprentice - Mechanical', 'Apprentice - Electronic', 'Apprentice - Electrical',
+					'Commerce', 'Medicine', 'Computer', 'Mechanics', 'Electricity', 'Electronics'
+				)
 				on conflict on constraint model_locale do update
 					set model_id = EXCLUDED.id;
 				
@@ -4792,21 +4863,35 @@ begin
 					'Acorn\User\Models\UserGroup' as model_type, 
 					'{"name":"' || 
 						case
-							when ugs.name = 'Science'     then 'العلوم'
-							when ugs.name = 'Literature'  then 'الأدب'
-							when ugs.name = 'Economics'   then 'الاقتصاد'
-							when ugs.name = 'Agriculture' then 'الزراعة'
-							when ugs.name = 'Medical'     then 'الطب'
-							when ugs.name = 'Apprentice - Computer'   then 'الكمبيوتر'
-							when ugs.name = 'Apprentice - Mechanical' then 'الميكانيكا'
-							when ugs.name = 'Apprentice - Electronic' then 'الإلكترونيات'
-							when ugs.name = 'Apprentice - Electrical' then 'الكهرباء'
+						    -- Always
+							when ugs.name = 'Science'     then 'علمي'
+							when ugs.name = 'Literature'  then 'ادبي'
+							-- Old names just in case
+							when ugs.name = 'Economics'   then 'اقتصاد'
+							when ugs.name = 'Medical'     then 'طب'
+							when ugs.name = 'Apprentice - Computer'   then 'كمبيوتر'
+							when ugs.name = 'Apprentice - Mechanical' then 'ميكانيك'
+							when ugs.name = 'Apprentice - Electronic' then 'إلكترون'
+							when ugs.name = 'Apprentice - Electrical' then 'كهرباء'
+							-- New in 2025
+							when ugs.name = 'Commerce'    then 'الاقتصاد'
+							when ugs.name = 'Agriculture' then 'زراعة'
+							when ugs.name = 'Medicine'    then 'طب'
+							when ugs.name = 'Computer'    then 'كمبيوتر'
+							when ugs.name = 'Mechanics'   then 'ميكانيك'
+							when ugs.name = 'Electricity' then 'كهرباء'
+							when ugs.name = 'Electronic'  then 'الإلكترونيات'
+							when ugs.name = 'Electronics' then 'الإلكترونيات'
 							else ''
 						end
 					|| '","description":""}' as attribute_data
 				FROM acorn_user_user_groups ugs
 				-- Actually we translate anything with these names, if not already translated
-				where ugs.name in('Science', 'Literature', 'Economics', 'Agriculture', 'Medical', 'Apprentice - Computer', 'Apprentice - Mechanical', 'Apprentice - Electronic', 'Apprentice - Electrical')
+				where ugs.name in('Science', 'Literature', 
+					'Economics', 'Agriculture', 'Medical', 
+					'Apprentice - Computer', 'Apprentice - Mechanical', 'Apprentice - Electronic', 'Apprentice - Electrical',
+					'Commerce', 'Medicine', 'Computer', 'Mechanics', 'Electricity', 'Electronics'
+				)
 				on conflict on constraint model_locale do update
 					set model_id = EXCLUDED.id;
 
@@ -4891,9 +4976,9 @@ begin
 			('ku', '680548d0-5190-11f0-bc02-fff4f307a4bb'::uuid, 'Acorn\User\Models\UserGroup', '{"name":"Salê 9","description":""}')
 			on conflict on constraint model_locale do nothing;
 		insert into winter_translate_attributes(locale, model_id, model_type, attribute_data) values
-			('ar', '680546dc-5190-11f0-bc00-2b9974d04458'::uuid, 'Acorn\User\Models\UserGroup', '{"name":"10 سالي","description":""}'),
-			('ar', '6805488a-5190-11f0-bc01-dbc094fbb388'::uuid, 'Acorn\User\Models\UserGroup', '{"name":"11 سالي","description":""}'),
-			('ar', '680548d0-5190-11f0-bc02-fff4f307a4bb'::uuid, 'Acorn\User\Models\UserGroup', '{"name":"9 سالي","description":""}')
+			('ar', '680546dc-5190-11f0-bc00-2b9974d04458'::uuid, 'Acorn\User\Models\UserGroup', '{"name":"10 الصف","description":""}'),
+			('ar', '6805488a-5190-11f0-bc01-dbc094fbb388'::uuid, 'Acorn\User\Models\UserGroup', '{"name":"11 الصف","description":""}'),
+			('ar', '680548d0-5190-11f0-bc02-fff4f307a4bb'::uuid, 'Acorn\User\Models\UserGroup', '{"name":"9 الصف","description":""}')
 			on conflict on constraint model_locale do nothing;
 		if p_messages then raise notice 'Year 9,10,11 translations Checked/inserted'; end if;
 		
@@ -4971,6 +5056,28 @@ begin
 		);
 	*/
 
+	-- TODO: Create place_and_date_of_birth Locations
+	-- NOTE: 
+	--   v2 import uses place_and_date_of_birth as place only. birth_date is a new, separate field
+	--   v1 import has dirty data in place_and_date_of_birth, Kurdish and Arabic language and dates on either side
+	--   تربسبيه 01/01/2005
+	--   Gundê Sîha Mezin 01/01/2006
+	--   Kobanî 25.10.2006
+	--   2006/05/01 Girbelek
+	-- select *, 
+	-- 	fn_acorn_calendar_is_date(a.birth_date, NULL)
+	-- 	from (
+	-- 		SELECT place_and_date_of_birth,
+	-- 		case when place_and_date_of_birth ~ '(19|20)[0-9]{2}' then
+	-- 			regexp_replace(place_and_date_of_birth, ' *[\\0-9/.-]{2,} *', '', 'g')
+	-- 		else place_and_date_of_birth end as birth_place,
+	-- 		case when place_and_date_of_birth ~ '(19|20)[0-9]{2}' then
+	-- 			regexp_replace(place_and_date_of_birth, ' *([^\\0-9/.]{2,}) *', '', 'g')
+	-- 		else place_and_date_of_birth end as birth_date
+	-- 		FROM public.university_mofadala_baccalaureate_marks
+	-- 	) a
+	-- 	where fn_acorn_calendar_is_date(a.birth_date, NULL) is NULL;
+	
 	-- UNIQUE: unique_user
 	-- 'name', 'surname', 'birth_date', 'fathers_name', 'mothers_name', 'gender'
 	-- TODO: This can be used, if necessary to update the import_source on the duplicates
@@ -5065,6 +5172,7 @@ begin
 				(select id from acorn_user_ethnicities e where position(lower(e.name) in lower(regexp_replace(bm.ethnicity, 'ish$|ic$', '', 'g'))) != 0), -- "community"
 				p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
 			from university_mofadala_baccalaureate_marks bm
+			where bm.import_irregularity is null
 			returning id
 		)
 		select array_agg(inserted.id) into p_uuids from inserted;
@@ -5078,14 +5186,14 @@ begin
 				-- Legacy & from new university_mofadala_baccalaureate_marks columns
 				legacy_import_final_avg, legacy_import_passed_primaries, legacy_import_passed_secondaries, legacy_import_attendance,
 				-- TODO: for later
-				legacy_import_school, legacy_import_qeyd, legacy_import_student_type
+				legacy_import_school, legacy_import_qeyd, legacy_import_student_type, legacy_import_birth_place
 			)
 			select u.id, u.import_source,
 				-- Legacy & from university_mofadala_baccalaureate_marks
 				bm.id, bm.result, bm.avg, bm.total_mark,
 				-- Legacy & from new university_mofadala_baccalaureate_marks columns
 				bm.final_avg, bm.passed_primaries = 'P', bm.passed_secondaries = 'P', bm.attendance,
-				school, qeyd, student_type
+				school, qeyd, student_type, place_and_date_of_birth
 			from acorn_user_users u,
 				university_mofadala_baccalaureate_marks bm
 				where u.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
@@ -5120,6 +5228,8 @@ begin
 				FROM university_mofadala_baccalaureate_marks bm
 				inner join acorn_university_students s on s.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
 				inner join acorn_user_languages l on position(lower(l.name) in lower(bm.other_language)) != 0
+				-- Let's not insert the same language twice
+				where position(lower(bm.other_language) in lower(bm.certificate_language)) = 0
 			returning id
 		)
 		select array_agg(inserted.id) into p_uuids from inserted;
@@ -5157,6 +5267,7 @@ begin
 			select s.id, p_top_node_entity_id, bm.code, true, p_created_by_user_id
 			FROM university_mofadala_baccalaureate_marks bm
 			inner join acorn_university_students s on s.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+			where not bm.code is null
 			returning id
 		)
 		select array_agg(inserted.id) into p_uuids from inserted;
@@ -5236,25 +5347,82 @@ begin
 	-- Literature (adabi) & Science (el) Bakeloria, etc.
 	WITH inserted as (
 		insert into acorn_university_materials(id, name, description, material_type_id, created_by_user_id)
+			-- Science
 			select 'cdc800ae-28be-11f0-a8a6-334555029afd'::uuid, 'Math',       NULL, p_material_type_normal_id, p_created_by_user_id union all
 			select 'd675a530-28be-11f0-a2c9-9bb10fa15bd3'::uuid, 'Biology',    NULL, p_material_type_normal_id, p_created_by_user_id union all
 			select 'dd494c0e-28be-11f0-94e1-a7b2083dd749'::uuid, 'Physics',    NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select 'e427a282-28be-11f0-8856-a7abd8a449c5'::uuid, 'Geography',  NULL, p_material_type_normal_id, p_created_by_user_id union all
 			select 'ecf3dae8-28be-11f0-91f7-f31527b6ca23'::uuid, 'Chemistry',  NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select 'f3c853a8-28be-11f0-8938-73b157eb85a1'::uuid, 'Kurdish',    NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select 'fa61ead0-28be-11f0-9fb3-2bbf7e1c7c7c'::uuid, 'English',    NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '005bba60-28bf-11f0-bf7f-cff663f8102b'::uuid, 'Arabic',     NULL, p_material_type_normal_id, p_created_by_user_id union all
+			-- Literature
+			select 'e427a282-28be-11f0-8856-a7abd8a449c5'::uuid, 'Geography',  NULL, p_material_type_normal_id, p_created_by_user_id union all
 			select 'd43af2a2-2bd9-11f0-b08b-5fd59b502470'::uuid, 'History',    NULL, p_material_type_normal_id, p_created_by_user_id union all
 			select 'd8168f4e-2bd9-11f0-97a5-1b42cf640b5b'::uuid, 'Philosophy', NULL, p_material_type_normal_id, p_created_by_user_id union all
 			select 'd84f8434-2bd9-11f0-bfa1-7b92380571bd'::uuid, 'Sociology',  NULL, p_material_type_normal_id, p_created_by_user_id union all
 			select p_jineologi_material, 'Jineologi',  NULL, p_material_type_normal_id, p_created_by_user_id union all
-			-- New
-			select 'b025cfe2-50f3-11f0-96d9-13090f80441e'::uuid, 'Community Language',  NULL, p_material_type_normal_id, p_created_by_user_id union all
 			-- Year 10,11 Bakeloria
 			select '7f5c3dc8-2e53-11f0-8600-6ff513625846'::uuid, 'Year 10',    NULL, p_material_type_normal_id, p_created_by_user_id union all
 			select '7f5c4156-2e53-11f0-8601-43470f236a9e'::uuid, 'Year 11',    NULL, p_material_type_normal_id, p_created_by_user_id union all
 			-- Year 9 Middle school
-			select 'ee22cafe-502e-11f0-90c2-3702c192c6ec'::uuid, 'Year 9',     NULL, p_material_type_normal_id, p_created_by_user_id
+			select 'ee22cafe-502e-11f0-90c2-3702c192c6ec'::uuid, 'Year 9',     NULL, p_material_type_normal_id, p_created_by_user_id union all
+			-- Language
+			select 'b025cfe2-50f3-11f0-96d9-13090f80441e'::uuid, 'Community Language',  NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select 'f3c853a8-28be-11f0-8938-73b157eb85a1'::uuid, 'Kurdish',    NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select 'fa61ead0-28be-11f0-9fb3-2bbf7e1c7c7c'::uuid, 'English',    NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '005bba60-28bf-11f0-bf7f-cff663f8102b'::uuid, 'Arabic',     NULL, p_material_type_normal_id, p_created_by_user_id union all
+			
+			-- Medicine
+			select '9f7d3005-1327-40a4-9d99-ad83d2358741'::uuid, 'Physics and Chemistry', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d3043-29c9-4a93-9417-374158b3fb10'::uuid, 'Anatomy', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d3073-300e-44a0-aa45-b738e474e871'::uuid, 'Nursing', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d30cd-6ceb-4841-bfd3-5b7de5f8085f'::uuid, 'Rays', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d310c-48de-40c8-a5a8-b9c406a779de'::uuid, 'Anesthetization', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d3139-9d3f-4965-970c-972c8824c6b4'::uuid, 'Physical therapy', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d3165-47e2-4239-9373-6f5bb82464a1'::uuid, 'Pharmacy', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d319d-bf6f-4662-a864-de0c7c1f35a0'::uuid, 'Lab', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			
+			-- Mechanics
+			select '9f7d3210-28c4-4b3d-a914-568d1b2b7987'::uuid, 'Internal Combustion Engines', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d32e0-2739-4ad6-9d1b-253a034c1ac2'::uuid, 'Mechanical Engineering Drawing 3', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d3312-291e-41a9-a5fe-e297d597e2dc'::uuid, 'Vehicle control systems', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d3342-ed04-4edd-a956-da51c02f58f4'::uuid, 'Diesel fuel injection systems', NULL, p_material_type_normal_id, p_created_by_user_id union all
+
+			-- Electricity
+			select '9f7d35eb-1782-4478-9e13-cc08eac51af5'::uuid, 'Electrical appliances 2', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d3615-0c25-4950-b326-01e832505ccc'::uuid, 'Automated command and control', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d363a-d062-4f98-8b96-6a8fdaa7e6eb'::uuid, 'Electrical Engineering Drawing 3', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d5a21-3c5c-4242-a091-5a3bf4fd829a'::uuid, 'Electronics 3', NULL, p_material_type_normal_id, p_created_by_user_id union all
+
+			-- Computer
+			select '9f83484d-e6cb-49c3-994b-fdb976ceba92'::uuid, 'Web Design', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d3661-f29f-4b5c-bf18-b49df3d424c7'::uuid, 'Hardware and software maintenance 2', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d368c-0ca7-4f3a-abc5-7991ce322b9f'::uuid, 'Programming 3', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d36b3-24d8-4537-a12b-a666197847c1'::uuid, 'Network management', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d36da-d87f-4fe2-83fe-fb6269b26c7b'::uuid, 'Computer applications', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			
+			-- Commerce
+			select '9f7d3700-135b-4322-9c21-aa8ad1e49c1e'::uuid, 'Marketing', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d3735-b592-45f9-bb09-f3cb237c1f76'::uuid, 'Bank accounting', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d375d-0c8d-4587-81d2-208632503d48'::uuid, 'Financial Institutions Accounting', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d3835-0cdf-487b-8daf-846854567178'::uuid, 'Private accounting', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d3861-f5b4-4e32-8de6-613fa2935b32'::uuid, 'Computer', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d3886-ce95-4120-bf5e-c26355e1cc6d'::uuid, 'Financial Mathematics', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d38a9-a00b-45a7-88dc-e1ca69b0f92d'::uuid, 'Statistics', NULL, p_material_type_normal_id, p_created_by_user_id union all
+
+			-- Agriculture
+			select '9f7d38d4-7ee0-432a-a613-13f1e8fc470d'::uuid, 'Food industries', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d38fb-2d86-4697-aaaa-2c7c744d2eed'::uuid, 'Dairy', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d391f-7aff-4a7c-a689-c3c58f72b430'::uuid, 'Gardening', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d3948-80cc-4fd1-bca2-774b7eea6b1a'::uuid, 'Farm animal', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d3976-aa21-471b-8a43-c4c5072e7a85'::uuid, 'Agricultural pests', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f83489a-47d5-47ad-8a11-d877272a51ee'::uuid, 'Micro Organisms', NULL, p_material_type_normal_id, p_created_by_user_id union all
+
+			-- Electronics
+			select '9f8d429b-fd97-437b-9a8f-dfaac8432db2'::uuid, 'Protection and Alarm Systems', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f8d42ca-567a-4106-b583-28281ba8ec35'::uuid, 'Antennas', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f8d42fb-0e1e-4459-8351-cac9a6828060'::uuid, 'Electronic Device Maintenance', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f8d4247-f04c-4bc5-9328-62a186e45574'::uuid, 'Televison', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			
+			select '9f7d3a1a-b218-44a0-b285-c58ed0749a5a'::uuid, 'Sport', NULL, p_material_type_normal_id, p_created_by_user_id union all
+			select '9f7d3a4c-ef31-444d-b9ce-e0277d883c69'::uuid, 'Art', NULL, p_material_type_normal_id, p_created_by_user_id
 			on conflict(id) do nothing
 			returning id
 		)
@@ -5262,7 +5430,9 @@ begin
 	if p_messages then raise notice 'Bakeloria materials checked, % inserted', array_upper(p_uuids, 1); end if;
 
 	-- Year 12 materials only
-	p_bakeloria_materials = ARRAY['cdc800ae-28be-11f0-a8a6-334555029afd'::uuid,
+	p_bakeloria_materials = ARRAY[
+	    -- Old
+	    'cdc800ae-28be-11f0-a8a6-334555029afd'::uuid,
 		'd675a530-28be-11f0-a2c9-9bb10fa15bd3'::uuid,
 		'dd494c0e-28be-11f0-94e1-a7b2083dd749'::uuid,
 		'e427a282-28be-11f0-8856-a7abd8a449c5'::uuid,
@@ -5274,7 +5444,55 @@ begin
 		'd8168f4e-2bd9-11f0-97a5-1b42cf640b5b'::uuid,
 		'd84f8434-2bd9-11f0-bfa1-7b92380571bd'::uuid,
 		p_jineologi_material,
-		'b025cfe2-50f3-11f0-96d9-13090f80441e'::uuid
+		-- New
+		'b025cfe2-50f3-11f0-96d9-13090f80441e'::uuid,
+		'9f7d3005-1327-40a4-9d99-ad83d2358741'::uuid,
+		'9f7d3043-29c9-4a93-9417-374158b3fb10'::uuid,
+		'9f7d3073-300e-44a0-aa45-b738e474e871'::uuid,
+		'9f7d30cd-6ceb-4841-bfd3-5b7de5f8085f'::uuid,
+		'9f7d310c-48de-40c8-a5a8-b9c406a779de'::uuid,
+		'9f7d3139-9d3f-4965-970c-972c8824c6b4'::uuid,
+		'9f7d3165-47e2-4239-9373-6f5bb82464a1'::uuid,
+		'9f7d319d-bf6f-4662-a864-de0c7c1f35a0'::uuid,
+		'9f7d3210-28c4-4b3d-a914-568d1b2b7987'::uuid,
+		'9f7d32e0-2739-4ad6-9d1b-253a034c1ac2'::uuid,
+		'9f7d3312-291e-41a9-a5fe-e297d597e2dc'::uuid,
+		'9f7d3342-ed04-4edd-a956-da51c02f58f4'::uuid,
+		'9f7d35eb-1782-4478-9e13-cc08eac51af5'::uuid,
+		'9f7d3615-0c25-4950-b326-01e832505ccc'::uuid,
+		'9f7d363a-d062-4f98-8b96-6a8fdaa7e6eb'::uuid,
+		'9f7d3661-f29f-4b5c-bf18-b49df3d424c7'::uuid,
+		'9f7d368c-0ca7-4f3a-abc5-7991ce322b9f'::uuid,
+		'9f7d36b3-24d8-4537-a12b-a666197847c1'::uuid,
+		'9f7d36da-d87f-4fe2-83fe-fb6269b26c7b'::uuid,
+		'9f7d3700-135b-4322-9c21-aa8ad1e49c1e'::uuid,
+		'9f7d3735-b592-45f9-bb09-f3cb237c1f76'::uuid,
+		'9f7d375d-0c8d-4587-81d2-208632503d48'::uuid,
+		'9f7d3835-0cdf-487b-8daf-846854567178'::uuid,
+		'9f7d3861-f5b4-4e32-8de6-613fa2935b32'::uuid,
+		'9f7d3886-ce95-4120-bf5e-c26355e1cc6d'::uuid,
+		'9f7d38a9-a00b-45a7-88dc-e1ca69b0f92d'::uuid,
+
+		'9f83484d-e6cb-49c3-994b-fdb976ceba92'::uuid,
+		
+		'9f7d5a21-3c5c-4242-a091-5a3bf4fd829a'::uuid,
+
+		-- Agriculture
+		'9f7d38d4-7ee0-432a-a613-13f1e8fc470d'::uuid,
+		'9f7d38fb-2d86-4697-aaaa-2c7c744d2eed'::uuid,
+		'9f7d391f-7aff-4a7c-a689-c3c58f72b430'::uuid,
+		'9f7d3948-80cc-4fd1-bca2-774b7eea6b1a'::uuid,
+		'9f7d3976-aa21-471b-8a43-c4c5072e7a85'::uuid,
+		'9f83489a-47d5-47ad-8a11-d877272a51ee'::uuid,
+
+		-- Electronics
+		'9f8d429b-fd97-437b-9a8f-dfaac8432db2'::uuid,
+		'9f8d42ca-567a-4106-b583-28281ba8ec35'::uuid,
+		'9f8d42fb-0e1e-4459-8351-cac9a6828060'::uuid,
+		'9f8d4247-f04c-4bc5-9328-62a186e45574'::uuid,
+
+		'9f7d3a1a-b218-44a0-b285-c58ed0749a5a'::uuid,
+		'9f7d3a4c-ef31-444d-b9ce-e0277d883c69'::uuid
 	];
 
 	-- Initially we add all materials to all courses
@@ -5458,7 +5676,7 @@ begin
 				
 				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
 					
-					and m.name = 'Biology'              -- Material name (Mathc, etc.)
+					and m.name = 'Biology'              -- Material name (Math, etc.)
 					and not bm.biology is null
 			returning id
 		)
@@ -5838,6 +6056,1437 @@ begin
 		)
 		select array_agg(inserted.id) into p_uuids from inserted;
 	if p_messages then raise notice '% Baccalaureate Community Language Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.physics_and_chemistry, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Physics and Chemistry'              -- Material name (Mathc, etc.)
+					and not bm.physics_and_chemistry is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.anatomy, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Anatomy'              -- Material name (Mathc, etc.)
+					and not bm.anatomy is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.nursing, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Nursing'              -- Material name (Mathc, etc.)
+					and not bm.nursing is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.rays, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Rays'              -- Material name (Mathc, etc.)
+					and not bm.rays is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.anesthetization, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Anesthetization'              -- Material name (Mathc, etc.)
+					and not bm.anesthetization is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.physical_therapy, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Physical therapy'              -- Material name (Mathc, etc.)
+					and not bm.physical_therapy is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.pharmacy, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Pharmacy'              -- Material name (Mathc, etc.)
+					and not bm.pharmacy is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.lab, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Lab'              -- Material name (Mathc, etc.)
+					and not bm.lab is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.internal_combustion_engines, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Internal Combustion Engines'              -- Material name (Mathc, etc.)
+					and not bm.internal_combustion_engines is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.mechanical_engineering_drawing_3, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Mechanical Engineering Drawing 3'              -- Material name (Mathc, etc.)
+					and not bm.mechanical_engineering_drawing_3 is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.vehicle_control_systems, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Vehicle control systems'              -- Material name (Mathc, etc.)
+					and not bm.vehicle_control_systems is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.diesel_fuel_injection_systems, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Diesel fuel injection systems'              -- Material name (Mathc, etc.)
+					and not bm.diesel_fuel_injection_systems is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.electrical_appliances_2, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Electrical appliances 2'              -- Material name (Mathc, etc.)
+					and not bm.electrical_appliances_2 is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.automated_command_and_control, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Automated command and control'              -- Material name (Mathc, etc.)
+					and not bm.automated_command_and_control is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.electrical_engineering_drawing_3, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Electrical Engineering Drawing 3'              -- Material name (Mathc, etc.)
+					and not bm.electrical_engineering_drawing_3 is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.electronics_3, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Electronics 3'              -- Material name (Mathc, etc.)
+					and not bm.electronics_3 is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.hardware_and_software_maintenance_2, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Hardware and software maintenance 2'              -- Material name (Mathc, etc.)
+					and not bm.hardware_and_software_maintenance_2 is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.programming_3, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Programming 3'              -- Material name (Mathc, etc.)
+					and not bm.programming_3 is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.network_management, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Network management'              -- Material name (Mathc, etc.)
+					and not bm.network_management is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.computer_applications, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Computer applications'              -- Material name (Mathc, etc.)
+					and not bm.computer_applications is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.marketing, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Marketing'              -- Material name (Mathc, etc.)
+					and not bm.marketing is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.bank_accounting, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Bank accounting'              -- Material name (Mathc, etc.)
+					and not bm.bank_accounting is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.financial_institutions_accounting, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Financial Institutions Accounting'              -- Material name (Mathc, etc.)
+					and not bm.financial_institutions_accounting is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.private_accounting, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Private accounting'              -- Material name (Mathc, etc.)
+					and not bm.private_accounting is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.computer, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Computer'              -- Material name (Mathc, etc.)
+					and not bm.computer is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.financial_mathematics, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Financial Mathematics'              -- Material name (Mathc, etc.)
+					and not bm.financial_mathematics is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.statistics, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Statistics'              -- Material name (Mathc, etc.)
+					and not bm.statistics is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.food_industries, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Food industries'              -- Material name (Mathc, etc.)
+					and not bm.food_industries is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.dairy, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Dairy'              -- Material name (Mathc, etc.)
+					and not bm.dairy is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.gardening, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Gardening'              -- Material name (Mathc, etc.)
+					and not bm.gardening is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.farm_animal, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Farm animal'              -- Material name (Mathc, etc.)
+					and not bm.farm_animal is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.agricultural_pests, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Agricultural pests'              -- Material name (Mathc, etc.)
+					and not bm.agricultural_pests is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.sport, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Sport'              -- Material name (Mathc, etc.)
+					and not bm.sport is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.art, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Art'              -- Material name (Mathc, etc.)
+					and not bm.art is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.web_design, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Web Design'              -- Material name (Mathc, etc.)
+					and not bm.web_design is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.micro_organisms, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Micro Organisms'              -- Material name (Mathc, etc.)
+					and not bm.micro_organisms is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.televison, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Televison'              -- Material name (Mathc, etc.)
+					and not bm.televison is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.electronic_device_maintenance, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Electronic Device Maintenance'              -- Material name (Mathc, etc.)
+					and not bm.electronic_device_maintenance is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.antennas, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Antennas'              -- Material name (Mathc, etc.)
+					and not bm.antennas is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.protection_and_alarm_systems, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Protection and Alarm Systems'              -- Material name (Mathc, etc.)
+					and not bm.protection_and_alarm_systems is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	-- ##################################### Set course_materials minimums
+	-- Prune Science and Literature Specializations
+	-- p_standard text[] := ARRAY['Maths', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Philosophy', 'Sociology', 'Jineologi', 'Sport', 'Art'];
+	-- p_language text[] := ARRAY['Community Language', 'Kurdish', 'English', 'Arabic'];
+	-- p_normal_certificates text[] := ARRAY['Science', 'Literature'];
+	/*
+	delete from public.acorn_university_course_materials cm
+		where course_id in(select c.id 
+			from public.acorn_university_courses c
+			inner join public.acorn_university_entities en on c.entity_id = en.id
+			inner join public.acorn_user_user_groups ugs on en.user_group_id = ugs.id
+			where ugs.name in('Science', 'Literature')
+		)
+		and material_id in(select m.id
+			from acorn_university_materials m
+			where array_position(ARRAY['Community Language', 'Kurdish', 'English', 'Arabic'], m.name) is null
+			and   array_position(p_standard, m.name) is null
+		);
+	*/
+	
+	-- All Specializations => 50%
+	update public.acorn_university_course_materials cm
+		set minimum = 50
+		where material_id in(select m.id
+			from acorn_university_materials m
+			where array_position(p_language, m.name) is null
+			and   array_position(p_standard, m.name) is null
+		);
+	-- Specializations => 60%
+	update public.acorn_university_course_materials cm
+		set minimum = 60
+		where course_id in(select c.id 
+			from public.acorn_university_courses c
+			inner join public.acorn_university_entities en on c.entity_id = en.id
+			inner join public.acorn_user_user_groups ugs on en.user_group_id = ugs.id
+			where ugs.name in('Agriculture')
+		)
+		and material_id in(select m.id
+			from acorn_university_materials m
+			where array_position(p_language, m.name) is null
+			and   array_position(p_standard, m.name) is null
+		);
+	-- Kurdish & Arabic => 50%
+	update public.acorn_university_course_materials cm
+		set minimum = 50
+		where course_id in(select c.id 
+			from public.acorn_university_courses c
+			inner join public.acorn_university_entities en on c.entity_id = en.id
+			inner join public.acorn_user_user_groups ugs on en.user_group_id = ugs.id
+			where ugs.name in('Medicine', 'Commerce', 'Agriculture')
+		)
+		and material_id in(select m.id
+			from acorn_university_materials m
+			where not array_position(ARRAY['Kurdish', 'Arabic'], m.name) is null
+		);
+	-- All Other Certificates, all materials required 
+	-- except Network Management
+	update public.acorn_university_course_materials cm
+		set required = true
+		where course_id in(select c.id 
+			from public.acorn_university_courses c
+			inner join public.acorn_university_entities en on c.entity_id = en.id
+			inner join public.acorn_user_user_groups ugs on en.user_group_id = ugs.id
+			-- Other Certificates
+			where array_position(p_normal_certificates, ugs.name) is null
+		)
+		and not material_id in(select m.id
+			from acorn_university_materials m
+			where m.name in('Network management')
+		);
 end;
 $_$;
 
@@ -5870,9 +7519,11 @@ CREATE FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_coun
     AS $$
 	select 'B' 
 		|| fn_acorn_user_code(p_county_name)
-		|| fn_acorn_user_code(replace(replace(p_certificate_name, 
+		|| fn_acorn_user_code(replace(replace(replace(replace(p_certificate_name, 
 			'Electrical', 'L'), 
-			'Apprentice - ', 'AP')
+			'Electricity', 'L'),
+			'Apprentice - ', 'AP'),
+			'Commerce', 'ECN') -- Stop conflict with Computer
 		);
 $$;
 
@@ -6561,26 +8212,36 @@ ALTER FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofa
 -- Name: fn_acorn_university_scope_entities(uuid, character varying); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acorn_university_scope_entities(p_entity_id uuid, p_setting character varying) RETURNS boolean
+CREATE FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) RETURNS boolean
     LANGUAGE plpgsql
     AS $$
 declare
 	p_uuids uuid[];
 begin
+	-- If the p_descendant_entity_id is, or is under, the p_ancestor_entity_id
+	-- using the CACHED nest_descendants field
 	return exists(
 		select * from acorn_university_hierarchies hi
-		inner join acorn_university_hierarchies hi_des on not array_position(hi.nest_descendants, hi_des.id) is null
-		where hi.entity_id = p_setting::uuid -- Multiple
+		-- Get the main ancestor details
+		where hi.entity_id = p_ancestor_entity_id::uuid -- Multiple
 		and (
-			p_entity_id = hi.entity_id 
-			or p_entity_id = hi_des.entity_id
+			-- Is the same entity
+			p_descendant_entity_id = hi.entity_id 
+			-- Is a descendant
+			or exists(
+				-- nest_descendants are hierarchy IDs
+				-- We are matching on entity_id
+				select * from acorn_university_hierarchies hiD
+				where not array_position(hi.nest_descendants, hiD.id) is null
+				and hiD.entity_id = p_descendant_entity_id
+			)
 		)
 	);
 end;
 $$;
 
 
-ALTER FUNCTION public.fn_acorn_university_scope_entities(p_entity_id uuid, p_setting character varying) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) OWNER TO university;
 
 --
 -- Name: fn_acorn_university_student_codes_current(); Type: FUNCTION; Schema: public; Owner: university
@@ -8654,25 +10315,58 @@ ALTER TABLE public.acorn_university_materials OWNER TO university;
 
 COMMENT ON TABLE public.acorn_university_materials IS 'order: 30
 seeding:
-  # Literature (adabi) & Science (el) Bakeloria
-  - [''cdc800ae-28be-11f0-a8a6-334555029afd'', ''Math'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
-  - [''d675a530-28be-11f0-a2c9-9bb10fa15bd3'', ''Biology'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
-  - [''dd494c0e-28be-11f0-94e1-a7b2083dd749'', ''Physics'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
-  - [''e427a282-28be-11f0-8856-a7abd8a449c5'', ''Geography'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
-  - [''ecf3dae8-28be-11f0-91f7-f31527b6ca23'', ''Chemistry'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
-  - [''f3c853a8-28be-11f0-8938-73b157eb85a1'', ''Kurdish'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
-  - [''fa61ead0-28be-11f0-9fb3-2bbf7e1c7c7c'', ''English'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
-  - [''005bba60-28bf-11f0-bf7f-cff663f8102b'', ''Arabic'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
-  - [''d43af2a2-2bd9-11f0-b08b-5fd59b502470'', ''History'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
-  - [''d8168f4e-2bd9-11f0-97a5-1b42cf640b5b'', ''Philosophy'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
-  - [''d84f8434-2bd9-11f0-bfa1-7b92380571bd'', ''Sociology'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
-  - [''d88f0f6e-2bd9-11f0-8846-8bc9dcb96017'', ''Jineologi'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
-  - [''b025cfe2-50f3-11f0-96d9-13090f80441e'', ''Community Language'',  NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
-  # Year 10,11 Bakeloria
-  - [''7f5c3dc8-2e53-11f0-8600-6ff513625846'', ''Year 10'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
-  - [''7f5c4156-2e53-11f0-8601-43470f236a9e'', ''Year 11'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
-  # Year 9 Middle school
-  - [''ee22cafe-502e-11f0-90c2-3702c192c6ec'', ''Year 9'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'']
+  # acorn_university_materials
+  # id, name, description, material_type_id, created_by_user_id
+  - [''d675a530-28be-11f0-a2c9-9bb10fa15bd3'', ''Biology'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''dd494c0e-28be-11f0-94e1-a7b2083dd749'', ''Physics'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''e427a282-28be-11f0-8856-a7abd8a449c5'', ''Geography'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''ecf3dae8-28be-11f0-91f7-f31527b6ca23'', ''Chemistry'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''f3c853a8-28be-11f0-8938-73b157eb85a1'', ''Kurdish'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''fa61ead0-28be-11f0-9fb3-2bbf7e1c7c7c'', ''English'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''005bba60-28bf-11f0-bf7f-cff663f8102b'', ''Arabic'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''d43af2a2-2bd9-11f0-b08b-5fd59b502470'', ''History'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''d8168f4e-2bd9-11f0-97a5-1b42cf640b5b'', ''Philosophy'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''d84f8434-2bd9-11f0-bfa1-7b92380571bd'', ''Sociology'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''d88f0f6e-2bd9-11f0-8846-8bc9dcb96017'', ''Jineologi'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''7f5c3dc8-2e53-11f0-8600-6ff513625846'', ''Year 10'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''7f5c4156-2e53-11f0-8601-43470f236a9e'', ''Year 11'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''b025cfe2-50f3-11f0-96d9-13090f80441e'', ''Community Language'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''ee22cafe-502e-11f0-90c2-3702c192c6ec'', ''Year 9'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''cdc800ae-28be-11f0-a8a6-334555029afd'', ''Maths'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''9f7d3005-1327-40a4-9d99-ad83d2358741'', ''Physics and Chemistry'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3043-29c9-4a93-9417-374158b3fb10'', ''Anatomy'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3073-300e-44a0-aa45-b738e474e871'', ''Nursing'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d30cd-6ceb-4841-bfd3-5b7de5f8085f'', ''Rays'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d310c-48de-40c8-a5a8-b9c406a779de'', ''Anesthetization'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3139-9d3f-4965-970c-972c8824c6b4'', ''Physical therapy'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3165-47e2-4239-9373-6f5bb82464a1'', ''Pharmacy'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d319d-bf6f-4662-a864-de0c7c1f35a0'', ''Lab'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3210-28c4-4b3d-a914-568d1b2b7987'', ''Internal Combustion Engines'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d32e0-2739-4ad6-9d1b-253a034c1ac2'', ''Mechanical Engineering Drawing 3'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3312-291e-41a9-a5fe-e297d597e2dc'', ''Vehicle control systems'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3342-ed04-4edd-a956-da51c02f58f4'', ''Diesel fuel injection systems'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d35eb-1782-4478-9e13-cc08eac51af5'', ''Electrical appliances 2'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3615-0c25-4950-b326-01e832505ccc'', ''Automated command and control'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d363a-d062-4f98-8b96-6a8fdaa7e6eb'', ''Electrical Engineering Drawing 3'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3661-f29f-4b5c-bf18-b49df3d424c7'', ''Hardware and software maintenance 2'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d368c-0ca7-4f3a-abc5-7991ce322b9f'', ''Programming 3'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d36b3-24d8-4537-a12b-a666197847c1'', ''Network management'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d36da-d87f-4fe2-83fe-fb6269b26c7b'', ''Computer applications'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3700-135b-4322-9c21-aa8ad1e49c1e'', ''Marketing'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3735-b592-45f9-bb09-f3cb237c1f76'', ''Bank accounting'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d375d-0c8d-4587-81d2-208632503d48'', ''Financial Institutions Accounting'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3835-0cdf-487b-8daf-846854567178'', ''Private accounting'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3861-f5b4-4e32-8de6-613fa2935b32'', ''Computer'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3886-ce95-4120-bf5e-c26355e1cc6d'', ''Financial Mathematics'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d38a9-a00b-45a7-88dc-e1ca69b0f92d'', ''Statistics'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d38d4-7ee0-432a-a613-13f1e8fc470d'', ''Food industries'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d38fb-2d86-4697-aaaa-2c7c744d2eed'', ''Dairy'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d391f-7aff-4a7c-a689-c3c58f72b430'', ''Gardening'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3948-80cc-4fd1-bca2-774b7eea6b1a'', ''Farm animal'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3976-aa21-471b-8a43-c4c5072e7a85'', ''Agricultural pests'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3a1a-b218-44a0-b285-c58ed0749a5a'', ''Sport'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3a4c-ef31-444d-b9ce-e0277d883c69'', ''Art'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d5a21-3c5c-4242-a091-5a3bf4fd829a'', ''Electronics 3'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
 labels:
   en: Material
   ku: Material
@@ -9278,6 +10972,22 @@ UNION ALL
     acorn_university_student_identities.updated_at AS datetime
    FROM public.acorn_university_student_identities
 UNION ALL
+ SELECT 'Acorn\University\Models\CourseMaterial'::text AS model_type,
+    acorn_university_course_materials.id AS model_id,
+    'acorn_university_course_materials'::text AS "table",
+    NULL::text AS name,
+    0 AS update,
+    acorn_university_course_materials.created_at AS datetime
+   FROM public.acorn_university_course_materials
+UNION ALL
+ SELECT 'Acorn\University\Models\CourseMaterial'::text AS model_type,
+    acorn_university_course_materials.id AS model_id,
+    'acorn_university_course_materials'::text AS "table",
+    NULL::text AS name,
+    1 AS update,
+    acorn_university_course_materials.updated_at AS datetime
+   FROM public.acorn_university_course_materials
+UNION ALL
  SELECT 'Acorn\University\Models\ProjectStudent'::text AS model_type,
     acorn_university_project_students.id AS model_id,
     'acorn_university_project_students'::text AS "table",
@@ -9310,22 +11020,6 @@ UNION ALL
     acorn_university_student_statuses.updated_at AS datetime
    FROM public.acorn_university_student_statuses
 UNION ALL
- SELECT 'Acorn\University\Models\CourseMaterial'::text AS model_type,
-    acorn_university_course_materials.id AS model_id,
-    'acorn_university_course_materials'::text AS "table",
-    NULL::text AS name,
-    0 AS update,
-    acorn_university_course_materials.created_at AS datetime
-   FROM public.acorn_university_course_materials
-UNION ALL
- SELECT 'Acorn\University\Models\CourseMaterial'::text AS model_type,
-    acorn_university_course_materials.id AS model_id,
-    'acorn_university_course_materials'::text AS "table",
-    NULL::text AS name,
-    1 AS update,
-    acorn_university_course_materials.updated_at AS datetime
-   FROM public.acorn_university_course_materials
-UNION ALL
  SELECT 'Acorn\University\Models\IdentityType'::text AS model_type,
     acorn_university_identity_types.id AS model_id,
     'acorn_university_identity_types'::text AS "table",
@@ -9342,22 +11036,6 @@ UNION ALL
     acorn_university_identity_types.updated_at AS datetime
    FROM public.acorn_university_identity_types
 UNION ALL
- SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
-    acorn_university_student_notes.id AS model_id,
-    'acorn_university_student_notes'::text AS "table",
-    acorn_university_student_notes.name,
-    0 AS update,
-    acorn_university_student_notes.created_at AS datetime
-   FROM public.acorn_university_student_notes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
-    acorn_university_student_notes.id AS model_id,
-    'acorn_university_student_notes'::text AS "table",
-    acorn_university_student_notes.name,
-    1 AS update,
-    acorn_university_student_notes.updated_at AS datetime
-   FROM public.acorn_university_student_notes
-UNION ALL
  SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
     acorn_university_student_codes.id AS model_id,
     'acorn_university_student_codes'::text AS "table",
@@ -9373,6 +11051,22 @@ UNION ALL
     1 AS update,
     acorn_university_student_codes.updated_at AS datetime
    FROM public.acorn_university_student_codes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    acorn_university_student_notes.name,
+    0 AS update,
+    acorn_university_student_notes.created_at AS datetime
+   FROM public.acorn_university_student_notes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    acorn_university_student_notes.name,
+    1 AS update,
+    acorn_university_student_notes.updated_at AS datetime
+   FROM public.acorn_university_student_notes
 UNION ALL
  SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
     acorn_exam_interview_students.id AS model_id,
@@ -9522,6 +11216,518 @@ UNION ALL
 ALTER VIEW public.acorn_calendar_upcreated_ats OWNER TO createsystem;
 
 --
+-- Name: acorn_created_bys; Type: VIEW; Schema: public; Owner: createsystem
+--
+
+CREATE VIEW public.acorn_created_bys AS
+ SELECT 'Acorn\University\Models\Entity'::text AS model_type,
+    acorn_university_entities.id AS model_id,
+    'acorn_university_entities'::text AS "table",
+    0 AS update,
+    acorn_university_entities.created_by_user_id AS by
+   FROM public.acorn_university_entities
+UNION ALL
+ SELECT 'Acorn\University\Models\Entity'::text AS model_type,
+    acorn_university_entities.id AS model_id,
+    'acorn_university_entities'::text AS "table",
+    1 AS update,
+    acorn_university_entities.updated_by_user_id AS by
+   FROM public.acorn_university_entities
+UNION ALL
+ SELECT 'Acorn\Exam\Models\CalculationType'::text AS model_type,
+    acorn_exam_calculation_types.id AS model_id,
+    'acorn_exam_calculation_types'::text AS "table",
+    0 AS update,
+    acorn_exam_calculation_types.created_by_user_id AS by
+   FROM public.acorn_exam_calculation_types
+UNION ALL
+ SELECT 'Acorn\Exam\Models\CalculationType'::text AS model_type,
+    acorn_exam_calculation_types.id AS model_id,
+    'acorn_exam_calculation_types'::text AS "table",
+    1 AS update,
+    acorn_exam_calculation_types.updated_by_user_id AS by
+   FROM public.acorn_exam_calculation_types
+UNION ALL
+ SELECT 'Acorn\University\Models\MaterialType'::text AS model_type,
+    acorn_university_material_types.id AS model_id,
+    'acorn_university_material_types'::text AS "table",
+    0 AS update,
+    acorn_university_material_types.created_by_user_id AS by
+   FROM public.acorn_university_material_types
+UNION ALL
+ SELECT 'Acorn\University\Models\MaterialType'::text AS model_type,
+    acorn_university_material_types.id AS model_id,
+    'acorn_university_material_types'::text AS "table",
+    1 AS update,
+    acorn_university_material_types.updated_by_user_id AS by
+   FROM public.acorn_university_material_types
+UNION ALL
+ SELECT 'Acorn\University\Models\CourseType'::text AS model_type,
+    acorn_university_course_types.id AS model_id,
+    'acorn_university_course_types'::text AS "table",
+    0 AS update,
+    acorn_university_course_types.created_by_user_id AS by
+   FROM public.acorn_university_course_types
+UNION ALL
+ SELECT 'Acorn\University\Models\CourseType'::text AS model_type,
+    acorn_university_course_types.id AS model_id,
+    'acorn_university_course_types'::text AS "table",
+    1 AS update,
+    acorn_university_course_types.updated_by_user_id AS by
+   FROM public.acorn_university_course_types
+UNION ALL
+ SELECT 'Acorn\University\Models\Material'::text AS model_type,
+    acorn_university_materials.id AS model_id,
+    'acorn_university_materials'::text AS "table",
+    0 AS update,
+    acorn_university_materials.created_by_user_id AS by
+   FROM public.acorn_university_materials
+UNION ALL
+ SELECT 'Acorn\University\Models\Material'::text AS model_type,
+    acorn_university_materials.id AS model_id,
+    'acorn_university_materials'::text AS "table",
+    1 AS update,
+    acorn_university_materials.updated_by_user_id AS by
+   FROM public.acorn_university_materials
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Score'::text AS model_type,
+    acorn_exam_scores.id AS model_id,
+    'acorn_exam_scores'::text AS "table",
+    0 AS update,
+    acorn_exam_scores.created_by_user_id AS by
+   FROM public.acorn_exam_scores
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Score'::text AS model_type,
+    acorn_exam_scores.id AS model_id,
+    'acorn_exam_scores'::text AS "table",
+    1 AS update,
+    acorn_exam_scores.updated_by_user_id AS by
+   FROM public.acorn_exam_scores
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Calculation'::text AS model_type,
+    acorn_exam_calculations.id AS model_id,
+    'acorn_exam_calculations'::text AS "table",
+    0 AS update,
+    acorn_exam_calculations.created_by_user_id AS by
+   FROM public.acorn_exam_calculations
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Calculation'::text AS model_type,
+    acorn_exam_calculations.id AS model_id,
+    'acorn_exam_calculations'::text AS "table",
+    1 AS update,
+    acorn_exam_calculations.updated_by_user_id AS by
+   FROM public.acorn_exam_calculations
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Type'::text AS model_type,
+    acorn_exam_types.id AS model_id,
+    'acorn_exam_types'::text AS "table",
+    0 AS update,
+    acorn_exam_types.created_by_user_id AS by
+   FROM public.acorn_exam_types
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Type'::text AS model_type,
+    acorn_exam_types.id AS model_id,
+    'acorn_exam_types'::text AS "table",
+    1 AS update,
+    acorn_exam_types.updated_by_user_id AS by
+   FROM public.acorn_exam_types
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Exam'::text AS model_type,
+    acorn_exam_exams.id AS model_id,
+    'acorn_exam_exams'::text AS "table",
+    0 AS update,
+    acorn_exam_exams.created_by_user_id AS by
+   FROM public.acorn_exam_exams
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Exam'::text AS model_type,
+    acorn_exam_exams.id AS model_id,
+    'acorn_exam_exams'::text AS "table",
+    1 AS update,
+    acorn_exam_exams.updated_by_user_id AS by
+   FROM public.acorn_exam_exams
+UNION ALL
+ SELECT 'Acorn\Exam\Models\CalculationCourseMaterial'::text AS model_type,
+    acorn_exam_calculation_course_materials.id AS model_id,
+    'acorn_exam_calculation_course_materials'::text AS "table",
+    0 AS update,
+    acorn_exam_calculation_course_materials.created_by_user_id AS by
+   FROM public.acorn_exam_calculation_course_materials
+UNION ALL
+ SELECT 'Acorn\Exam\Models\CalculationCourseMaterial'::text AS model_type,
+    acorn_exam_calculation_course_materials.id AS model_id,
+    'acorn_exam_calculation_course_materials'::text AS "table",
+    1 AS update,
+    acorn_exam_calculation_course_materials.updated_by_user_id AS by
+   FROM public.acorn_exam_calculation_course_materials
+UNION ALL
+ SELECT 'Acorn\Exam\Models\CalculationMaterialType'::text AS model_type,
+    acorn_exam_calculation_material_types.id AS model_id,
+    'acorn_exam_calculation_material_types'::text AS "table",
+    0 AS update,
+    acorn_exam_calculation_material_types.created_by_user_id AS by
+   FROM public.acorn_exam_calculation_material_types
+UNION ALL
+ SELECT 'Acorn\Exam\Models\CalculationMaterialType'::text AS model_type,
+    acorn_exam_calculation_material_types.id AS model_id,
+    'acorn_exam_calculation_material_types'::text AS "table",
+    1 AS update,
+    acorn_exam_calculation_material_types.updated_by_user_id AS by
+   FROM public.acorn_exam_calculation_material_types
+UNION ALL
+ SELECT 'Acorn\Exam\Models\CalculationCourseType'::text AS model_type,
+    acorn_exam_calculation_course_types.id AS model_id,
+    'acorn_exam_calculation_course_types'::text AS "table",
+    0 AS update,
+    acorn_exam_calculation_course_types.created_by_user_id AS by
+   FROM public.acorn_exam_calculation_course_types
+UNION ALL
+ SELECT 'Acorn\Exam\Models\CalculationCourseType'::text AS model_type,
+    acorn_exam_calculation_course_types.id AS model_id,
+    'acorn_exam_calculation_course_types'::text AS "table",
+    1 AS update,
+    acorn_exam_calculation_course_types.updated_by_user_id AS by
+   FROM public.acorn_exam_calculation_course_types
+UNION ALL
+ SELECT 'Acorn\Exam\Models\CalculationCourse'::text AS model_type,
+    acorn_exam_calculation_courses.id AS model_id,
+    'acorn_exam_calculation_courses'::text AS "table",
+    0 AS update,
+    acorn_exam_calculation_courses.created_by_user_id AS by
+   FROM public.acorn_exam_calculation_courses
+UNION ALL
+ SELECT 'Acorn\Exam\Models\CalculationCourse'::text AS model_type,
+    acorn_exam_calculation_courses.id AS model_id,
+    'acorn_exam_calculation_courses'::text AS "table",
+    1 AS update,
+    acorn_exam_calculation_courses.updated_by_user_id AS by
+   FROM public.acorn_exam_calculation_courses
+UNION ALL
+ SELECT 'Acorn\University\Models\AcademicYear'::text AS model_type,
+    acorn_university_academic_years.id AS model_id,
+    'acorn_university_academic_years'::text AS "table",
+    0 AS update,
+    acorn_university_academic_years.created_by_user_id AS by
+   FROM public.acorn_university_academic_years
+UNION ALL
+ SELECT 'Acorn\University\Models\AcademicYear'::text AS model_type,
+    acorn_university_academic_years.id AS model_id,
+    'acorn_university_academic_years'::text AS "table",
+    1 AS update,
+    acorn_university_academic_years.updated_by_user_id AS by
+   FROM public.acorn_university_academic_years
+UNION ALL
+ SELECT 'Acorn\University\Models\CourseYear'::text AS model_type,
+    acorn_university_course_years.id AS model_id,
+    'acorn_university_course_years'::text AS "table",
+    0 AS update,
+    acorn_university_course_years.created_by_user_id AS by
+   FROM public.acorn_university_course_years
+UNION ALL
+ SELECT 'Acorn\University\Models\CourseYear'::text AS model_type,
+    acorn_university_course_years.id AS model_id,
+    'acorn_university_course_years'::text AS "table",
+    1 AS update,
+    acorn_university_course_years.updated_by_user_id AS by
+   FROM public.acorn_university_course_years
+UNION ALL
+ SELECT 'Acorn\University\Models\Hierarchy'::text AS model_type,
+    acorn_university_hierarchies.id AS model_id,
+    'acorn_university_hierarchies'::text AS "table",
+    0 AS update,
+    acorn_university_hierarchies.created_by_user_id AS by
+   FROM public.acorn_university_hierarchies
+UNION ALL
+ SELECT 'Acorn\University\Models\Hierarchy'::text AS model_type,
+    acorn_university_hierarchies.id AS model_id,
+    'acorn_university_hierarchies'::text AS "table",
+    1 AS update,
+    acorn_university_hierarchies.updated_by_user_id AS by
+   FROM public.acorn_university_hierarchies
+UNION ALL
+ SELECT 'Acorn\University\Models\Semester'::text AS model_type,
+    acorn_university_semesters.id AS model_id,
+    'acorn_university_semesters'::text AS "table",
+    0 AS update,
+    acorn_university_semesters.created_by_user_id AS by
+   FROM public.acorn_university_semesters
+UNION ALL
+ SELECT 'Acorn\University\Models\Semester'::text AS model_type,
+    acorn_university_semesters.id AS model_id,
+    'acorn_university_semesters'::text AS "table",
+    1 AS update,
+    acorn_university_semesters.updated_by_user_id AS by
+   FROM public.acorn_university_semesters
+UNION ALL
+ SELECT 'Acorn\University\Models\AcademicYearSemester'::text AS model_type,
+    acorn_university_academic_year_semesters.id AS model_id,
+    'acorn_university_academic_year_semesters'::text AS "table",
+    0 AS update,
+    acorn_university_academic_year_semesters.created_by_user_id AS by
+   FROM public.acorn_university_academic_year_semesters
+UNION ALL
+ SELECT 'Acorn\University\Models\AcademicYearSemester'::text AS model_type,
+    acorn_university_academic_year_semesters.id AS model_id,
+    'acorn_university_academic_year_semesters'::text AS "table",
+    1 AS update,
+    acorn_university_academic_year_semesters.updated_by_user_id AS by
+   FROM public.acorn_university_academic_year_semesters
+UNION ALL
+ SELECT 'Acorn\Enrollment\Models\CourseEntryRequirement'::text AS model_type,
+    acorn_enrollment_course_entry_requirements.id AS model_id,
+    'acorn_enrollment_course_entry_requirements'::text AS "table",
+    0 AS update,
+    acorn_enrollment_course_entry_requirements.created_by_user_id AS by
+   FROM public.acorn_enrollment_course_entry_requirements
+UNION ALL
+ SELECT 'Acorn\Enrollment\Models\CourseEntryRequirement'::text AS model_type,
+    acorn_enrollment_course_entry_requirements.id AS model_id,
+    'acorn_enrollment_course_entry_requirements'::text AS "table",
+    1 AS update,
+    acorn_enrollment_course_entry_requirements.updated_by_user_id AS by
+   FROM public.acorn_enrollment_course_entry_requirements
+UNION ALL
+ SELECT 'Acorn\University\Models\CourseYearSetting'::text AS model_type,
+    acorn_university_course_year_settings.id AS model_id,
+    'acorn_university_course_year_settings'::text AS "table",
+    0 AS update,
+    acorn_university_course_year_settings.created_by_user_id AS by
+   FROM public.acorn_university_course_year_settings
+UNION ALL
+ SELECT 'Acorn\University\Models\CourseYearSetting'::text AS model_type,
+    acorn_university_course_year_settings.id AS model_id,
+    'acorn_university_course_year_settings'::text AS "table",
+    1 AS update,
+    acorn_university_course_year_settings.updated_by_user_id AS by
+   FROM public.acorn_university_course_year_settings
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentIdentity'::text AS model_type,
+    acorn_university_student_identities.id AS model_id,
+    'acorn_university_student_identities'::text AS "table",
+    0 AS update,
+    acorn_university_student_identities.created_by_user_id AS by
+   FROM public.acorn_university_student_identities
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentIdentity'::text AS model_type,
+    acorn_university_student_identities.id AS model_id,
+    'acorn_university_student_identities'::text AS "table",
+    1 AS update,
+    acorn_university_student_identities.updated_by_user_id AS by
+   FROM public.acorn_university_student_identities
+UNION ALL
+ SELECT 'Acorn\University\Models\CourseMaterial'::text AS model_type,
+    acorn_university_course_materials.id AS model_id,
+    'acorn_university_course_materials'::text AS "table",
+    0 AS update,
+    acorn_university_course_materials.created_by_user_id AS by
+   FROM public.acorn_university_course_materials
+UNION ALL
+ SELECT 'Acorn\University\Models\CourseMaterial'::text AS model_type,
+    acorn_university_course_materials.id AS model_id,
+    'acorn_university_course_materials'::text AS "table",
+    1 AS update,
+    acorn_university_course_materials.updated_by_user_id AS by
+   FROM public.acorn_university_course_materials
+UNION ALL
+ SELECT 'Acorn\University\Models\ProjectStudent'::text AS model_type,
+    acorn_university_project_students.id AS model_id,
+    'acorn_university_project_students'::text AS "table",
+    0 AS update,
+    acorn_university_project_students.created_by_user_id AS by
+   FROM public.acorn_university_project_students
+UNION ALL
+ SELECT 'Acorn\University\Models\ProjectStudent'::text AS model_type,
+    acorn_university_project_students.id AS model_id,
+    'acorn_university_project_students'::text AS "table",
+    1 AS update,
+    acorn_university_project_students.updated_by_user_id AS by
+   FROM public.acorn_university_project_students
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
+    acorn_university_student_statuses.id AS model_id,
+    'acorn_university_student_statuses'::text AS "table",
+    0 AS update,
+    acorn_university_student_statuses.created_by_user_id AS by
+   FROM public.acorn_university_student_statuses
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
+    acorn_university_student_statuses.id AS model_id,
+    'acorn_university_student_statuses'::text AS "table",
+    1 AS update,
+    acorn_university_student_statuses.updated_by_user_id AS by
+   FROM public.acorn_university_student_statuses
+UNION ALL
+ SELECT 'Acorn\University\Models\IdentityType'::text AS model_type,
+    acorn_university_identity_types.id AS model_id,
+    'acorn_university_identity_types'::text AS "table",
+    0 AS update,
+    acorn_university_identity_types.created_by_user_id AS by
+   FROM public.acorn_university_identity_types
+UNION ALL
+ SELECT 'Acorn\University\Models\IdentityType'::text AS model_type,
+    acorn_university_identity_types.id AS model_id,
+    'acorn_university_identity_types'::text AS "table",
+    1 AS update,
+    acorn_university_identity_types.updated_by_user_id AS by
+   FROM public.acorn_university_identity_types
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    0 AS update,
+    acorn_university_student_codes.created_by_user_id AS by
+   FROM public.acorn_university_student_codes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    1 AS update,
+    acorn_university_student_codes.updated_by_user_id AS by
+   FROM public.acorn_university_student_codes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    0 AS update,
+    acorn_university_student_notes.created_by_user_id AS by
+   FROM public.acorn_university_student_notes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    1 AS update,
+    acorn_university_student_notes.updated_by_user_id AS by
+   FROM public.acorn_university_student_notes
+UNION ALL
+ SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
+    acorn_exam_interview_students.id AS model_id,
+    'acorn_exam_interview_students'::text AS "table",
+    0 AS update,
+    acorn_exam_interview_students.created_by_user_id AS by
+   FROM public.acorn_exam_interview_students
+UNION ALL
+ SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
+    acorn_exam_interview_students.id AS model_id,
+    'acorn_exam_interview_students'::text AS "table",
+    1 AS update,
+    acorn_exam_interview_students.updated_by_user_id AS by
+   FROM public.acorn_exam_interview_students
+UNION ALL
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
+    0 AS update,
+    acorn_university_projects.created_by_user_id AS by
+   FROM public.acorn_university_projects
+UNION ALL
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
+    1 AS update,
+    acorn_university_projects.updated_by_user_id AS by
+   FROM public.acorn_university_projects
+UNION ALL
+ SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
+    acorn_university_lectures.id AS model_id,
+    'acorn_university_lectures'::text AS "table",
+    0 AS update,
+    acorn_university_lectures.created_by_user_id AS by
+   FROM public.acorn_university_lectures
+UNION ALL
+ SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
+    acorn_university_lectures.id AS model_id,
+    'acorn_university_lectures'::text AS "table",
+    1 AS update,
+    acorn_university_lectures.updated_by_user_id AS by
+   FROM public.acorn_university_lectures
+UNION ALL
+ SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
+    acorn_exam_exam_materials.id AS model_id,
+    'acorn_exam_exam_materials'::text AS "table",
+    0 AS update,
+    acorn_exam_exam_materials.created_by_user_id AS by
+   FROM public.acorn_exam_exam_materials
+UNION ALL
+ SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
+    acorn_exam_exam_materials.id AS model_id,
+    'acorn_exam_exam_materials'::text AS "table",
+    1 AS update,
+    acorn_exam_exam_materials.updated_by_user_id AS by
+   FROM public.acorn_exam_exam_materials
+UNION ALL
+ SELECT 'Acorn\Enrollment\Models\Desire'::text AS model_type,
+    acorn_enrollment_desires.id AS model_id,
+    'acorn_enrollment_desires'::text AS "table",
+    0 AS update,
+    acorn_enrollment_desires.created_by_user_id AS by
+   FROM public.acorn_enrollment_desires
+UNION ALL
+ SELECT 'Acorn\Enrollment\Models\Desire'::text AS model_type,
+    acorn_enrollment_desires.id AS model_id,
+    'acorn_enrollment_desires'::text AS "table",
+    1 AS update,
+    acorn_enrollment_desires.updated_by_user_id AS by
+   FROM public.acorn_enrollment_desires
+UNION ALL
+ SELECT 'Acorn\Exam\Models\ScoreName'::text AS model_type,
+    acorn_exam_score_names.id AS model_id,
+    'acorn_exam_score_names'::text AS "table",
+    0 AS update,
+    acorn_exam_score_names.created_by_user_id AS by
+   FROM public.acorn_exam_score_names
+UNION ALL
+ SELECT 'Acorn\Exam\Models\ScoreName'::text AS model_type,
+    acorn_exam_score_names.id AS model_id,
+    'acorn_exam_score_names'::text AS "table",
+    1 AS update,
+    acorn_exam_score_names.updated_by_user_id AS by
+   FROM public.acorn_exam_score_names
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Interview'::text AS model_type,
+    acorn_exam_interviews.id AS model_id,
+    'acorn_exam_interviews'::text AS "table",
+    0 AS update,
+    acorn_exam_interviews.created_by_user_id AS by
+   FROM public.acorn_exam_interviews
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Interview'::text AS model_type,
+    acorn_exam_interviews.id AS model_id,
+    'acorn_exam_interviews'::text AS "table",
+    1 AS update,
+    acorn_exam_interviews.updated_by_user_id AS by
+   FROM public.acorn_exam_interviews
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Instance'::text AS model_type,
+    acorn_exam_instances.id AS model_id,
+    'acorn_exam_instances'::text AS "table",
+    0 AS update,
+    acorn_exam_instances.created_by_user_id AS by
+   FROM public.acorn_exam_instances
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Instance'::text AS model_type,
+    acorn_exam_instances.id AS model_id,
+    'acorn_exam_instances'::text AS "table",
+    1 AS update,
+    acorn_exam_instances.updated_by_user_id AS by
+   FROM public.acorn_exam_instances
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Centre'::text AS model_type,
+    acorn_exam_centres.id AS model_id,
+    'acorn_exam_centres'::text AS "table",
+    0 AS update,
+    acorn_exam_centres.created_by_user_id AS by
+   FROM public.acorn_exam_centres
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Centre'::text AS model_type,
+    acorn_exam_centres.id AS model_id,
+    'acorn_exam_centres'::text AS "table",
+    1 AS update,
+    acorn_exam_centres.updated_by_user_id AS by
+   FROM public.acorn_exam_centres;
+
+
+ALTER VIEW public.acorn_created_bys OWNER TO createsystem;
+
+--
 -- Name: acorn_exam_data_entry_scores; Type: VIEW; Schema: public; Owner: university
 --
 
@@ -9533,9 +11739,10 @@ SELECT
     NULL::character varying(1024) AS student_code,
     NULL::uuid AS academic_year_semester_id,
     NULL::uuid AS academic_year_id,
-    NULL::character varying(1024) AS filename,
+    NULL::character varying AS filename,
     NULL::uuid AS primary_language_id,
     NULL::uuid AS course_user_group_id,
+    NULL::uuid AS organisation_user_group_id,
     NULL::uuid AS course_id,
     NULL::character varying(255) AS course_code,
     NULL::uuid AS course_type_id,
@@ -9543,6 +11750,7 @@ SELECT
     NULL::uuid AS exam_id,
     NULL::json AS scores,
     NULL::json AS score_names,
+    NULL::double precision AS sum,
     NULL::bigint AS attendance,
     NULL::double precision AS result,
     NULL::double precision AS minimum,
@@ -9551,6 +11759,8 @@ SELECT
     NULL::boolean AS bakeloria_passed,
     NULL::character varying(2048) AS bakeloria_passed_resolved_expression,
     NULL::boolean AS passed,
+    NULL::character varying(1024) AS legacy_import_student_type,
+    NULL::character varying(20248) AS legacy_import_birth_place,
     NULL::double precision AS legacy_import_the_total,
     NULL::double precision AS legacy_import_final_avg,
     NULL::character varying(1024) AS legacy_import_result,
@@ -9561,10 +11771,13 @@ SELECT
     NULL::character varying(255) AS password,
     NULL::character varying(255) AS email,
     NULL::timestamp without time zone AS birth_date,
+    NULL::character varying(255) AS name,
+    NULL::character varying(255) AS surname,
     NULL::character varying(1024) AS fathers_name,
     NULL::character varying(1024) AS mothers_name,
     NULL::"char" AS gender,
-    NULL::"char" AS marital_status;
+    NULL::"char" AS marital_status,
+    NULL::json AS printed;
 
 
 ALTER VIEW public.acorn_exam_data_entry_scores OWNER TO university;
@@ -9609,6 +11822,8 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.student_id IS 'extra-forei
   comment:
     tab-location: 2
     name-object: true
+    depends-on:
+      user_user_group_versions: true
 labels:
   en: Student
 labels-plural:
@@ -9684,6 +11899,22 @@ labels:
   en: Course
 labels-plural:
   en: Courses';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.organisation_user_group_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.organisation_user_group_id IS 'extra-foreign-key: 
+  table: acorn_user_user_groups
+  comment:
+    tab-location: 2
+    name-object: true
+labels:
+  en: Organisation
+labels-plural:
+  en: Organisations
+sortable: false';
 
 
 --
@@ -9956,49 +12187,84 @@ labels-plural:
 
 
 --
+-- Name: acorn_user_languages; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_user_languages (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(1024) NOT NULL,
+    locale character varying(10) NOT NULL,
+    rtl boolean DEFAULT false NOT NULL
+);
+
+
+ALTER TABLE public.acorn_user_languages OWNER TO university;
+
+--
 -- Name: acorn_exam_certificates; Type: VIEW; Schema: public; Owner: university
 --
 
 CREATE VIEW public.acorn_exam_certificates AS
- SELECT id,
-    student_user_id,
-    student_id,
-    student_code,
-    academic_year_semester_id,
-    academic_year_id,
-    filename,
-    primary_language_id,
-    course_user_group_id,
-    course_id,
-    course_code,
-    course_type_id,
-    qrcode,
-    exam_id,
-    scores,
-    score_names,
-    attendance,
-    result,
-    minimum,
-    maximum,
-    bakeloria_final_mark,
-    bakeloria_passed,
-    bakeloria_passed_resolved_expression,
-    passed,
-    legacy_import_the_total,
-    legacy_import_final_avg,
-    legacy_import_result,
-    legacy_import_avg,
-    legacy_import_correct,
-    legacy_import_passed,
-    username,
-    password,
-    email,
-    birth_date,
-    fathers_name,
-    mothers_name,
-    gender,
-    marital_status
-   FROM public.acorn_exam_data_entry_scores;
+ SELECT sc.id,
+    sc.student_user_id,
+    sc.student_id,
+    sc.student_code,
+    sc.academic_year_semester_id,
+    sc.academic_year_id,
+    sc.filename,
+    sc.primary_language_id,
+    sc.course_user_group_id,
+    sc.organisation_user_group_id,
+    sc.course_id,
+    sc.course_code,
+    sc.course_type_id,
+    sc.qrcode,
+    sc.exam_id,
+    sc.scores,
+    sc.score_names,
+    sc.sum,
+    ( SELECT acorn_exam_score_names.id
+           FROM public.acorn_exam_score_names
+          WHERE ((acorn_exam_score_names.score)::double precision = sc.sum)) AS sum_score_name_id,
+    sc.attendance,
+    sc.result,
+    sc.minimum,
+    sc.maximum,
+    sc.bakeloria_final_mark,
+    sc.bakeloria_passed,
+    sc.bakeloria_passed_resolved_expression,
+    sc.passed,
+    sc.legacy_import_student_type,
+    sc.legacy_import_birth_place,
+    sc.legacy_import_the_total,
+    sc.legacy_import_final_avg,
+    sc.legacy_import_result,
+    sc.legacy_import_avg,
+    sc.legacy_import_correct,
+    sc.legacy_import_passed,
+    sc.username,
+    sc.password,
+    sc.email,
+    (sc.birth_date)::date AS birth_date,
+        CASE
+            WHEN l.rtl THEN ((COALESCE(((sc.birth_date)::date)::text, (''::character varying)::text) || ' '::text) || (COALESCE(sc.legacy_import_birth_place, ''::character varying))::text)
+            ELSE (((COALESCE(sc.legacy_import_birth_place, ''::character varying))::text || ' '::text) || COALESCE(((sc.birth_date)::date)::text, (''::character varying)::text))
+        END AS place_and_date_of_birth,
+    (now())::date AS printed_date,
+    sc.name,
+    sc.surname,
+        CASE
+            WHEN l.rtl THEN (((COALESCE(sc.surname, ''::character varying))::text || ' '::text) || (COALESCE(sc.name, ''::character varying))::text)
+            ELSE (((COALESCE(sc.name, ''::character varying))::text || ' '::text) || (COALESCE(sc.surname, ''::character varying))::text)
+        END AS full_name,
+    sc.fathers_name,
+    sc.mothers_name,
+    sc.gender,
+    sc.marital_status,
+    sc.printed,
+    l.rtl
+   FROM (public.acorn_exam_data_entry_scores sc
+     JOIN public.acorn_user_languages l ON ((sc.primary_language_id = l.id)));
 
 
 ALTER VIEW public.acorn_exam_certificates OWNER TO university;
@@ -10135,6 +12401,22 @@ sortable: false';
 
 
 --
+-- Name: COLUMN acorn_exam_certificates.organisation_user_group_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.organisation_user_group_id IS 'extra-foreign-key: 
+  table: acorn_user_user_groups
+  comment:
+    tab-location: 2
+    name-object: true
+labels:
+  en: Organisation
+labels-plural:
+  en: Organisations
+sortable: false';
+
+
+--
 -- Name: COLUMN acorn_exam_certificates.course_id; Type: COMMENT; Schema: public; Owner: university
 --
 
@@ -10212,6 +12494,17 @@ labels:
   en: Material Score name
 labels-plural:
   en: Materials Score names
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.sum_score_name_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.sum_score_name_id IS 'extra-foreign-key: 
+  table: acorn_exam_score_names
+  comment:
+    tab-location: 2
 sortable: false';
 
 
@@ -10321,6 +12614,37 @@ sortable: false';
 
 
 --
+-- Name: COLUMN acorn_exam_certificates.legacy_import_student_type; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_student_type IS 'filters:
+  legacy_import_student_type:
+    label: acorn.exam::lang.models.dataentryscore.legacy_import_student_type
+    type: group
+    options:
+      regular: acorn.exam::lang.models.certificate.regular
+      irregular: acorn.exam::lang.models.certificate.irregular
+    conditions: legacy_import_student_type in(:filtered)
+extra-translations:
+  regular_students:
+    en: High-School failed
+    ku: Bakeloria binket
+  regular:
+    en: Regular
+    ku: Rêzbirêz
+  irregular:
+    en: Irregular
+    ku: Serbixwe
+labels:
+  en: Legacy Import Student Type
+  ku: Legacy Import Cura Xwendekar
+labels-plural:
+  en: Legacy Import Student Types
+  ku: Legacy Import Cura Xwendekarên
+sortable: false';
+
+
+--
 -- Name: COLUMN acorn_exam_certificates.legacy_import_the_total; Type: COMMENT; Schema: public; Owner: university
 --
 
@@ -10409,6 +12733,21 @@ labels-plural:
   en: Legacy Import Passes
   ku: Barkirine kevin Serketên
 sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.printed; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.printed IS 'filters:
+  printed:
+    label: acorn.university::lang.models.student.documents_printed
+    type: checkbox
+    conditions: not printed is null
+  not_printed:
+    label: acorn.university::lang.models.student.documents_not_printed
+    type: checkbox
+    conditions: printed is null';
 
 
 --
@@ -10866,7 +13205,9 @@ CREATE TABLE public.acorn_university_students (
     legacy_import_school character varying(1024),
     legacy_import_qeyd character varying(1024),
     legacy_import_student_type character varying(1024),
-    legacy_import_id integer
+    legacy_import_id integer,
+    legacy_import_birth_place character varying(20248),
+    printed json
 );
 
 
@@ -11049,6 +13390,54 @@ labels:
   en: Legacy Import ID
 labels-plural:
   en: Legacy Import IDs';
+
+
+--
+-- Name: COLUMN acorn_university_students.legacy_import_birth_place; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_students.legacy_import_birth_place IS 'tab: Legacy
+tabLocation: 2
+advanced: true
+readOnly: true
+comment: Birth place because location cleaning is difficult';
+
+
+--
+-- Name: COLUMN acorn_university_students.printed; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_students.printed IS 'column-type: text
+field-type: datatable
+adding: false
+deleting: false
+css-classes:
+  - single-tab
+  - nolabel
+columns:
+  0:
+    type: string
+    title: Name
+tab: INHERIT
+tab-location: 2
+
+filters:
+  printed:
+    label: acorn.university::lang.models.student.documents_printed
+    type: checkbox
+    conditions: not printed is null
+  not_printed:
+    label: acorn.university::lang.models.student.documents_not_printed
+    type: checkbox
+    conditions: printed is null
+extra-translations:
+  documents_printed:
+    en: Documents printed
+    ku: Belgeyên çapkirî
+  documents_not_printed:
+    en: Documents not printed
+    ku: Belgeyên ne çapkirî
+';
 
 
 --
@@ -12008,20 +14397,6 @@ UNION ALL
     acorn_university_identity_types.description AS content
    FROM public.acorn_university_identity_types
 UNION ALL
- SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
-    acorn_university_student_notes.id AS model_id,
-    'acorn_university_student_notes'::text AS "table",
-    'name'::text AS field,
-    (acorn_university_student_notes.name)::text AS content
-   FROM public.acorn_university_student_notes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
-    acorn_university_student_notes.id AS model_id,
-    'acorn_university_student_notes'::text AS "table",
-    'description'::text AS field,
-    acorn_university_student_notes.description AS content
-   FROM public.acorn_university_student_notes
-UNION ALL
  SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
     acorn_university_student_codes.id AS model_id,
     'acorn_university_student_codes'::text AS "table",
@@ -12035,6 +14410,20 @@ UNION ALL
     'description'::text AS field,
     acorn_university_student_codes.description AS content
    FROM public.acorn_university_student_codes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    'name'::text AS field,
+    (acorn_university_student_notes.name)::text AS content
+   FROM public.acorn_university_student_notes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    'description'::text AS field,
+    acorn_university_student_notes.description AS content
+   FROM public.acorn_university_student_notes
 UNION ALL
  SELECT 'Acorn\University\Models\Project'::text AS model_type,
     acorn_university_projects.id AS model_id,
@@ -12269,35 +14658,6 @@ labels-plural:
 
 
 --
--- Name: acorn_university_qualified_courses; Type: VIEW; Schema: public; Owner: university
---
-
-CREATE VIEW public.acorn_university_qualified_courses AS
- SELECT id,
-    user_group_id,
-    version,
-    current,
-    import_source,
-    created_at,
-    updated_at
-   FROM public.acorn_user_user_group_versions;
-
-
-ALTER VIEW public.acorn_university_qualified_courses OWNER TO university;
-
---
--- Name: COLUMN acorn_university_qualified_courses.user_group_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_university_qualified_courses.user_group_id IS 'extra-foreign-key: 
-  table: acorn_user_user_group_versions
-  type: 1to1
-  comment:
-    tab-location: 2
-';
-
-
---
 -- Name: acorn_university_schools; Type: TABLE; Schema: public; Owner: university
 --
 
@@ -12323,96 +14683,23 @@ labels-plural:
 
 
 --
--- Name: acorn_user_users; Type: TABLE; Schema: public; Owner: university
---
-
-CREATE TABLE public.acorn_user_users (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    name character varying(255),
-    email character varying(255),
-    password character varying(255),
-    activation_code character varying(255),
-    persist_code character varying(255),
-    reset_password_code character varying(255),
-    permissions text,
-    is_activated boolean DEFAULT false NOT NULL,
-    is_system_user boolean DEFAULT false NOT NULL,
-    activated_at timestamp(0) without time zone,
-    last_login timestamp(0) without time zone,
-    created_at timestamp(0) without time zone,
-    updated_at timestamp(0) without time zone,
-    username character varying(255),
-    surname character varying(255),
-    deleted_at timestamp(0) without time zone,
-    last_seen timestamp(0) without time zone,
-    is_guest boolean DEFAULT false NOT NULL,
-    is_superuser boolean DEFAULT false NOT NULL,
-    created_ip_address character varying(255),
-    last_ip_address character varying(255),
-    acorn_imap_username character varying(255),
-    acorn_imap_password character varying(255),
-    acorn_imap_server character varying(255),
-    acorn_imap_port integer,
-    acorn_imap_protocol character varying(255),
-    acorn_imap_encryption character varying(255),
-    acorn_imap_authentication character varying(255),
-    acorn_imap_validate_cert boolean,
-    acorn_smtp_server character varying(255),
-    acorn_smtp_port character varying(255),
-    acorn_smtp_encryption character varying(255),
-    acorn_smtp_authentication character varying(255),
-    acorn_smtp_username character varying(255),
-    acorn_smtp_password character varying(255),
-    acorn_messaging_sounds boolean,
-    acorn_messaging_email_notifications character(1),
-    acorn_messaging_autocreated boolean,
-    acorn_imap_last_fetch timestamp(0) without time zone,
-    acorn_default_calendar uuid,
-    acorn_start_of_week integer,
-    acorn_default_event_time_from date,
-    acorn_default_event_time_to date,
-    birth_date timestamp without time zone,
-    import_source character varying(1024),
-    fathers_name character varying(1024),
-    mothers_name character varying(1024),
-    gender "char",
-    marital_status "char",
-    religion_id uuid,
-    ethnicity_id uuid,
-    CONSTRAINT gender_enum CHECK (((gender IS NULL) OR (gender = ANY (ARRAY['M'::"char", 'F'::"char", 'O'::"char"])))),
-    CONSTRAINT marital_status_enum CHECK (((marital_status IS NULL) OR (marital_status = ANY (ARRAY['M'::"char", 'S'::"char", 'O'::"char"]))))
-);
-
-
-ALTER TABLE public.acorn_user_users OWNER TO university;
-
---
 -- Name: acorn_university_student_lookups; Type: VIEW; Schema: public; Owner: university
 --
 
 CREATE VIEW public.acorn_university_student_lookups AS
- SELECT s.id,
-    s.id AS student_id,
-    sc.id AS school_id,
-    c_hs.id AS course_id,
-    JSON_ARRAYAGG(c_hsy.id RETURNING json) AS course_year_ids,
-    co.name AS code,
-    hi_cs.academic_year_id,
-    u.name,
-    u.surname,
-    u.fathers_name
-   FROM ((((((((((public.acorn_university_hierarchies hi_cs
-     JOIN public.acorn_university_courses c_hs ON (((c_hs.entity_id = hi_cs.entity_id) AND (c_hs.course_type_id = 'a5d8016a-78ad-4296-aac7-fc5332045764'::uuid))))
-     JOIN public.acorn_user_user_group_version ugv_cs ON ((ugv_cs.user_group_version_id = hi_cs.user_group_version_id)))
-     JOIN public.acorn_university_students s ON ((ugv_cs.user_id = s.user_id)))
-     JOIN public.acorn_user_users u ON ((s.user_id = u.id)))
-     JOIN public.acorn_university_student_codes co ON ((co.student_id = s.id)))
-     JOIN public.acorn_university_hierarchies hip_sc ON ((hi_cs.parent_id = hip_sc.id)))
-     JOIN public.acorn_university_schools sc ON ((sc.entity_id = hip_sc.entity_id)))
-     LEFT JOIN public.acorn_user_user_group_version ugv_csy ON ((ugv_csy.user_id = s.user_id)))
-     LEFT JOIN public.acorn_university_hierarchies hi_csy ON ((hi_csy.user_group_version_id = ugv_csy.user_group_version_id)))
-     LEFT JOIN public.acorn_university_courses c_hsy ON (((c_hsy.entity_id = hi_csy.entity_id) AND (c_hsy.course_type_id = '801fb8af-5ed3-4436-b89e-9151e9558c24'::uuid))))
-  GROUP BY s.id, sc.id, c_hs.id, co.name, hi_cs.academic_year_id, u.name, u.surname, u.fathers_name;
+SELECT
+    NULL::uuid AS id,
+    NULL::uuid AS student_id,
+    NULL::uuid AS school_id,
+    NULL::uuid AS course_id,
+    NULL::json AS course_year_ids,
+    NULL::character varying(1024) AS legacy_import_student_type,
+    NULL::character varying(1024) AS code,
+    NULL::uuid AS academic_year_id,
+    NULL::character varying(255) AS name,
+    NULL::character varying(255) AS surname,
+    NULL::text AS full_name,
+    NULL::character varying(1024) AS fathers_name;
 
 
 ALTER VIEW public.acorn_university_student_lookups OWNER TO university;
@@ -12543,6 +14830,7 @@ COMMENT ON TABLE public.acorn_university_universities IS 'plugin-icon: book
 plugin-names:
   en: Universities
   ku: Zaningehên
+all-controllers: true
 order: 20
 labels:
   en: University
@@ -12563,19 +14851,6 @@ CREATE TABLE public.acorn_user_ethnicities (
 
 
 ALTER TABLE public.acorn_user_ethnicities OWNER TO university;
-
---
--- Name: acorn_user_languages; Type: TABLE; Schema: public; Owner: university
---
-
-CREATE TABLE public.acorn_user_languages (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    name character varying(1024) NOT NULL,
-    locale character varying(10) NOT NULL
-);
-
-
-ALTER TABLE public.acorn_user_languages OWNER TO university;
 
 --
 -- Name: acorn_user_mail_blockers; Type: TABLE; Schema: public; Owner: university
@@ -12705,6 +14980,72 @@ CREATE TABLE public.acorn_user_user_languages (
 
 
 ALTER TABLE public.acorn_user_user_languages OWNER TO university;
+
+--
+-- Name: acorn_user_users; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_user_users (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(255),
+    email character varying(255),
+    password character varying(255),
+    activation_code character varying(255),
+    persist_code character varying(255),
+    reset_password_code character varying(255),
+    permissions text,
+    is_activated boolean DEFAULT false NOT NULL,
+    is_system_user boolean DEFAULT false NOT NULL,
+    activated_at timestamp(0) without time zone,
+    last_login timestamp(0) without time zone,
+    created_at timestamp(0) without time zone,
+    updated_at timestamp(0) without time zone,
+    username character varying(255),
+    surname character varying(255),
+    deleted_at timestamp(0) without time zone,
+    last_seen timestamp(0) without time zone,
+    is_guest boolean DEFAULT false NOT NULL,
+    is_superuser boolean DEFAULT false NOT NULL,
+    created_ip_address character varying(255),
+    last_ip_address character varying(255),
+    acorn_imap_username character varying(255),
+    acorn_imap_password character varying(255),
+    acorn_imap_server character varying(255),
+    acorn_imap_port integer,
+    acorn_imap_protocol character varying(255),
+    acorn_imap_encryption character varying(255),
+    acorn_imap_authentication character varying(255),
+    acorn_imap_validate_cert boolean,
+    acorn_smtp_server character varying(255),
+    acorn_smtp_port character varying(255),
+    acorn_smtp_encryption character varying(255),
+    acorn_smtp_authentication character varying(255),
+    acorn_smtp_username character varying(255),
+    acorn_smtp_password character varying(255),
+    acorn_messaging_sounds boolean,
+    acorn_messaging_email_notifications character(1),
+    acorn_messaging_autocreated boolean,
+    acorn_imap_last_fetch timestamp(0) without time zone,
+    acorn_default_calendar uuid,
+    acorn_start_of_week integer,
+    acorn_default_event_time_from date,
+    acorn_default_event_time_to date,
+    birth_date timestamp without time zone,
+    import_source character varying(1024),
+    fathers_name character varying(1024),
+    mothers_name character varying(1024),
+    gender "char",
+    marital_status "char",
+    religion_id uuid,
+    ethnicity_id uuid,
+    global_scope_entity_id uuid,
+    global_scope_academic_year_id uuid,
+    CONSTRAINT gender_enum CHECK (((gender IS NULL) OR (gender = ANY (ARRAY['M'::"char", 'F'::"char", 'O'::"char"])))),
+    CONSTRAINT marital_status_enum CHECK (((marital_status IS NULL) OR (marital_status = ANY (ARRAY['M'::"char", 'S'::"char", 'O'::"char"]))))
+);
+
+
+ALTER TABLE public.acorn_user_users OWNER TO university;
 
 --
 -- Name: backend_access_log; Type: TABLE; Schema: public; Owner: university
@@ -13957,12 +16298,12 @@ ALTER SEQUENCE public.system_settings_id_seq OWNED BY public.system_settings.id;
 CREATE FOREIGN TABLE public.university_mofadala_baccalaureate_marks (
     id integer NOT NULL,
     county character varying(255) NOT NULL,
-    code text NOT NULL,
+    code text,
     certificate character varying(255) NOT NULL,
     full_name character varying(255) NOT NULL,
-    father_name character varying(255) NOT NULL,
-    mother_name character varying(255) NOT NULL,
-    place_and_date_of_birth text NOT NULL,
+    father_name character varying(255),
+    mother_name character varying(255),
+    place_and_date_of_birth text,
     total_mark double precision NOT NULL,
     avg double precision NOT NULL,
     certificate_language character varying(255) NOT NULL,
@@ -14001,7 +16342,50 @@ CREATE FOREIGN TABLE public.university_mofadala_baccalaureate_marks (
     surname character varying(1024),
     number integer NOT NULL,
     marital_status character varying(1024),
-    student_type character varying(1024)
+    student_type character varying(1024),
+    physics_and_chemistry double precision,
+    anatomy double precision,
+    nursing double precision,
+    rays double precision,
+    anesthetization double precision,
+    physical_therapy double precision,
+    pharmacy double precision,
+    lab double precision,
+    internal_combustion_engines double precision,
+    mechanical_engineering_drawing_3 double precision,
+    vehicle_control_systems double precision,
+    diesel_fuel_injection_systems double precision,
+    electrical_appliances_2 double precision,
+    automated_command_and_control double precision,
+    electrical_engineering_drawing_3 double precision,
+    electronics_3 double precision,
+    hardware_and_software_maintenance_2 double precision,
+    programming_3 double precision,
+    network_management double precision,
+    computer_applications double precision,
+    marketing double precision,
+    bank_accounting double precision,
+    financial_institutions_accounting double precision,
+    private_accounting double precision,
+    computer double precision,
+    financial_mathematics double precision,
+    statistics double precision,
+    food_industries double precision,
+    dairy double precision,
+    gardening double precision,
+    farm_animal double precision,
+    agricultural_pests double precision,
+    sport double precision,
+    art double precision,
+    certificate_date timestamp without time zone NOT NULL,
+    micro_organisms double precision,
+    web_design double precision,
+    department character varying(2048),
+    televison double precision,
+    electronic_device_maintenance double precision,
+    antennas double precision,
+    protection_and_alarm_systems double precision,
+    import_irregularity character varying(1024)
 )
 SERVER localserver_universityacceptance
 OPTIONS (
@@ -14148,6 +16532,135 @@ ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN 
 );
 ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN student_type OPTIONS (
     column_name 'student_type'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN physics_and_chemistry OPTIONS (
+    column_name 'physics_and_chemistry'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN anatomy OPTIONS (
+    column_name 'anatomy'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN nursing OPTIONS (
+    column_name 'nursing'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN rays OPTIONS (
+    column_name 'rays'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN anesthetization OPTIONS (
+    column_name 'anesthetization'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN physical_therapy OPTIONS (
+    column_name 'physical_therapy'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN pharmacy OPTIONS (
+    column_name 'pharmacy'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN lab OPTIONS (
+    column_name 'lab'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN internal_combustion_engines OPTIONS (
+    column_name 'internal_combustion_engines'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN mechanical_engineering_drawing_3 OPTIONS (
+    column_name 'mechanical_engineering_drawing_3'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN vehicle_control_systems OPTIONS (
+    column_name 'vehicle_control_systems'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN diesel_fuel_injection_systems OPTIONS (
+    column_name 'diesel_fuel_injection_systems'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN electrical_appliances_2 OPTIONS (
+    column_name 'electrical_appliances_2'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN automated_command_and_control OPTIONS (
+    column_name 'automated_command_and_control'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN electrical_engineering_drawing_3 OPTIONS (
+    column_name 'electrical_engineering_drawing_3'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN electronics_3 OPTIONS (
+    column_name 'electronics_3'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN hardware_and_software_maintenance_2 OPTIONS (
+    column_name 'hardware_and_software_maintenance_2'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN programming_3 OPTIONS (
+    column_name 'programming_3'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN network_management OPTIONS (
+    column_name 'network_management'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN computer_applications OPTIONS (
+    column_name 'computer_applications'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN marketing OPTIONS (
+    column_name 'marketing'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN bank_accounting OPTIONS (
+    column_name 'bank_accounting'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN financial_institutions_accounting OPTIONS (
+    column_name 'financial_institutions_accounting'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN private_accounting OPTIONS (
+    column_name 'private_accounting'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN computer OPTIONS (
+    column_name 'computer'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN financial_mathematics OPTIONS (
+    column_name 'financial_mathematics'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN statistics OPTIONS (
+    column_name 'statistics'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN food_industries OPTIONS (
+    column_name 'food_industries'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN dairy OPTIONS (
+    column_name 'dairy'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN gardening OPTIONS (
+    column_name 'gardening'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN farm_animal OPTIONS (
+    column_name 'farm_animal'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN agricultural_pests OPTIONS (
+    column_name 'agricultural_pests'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN sport OPTIONS (
+    column_name 'sport'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN art OPTIONS (
+    column_name 'art'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN certificate_date OPTIONS (
+    column_name 'certificate_date'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN micro_organisms OPTIONS (
+    column_name 'micro_organisms'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN web_design OPTIONS (
+    column_name 'web_design'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN department OPTIONS (
+    column_name 'department'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN televison OPTIONS (
+    column_name 'televison'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN electronic_device_maintenance OPTIONS (
+    column_name 'electronic_device_maintenance'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN antennas OPTIONS (
+    column_name 'antennas'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN protection_and_alarm_systems OPTIONS (
+    column_name 'protection_and_alarm_systems'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN import_irregularity OPTIONS (
+    column_name 'import_irregularity'
 );
 
 
@@ -16849,6 +19362,20 @@ CREATE INDEX fki_exam_material_id ON public.acorn_exam_scores USING btree (exam_
 
 
 --
+-- Name: fki_global_scope_academic_year_id; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX fki_global_scope_academic_year_id ON public.acorn_user_users USING btree (global_scope_academic_year_id);
+
+
+--
+-- Name: fki_global_scope_entity_id; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX fki_global_scope_entity_id ON public.acorn_user_users USING btree (global_scope_entity_id);
+
+
+--
 -- Name: fki_high_school_course_id; Type: INDEX; Schema: public; Owner: university
 --
 
@@ -17080,10 +19607,24 @@ CREATE INDEX reset_code_index ON public.backend_users USING btree (reset_passwor
 
 
 --
+-- Name: result_name_btree; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX result_name_btree ON public.acorn_exam_result_internal2s USING btree (name) WITH (deduplicate_items='true');
+
+
+--
 -- Name: role_code_index; Type: INDEX; Schema: public; Owner: university
 --
 
 CREATE INDEX role_code_index ON public.backend_user_roles USING btree (code);
+
+
+--
+-- Name: score; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX score ON public.acorn_exam_score_names USING btree (score) WITH (deduplicate_items='true');
 
 
 --
@@ -17269,6 +19810,37 @@ CREATE INDEX winter_translate_messages_code_pre_2_1_0_index ON public.winter_tra
 
 
 --
+-- Name: acorn_university_student_lookups _RETURN; Type: RULE; Schema: public; Owner: university
+--
+
+CREATE OR REPLACE VIEW public.acorn_university_student_lookups AS
+ SELECT s.id,
+    s.id AS student_id,
+    sc.id AS school_id,
+    c_hs.id AS course_id,
+    JSON_ARRAYAGG(c_hsy.id RETURNING json) AS course_year_ids,
+    s.legacy_import_student_type,
+    co.name AS code,
+    hi_cs.academic_year_id,
+    u.name,
+    u.surname,
+    (((COALESCE(u.name, ''::character varying))::text || ' '::text) || (COALESCE(u.surname, ''::character varying))::text) AS full_name,
+    u.fathers_name
+   FROM ((((((((((public.acorn_university_hierarchies hi_cs
+     JOIN public.acorn_university_courses c_hs ON (((c_hs.entity_id = hi_cs.entity_id) AND (c_hs.course_type_id = 'a5d8016a-78ad-4296-aac7-fc5332045764'::uuid))))
+     JOIN public.acorn_user_user_group_version ugv_cs ON ((ugv_cs.user_group_version_id = hi_cs.user_group_version_id)))
+     JOIN public.acorn_university_students s ON ((ugv_cs.user_id = s.user_id)))
+     JOIN public.acorn_user_users u ON ((s.user_id = u.id)))
+     JOIN public.acorn_university_hierarchies hip_sc ON ((hi_cs.parent_id = hip_sc.id)))
+     JOIN public.acorn_university_schools sc ON ((sc.entity_id = hip_sc.entity_id)))
+     LEFT JOIN public.acorn_university_student_codes co ON ((co.student_id = s.id)))
+     LEFT JOIN public.acorn_user_user_group_version ugv_csy ON ((ugv_csy.user_id = s.user_id)))
+     LEFT JOIN public.acorn_university_hierarchies hi_csy ON ((hi_csy.user_group_version_id = ugv_csy.user_group_version_id)))
+     LEFT JOIN public.acorn_university_courses c_hsy ON (((c_hsy.entity_id = hi_csy.entity_id) AND (c_hsy.course_type_id = '801fb8af-5ed3-4436-b89e-9151e9558c24'::uuid))))
+  GROUP BY s.id, sc.id, c_hs.id, co.name, hi_cs.academic_year_id, u.name, u.surname, u.fathers_name;
+
+
+--
 -- Name: acorn_exam_data_entry_scores _RETURN; Type: RULE; Schema: public; Owner: university
 --
 
@@ -17279,13 +19851,14 @@ CREATE OR REPLACE VIEW public.acorn_exam_data_entry_scores AS
     sc.code AS student_code,
     cm.academic_year_semester_id,
     ays.academic_year_id,
-    sc.code AS filename,
+    COALESCE(sc.code, (s.id)::character varying) AS filename,
     uul.language_id AS primary_language_id,
     en.user_group_id AS course_user_group_id,
+    ens.user_group_id AS organisation_user_group_id,
     c.id AS course_id,
     ugs.code AS course_code,
     c.course_type_id,
-    ((('https://university.acorn.org/student/login/id/'::text || (s.id)::text) || '/?bm='::text) || (s.legacy_import_id)::text) AS qrcode,
+    ((('https://nabu.acorn.org/student/login/id/'::text || (s.id)::text) || '/?bm='::text) || (s.legacy_import_id)::text) AS qrcode,
     em.exam_id,
     json_object_agg(public.fn_acorn_exam_token_name(VARIADIC ARRAY[m.name]), json_build_object('id', es.id, 'exam_material_id', em.id, 'title', ( SELECT json_object_agg(labels.locale, labels.label) AS json_object_agg
            FROM ( SELECT winter_translate_attributes.locale,
@@ -17303,6 +19876,7 @@ CREATE OR REPLACE VIEW public.acorn_exam_data_entry_scores AS
                 UNION ALL
                  SELECT 'en'::character varying AS locale,
                     sn.name AS label) labels))) AS score_names,
+    sum(es.score) AS sum,
     count(es.id) AS attendance,
     xr.result,
     xr.minimum,
@@ -17311,6 +19885,8 @@ CREATE OR REPLACE VIEW public.acorn_exam_data_entry_scores AS
     xrp.passed AS bakeloria_passed,
     xrp.resolved_expression AS bakeloria_passed_resolved_expression,
     xr.passed,
+    s.legacy_import_student_type,
+    s.legacy_import_birth_place,
     s.legacy_import_the_total,
     s.legacy_import_final_avg,
     s.legacy_import_result,
@@ -17333,11 +19909,14 @@ CREATE OR REPLACE VIEW public.acorn_exam_data_entry_scores AS
     u.password,
     u.email,
     u.birth_date,
+    u.name,
+    u.surname,
     u.fathers_name,
     u.mothers_name,
     u.gender,
-    u.marital_status
-   FROM (((((((((((((((((((((((public.acorn_university_courses c
+    u.marital_status,
+    s.printed
+   FROM ((((((((((((((((((((((((((public.acorn_university_courses c
      JOIN public.acorn_university_course_types ct ON ((c.course_type_id = ct.id)))
      JOIN public.acorn_university_course_materials cm ON ((cm.course_id = c.id)))
      JOIN public.acorn_university_academic_year_semesters ays ON ((cm.academic_year_semester_id = ays.id)))
@@ -17349,6 +19928,9 @@ CREATE OR REPLACE VIEW public.acorn_exam_data_entry_scores AS
      JOIN public.acorn_user_user_groups ugs ON ((ugv.user_group_id = ugs.id)))
      JOIN public.acorn_user_user_group_version ug ON ((ugv.id = ug.user_group_version_id)))
      JOIN public.acorn_user_users u ON ((u.id = ug.user_id)))
+     JOIN public.acorn_university_hierarchies his ON ((hi.parent_id = his.id)))
+     JOIN public.acorn_university_entities ens ON ((his.entity_id = ens.id)))
+     JOIN public.acorn_user_user_groups ugss ON ((ens.user_group_id = ugss.id)))
      LEFT JOIN public.acorn_user_user_languages uul ON (((u.id = uul.user_id) AND uul.current)))
      JOIN public.acorn_university_students s ON ((s.user_id = u.id)))
      LEFT JOIN public.acorn_university_student_codes sc ON (((sc.student_id = s.id) AND sc.current)))
@@ -17361,7 +19943,7 @@ CREATE OR REPLACE VIEW public.acorn_exam_data_entry_scores AS
      LEFT JOIN public.acorn_exam_results xrp ON (((xrp.student_id = s.id) AND (xrp.academic_year_id = ay.id) AND (xrp.calculation_id = '9ee52f50-d22a-471e-bdeb-b13d81b1afb2'::uuid))))
      LEFT JOIN public.acorn_exam_results xrfa ON (((xrfa.student_id = s.id) AND (xrfa.academic_year_id = ay.id) AND (xrfa.calculation_id = '958b952c-2e7f-11f0-b4b6-0f8c2c07f33e'::uuid))))
      LEFT JOIN public.acorn_exam_results xrm ON (((xrm.student_id = s.id) AND (xrm.academic_year_id = ay.id) AND (xrm.course_id = c.id) AND (xrm.material_id = m.id) AND (xrm.calculation_type_id = '56013d6e-3247-11f0-8e96-2f232943abf8'::uuid))))
-  GROUP BY u.id, s.id, c.id, xrp.resolved_expression, xrfa.result, uul.language_id, sc.code, ct.id, xr.minimum, xr.maximum, cm.academic_year_semester_id, ays.academic_year_id, en.user_group_id, ugs.code, c.course_type_id, em.exam_id, xr.result, xr.passed, xrp.passed;
+  GROUP BY u.id, s.id, c.id, xrp.resolved_expression, xrfa.result, uul.language_id, sc.code, ct.id, xr.minimum, xr.maximum, cm.academic_year_semester_id, ens.user_group_id, ays.academic_year_id, en.user_group_id, ugs.code, c.course_type_id, em.exam_id, xr.result, xr.passed, xrp.passed;
 
 
 --
@@ -19102,6 +21684,8 @@ ALTER TABLE ONLY public.acorn_university_hierarchies
 COMMENT ON CONSTRAINT entity_id ON public.acorn_university_hierarchies IS 'global-scope: to
 tab-location: 3
 name-object: true
+flags:
+  - hierarchy
 multi:
   valueFrom: htmlName
   html: true
@@ -19228,7 +21812,7 @@ ALTER TABLE ONLY public.acorn_exam_instances
 --
 
 ALTER TABLE ONLY public.acorn_exam_scores
-    ADD CONSTRAINT exam_material_id FOREIGN KEY (exam_material_id) REFERENCES public.acorn_exam_exam_materials(id) ON DELETE CASCADE;
+    ADD CONSTRAINT exam_material_id FOREIGN KEY (exam_material_id) REFERENCES public.acorn_exam_exam_materials(id);
 
 
 --
@@ -19236,6 +21820,22 @@ ALTER TABLE ONLY public.acorn_exam_scores
 --
 
 COMMENT ON CONSTRAINT exam_material_id ON public.acorn_exam_scores IS 'type: Xto1';
+
+
+--
+-- Name: acorn_user_users global_scope_academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_user_users
+    ADD CONSTRAINT global_scope_academic_year_id FOREIGN KEY (global_scope_academic_year_id) REFERENCES public.acorn_university_academic_years(id) ON DELETE SET NULL NOT VALID;
+
+
+--
+-- Name: acorn_user_users global_scope_entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_user_users
+    ADD CONSTRAINT global_scope_entity_id FOREIGN KEY (global_scope_entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE SET NULL NOT VALID;
 
 
 --
@@ -20541,11 +23141,13 @@ ALTER TABLE ONLY public.acorn_university_students
 COMMENT ON CONSTRAINT user_id ON public.acorn_university_students IS 'type: leaf
 has-many-deep-settings:
   user_user_group_versions:
-    read-only: true
-    field-comment: Add users to groups through the <a href="/backend/acorn/university/hierarchies">Relations</a> screen
-    comment-html: true
     tab: acorn.university::lang.models.course.label_plural
+    rl-buttons:
+      link: true
+      unlink: true
     order: 40
+    field-comment: Add new <a href="/backend/acorn/university/courses">Courses</a>
+    comment-html: true
   user_groups:
     hidden: true
   user_addresses:
@@ -21001,6 +23603,22 @@ GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO token_5;
 
 
 --
+-- Name: FUNCTION daitch_mokotoff(text); Type: ACL; Schema: public; Owner: sz
+--
+
+REVOKE ALL ON FUNCTION public.daitch_mokotoff(text) FROM sz;
+GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO sz WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION difference(text, text); Type: ACL; Schema: public; Owner: sz
+--
+
+REVOKE ALL ON FUNCTION public.difference(text, text) FROM sz;
+GRANT ALL ON FUNCTION public.difference(text, text) TO sz WITH GRANT OPTION;
+
+
+--
 -- Name: FUNCTION distance_chebyshev(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
@@ -21022,6 +23640,22 @@ GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO token
 GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO token_5;
+
+
+--
+-- Name: FUNCTION dmetaphone(text); Type: ACL; Schema: public; Owner: sz
+--
+
+REVOKE ALL ON FUNCTION public.dmetaphone(text) FROM sz;
+GRANT ALL ON FUNCTION public.dmetaphone(text) TO sz WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION dmetaphone_alt(text); Type: ACL; Schema: public; Owner: sz
+--
+
+REVOKE ALL ON FUNCTION public.dmetaphone_alt(text) FROM sz;
+GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO sz WITH GRANT OPTION;
 
 
 --
@@ -21603,6 +24237,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO s
 --
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO admin WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO sz WITH GRANT OPTION;
 
 
 --
@@ -21610,6 +24245,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO admin WITH G
 --
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO admin WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO sz WITH GRANT OPTION;
 
 
 --
@@ -21638,6 +24274,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uui
 --
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -21771,11 +24408,11 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_impo
 
 
 --
--- Name: FUNCTION fn_acorn_university_scope_entities(p_entity_id uuid, p_setting character varying); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_entity_id uuid, p_setting character varying) TO token_5;
-GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_entity_id uuid, p_setting character varying) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO token_5;
 
 
 --
@@ -22293,6 +24930,38 @@ GRANT ALL ON FUNCTION public.latitude(public.earth) TO token_5;
 
 
 --
+-- Name: FUNCTION levenshtein(text, text); Type: ACL; Schema: public; Owner: sz
+--
+
+REVOKE ALL ON FUNCTION public.levenshtein(text, text) FROM sz;
+GRANT ALL ON FUNCTION public.levenshtein(text, text) TO sz WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION levenshtein(text, text, integer, integer, integer); Type: ACL; Schema: public; Owner: sz
+--
+
+REVOKE ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) FROM sz;
+GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO sz WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION levenshtein_less_equal(text, text, integer); Type: ACL; Schema: public; Owner: sz
+--
+
+REVOKE ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) FROM sz;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO sz WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION levenshtein_less_equal(text, text, integer, integer, integer, integer); Type: ACL; Schema: public; Owner: sz
+--
+
+REVOKE ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) FROM sz;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO sz WITH GRANT OPTION;
+
+
+--
 -- Name: FUNCTION ll_to_earth(double precision, double precision); Type: ACL; Schema: public; Owner: sz
 --
 
@@ -22314,6 +24983,14 @@ GRANT ALL ON FUNCTION public.longitude(public.earth) TO token_1 WITH GRANT OPTIO
 GRANT ALL ON FUNCTION public.longitude(public.earth) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.longitude(public.earth) TO frontend;
 GRANT ALL ON FUNCTION public.longitude(public.earth) TO token_5;
+
+
+--
+-- Name: FUNCTION metaphone(text, integer); Type: ACL; Schema: public; Owner: sz
+--
+
+REVOKE ALL ON FUNCTION public.metaphone(text, integer) FROM sz;
+GRANT ALL ON FUNCTION public.metaphone(text, integer) TO sz WITH GRANT OPTION;
 
 
 --
@@ -22438,6 +25115,14 @@ GRANT ALL ON FUNCTION public.similarity_op(text, text) TO token_5;
 
 
 --
+-- Name: FUNCTION soundex(text); Type: ACL; Schema: public; Owner: sz
+--
+
+REVOKE ALL ON FUNCTION public.soundex(text) FROM sz;
+GRANT ALL ON FUNCTION public.soundex(text) TO sz WITH GRANT OPTION;
+
+
+--
 -- Name: FUNCTION strict_word_similarity(text, text); Type: ACL; Schema: public; Owner: sz
 --
 
@@ -22490,6 +25175,14 @@ GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO sz WITH GR
 GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO frontend;
 GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO token_5;
+
+
+--
+-- Name: FUNCTION text_soundex(text); Type: ACL; Schema: public; Owner: sz
+--
+
+REVOKE ALL ON FUNCTION public.text_soundex(text) FROM sz;
+GRANT ALL ON FUNCTION public.text_soundex(text) TO sz WITH GRANT OPTION;
 
 
 --
@@ -23155,13 +25848,25 @@ GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_5;
 
 
 --
+-- Name: TABLE acorn_user_languages; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_user_languages TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_languages TO admin WITH GRANT OPTION;
+GRANT SELECT,TRIGGER ON TABLE public.acorn_user_languages TO frontend;
+GRANT ALL ON TABLE public.acorn_user_languages TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_languages TO token_5;
+GRANT SELECT ON TABLE public.acorn_user_languages TO PUBLIC;
+
+
+--
 -- Name: TABLE acorn_exam_certificates; Type: ACL; Schema: public; Owner: university
 --
 
 GRANT SELECT ON TABLE public.acorn_exam_certificates TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_certificates TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_certificates TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_certificates TO token_5;
-GRANT ALL ON TABLE public.acorn_exam_certificates TO sz WITH GRANT OPTION;
 
 
 --
@@ -23580,18 +26285,6 @@ GRANT SELECT ON TABLE public.acorn_university_schools TO PUBLIC;
 
 
 --
--- Name: TABLE acorn_user_users; Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON TABLE public.acorn_user_users TO token_1 WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_user_users TO admin WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_user_users TO sz WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_user_users TO token_5;
-GRANT SELECT,INSERT,TRIGGER,UPDATE ON TABLE public.acorn_user_users TO frontend;
-GRANT SELECT ON TABLE public.acorn_user_users TO PUBLIC;
-
-
---
 -- Name: TABLE acorn_university_student_lookups; Type: ACL; Schema: public; Owner: university
 --
 
@@ -23647,18 +26340,6 @@ GRANT SELECT,TRIGGER ON TABLE public.acorn_user_ethnicities TO frontend;
 GRANT ALL ON TABLE public.acorn_user_ethnicities TO token_1 WITH GRANT OPTION;
 GRANT SELECT ON TABLE public.acorn_user_ethnicities TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_ethnicities TO token_5;
-
-
---
--- Name: TABLE acorn_user_languages; Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON TABLE public.acorn_user_languages TO token_1 WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_user_languages TO admin WITH GRANT OPTION;
-GRANT SELECT,TRIGGER ON TABLE public.acorn_user_languages TO frontend;
-GRANT ALL ON TABLE public.acorn_user_languages TO sz WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_user_languages TO token_5;
-GRANT SELECT ON TABLE public.acorn_user_languages TO PUBLIC;
 
 
 --
@@ -23767,6 +26448,18 @@ GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_languages TO frontend;
 GRANT ALL ON TABLE public.acorn_user_user_languages TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_languages TO token_5;
 GRANT SELECT ON TABLE public.acorn_user_user_languages TO PUBLIC;
+
+
+--
+-- Name: TABLE acorn_user_users; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_user_users TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_users TO admin WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_users TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_users TO token_5;
+GRANT SELECT,INSERT,TRIGGER,UPDATE ON TABLE public.acorn_user_users TO frontend;
+GRANT SELECT ON TABLE public.acorn_user_users TO PUBLIC;
 
 
 --
@@ -24535,18 +27228,6 @@ GRANT SELECT,USAGE ON SEQUENCE public.system_settings_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_settings_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_settings_id_seq TO token_5;
 GRANT SELECT ON SEQUENCE public.system_settings_id_seq TO PUBLIC;
-
-
---
--- Name: TABLE university_mofadala_baccalaureate_marks; Type: ACL; Schema: public; Owner: sz
---
-
-REVOKE ALL ON TABLE public.university_mofadala_baccalaureate_marks FROM sz;
-GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO sz WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.university_mofadala_baccalaureate_marks TO frontend;
-GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.university_mofadala_baccalaureate_marks TO PUBLIC;
-GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_5;
 
 
 --

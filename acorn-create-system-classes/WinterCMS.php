@@ -164,7 +164,7 @@ class WinterCMS extends Framework
         // Alter the public function pluginDetails(): array function array return
         // and append some comments
         $this->changeArrayReturnFunctionEntry($pluginFilePath, 'pluginDetails', 'author', 'Acorn');
-        $this->removeFunction($pluginFilePath, 'registerNavigation');
+        $this->removeMethod($pluginFilePath, 'registerNavigation');
         $this->replaceInFile( $pluginFilePath, '/Registers backend navigation items for this plugin./', 'Navigation in plugin.yaml.');
 
         // Adding cross plugin dependencies
@@ -503,6 +503,152 @@ class WinterCMS extends Framework
         $this->runWinterCommand('acorn:seed', 2, $plugin->dotClassName());
     }
 
+    protected function adornOtherCustomPlugins(Plugin &$thisPlugin, bool $overwrite = FALSE) {
+        // Non-create-system plugins can usefully receive extra dynamic relations, fields and columns
+        // where create-system plugins are referencing them
+        // For example: student 1-1=> (user 1-X=> user_group) <=1-1 entity
+
+        // This happens where $this model has a relation to a custom plugin like user
+        // which means that $this->plugin needs to boot() adorn the custom plugin
+        // with a relation, field and column
+        // For example:
+        //   public function boot() {
+        //     User::extend(function ($model){
+        //         $model->belongsToMany['addresses'] = [Address::class, 'table' => 'acorn_location_user_address'];
+        //     });
+        //     Users::extendFormFields(function ($form, $model, $context) {
+        //       $form->addFields(['addresses' => [...]]);
+        //     });
+        //     Users::extendListColumns(function ($list, $model) {
+        //         $list->addColumns(['addresses' => [...]]);
+        //     });
+        //   }
+        global $GREEN, $YELLOW, $RED, $NC;
+
+        $bootMethodPhp = '';
+
+        foreach ($thisPlugin->models as $thisModel) {
+            $thisTable        = $thisModel->getTable();
+            $thisLabel        = $thisModel->translationKey();
+            $pluginLabel      = $thisPlugin->translationKey();
+            $thisOptions      = $thisModel->dropdownOptionsCall();
+            $thisRelationName = $thisModel->dirName(); // hierarchies
+            $thisClassFQN     = $thisModel->absoluteFullyQualifiedName(Model::WITH_CLASS_STRING);
+            $thisTableFQN     = $thisTable->fullyQualifiedName();
+
+            // ------------------------------- belongsTo(1-1) => hasOne
+            $relationType = 'hasOne';
+            foreach ($thisModel->relations1to1() as $name => &$relation) {
+                $isToCustomModel = !$relation->to->isCreateSystem();
+                if ($isToCustomModel) {
+                    $customModelFQN    = $relation->to->absoluteFullyQualifiedName();
+                    $customController  = $relation->to->controller();
+
+                    $bootMethodPhp    .= <<<PHP
+// ------------------ $customModelFQN
+$customModelFQN::extend(function (\$model){
+    \$model->{$relationType}['$thisRelationName'] = [$thisClassFQN, 'table' => '$thisTableFQN'];
+});
+
+PHP;
+                    if ($customController->exists()) {
+                        // emptyOption to ensure that it can and does remain NULL
+                        $bootMethodPhp    .= <<<PHP
+\Acorn\Controller::extendFormFieldsGeneral(function (\$form, \$model, \$context) {
+    if (\$model instanceof $customModelFQN) {
+        \$form->addTabFields(['$thisRelationName' => [
+            'label'    => '$thisLabel',
+            'type'     => 'dropdown',
+            'options'  => '$thisOptions',
+            'emptyOption' => 'acorn::lang.models.general.nothing_linked',
+            'tab'      => '$pluginLabel'
+        ]]);
+    }
+});
+\Acorn\Controller::extendListColumnsGeneral(function (\$list, \$model) {
+    if (\$model instanceof $customModelFQN) {
+        \$list->addColumns(['$thisRelationName' => [
+            'label'     => '$thisLabel',
+            'relation'  => '$thisRelationName',
+            'valueFrom' => 'name',
+        ]]);
+    }
+});
+
+PHP;
+                    }
+                    print("  {$GREEN}INFO{$NC}: Adorned {$YELLOW}$customModelFQN{$NC} with {$YELLOW}$thisRelationName{$NC} relation\n");
+                }
+            }
+
+            // TODO: ------------------------------- Custom plugin adornment belongsTo(X-1) => hasMany, etc.
+
+            // ------------------------------- Global Scope setting additions to the User plugin
+            if ($thisModel->globalScope) {
+                // Add field to DB if not present
+                // acorn_university_academic_years_global_scope_setting
+                $usersTable       = Table::get('acorn_user_users');
+                $thisTableSubName = $thisTable->subNameSingular();
+                $usersColumnStub  = "global_scope_$thisTableSubName"; 
+                $usersColumnName  = "{$usersColumnStub}_id"; 
+                if (!$usersTable->hasColumn($usersColumnName)) {
+                    // We assume a Lookup table with id (uuid)
+                    $this->db->addColumn(
+                        $usersTable->fullyQualifiedName(), 
+                        $usersColumnName, 
+                        'uuid', 
+                        NULL, 
+                        Column::NULLABLE
+                    );
+                    $this->db->addForeignKey(
+                        $usersTable->fullyQualifiedName(), 
+                        $usersColumnName, 
+                        $thisTableFQN,
+                        'id',
+                        DB::SET_NULL
+                    );
+                }
+
+                // Add field to user field tab and columns
+                $bootMethodPhp    .= <<<PHP
+// ------------------ Global Scope setting for $thisModel
+\Acorn\User\Models\User::extend(function (\$model){
+    \$model->belongsTo['$usersColumnStub'] = [$thisClassFQN, 'table' => '$thisTableFQN'];
+});
+\Acorn\User\Controllers\Users::extendFormFieldsGeneral(function (\$form, \$model, \$context) {
+    if (\$model instanceof \Acorn\User\Models\User) {
+        \$form->addTabFields(['$usersColumnName' => [
+            'label'   => '$thisLabel',
+            'type'    => 'dropdown',
+            'options' => '$thisOptions',
+            'emptyOption' => 'acorn::lang.models.general.no_restriction',
+            'tab'     => 'acorn::lang.models.general.global_scopes'
+        ]]);
+    }
+});
+\Acorn\User\Controllers\Users::extendListColumnsGeneral(function (\$list, \$model) {
+    if (\$model instanceof \Acorn\User\Models\User) {
+        \$list->addColumns(['$usersColumnStub' => [
+            'label'     => '$thisLabel',
+            'relation'  => '$usersColumnStub',
+            'valueFrom' => 'name',
+        ]]);
+    }
+});
+
+PHP;
+                print("  {$GREEN}INFO{$NC}: Adorned User Model with {$YELLOW}$thisClassFQN{$NC} global scope setting\n");
+            }
+        }
+
+        // Write boot method of this plugin
+        if ($bootMethodPhp) {
+            $pluginDirectoryPath = $this->pluginDirectoryPath($thisPlugin);
+            $pluginFilePath      = "$pluginDirectoryPath/Plugin.php";
+            $this->replaceMethod($pluginFilePath, 'boot', $bootMethodPhp);
+        }
+    }
+
     protected function writeReadme(Plugin &$plugin, string $contents) {
         // Created bys, authors & README.md
         $pluginDirectoryPath = $this->pluginDirectoryPath($plugin);
@@ -526,7 +672,7 @@ class WinterCMS extends Framework
         }
     }
 
-    public function createMenus(Plugin &$plugin) {
+    public function createMenus(Plugin &$plugin, bool $overwrite = FALSE) {
         global $GREEN, $YELLOW, $RED, $NC;
 
         $pluginDirectoryPath = $this->pluginDirectoryPath($plugin);
@@ -562,6 +708,16 @@ class WinterCMS extends Framework
                                     'icon'    => 'icon-qrcode',
                                     
                                     'permissions' => array($permissionFQN),
+                                );
+                            }
+
+                            if ($controller->allControllers) {
+                                // All controllers item
+                                $sideMenu['All'] = array(
+                                    'label' => 'acorn::lang.models.general.all_controllers',
+                                    'url'   => $controller->relativeUrl('all'),
+                                    'icon'  => 'icon-map',
+                                    'permissions' => array($model->permissionFQN('all')),
                                 );
                             }
 
@@ -619,7 +775,6 @@ class WinterCMS extends Framework
                 );
 
                 $this->yamlFileSet($pluginYamlPath, 'navigation', $navigationDefinition);
-
             }
         }
     }
@@ -854,6 +1009,7 @@ PHP
                     'global_scope' => ($relation->globalScope === 'to'),
                     'delete' => $relation->delete,
                     'count'  => $relation->isCount,
+                    'flags'  => $relation->flags,
                     'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
             }
@@ -867,6 +1023,7 @@ PHP
                     'global_scope' => ($relation->globalScope === 'to'),
                     'delete' => $relation->delete,
                     'count'  => $relation->isCount,
+                    'flags'  => $relation->flags,
                     'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
             }
@@ -892,6 +1049,7 @@ PHP
                     // other (XfromX, etc.) indicates the LAST step only
                     'type'   => $relation->type(), 
                     'count'  => $relation->isCount,
+                    'flags'  => $relation->flags,
                     'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
             }
@@ -906,6 +1064,7 @@ PHP
                     'global_scope' => ($relation->globalScope === 'from'),
                     'type'   => $relation->type(),
                     'count'  => $relation->isCount,
+                    'flags'  => $relation->flags,
                     'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
             }
@@ -920,6 +1079,7 @@ PHP
                     'global_scope' => ($relation->globalScope === 'from'),
                     'type'     => $relation->type(),
                     'count'    => $relation->isCount,
+                    'flags'  => $relation->flags,
                     'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
             }
@@ -938,6 +1098,7 @@ PHP
                     'global_scope' => ($relation->globalScope === 'from'),
                     'delete'   => $relation->delete,
                     'count'    => $relation->isCount,
+                    'flags'  => $relation->flags,
                     'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
             }
@@ -954,6 +1115,7 @@ PHP
                     'global_scope' => ($relation->globalScope === 'from'),
                     'delete'   => $relation->delete,
                     'count'    => $relation->isCount,
+                    'flags'  => $relation->flags,
                     'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
             }
@@ -969,6 +1131,7 @@ PHP
                     'global_scope' => ($relation->globalScope === 'from'),
                     'delete' => $relation->delete, // This can be done by a DELETE CASCADE FK
                     'count'  => $relation->isCount,
+                    'flags'  => $relation->flags,
                     'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
             }
@@ -1010,11 +1173,12 @@ PHP
             }
             $this->setPropertyInClassFile($modelFilePath, 'jsonable', $jsonable, TRUE, 'protected');
 
-            // ----------------------------------------------------------------- JSONable
+            // ----------------------------------------------------------------- Translatable
             $translatable = array();
             foreach ($model->fields() as $name => &$field) {
-                if ($field->canDisplayAsField() && $field->translatable)
+                if ($field->canDisplayAsField() && $field->translatable) {
                     array_push($translatable, $name);
+                }
             }
             $this->setPropertyInClassFile($modelFilePath, 'translatable', $translatable, FALSE);
 
@@ -1039,7 +1203,7 @@ PHP
             // Note that MATERIALIZED VIEWs can throw errors if not populated
             // so we try{}, otherwise we will take down the whole interface
             print("  Adding menuitemCount()\n");
-            $this->addStaticMethod($modelFilePath, 'menuitemCount', 'try{return (isset($_GET["count"]) ? self::count() : NULL);} catch (Exception $ex) {return NULL;}');
+            $this->addStaticMethod($modelFilePath, 'menuitemCount', 'return Model::menuitemCountFor(self::class);');
 
             // findByCode() static
             if ($model->hasField('code')) {
@@ -1232,6 +1396,12 @@ PHP
                     'height' => $field->height,
                     'size'   => $field->size,
                     'emptyOption' => $field->emptyOption,
+                    // DataTable field type
+                    'adding' => $field->adding,
+                    'searching' => $field->searching,
+                    'deleting' => $field->deleting,
+                    'columns' => $field->columns,
+                    'keyFrom' => $field->keyFrom,
                 
                     'options'      => $field->fieldOptions,      // Function call
                     'optionsModel' => $field->fieldOptionsModel, // Model name
@@ -1241,7 +1411,7 @@ PHP
                     'nameFrom'     => $field->nameFrom,
                     'dependsOn'    => array_keys($field->dependsOn),
                     'attributes'   => $field->attributes,
-
+                    
                     // Extended info
                     'nested'       => ($field->nested    ?: NULL),
                     'nestLevel'    => ($field->nestLevel ?: NULL),
@@ -1259,7 +1429,11 @@ PHP
                     'includeContext' => $field->includeContext, // = exclude for QRCode
                 );
                 if ($field->fieldConfig) $fieldDefinition = array_merge($fieldDefinition, $field->fieldConfig);
-                $fieldDefinition = $this->removeEmpty($fieldDefinition, self::AND_FALSES); // Remove FALSE
+                $fieldDefinition = $this->removeEmpty(
+                    $fieldDefinition, 
+                    self::AND_FALSES, 
+                    ['adding', 'searching', 'deleting', 'height']
+                ); // Remove FALSE
                 if ($field->goto) $fieldDefinition['containerAttributes'] = array('goto-form-group-selection' => $field->goto);
                 $this->yamlFileSet($fieldsPath, $dotPath, $fieldDefinition);
 
@@ -1579,12 +1753,14 @@ PHP
             if ($field->fieldType == 'relationmanager') {
                 if (count($field->relations) == 0) throw new Exception("Field $name has no relations for relationmanager configuration");
                 if (count($field->relations) > 1)  throw new Exception("Field $name has multiple relations for relationmanager configuration");
-                $relation1               = end($field->relations);
-                $relationModel           = $relation1->to;
-                $relationPluginDirectory = $relationModel->plugin->dirName();
-                $relationModelDirName    = $relationModel->dirName();
-                $relationModelDirPath    = "/$relationPluginDirectory/models/$relationModelDirName";
-                $rlButtons               = ($field->rlButtons ?: array('create' => TRUE, 'delete' => TRUE));
+                $relation1                 = end($field->relations);
+                $relationModel             = $relation1->to;
+                $relationPluginDirectory   = $relationModel->plugin->dirName();
+                $relationModelDirName      = $relationModel->dirName();
+                $relationControllerDirName = $relationModel->controller()->dirName();
+                $relationModelDirPath      = "$relationPluginDirectory/models/$relationModelDirName";
+                $relationControllerDirPath = "$relationPluginDirectory/controllers/$relationControllerDirName";
+                $rlButtons                 = ($field->rlButtons ?: array('create' => TRUE, 'delete' => TRUE));
 
                 print("    +{$YELLOW}$field->fieldKey{$NC} filter\n");
                 $relationDefinition = NULL;
@@ -1593,7 +1769,7 @@ PHP
                         'label'    => $field->translationKey(),
                         'readOnly' => TRUE,
                         'view'     => array(
-                            'list' => "\$$relationModelDirPath/columns.yaml",
+                            'list' => "\$/$relationModelDirPath/columns.yaml",
                             'toolbarButtons' => false,
                             'recordsPerPage' => $field->recordsPerPage, // Can be false
                             'showCheckboxes' => FALSE,
@@ -1604,12 +1780,12 @@ PHP
                     $relationDefinition = array(
                         'label' => $field->translationKey(),
                         'view' => array(
-                            'list' => "\$$relationModelDirPath/columns.yaml",
+                            'list' => "\$/$relationModelDirPath/columns.yaml",
                             'toolbarButtons' => implode('|', array_keys($rlButtons)),
                             'recordsPerPage' => $field->recordsPerPage, // Can be false
                         ),
                         'manage' => array(
-                            'form' => "\$$relationModelDirPath/fields.yaml",
+                            'form' => "\$/$relationModelDirPath/fields.yaml",
                             'recordsPerPage' => $field->recordsPerPage,
                         ),
                     );
@@ -1618,6 +1794,17 @@ PHP
                 }
                 
                 if ($relation1->conditions) $relationDefinition['view']['conditions'] = $relation1->conditions;
+                if ($relation1->showSearch !== FALSE) {
+                    $relationDefinition['view']['showSearch']   = true;
+                    $relationDefinition['manage']['showSearch'] = true;
+                }
+                if ($relation1->showFilter !== FALSE) {
+                    $path = "$relationControllerDirPath/config_filter.yaml";
+                    if ($relationModel->isCreateSystem() || file_exists("plugins/$path")) {
+                        $relationDefinition['view']['filter']   = "\$/$path";
+                        $relationDefinition['manage']['filter'] = "\$/$path";
+                    }
+                }
 
                 $this->yamlFileSet($configRelationPath, $field->fieldKey, $relationDefinition);
             }
@@ -1733,6 +1920,18 @@ PHP
                 if ($field->columnConfig) $columnDefinition = array_merge($columnDefinition, $field->columnConfig);
                 $columnDefinition = $this->removeEmpty($columnDefinition); // We do not remove falses
                 $this->yamlFileSet($columnsPath, "columns.$field->columnKey", $columnDefinition);
+
+                if ($name == 'name' && $field->translatable) {
+                    // TODO: fields.translations does not support 1-1 yet
+                    $this->yamlFileSet($columnsPath, 'columns.translations', array(
+                        'label'    => 'winter.translate::lang.plugin.tab',
+                        'relation' => 'translations',
+                        'type'     => 'partial',
+                        'path'     => 'translations',
+                        'sortable' => false,
+                        'searchable' => false
+                    ));
+                }
             } else {
                 print("    $indentString{$YELLOW}WARNING{$NC}: Field [$name]($typeString) cannot display as {$YELLOW}column{$NC} because columnType is blank\n");
             }

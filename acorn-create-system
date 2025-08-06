@@ -20,9 +20,10 @@ require_once('acorn-create-system-classes/WinterCMS.php');
 
 // ------------------------------------------- Inputs
 $file = basename(__FILE__);
-print("Usage: $file [<plugin-name|all|lang.yaml> <git command (push|ask|leave)>]\n");
+print("Usage: $file [<plugin-name|all|lang.yaml> <git command (push|ask|leave)> <write README (y|n)>]\n");
 $installPlugins = (isset($argv[1]) ? $argv[1] : NULL);
 $gitPolicy      = (isset($argv[2]) ? $argv[2] : NULL);
+$writeREADME    = ((isset($argv[3]) ? $argv[3] : 'n') == 'y');
 
 // ------------------------------------------- lang.yaml
 if ($installPlugins == 'lang.yaml') {
@@ -70,6 +71,8 @@ file_put_contents('date_tables_view.sql', "DROP VIEW IF EXISTS acorn_calendar_up
 file_put_contents('date_tables_view.sql', "CREATE OR REPLACE VIEW acorn_calendar_upcreated_ats as\n", FILE_APPEND);
 file_put_contents('name_tables_view.sql', "DROP VIEW IF EXISTS acorn_names;\n");
 file_put_contents('name_tables_view.sql', "CREATE OR REPLACE VIEW acorn_names as\n", FILE_APPEND);
+file_put_contents('acorn_created_bys_view.sql', "DROP VIEW IF EXISTS acorn_created_bys;\n");
+file_put_contents('acorn_created_bys_view.sql', "CREATE OR REPLACE VIEW acorn_created_bys as\n", FILE_APPEND);
 
 // ------------------------------------------- Read DB
 $nc      = new AcornNamingConvention();
@@ -103,6 +106,7 @@ foreach ($plugins as $plugin) $plugin->show();
 
 $db->runSQLFile('date_tables_view.sql');
 $db->runSQLFile('name_tables_view.sql');
+$db->runSQLFile('acorn_created_bys_view.sql');
 
 // ------------------------------------------- Choose which plugin to create()
 if ($installPlugins == '*') {
@@ -144,5 +148,5 @@ if ($installPlugins == '*') {
 // to the framework
 // README.md generation is buffered in the plugin create
 foreach ($chosenPlugins as $plugin) {
-    $framework->create($plugin);
+    $framework->create($plugin, $writeREADME);
 }

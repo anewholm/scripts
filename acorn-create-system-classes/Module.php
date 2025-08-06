@@ -96,7 +96,7 @@ class Module {
         return ($this->name == 'Acorn');
     }
 
-    public function isCreateSystemPlugin(): bool
+    public function isCreateSystem(): bool
     {
         return $this->framework->wasCreatedByUs($this);
     }

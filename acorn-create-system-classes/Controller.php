@@ -14,6 +14,7 @@ class Controller {
     public $icon;
     public $url;
     public $qrCodeScan;
+    public $allControllers;
 
     // Output arrays
     protected $filters = array();
@@ -67,6 +68,13 @@ class Controller {
         return $url;
     }
 
+    public function exists(): bool
+    {
+        // Useful for custom plugins
+        // Requires the framework to be loaded
+        return class_exists($this->absoluteFullyQualifiedName());
+    }
+
     // ----------------------------------------- Display
     public function __toString(): string
     {
@@ -86,9 +94,15 @@ class Controller {
         print("$indentString$GREEN$this$NC\n");
     }
 
-    public function fullyQualifiedName(): string
+    public function fullyQualifiedName(bool $withClassString = FALSE): string
     {
+        $classString = ($withClassString ? '::class' : '');
         $pluginFullyQualifiedName = $this->model->plugin->fullyQualifiedName();
-        return "$pluginFullyQualifiedName\\Controllers\\$this->name";
+        return "$pluginFullyQualifiedName\\Controllers\\$this->name$classString";
+    }
+
+    public function absoluteFullyQualifiedName(bool $withClassString = FALSE): string
+    {
+        return '\\' . $this->fullyQualifiedName($withClassString);
     }
 }

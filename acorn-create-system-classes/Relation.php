@@ -31,6 +31,8 @@ class Relation {
     public $bootstraps;
     public $tab;
     public $advanced;
+    public $showFilter; // In relationmanager, default: TRUE
+    public $showSearch; // In relationmanager, default: TRUE
     public $tabLocation; // primary|secondary|tertiary
     public $span;
     public $rlButtons = array('create' => TRUE, 'delete' => TRUE);
@@ -42,6 +44,8 @@ class Relation {
     public $conditions;  // config_relation.yaml conditions
     public $isCount;
     public $order;
+    public $dependsOn;  // Array of field names
+    public $flags; // e.g. hierarchy flag for global scope
 
     // Translation arrays
     public $labels;

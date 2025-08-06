@@ -25,6 +25,7 @@ class Model {
     public const WITH_FROMS = TRUE;
     public const NO_FROMS = FALSE;
     public const HAS_MANY_DEEP_INCLUDE = TRUE;
+    public const WITH_CLASS_STRING = TRUE;
 
     public $controllers = array();
     public $actionFunctions;
@@ -33,7 +34,8 @@ class Model {
     public $defaultSort;
     public $showSorting;
     public $qrCodeScan;
-
+    public $allControllers;
+    
     public $plugin;
     protected $table; // To mimick Winter Models. See getTable()
     public $name;
@@ -216,6 +218,11 @@ class Model {
         return $hasSelfReferencingRelations;
     }
 
+    public function isCreateSystem(): bool
+    {
+        return $this->plugin->isCreateSystem();
+    }
+
     public function hasAttribute(string $name): bool
     {
         // Alias for hasField()
@@ -339,7 +346,7 @@ class Model {
         }
 
         // Relations
-        if ($this->plugin->isCreateSystemPlugin()) { // Non-create-system relations require Class::belongsTo
+        if ($this->isCreateSystem()) { // Non-create-system relations require Class::belongsTo
             $previousClass = NULL;
             foreach ($this->relations() as &$relation) {
                 $classParts = explode('\\', get_class($relation));
@@ -600,7 +607,7 @@ class Model {
         // Same as the relationsXto1() below, but FK comment annotated as type: 1to1
         $relations = array();
 
-        if ($this->plugin->isCreateSystemPlugin()) {
+        if ($this->isCreateSystem()) {
             // 1 column pointing to the parent content table
             if ($idColumn = $this->table->idColumn()) {
                 foreach ($idColumn->foreignKeysTo as &$foreignKeyTo) {
@@ -662,7 +669,7 @@ class Model {
         $relations = array();
 
         // Non-create system plugins do not declare 1to1 nature
-        if ($this->plugin->isCreateSystemPlugin()) {
+        if ($this->isCreateSystem()) {
             // 1 column pointing to the parent content table
             foreach ($this->table->columns as &$column) {
                 foreach ($column->foreignKeysFrom as &$foreignKeyFrom) {
@@ -782,7 +789,7 @@ class Model {
         // All from relations always point to $this->table->idColumn() only
         $relations = array();
 
-        if ($this->plugin->isCreateSystemPlugin()) {
+        if ($this->isCreateSystem()) {
             // All content tables pointing to this id
             if ($idColumn = $this->table->idColumn()) {
                 foreach ($idColumn->foreignKeysTo as &$foreignKeyTo) {
@@ -816,6 +823,7 @@ class Model {
             if ($winterModel = $this->winterModel(FALSE)) {
                 foreach ($winterModel->hasMany as $relationName => $config) {
                     // If the relation config has a ModelTo setting, usually config[0]
+                    // $finalModel is a create-system Model wrapper
                     $finalModel = $this->relationConfigModel($config);
                     $key        = (isset($config['key']) ? $config['key'] : $this->standardBareReferencingField());
                     $conditions = (isset($config['conditions']) ? $config['conditions'] : NULL);
@@ -836,7 +844,7 @@ class Model {
         // The DB-FK-to is located on $this->table->column(*_id)
         $relations = array();
 
-        if ($this->plugin->isCreateSystemPlugin()) {
+        if ($this->isCreateSystem()) {
             foreach ($this->table->columns as &$column) {
                 foreach ($column->foreignKeysFrom as &$foreignKeyFrom) {
                     if ($foreignKeyFrom->shouldProcess()) {
@@ -863,6 +871,7 @@ class Model {
             if ($winterModel = $this->winterModel(FALSE)) {
                 foreach ($winterModel->belongsTo as $relationName => $config) {
                     // If the relation config has a ModelTo setting, usually config[0]
+                    // $finalModel is a create-system Model wrapper
                     $finalModel = $this->relationConfigModel($config);
                     $isCount    = (isset($config['count']) && $config['count']);
                     $table      = NULL;
@@ -900,7 +909,7 @@ class Model {
         // See: $pivotTable->throughColumn($foreignKeyTo->columnFrom, Table::FIRST_ONLY);
         $relations = array();
 
-        if ($this->plugin->isCreateSystemPlugin()) {
+        if ($this->isCreateSystem()) {
             // All pivot tables pointing to this id
             if ($idColumn = $this->table->idColumn()) {
                 foreach ($idColumn->foreignKeysTo as &$foreignKeyTo) {
@@ -963,7 +972,7 @@ class Model {
         // See: $pivotTable->throughColumn($foreignKeyTo->columnFrom, Table::FIRST_ONLY);
         $relations = array();
 
-        if ($this->plugin->isCreateSystemPlugin()) {
+        if ($this->isCreateSystem()) {
             // All pivot tables pointing to this id
             if ($idColumn = $this->table->idColumn()) {
                 foreach ($idColumn->foreignKeysTo as &$foreignKeyTo) {
@@ -1014,9 +1023,10 @@ class Model {
             if ($winterModel = $this->winterModel(FALSE)) {
                 foreach ($winterModel->belongsToMany as $relationName => $config) {
                     // If the relation config has a ModelTo setting, usually config[0]
+                    // $finalModel is a create-system Model wrapper
+                    $finalModel    = $this->relationConfigModel($config);
                     $db            = $this->table->db();
                     $isCount       = (isset($config['count']) && $config['count']);
-                    $finalModel    = $this->relationConfigModel($config);
                     $key           = (isset($config['key'])      ? $config['key']      : $this->standardBareReferencingField());
                     $conditions    = (isset($config['conditions']) ? $config['conditions'] : NULL);
                     $otherKey      = (isset($config['otherKey']) ? $config['otherKey'] : $finalModel->standardBareReferencingField());
@@ -1182,7 +1192,7 @@ class Model {
         $suppressOutput = !$print;
         if ($suppressOutput) ob_start(); 
 
-        if ($this->plugin->isCreateSystemPlugin()) {
+        if ($this->isCreateSystem()) {
             // ---------------------------------------------------------------- Database Columns => Fields
             foreach ($this->table->columns as $columnName => &$column) {
                 if ($column->shouldProcess()) { // !system && !todo
@@ -1467,6 +1477,8 @@ class Model {
             $tab             = ($relation->tab ?: 'INHERIT'); 
             $translationKey  = $relation->to->translationKey(Model::PLURAL);
             $cssClasses      = $relation->cssClasses($useRelationManager);
+            $dependsOn       = ($relation->dependsOn ? $relation->dependsOn : array());
+            $dependsOn['_paste'] = TRUE;
 
             print("    {$indentString}Creating column _multi for HasManyDeep({$YELLOW}$relation{$NC})\n");
             $thisIdRelation  = array($name => $relation);
@@ -1502,6 +1514,7 @@ class Model {
                 'tab'            => $tab,
                 'cssClasses'     => $cssClasses,
                 'rlButtons'      => $relation->rlButtons,
+                'dependsOn'      => $dependsOn,
                 'tabLocation'    => $relation->tabLocation,
             );
             if ($relation->isCount) {
@@ -1534,7 +1547,8 @@ class Model {
             $nameFrom      = 'fully_qualified_name';
             $relationClass = get_class($relation);
             $relationType  = $relation->type();
-            $dependsOn     = array('_paste' => TRUE);
+            $dependsOn     = ($relation->dependsOn ? $relation->dependsOn : array());
+            $dependsOn['_paste'] = TRUE;
             // TODO: The tab should inherit the labels local key
             $tab           = ($relation->tab ?: (
                 $relation->isSelfReferencing()
@@ -1613,7 +1627,8 @@ class Model {
             $relationType    = $relation->type();
             $tab             = ($relation->tab ?: 'INHERIT'); 
             $translationKey  = $relation->pivotModel->translationKey(Model::PLURAL);
-            $dependsOn       = array('_paste' => TRUE);
+            $dependsOn       = ($relation->dependsOn ? $relation->dependsOn : array());
+            $dependsOn['_paste'] = TRUE;
             $comment         = '';
             $cssClasses      = $relation->cssClasses($useRelationManager);
             $valueFrom       = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
@@ -1683,7 +1698,8 @@ class Model {
             $relationType    = $relation->type();
             $tab             = ($relation->tab ?: 'INHERIT'); 
             $translationKey  = $relation->to->translationKey(Model::PLURAL);
-            $dependsOn       = array('_paste' => TRUE);
+            $dependsOn       = ($relation->dependsOn ? $relation->dependsOn : array());
+            $dependsOn['_paste'] = TRUE;
             $comment         = '';
             $cssClasses      = $relation->cssClasses($useRelationManager);
             $valueFrom       = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable

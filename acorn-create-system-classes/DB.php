@@ -11,6 +11,9 @@ class DB {
     protected $connection;
     protected $comment;
 
+    const SET_NULL = 'SET NULL';
+    const CASCADE = 'CASCADE';
+
     public function __construct(DatabaseNamingConvention &$nc, Framework &$framework)
     {
         $this->nc         = &$nc;
@@ -581,13 +584,13 @@ SQL;
         $statement->execute();
     }
 
-    public function addForeignKey(string $table, string $column, string $references_table, string $references_column = 'id')
+    public function addForeignKey(string $table, string $column, string $references_table, string $references_column = 'id', $deleteAction = self::CASCADE)
     {
         $sql = "ALTER TABLE IF EXISTS $table
             ADD CONSTRAINT $column FOREIGN KEY ($column)
             REFERENCES $references_table ($references_column) MATCH SIMPLE
             ON UPDATE NO ACTION
-            ON DELETE NO ACTION
+            ON DELETE $deleteAction
             NOT VALID;";
         $statement = $this->connection->prepare($sql);
         $statement->execute();

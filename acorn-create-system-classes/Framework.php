@@ -529,6 +529,12 @@ class Framework
         return $this->addMethod($path, $name, $body, 'mixed', $scope, TRUE, $indent);
     }
 
+    protected function replaceMethod(string $path, string $name, string|array $body, string $type = NULL, string $scope = 'public', bool $static = FALSE, int $indent = 1)
+    {
+        $this->removeMethod($path, $name);
+        $this->addMethod($path, $name, $body, $type, $scope, $static, $indent);name: 
+    }
+
     protected function addMethod(string $path, string $name, string|array $body, string $type = NULL, string $scope = 'public', bool $static = FALSE, int $indent = 1)
     {
         if (!$path) 
@@ -542,7 +548,13 @@ class Framework
         $staticString  = ($static ? ' static' : '');
         $signature     = "$name$parameters"; 
         if (is_array($body)) $body = implode("\n$indentString2", $body);
+        else $body = preg_replace('/\n/', "\n$indentString2", $body);
         if ($type) $signature .= ": $type";
+
+        $contents = &$this->fileLoad($path);
+        if (strstr($contents, "function $signature") !== FALSE)
+            throw new Exception("Method $signature already exists in $path");
+
         $this->replaceInFile($path, '/^}$/m', <<<FUNCTION
 
 $indentString$scope$staticString function $signature {
@@ -606,7 +618,7 @@ FUNCTION
         return $string;
     }
 
-    protected function removeEmpty(array $array, bool $andFalses = self::NOT_FALSES): array
+    protected function removeEmpty(array $array, bool $andFalses = self::NOT_FALSES, array $keepFalses = array()): array
     {
         $cleanedArray = array();
         foreach ($array as $name => $value) {
@@ -614,16 +626,18 @@ FUNCTION
                    is_null($value)
                 || (is_string($value) && !$value)
                 || (is_array($value)  && !count($value))
-                || ($andFalses && is_bool($value) && !$value)
+                || ($andFalses && is_bool($value) && !$value && !in_array($name, $keepFalses))
             );
             if (!$empty) $cleanedArray[$name] = $value;
         }
         return $cleanedArray;
     }
 
-    protected function removeFunction(string $path, string $functionName, string $scope = 'public', int $indent = 1)
+    protected function removeMethod(string $path, string $functionName, string $scope = 'public')
     {
-        if (!$path) throw new Exception("Function path is empty");
+        if (!$path) 
+            throw new Exception("Function path is empty");
+
         $this->replaceInFile($path, "/$scope function $functionName\(/", "$scope function {$functionName}_REMOVED(");
     }
 
@@ -681,7 +695,7 @@ FUNCTION
     }
 
     // ---------------------------------------------- Create
-    public function create(Plugin &$plugin)
+    public function create(Plugin &$plugin, bool $writeREADME = FALSE)
     {
         global $YELLOW, $GREEN, $RED, $NC;
 
@@ -690,7 +704,7 @@ FUNCTION
             print("{$GREEN}REMOVING{$NC} existing plugin sub-directories and files from [$pluginDirectoryPath]...\n");
             $this->removeDir($pluginDirectoryPath, FALSE, FALSE);
         }
-        ob_start(); // README.md content
+        if ($writeREADME) ob_start(); // README.md content
 
         // Abstracted MVC creates
         $this->createPlugin($plugin);
@@ -703,9 +717,12 @@ FUNCTION
                 $this->createController($controller);
             }
         }
+        $this->adornOtherCustomPlugins($plugin);
         // README.md content
-        $this->writeReadme($plugin, ob_get_contents());
-        ob_end_flush(); 
+        if ($writeREADME) {
+            $this->writeReadme($plugin, ob_get_contents());
+            ob_end_flush(); 
+        }
 
         $this->writeOutFiles();
         $this->runChecks($plugin);
@@ -724,10 +741,12 @@ FUNCTION
 
     // Abstracted framework dependant
     protected function createPlugin(Plugin &$plugin, bool $overwrite = FALSE) {}
+    protected function createMenus(Plugin &$plugin, bool $overwrite = FALSE) {}
     protected function createModel(Model &$model, bool $overwrite = FALSE) {}
     protected function createFormInterface(Model &$model, bool $overwrite = FALSE) {}
     protected function createController(Controller &$controller, bool $overwrite = FALSE) {}
     protected function createListInterface(Model &$model, bool $overwrite = FALSE) {}
+    protected function adornOtherCustomPlugins(Plugin &$plugin, bool $overwrite = FALSE) {}
     protected function runChecks(Plugin &$plugin) {}
     protected function writeReadme(Plugin &$plugin, string $contents) {}
 }

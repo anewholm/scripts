@@ -74,6 +74,7 @@ class Table {
     public $export;
     public $batchPrint;
     public $qrCodeScan;
+    public $allControllers;
 
     public $filters = array();
 
@@ -302,12 +303,25 @@ class Table {
                     $firstNameTablesViewEntry = FALSE;
                 }
 
+                // -------------------- compile created_by users
+                static $firstUserTablesViewEntry = TRUE;
+                $tablesView = array();
+
+                if ($this->hasColumn('created_by_user_id')) array_push($tablesView, "select $standardFields, 0 as \"update\", created_by_user_id as \"by\" from $this->name");
+                if ($this->hasColumn('updated_by_user_id')) array_push($tablesView, "select $standardFields, 1 as \"update\", updated_by_user_id as \"by\" from $this->name");
+                
+                if ($tablesView) {
+                    $tablesViewString = implode("\nunion all\n", $tablesView);
+                    if (!$firstUserTablesViewEntry) $tablesViewString = "\nunion all\n$tablesViewString";
+                    file_put_contents('acorn_created_bys_view.sql', $tablesViewString, FILE_APPEND);
+                    $firstUserTablesViewEntry = FALSE;
+                }                
+
                 // -------------------- compile created|updated_at[_event_id] fields for calendar
                 // to use in its special activity event instance view
                 // TODO: Should this date_tables_view.sql be in the Model instead? We need the external_url from the Controller facade
                 static $firstDateTablesViewEntry = TRUE;
                 $tablesView = array();
-                $modelClass     = $this->fullyQualifiedModelName();
                 $nameColumn     = ($this->hasColumn('name') ? 'name::character varying(1024)' : 'NULL');
                 $standardFields = "'$modelClass' as model_type, id as model_id, '$this->name' as \"table\", $nameColumn as \"name\"";
 

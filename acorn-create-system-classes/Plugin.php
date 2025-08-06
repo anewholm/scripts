@@ -141,7 +141,7 @@ class Plugin {
     {
         $relations = array();
         // TODO: Support non-create-system plugins
-        if ($this->isCreateSystemPlugin()) {
+        if ($this->isCreateSystem()) {
             foreach ($this->models as &$model) {
                 foreach ($model->relations() as $name => &$relation) {
                     // Exclude Modules
@@ -202,7 +202,7 @@ class Plugin {
         );
     }
 
-    public function isCreateSystemPlugin(): bool
+    public function isCreateSystem(): bool
     {
         return $this->framework->wasCreatedByUs($this);
     }
@@ -215,6 +215,12 @@ class Plugin {
     public function translationDomain(): string
     {
         return $this->dotName();
+    }
+
+    public function translationKey(): string
+    {
+        $domain   = $this->translationDomain(); // acorn.user
+        return "$domain::lang.plugin.name";
     }
 
     public function langEnPath(): string

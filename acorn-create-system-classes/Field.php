@@ -101,6 +101,13 @@ class Field {
     public $setting; // Only show the column if a Setting is TRUE
     public $env;     // Only show the column if an env VAR is TRUE
 
+    // DataTable field type
+    public $adding;
+    public $searching;
+    public $deleting;
+    public $columns;
+    public $keyFrom;
+
     // Custom AA directives that indicate the field is an dynamic include form
     public $phpAttributeCalculation;
     public $include;

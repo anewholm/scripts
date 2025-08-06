@@ -23,6 +23,9 @@ BEGIN
 END
 $BODY$;
 
+-- delete from system_event_logs;
+
 select * from fn_acorn_university_table_counts('public')
-where "table" like('acorn%')
-order by "table";
+-- where "table" like('acorn%')
+order by "count" desc;
+
