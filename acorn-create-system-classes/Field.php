@@ -13,6 +13,7 @@ class Field {
     public $autoFKType;
     public $extraForeignKey;
     public $fromYaml;
+    public $revisionable;
 
     public $comment;     // From column->comment
     public $name;        // => fieldName & columnName

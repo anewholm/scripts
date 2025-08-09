@@ -843,12 +843,20 @@ PHP;
             $this->replaceInFile($modelFilePath, '/^use (Winter\\\Storm\\\Database\\\Model|Model);$/m', 'use Acorn\\Model;');
 
             // Traits
-            print("    Adding Trait Revisionable\n");
-            $model->traits['\\Winter\\Storm\\Database\\Traits\\Revisionable'] = TRUE;
-            $this->setPropertyInClassFile($modelFilePath, 'revisionable', array(), FALSE, 'protected');
-            $this->setPropertyInClassFile($modelFilePath, 'morphMany', array(
-                'revision_history' => array('System\\Models\\Revision', 'name' => 'revisionable')
-            ));
+            $revisionable = array();
+            foreach ($model->fields() as $name => &$field) {
+                if ($field->revisionable) 
+                    array_push($revisionable, $name);
+            }
+            if ($revisionable) {
+                $revisionableList = implode(',', $revisionable);
+                print("    Adding Trait Revisionable for $revisionableList\n");
+                $model->traits['\\Winter\\Storm\\Database\\Traits\\Revisionable'] = TRUE;
+                $this->setPropertyInClassFile($modelFilePath, 'revisionable', $revisionable, FALSE, 'protected');
+                $this->setPropertyInClassFile($modelFilePath, 'morphMany', array(
+                    'revision_history' => array('System\\Models\\Revision', 'name' => 'revisionable')
+                ));
+            }
 
             if ($model->hasSoftDelete()) {
                 print("    Adding Trait SoftDelete\n");

@@ -122,6 +122,7 @@ class Column {
     public $prefix; // Supported by _some_ partials
     public $suffix; // Supported by _some_ partials
     public $multi;
+    public $revisionable;
 
     // --------------------- Column comment accepted values
     // These flow through to Field

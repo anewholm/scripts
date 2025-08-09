@@ -286,6 +286,7 @@ ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT I
 DROP TRIGGER IF EXISTS tr_acorn_user_user_languages_current ON public.acorn_user_user_languages;
 DROP TRIGGER IF EXISTS tr_acorn_user_user_group_version_current ON public.acorn_user_user_group_versions;
 DROP TRIGGER IF EXISTS tr_acorn_user_user_group_first_version ON public.acorn_user_user_groups;
+DROP TRIGGER IF EXISTS tr_acorn_university_student_update ON public.acorn_university_students;
 DROP TRIGGER IF EXISTS tr_acorn_university_student_identities_current ON public.acorn_university_student_identities;
 DROP TRIGGER IF EXISTS tr_acorn_university_student_codes_current ON public.acorn_university_student_codes;
 DROP TRIGGER IF EXISTS tr_acorn_university_import_source_empty ON public.acorn_university_entities;
@@ -350,55 +351,9 @@ DROP TRIGGER IF EXISTS tr_acorn_location_area_types_server_id ON public.acorn_lo
 DROP TRIGGER IF EXISTS tr_acorn_location_area_types_new_replicated_row ON public.acorn_location_area_types;
 DROP TRIGGER IF EXISTS tr_acorn_location_addresses_server_id ON public.acorn_location_addresses;
 DROP TRIGGER IF EXISTS tr_acorn_location_addresses_new_replicated_row ON public.acorn_location_addresses;
+DROP TRIGGER IF EXISTS tr_acorn_exam_scores_log ON public.acorn_exam_scores;
 DROP TRIGGER IF EXISTS tr_acorn_enrollment_desires_ordinal ON public.acorn_enrollment_desires;
 DROP TRIGGER IF EXISTS tr_acorn_calendar_events_generate_event_instances ON public.acorn_calendar_event_parts;
-CREATE OR REPLACE VIEW public.acorn_exam_data_entry_scores AS
-SELECT
-    NULL::text AS id,
-    NULL::uuid AS student_user_id,
-    NULL::uuid AS student_id,
-    NULL::character varying(1024) AS student_code,
-    NULL::uuid AS academic_year_semester_id,
-    NULL::uuid AS academic_year_id,
-    NULL::character varying AS filename,
-    NULL::uuid AS primary_language_id,
-    NULL::uuid AS course_user_group_id,
-    NULL::uuid AS organisation_user_group_id,
-    NULL::uuid AS course_id,
-    NULL::character varying(255) AS course_code,
-    NULL::uuid AS course_type_id,
-    NULL::text AS qrcode,
-    NULL::uuid AS exam_id,
-    NULL::json AS scores,
-    NULL::json AS score_names,
-    NULL::double precision AS sum,
-    NULL::bigint AS attendance,
-    NULL::double precision AS result,
-    NULL::double precision AS minimum,
-    NULL::double precision AS maximum,
-    NULL::double precision AS bakeloria_final_mark,
-    NULL::boolean AS bakeloria_passed,
-    NULL::character varying(2048) AS bakeloria_passed_resolved_expression,
-    NULL::boolean AS passed,
-    NULL::character varying(1024) AS legacy_import_student_type,
-    NULL::character varying(20248) AS legacy_import_birth_place,
-    NULL::double precision AS legacy_import_the_total,
-    NULL::double precision AS legacy_import_final_avg,
-    NULL::character varying(1024) AS legacy_import_result,
-    NULL::double precision AS legacy_import_avg,
-    NULL::boolean AS legacy_import_correct,
-    NULL::boolean AS legacy_import_passed,
-    NULL::character varying(255) AS username,
-    NULL::character varying(255) AS password,
-    NULL::character varying(255) AS email,
-    NULL::timestamp without time zone AS birth_date,
-    NULL::character varying(255) AS name,
-    NULL::character varying(255) AS surname,
-    NULL::character varying(1024) AS fathers_name,
-    NULL::character varying(1024) AS mothers_name,
-    NULL::"char" AS gender,
-    NULL::"char" AS marital_status,
-    NULL::json AS printed;
 CREATE OR REPLACE VIEW public.acorn_university_student_lookups AS
 SELECT
     NULL::uuid AS id,
@@ -427,7 +382,6 @@ DROP INDEX IF EXISTS public.winter_translate_attributes_locale_index;
 DROP INDEX IF EXISTS public.user_item_index;
 DROP INDEX IF EXISTS public.system_settings_item_index;
 DROP INDEX IF EXISTS public.system_revisions_user_id_index;
-DROP INDEX IF EXISTS public.system_revisions_revisionable_id_revisionable_type_index;
 DROP INDEX IF EXISTS public.system_revisions_field_index;
 DROP INDEX IF EXISTS public.system_plugin_versions_code_index;
 DROP INDEX IF EXISTS public.system_plugin_history_type_index;
@@ -761,7 +715,6 @@ DROP TABLE IF EXISTS public.winter_translate_locales;
 DROP SEQUENCE IF EXISTS public.rainlab_translate_indexes_id_seq;
 DROP TABLE IF EXISTS public.winter_translate_indexes;
 DROP SEQUENCE IF EXISTS public.rainlab_translate_attributes_id_seq;
-DROP TABLE IF EXISTS public.winter_translate_attributes;
 DROP SEQUENCE IF EXISTS public.rainlab_location_states_id_seq;
 DROP TABLE IF EXISTS public.winter_location_states;
 DROP SEQUENCE IF EXISTS public.rainlab_location_countries_id_seq;
@@ -795,8 +748,6 @@ DROP SEQUENCE IF EXISTS public.backend_user_groups_id_seq;
 DROP TABLE IF EXISTS public.backend_user_groups;
 DROP SEQUENCE IF EXISTS public.backend_access_log_id_seq;
 DROP TABLE IF EXISTS public.backend_access_log;
-DROP TABLE IF EXISTS public.acorn_user_users;
-DROP TABLE IF EXISTS public.acorn_user_user_languages;
 DROP VIEW IF EXISTS public.acorn_user_user_group_version_usages;
 DROP TABLE IF EXISTS public.acorn_user_user_group_types;
 DROP TABLE IF EXISTS public.acorn_user_user_group;
@@ -838,6 +789,12 @@ DROP TABLE IF EXISTS public.acorn_location_areas;
 DROP TABLE IF EXISTS public.acorn_location_area_types;
 DROP TABLE IF EXISTS public.acorn_location_addresses;
 DROP VIEW IF EXISTS public.acorn_exam_token2s;
+DROP VIEW IF EXISTS public.acorn_exam_certificates;
+DROP TABLE IF EXISTS public.acorn_user_user_languages;
+DROP TABLE IF EXISTS public.acorn_user_languages;
+DROP VIEW IF EXISTS public.acorn_exam_data_entry_scores;
+DROP TABLE IF EXISTS public.winter_translate_attributes;
+DROP TABLE IF EXISTS public.acorn_user_users;
 DROP TABLE IF EXISTS public.acorn_user_user_groups;
 DROP TABLE IF EXISTS public.acorn_user_user_group_versions;
 DROP TABLE IF EXISTS public.acorn_user_user_group_version;
@@ -846,9 +803,6 @@ DROP SEQUENCE IF EXISTS public.acorn_university_students_number;
 DROP TABLE IF EXISTS public.acorn_university_courses;
 DROP VIEW IF EXISTS public.acorn_exam_results;
 DROP TABLE IF EXISTS public.acorn_exam_result_internal2s;
-DROP VIEW IF EXISTS public.acorn_exam_certificates;
-DROP TABLE IF EXISTS public.acorn_user_languages;
-DROP VIEW IF EXISTS public.acorn_exam_data_entry_scores;
 DROP VIEW IF EXISTS public.acorn_created_bys;
 DROP VIEW IF EXISTS public.acorn_calendar_upcreated_ats;
 DROP TABLE IF EXISTS public.acorn_university_student_statuses;
@@ -896,10 +850,13 @@ DROP TABLE IF EXISTS public.acorn_calendar_event_parts;
 DROP TABLE IF EXISTS public.acorn_calendar_event_part_user_group;
 DROP TABLE IF EXISTS public.acorn_calendar_event_part_user;
 DROP TABLE IF EXISTS public.acorn_calendar_calendars;
+DROP FOREIGN TABLE IF EXISTS live_public.acorn_exam_scores;
 DROP USER MAPPING IF EXISTS FOR university SERVER localserver_universityacceptance;
 DROP USER MAPPING IF EXISTS FOR token_1 SERVER localserver_universityacceptance;
 DROP USER MAPPING IF EXISTS FOR sz SERVER localserver_universityacceptance;
 DROP SERVER IF EXISTS localserver_universityacceptance;
+DROP USER MAPPING IF EXISTS FOR sz SERVER live_university;
+DROP SERVER IF EXISTS live_university;
 DROP AGGREGATE IF EXISTS public.agg_acorn_last(anyelement);
 DROP AGGREGATE IF EXISTS public.agg_acorn_first(anyelement);
 DROP FUNCTION IF EXISTS public.fn_acorn_user_user_languages_current();
@@ -909,6 +866,7 @@ DROP FUNCTION IF EXISTS public.fn_acorn_user_get_seed_user();
 DROP FUNCTION IF EXISTS public.fn_acorn_user_code_acronym(name character varying, word integer, length integer);
 DROP FUNCTION IF EXISTS public.fn_acorn_user_code(name character varying, word integer, length integer);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_table_counts(_schema character varying);
+DROP FUNCTION IF EXISTS public.fn_acorn_university_student_update();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_student_identities_current();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_student_codes_current();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying);
@@ -961,6 +919,7 @@ DROP FUNCTION IF EXISTS public.fn_acorn_exam_tokenize(p_expr character varying, 
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_token_name_internal(p_titles character varying[]);
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]);
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]);
+DROP FUNCTION IF EXISTS public.fn_acorn_exam_scores_log();
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray);
@@ -986,6 +945,16 @@ DROP EXTENSION IF EXISTS fuzzystrmatch;
 DROP EXTENSION IF EXISTS earthdistance;
 DROP EXTENSION IF EXISTS cube;
 DROP SCHEMA IF EXISTS product;
+DROP SCHEMA IF EXISTS live_public;
+--
+-- Name: live_public; Type: SCHEMA; Schema: -; Owner: sz
+--
+
+CREATE SCHEMA live_public;
+
+
+ALTER SCHEMA live_public OWNER TO sz;
+
 --
 -- Name: product; Type: SCHEMA; Schema: -; Owner: university
 --
@@ -1660,6 +1629,84 @@ $$;
 
 
 ALTER FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) OWNER TO university;
+
+--
+-- Name: fn_acorn_exam_scores_log(); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_exam_scores_log() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $_$
+declare
+	p_new_score double precision;
+	p_student_id uuid;
+	p_exam_material_id uuid;
+begin
+	-- Runs after insert, update & delete
+	-- student_id & exam_material_id are assumed they cannot change
+	-- NOTE: This will make an event for every hierarchy parent (school) 
+	-- in the case that the course appears under many parents with the student in
+	p_new_score        := new.score;
+	p_student_id       := case when not old.student_id       is null then old.student_id       else new.student_id end;
+	p_exam_material_id := case when not old.exam_material_id is null then old.exam_material_id else new.exam_material_id end;
+
+	insert into system_event_logs(level, message, details, created_at)
+		select 'info', 'Exam score ' || TG_OP,
+
+			-- JSON
+			to_json(ARRAY[
+				'Student:'  || su.name || ' ' || su.surname || '(' || s.id || ')',
+				'Score:'    || coalesce(old.score::text, '-') || '=>' || coalesce(new.score::text, '-') || '(' || coalesce(old.id, new.id) || ')',
+				'Material:' || m.name || '(' || m.id || ')',
+				'Course:'   || ugs_c.name|| '(' || c.id || ',' || coalesce(ugs_p.name, '<no course parent>') || ')',
+				'User:'     || current_user || '(' || coalesce(bk.login, '<not token backend user>') || ', ' || coalesce(ugs_g.name, '<no entity restriction>') || ')',
+				'Action:'   || TG_OP
+			]),
+			now()
+		from acorn_university_students s
+		inner join acorn_user_users su on su.id = s.user_id,
+		
+		acorn_exam_exam_materials em
+		inner join acorn_university_course_materials cm on em.course_material_id = cm.id
+		inner join acorn_university_materials m on cm.material_id = m.id
+		inner join acorn_university_academic_year_semesters ays on ays.id = cm.academic_year_semester_id
+
+		inner join acorn_university_courses c on cm.course_id = c.id
+		inner join acorn_university_entities en_c on en_c.id = c.entity_id
+		inner join acorn_user_user_groups ugs_c on en_c.user_group_id = ugs_c.id
+
+		-- Hierarchies (needs to include user_group_version of the student)
+		-- A course can appear in many places for same year
+		left join acorn_university_hierarchies hi on hi.entity_id = en_c.id and hi.academic_year_id = ays.academic_year_id
+		left join acorn_user_user_group_version ugv_p on hi.user_group_version_id = ugv_p.user_group_version_id
+		left join acorn_university_students s2 on ugv_p.user_id = s2.user_id
+		left join acorn_university_hierarchies hi_p on hi.parent_id = hi_p.id
+		left join acorn_university_entities en_p on hi_p.entity_id = en_p.id
+		left join acorn_user_user_groups ugs_p on ugs_p.id = en_p.user_group_id
+
+		-- DBAuth systems only: token_<bk.id>
+		-- We LEFT JOIN because it may not be relevant
+		left join backend_users bk on bk.id = case 
+			-- token_* logins
+			when regexp_like(current_user, '^token_[0-9]+$') then regexp_replace(current_user, '^token_', '')::int
+			-- Direct users
+			else NULL::int
+		end
+		left join acorn_user_users u on u.id = bk.acorn_user_user_id
+		left join acorn_university_entities en_g on en_g.id = u.global_scope_entity_id
+		left join acorn_user_user_groups ugs_g on ugs_g.id = en_g.user_group_id
+		
+		where s.id  = p_student_id
+		and   s2.id = p_student_id
+		and   em.id = p_exam_material_id;
+	
+	return new;
+end;
+            
+$_$;
+
+
+ALTER FUNCTION public.fn_acorn_exam_scores_log() OWNER TO university;
 
 --
 -- Name: fn_acorn_exam_token_name(character varying[]); Type: FUNCTION; Schema: public; Owner: university
@@ -8297,6 +8344,33 @@ $$;
 ALTER FUNCTION public.fn_acorn_university_student_identities_current() OWNER TO university;
 
 --
+-- Name: fn_acorn_university_student_update(); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_university_student_update() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+	-- Runs after updates on Student
+	-- TODO: But BEFORE updates to scores...
+	/*
+	perform fn_acorn_university_action_students_refresh(new.id, new.user_id);
+	insert into system_event_logs(level, message, details, created_at)
+		select 'info', 'Student refreshed',
+			to_json(ARRAY[u.name || '(' || u.id || ')']),
+			now()
+		from public.acorn_user_users u
+		where u.id = new.user_id;
+	*/
+    return new;
+end;
+            
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_university_student_update() OWNER TO university;
+
+--
 -- Name: fn_acorn_university_table_counts(character varying); Type: FUNCTION; Schema: public; Owner: sz
 --
 
@@ -8509,6 +8583,29 @@ CREATE AGGREGATE public.agg_acorn_last(anyelement) (
 ALTER AGGREGATE public.agg_acorn_last(anyelement) OWNER TO university;
 
 --
+-- Name: live_university; Type: SERVER; Schema: -; Owner: sz
+--
+
+CREATE SERVER live_university FOREIGN DATA WRAPPER postgres_fdw OPTIONS (
+    dbname 'university',
+    host 'store.acorn.org',
+    port '5433'
+);
+
+
+ALTER SERVER live_university OWNER TO sz;
+
+--
+-- Name: USER MAPPING sz SERVER live_university; Type: USER MAPPING; Schema: -; Owner: sz
+--
+
+CREATE USER MAPPING FOR sz SERVER live_university OPTIONS (
+    password 'SantaTickle2',
+    "user" 'sz'
+);
+
+
+--
 -- Name: localserver_universityacceptance; Type: SERVER; Schema: -; Owner: university
 --
 
@@ -8550,6 +8647,57 @@ CREATE USER MAPPING FOR university SERVER localserver_universityacceptance OPTIO
     "user" 'sz'
 );
 
+
+--
+-- Name: acorn_exam_scores; Type: FOREIGN TABLE; Schema: live_public; Owner: sz
+--
+
+CREATE FOREIGN TABLE live_public.acorn_exam_scores (
+    id uuid NOT NULL,
+    exam_material_id uuid NOT NULL,
+    score double precision NOT NULL,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL,
+    student_id uuid NOT NULL,
+    created_at timestamp(0) without time zone NOT NULL,
+    updated_at timestamp(0) without time zone
+)
+SERVER live_university
+OPTIONS (
+    schema_name 'public',
+    table_name 'acorn_exam_scores'
+);
+ALTER FOREIGN TABLE live_public.acorn_exam_scores ALTER COLUMN id OPTIONS (
+    column_name 'id'
+);
+ALTER FOREIGN TABLE live_public.acorn_exam_scores ALTER COLUMN exam_material_id OPTIONS (
+    column_name 'exam_material_id'
+);
+ALTER FOREIGN TABLE live_public.acorn_exam_scores ALTER COLUMN score OPTIONS (
+    column_name 'score'
+);
+ALTER FOREIGN TABLE live_public.acorn_exam_scores ALTER COLUMN created_by_user_id OPTIONS (
+    column_name 'created_by_user_id'
+);
+ALTER FOREIGN TABLE live_public.acorn_exam_scores ALTER COLUMN updated_by_user_id OPTIONS (
+    column_name 'updated_by_user_id'
+);
+ALTER FOREIGN TABLE live_public.acorn_exam_scores ALTER COLUMN server_id OPTIONS (
+    column_name 'server_id'
+);
+ALTER FOREIGN TABLE live_public.acorn_exam_scores ALTER COLUMN student_id OPTIONS (
+    column_name 'student_id'
+);
+ALTER FOREIGN TABLE live_public.acorn_exam_scores ALTER COLUMN created_at OPTIONS (
+    column_name 'created_at'
+);
+ALTER FOREIGN TABLE live_public.acorn_exam_scores ALTER COLUMN updated_at OPTIONS (
+    column_name 'updated_at'
+);
+
+
+ALTER FOREIGN TABLE live_public.acorn_exam_scores OWNER TO sz;
 
 SET default_tablespace = '';
 
@@ -9629,7 +9777,8 @@ labels-plural:
 --
 
 COMMENT ON COLUMN public.acorn_exam_scores.score IS 'list-editable: delete-on-null
-format: "%.2f%%"';
+format: "%.2f%%"
+revisionable: true';
 
 
 --
@@ -10281,7 +10430,12 @@ ALTER TABLE public.acorn_university_material_types OWNER TO university;
 
 COMMENT ON TABLE public.acorn_university_material_types IS 'order: 25
 seeding:
-  - [''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''material'']
+  # acorn_university_material_types
+  # id, name, description, created_by_user_id
+  - [''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''material'', NULL, ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''d0fcbfae-f745-4f1c-a99c-30372a6aa128'', ''language'', NULL, ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''specialization'', NULL, ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''ece9328c-430c-4183-a34b-ab3fd4de3589'', ''standard'', NULL, ''a11d6172-6565-4195-a62e-038358aa9fa9'']
 labels:
   en: Material type
   ku: Cura material
@@ -10972,6 +11126,22 @@ UNION ALL
     acorn_university_student_identities.updated_at AS datetime
    FROM public.acorn_university_student_identities
 UNION ALL
+ SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
+    acorn_university_student_statuses.id AS model_id,
+    'acorn_university_student_statuses'::text AS "table",
+    acorn_university_student_statuses.name,
+    0 AS update,
+    acorn_university_student_statuses.created_at AS datetime
+   FROM public.acorn_university_student_statuses
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
+    acorn_university_student_statuses.id AS model_id,
+    'acorn_university_student_statuses'::text AS "table",
+    acorn_university_student_statuses.name,
+    1 AS update,
+    acorn_university_student_statuses.updated_at AS datetime
+   FROM public.acorn_university_student_statuses
+UNION ALL
  SELECT 'Acorn\University\Models\CourseMaterial'::text AS model_type,
     acorn_university_course_materials.id AS model_id,
     'acorn_university_course_materials'::text AS "table",
@@ -11004,22 +11174,6 @@ UNION ALL
     acorn_university_project_students.updated_at AS datetime
    FROM public.acorn_university_project_students
 UNION ALL
- SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
-    acorn_university_student_statuses.id AS model_id,
-    'acorn_university_student_statuses'::text AS "table",
-    acorn_university_student_statuses.name,
-    0 AS update,
-    acorn_university_student_statuses.created_at AS datetime
-   FROM public.acorn_university_student_statuses
-UNION ALL
- SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
-    acorn_university_student_statuses.id AS model_id,
-    'acorn_university_student_statuses'::text AS "table",
-    acorn_university_student_statuses.name,
-    1 AS update,
-    acorn_university_student_statuses.updated_at AS datetime
-   FROM public.acorn_university_student_statuses
-UNION ALL
  SELECT 'Acorn\University\Models\IdentityType'::text AS model_type,
     acorn_university_identity_types.id AS model_id,
     'acorn_university_identity_types'::text AS "table",
@@ -11036,22 +11190,6 @@ UNION ALL
     acorn_university_identity_types.updated_at AS datetime
    FROM public.acorn_university_identity_types
 UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
-    acorn_university_student_codes.name,
-    0 AS update,
-    acorn_university_student_codes.created_at AS datetime
-   FROM public.acorn_university_student_codes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
-    acorn_university_student_codes.name,
-    1 AS update,
-    acorn_university_student_codes.updated_at AS datetime
-   FROM public.acorn_university_student_codes
-UNION ALL
  SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
     acorn_university_student_notes.id AS model_id,
     'acorn_university_student_notes'::text AS "table",
@@ -11067,6 +11205,22 @@ UNION ALL
     1 AS update,
     acorn_university_student_notes.updated_at AS datetime
    FROM public.acorn_university_student_notes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    acorn_university_student_codes.name,
+    0 AS update,
+    acorn_university_student_codes.created_at AS datetime
+   FROM public.acorn_university_student_codes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    acorn_university_student_codes.name,
+    1 AS update,
+    acorn_university_student_codes.updated_at AS datetime
+   FROM public.acorn_university_student_codes
 UNION ALL
  SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
     acorn_exam_interview_students.id AS model_id,
@@ -11514,6 +11668,20 @@ UNION ALL
     acorn_university_student_identities.updated_by_user_id AS by
    FROM public.acorn_university_student_identities
 UNION ALL
+ SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
+    acorn_university_student_statuses.id AS model_id,
+    'acorn_university_student_statuses'::text AS "table",
+    0 AS update,
+    acorn_university_student_statuses.created_by_user_id AS by
+   FROM public.acorn_university_student_statuses
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
+    acorn_university_student_statuses.id AS model_id,
+    'acorn_university_student_statuses'::text AS "table",
+    1 AS update,
+    acorn_university_student_statuses.updated_by_user_id AS by
+   FROM public.acorn_university_student_statuses
+UNION ALL
  SELECT 'Acorn\University\Models\CourseMaterial'::text AS model_type,
     acorn_university_course_materials.id AS model_id,
     'acorn_university_course_materials'::text AS "table",
@@ -11542,20 +11710,6 @@ UNION ALL
     acorn_university_project_students.updated_by_user_id AS by
    FROM public.acorn_university_project_students
 UNION ALL
- SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
-    acorn_university_student_statuses.id AS model_id,
-    'acorn_university_student_statuses'::text AS "table",
-    0 AS update,
-    acorn_university_student_statuses.created_by_user_id AS by
-   FROM public.acorn_university_student_statuses
-UNION ALL
- SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
-    acorn_university_student_statuses.id AS model_id,
-    'acorn_university_student_statuses'::text AS "table",
-    1 AS update,
-    acorn_university_student_statuses.updated_by_user_id AS by
-   FROM public.acorn_university_student_statuses
-UNION ALL
  SELECT 'Acorn\University\Models\IdentityType'::text AS model_type,
     acorn_university_identity_types.id AS model_id,
     'acorn_university_identity_types'::text AS "table",
@@ -11570,20 +11724,6 @@ UNION ALL
     acorn_university_identity_types.updated_by_user_id AS by
    FROM public.acorn_university_identity_types
 UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
-    0 AS update,
-    acorn_university_student_codes.created_by_user_id AS by
-   FROM public.acorn_university_student_codes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
-    1 AS update,
-    acorn_university_student_codes.updated_by_user_id AS by
-   FROM public.acorn_university_student_codes
-UNION ALL
  SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
     acorn_university_student_notes.id AS model_id,
     'acorn_university_student_notes'::text AS "table",
@@ -11597,6 +11737,20 @@ UNION ALL
     1 AS update,
     acorn_university_student_notes.updated_by_user_id AS by
    FROM public.acorn_university_student_notes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    0 AS update,
+    acorn_university_student_codes.created_by_user_id AS by
+   FROM public.acorn_university_student_codes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    1 AS update,
+    acorn_university_student_codes.updated_by_user_id AS by
+   FROM public.acorn_university_student_codes
 UNION ALL
  SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
     acorn_exam_interview_students.id AS model_id,
@@ -11726,1029 +11880,6 @@ UNION ALL
 
 
 ALTER VIEW public.acorn_created_bys OWNER TO createsystem;
-
---
--- Name: acorn_exam_data_entry_scores; Type: VIEW; Schema: public; Owner: university
---
-
-CREATE VIEW public.acorn_exam_data_entry_scores AS
-SELECT
-    NULL::text AS id,
-    NULL::uuid AS student_user_id,
-    NULL::uuid AS student_id,
-    NULL::character varying(1024) AS student_code,
-    NULL::uuid AS academic_year_semester_id,
-    NULL::uuid AS academic_year_id,
-    NULL::character varying AS filename,
-    NULL::uuid AS primary_language_id,
-    NULL::uuid AS course_user_group_id,
-    NULL::uuid AS organisation_user_group_id,
-    NULL::uuid AS course_id,
-    NULL::character varying(255) AS course_code,
-    NULL::uuid AS course_type_id,
-    NULL::text AS qrcode,
-    NULL::uuid AS exam_id,
-    NULL::json AS scores,
-    NULL::json AS score_names,
-    NULL::double precision AS sum,
-    NULL::bigint AS attendance,
-    NULL::double precision AS result,
-    NULL::double precision AS minimum,
-    NULL::double precision AS maximum,
-    NULL::double precision AS bakeloria_final_mark,
-    NULL::boolean AS bakeloria_passed,
-    NULL::character varying(2048) AS bakeloria_passed_resolved_expression,
-    NULL::boolean AS passed,
-    NULL::character varying(1024) AS legacy_import_student_type,
-    NULL::character varying(20248) AS legacy_import_birth_place,
-    NULL::double precision AS legacy_import_the_total,
-    NULL::double precision AS legacy_import_final_avg,
-    NULL::character varying(1024) AS legacy_import_result,
-    NULL::double precision AS legacy_import_avg,
-    NULL::boolean AS legacy_import_correct,
-    NULL::boolean AS legacy_import_passed,
-    NULL::character varying(255) AS username,
-    NULL::character varying(255) AS password,
-    NULL::character varying(255) AS email,
-    NULL::timestamp without time zone AS birth_date,
-    NULL::character varying(255) AS name,
-    NULL::character varying(255) AS surname,
-    NULL::character varying(1024) AS fathers_name,
-    NULL::character varying(1024) AS mothers_name,
-    NULL::"char" AS gender,
-    NULL::"char" AS marital_status,
-    NULL::json AS printed;
-
-
-ALTER VIEW public.acorn_exam_data_entry_scores OWNER TO university;
-
---
--- Name: VIEW acorn_exam_data_entry_scores; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON VIEW public.acorn_exam_data_entry_scores IS 'batch-print: true
-labels:
-  en: Data Entry Score
-  ku: Sitand Diyar Kirin
-labels-plural:
-  en: Data Entry Scores
-  ku: Sitandên Diyar Kirin
-';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.student_user_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.student_user_id IS 'extra-foreign-key: 
-  table: acorn_user_users
-  comment:
-    tab-location: 2
-labels:
-  en: Student User
-labels-plural:
-  en: Student Users
-sql-select: acorn_user_users.name
-sortable: true
-searchable: true';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.student_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.student_id IS 'extra-foreign-key: 
-  table: acorn_university_students
-  comment:
-    tab-location: 2
-    name-object: true
-    depends-on:
-      user_user_group_versions: true
-labels:
-  en: Student
-labels-plural:
-  en: Students
-invisible: true
-qrcode-object: true';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.student_code; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.student_code IS 'sortable: true
-sql-select: acorn_exam_data_entry_scores.student_code';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.academic_year_semester_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.academic_year_semester_id IS 'extra-foreign-key: 
-  table: acorn_university_academic_year_semesters
-  comment:
-    tab-location: 2
-    name-object: true
-labels:
-  en: Academic Year Semester
-labels-plural:
-  en: Academic Year Semesters';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.academic_year_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.academic_year_id IS 'extra-foreign-key: 
-  table: acorn_university_academic_years
-  comment:
-    tab-location: 2
-    name-object: true
-labels:
-  en: Academic Year
-labels-plural:
-  en: Academic Years
-css-classes-column:
-  - tablet';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.primary_language_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.primary_language_id IS 'extra-foreign-key: 
-  table: acorn_user_languages
-  comment:
-    tab-location: 2
-labels:
-  en: Primary Language
-labels-plural:
-  en: Primary Languages';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.course_user_group_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.course_user_group_id IS 'extra-foreign-key: 
-  table: acorn_user_user_groups
-  comment:
-    tab-location: 2
-    name-object: true
-labels:
-  en: Course
-labels-plural:
-  en: Courses';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.organisation_user_group_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.organisation_user_group_id IS 'extra-foreign-key: 
-  table: acorn_user_user_groups
-  comment:
-    tab-location: 2
-    name-object: true
-labels:
-  en: Organisation
-labels-plural:
-  en: Organisations
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.course_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.course_id IS 'extra-foreign-key: 
-  table: acorn_university_courses
-  comment:
-    tab-location: 2
-labels:
-  en: Course
-labels-plural:
-  en: Courses';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.course_code; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.course_code IS 'sortable: true
-sql-select: acorn_exam_data_entry_scores.course_code
-labels:
-  en: Course Code
-  ku: Kode kors
-labels-plural:
-  en: Courses
-  ku: Kode korsên';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.course_type_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.course_type_id IS 'extra-foreign-key: 
-  table: acorn_university_course_types
-  comment:
-    tab-location: 2';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.exam_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.exam_id IS 'extra-foreign-key: 
-  table: acorn_exam_exams
-  comment:
-    tab-location: 2';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.scores; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.scores IS 'list-editable: delete-on-null
-type-editable: number
-labels:
-  en: Material Score
-labels-plural:
-  en: Materials Scores';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.score_names; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.score_names IS 'read-only: true
-column-type: partial
-column-partial: record_list_editable
-invisible: true
-labels:
-  en: Material Score name
-labels-plural:
-  en: Materials Score names';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.result; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.result IS 'column-partial: number
-column-type: partial
-format: "%.2f%%"
-bar: true
-labels:
-  en: Result
-  ku: Encam
-labels-plural:
-  en: Results
-  ku: Encamên
-';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.bakeloria_final_mark; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.bakeloria_final_mark IS 'column-partial: number
-column-type: partial
-format: "%.2f%%"
-bar: true
-labels:
-  en: High School Final Mark
-  ku: Bakeloria Ortê dawî
-labels-plural:
-  en: High School Final Mark
-  ku: Bakeloria Ortên dawî
-';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.bakeloria_passed; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.bakeloria_passed IS 'column-partial: tick
-column-type: partial
-css-classes-column:
-  - show-cross
-filters:
-  bakeloria_passed:
-    label: acorn.exam::lang.models.dataentryscore.bakeloria_passed
-    type: checkbox
-    conditions: bakeloria_passed
-  bakeloria_not_passed:
-    label: acorn.exam::lang.models.dataentryscore.bakeloria_not_passed
-    type: checkbox
-    conditions: not bakeloria_passed
-extra-translations:
-  bakeloria_not_passed:
-    en: High-School failed
-    ku: Bakeloria binket
-labels:
-  en: High-School Passed
-  ku: Bakeloria Serket
-labels-plural:
-  en: High-School Passes
-  ku: Bakeloria Serketên
-';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.bakeloria_passed_resolved_expression; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.bakeloria_passed_resolved_expression IS 'column-partial: expression
-column-type: partial
-labels:
-  en: High-School Passed resolved expression
-  ku: Bakeloria Serket algorithm hasabkir
-labels-plural:
-  en: High-School Pass resolved expressions
-  ku: Bakeloria Serket algorithmên hasabkir
-';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.passed; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.passed IS 'column-partial: tick
-column-type: partial
-css-classes-column:
-  - show-cross
-filters:
-  passed:
-    label: acorn.exam::lang.models.result.passed
-    type: checkbox
-    conditions: passed
-  failed:
-    label: acorn.exam::lang.models.result.not_passed
-    type: checkbox
-    conditions: not passed
-labels:
-  en: Course Passed
-  ku: Kors Serket
-labels-plural:
-  en: Course Passes
-  ku: Kors Serketên
-';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.legacy_import_the_total; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.legacy_import_the_total IS 'column-partial: number
-column-type: partial
-format: "%.2f%%"
-bar: true';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.legacy_import_final_avg; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.legacy_import_final_avg IS 'column-partial: number
-column-type: partial
-format: "%.2f%%"
-bar: true
-labels:
-  en: Legacy Import Final Average
-  ku: Barkirine kevin Ortê dawî
-labels-plural:
-  en: Legacy Import Final Averages
-  ku: Barkirine kevin Ortên dawî
-';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.legacy_import_avg; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.legacy_import_avg IS 'column-partial: number
-column-type: partial
-format: "%.2f%%"
-bar: true
-labels:
-  en: Legacy Import Average
-  ku: Barkirine kevin Ort
-labels-plural:
-  en: Legacy Import Averages
-  ku: Barkirine kevin Ortên
-';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.legacy_import_correct; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.legacy_import_correct IS 'column-partial: tick
-column-type: partial
-css-classes-column:
-  - show-cross
-filters:
-  legacy_import_correct:
-    label: acorn.exam::lang.models.dataentryscore.legacy_import_correct
-    type: checkbox
-    conditions: legacy_import_correct
-  legacy_import_incorrect:
-    label: acorn.exam::lang.models.dataentryscore.legacy_import_incorrect
-    type: checkbox
-    conditions: not legacy_import_correct
-extra-translations:
-  legacy_import_incorrect:
-    en: Legacy Import Incorrect
-labels:
-  en: Legacy Import Correct
-  ku: Barkirine kevin Rast
-labels-plural:
-  en: Legacy Import Correct
-  ku: Barkirine kevin Rastên
-';
-
-
---
--- Name: COLUMN acorn_exam_data_entry_scores.legacy_import_passed; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.legacy_import_passed IS 'column-partial: tick
-column-type: partial
-css-classes-column:
-  - show-cross
-labels:
-  en: Legacy Import Passed
-  ku: Barkirine kevin Serket
-labels-plural:
-  en: Legacy Import Passes
-  ku: Barkirine kevin Serketên
-';
-
-
---
--- Name: acorn_user_languages; Type: TABLE; Schema: public; Owner: university
---
-
-CREATE TABLE public.acorn_user_languages (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    name character varying(1024) NOT NULL,
-    locale character varying(10) NOT NULL,
-    rtl boolean DEFAULT false NOT NULL
-);
-
-
-ALTER TABLE public.acorn_user_languages OWNER TO university;
-
---
--- Name: acorn_exam_certificates; Type: VIEW; Schema: public; Owner: university
---
-
-CREATE VIEW public.acorn_exam_certificates AS
- SELECT sc.id,
-    sc.student_user_id,
-    sc.student_id,
-    sc.student_code,
-    sc.academic_year_semester_id,
-    sc.academic_year_id,
-    sc.filename,
-    sc.primary_language_id,
-    sc.course_user_group_id,
-    sc.organisation_user_group_id,
-    sc.course_id,
-    sc.course_code,
-    sc.course_type_id,
-    sc.qrcode,
-    sc.exam_id,
-    sc.scores,
-    sc.score_names,
-    sc.sum,
-    ( SELECT acorn_exam_score_names.id
-           FROM public.acorn_exam_score_names
-          WHERE ((acorn_exam_score_names.score)::double precision = sc.sum)) AS sum_score_name_id,
-    sc.attendance,
-    sc.result,
-    sc.minimum,
-    sc.maximum,
-    sc.bakeloria_final_mark,
-    sc.bakeloria_passed,
-    sc.bakeloria_passed_resolved_expression,
-    sc.passed,
-    sc.legacy_import_student_type,
-    sc.legacy_import_birth_place,
-    sc.legacy_import_the_total,
-    sc.legacy_import_final_avg,
-    sc.legacy_import_result,
-    sc.legacy_import_avg,
-    sc.legacy_import_correct,
-    sc.legacy_import_passed,
-    sc.username,
-    sc.password,
-    sc.email,
-    (sc.birth_date)::date AS birth_date,
-        CASE
-            WHEN l.rtl THEN ((COALESCE(((sc.birth_date)::date)::text, (''::character varying)::text) || ' '::text) || (COALESCE(sc.legacy_import_birth_place, ''::character varying))::text)
-            ELSE (((COALESCE(sc.legacy_import_birth_place, ''::character varying))::text || ' '::text) || COALESCE(((sc.birth_date)::date)::text, (''::character varying)::text))
-        END AS place_and_date_of_birth,
-    (now())::date AS printed_date,
-    sc.name,
-    sc.surname,
-        CASE
-            WHEN l.rtl THEN (((COALESCE(sc.surname, ''::character varying))::text || ' '::text) || (COALESCE(sc.name, ''::character varying))::text)
-            ELSE (((COALESCE(sc.name, ''::character varying))::text || ' '::text) || (COALESCE(sc.surname, ''::character varying))::text)
-        END AS full_name,
-    sc.fathers_name,
-    sc.mothers_name,
-    sc.gender,
-    sc.marital_status,
-    sc.printed,
-    l.rtl
-   FROM (public.acorn_exam_data_entry_scores sc
-     JOIN public.acorn_user_languages l ON ((sc.primary_language_id = l.id)));
-
-
-ALTER VIEW public.acorn_exam_certificates OWNER TO university;
-
---
--- Name: VIEW acorn_exam_certificates; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON VIEW public.acorn_exam_certificates IS 'batch-print: true
-show-sorting: false
-default-sort: id
-labels:
-  en: Certificate Information
-  ku: Bawername agahî
-labels-plural:
-  en: Certificate Informations
-  ku: Bawername agahîyên
-';
-
-
---
--- Name: COLUMN acorn_exam_certificates.id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.id IS 'sortable: true';
-
-
---
--- Name: COLUMN acorn_exam_certificates.student_user_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.student_user_id IS 'sortable: false
-extra-foreign-key: 
-  table: acorn_user_users
-  comment:
-    tab-location: 2
-labels:
-  en: Student User
-labels-plural:
-  en: Student Users
-sql-select: acorn_user_users.name
-searchable: true';
-
-
---
--- Name: COLUMN acorn_exam_certificates.student_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.student_id IS 'extra-foreign-key: 
-  table: acorn_university_students
-  comment:
-    tab-location: 2
-    name-object: true
-    field-exclude: true
-labels:
-  en: Student
-labels-plural:
-  en: Students
-invisible: true
-qrcode-object: true';
-
-
---
--- Name: COLUMN acorn_exam_certificates.student_code; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.student_code IS 'sortable: false
-sql-select: acorn_exam_certificates.student_code';
-
-
---
--- Name: COLUMN acorn_exam_certificates.academic_year_semester_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.academic_year_semester_id IS 'extra-foreign-key: 
-  table: acorn_university_academic_year_semesters
-  comment:
-    tab-location: 2
-    name-object: true
-labels:
-  en: Academic Year Semester
-labels-plural:
-  en: Academic Year Semesters
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.academic_year_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.academic_year_id IS 'extra-foreign-key: 
-  table: acorn_university_academic_years
-  comment:
-    tab-location: 2
-    name-object: true
-labels:
-  en: Academic Year
-labels-plural:
-  en: Academic Years
-css-classes-column:
-  - tablet
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.primary_language_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.primary_language_id IS 'extra-foreign-key: 
-  table: acorn_user_languages
-  comment:
-    tab-location: 2
-labels:
-  en: Primary Language
-labels-plural:
-  en: Primary Languages
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.course_user_group_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.course_user_group_id IS 'extra-foreign-key: 
-  table: acorn_user_user_groups
-  comment:
-    tab-location: 2
-    name-object: true
-labels:
-  en: Course
-labels-plural:
-  en: Courses
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.organisation_user_group_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.organisation_user_group_id IS 'extra-foreign-key: 
-  table: acorn_user_user_groups
-  comment:
-    tab-location: 2
-    name-object: true
-labels:
-  en: Organisation
-labels-plural:
-  en: Organisations
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.course_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.course_id IS 'extra-foreign-key: 
-  table: acorn_university_courses
-  comment:
-    tab-location: 2
-    hidden: true
-labels:
-  en: Course
-labels-plural:
-  en: Courses
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.course_code; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.course_code IS 'sortable: false
-sql-select: acorn_exam_certificates.course_code
-labels:
-  en: Course Code
-  ku: Kode kors
-labels-plural:
-  en: Courses
-  ku: Kode korsên
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.course_type_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.course_type_id IS 'extra-foreign-key: 
-  table: acorn_university_course_types
-  comment:
-    tab-location: 2
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.exam_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.exam_id IS 'extra-foreign-key: 
-  table: acorn_exam_exams
-  comment:
-    tab-location: 2
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.scores; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.scores IS 'list-editable: delete-on-null
-type-editable: number
-labels:
-  en: Material Score
-labels-plural:
-  en: Materials Scores
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.score_names; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.score_names IS 'read-only: true
-column-type: partial
-column-partial: record_list_editable
-invisible: true
-labels:
-  en: Material Score name
-labels-plural:
-  en: Materials Score names
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.sum_score_name_id; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.sum_score_name_id IS 'extra-foreign-key: 
-  table: acorn_exam_score_names
-  comment:
-    tab-location: 2
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.result; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.result IS 'column-partial: number
-column-type: partial
-format: "%.2f%%"
-bar: true
-labels:
-  en: Result
-  ku: Encam
-labels-plural:
-  en: Results
-  ku: Encamên
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.bakeloria_final_mark; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.bakeloria_final_mark IS 'column-partial: number
-column-type: partial
-format: "%.2f%%"
-bar: true
-labels:
-  en: High School Final Mark
-  ku: Bakeloria Ortê dawî
-labels-plural:
-  en: High School Final Mark
-  ku: Bakeloria Ortên dawî
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.bakeloria_passed; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.bakeloria_passed IS 'column-partial: tick
-column-type: partial
-css-classes-column:
-  - show-cross
-filters:
-  bakeloria_passed:
-    label: acorn.exam::lang.models.dataentryscore.bakeloria_passed
-    type: checkbox
-    conditions: bakeloria_passed
-  bakeloria_not_passed:
-    label: acorn.exam::lang.models.dataentryscore.bakeloria_not_passed
-    type: checkbox
-    conditions: not bakeloria_passed
-extra-translations:
-  bakeloria_not_passed:
-    en: High-School failed
-    ku: Bakeloria binket
-labels:
-  en: High-School Passed
-  ku: Bakeloria Serket
-labels-plural:
-  en: High-School Passes
-  ku: Bakeloria Serketên
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.bakeloria_passed_resolved_expression; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.bakeloria_passed_resolved_expression IS 'column-partial: expression
-column-type: partial
-labels:
-  en: High-School Passed resolved expression
-  ku: Bakeloria Serket algorithm hasabkir
-labels-plural:
-  en: High-School Pass resolved expressions
-  ku: Bakeloria Serket algorithmên hasabkir
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.passed; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.passed IS 'column-partial: tick
-column-type: partial
-css-classes-column:
-  - show-cross
-filters:
-  passed:
-    label: acorn.exam::lang.models.result.passed
-    type: checkbox
-    conditions: passed
-  failed:
-    label: acorn.exam::lang.models.result.not_passed
-    type: checkbox
-    conditions: not passed
-labels:
-  en: Course Passed
-  ku: Kors Serket
-labels-plural:
-  en: Course Passes
-  ku: Kors Serketên
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.legacy_import_student_type; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_student_type IS 'filters:
-  legacy_import_student_type:
-    label: acorn.exam::lang.models.dataentryscore.legacy_import_student_type
-    type: group
-    options:
-      regular: acorn.exam::lang.models.certificate.regular
-      irregular: acorn.exam::lang.models.certificate.irregular
-    conditions: legacy_import_student_type in(:filtered)
-extra-translations:
-  regular_students:
-    en: High-School failed
-    ku: Bakeloria binket
-  regular:
-    en: Regular
-    ku: Rêzbirêz
-  irregular:
-    en: Irregular
-    ku: Serbixwe
-labels:
-  en: Legacy Import Student Type
-  ku: Legacy Import Cura Xwendekar
-labels-plural:
-  en: Legacy Import Student Types
-  ku: Legacy Import Cura Xwendekarên
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.legacy_import_the_total; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_the_total IS 'column-partial: number
-column-type: partial
-format: "%.2f%%"
-bar: true
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.legacy_import_final_avg; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_final_avg IS 'column-partial: number
-column-type: partial
-format: "%.2f%%"
-bar: true
-labels:
-  en: Legacy Import Final Average
-  ku: Barkirine kevin Ortê dawî
-labels-plural:
-  en: Legacy Import Final Averages
-  ku: Barkirine kevin Ortên dawî
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.legacy_import_avg; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_avg IS 'column-partial: number
-column-type: partial
-format: "%.2f%%"
-bar: true
-labels:
-  en: Legacy Import Average
-  ku: Barkirine kevin Ort
-labels-plural:
-  en: Legacy Import Averages
-  ku: Barkirine kevin Ortên
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.legacy_import_correct; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_correct IS 'column-partial: tick
-column-type: partial
-css-classes-column:
-  - show-cross
-filters:
-  legacy_import_correct:
-    label: acorn.exam::lang.models.dataentryscore.legacy_import_correct
-    type: checkbox
-    conditions: legacy_import_correct
-  legacy_import_incorrect:
-    label: acorn.exam::lang.models.dataentryscore.legacy_import_incorrect
-    type: checkbox
-    conditions: not legacy_import_correct
-extra-translations:
-  legacy_import_incorrect:
-    en: Legacy Import Incorrect
-labels:
-  en: Legacy Import Correct
-  ku: Barkirine kevin Rast
-labels-plural:
-  en: Legacy Import Correct
-  ku: Barkirine kevin Rastên
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.legacy_import_passed; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_passed IS 'column-partial: tick
-column-type: partial
-css-classes-column:
-  - show-cross
-labels:
-  en: Legacy Import Passed
-  ku: Barkirine kevin Serket
-labels-plural:
-  en: Legacy Import Passes
-  ku: Barkirine kevin Serketên
-sortable: false';
-
-
---
--- Name: COLUMN acorn_exam_certificates.printed; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_exam_certificates.printed IS 'filters:
-  printed:
-    label: acorn.university::lang.models.student.documents_printed
-    type: checkbox
-    conditions: not printed is null
-  not_printed:
-    label: acorn.university::lang.models.student.documents_not_printed
-    type: checkbox
-    conditions: printed is null';
-
 
 --
 -- Name: acorn_exam_result_internal2s; Type: TABLE; Schema: public; Owner: university
@@ -13501,6 +12632,963 @@ ALTER TABLE public.acorn_user_user_groups OWNER TO university;
 --
 
 COMMENT ON COLUMN public.acorn_user_user_groups.import_source IS 'advanced: true';
+
+
+--
+-- Name: acorn_user_users; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_user_users (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(255),
+    email character varying(255),
+    password character varying(255),
+    activation_code character varying(255),
+    persist_code character varying(255),
+    reset_password_code character varying(255),
+    permissions text,
+    is_activated boolean DEFAULT false NOT NULL,
+    is_system_user boolean DEFAULT false NOT NULL,
+    activated_at timestamp(0) without time zone,
+    last_login timestamp(0) without time zone,
+    created_at timestamp(0) without time zone,
+    updated_at timestamp(0) without time zone,
+    username character varying(255),
+    surname character varying(255),
+    deleted_at timestamp(0) without time zone,
+    last_seen timestamp(0) without time zone,
+    is_guest boolean DEFAULT false NOT NULL,
+    is_superuser boolean DEFAULT false NOT NULL,
+    created_ip_address character varying(255),
+    last_ip_address character varying(255),
+    acorn_imap_username character varying(255),
+    acorn_imap_password character varying(255),
+    acorn_imap_server character varying(255),
+    acorn_imap_port integer,
+    acorn_imap_protocol character varying(255),
+    acorn_imap_encryption character varying(255),
+    acorn_imap_authentication character varying(255),
+    acorn_imap_validate_cert boolean,
+    acorn_smtp_server character varying(255),
+    acorn_smtp_port character varying(255),
+    acorn_smtp_encryption character varying(255),
+    acorn_smtp_authentication character varying(255),
+    acorn_smtp_username character varying(255),
+    acorn_smtp_password character varying(255),
+    acorn_messaging_sounds boolean,
+    acorn_messaging_email_notifications character(1),
+    acorn_messaging_autocreated boolean,
+    acorn_imap_last_fetch timestamp(0) without time zone,
+    acorn_default_calendar uuid,
+    acorn_start_of_week integer,
+    acorn_default_event_time_from date,
+    acorn_default_event_time_to date,
+    birth_date timestamp without time zone,
+    import_source character varying(1024),
+    fathers_name character varying(1024),
+    mothers_name character varying(1024),
+    gender "char",
+    marital_status "char",
+    religion_id uuid,
+    ethnicity_id uuid,
+    global_scope_entity_id uuid,
+    global_scope_academic_year_id uuid,
+    CONSTRAINT gender_enum CHECK (((gender IS NULL) OR (gender = ANY (ARRAY['M'::"char", 'F'::"char", 'O'::"char"])))),
+    CONSTRAINT marital_status_enum CHECK (((marital_status IS NULL) OR (marital_status = ANY (ARRAY['M'::"char", 'S'::"char", 'O'::"char"]))))
+);
+
+
+ALTER TABLE public.acorn_user_users OWNER TO university;
+
+--
+-- Name: winter_translate_attributes; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.winter_translate_attributes (
+    id integer NOT NULL,
+    locale character varying(255) NOT NULL,
+    model_id character varying(255),
+    model_type character varying(255),
+    attribute_data text
+);
+
+
+ALTER TABLE public.winter_translate_attributes OWNER TO university;
+
+--
+-- Name: acorn_exam_data_entry_scores; Type: VIEW; Schema: public; Owner: university
+--
+
+CREATE VIEW public.acorn_exam_data_entry_scores AS
+ SELECT concat(u.id, '::', en.user_group_id, '::', em.exam_id) AS id,
+    u.id AS student_user_id,
+    s.id AS student_id,
+    cm.academic_year_semester_id,
+    ays.academic_year_id,
+    en.user_group_id AS course_user_group_id,
+    ens.user_group_id AS organisation_user_group_id,
+    c.id AS course_id,
+    ugs.code AS course_code,
+    c.course_type_id,
+    em.exam_id,
+    json_object_agg(public.fn_acorn_exam_token_name(VARIADIC ARRAY[m.name]), json_build_object('id', es.id, 'exam_material_id', em.id, 'title', ( SELECT json_object_agg(labels.locale, labels.label) AS json_object_agg
+           FROM ( SELECT winter_translate_attributes.locale,
+                    json_extract_path_text((winter_translate_attributes.attribute_data)::json, VARIADIC ARRAY['name'::text]) AS label
+                   FROM public.winter_translate_attributes
+                  WHERE (((winter_translate_attributes.model_type)::text = 'Acorn\University\Models\Material'::text) AND ((winter_translate_attributes.model_id)::text = ((m.id)::character varying)::text))
+                UNION ALL
+                 SELECT 'en'::character varying AS "varchar",
+                    m.name) labels), 'value', es.score, 'createValues', json_build_object('student_id', s.id, 'exam_material_id', em.id), 'minimum', xrm.minimum, 'maximum', xrm.maximum, 'required', xrm.required, 'result', xrm.result, 'passed', xrm.passed) ORDER BY cm."order") AS scores,
+    json_object_agg(public.fn_acorn_exam_token_name(VARIADIC ARRAY[m.name]), json_build_object('id', sn.id, 'title', m.name, 'value', ( SELECT json_object_agg(labels.locale, labels.label) AS json_object_agg
+           FROM ( SELECT winter_translate_attributes.locale,
+                    json_extract_path_text((winter_translate_attributes.attribute_data)::json, VARIADIC ARRAY['name'::text]) AS label
+                   FROM public.winter_translate_attributes
+                  WHERE (((winter_translate_attributes.model_type)::text = 'Acorn\Exam\Models\ScoreName'::text) AND ((winter_translate_attributes.model_id)::text = ((sn.id)::character varying)::text))
+                UNION ALL
+                 SELECT 'en'::character varying AS locale,
+                    sn.name AS label) labels))) AS score_names,
+    sum(es.score) AS sum,
+    count(es.id) AS attendance,
+    xr.passed,
+    xr.result,
+    xr.minimum,
+    xr.maximum
+   FROM ((((((((((((((((((((((public.acorn_university_courses c
+     JOIN public.acorn_university_course_types ct ON ((c.course_type_id = ct.id)))
+     JOIN public.acorn_university_course_materials cm ON ((cm.course_id = c.id)))
+     JOIN public.acorn_university_academic_year_semesters ays ON ((cm.academic_year_semester_id = ays.id)))
+     JOIN public.acorn_university_academic_years ay ON ((ay.id = ays.academic_year_id)))
+     JOIN public.acorn_exam_exam_materials em ON ((em.course_material_id = cm.id)))
+     JOIN public.acorn_exam_exams e ON ((em.exam_id = e.id)))
+     JOIN public.acorn_exam_types et ON ((e.type_id = et.id)))
+     JOIN public.acorn_university_materials m ON ((cm.material_id = m.id)))
+     JOIN public.acorn_university_entities en ON ((c.entity_id = en.id)))
+     JOIN public.acorn_university_hierarchies hi ON (((hi.entity_id = en.id) AND (hi.academic_year_id = ay.id))))
+     JOIN public.acorn_user_user_group_versions ugv ON ((hi.user_group_version_id = ugv.id)))
+     JOIN public.acorn_user_user_groups ugs ON ((ugv.user_group_id = ugs.id)))
+     JOIN public.acorn_user_user_group_version ug ON ((ugv.id = ug.user_group_version_id)))
+     JOIN public.acorn_user_users u ON ((u.id = ug.user_id)))
+     JOIN public.acorn_university_students s ON ((s.user_id = u.id)))
+     JOIN public.acorn_university_hierarchies his ON ((hi.parent_id = his.id)))
+     JOIN public.acorn_university_entities ens ON ((his.entity_id = ens.id)))
+     JOIN public.acorn_user_user_groups ugss ON ((ens.user_group_id = ugss.id)))
+     LEFT JOIN public.acorn_exam_scores es ON (((es.exam_material_id = em.id) AND (es.student_id = s.id))))
+     LEFT JOIN public.acorn_exam_score_names sn ON ((es.score = (sn.score)::double precision)))
+     LEFT JOIN public.acorn_exam_results xr ON (((xr.student_id = s.id) AND (xr.academic_year_id = ay.id) AND (xr.course_id = c.id) AND (xr.course_material_id IS NULL) AND (xr.calculation_type_id = '56013d6e-3247-11f0-8e96-2f232943abf8'::uuid))))
+     LEFT JOIN public.acorn_exam_results xrm ON (((xrm.student_id = s.id) AND (xrm.academic_year_id = ay.id) AND (xrm.course_id = c.id) AND (xrm.material_id = m.id) AND (xrm.calculation_type_id = '56013d6e-3247-11f0-8e96-2f232943abf8'::uuid))))
+  GROUP BY u.id, s.id, c.id, ct.id, xr.minimum, xr.maximum, cm.academic_year_semester_id, ens.user_group_id, ays.academic_year_id, en.user_group_id, ugs.code, c.course_type_id, em.exam_id, xr.result, xr.passed;
+
+
+ALTER VIEW public.acorn_exam_data_entry_scores OWNER TO university;
+
+--
+-- Name: VIEW acorn_exam_data_entry_scores; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON VIEW public.acorn_exam_data_entry_scores IS 'batch-print: true
+labels:
+  en: Data Entry Score
+  ku: Sitand Diyar Kirin
+labels-plural:
+  en: Data Entry Scores
+  ku: Sitandên Diyar Kirin
+';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.student_user_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.student_user_id IS 'extra-foreign-key: 
+  table: acorn_user_users
+  comment:
+    tab-location: 2
+labels:
+  en: Student User
+labels-plural:
+  en: Student Users
+sql-select: acorn_user_users.name
+sortable: true
+searchable: true';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.student_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.student_id IS 'extra-foreign-key: 
+  table: acorn_university_students
+  comment:
+    tab-location: 2
+    name-object: true
+    depends-on:
+      user_user_group_versions: true
+labels:
+  en: Student
+labels-plural:
+  en: Students
+invisible: true
+qrcode-object: true';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.academic_year_semester_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.academic_year_semester_id IS 'extra-foreign-key: 
+  table: acorn_university_academic_year_semesters
+  comment:
+    tab-location: 2
+    name-object: true
+labels:
+  en: Academic Year Semester
+labels-plural:
+  en: Academic Year Semesters';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.academic_year_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.academic_year_id IS 'extra-foreign-key: 
+  table: acorn_university_academic_years
+  comment:
+    tab-location: 2
+    name-object: true
+labels:
+  en: Academic Year
+labels-plural:
+  en: Academic Years
+css-classes-column:
+  - tablet';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.course_user_group_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.course_user_group_id IS 'extra-foreign-key: 
+  table: acorn_user_user_groups
+  comment:
+    tab-location: 2
+    name-object: true
+labels:
+  en: Course
+labels-plural:
+  en: Courses';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.organisation_user_group_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.organisation_user_group_id IS 'extra-foreign-key: 
+  table: acorn_user_user_groups
+  comment:
+    tab-location: 2
+    name-object: true
+labels:
+  en: Organisation
+labels-plural:
+  en: Organisations
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.course_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.course_id IS 'extra-foreign-key: 
+  table: acorn_university_courses
+  comment:
+    tab-location: 2
+labels:
+  en: Course
+labels-plural:
+  en: Courses';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.course_code; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.course_code IS 'sortable: true
+sql-select: acorn_exam_data_entry_scores.course_code
+labels:
+  en: Course Code
+  ku: Kode kors
+labels-plural:
+  en: Courses
+  ku: Kode korsên';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.course_type_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.course_type_id IS 'extra-foreign-key: 
+  table: acorn_university_course_types
+  comment:
+    tab-location: 2';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.exam_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.exam_id IS 'extra-foreign-key: 
+  table: acorn_exam_exams
+  comment:
+    tab-location: 2';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.scores; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.scores IS 'list-editable: delete-on-null
+type-editable: number
+labels:
+  en: Material Score
+labels-plural:
+  en: Materials Scores';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.score_names; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.score_names IS 'read-only: true
+column-type: partial
+column-partial: record_list_editable
+invisible: true
+labels:
+  en: Material Score name
+labels-plural:
+  en: Materials Score names';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.passed; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.passed IS 'column-partial: tick
+column-type: partial
+css-classes-column:
+  - show-cross
+filters:
+  passed:
+    label: acorn.exam::lang.models.result.passed
+    type: checkbox
+    conditions: passed
+  failed:
+    label: acorn.exam::lang.models.result.not_passed
+    type: checkbox
+    conditions: not passed
+labels:
+  en: Course Passed
+  ku: Kors Serket
+labels-plural:
+  en: Course Passes
+  ku: Kors Serketên
+';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.result; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.result IS 'column-partial: number
+column-type: partial
+format: "%.2f%%"
+bar: true
+labels:
+  en: Result
+  ku: Encam
+labels-plural:
+  en: Results
+  ku: Encamên
+';
+
+
+--
+-- Name: acorn_user_languages; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_user_languages (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(1024) NOT NULL,
+    locale character varying(10) NOT NULL,
+    rtl boolean DEFAULT false NOT NULL
+);
+
+
+ALTER TABLE public.acorn_user_languages OWNER TO university;
+
+--
+-- Name: acorn_user_user_languages; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_user_user_languages (
+    user_id uuid NOT NULL,
+    language_id uuid NOT NULL,
+    current boolean DEFAULT true NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL
+);
+
+
+ALTER TABLE public.acorn_user_user_languages OWNER TO university;
+
+--
+-- Name: acorn_exam_certificates; Type: VIEW; Schema: public; Owner: university
+--
+
+CREATE VIEW public.acorn_exam_certificates AS
+ SELECT sc.id,
+    sc.student_user_id,
+    sc.student_id,
+    co.code AS student_code,
+    sc.academic_year_semester_id,
+    sc.academic_year_id,
+    sc.course_user_group_id,
+    sc.organisation_user_group_id,
+    sc.course_id,
+    sc.course_code,
+    sc.course_type_id,
+    ((('https://nabu.acorn.org/student/login/id/'::text || (s.id)::text) || '/?bm='::text) || (s.legacy_import_id)::text) AS qrcode,
+    sc.exam_id,
+    sc.scores,
+    sc.score_names,
+    sc.sum,
+    ( SELECT acorn_exam_score_names.id
+           FROM public.acorn_exam_score_names
+          WHERE ((acorn_exam_score_names.score)::double precision = sc.sum)) AS sum_score_name_id,
+    sc.attendance,
+    sc.passed,
+    sc.result,
+    sc.minimum,
+    sc.maximum,
+    xrfa.result AS bakeloria_final_mark,
+    xrp.passed AS bakeloria_passed,
+        CASE
+            WHEN l.rtl THEN ((COALESCE(((u.birth_date)::date)::text, (''::character varying)::text) || ' '::text) || (COALESCE(s.legacy_import_birth_place, ''::character varying))::text)
+            ELSE (((COALESCE(s.legacy_import_birth_place, ''::character varying))::text || ' '::text) || COALESCE(((u.birth_date)::date)::text, (''::character varying)::text))
+        END AS place_and_date_of_birth,
+    (now())::date AS printed_date,
+        CASE
+            WHEN l.rtl THEN (((COALESCE(u.surname, ''::character varying))::text || ' '::text) || (COALESCE(u.name, ''::character varying))::text)
+            ELSE (((COALESCE(u.name, ''::character varying))::text || ' '::text) || (COALESCE(u.surname, ''::character varying))::text)
+        END AS full_name,
+    l.rtl,
+    COALESCE(co.code, (s.id)::character varying) AS filename,
+    uul.language_id AS primary_language_id,
+    s.legacy_import_student_type,
+    s.legacy_import_birth_place,
+    s.legacy_import_the_total,
+    s.legacy_import_final_avg,
+    s.legacy_import_result,
+        CASE
+            WHEN (sc.course_type_id = 'a5d8016a-78ad-4296-aac7-fc5332045764'::uuid) THEN s.legacy_import_avg
+            ELSE NULL::double precision
+        END AS legacy_import_avg,
+        CASE
+            WHEN (sc.course_type_id = 'a5d8016a-78ad-4296-aac7-fc5332045764'::uuid) THEN (((s.legacy_import_avg IS NULL) OR (abs((xr.result - s.legacy_import_avg)) < (0.5)::double precision)) AND ((s.legacy_import_final_avg IS NULL) OR (abs((xrfa.result - s.legacy_import_final_avg)) < (0.5)::double precision)) AND (xrp.passed = ((s.legacy_import_result)::text = ANY (ARRAY[('P'::character varying)::text, ('serket'::character varying)::text, ('Serket'::character varying)::text, ('Serkeftî'::character varying)::text]))))
+            ELSE NULL::boolean
+        END AS legacy_import_correct,
+        CASE
+            WHEN ((s.legacy_import_result)::text = 'Binket'::text) THEN false
+            WHEN ((s.legacy_import_result)::text = 'F'::text) THEN false
+            WHEN ((s.legacy_import_result)::text = ''::text) THEN NULL::boolean
+            WHEN (s.legacy_import_result IS NULL) THEN NULL::boolean
+            ELSE true
+        END AS legacy_import_passed,
+    u.username,
+    u.password,
+    u.email,
+    (u.birth_date)::date AS birth_date,
+    u.name,
+    u.surname,
+    u.fathers_name,
+    u.mothers_name,
+    u.gender,
+    u.marital_status,
+    s.printed
+   FROM ((((((((public.acorn_exam_data_entry_scores sc
+     JOIN public.acorn_university_students s ON ((sc.student_id = s.id)))
+     JOIN public.acorn_user_users u ON ((s.user_id = u.id)))
+     LEFT JOIN public.acorn_exam_results xr ON (((xr.student_id = sc.student_id) AND (xr.academic_year_id = sc.academic_year_id) AND (xr.course_id = sc.course_id) AND (xr.course_material_id IS NULL) AND (xr.calculation_type_id = '56013d6e-3247-11f0-8e96-2f232943abf8'::uuid))))
+     LEFT JOIN public.acorn_exam_results xrp ON (((xrp.student_id = sc.student_id) AND (xrp.academic_year_id = sc.academic_year_id) AND (xrp.calculation_id = '9ee52f50-d22a-471e-bdeb-b13d81b1afb2'::uuid))))
+     LEFT JOIN public.acorn_exam_results xrfa ON (((xrfa.student_id = sc.student_id) AND (xrfa.academic_year_id = sc.academic_year_id) AND (xrfa.calculation_id = '958b952c-2e7f-11f0-b4b6-0f8c2c07f33e'::uuid))))
+     LEFT JOIN public.acorn_university_student_codes co ON (((co.student_id = sc.student_id) AND co.current)))
+     LEFT JOIN public.acorn_user_user_languages uul ON (((u.id = uul.user_id) AND uul.current)))
+     LEFT JOIN public.acorn_user_languages l ON ((uul.language_id = l.id)));
+
+
+ALTER VIEW public.acorn_exam_certificates OWNER TO university;
+
+--
+-- Name: VIEW acorn_exam_certificates; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON VIEW public.acorn_exam_certificates IS 'batch-print: true
+show-sorting: false
+default-sort: id
+labels:
+  en: Certificate Information
+  ku: Bawername agahî
+labels-plural:
+  en: Certificate Informations
+  ku: Bawername agahîyên
+';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.id IS 'sortable: true';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.student_user_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.student_user_id IS 'sortable: false
+extra-foreign-key: 
+  table: acorn_user_users
+  comment:
+    tab-location: 2
+labels:
+  en: Student User
+labels-plural:
+  en: Student Users
+sql-select: acorn_user_users.name
+searchable: true';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.student_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.student_id IS 'extra-foreign-key: 
+  table: acorn_university_students
+  comment:
+    tab-location: 2
+    name-object: true
+    field-exclude: true
+labels:
+  en: Student
+labels-plural:
+  en: Students
+invisible: true
+qrcode-object: true';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.student_code; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.student_code IS 'sortable: false
+sql-select: acorn_exam_certificates.student_code';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.academic_year_semester_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.academic_year_semester_id IS 'extra-foreign-key: 
+  table: acorn_university_academic_year_semesters
+  comment:
+    tab-location: 2
+    name-object: true
+labels:
+  en: Academic Year Semester
+labels-plural:
+  en: Academic Year Semesters
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.academic_year_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.academic_year_id IS 'extra-foreign-key: 
+  table: acorn_university_academic_years
+  comment:
+    tab-location: 2
+    name-object: true
+labels:
+  en: Academic Year
+labels-plural:
+  en: Academic Years
+css-classes-column:
+  - tablet
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.course_user_group_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.course_user_group_id IS 'extra-foreign-key: 
+  table: acorn_user_user_groups
+  comment:
+    tab-location: 2
+    name-object: true
+labels:
+  en: Course
+labels-plural:
+  en: Courses
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.organisation_user_group_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.organisation_user_group_id IS 'extra-foreign-key: 
+  table: acorn_user_user_groups
+  comment:
+    tab-location: 2
+    name-object: true
+labels:
+  en: Organisation
+labels-plural:
+  en: Organisations
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.course_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.course_id IS 'extra-foreign-key: 
+  table: acorn_university_courses
+  comment:
+    tab-location: 2
+    hidden: true
+labels:
+  en: Course
+labels-plural:
+  en: Courses
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.course_code; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.course_code IS 'sortable: false
+sql-select: acorn_exam_certificates.course_code
+labels:
+  en: Course Code
+  ku: Kode kors
+labels-plural:
+  en: Courses
+  ku: Kode korsên
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.course_type_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.course_type_id IS 'extra-foreign-key: 
+  table: acorn_university_course_types
+  comment:
+    tab-location: 2
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.exam_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.exam_id IS 'extra-foreign-key: 
+  table: acorn_exam_exams
+  comment:
+    tab-location: 2
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.scores; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.scores IS 'list-editable: delete-on-null
+type-editable: number
+labels:
+  en: Material Score
+labels-plural:
+  en: Materials Scores
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.score_names; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.score_names IS 'read-only: true
+column-type: partial
+column-partial: record_list_editable
+invisible: true
+labels:
+  en: Material Score name
+labels-plural:
+  en: Materials Score names
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.sum_score_name_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.sum_score_name_id IS 'extra-foreign-key: 
+  table: acorn_exam_score_names
+  comment:
+    tab-location: 2
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.passed; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.passed IS 'column-partial: tick
+column-type: partial
+css-classes-column:
+  - show-cross
+filters:
+  passed:
+    label: acorn.exam::lang.models.result.passed
+    type: checkbox
+    conditions: passed
+  failed:
+    label: acorn.exam::lang.models.result.not_passed
+    type: checkbox
+    conditions: not passed
+labels:
+  en: Course Passed
+  ku: Kors Serket
+labels-plural:
+  en: Course Passes
+  ku: Kors Serketên
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.result; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.result IS 'column-partial: number
+column-type: partial
+format: "%.2f%%"
+bar: true
+labels:
+  en: Result
+  ku: Encam
+labels-plural:
+  en: Results
+  ku: Encamên
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.bakeloria_final_mark; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.bakeloria_final_mark IS 'column-partial: number
+column-type: partial
+format: "%.2f%%"
+bar: true
+labels:
+  en: High School Final Mark
+  ku: Bakeloria Ortê dawî
+labels-plural:
+  en: High School Final Mark
+  ku: Bakeloria Ortên dawî
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.bakeloria_passed; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.bakeloria_passed IS 'column-partial: tick
+column-type: partial
+css-classes-column:
+  - show-cross
+filters:
+  bakeloria_passed:
+    label: acorn.exam::lang.models.certificate.bakeloria_passed
+    type: checkbox
+    conditions: bakeloria_passed
+  bakeloria_not_passed:
+    label: acorn.exam::lang.models.certificate.bakeloria_not_passed
+    type: checkbox
+    conditions: not bakeloria_passed
+extra-translations:
+  bakeloria_not_passed:
+    en: High-School failed
+    ku: Bakeloria binket
+labels:
+  en: High-School Passed
+  ku: Bakeloria Serket
+labels-plural:
+  en: High-School Passes
+  ku: Bakeloria Serketên
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.primary_language_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.primary_language_id IS 'extra-foreign-key: 
+  table: acorn_user_languages
+  comment:
+    tab-location: 2
+labels:
+  en: Primary Language
+labels-plural:
+  en: Primary Languages
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.legacy_import_student_type; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_student_type IS 'filters:
+  legacy_import_student_type:
+    label: acorn.exam::lang.models.certificate.legacy_import_student_type
+    type: group
+    options:
+      regular: acorn.exam::lang.models.certificate.regular
+      irregular: acorn.exam::lang.models.certificate.irregular
+    conditions: legacy_import_student_type in(:filtered)
+extra-translations:
+  regular_students:
+    en: High-School failed
+    ku: Bakeloria binket
+  regular:
+    en: Regular
+    ku: Rêzbirêz
+  irregular:
+    en: Irregular
+    ku: Serbixwe
+labels:
+  en: Legacy Import Student Type
+  ku: Legacy Import Cura Xwendekar
+labels-plural:
+  en: Legacy Import Student Types
+  ku: Legacy Import Cura Xwendekarên
+sortable: false';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.legacy_import_the_total; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_the_total IS 'column-partial: number
+column-type: partial
+format: "%.2f%%"
+bar: true';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.legacy_import_final_avg; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_final_avg IS 'column-partial: number
+column-type: partial
+format: "%.2f%%"
+bar: true
+labels:
+  en: Legacy Import Final Average
+  ku: Barkirine kevin Ortê dawî
+labels-plural:
+  en: Legacy Import Final Averages
+  ku: Barkirine kevin Ortên dawî
+';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.legacy_import_avg; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_avg IS 'column-partial: number
+column-type: partial
+format: "%.2f%%"
+bar: true
+labels:
+  en: Legacy Import Average
+  ku: Barkirine kevin Ort
+labels-plural:
+  en: Legacy Import Averages
+  ku: Barkirine kevin Ortên
+';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.legacy_import_correct; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_correct IS 'column-partial: tick
+column-type: partial
+css-classes-column:
+  - show-cross
+filters:
+  legacy_import_correct:
+    label: acorn.exam::lang.models.certificate.legacy_import_correct
+    type: checkbox
+    conditions: legacy_import_correct
+  legacy_import_incorrect:
+    label: acorn.exam::lang.models.certificate.legacy_import_incorrect
+    type: checkbox
+    conditions: not legacy_import_correct
+extra-translations:
+  legacy_import_incorrect:
+    en: Legacy Import Incorrect
+labels:
+  en: Legacy Import Correct
+  ku: Barkirine kevin Rast
+labels-plural:
+  en: Legacy Import Correct
+  ku: Barkirine kevin Rastên
+';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.legacy_import_passed; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.legacy_import_passed IS 'column-partial: tick
+column-type: partial
+css-classes-column:
+  - show-cross
+labels:
+  en: Legacy Import Passed
+  ku: Barkirine kevin Serket
+labels-plural:
+  en: Legacy Import Passes
+  ku: Barkirine kevin Serketên
+';
+
+
+--
+-- Name: COLUMN acorn_exam_certificates.printed; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_certificates.printed IS 'filters:
+  printed:
+    label: acorn.university::lang.models.student.documents_printed
+    type: checkbox
+    conditions: not printed is null
+  not_printed:
+    label: acorn.university::lang.models.student.documents_not_printed
+    type: checkbox
+    conditions: printed is null';
 
 
 --
@@ -14355,20 +14443,6 @@ UNION ALL
     acorn_university_student_identities.description AS content
    FROM public.acorn_university_student_identities
 UNION ALL
- SELECT 'Acorn\University\Models\ProjectStudent'::text AS model_type,
-    acorn_university_project_students.id AS model_id,
-    'acorn_university_project_students'::text AS "table",
-    'name'::text AS field,
-    (acorn_university_project_students.name)::text AS content
-   FROM public.acorn_university_project_students
-UNION ALL
- SELECT 'Acorn\University\Models\ProjectStudent'::text AS model_type,
-    acorn_university_project_students.id AS model_id,
-    'acorn_university_project_students'::text AS "table",
-    'description'::text AS field,
-    acorn_university_project_students.description AS content
-   FROM public.acorn_university_project_students
-UNION ALL
  SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
     acorn_university_student_statuses.id AS model_id,
     'acorn_university_student_statuses'::text AS "table",
@@ -14382,6 +14456,20 @@ UNION ALL
     'description'::text AS field,
     acorn_university_student_statuses.description AS content
    FROM public.acorn_university_student_statuses
+UNION ALL
+ SELECT 'Acorn\University\Models\ProjectStudent'::text AS model_type,
+    acorn_university_project_students.id AS model_id,
+    'acorn_university_project_students'::text AS "table",
+    'name'::text AS field,
+    (acorn_university_project_students.name)::text AS content
+   FROM public.acorn_university_project_students
+UNION ALL
+ SELECT 'Acorn\University\Models\ProjectStudent'::text AS model_type,
+    acorn_university_project_students.id AS model_id,
+    'acorn_university_project_students'::text AS "table",
+    'description'::text AS field,
+    acorn_university_project_students.description AS content
+   FROM public.acorn_university_project_students
 UNION ALL
  SELECT 'Acorn\University\Models\IdentityType'::text AS model_type,
     acorn_university_identity_types.id AS model_id,
@@ -14397,20 +14485,6 @@ UNION ALL
     acorn_university_identity_types.description AS content
    FROM public.acorn_university_identity_types
 UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
-    'name'::text AS field,
-    (acorn_university_student_codes.name)::text AS content
-   FROM public.acorn_university_student_codes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
-    'description'::text AS field,
-    acorn_university_student_codes.description AS content
-   FROM public.acorn_university_student_codes
-UNION ALL
  SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
     acorn_university_student_notes.id AS model_id,
     'acorn_university_student_notes'::text AS "table",
@@ -14424,6 +14498,20 @@ UNION ALL
     'description'::text AS field,
     acorn_university_student_notes.description AS content
    FROM public.acorn_university_student_notes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    'name'::text AS field,
+    (acorn_university_student_codes.name)::text AS content
+   FROM public.acorn_university_student_codes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    'description'::text AS field,
+    acorn_university_student_codes.description AS content
+   FROM public.acorn_university_student_codes
 UNION ALL
  SELECT 'Acorn\University\Models\Project'::text AS model_type,
     acorn_university_projects.id AS model_id,
@@ -14966,86 +15054,6 @@ CREATE VIEW public.acorn_user_user_group_version_usages AS
 
 
 ALTER VIEW public.acorn_user_user_group_version_usages OWNER TO university;
-
---
--- Name: acorn_user_user_languages; Type: TABLE; Schema: public; Owner: university
---
-
-CREATE TABLE public.acorn_user_user_languages (
-    user_id uuid NOT NULL,
-    language_id uuid NOT NULL,
-    current boolean DEFAULT true NOT NULL,
-    id uuid DEFAULT gen_random_uuid() NOT NULL
-);
-
-
-ALTER TABLE public.acorn_user_user_languages OWNER TO university;
-
---
--- Name: acorn_user_users; Type: TABLE; Schema: public; Owner: university
---
-
-CREATE TABLE public.acorn_user_users (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    name character varying(255),
-    email character varying(255),
-    password character varying(255),
-    activation_code character varying(255),
-    persist_code character varying(255),
-    reset_password_code character varying(255),
-    permissions text,
-    is_activated boolean DEFAULT false NOT NULL,
-    is_system_user boolean DEFAULT false NOT NULL,
-    activated_at timestamp(0) without time zone,
-    last_login timestamp(0) without time zone,
-    created_at timestamp(0) without time zone,
-    updated_at timestamp(0) without time zone,
-    username character varying(255),
-    surname character varying(255),
-    deleted_at timestamp(0) without time zone,
-    last_seen timestamp(0) without time zone,
-    is_guest boolean DEFAULT false NOT NULL,
-    is_superuser boolean DEFAULT false NOT NULL,
-    created_ip_address character varying(255),
-    last_ip_address character varying(255),
-    acorn_imap_username character varying(255),
-    acorn_imap_password character varying(255),
-    acorn_imap_server character varying(255),
-    acorn_imap_port integer,
-    acorn_imap_protocol character varying(255),
-    acorn_imap_encryption character varying(255),
-    acorn_imap_authentication character varying(255),
-    acorn_imap_validate_cert boolean,
-    acorn_smtp_server character varying(255),
-    acorn_smtp_port character varying(255),
-    acorn_smtp_encryption character varying(255),
-    acorn_smtp_authentication character varying(255),
-    acorn_smtp_username character varying(255),
-    acorn_smtp_password character varying(255),
-    acorn_messaging_sounds boolean,
-    acorn_messaging_email_notifications character(1),
-    acorn_messaging_autocreated boolean,
-    acorn_imap_last_fetch timestamp(0) without time zone,
-    acorn_default_calendar uuid,
-    acorn_start_of_week integer,
-    acorn_default_event_time_from date,
-    acorn_default_event_time_to date,
-    birth_date timestamp without time zone,
-    import_source character varying(1024),
-    fathers_name character varying(1024),
-    mothers_name character varying(1024),
-    gender "char",
-    marital_status "char",
-    religion_id uuid,
-    ethnicity_id uuid,
-    global_scope_entity_id uuid,
-    global_scope_academic_year_id uuid,
-    CONSTRAINT gender_enum CHECK (((gender IS NULL) OR (gender = ANY (ARRAY['M'::"char", 'F'::"char", 'O'::"char"])))),
-    CONSTRAINT marital_status_enum CHECK (((marital_status IS NULL) OR (marital_status = ANY (ARRAY['M'::"char", 'S'::"char", 'O'::"char"]))))
-);
-
-
-ALTER TABLE public.acorn_user_users OWNER TO university;
 
 --
 -- Name: backend_access_log; Type: TABLE; Schema: public; Owner: university
@@ -15688,21 +15696,6 @@ ALTER SEQUENCE public.rainlab_location_states_id_seq OWNED BY public.winter_loca
 
 
 --
--- Name: winter_translate_attributes; Type: TABLE; Schema: public; Owner: university
---
-
-CREATE TABLE public.winter_translate_attributes (
-    id integer NOT NULL,
-    locale character varying(255) NOT NULL,
-    model_id character varying(255),
-    model_type character varying(255),
-    attribute_data text
-);
-
-
-ALTER TABLE public.winter_translate_attributes OWNER TO university;
-
---
 -- Name: rainlab_translate_attributes_id_seq; Type: SEQUENCE; Schema: public; Owner: university
 --
 
@@ -16226,9 +16219,9 @@ CREATE TABLE public.system_revisions (
     old_value text,
     new_value text,
     revisionable_type character varying(255) NOT NULL,
-    revisionable_id integer NOT NULL,
     created_at timestamp(0) without time zone,
-    updated_at timestamp(0) without time zone
+    updated_at timestamp(0) without time zone,
+    revisionable_id uuid NOT NULL
 );
 
 
@@ -19705,13 +19698,6 @@ CREATE INDEX system_revisions_field_index ON public.system_revisions USING btree
 
 
 --
--- Name: system_revisions_revisionable_id_revisionable_type_index; Type: INDEX; Schema: public; Owner: university
---
-
-CREATE INDEX system_revisions_revisionable_id_revisionable_type_index ON public.system_revisions USING btree (revisionable_id, revisionable_type);
-
-
---
 -- Name: system_revisions_user_id_index; Type: INDEX; Schema: public; Owner: university
 --
 
@@ -19841,112 +19827,6 @@ CREATE OR REPLACE VIEW public.acorn_university_student_lookups AS
 
 
 --
--- Name: acorn_exam_data_entry_scores _RETURN; Type: RULE; Schema: public; Owner: university
---
-
-CREATE OR REPLACE VIEW public.acorn_exam_data_entry_scores AS
- SELECT concat(u.id, '::', en.user_group_id, '::', em.exam_id) AS id,
-    u.id AS student_user_id,
-    s.id AS student_id,
-    sc.code AS student_code,
-    cm.academic_year_semester_id,
-    ays.academic_year_id,
-    COALESCE(sc.code, (s.id)::character varying) AS filename,
-    uul.language_id AS primary_language_id,
-    en.user_group_id AS course_user_group_id,
-    ens.user_group_id AS organisation_user_group_id,
-    c.id AS course_id,
-    ugs.code AS course_code,
-    c.course_type_id,
-    ((('https://nabu.acorn.org/student/login/id/'::text || (s.id)::text) || '/?bm='::text) || (s.legacy_import_id)::text) AS qrcode,
-    em.exam_id,
-    json_object_agg(public.fn_acorn_exam_token_name(VARIADIC ARRAY[m.name]), json_build_object('id', es.id, 'exam_material_id', em.id, 'title', ( SELECT json_object_agg(labels.locale, labels.label) AS json_object_agg
-           FROM ( SELECT winter_translate_attributes.locale,
-                    json_extract_path_text((winter_translate_attributes.attribute_data)::json, VARIADIC ARRAY['name'::text]) AS label
-                   FROM public.winter_translate_attributes
-                  WHERE (((winter_translate_attributes.model_type)::text = 'Acorn\University\Models\Material'::text) AND ((winter_translate_attributes.model_id)::text = ((m.id)::character varying)::text))
-                UNION ALL
-                 SELECT 'en'::character varying AS "varchar",
-                    m.name) labels), 'value', es.score, 'createValues', json_build_object('student_id', s.id, 'exam_material_id', em.id), 'minimum', xrm.minimum, 'maximum', xrm.maximum, 'required', xrm.required, 'result', xrm.result, 'passed', xrm.passed) ORDER BY cm."order") AS scores,
-    json_object_agg(public.fn_acorn_exam_token_name(VARIADIC ARRAY[m.name]), json_build_object('id', sn.id, 'title', m.name, 'value', ( SELECT json_object_agg(labels.locale, labels.label) AS json_object_agg
-           FROM ( SELECT winter_translate_attributes.locale,
-                    json_extract_path_text((winter_translate_attributes.attribute_data)::json, VARIADIC ARRAY['name'::text]) AS label
-                   FROM public.winter_translate_attributes
-                  WHERE (((winter_translate_attributes.model_type)::text = 'Acorn\Exam\Models\ScoreName'::text) AND ((winter_translate_attributes.model_id)::text = ((sn.id)::character varying)::text))
-                UNION ALL
-                 SELECT 'en'::character varying AS locale,
-                    sn.name AS label) labels))) AS score_names,
-    sum(es.score) AS sum,
-    count(es.id) AS attendance,
-    xr.result,
-    xr.minimum,
-    xr.maximum,
-    xrfa.result AS bakeloria_final_mark,
-    xrp.passed AS bakeloria_passed,
-    xrp.resolved_expression AS bakeloria_passed_resolved_expression,
-    xr.passed,
-    s.legacy_import_student_type,
-    s.legacy_import_birth_place,
-    s.legacy_import_the_total,
-    s.legacy_import_final_avg,
-    s.legacy_import_result,
-        CASE
-            WHEN (ct.id = 'a5d8016a-78ad-4296-aac7-fc5332045764'::uuid) THEN s.legacy_import_avg
-            ELSE NULL::double precision
-        END AS legacy_import_avg,
-        CASE
-            WHEN (ct.id = 'a5d8016a-78ad-4296-aac7-fc5332045764'::uuid) THEN (((s.legacy_import_avg IS NULL) OR (abs((xr.result - s.legacy_import_avg)) < (0.5)::double precision)) AND ((s.legacy_import_final_avg IS NULL) OR (abs((xrfa.result - s.legacy_import_final_avg)) < (0.5)::double precision)) AND (xrp.passed = ((s.legacy_import_result)::text = ANY (ARRAY[('P'::character varying)::text, ('serket'::character varying)::text, ('Serket'::character varying)::text, ('Serkeftî'::character varying)::text]))))
-            ELSE NULL::boolean
-        END AS legacy_import_correct,
-        CASE
-            WHEN ((s.legacy_import_result)::text = 'Binket'::text) THEN false
-            WHEN ((s.legacy_import_result)::text = 'F'::text) THEN false
-            WHEN ((s.legacy_import_result)::text = ''::text) THEN NULL::boolean
-            WHEN (s.legacy_import_result IS NULL) THEN NULL::boolean
-            ELSE true
-        END AS legacy_import_passed,
-    u.username,
-    u.password,
-    u.email,
-    u.birth_date,
-    u.name,
-    u.surname,
-    u.fathers_name,
-    u.mothers_name,
-    u.gender,
-    u.marital_status,
-    s.printed
-   FROM ((((((((((((((((((((((((((public.acorn_university_courses c
-     JOIN public.acorn_university_course_types ct ON ((c.course_type_id = ct.id)))
-     JOIN public.acorn_university_course_materials cm ON ((cm.course_id = c.id)))
-     JOIN public.acorn_university_academic_year_semesters ays ON ((cm.academic_year_semester_id = ays.id)))
-     JOIN public.acorn_university_academic_years ay ON ((ay.id = ays.academic_year_id)))
-     JOIN public.acorn_exam_exam_materials em ON ((em.course_material_id = cm.id)))
-     JOIN public.acorn_university_entities en ON ((c.entity_id = en.id)))
-     JOIN public.acorn_university_hierarchies hi ON (((hi.entity_id = en.id) AND (hi.academic_year_id = ay.id))))
-     JOIN public.acorn_user_user_group_versions ugv ON ((hi.user_group_version_id = ugv.id)))
-     JOIN public.acorn_user_user_groups ugs ON ((ugv.user_group_id = ugs.id)))
-     JOIN public.acorn_user_user_group_version ug ON ((ugv.id = ug.user_group_version_id)))
-     JOIN public.acorn_user_users u ON ((u.id = ug.user_id)))
-     JOIN public.acorn_university_hierarchies his ON ((hi.parent_id = his.id)))
-     JOIN public.acorn_university_entities ens ON ((his.entity_id = ens.id)))
-     JOIN public.acorn_user_user_groups ugss ON ((ens.user_group_id = ugss.id)))
-     LEFT JOIN public.acorn_user_user_languages uul ON (((u.id = uul.user_id) AND uul.current)))
-     JOIN public.acorn_university_students s ON ((s.user_id = u.id)))
-     LEFT JOIN public.acorn_university_student_codes sc ON (((sc.student_id = s.id) AND sc.current)))
-     JOIN public.acorn_university_materials m ON ((cm.material_id = m.id)))
-     JOIN public.acorn_exam_exams e ON ((em.exam_id = e.id)))
-     JOIN public.acorn_exam_types et ON ((e.type_id = et.id)))
-     LEFT JOIN public.acorn_exam_scores es ON (((es.exam_material_id = em.id) AND (es.student_id = s.id))))
-     LEFT JOIN public.acorn_exam_score_names sn ON ((es.score = (sn.score)::double precision)))
-     LEFT JOIN public.acorn_exam_results xr ON (((xr.student_id = s.id) AND (xr.academic_year_id = ay.id) AND (xr.course_id = c.id) AND (xr.course_material_id IS NULL) AND (xr.calculation_type_id = '56013d6e-3247-11f0-8e96-2f232943abf8'::uuid))))
-     LEFT JOIN public.acorn_exam_results xrp ON (((xrp.student_id = s.id) AND (xrp.academic_year_id = ay.id) AND (xrp.calculation_id = '9ee52f50-d22a-471e-bdeb-b13d81b1afb2'::uuid))))
-     LEFT JOIN public.acorn_exam_results xrfa ON (((xrfa.student_id = s.id) AND (xrfa.academic_year_id = ay.id) AND (xrfa.calculation_id = '958b952c-2e7f-11f0-b4b6-0f8c2c07f33e'::uuid))))
-     LEFT JOIN public.acorn_exam_results xrm ON (((xrm.student_id = s.id) AND (xrm.academic_year_id = ay.id) AND (xrm.course_id = c.id) AND (xrm.material_id = m.id) AND (xrm.calculation_type_id = '56013d6e-3247-11f0-8e96-2f232943abf8'::uuid))))
-  GROUP BY u.id, s.id, c.id, xrp.resolved_expression, xrfa.result, uul.language_id, sc.code, ct.id, xr.minimum, xr.maximum, cm.academic_year_semester_id, ens.user_group_id, ays.academic_year_id, en.user_group_id, ugs.code, c.course_type_id, em.exam_id, xr.result, xr.passed, xrp.passed;
-
-
---
 -- Name: acorn_calendar_event_parts tr_acorn_calendar_events_generate_event_instances; Type: TRIGGER; Schema: public; Owner: university
 --
 
@@ -19958,6 +19838,13 @@ CREATE TRIGGER tr_acorn_calendar_events_generate_event_instances AFTER INSERT OR
 --
 
 CREATE TRIGGER tr_acorn_enrollment_desires_ordinal BEFORE INSERT ON public.acorn_enrollment_desires FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_enrollment_desires_ordinal();
+
+
+--
+-- Name: acorn_exam_scores tr_acorn_exam_scores_log; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_exam_scores_log AFTER INSERT OR DELETE OR UPDATE ON public.acorn_exam_scores FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_exam_scores_log();
 
 
 --
@@ -20418,6 +20305,13 @@ CREATE TRIGGER tr_acorn_university_student_codes_current AFTER INSERT OR UPDATE 
 --
 
 CREATE TRIGGER tr_acorn_university_student_identities_current AFTER INSERT OR UPDATE ON public.acorn_university_student_identities FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_university_student_identities_current();
+
+
+--
+-- Name: acorn_university_students tr_acorn_university_student_update; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_university_student_update AFTER UPDATE ON public.acorn_university_students FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_university_student_update();
 
 
 --
@@ -23903,6 +23797,13 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_m
 
 
 --
+-- Name: FUNCTION fn_acorn_exam_scores_log(); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO admin WITH GRANT OPTION;
+
+
+--
 -- Name: FUNCTION fn_acorn_exam_token_name(VARIADIC p_titles character varying[]); Type: ACL; Schema: public; Owner: university
 --
 
@@ -25836,40 +25737,6 @@ GRANT SELECT ON TABLE public.acorn_university_student_statuses TO PUBLIC;
 
 
 --
--- Name: TABLE acorn_exam_data_entry_scores; Type: ACL; Schema: public; Owner: university
---
-
-GRANT SELECT ON TABLE public.acorn_exam_data_entry_scores TO PUBLIC;
-GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO admin WITH GRANT OPTION;
-GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_data_entry_scores TO frontend;
-GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO sz WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_1 WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_5;
-
-
---
--- Name: TABLE acorn_user_languages; Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON TABLE public.acorn_user_languages TO token_1 WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_user_languages TO admin WITH GRANT OPTION;
-GRANT SELECT,TRIGGER ON TABLE public.acorn_user_languages TO frontend;
-GRANT ALL ON TABLE public.acorn_user_languages TO sz WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_user_languages TO token_5;
-GRANT SELECT ON TABLE public.acorn_user_languages TO PUBLIC;
-
-
---
--- Name: TABLE acorn_exam_certificates; Type: ACL; Schema: public; Owner: university
---
-
-GRANT SELECT ON TABLE public.acorn_exam_certificates TO PUBLIC;
-GRANT ALL ON TABLE public.acorn_exam_certificates TO sz WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_exam_certificates TO token_1 WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_exam_certificates TO token_5;
-
-
---
 -- Name: TABLE acorn_exam_result_internal2s; Type: ACL; Schema: public; Owner: university
 --
 
@@ -25961,6 +25828,76 @@ GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_groups TO frontend;
 GRANT ALL ON TABLE public.acorn_user_user_groups TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_groups TO token_5;
 GRANT SELECT ON TABLE public.acorn_user_user_groups TO PUBLIC;
+
+
+--
+-- Name: TABLE acorn_user_users; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_user_users TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_users TO admin WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_users TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_users TO token_5;
+GRANT SELECT,INSERT,TRIGGER,UPDATE ON TABLE public.acorn_user_users TO frontend;
+GRANT SELECT ON TABLE public.acorn_user_users TO PUBLIC;
+
+
+--
+-- Name: TABLE winter_translate_attributes; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.winter_translate_attributes TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_translate_attributes TO admin WITH GRANT OPTION;
+GRANT SELECT,TRIGGER ON TABLE public.winter_translate_attributes TO frontend;
+GRANT ALL ON TABLE public.winter_translate_attributes TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_translate_attributes TO token_5;
+GRANT SELECT ON TABLE public.winter_translate_attributes TO PUBLIC;
+
+
+--
+-- Name: TABLE acorn_exam_data_entry_scores; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT SELECT ON TABLE public.acorn_exam_data_entry_scores TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO admin WITH GRANT OPTION;
+GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_data_entry_scores TO frontend;
+GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_5;
+
+
+--
+-- Name: TABLE acorn_user_languages; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_user_languages TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_languages TO admin WITH GRANT OPTION;
+GRANT SELECT,TRIGGER ON TABLE public.acorn_user_languages TO frontend;
+GRANT ALL ON TABLE public.acorn_user_languages TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_languages TO token_5;
+GRANT SELECT ON TABLE public.acorn_user_languages TO PUBLIC;
+
+
+--
+-- Name: TABLE acorn_user_user_languages; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_user_user_languages TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_languages TO admin WITH GRANT OPTION;
+GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_languages TO frontend;
+GRANT ALL ON TABLE public.acorn_user_user_languages TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_languages TO token_5;
+GRANT SELECT ON TABLE public.acorn_user_user_languages TO PUBLIC;
+
+
+--
+-- Name: TABLE acorn_exam_certificates; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT SELECT ON TABLE public.acorn_exam_certificates TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_certificates TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_certificates TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_certificates TO token_5;
 
 
 --
@@ -26439,30 +26376,6 @@ GRANT SELECT ON TABLE public.acorn_user_user_group_version_usages TO PUBLIC;
 
 
 --
--- Name: TABLE acorn_user_user_languages; Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON TABLE public.acorn_user_user_languages TO token_1 WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_user_user_languages TO admin WITH GRANT OPTION;
-GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_languages TO frontend;
-GRANT ALL ON TABLE public.acorn_user_user_languages TO sz WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_user_user_languages TO token_5;
-GRANT SELECT ON TABLE public.acorn_user_user_languages TO PUBLIC;
-
-
---
--- Name: TABLE acorn_user_users; Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON TABLE public.acorn_user_users TO token_1 WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_user_users TO admin WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_user_users TO sz WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_user_users TO token_5;
-GRANT SELECT,INSERT,TRIGGER,UPDATE ON TABLE public.acorn_user_users TO frontend;
-GRANT SELECT ON TABLE public.acorn_user_users TO PUBLIC;
-
-
---
 -- Name: TABLE backend_access_log; Type: ACL; Schema: public; Owner: university
 --
 
@@ -26856,18 +26769,6 @@ GRANT SELECT,USAGE ON SEQUENCE public.rainlab_location_states_id_seq TO frontend
 GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO token_5;
 GRANT SELECT ON SEQUENCE public.rainlab_location_states_id_seq TO PUBLIC;
-
-
---
--- Name: TABLE winter_translate_attributes; Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON TABLE public.winter_translate_attributes TO token_1 WITH GRANT OPTION;
-GRANT ALL ON TABLE public.winter_translate_attributes TO admin WITH GRANT OPTION;
-GRANT SELECT,TRIGGER ON TABLE public.winter_translate_attributes TO frontend;
-GRANT ALL ON TABLE public.winter_translate_attributes TO sz WITH GRANT OPTION;
-GRANT ALL ON TABLE public.winter_translate_attributes TO token_5;
-GRANT SELECT ON TABLE public.winter_translate_attributes TO PUBLIC;
 
 
 --
