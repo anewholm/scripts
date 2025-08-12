@@ -122,6 +122,14 @@ class DB {
         return (isset($tableParts[1]) ? $this->functions($tableParts[0], $tableParts[1], 'action', $tableQualifier) : array());
     }
 
+    public function alesFunctionsForTable(string $table): array
+    {
+        // After List Editable Save
+        $tableParts     = explode('_', $table); // acorn_justice_legalcases
+        $tableQualifier = implode('_', array_slice($tableParts, 2)); // legalcases_*
+        return (isset($tableParts[1]) ? $this->functions($tableParts[0], $tableParts[1], $tableQualifier, 'ales') : array());
+    }
+
     public function functions(string $author = NULL, string $plugin = NULL, string $qualifier1 = NULL, string $qualifier2 = NULL): array
     {
         $like  = 'fn';
@@ -178,7 +186,7 @@ class DB {
             $functions[$result->name] = array(
                 'oid'        => $result->oid,
                 'parameters' => $parameters,
-                'comment'    => $result->comment,
+                'comment'    => ($result->comment ?: ''),
                 'returnType' => $returnType,
             );
         }

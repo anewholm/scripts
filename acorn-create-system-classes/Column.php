@@ -70,6 +70,7 @@ class Column {
     public $fieldExclude;
     public $columnExclude;
     public $filters;
+    public $noRelationManager;
 
     // --------------------- Database column settings
     // information_schema.columns.* SQL standard
@@ -197,6 +198,8 @@ class Column {
     public $height;
     public $keyFrom;
 
+    public $canFilter;
+
     // Translation arrays
     public $labels;
     public $labelsPlural;
@@ -244,7 +247,7 @@ class Column {
             }
         }
 
-        $this->parsedComment = \Spyc::YAMLLoadString($this->comment);
+        $this->parsedComment = \Spyc::YAMLLoadString(preg_replace('/^\t/m', '    ', $this->comment));
         foreach ($this->parsedComment as $name => $value) {
             $nameCamel = Str::camel($name);
             if (!property_exists($this, $nameCamel)) self::blockingAlert("Property [$nameCamel] does not exist on [$this->table.$this->name]");

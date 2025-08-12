@@ -42,10 +42,14 @@ class Relation {
     public $globalScope; // Chaining from|to
     public $hasManyDeepInclude; // Process this non 1-1 has many deep link
     public $conditions;  // config_relation.yaml conditions
+    public $filterConditions;
     public $isCount;
     public $order;
     public $dependsOn;  // Array of field names
     public $flags; // e.g. hierarchy flag for global scope
+    public $noRelationManager;
+    public $nameFrom;
+    public $explicitLabelKey;
 
     // Translation arrays
     public $labels;
@@ -88,6 +92,11 @@ class Relation {
         if (!isset($this->readOnly))   $this->readOnly   = $this->to->readOnly;
         if (!isset($this->span))       $this->span       = 'storm';
         if (!isset($this->advanced))   $this->advanced   = $this->foreignKey?->advanced;
+        if (!isset($this->columnExclude)) {
+            // Causes slow-down for large user sets in column views, and usless
+            // leave to the fields view
+            if ($this->to->isAcornUser()) $this->columnExclude = TRUE;
+        }
     }
 
     public function __toString()

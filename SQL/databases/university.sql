@@ -286,7 +286,6 @@ ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT I
 DROP TRIGGER IF EXISTS tr_acorn_user_user_languages_current ON public.acorn_user_user_languages;
 DROP TRIGGER IF EXISTS tr_acorn_user_user_group_version_current ON public.acorn_user_user_group_versions;
 DROP TRIGGER IF EXISTS tr_acorn_user_user_group_first_version ON public.acorn_user_user_groups;
-DROP TRIGGER IF EXISTS tr_acorn_university_student_update ON public.acorn_university_students;
 DROP TRIGGER IF EXISTS tr_acorn_university_student_identities_current ON public.acorn_university_student_identities;
 DROP TRIGGER IF EXISTS tr_acorn_university_student_codes_current ON public.acorn_university_student_codes;
 DROP TRIGGER IF EXISTS tr_acorn_university_import_source_empty ON public.acorn_university_entities;
@@ -866,7 +865,7 @@ DROP FUNCTION IF EXISTS public.fn_acorn_user_get_seed_user();
 DROP FUNCTION IF EXISTS public.fn_acorn_user_code_acronym(name character varying, word integer, length integer);
 DROP FUNCTION IF EXISTS public.fn_acorn_user_code(name character varying, word integer, length integer);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_table_counts(_schema character varying);
-DROP FUNCTION IF EXISTS public.fn_acorn_university_student_update();
+DROP FUNCTION IF EXISTS public.fn_acorn_university_students_ales_refresh(p_model_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_student_identities_current();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_student_codes_current();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying);
@@ -8344,31 +8343,26 @@ $$;
 ALTER FUNCTION public.fn_acorn_university_student_identities_current() OWNER TO university;
 
 --
--- Name: fn_acorn_university_student_update(); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_university_students_ales_refresh(uuid); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acorn_university_student_update() RETURNS trigger
+CREATE FUNCTION public.fn_acorn_university_students_ales_refresh(p_model_id uuid) RETURNS void
     LANGUAGE plpgsql
     AS $$
 begin
-	-- Runs after updates on Student
-	-- TODO: But BEFORE updates to scores...
-	/*
-	perform fn_acorn_university_action_students_refresh(new.id, new.user_id);
+	perform fn_acorn_university_action_students_refresh(p_model_id, NULL::uuid);
 	insert into system_event_logs(level, message, details, created_at)
 		select 'info', 'Student refreshed',
 			to_json(ARRAY[u.name || '(' || u.id || ')']),
 			now()
-		from public.acorn_user_users u
-		where u.id = new.user_id;
-	*/
-    return new;
+		from acorn_user_users u
+		inner join acorn_university_students s on s.user_id = u.id
+		where s.id = p_model_id;
 end;
-            
 $$;
 
 
-ALTER FUNCTION public.fn_acorn_university_student_update() OWNER TO university;
+ALTER FUNCTION public.fn_acorn_university_students_ales_refresh(p_model_id uuid) OWNER TO university;
 
 --
 -- Name: fn_acorn_university_table_counts(character varying); Type: FUNCTION; Schema: public; Owner: sz
@@ -10272,16 +10266,52 @@ labels-plural:
 
 
 --
+-- Name: COLUMN acorn_university_hierarchies.entity_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_hierarchies.entity_id IS 'can-filter: false';
+
+
+--
 -- Name: COLUMN acorn_university_hierarchies.academic_year_id; Type: COMMENT; Schema: public; Owner: university
 --
 
 COMMENT ON COLUMN public.acorn_university_hierarchies.academic_year_id IS 'column-type: partial
 column-partial: current
+can-filter: false
 # Supress create-system
 sql-select: ""
 value-from: ""
 css-classes-column:
   - tablet';
+
+
+--
+-- Name: COLUMN acorn_university_hierarchies.parent_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_hierarchies.parent_id IS 'can-filter: false';
+
+
+--
+-- Name: COLUMN acorn_university_hierarchies.created_by_user_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_hierarchies.created_by_user_id IS 'can-filter: false';
+
+
+--
+-- Name: COLUMN acorn_university_hierarchies.updated_by_user_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_hierarchies.updated_by_user_id IS 'can-filter: false';
+
+
+--
+-- Name: COLUMN acorn_university_hierarchies.user_group_version_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_hierarchies.user_group_version_id IS 'can-filter: false';
 
 
 --
@@ -12355,7 +12385,23 @@ labels:
   ku: Xwendekar
 labels-plural:
   en: Students
-  ku: Xwendekarên';
+  ku: Xwendekarên
+filters:
+  religion:
+    label: acorn.user::lang.models.religion.label_plural
+    type: group
+    modelClass: Acorn\User\Models\Religion
+    conditions: exists(select * from acorn_user_users u where u.religion_id in(:filtered) and u.id = acorn_university_students.user_id)
+  ethnicity:
+    label: acorn.user::lang.models.ethnicity.label_plural
+    type: group
+    modelClass: Acorn\User\Models\Ethnicity
+    conditions: exists(select * from acorn_user_users u where u.ethnicity_id in(:filtered) and u.id = acorn_university_students.user_id)
+  courses:
+    label: acorn.university::lang.models.course.label_plural
+    conditions: ''exists(select * from acorn_user_user_group_version ugv inner join acorn_university_hierarchies hi on hi.user_group_version_id = ugv.user_group_version_id where hi.entity_id in(:filtered) and ugv.user_id = acorn_university_students.user_id)''
+    modelClass: Acorn\University\Models\Entity
+';
 
 
 --
@@ -12504,7 +12550,16 @@ COMMENT ON COLUMN public.acorn_university_students.legacy_import_student_type IS
 tabLocation: 2
 advanced: true
 readOnly: true
-comment: Regular or Irregular, concerning Year 10 and 11';
+comment: Regular or Irregular, concerning Year 10 and 11
+filters:
+  student_type:
+    label: acorn.exam::lang.models.certificate.legacy_import_student_type
+    type: group
+    options:
+      regular: acorn.exam::lang.models.certificate.regular
+      irregular: acorn.exam::lang.models.certificate.irregular
+    conditions: legacy_import_student_type in(:filtered)
+';
 
 
 --
@@ -12872,6 +12927,7 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.course_user_group_id IS 'e
   comment:
     tab-location: 2
     name-object: true
+no-relation-manager: true
 labels:
   en: Course
 labels-plural:
@@ -12887,6 +12943,7 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.organisation_user_group_id
   comment:
     tab-location: 2
     name-object: true
+no-relation-manager: true
 labels:
   en: Organisation
 labels-plural:
@@ -12902,6 +12959,7 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.course_id IS 'extra-foreig
   table: acorn_university_courses
   comment:
     tab-location: 2
+no-relation-manager: true
 labels:
   en: Course
 labels-plural:
@@ -14796,7 +14854,8 @@ ALTER VIEW public.acorn_university_student_lookups OWNER TO university;
 -- Name: VIEW acorn_university_student_lookups; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON VIEW public.acorn_university_student_lookups IS 'labels:
+COMMENT ON VIEW public.acorn_university_student_lookups IS 'list-record-url: acorn/university/students/update/:id
+labels:
   en: Student Lookup
   ku: Digerîn Xwendekar
 labels-plural:
@@ -14811,9 +14870,11 @@ labels-plural:
 COMMENT ON COLUMN public.acorn_university_student_lookups.student_id IS 'extra-foreign-key: 
   table: acorn_university_students
   comment:
+    global-scope: from
     tab-location: 2
     invisible: true
-    advanced: true';
+    advanced: true
+can-filter: false';
 
 
 --
@@ -14823,6 +14884,7 @@ COMMENT ON COLUMN public.acorn_university_student_lookups.student_id IS 'extra-f
 COMMENT ON COLUMN public.acorn_university_student_lookups.school_id IS 'extra-foreign-key: 
   table: acorn_university_schools
   comment:
+    global-scope: to
     tab-location: 2
     invisible: true';
 
@@ -14857,6 +14919,7 @@ multi:
 COMMENT ON COLUMN public.acorn_university_student_lookups.academic_year_id IS 'extra-foreign-key: 
   table: acorn_university_academic_years
   comment:
+    global-scope: to
     tab-location: 2
     invisible: true';
 
@@ -20308,13 +20371,6 @@ CREATE TRIGGER tr_acorn_university_student_identities_current AFTER INSERT OR UP
 
 
 --
--- Name: acorn_university_students tr_acorn_university_student_update; Type: TRIGGER; Schema: public; Owner: university
---
-
-CREATE TRIGGER tr_acorn_university_student_update AFTER UPDATE ON public.acorn_university_students FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_university_student_update();
-
-
---
 -- Name: acorn_user_user_groups tr_acorn_user_user_group_first_version; Type: TRIGGER; Schema: public; Owner: university
 --
 
@@ -23042,20 +23098,32 @@ has-many-deep-settings:
     order: 40
     field-comment: Add new <a href="/backend/acorn/university/courses">Courses</a>
     comment-html: true
+    filter-conditions: exists(select * from acorn_user_user_group_version ugv where ugv.user_group_version_id in(:filtered) and ugv.user_id = acorn_university_students.user_id)
+    can-filter: false
+    nameFrom: name
+    explicit-label-key: acorn.university::lang.models.course.label_plural
   user_groups:
     hidden: true
+    can-filter: false
+    filter-conditions: exists(select * from acorn_user_user_group_version ugv inner join acorn_user_user_group_versions ugvs on ugv.user_group_version_id = ugvs.id where ugvs.user_group_id in(:filtered) and ugv.user_id = acorn_university_students.user_id)
   user_addresses:
     tab: acorn.location::lang.models.address.label_plural
     order: 30
+    can-filter: false
   user_languages:
     hidden: true
+    filter-conditions: exists(select * from acorn_user_user_languages where language_id in(:filtered) and user_id = acorn_university_students.user_id)
   user_eventParts:
     hidden: true
+    can-filter: false
   user_roles:
     hidden: true
     tab: acorn.user::lang.models.role.label_plural
+    can-filter: false
   user_user_languages:
     tab: acorn.user::lang.models.language.label_plural
+    can-filter: false
+    column-exclude: true
 ';
 
 
@@ -23502,6 +23570,7 @@ GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO token_5;
 
 REVOKE ALL ON FUNCTION public.daitch_mokotoff(text) FROM sz;
 GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -23510,6 +23579,7 @@ GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO sz WITH GRANT OPTION;
 
 REVOKE ALL ON FUNCTION public.difference(text, text) FROM sz;
 GRANT ALL ON FUNCTION public.difference(text, text) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.difference(text, text) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -23542,6 +23612,7 @@ GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO token
 
 REVOKE ALL ON FUNCTION public.dmetaphone(text) FROM sz;
 GRANT ALL ON FUNCTION public.dmetaphone(text) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.dmetaphone(text) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -23550,6 +23621,7 @@ GRANT ALL ON FUNCTION public.dmetaphone(text) TO sz WITH GRANT OPTION;
 
 REVOKE ALL ON FUNCTION public.dmetaphone_alt(text) FROM sz;
 GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -23801,6 +23873,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_m
 --
 
 GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO admin WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -24139,6 +24212,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO s
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -24147,6 +24221,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO sz WITH GRAN
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -24176,6 +24251,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uui
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -24296,6 +24372,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -24314,6 +24391,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_impo
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -24334,6 +24412,13 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO
 GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO sz WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_students_ales_refresh(p_model_id uuid); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_students_ales_refresh(p_model_id uuid) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -24836,6 +24921,7 @@ GRANT ALL ON FUNCTION public.latitude(public.earth) TO token_5;
 
 REVOKE ALL ON FUNCTION public.levenshtein(text, text) FROM sz;
 GRANT ALL ON FUNCTION public.levenshtein(text, text) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.levenshtein(text, text) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -24844,6 +24930,7 @@ GRANT ALL ON FUNCTION public.levenshtein(text, text) TO sz WITH GRANT OPTION;
 
 REVOKE ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) FROM sz;
 GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -24852,6 +24939,7 @@ GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) 
 
 REVOKE ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) FROM sz;
 GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -24860,6 +24948,7 @@ GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO sz W
 
 REVOKE ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) FROM sz;
 GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -24892,6 +24981,7 @@ GRANT ALL ON FUNCTION public.longitude(public.earth) TO token_5;
 
 REVOKE ALL ON FUNCTION public.metaphone(text, integer) FROM sz;
 GRANT ALL ON FUNCTION public.metaphone(text, integer) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.metaphone(text, integer) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -25021,6 +25111,7 @@ GRANT ALL ON FUNCTION public.similarity_op(text, text) TO token_5;
 
 REVOKE ALL ON FUNCTION public.soundex(text) FROM sz;
 GRANT ALL ON FUNCTION public.soundex(text) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.soundex(text) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -25084,6 +25175,7 @@ GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO token_5;
 
 REVOKE ALL ON FUNCTION public.text_soundex(text) FROM sz;
 GRANT ALL ON FUNCTION public.text_soundex(text) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.text_soundex(text) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -27129,6 +27221,13 @@ GRANT SELECT,USAGE ON SEQUENCE public.system_settings_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_settings_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_settings_id_seq TO token_5;
 GRANT SELECT ON SEQUENCE public.system_settings_id_seq TO PUBLIC;
+
+
+--
+-- Name: TABLE university_mofadala_baccalaureate_marks; Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_1 WITH GRANT OPTION;
 
 
 --

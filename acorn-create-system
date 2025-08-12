@@ -82,6 +82,7 @@ do {
     foreach ($tables as &$table) {
         $table->loadForeignKeys();
         $table->loadActionFunctions();
+        $table->loadALESFunctions();
         $table->loadTriggers();
     }
 

@@ -61,6 +61,7 @@ class ForeignKey {
     public $labelsPlural;
 
     public $globalScope; // Chaining from|to
+    public $noRelationManager;
     public $hasManyDeepInclude; // Process this non 1-1 has many deep link
     public $showFilter; // In relationmanager, default: TRUE
     public $showSearch; // In relationmanager, default: TRUE
@@ -80,9 +81,10 @@ class ForeignKey {
         $this->from   = !$to;
 
         foreach ($properties as $name => $value) {
+            // This will write also $this->comment
             if (property_exists($this, $name)) $this->$name = $value;
         }
-        foreach (\Spyc::YAMLLoadString($this->comment) as $name => $value) {
+        foreach (\Spyc::YAMLLoadString(preg_replace('/^\t/m', '    ', $this->comment)) as $name => $value) {
             $nameCamel = Str::camel($name);
             if (!property_exists($this, $nameCamel)) 
                 throw new Exception("Property [$nameCamel] does not exist on [$this->table_from_name.$column->name] => [$this->name]");

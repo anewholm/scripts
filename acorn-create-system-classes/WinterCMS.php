@@ -552,19 +552,21 @@ $customModelFQN::extend(function (\$model){
 
 PHP;
                     if ($customController->exists()) {
+                        // We DO NOT add the field for performance reasons
+                        // \Acorn\Controller::extendFormFieldsGeneral(function (\$form, \$model, \$context) {
+                        //     if (\$model instanceof $customModelFQN) {
+                        //         \$form->addTabFields(['$thisRelationName' => [
+                        //             'label'    => '$thisLabel',
+                        //             'type'     => 'dropdown',
+                        //             'options'  => '$thisOptions',
+                        //             'emptyOption' => 'acorn::lang.models.general.nothing_linked',
+                        //             'tab'      => '$pluginLabel'
+                        //         ]]);
+                        //     }
+                        // });
+
                         // emptyOption to ensure that it can and does remain NULL
                         $bootMethodPhp    .= <<<PHP
-\Acorn\Controller::extendFormFieldsGeneral(function (\$form, \$model, \$context) {
-    if (\$model instanceof $customModelFQN) {
-        \$form->addTabFields(['$thisRelationName' => [
-            'label'    => '$thisLabel',
-            'type'     => 'dropdown',
-            'options'  => '$thisOptions',
-            'emptyOption' => 'acorn::lang.models.general.nothing_linked',
-            'tab'      => '$pluginLabel'
-        ]]);
-    }
-});
 \Acorn\Controller::extendListColumnsGeneral(function (\$list, \$model) {
     if (\$model instanceof $customModelFQN) {
         \$list->addColumns(['$thisRelationName' => [
@@ -620,6 +622,8 @@ PHP;
         \$form->addTabFields(['$usersColumnName' => [
             'label'   => '$thisLabel',
             'type'    => 'dropdown',
+            'span'    => 'storm',
+            'cssClass' => 'col-xs-6 col-md-3',
             'options' => '$thisOptions',
             'emptyOption' => 'acorn::lang.models.general.no_restriction',
             'tab'     => 'acorn::lang.models.general.global_scopes'
@@ -887,6 +891,9 @@ PHP;
                     print("    {$GREEN}$class{$NC}({$YELLOW}$name{$NC}): $relation\n");
                 }
             }
+
+            // ---------------------------------------------------------------- Model based ALES functions
+            $this->setPropertyInClassFile($modelFilePath, 'alesFunctions', $model->alesFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
 
             // ---------------------------------------------------------------- Model based action functions
             // Write the labels to lang, and the translationKeys to the YAML
@@ -1581,6 +1588,9 @@ PHP
                 $this->yamlFileSet($configListPath, 'showCheckboxes', false, Framework::NO_THROW);
                 $this->yamlFileUnSet($configListPath, 'recordUrl');
             }
+            if ($controller->model->listRecordUrl) {
+                $this->yamlFileSet($configListPath, 'recordUrl', $controller->model->listRecordUrl);
+            }
             if ($controller->model->defaultSort) {
                 $this->yamlFileSet($configListPath, 'defaultSort', $controller->model->defaultSort);
             }
@@ -1637,12 +1647,14 @@ PHP
                     // The IdField also has all these relations on it, but is usually marked as !canFilter
                     // Time fields also have relations
                     $nameFromEmbedded = (strstr($field->nameFrom, '[') !== FALSE);
+                    $labelKey         = (isset($field->explicitLabelKey) ? $field->explicitLabelKey : $field->translationKey(Model::PLURAL));
                     $filterDefinition = array(
                         '#'          => $fieldName,
-                        'label'      => $field->translationKey(Model::PLURAL),
+                        'label'      => $labelKey,
                         'type'       => $field->filterType,
                         'conditions' => $field->filterConditions,
                         'nameFrom'   => ($nameFromEmbedded ? FALSE : $field->nameFrom), 
+                        'noRelationManager' => $field->noRelationManager
                     );
 
                     if (count($field->relations)) {

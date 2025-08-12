@@ -12,6 +12,7 @@ class Field {
     public $relations; // Can be empty array()
     public $autoFKType;
     public $extraForeignKey;
+    public $noRelationManager;
     public $fromYaml;
     public $revisionable;
 

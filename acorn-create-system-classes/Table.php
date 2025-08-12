@@ -68,6 +68,7 @@ class Table {
     public $showSorting;
     public $columns;
     public $actionFunctions;
+    public $alesFunctions;
     public $triggers;
     public $printable;
     public $import;
@@ -77,6 +78,7 @@ class Table {
     public $allControllers;
 
     public $filters = array();
+    public $listRecordUrl;
 
     // This is set when models are created
     public $model;
@@ -523,6 +525,12 @@ class Table {
     {
         $this->actionFunctions = $this->db->actionFunctionsForTable($this->name);
     }
+
+    public function loadALESFunctions()
+    {
+        $this->alesFunctions = $this->db->alesFunctionsForTable($this->name);
+    }
+    
 
     public function loadTriggers()
     {

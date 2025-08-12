@@ -29,6 +29,7 @@ class Model {
 
     public $controllers = array();
     public $actionFunctions;
+    public $alesFunctions;
     public $printable;
     public $readOnly;
     public $defaultSort;
@@ -65,6 +66,7 @@ class Model {
     public $labelsPlural;
 
     public $filters;
+    public $listRecordUrl;
     public $globalScope; // Limits all related models to here by the selection
     public $import;
     public $export;
@@ -107,6 +109,7 @@ class Model {
                 'returnType'     => $definition['returnType'],
             ), $commentDef);
         }
+        $this->alesFunctions = $table->alesFunctions;
 
         // Adopt some of the tables comment statements
         $this->comment = $table->comment;
@@ -1501,6 +1504,9 @@ class Model {
                 'readOnly'       => $relation->readOnly,
                 'fieldComment'   => $relation->fieldComment,
                 'commentHtml'    => $relation->commentHtml,
+                'noRelationManager' => $relation->noRelationManager,
+                'filterConditions' => $relation->filterConditions,
+                'explicitLabelKey' => $relation->explicitLabelKey,
                 
                 // The relation decides about its presentation with fieldExclude
                 // Essentially, only for 1toX and XtoX final relations
@@ -1544,7 +1550,7 @@ class Model {
         *   relation list
         */
         foreach ($this->relations1fromX() as $name => &$relation) {
-            $nameFrom      = 'fully_qualified_name';
+            $nameFrom      = ($relation->nameFrom ?: 'name');
             $relationClass = get_class($relation);
             $relationType  = $relation->type();
             $dependsOn     = ($relation->dependsOn ? $relation->dependsOn : array());
@@ -1590,6 +1596,8 @@ class Model {
                 'nameObject'     => $relation->nameObject,
                 'span'           => $relation->span,
                 'tab'            => 'INHERIT',
+                'noRelationManager' => $relation->noRelationManager,
+                'explicitLabelKey'  => $relation->explicitLabelKey,
 
                 // List
                 'columnType'     => 'partial',
@@ -1622,7 +1630,7 @@ class Model {
         * TODO: This is just the same as 1fromX above at the moment
         */
         foreach ($this->relationsXfromXSemi() as $name => &$relation) {
-            $nameFrom        = 'fully_qualified_name';
+            $nameFrom        = ($relation->nameFrom ?: 'name');
             $relationClass   = get_class($relation);
             $relationType    = $relation->type();
             $tab             = ($relation->tab ?: 'INHERIT'); 
@@ -1666,6 +1674,8 @@ class Model {
                 'multi'          => $relation->multi,
                 'nameObject'     => $relation->nameObject,
                 'dependsOn'      => $dependsOn,
+                'noRelationManager' => $relation->noRelationManager,
+                'explicitLabelKey'  => $relation->explicitLabelKey,
 
                 // List
                 'columnType'    => 'partial',
@@ -1693,7 +1703,7 @@ class Model {
         *   relation list
         */
         foreach ($this->relationsXfromX() as $name => &$relation) {
-            $nameFrom        = 'fully_qualified_name';
+            $nameFrom        = ($relation->nameFrom ?: 'name');
             $relationClass   = get_class($relation);
             $relationType    = $relation->type();
             $tab             = ($relation->tab ?: 'INHERIT'); 
@@ -1742,6 +1752,8 @@ class Model {
                 'multi'          => $relation->multi,
                 'nameObject'     => $relation->nameObject,
                 'dependsOn'      => $dependsOn,
+                'noRelationManager' => $relation->noRelationManager,
+                'explicitLabelKey'  => $relation->explicitLabelKey,
 
                 // List
                 'columnType'    => 'partial',
