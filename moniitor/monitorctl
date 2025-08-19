@@ -1,0 +1,37 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          monitorctl
+# Required-Start:    $remote_fs $syslog $time
+# Required-Stop:     $remote_fs $syslog $time
+# Default-Start:     3
+# Default-Stop:
+# Short-Description: Monitor websites
+# Description: Hardcoded monitoring of personal websites
+#              will notify-send to this laptop when there
+#              is an non-200 response
+### END INIT INFO
+
+# Install in /etc/init.d/ systemd systems like Ubuntu
+# then sym link (ln -s) to a run-level folder like /etc/rc3.d/S01monitorctl
+# Optionally you can kill the monitor in rc5
+monitor=/etc/init.d/monitor
+case "$1" in
+  start)
+    start-stop-daemon --start --exec $monitor
+    ;;
+  restart|force-reload|reload)
+    start-stop-daemon --stop -s SIGKILL --exec $monitor
+    start-stop-daemon --start --exec $monitor
+    ;;
+  stop)
+    start-stop-daemon --stop -s SIGKILL --exec $monitor
+    ;;
+  status)
+    ;;
+  *)
+    echo "Usage: /etc/init.d/monitorctl {start|stop|restart|force-reload|reload}"
+    exit 2
+    ;;
+esac
+
+exit 0
