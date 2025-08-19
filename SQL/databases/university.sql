@@ -2,8 +2,10 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 16.9 (Ubuntu 16.9-1.pgdg24.04+1)
--- Dumped by pg_dump version 16.9 (Ubuntu 16.9-1.pgdg24.04+1)
+\restrict emusFksvORuUhYfhLzB9k3W7PMgbeGd7wlnJnJlPzp2AiRGW4kDHp6RHkL1bUEP
+
+-- Dumped from database version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
+-- Dumped by pg_dump version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -480,6 +482,7 @@ DROP INDEX IF EXISTS public.acorn_calendar_instances_date_event_part_id_instance
 ALTER TABLE IF EXISTS ONLY public.acorn_user_user_languages DROP CONSTRAINT IF EXISTS user_language;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_entities DROP CONSTRAINT IF EXISTS unique_user_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_users DROP CONSTRAINT IF EXISTS unique_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_students DROP CONSTRAINT IF EXISTS unique_1to1_user_id;
 ALTER TABLE IF EXISTS ONLY public.system_settings DROP CONSTRAINT IF EXISTS system_settings_pkey;
 ALTER TABLE IF EXISTS ONLY public.system_revisions DROP CONSTRAINT IF EXISTS system_revisions_pkey;
 ALTER TABLE IF EXISTS ONLY public.system_request_logs DROP CONSTRAINT IF EXISTS system_request_logs_pkey;
@@ -962,6 +965,13 @@ CREATE SCHEMA product;
 
 
 ALTER SCHEMA product OWNER TO university;
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: pg_database_owner
+--
+
+COMMENT ON SCHEMA public IS '';
+
 
 --
 -- Name: cube; Type: EXTENSION; Schema: -; Owner: -
@@ -8983,6 +8993,20 @@ labels-plural:
 
 
 --
+-- Name: COLUMN acorn_enrollment_desires.academic_year_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_enrollment_desires.academic_year_id IS 'no-relation-manager: true';
+
+
+--
+-- Name: COLUMN acorn_enrollment_desires.course_entry_requirements_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_enrollment_desires.course_entry_requirements_id IS 'can-filter: false';
+
+
+--
 -- Name: COLUMN acorn_enrollment_desires.sort_order; Type: COMMENT; Schema: public; Owner: university
 --
 
@@ -9457,10 +9481,38 @@ labels-plural:
 
 
 --
+-- Name: COLUMN acorn_exam_interview_students.interview_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_interview_students.interview_id IS 'can-filter: false';
+
+
+--
+-- Name: COLUMN acorn_exam_interview_students.teacher_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_interview_students.teacher_id IS 'no-relation-manager: true';
+
+
+--
+-- Name: COLUMN acorn_exam_interview_students.event_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_interview_students.event_id IS 'can-filter: false';
+
+
+--
 -- Name: COLUMN acorn_exam_interview_students.score; Type: COMMENT; Schema: public; Owner: university
 --
 
 COMMENT ON COLUMN public.acorn_exam_interview_students.score IS 'list-editable: true';
+
+
+--
+-- Name: COLUMN acorn_exam_interview_students.course_material_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_interview_students.course_material_id IS 'no-relation-manager: true';
 
 
 --
@@ -9974,6 +10026,7 @@ labels:
 labels-plural:
   en: Course materials
   ku: Kors materialên
+no-relation-manager-default: true
 ';
 
 
@@ -10206,8 +10259,6 @@ ALTER TABLE public.acorn_university_entities OWNER TO university;
 COMMENT ON TABLE public.acorn_university_entities IS 'global-scope: fn_acorn_university_scope_entities
 menu: false
 order: -100
-attribute-functions:
-  name: "return $this->user_group->name;"
 ';
 
 
@@ -10600,6 +10651,20 @@ COMMENT ON COLUMN public.acorn_university_project_students.score IS 'list-editab
 
 
 --
+-- Name: COLUMN acorn_university_project_students.course_material_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_project_students.course_material_id IS 'no-relation-manager: true';
+
+
+--
+-- Name: COLUMN acorn_university_project_students.project_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_project_students.project_id IS 'can-filter: false';
+
+
+--
 -- Name: acorn_university_projects; Type: TABLE; Schema: public; Owner: university
 --
 
@@ -10700,6 +10765,20 @@ COMMENT ON TABLE public.acorn_university_student_codes IS 'menu: false';
 
 
 --
+-- Name: COLUMN acorn_university_student_codes.entity_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_student_codes.entity_id IS 'can-filter: false
+labels:
+  en: Owner organisation
+  ku: Xwede kod
+labels-plural:
+  en: Owning organisations
+  ku: Xwede kodên
+';
+
+
+--
 -- Name: COLUMN acorn_university_student_codes.current; Type: COMMENT; Schema: public; Owner: university
 --
 
@@ -10736,6 +10815,20 @@ COMMENT ON TABLE public.acorn_university_student_identities IS 'menu: false';
 
 
 --
+-- Name: COLUMN acorn_university_student_identities.identity_type_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_student_identities.identity_type_id IS 'no-relation-manager: true';
+
+
+--
+-- Name: COLUMN acorn_university_student_identities.student_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_student_identities.student_id IS 'can-filter: false';
+
+
+--
 -- Name: COLUMN acorn_university_student_identities.current; Type: COMMENT; Schema: public; Owner: university
 --
 
@@ -10767,6 +10860,13 @@ ALTER TABLE public.acorn_university_student_notes OWNER TO university;
 --
 
 COMMENT ON TABLE public.acorn_university_student_notes IS 'menu: false';
+
+
+--
+-- Name: COLUMN acorn_university_student_notes.entity_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_student_notes.entity_id IS 'no-relation-manager: true';
 
 
 --
@@ -11156,22 +11256,6 @@ UNION ALL
     acorn_university_student_identities.updated_at AS datetime
    FROM public.acorn_university_student_identities
 UNION ALL
- SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
-    acorn_university_student_statuses.id AS model_id,
-    'acorn_university_student_statuses'::text AS "table",
-    acorn_university_student_statuses.name,
-    0 AS update,
-    acorn_university_student_statuses.created_at AS datetime
-   FROM public.acorn_university_student_statuses
-UNION ALL
- SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
-    acorn_university_student_statuses.id AS model_id,
-    'acorn_university_student_statuses'::text AS "table",
-    acorn_university_student_statuses.name,
-    1 AS update,
-    acorn_university_student_statuses.updated_at AS datetime
-   FROM public.acorn_university_student_statuses
-UNION ALL
  SELECT 'Acorn\University\Models\CourseMaterial'::text AS model_type,
     acorn_university_course_materials.id AS model_id,
     'acorn_university_course_materials'::text AS "table",
@@ -11203,6 +11287,22 @@ UNION ALL
     1 AS update,
     acorn_university_project_students.updated_at AS datetime
    FROM public.acorn_university_project_students
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
+    acorn_university_student_statuses.id AS model_id,
+    'acorn_university_student_statuses'::text AS "table",
+    acorn_university_student_statuses.name,
+    0 AS update,
+    acorn_university_student_statuses.created_at AS datetime
+   FROM public.acorn_university_student_statuses
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
+    acorn_university_student_statuses.id AS model_id,
+    'acorn_university_student_statuses'::text AS "table",
+    acorn_university_student_statuses.name,
+    1 AS update,
+    acorn_university_student_statuses.updated_at AS datetime
+   FROM public.acorn_university_student_statuses
 UNION ALL
  SELECT 'Acorn\University\Models\IdentityType'::text AS model_type,
     acorn_university_identity_types.id AS model_id,
@@ -11284,22 +11384,6 @@ UNION ALL
     acorn_university_projects.updated_at AS datetime
    FROM public.acorn_university_projects
 UNION ALL
- SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
-    acorn_university_lectures.id AS model_id,
-    'acorn_university_lectures'::text AS "table",
-    NULL::text AS name,
-    0 AS update,
-    acorn_university_lectures.created_at AS datetime
-   FROM public.acorn_university_lectures
-UNION ALL
- SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
-    acorn_university_lectures.id AS model_id,
-    'acorn_university_lectures'::text AS "table",
-    NULL::text AS name,
-    1 AS update,
-    acorn_university_lectures.updated_at AS datetime
-   FROM public.acorn_university_lectures
-UNION ALL
  SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
     acorn_exam_exam_materials.id AS model_id,
     'acorn_exam_exam_materials'::text AS "table",
@@ -11315,6 +11399,22 @@ UNION ALL
     1 AS update,
     acorn_exam_exam_materials.updated_at AS datetime
    FROM public.acorn_exam_exam_materials
+UNION ALL
+ SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
+    acorn_university_lectures.id AS model_id,
+    'acorn_university_lectures'::text AS "table",
+    NULL::text AS name,
+    0 AS update,
+    acorn_university_lectures.created_at AS datetime
+   FROM public.acorn_university_lectures
+UNION ALL
+ SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
+    acorn_university_lectures.id AS model_id,
+    'acorn_university_lectures'::text AS "table",
+    NULL::text AS name,
+    1 AS update,
+    acorn_university_lectures.updated_at AS datetime
+   FROM public.acorn_university_lectures
 UNION ALL
  SELECT 'Acorn\Enrollment\Models\Desire'::text AS model_type,
     acorn_enrollment_desires.id AS model_id,
@@ -11698,20 +11798,6 @@ UNION ALL
     acorn_university_student_identities.updated_by_user_id AS by
    FROM public.acorn_university_student_identities
 UNION ALL
- SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
-    acorn_university_student_statuses.id AS model_id,
-    'acorn_university_student_statuses'::text AS "table",
-    0 AS update,
-    acorn_university_student_statuses.created_by_user_id AS by
-   FROM public.acorn_university_student_statuses
-UNION ALL
- SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
-    acorn_university_student_statuses.id AS model_id,
-    'acorn_university_student_statuses'::text AS "table",
-    1 AS update,
-    acorn_university_student_statuses.updated_by_user_id AS by
-   FROM public.acorn_university_student_statuses
-UNION ALL
  SELECT 'Acorn\University\Models\CourseMaterial'::text AS model_type,
     acorn_university_course_materials.id AS model_id,
     'acorn_university_course_materials'::text AS "table",
@@ -11739,6 +11825,20 @@ UNION ALL
     1 AS update,
     acorn_university_project_students.updated_by_user_id AS by
    FROM public.acorn_university_project_students
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
+    acorn_university_student_statuses.id AS model_id,
+    'acorn_university_student_statuses'::text AS "table",
+    0 AS update,
+    acorn_university_student_statuses.created_by_user_id AS by
+   FROM public.acorn_university_student_statuses
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
+    acorn_university_student_statuses.id AS model_id,
+    'acorn_university_student_statuses'::text AS "table",
+    1 AS update,
+    acorn_university_student_statuses.updated_by_user_id AS by
+   FROM public.acorn_university_student_statuses
 UNION ALL
  SELECT 'Acorn\University\Models\IdentityType'::text AS model_type,
     acorn_university_identity_types.id AS model_id,
@@ -11810,20 +11910,6 @@ UNION ALL
     acorn_university_projects.updated_by_user_id AS by
    FROM public.acorn_university_projects
 UNION ALL
- SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
-    acorn_university_lectures.id AS model_id,
-    'acorn_university_lectures'::text AS "table",
-    0 AS update,
-    acorn_university_lectures.created_by_user_id AS by
-   FROM public.acorn_university_lectures
-UNION ALL
- SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
-    acorn_university_lectures.id AS model_id,
-    'acorn_university_lectures'::text AS "table",
-    1 AS update,
-    acorn_university_lectures.updated_by_user_id AS by
-   FROM public.acorn_university_lectures
-UNION ALL
  SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
     acorn_exam_exam_materials.id AS model_id,
     'acorn_exam_exam_materials'::text AS "table",
@@ -11837,6 +11923,20 @@ UNION ALL
     1 AS update,
     acorn_exam_exam_materials.updated_by_user_id AS by
    FROM public.acorn_exam_exam_materials
+UNION ALL
+ SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
+    acorn_university_lectures.id AS model_id,
+    'acorn_university_lectures'::text AS "table",
+    0 AS update,
+    acorn_university_lectures.created_by_user_id AS by
+   FROM public.acorn_university_lectures
+UNION ALL
+ SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
+    acorn_university_lectures.id AS model_id,
+    'acorn_university_lectures'::text AS "table",
+    1 AS update,
+    acorn_university_lectures.updated_by_user_id AS by
+   FROM public.acorn_university_lectures
 UNION ALL
  SELECT 'Acorn\Enrollment\Models\Desire'::text AS model_type,
     acorn_enrollment_desires.id AS model_id,
@@ -12401,6 +12501,7 @@ filters:
     label: acorn.university::lang.models.course.label_plural
     conditions: ''exists(select * from acorn_user_user_group_version ugv inner join acorn_university_hierarchies hi on hi.user_group_version_id = ugv.user_group_version_id where hi.entity_id in(:filtered) and ugv.user_id = acorn_university_students.user_id)''
     modelClass: Acorn\University\Models\Entity
+    searchNameSelect: select ugs.name from acorn_user_user_groups ugs where ugs.id = acorn_university_entities.user_group_id
 ';
 
 
@@ -12411,7 +12512,8 @@ filters:
 COMMENT ON COLUMN public.acorn_university_students.import_source IS 'tab: Legacy
 readOnly: true
 tabLocation: 2
-advanced: true';
+advanced: true
+invisible: true';
 
 
 --
@@ -12422,6 +12524,7 @@ COMMENT ON COLUMN public.acorn_university_students.legacy_import_result IS 'tab:
 readOnly: true
 tabLocation: 2
 advanced: true
+invisible: true
 comment: Binket, serket, Serket, Serkeftî';
 
 
@@ -12433,6 +12536,7 @@ COMMENT ON COLUMN public.acorn_university_students.legacy_import_avg IS 'tab: Le
 tabLocation: 2
 advanced: true
 readOnly: true
+invisible: true
 comment: Final University enrollment score';
 
 
@@ -12443,6 +12547,7 @@ comment: Final University enrollment score';
 COMMENT ON COLUMN public.acorn_university_students.legacy_import_total_mark IS 'tab: Legacy
 tabLocation: 2
 advanced: true
+invisible: true
 readOnly: true
 comment: Final University enrollment score';
 
@@ -12454,6 +12559,7 @@ comment: Final University enrollment score';
 COMMENT ON COLUMN public.acorn_university_students.legacy_import_the_total IS 'tab: Legacy
 tabLocation: 2
 advanced: true
+invisible: true
 readOnly: true
 comment: Final University enrollment score';
 
@@ -12465,6 +12571,7 @@ comment: Final University enrollment score';
 COMMENT ON COLUMN public.acorn_university_students.legacy_import_final_avg IS 'tab: Legacy
 tabLocation: 2
 advanced: true
+invisible: true
 readOnly: true
 comment: Final University enrollment score with Year 10 & 11';
 
@@ -12477,6 +12584,7 @@ COMMENT ON COLUMN public.acorn_university_students.legacy_import_passed_primarie
 tabLocation: 2
 advanced: true
 readOnly: true
+invisible: true
 comment: Primary subjects passed';
 
 
@@ -12488,6 +12596,7 @@ COMMENT ON COLUMN public.acorn_university_students.legacy_import_passed_secondar
 tabLocation: 2
 advanced: true
 readOnly: true
+invisible: true
 comment: Secondary subjects passed minimum';
 
 
@@ -12499,6 +12608,7 @@ COMMENT ON COLUMN public.acorn_university_students.legacy_import_attendance IS '
 tabLocation: 2
 advanced: true
 readOnly: true
+invisible: true
 comment: Number of materials required (non-blank score)';
 
 
@@ -12509,6 +12619,7 @@ comment: Number of materials required (non-blank score)';
 COMMENT ON COLUMN public.acorn_university_students.number IS 'read-only: true
 comment: Unique student system number
 span: right
+invisible: true
 tab: acorn.university::lang.models.student.university_student_codes__student
 labels:
   en: Unique System number
@@ -12569,6 +12680,7 @@ filters:
 COMMENT ON COLUMN public.acorn_university_students.legacy_import_id IS 'columnClass: normal # Not _id FK field
 tab: Legacy
 tabLocation: 2
+invisible: true
 advanced: true
 readOnly: true
 comment: Legacy import ID
@@ -12585,6 +12697,7 @@ labels-plural:
 COMMENT ON COLUMN public.acorn_university_students.legacy_import_birth_place IS 'tab: Legacy
 tabLocation: 2
 advanced: true
+invisible: true
 readOnly: true
 comment: Birth place because location cleaning is difficult';
 
@@ -12596,6 +12709,7 @@ comment: Birth place because location cleaning is difficult';
 COMMENT ON COLUMN public.acorn_university_students.printed IS 'column-type: text
 field-type: datatable
 adding: false
+invisible: true
 deleting: false
 css-classes:
   - single-tab
@@ -12864,7 +12978,8 @@ labels-plural:
   en: Student Users
 sql-select: acorn_user_users.name
 sortable: true
-searchable: true';
+searchable: true
+invisible: true';
 
 
 --
@@ -12875,6 +12990,7 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.student_id IS 'extra-forei
   table: acorn_university_students
   comment:
     tab-location: 2
+    invisible: true
     name-object: true
     depends-on:
       user_user_group_versions: true
@@ -12882,7 +12998,6 @@ labels:
   en: Student
 labels-plural:
   en: Students
-invisible: true
 qrcode-object: true';
 
 
@@ -12895,6 +13010,7 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.academic_year_semester_id 
   comment:
     tab-location: 2
     name-object: true
+filter-search-name-select: select ay.name from acorn_university_academic_years ay where ay.id = acorn_university_academic_year_semesters.academic_year_id
 labels:
   en: Academic Year Semester
 labels-plural:
@@ -12915,7 +13031,9 @@ labels:
 labels-plural:
   en: Academic Years
 css-classes-column:
-  - tablet';
+  - tablet
+invisible: true
+no-relation-manager: true';
 
 
 --
@@ -12931,7 +13049,8 @@ no-relation-manager: true
 labels:
   en: Course
 labels-plural:
-  en: Courses';
+  en: Courses
+invisible: true';
 
 
 --
@@ -12977,7 +13096,8 @@ labels:
   ku: Kode kors
 labels-plural:
   en: Courses
-  ku: Kode korsên';
+  ku: Kode korsên
+invisible: true';
 
 
 --
@@ -12987,7 +13107,8 @@ labels-plural:
 COMMENT ON COLUMN public.acorn_exam_data_entry_scores.course_type_id IS 'extra-foreign-key: 
   table: acorn_university_course_types
   comment:
-    tab-location: 2';
+    tab-location: 2
+invisible: true';
 
 
 --
@@ -12997,7 +13118,8 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.course_type_id IS 'extra-f
 COMMENT ON COLUMN public.acorn_exam_data_entry_scores.exam_id IS 'extra-foreign-key: 
   table: acorn_exam_exams
   comment:
-    tab-location: 2';
+    tab-location: 2
+invisible: true';
 
 
 --
@@ -13027,6 +13149,20 @@ labels-plural:
 
 
 --
+-- Name: COLUMN acorn_exam_data_entry_scores.sum; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.sum IS 'invisible: true';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.attendance; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.attendance IS 'invisible: true';
+
+
+--
 -- Name: COLUMN acorn_exam_data_entry_scores.passed; Type: COMMENT; Schema: public; Owner: university
 --
 
@@ -13049,7 +13185,7 @@ labels:
 labels-plural:
   en: Course Passes
   ku: Kors Serketên
-';
+invisible: true';
 
 
 --
@@ -13067,6 +13203,13 @@ labels-plural:
   en: Results
   ku: Encamên
 ';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.maximum; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.maximum IS 'invisible: true';
 
 
 --
@@ -13096,6 +13239,13 @@ CREATE TABLE public.acorn_user_user_languages (
 
 
 ALTER TABLE public.acorn_user_user_languages OWNER TO university;
+
+--
+-- Name: COLUMN acorn_user_user_languages.user_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_user_user_languages.user_id IS 'no-relation-manager: true';
+
 
 --
 -- Name: acorn_exam_certificates; Type: VIEW; Schema: public; Owner: university
@@ -13233,6 +13383,7 @@ COMMENT ON COLUMN public.acorn_exam_certificates.student_id IS 'extra-foreign-ke
   comment:
     tab-location: 2
     name-object: true
+    invisible: true
     field-exclude: true
 labels:
   en: Student
@@ -13863,6 +14014,8 @@ COMMENT ON COLUMN public.acorn_exam_token2s.student_id IS 'extra-foreign-key:
   table: acorn_university_students
   comment:
     tab-location: 2
+    field-exclude: true
+    column-exclude: true
     hidden: true
     labels:
       en: Calculation
@@ -13880,7 +14033,8 @@ COMMENT ON COLUMN public.acorn_exam_token2s.academic_year_id IS 'extra-foreign-k
   table: acorn_university_academic_years
   comment:
     tab-location: 2
-    hidden: true';
+    field-exclude: true
+    column-exclude: true';
 
 
 --
@@ -13891,7 +14045,8 @@ COMMENT ON COLUMN public.acorn_exam_token2s.exam_id IS 'extra-foreign-key:
   table: acorn_exam_exams
   comment:
     tab-location: 2
-    hidden: true';
+    field-exclude: true
+    column-exclude: true';
 
 
 --
@@ -13902,7 +14057,8 @@ COMMENT ON COLUMN public.acorn_exam_token2s.course_material_id IS 'extra-foreign
   table: acorn_university_course_materials
   comment:
     tab-location: 2
-    hidden: true';
+    field-exclude: true
+    column-exclude: true';
 
 
 --
@@ -13913,7 +14069,9 @@ COMMENT ON COLUMN public.acorn_exam_token2s.course_id IS 'extra-foreign-key:
   table: acorn_university_courses
   comment:
     tab-location: 2
-    hidden: true';
+    field-exclude: true
+    column-exclude: true
+    no-relation-manager: true';
 
 
 --
@@ -13924,7 +14082,9 @@ COMMENT ON COLUMN public.acorn_exam_token2s.material_id IS 'extra-foreign-key:
   table: acorn_university_materials
   comment:
     tab-location: 2
-    hidden: true';
+    field-exclude: true
+    column-exclude: true
+    no-relation-manager: true';
 
 
 --
@@ -13935,7 +14095,8 @@ COMMENT ON COLUMN public.acorn_exam_token2s.calculation_id IS 'extra-foreign-key
   table: acorn_exam_calculations
   comment:
     tab-location: 2
-    hidden: true';
+    field-exclude: true
+    column-exclude: true';
 
 
 --
@@ -13946,7 +14107,9 @@ COMMENT ON COLUMN public.acorn_exam_token2s.project_id IS 'extra-foreign-key:
   table: acorn_university_projects
   comment:
     tab-location: 2
-    hidden: true';
+    field-exclude: true
+    column-exclude: true
+    no-relation-manager: true';
 
 
 --
@@ -13957,7 +14120,8 @@ COMMENT ON COLUMN public.acorn_exam_token2s.interview_id IS 'extra-foreign-key:
   table: acorn_exam_interviews
   comment:
     tab-location: 2
-	hidden: true';
+    field-exclude: true
+    column-exclude: true';
 
 
 --
@@ -14501,20 +14665,6 @@ UNION ALL
     acorn_university_student_identities.description AS content
    FROM public.acorn_university_student_identities
 UNION ALL
- SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
-    acorn_university_student_statuses.id AS model_id,
-    'acorn_university_student_statuses'::text AS "table",
-    'name'::text AS field,
-    (acorn_university_student_statuses.name)::text AS content
-   FROM public.acorn_university_student_statuses
-UNION ALL
- SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
-    acorn_university_student_statuses.id AS model_id,
-    'acorn_university_student_statuses'::text AS "table",
-    'description'::text AS field,
-    acorn_university_student_statuses.description AS content
-   FROM public.acorn_university_student_statuses
-UNION ALL
  SELECT 'Acorn\University\Models\ProjectStudent'::text AS model_type,
     acorn_university_project_students.id AS model_id,
     'acorn_university_project_students'::text AS "table",
@@ -14528,6 +14678,20 @@ UNION ALL
     'description'::text AS field,
     acorn_university_project_students.description AS content
    FROM public.acorn_university_project_students
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
+    acorn_university_student_statuses.id AS model_id,
+    'acorn_university_student_statuses'::text AS "table",
+    'name'::text AS field,
+    (acorn_university_student_statuses.name)::text AS content
+   FROM public.acorn_university_student_statuses
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
+    acorn_university_student_statuses.id AS model_id,
+    'acorn_university_student_statuses'::text AS "table",
+    'description'::text AS field,
+    acorn_university_student_statuses.description AS content
+   FROM public.acorn_university_student_statuses
 UNION ALL
  SELECT 'Acorn\University\Models\IdentityType'::text AS model_type,
     acorn_university_identity_types.id AS model_id,
@@ -14886,7 +15050,8 @@ COMMENT ON COLUMN public.acorn_university_student_lookups.school_id IS 'extra-fo
   comment:
     global-scope: to
     tab-location: 2
-    invisible: true';
+    invisible: true
+no-relation-manager: true';
 
 
 --
@@ -14898,7 +15063,10 @@ COMMENT ON COLUMN public.acorn_university_student_lookups.course_id IS 'extra-fo
   comment:
     tab-location: 2
     invisible: true
-    hidden: true';
+    hidden: true
+    filter-search-name-select: select ugs.name from acorn_user_user_groups ugs where ugs.id = acorn_university_entities.user_group_id
+no-relation-manager: true
+';
 
 
 --
@@ -15338,7 +15506,9 @@ CREATE TABLE public.backend_users (
     is_superuser boolean DEFAULT false NOT NULL,
     metadata text,
     acorn_url character varying(2048),
-    acorn_user_user_id uuid
+    acorn_user_user_id uuid,
+    acorn_create_sync_user boolean DEFAULT true NOT NULL,
+    acorn_create_and_sync_aa_user boolean DEFAULT true
 );
 
 
@@ -19065,6 +19235,14 @@ ALTER TABLE ONLY public.system_settings
 
 
 --
+-- Name: acorn_university_students unique_1to1_user_id; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_students
+    ADD CONSTRAINT unique_1to1_user_id UNIQUE (user_id);
+
+
+--
 -- Name: acorn_user_users unique_user; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -21985,6 +22163,7 @@ ALTER TABLE ONLY public.acorn_university_project_students
 --
 
 COMMENT ON CONSTRAINT owner_student_id ON public.acorn_university_project_students IS 'tab-location: 2
+invisible: true
 labels:
   en: Owned projects
   ku: Xwedê projê
@@ -22472,6 +22651,7 @@ ALTER TABLE ONLY public.acorn_exam_interview_students
 --
 
 COMMENT ON CONSTRAINT student_id ON public.acorn_exam_interview_students IS 'tab-location: 2
+invisible: true
 labels:
   en: Interview
   ku: Bihevditîn
@@ -22514,7 +22694,9 @@ ALTER TABLE ONLY public.acorn_exam_scores
 -- Name: CONSTRAINT student_id ON acorn_exam_scores; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT student_id ON public.acorn_exam_scores IS 'field-exclude: true';
+COMMENT ON CONSTRAINT student_id ON public.acorn_exam_scores IS 'field-exclude: true
+column-exclude: true
+';
 
 
 --
@@ -22566,7 +22748,8 @@ ALTER TABLE ONLY public.acorn_university_student_notes
 -- Name: CONSTRAINT student_id ON acorn_university_student_notes; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_notes IS 'labels:
+COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_notes IS 'invisible: true
+labels:
   en: Notes
   ku: Notên
 labels-plural:
@@ -22606,7 +22789,8 @@ ALTER TABLE ONLY public.acorn_enrollment_desires
 -- Name: CONSTRAINT student_id ON acorn_enrollment_desires; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT student_id ON public.acorn_enrollment_desires IS 'labels:
+COMMENT ON CONSTRAINT student_id ON public.acorn_enrollment_desires IS 'invisible: true
+labels:
   en: Enrollment desire
   ku: Mofadala xwast
 labels-plural:
@@ -22971,7 +23155,8 @@ ALTER TABLE ONLY public.acorn_university_entities
 -- Name: CONSTRAINT user_group_id ON acorn_university_entities; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT user_group_id ON public.acorn_university_entities IS 'type: 1to1';
+COMMENT ON CONSTRAINT user_group_id ON public.acorn_university_entities IS 'type: 1to1
+name-object: true';
 
 
 --
@@ -23101,30 +23286,36 @@ has-many-deep-settings:
     filter-conditions: exists(select * from acorn_user_user_group_version ugv where ugv.user_group_version_id in(:filtered) and ugv.user_id = acorn_university_students.user_id)
     can-filter: false
     nameFrom: name
+    filter-search-name-select: select ugs.name from acorn_user_user_groups ugs where ugs.id = acorn_university_entities.user_group_id
     explicit-label-key: acorn.university::lang.models.course.label_plural
   user_groups:
-    hidden: true
+    column-exclude: true
+    field-exclude: true
     can-filter: false
     filter-conditions: exists(select * from acorn_user_user_group_version ugv inner join acorn_user_user_group_versions ugvs on ugv.user_group_version_id = ugvs.id where ugvs.user_group_id in(:filtered) and ugv.user_id = acorn_university_students.user_id)
   user_addresses:
     tab: acorn.location::lang.models.address.label_plural
     order: 30
     can-filter: false
+    invisible: true
   user_languages:
-    hidden: true
+    field-exclude: true
+    column-exclude: true
+    can-filter: true
     filter-conditions: exists(select * from acorn_user_user_languages where language_id in(:filtered) and user_id = acorn_university_students.user_id)
   user_eventParts:
     hidden: true
+    invisible: true
     can-filter: false
   user_roles:
     hidden: true
+    invisible: true
     tab: acorn.user::lang.models.role.label_plural
     can-filter: false
-  user_user_languages:
+  user_user_user_languages:
+    explicit-label-key: acorn.user::lang.models.language.label_plural 
     tab: acorn.user::lang.models.language.label_plural
-    can-filter: false
-    column-exclude: true
-';
+    can-filter: false';
 
 
 --
@@ -23144,6 +23335,21 @@ GRANT ALL ON SCHEMA public TO admin WITH GRANT OPTION;
 GRANT ALL ON SCHEMA public TO sz WITH GRANT OPTION;
 GRANT ALL ON SCHEMA public TO token_5;
 GRANT USAGE ON SCHEMA public TO frontend;
+GRANT ALL ON SCHEMA public TO test WITH GRANT OPTION;
+GRANT ALL ON SCHEMA public TO token_7;
+GRANT ALL ON SCHEMA public TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SCHEMA public TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SCHEMA public TO test4;
+GRANT ALL ON SCHEMA public TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SCHEMA public TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SCHEMA public TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SCHEMA public TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23156,6 +23362,21 @@ GRANT ALL ON FUNCTION public.cube_in(cstring) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_in(cstring) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_in(cstring) TO frontend;
 GRANT ALL ON FUNCTION public.cube_in(cstring) TO token_5;
+GRANT ALL ON FUNCTION public.cube_in(cstring) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_in(cstring) TO token_7;
+GRANT ALL ON FUNCTION public.cube_in(cstring) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_in(cstring) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_in(cstring) TO test4;
+GRANT ALL ON FUNCTION public.cube_in(cstring) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_in(cstring) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_in(cstring) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_in(cstring) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23168,6 +23389,21 @@ GRANT ALL ON FUNCTION public.cube_out(public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_out(public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_out(public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_out(public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_out(public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_out(public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_out(public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_out(public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_out(public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_out(public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_out(public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_out(public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_out(public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23180,6 +23416,21 @@ GRANT ALL ON FUNCTION public.cube_recv(internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_recv(internal) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_recv(internal) TO frontend;
 GRANT ALL ON FUNCTION public.cube_recv(internal) TO token_5;
+GRANT ALL ON FUNCTION public.cube_recv(internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_recv(internal) TO token_7;
+GRANT ALL ON FUNCTION public.cube_recv(internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_recv(internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_recv(internal) TO test4;
+GRANT ALL ON FUNCTION public.cube_recv(internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_recv(internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_recv(internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_recv(internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23192,6 +23443,21 @@ GRANT ALL ON FUNCTION public.cube_send(public.cube) TO token_1 WITH GRANT OPTION
 GRANT ALL ON FUNCTION public.cube_send(public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_send(public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_send(public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_send(public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_send(public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_send(public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_send(public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_send(public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_send(public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_send(public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_send(public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_send(public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23203,6 +23469,21 @@ GRANT ALL ON FUNCTION public.gtrgm_in(cstring) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_in(cstring) TO frontend;
 GRANT ALL ON FUNCTION public.gtrgm_in(cstring) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_in(cstring) TO token_5;
+GRANT ALL ON FUNCTION public.gtrgm_in(cstring) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gtrgm_in(cstring) TO token_7;
+GRANT ALL ON FUNCTION public.gtrgm_in(cstring) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.gtrgm_in(cstring) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_in(cstring) TO test4;
+GRANT ALL ON FUNCTION public.gtrgm_in(cstring) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.gtrgm_in(cstring) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_in(cstring) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.gtrgm_in(cstring) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23214,6 +23495,21 @@ GRANT ALL ON FUNCTION public.gtrgm_out(public.gtrgm) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_out(public.gtrgm) TO frontend;
 GRANT ALL ON FUNCTION public.gtrgm_out(public.gtrgm) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_out(public.gtrgm) TO token_5;
+GRANT ALL ON FUNCTION public.gtrgm_out(public.gtrgm) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gtrgm_out(public.gtrgm) TO token_7;
+GRANT ALL ON FUNCTION public.gtrgm_out(public.gtrgm) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.gtrgm_out(public.gtrgm) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_out(public.gtrgm) TO test4;
+GRANT ALL ON FUNCTION public.gtrgm_out(public.gtrgm) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.gtrgm_out(public.gtrgm) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_out(public.gtrgm) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.gtrgm_out(public.gtrgm) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23226,6 +23522,21 @@ GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO token_1 WITH GRANT OPT
 GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO frontend;
 GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO token_5;
+GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO token_7;
+GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO test4;
+GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23238,6 +23549,21 @@ GRANT ALL ON FUNCTION public.cube(double precision[]) TO token_1 WITH GRANT OPTI
 GRANT ALL ON FUNCTION public.cube(double precision[]) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(double precision[]) TO frontend;
 GRANT ALL ON FUNCTION public.cube(double precision[]) TO token_5;
+GRANT ALL ON FUNCTION public.cube(double precision[]) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(double precision[]) TO token_7;
+GRANT ALL ON FUNCTION public.cube(double precision[]) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube(double precision[]) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube(double precision[]) TO test4;
+GRANT ALL ON FUNCTION public.cube(double precision[]) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube(double precision[]) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube(double precision[]) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube(double precision[]) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23250,6 +23576,21 @@ GRANT ALL ON FUNCTION public.cube(double precision) TO token_1 WITH GRANT OPTION
 GRANT ALL ON FUNCTION public.cube(double precision) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(double precision) TO frontend;
 GRANT ALL ON FUNCTION public.cube(double precision) TO token_5;
+GRANT ALL ON FUNCTION public.cube(double precision) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(double precision) TO token_7;
+GRANT ALL ON FUNCTION public.cube(double precision) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube(double precision) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube(double precision) TO test4;
+GRANT ALL ON FUNCTION public.cube(double precision) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube(double precision) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube(double precision) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube(double precision) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23262,6 +23603,21 @@ GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO tok
 GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO frontend;
 GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO token_5;
+GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO token_7;
+GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO test4;
+GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23274,6 +23630,21 @@ GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO token_1
 GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO frontend;
 GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO token_5;
+GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO token_7;
+GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO test4;
+GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23286,6 +23657,21 @@ GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO token_1 WITH
 GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO frontend;
 GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO token_5;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO token_7;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO test4;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23298,6 +23684,21 @@ GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precisio
 GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO frontend;
 GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO token_5;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO token_7;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO test4;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23310,6 +23711,21 @@ GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO token_1 WITH 
 GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23322,6 +23738,21 @@ GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO token_1
 GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23334,6 +23765,21 @@ GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO token_1 
 GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23346,6 +23792,21 @@ GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO token_1 WITH GR
 GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO frontend;
 GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO token_5;
+GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO token_7;
+GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO test4;
+GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23358,6 +23819,21 @@ GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO token_1 WI
 GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO frontend;
 GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO token_5;
+GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO token_7;
+GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO test4;
+GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23370,6 +23846,21 @@ GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23382,6 +23873,21 @@ GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO token_1 
 GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23394,6 +23900,21 @@ GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer
 GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO frontend;
 GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO token_5;
+GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO token_7;
+GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO test4;
+GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23406,6 +23927,21 @@ GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO token_1 WITH G
 GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23418,6 +23954,21 @@ GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO token_1 WITH G
 GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23430,6 +23981,21 @@ GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO token_1 WITH G
 GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23442,6 +24008,21 @@ GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO token_1 WIT
 GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23454,6 +24035,21 @@ GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO token_1 WITH GRANT OP
 GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23466,6 +24062,21 @@ GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO token_1 WITH G
 GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23478,6 +24089,21 @@ GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO token_1 WITH
 GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO frontend;
 GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO token_5;
+GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO token_7;
+GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO test4;
+GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23490,6 +24116,21 @@ GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO token_1 WITH G
 GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23502,6 +24143,21 @@ GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO token_1 WITH G
 GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23514,6 +24170,21 @@ GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO token_1 W
 GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23526,6 +24197,21 @@ GRANT ALL ON FUNCTION public.cube_size(public.cube) TO token_1 WITH GRANT OPTION
 GRANT ALL ON FUNCTION public.cube_size(public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_size(public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_size(public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_size(public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_size(public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_size(public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_size(public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_size(public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_size(public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_size(public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_size(public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_size(public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23538,6 +24224,21 @@ GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO token_1 WITH
 GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO frontend;
 GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO token_5;
+GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO token_7;
+GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO test4;
+GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23550,6 +24251,21 @@ GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO token_1 WIT
 GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO test4;
+GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23562,6 +24278,21 @@ GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO token_1 WITH
 GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO frontend;
 GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO token_5;
+GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO token_7;
+GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO test4;
+GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23571,6 +24302,22 @@ GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO token_5;
 REVOKE ALL ON FUNCTION public.daitch_mokotoff(text) FROM sz;
 GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO token_7;
+GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO token_5;
+GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO test4;
+GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23580,6 +24327,22 @@ GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO token_1 WITH GRANT OPTION;
 REVOKE ALL ON FUNCTION public.difference(text, text) FROM sz;
 GRANT ALL ON FUNCTION public.difference(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.difference(text, text) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.difference(text, text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.difference(text, text) TO token_7;
+GRANT ALL ON FUNCTION public.difference(text, text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.difference(text, text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.difference(text, text) TO token_5;
+GRANT ALL ON FUNCTION public.difference(text, text) TO test4;
+GRANT ALL ON FUNCTION public.difference(text, text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.difference(text, text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.difference(text, text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.difference(text, text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23592,6 +24355,21 @@ GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO tok
 GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO test4;
+GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23604,6 +24382,21 @@ GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO token
 GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO frontend;
 GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO token_5;
+GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO token_7;
+GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO test4;
+GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23613,6 +24406,22 @@ GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO token
 REVOKE ALL ON FUNCTION public.dmetaphone(text) FROM sz;
 GRANT ALL ON FUNCTION public.dmetaphone(text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.dmetaphone(text) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.dmetaphone(text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.dmetaphone(text) TO token_7;
+GRANT ALL ON FUNCTION public.dmetaphone(text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.dmetaphone(text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.dmetaphone(text) TO token_5;
+GRANT ALL ON FUNCTION public.dmetaphone(text) TO test4;
+GRANT ALL ON FUNCTION public.dmetaphone(text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.dmetaphone(text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.dmetaphone(text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.dmetaphone(text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23622,6 +24431,22 @@ GRANT ALL ON FUNCTION public.dmetaphone(text) TO token_1 WITH GRANT OPTION;
 REVOKE ALL ON FUNCTION public.dmetaphone_alt(text) FROM sz;
 GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO token_7;
+GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO token_5;
+GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO test4;
+GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23634,6 +24459,21 @@ GRANT ALL ON FUNCTION public.earth() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.earth() TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.earth() TO frontend;
 GRANT ALL ON FUNCTION public.earth() TO token_5;
+GRANT ALL ON FUNCTION public.earth() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.earth() TO token_7;
+GRANT ALL ON FUNCTION public.earth() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.earth() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.earth() TO test4;
+GRANT ALL ON FUNCTION public.earth() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.earth() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.earth() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.earth() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23646,6 +24486,21 @@ GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO token_1 WITH GRANT O
 GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO frontend;
 GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO token_5;
+GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO token_7;
+GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO test4;
+GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23658,6 +24513,21 @@ GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO token_
 GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO frontend;
 GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO token_5;
+GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO token_7;
+GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO test4;
+GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23670,6 +24540,21 @@ GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO token_1 WITH GRANT O
 GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO frontend;
 GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO token_5;
+GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO token_7;
+GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO test4;
+GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23682,6 +24567,21 @@ GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO token
 GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO frontend;
 GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO token_5;
+GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO token_7;
+GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO test4;
+GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23693,6 +24593,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character v
 GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23704,6 +24619,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_avg() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_avg() TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_avg() TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_avg() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_avg() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_avg() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_avg() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_avg() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_avg() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_avg() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_avg() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_avg() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_avg() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23716,6 +24646,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) TO t
 GRANT ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23727,6 +24672,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, ow
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23738,6 +24698,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, ow
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23749,6 +24724,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances()
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23760,6 +24750,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_even
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23771,6 +24776,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d ti
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23782,6 +24802,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name c
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23793,6 +24828,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO admin WITH GRANT OPTION
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23804,6 +24854,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_count() TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_count() TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_count() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_count() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_count() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_count() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_count() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_count() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_count() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_count() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_count() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_count() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_count() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23815,6 +24880,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO
 GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23825,6 +24905,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23835,6 +24930,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id u
 GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23846,6 +24956,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarra
 GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23857,6 +24982,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_leve
 GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23866,6 +25006,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_leve
 GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23874,6 +25029,22 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_m
 
 GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23885,6 +25056,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles characte
 GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23896,6 +25082,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titl
 GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23907,6 +25108,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles characte
 GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23918,6 +25134,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_
 GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23929,6 +25160,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO admin WIT
 GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23940,6 +25186,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO admin WITH
 GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23951,6 +25212,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_max() TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_max() TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_max() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_max() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_max() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_max() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_max() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_max() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_max() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_max() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_max() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_max() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_max() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23962,6 +25238,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_max(VARIADIC ints double precision[]) TO a
 GRANT ALL ON FUNCTION public.fn_acorn_max(VARIADIC ints double precision[]) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_max(VARIADIC ints double precision[]) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_max(VARIADIC ints double precision[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_max(VARIADIC ints double precision[]) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_max(VARIADIC ints double precision[]) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_max(VARIADIC ints double precision[]) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_max(VARIADIC ints double precision[]) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_max(VARIADIC ints double precision[]) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_max(VARIADIC ints double precision[]) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_max(VARIADIC ints double precision[]) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_max(VARIADIC ints double precision[]) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_max(VARIADIC ints double precision[]) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23973,6 +25264,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_min() TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_min() TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_min() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_min() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_min() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_min() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_min() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_min() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_min() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_min() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_min() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_min() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_min() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23984,6 +25290,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_min(VARIADIC ints double precision[]) TO a
 GRANT ALL ON FUNCTION public.fn_acorn_min(VARIADIC ints double precision[]) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_min(VARIADIC ints double precision[]) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_min(VARIADIC ints double precision[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_min(VARIADIC ints double precision[]) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_min(VARIADIC ints double precision[]) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_min(VARIADIC ints double precision[]) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_min(VARIADIC ints double precision[]) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_min(VARIADIC ints double precision[]) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_min(VARIADIC ints double precision[]) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_min(VARIADIC ints double precision[]) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_min(VARIADIC ints double precision[]) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_min(VARIADIC ints double precision[]) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -23995,6 +25316,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO admin WITH GRANT O
 GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24006,6 +25342,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character vary
 GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24017,6 +25368,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24028,6 +25394,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_sum() TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_sum() TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_sum() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_sum() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_sum() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_sum() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_sum() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_sum() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_sum() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_sum() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_sum() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_sum() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_sum() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24039,6 +25420,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_sum(VARIADIC ints double precision[]) TO a
 GRANT ALL ON FUNCTION public.fn_acorn_sum(VARIADIC ints double precision[]) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_sum(VARIADIC ints double precision[]) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_sum(VARIADIC ints double precision[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(VARIADIC ints double precision[]) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(VARIADIC ints double precision[]) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(VARIADIC ints double precision[]) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(VARIADIC ints double precision[]) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(VARIADIC ints double precision[]) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(VARIADIC ints double precision[]) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(VARIADIC ints double precision[]) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(VARIADIC ints double precision[]) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(VARIADIC ints double precision[]) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24050,6 +25446,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_sum(ints character varying) TO admin WITH 
 GRANT ALL ON FUNCTION public.fn_acorn_sum(ints character varying) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_sum(ints character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_sum(ints character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(ints character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(ints character varying) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(ints character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(ints character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(ints character varying) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(ints character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(ints character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(ints character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(ints character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24061,6 +25472,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_sumproduct() TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_sumproduct() TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_sumproduct() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_sumproduct() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24072,6 +25498,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_sumproduct(VARIADIC ints double precision[
 GRANT ALL ON FUNCTION public.fn_acorn_sumproduct(VARIADIC ints double precision[]) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_sumproduct(VARIADIC ints double precision[]) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_sumproduct(VARIADIC ints double precision[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct(VARIADIC ints double precision[]) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct(VARIADIC ints double precision[]) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct(VARIADIC ints double precision[]) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct(VARIADIC ints double precision[]) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct(VARIADIC ints double precision[]) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct(VARIADIC ints double precision[]) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct(VARIADIC ints double precision[]) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct(VARIADIC ints double precision[]) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct(VARIADIC ints double precision[]) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24083,6 +25524,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO
 GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24094,6 +25550,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character va
 GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24104,6 +25575,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_ac
 GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24114,6 +25600,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(mod
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24124,6 +25625,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(m
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24134,6 +25650,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import242
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24144,6 +25675,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import242
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24154,6 +25700,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import252
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24164,6 +25725,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(m
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24174,6 +25750,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24184,6 +25775,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(mode
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24194,6 +25800,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_i
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24204,6 +25825,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO f
 GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24213,6 +25849,22 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO s
 GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24222,6 +25874,22 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO token_1 WITH
 GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24233,6 +25901,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO token_1 WI
 GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24243,6 +25926,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uui
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24252,6 +25950,22 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uui
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24263,6 +25977,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24273,6 +26002,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uu
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24283,6 +26027,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_update(
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_update() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_update() TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_update() TO frontend;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_update() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_update() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_update() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_update() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_update() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_update() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_update() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_update() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_update() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24293,6 +26052,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_entity_leaf_type(p_
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24304,6 +26078,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO fr
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24314,6 +26103,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24323,6 +26127,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO
 GRANT ALL ON FUNCTION public.fn_acorn_university_import_source_empty() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_import_source_empty() TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_import_source_empty() TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_import_source_empty() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_import_source_empty() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_import_source_empty() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_import_source_empty() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_import_source_empty() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_import_source_empty() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_import_source_empty() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_import_source_empty() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_import_source_empty() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24333,6 +26152,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_de
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24343,6 +26177,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_de
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24354,6 +26203,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24364,6 +26228,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24373,6 +26252,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24383,6 +26277,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_impo
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24392,6 +26301,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_impo
 GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24402,6 +26326,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO fron
 GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24412,6 +26351,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO
 GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24419,6 +26373,22 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO
 --
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_students_ales_refresh(p_model_id uuid) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_students_ales_refresh(p_model_id uuid) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_students_ales_refresh(p_model_id uuid) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_students_ales_refresh(p_model_id uuid) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_students_ales_refresh(p_model_id uuid) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_students_ales_refresh(p_model_id uuid) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_students_ales_refresh(p_model_id uuid) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_students_ales_refresh(p_model_id uuid) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_students_ales_refresh(p_model_id uuid) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_students_ales_refresh(p_model_id uuid) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_students_ales_refresh(p_model_id uuid) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24430,6 +26400,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character 
 GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24441,6 +26426,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_user_code(name character varying, word int
 GRANT ALL ON FUNCTION public.fn_acorn_user_code(name character varying, word integer, length integer) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_user_code(name character varying, word integer, length integer) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_user_code(name character varying, word integer, length integer) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code(name character varying, word integer, length integer) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code(name character varying, word integer, length integer) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code(name character varying, word integer, length integer) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code(name character varying, word integer, length integer) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code(name character varying, word integer, length integer) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code(name character varying, word integer, length integer) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code(name character varying, word integer, length integer) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code(name character varying, word integer, length integer) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code(name character varying, word integer, length integer) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24452,6 +26452,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_user_code_acronym(name character varying, 
 GRANT ALL ON FUNCTION public.fn_acorn_user_code_acronym(name character varying, word integer, length integer) TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_user_code_acronym(name character varying, word integer, length integer) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_user_code_acronym(name character varying, word integer, length integer) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code_acronym(name character varying, word integer, length integer) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code_acronym(name character varying, word integer, length integer) TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code_acronym(name character varying, word integer, length integer) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code_acronym(name character varying, word integer, length integer) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code_acronym(name character varying, word integer, length integer) TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code_acronym(name character varying, word integer, length integer) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code_acronym(name character varying, word integer, length integer) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code_acronym(name character varying, word integer, length integer) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code_acronym(name character varying, word integer, length integer) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24463,6 +26478,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO admin WITH GRANT O
 GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24474,6 +26504,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO fronten
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24484,6 +26529,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO front
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24494,6 +26554,21 @@ GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO frontend;
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO token_7;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO test4;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24506,6 +26581,21 @@ GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, 
 GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO frontend;
 GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO token_5;
+GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO token_7;
+GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO test4;
+GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24518,6 +26608,21 @@ GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oi
 GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO frontend;
 GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO token_5;
+GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO token_7;
+GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO test4;
+GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24530,6 +26635,21 @@ GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO tok
 GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO frontend;
 GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO token_5;
+GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO token_7;
+GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO test4;
+GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24542,6 +26662,21 @@ GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO token_1 WIT
 GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO frontend;
 GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO token_5;
+GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO token_7;
+GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO test4;
+GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24554,6 +26689,21 @@ GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO 
 GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO frontend;
 GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO token_5;
+GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO token_7;
+GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO test4;
+GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24566,6 +26716,21 @@ GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO token_1 WITH GR
 GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO frontend;
 GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO token_5;
+GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO token_7;
+GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO test4;
+GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24578,6 +26743,21 @@ GRANT ALL ON FUNCTION public.geo_distance(point, point) TO token_1 WITH GRANT OP
 GRANT ALL ON FUNCTION public.geo_distance(point, point) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.geo_distance(point, point) TO frontend;
 GRANT ALL ON FUNCTION public.geo_distance(point, point) TO token_5;
+GRANT ALL ON FUNCTION public.geo_distance(point, point) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.geo_distance(point, point) TO token_7;
+GRANT ALL ON FUNCTION public.geo_distance(point, point) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.geo_distance(point, point) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.geo_distance(point, point) TO test4;
+GRANT ALL ON FUNCTION public.geo_distance(point, point) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.geo_distance(point, point) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.geo_distance(point, point) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.geo_distance(point, point) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24589,6 +26769,21 @@ GRANT ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, in
 GRANT ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal) TO frontend;
 GRANT ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal) TO token_5;
+GRANT ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal) TO token_7;
+GRANT ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal) TO test4;
+GRANT ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24600,6 +26795,21 @@ GRANT ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) TO sz WITH G
 GRANT ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) TO frontend;
 GRANT ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) TO token_5;
+GRANT ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) TO token_7;
+GRANT ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) TO test4;
+GRANT ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24611,6 +26821,21 @@ GRANT ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integ
 GRANT ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal) TO frontend;
 GRANT ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal) TO token_5;
+GRANT ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal) TO token_7;
+GRANT ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal) TO test4;
+GRANT ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24622,6 +26847,21 @@ GRANT ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, in
 GRANT ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal) TO frontend;
 GRANT ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal) TO token_5;
+GRANT ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal) TO token_7;
+GRANT ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal) TO test4;
+GRANT ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24633,6 +26873,21 @@ GRANT ALL ON FUNCTION public.gtrgm_compress(internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_compress(internal) TO frontend;
 GRANT ALL ON FUNCTION public.gtrgm_compress(internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_compress(internal) TO token_5;
+GRANT ALL ON FUNCTION public.gtrgm_compress(internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gtrgm_compress(internal) TO token_7;
+GRANT ALL ON FUNCTION public.gtrgm_compress(internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.gtrgm_compress(internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_compress(internal) TO test4;
+GRANT ALL ON FUNCTION public.gtrgm_compress(internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.gtrgm_compress(internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_compress(internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.gtrgm_compress(internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24644,6 +26899,21 @@ GRANT ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, int
 GRANT ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, internal) TO frontend;
 GRANT ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, internal) TO token_5;
+GRANT ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, internal) TO token_7;
+GRANT ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, internal) TO test4;
+GRANT ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24655,6 +26925,21 @@ GRANT ALL ON FUNCTION public.gtrgm_decompress(internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_decompress(internal) TO frontend;
 GRANT ALL ON FUNCTION public.gtrgm_decompress(internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_decompress(internal) TO token_5;
+GRANT ALL ON FUNCTION public.gtrgm_decompress(internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gtrgm_decompress(internal) TO token_7;
+GRANT ALL ON FUNCTION public.gtrgm_decompress(internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.gtrgm_decompress(internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_decompress(internal) TO test4;
+GRANT ALL ON FUNCTION public.gtrgm_decompress(internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.gtrgm_decompress(internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_decompress(internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.gtrgm_decompress(internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24666,6 +26951,21 @@ GRANT ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, inter
 GRANT ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, internal) TO frontend;
 GRANT ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, internal) TO token_5;
+GRANT ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, internal) TO token_7;
+GRANT ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, internal) TO test4;
+GRANT ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24677,6 +26977,21 @@ GRANT ALL ON FUNCTION public.gtrgm_options(internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_options(internal) TO frontend;
 GRANT ALL ON FUNCTION public.gtrgm_options(internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_options(internal) TO token_5;
+GRANT ALL ON FUNCTION public.gtrgm_options(internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gtrgm_options(internal) TO token_7;
+GRANT ALL ON FUNCTION public.gtrgm_options(internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.gtrgm_options(internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_options(internal) TO test4;
+GRANT ALL ON FUNCTION public.gtrgm_options(internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.gtrgm_options(internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_options(internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.gtrgm_options(internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24688,6 +27003,21 @@ GRANT ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) TO sz W
 GRANT ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) TO frontend;
 GRANT ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) TO token_5;
+GRANT ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) TO token_7;
+GRANT ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) TO test4;
+GRANT ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24699,6 +27029,21 @@ GRANT ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) TO sz WITH GRAN
 GRANT ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) TO frontend;
 GRANT ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) TO token_5;
+GRANT ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) TO token_7;
+GRANT ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) TO test4;
+GRANT ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24710,6 +27055,21 @@ GRANT ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) TO
 GRANT ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) TO frontend;
 GRANT ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) TO token_5;
+GRANT ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) TO token_7;
+GRANT ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) TO test4;
+GRANT ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24721,6 +27081,21 @@ GRANT ALL ON FUNCTION public.gtrgm_union(internal, internal) TO sz WITH GRANT OP
 GRANT ALL ON FUNCTION public.gtrgm_union(internal, internal) TO frontend;
 GRANT ALL ON FUNCTION public.gtrgm_union(internal, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_union(internal, internal) TO token_5;
+GRANT ALL ON FUNCTION public.gtrgm_union(internal, internal) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.gtrgm_union(internal, internal) TO token_7;
+GRANT ALL ON FUNCTION public.gtrgm_union(internal, internal) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.gtrgm_union(internal, internal) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_union(internal, internal) TO test4;
+GRANT ALL ON FUNCTION public.gtrgm_union(internal, internal) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.gtrgm_union(internal, internal) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.gtrgm_union(internal, internal) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.gtrgm_union(internal, internal) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24733,6 +27108,21 @@ GRANT ALL ON FUNCTION public.hostname() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.hostname() TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.hostname() TO frontend;
 GRANT ALL ON FUNCTION public.hostname() TO token_5;
+GRANT ALL ON FUNCTION public.hostname() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.hostname() TO token_7;
+GRANT ALL ON FUNCTION public.hostname() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.hostname() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.hostname() TO test4;
+GRANT ALL ON FUNCTION public.hostname() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.hostname() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.hostname() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.hostname() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24745,6 +27135,21 @@ GRANT ALL ON FUNCTION public.http(request public.http_request) TO token_1 WITH G
 GRANT ALL ON FUNCTION public.http(request public.http_request) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http(request public.http_request) TO frontend;
 GRANT ALL ON FUNCTION public.http(request public.http_request) TO token_5;
+GRANT ALL ON FUNCTION public.http(request public.http_request) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http(request public.http_request) TO token_7;
+GRANT ALL ON FUNCTION public.http(request public.http_request) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.http(request public.http_request) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http(request public.http_request) TO test4;
+GRANT ALL ON FUNCTION public.http(request public.http_request) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.http(request public.http_request) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http(request public.http_request) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.http(request public.http_request) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24757,6 +27162,21 @@ GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO token_1 WITH 
 GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO frontend;
 GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO token_5;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO token_7;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO test4;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24769,6 +27189,21 @@ GRANT ALL ON FUNCTION public.http_delete(uri character varying, content characte
 GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO frontend;
 GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO token_5;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO token_7;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO test4;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24781,6 +27216,21 @@ GRANT ALL ON FUNCTION public.http_get(uri character varying) TO token_1 WITH GRA
 GRANT ALL ON FUNCTION public.http_get(uri character varying) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_get(uri character varying) TO frontend;
 GRANT ALL ON FUNCTION public.http_get(uri character varying) TO token_5;
+GRANT ALL ON FUNCTION public.http_get(uri character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_get(uri character varying) TO token_7;
+GRANT ALL ON FUNCTION public.http_get(uri character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.http_get(uri character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_get(uri character varying) TO test4;
+GRANT ALL ON FUNCTION public.http_get(uri character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.http_get(uri character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_get(uri character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.http_get(uri character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24793,6 +27243,21 @@ GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO toke
 GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO frontend;
 GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO token_5;
+GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO token_7;
+GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO test4;
+GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24805,6 +27270,21 @@ GRANT ALL ON FUNCTION public.http_head(uri character varying) TO token_1 WITH GR
 GRANT ALL ON FUNCTION public.http_head(uri character varying) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_head(uri character varying) TO frontend;
 GRANT ALL ON FUNCTION public.http_head(uri character varying) TO token_5;
+GRANT ALL ON FUNCTION public.http_head(uri character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_head(uri character varying) TO token_7;
+GRANT ALL ON FUNCTION public.http_head(uri character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.http_head(uri character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_head(uri character varying) TO test4;
+GRANT ALL ON FUNCTION public.http_head(uri character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.http_head(uri character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_head(uri character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.http_head(uri character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24817,6 +27297,21 @@ GRANT ALL ON FUNCTION public.http_header(field character varying, value characte
 GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO frontend;
 GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO token_5;
+GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO token_7;
+GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO test4;
+GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24829,6 +27324,21 @@ GRANT ALL ON FUNCTION public.http_list_curlopt() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_list_curlopt() TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_list_curlopt() TO frontend;
 GRANT ALL ON FUNCTION public.http_list_curlopt() TO token_5;
+GRANT ALL ON FUNCTION public.http_list_curlopt() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_list_curlopt() TO token_7;
+GRANT ALL ON FUNCTION public.http_list_curlopt() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.http_list_curlopt() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_list_curlopt() TO test4;
+GRANT ALL ON FUNCTION public.http_list_curlopt() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.http_list_curlopt() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_list_curlopt() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.http_list_curlopt() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24841,6 +27351,21 @@ GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character
 GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO frontend;
 GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO token_5;
+GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO token_7;
+GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO test4;
+GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24853,6 +27378,21 @@ GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO tok
 GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO frontend;
 GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO token_5;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO token_7;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO test4;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24865,6 +27405,21 @@ GRANT ALL ON FUNCTION public.http_post(uri character varying, content character 
 GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO frontend;
 GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO token_5;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO token_7;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO test4;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24877,6 +27432,21 @@ GRANT ALL ON FUNCTION public.http_put(uri character varying, content character v
 GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO frontend;
 GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO token_5;
+GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO token_7;
+GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO test4;
+GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24889,6 +27459,21 @@ GRANT ALL ON FUNCTION public.http_reset_curlopt() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_reset_curlopt() TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_reset_curlopt() TO frontend;
 GRANT ALL ON FUNCTION public.http_reset_curlopt() TO token_5;
+GRANT ALL ON FUNCTION public.http_reset_curlopt() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_reset_curlopt() TO token_7;
+GRANT ALL ON FUNCTION public.http_reset_curlopt() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.http_reset_curlopt() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_reset_curlopt() TO test4;
+GRANT ALL ON FUNCTION public.http_reset_curlopt() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.http_reset_curlopt() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_reset_curlopt() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.http_reset_curlopt() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24901,6 +27486,21 @@ GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value c
 GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO frontend;
 GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO token_5;
+GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO token_7;
+GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO test4;
+GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24913,6 +27513,21 @@ GRANT ALL ON FUNCTION public.latitude(public.earth) TO token_1 WITH GRANT OPTION
 GRANT ALL ON FUNCTION public.latitude(public.earth) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.latitude(public.earth) TO frontend;
 GRANT ALL ON FUNCTION public.latitude(public.earth) TO token_5;
+GRANT ALL ON FUNCTION public.latitude(public.earth) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.latitude(public.earth) TO token_7;
+GRANT ALL ON FUNCTION public.latitude(public.earth) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.latitude(public.earth) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.latitude(public.earth) TO test4;
+GRANT ALL ON FUNCTION public.latitude(public.earth) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.latitude(public.earth) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.latitude(public.earth) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.latitude(public.earth) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24922,6 +27537,22 @@ GRANT ALL ON FUNCTION public.latitude(public.earth) TO token_5;
 REVOKE ALL ON FUNCTION public.levenshtein(text, text) FROM sz;
 GRANT ALL ON FUNCTION public.levenshtein(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.levenshtein(text, text) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.levenshtein(text, text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.levenshtein(text, text) TO token_7;
+GRANT ALL ON FUNCTION public.levenshtein(text, text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.levenshtein(text, text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.levenshtein(text, text) TO token_5;
+GRANT ALL ON FUNCTION public.levenshtein(text, text) TO test4;
+GRANT ALL ON FUNCTION public.levenshtein(text, text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.levenshtein(text, text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.levenshtein(text, text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.levenshtein(text, text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24931,6 +27562,22 @@ GRANT ALL ON FUNCTION public.levenshtein(text, text) TO token_1 WITH GRANT OPTIO
 REVOKE ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) FROM sz;
 GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO token_7;
+GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO token_5;
+GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO test4;
+GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24940,6 +27587,22 @@ GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) 
 REVOKE ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) FROM sz;
 GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO token_7;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO token_5;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO test4;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24949,6 +27612,22 @@ GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO toke
 REVOKE ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) FROM sz;
 GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO token_7;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO token_5;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO test4;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24961,6 +27640,21 @@ GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO 
 GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO frontend;
 GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO token_5;
+GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO token_7;
+GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO test4;
+GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24973,6 +27667,21 @@ GRANT ALL ON FUNCTION public.longitude(public.earth) TO token_1 WITH GRANT OPTIO
 GRANT ALL ON FUNCTION public.longitude(public.earth) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.longitude(public.earth) TO frontend;
 GRANT ALL ON FUNCTION public.longitude(public.earth) TO token_5;
+GRANT ALL ON FUNCTION public.longitude(public.earth) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.longitude(public.earth) TO token_7;
+GRANT ALL ON FUNCTION public.longitude(public.earth) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.longitude(public.earth) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.longitude(public.earth) TO test4;
+GRANT ALL ON FUNCTION public.longitude(public.earth) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.longitude(public.earth) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.longitude(public.earth) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.longitude(public.earth) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24982,6 +27691,22 @@ GRANT ALL ON FUNCTION public.longitude(public.earth) TO token_5;
 REVOKE ALL ON FUNCTION public.metaphone(text, integer) FROM sz;
 GRANT ALL ON FUNCTION public.metaphone(text, integer) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.metaphone(text, integer) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.metaphone(text, integer) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.metaphone(text, integer) TO token_7;
+GRANT ALL ON FUNCTION public.metaphone(text, integer) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.metaphone(text, integer) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.metaphone(text, integer) TO token_5;
+GRANT ALL ON FUNCTION public.metaphone(text, integer) TO test4;
+GRANT ALL ON FUNCTION public.metaphone(text, integer) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.metaphone(text, integer) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.metaphone(text, integer) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.metaphone(text, integer) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -24993,6 +27718,21 @@ GRANT ALL ON FUNCTION public.postgres_fdw_disconnect(text) TO sz WITH GRANT OPTI
 GRANT ALL ON FUNCTION public.postgres_fdw_disconnect(text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.postgres_fdw_disconnect(text) TO frontend;
 GRANT ALL ON FUNCTION public.postgres_fdw_disconnect(text) TO token_5;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect(text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect(text) TO token_7;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect(text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect(text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect(text) TO test4;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect(text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect(text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect(text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect(text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25004,6 +27744,21 @@ GRANT ALL ON FUNCTION public.postgres_fdw_disconnect_all() TO sz WITH GRANT OPTI
 GRANT ALL ON FUNCTION public.postgres_fdw_disconnect_all() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.postgres_fdw_disconnect_all() TO frontend;
 GRANT ALL ON FUNCTION public.postgres_fdw_disconnect_all() TO token_5;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect_all() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect_all() TO token_7;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect_all() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect_all() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect_all() TO test4;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect_all() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect_all() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect_all() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect_all() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25015,6 +27770,21 @@ GRANT ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, 
 GRANT ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) TO frontend;
 GRANT ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) TO token_5;
+GRANT ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) TO token_7;
+GRANT ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) TO test4;
+GRANT ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25026,6 +27796,21 @@ GRANT ALL ON FUNCTION public.postgres_fdw_handler() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.postgres_fdw_handler() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.postgres_fdw_handler() TO frontend;
 GRANT ALL ON FUNCTION public.postgres_fdw_handler() TO token_5;
+GRANT ALL ON FUNCTION public.postgres_fdw_handler() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.postgres_fdw_handler() TO token_7;
+GRANT ALL ON FUNCTION public.postgres_fdw_handler() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.postgres_fdw_handler() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.postgres_fdw_handler() TO test4;
+GRANT ALL ON FUNCTION public.postgres_fdw_handler() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.postgres_fdw_handler() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.postgres_fdw_handler() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.postgres_fdw_handler() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25037,6 +27822,21 @@ GRANT ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) TO sz WITH GRAN
 GRANT ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) TO frontend;
 GRANT ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) TO token_5;
+GRANT ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) TO token_7;
+GRANT ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) TO test4;
+GRANT ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25048,6 +27848,21 @@ GRANT ALL ON FUNCTION public.set_limit(real) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.set_limit(real) TO frontend;
 GRANT ALL ON FUNCTION public.set_limit(real) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.set_limit(real) TO token_5;
+GRANT ALL ON FUNCTION public.set_limit(real) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.set_limit(real) TO token_7;
+GRANT ALL ON FUNCTION public.set_limit(real) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.set_limit(real) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.set_limit(real) TO test4;
+GRANT ALL ON FUNCTION public.set_limit(real) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.set_limit(real) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.set_limit(real) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.set_limit(real) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25059,6 +27874,21 @@ GRANT ALL ON FUNCTION public.show_limit() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.show_limit() TO frontend;
 GRANT ALL ON FUNCTION public.show_limit() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.show_limit() TO token_5;
+GRANT ALL ON FUNCTION public.show_limit() TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.show_limit() TO token_7;
+GRANT ALL ON FUNCTION public.show_limit() TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.show_limit() TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.show_limit() TO test4;
+GRANT ALL ON FUNCTION public.show_limit() TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.show_limit() TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.show_limit() TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.show_limit() TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25070,6 +27900,21 @@ GRANT ALL ON FUNCTION public.show_trgm(text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.show_trgm(text) TO frontend;
 GRANT ALL ON FUNCTION public.show_trgm(text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.show_trgm(text) TO token_5;
+GRANT ALL ON FUNCTION public.show_trgm(text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.show_trgm(text) TO token_7;
+GRANT ALL ON FUNCTION public.show_trgm(text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.show_trgm(text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.show_trgm(text) TO test4;
+GRANT ALL ON FUNCTION public.show_trgm(text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.show_trgm(text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.show_trgm(text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.show_trgm(text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25081,6 +27926,21 @@ GRANT ALL ON FUNCTION public.similarity(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.similarity(text, text) TO frontend;
 GRANT ALL ON FUNCTION public.similarity(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.similarity(text, text) TO token_5;
+GRANT ALL ON FUNCTION public.similarity(text, text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.similarity(text, text) TO token_7;
+GRANT ALL ON FUNCTION public.similarity(text, text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.similarity(text, text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.similarity(text, text) TO test4;
+GRANT ALL ON FUNCTION public.similarity(text, text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.similarity(text, text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.similarity(text, text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.similarity(text, text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25092,6 +27952,21 @@ GRANT ALL ON FUNCTION public.similarity_dist(text, text) TO sz WITH GRANT OPTION
 GRANT ALL ON FUNCTION public.similarity_dist(text, text) TO frontend;
 GRANT ALL ON FUNCTION public.similarity_dist(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.similarity_dist(text, text) TO token_5;
+GRANT ALL ON FUNCTION public.similarity_dist(text, text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.similarity_dist(text, text) TO token_7;
+GRANT ALL ON FUNCTION public.similarity_dist(text, text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.similarity_dist(text, text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.similarity_dist(text, text) TO test4;
+GRANT ALL ON FUNCTION public.similarity_dist(text, text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.similarity_dist(text, text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.similarity_dist(text, text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.similarity_dist(text, text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25103,6 +27978,21 @@ GRANT ALL ON FUNCTION public.similarity_op(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.similarity_op(text, text) TO frontend;
 GRANT ALL ON FUNCTION public.similarity_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.similarity_op(text, text) TO token_5;
+GRANT ALL ON FUNCTION public.similarity_op(text, text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.similarity_op(text, text) TO token_7;
+GRANT ALL ON FUNCTION public.similarity_op(text, text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.similarity_op(text, text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.similarity_op(text, text) TO test4;
+GRANT ALL ON FUNCTION public.similarity_op(text, text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.similarity_op(text, text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.similarity_op(text, text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.similarity_op(text, text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25112,6 +28002,22 @@ GRANT ALL ON FUNCTION public.similarity_op(text, text) TO token_5;
 REVOKE ALL ON FUNCTION public.soundex(text) FROM sz;
 GRANT ALL ON FUNCTION public.soundex(text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.soundex(text) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.soundex(text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.soundex(text) TO token_7;
+GRANT ALL ON FUNCTION public.soundex(text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.soundex(text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.soundex(text) TO token_5;
+GRANT ALL ON FUNCTION public.soundex(text) TO test4;
+GRANT ALL ON FUNCTION public.soundex(text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.soundex(text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.soundex(text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.soundex(text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25123,6 +28029,21 @@ GRANT ALL ON FUNCTION public.strict_word_similarity(text, text) TO sz WITH GRANT
 GRANT ALL ON FUNCTION public.strict_word_similarity(text, text) TO frontend;
 GRANT ALL ON FUNCTION public.strict_word_similarity(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.strict_word_similarity(text, text) TO token_5;
+GRANT ALL ON FUNCTION public.strict_word_similarity(text, text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.strict_word_similarity(text, text) TO token_7;
+GRANT ALL ON FUNCTION public.strict_word_similarity(text, text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.strict_word_similarity(text, text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.strict_word_similarity(text, text) TO test4;
+GRANT ALL ON FUNCTION public.strict_word_similarity(text, text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.strict_word_similarity(text, text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.strict_word_similarity(text, text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.strict_word_similarity(text, text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25134,6 +28055,21 @@ GRANT ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) TO
 GRANT ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) TO frontend;
 GRANT ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) TO token_5;
+GRANT ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) TO token_7;
+GRANT ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) TO test4;
+GRANT ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25145,6 +28081,21 @@ GRANT ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, tex
 GRANT ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, text) TO frontend;
 GRANT ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, text) TO token_5;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, text) TO token_7;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, text) TO test4;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25156,6 +28107,21 @@ GRANT ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) TO sz WI
 GRANT ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) TO frontend;
 GRANT ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) TO token_5;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) TO token_7;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) TO test4;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25167,6 +28133,21 @@ GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO sz WITH GR
 GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO frontend;
 GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO token_5;
+GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO token_7;
+GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO test4;
+GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25176,6 +28157,22 @@ GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO token_5;
 REVOKE ALL ON FUNCTION public.text_soundex(text) FROM sz;
 GRANT ALL ON FUNCTION public.text_soundex(text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.text_soundex(text) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.text_soundex(text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.text_soundex(text) TO token_7;
+GRANT ALL ON FUNCTION public.text_soundex(text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.text_soundex(text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.text_soundex(text) TO token_5;
+GRANT ALL ON FUNCTION public.text_soundex(text) TO test4;
+GRANT ALL ON FUNCTION public.text_soundex(text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.text_soundex(text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.text_soundex(text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.text_soundex(text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25188,6 +28185,21 @@ GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO token_1 WITH GRANT OPTI
 GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO frontend;
 GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO token_5;
+GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO token_7;
+GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO test4;
+GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25200,6 +28212,21 @@ GRANT ALL ON FUNCTION public.urlencode(string bytea) TO token_1 WITH GRANT OPTIO
 GRANT ALL ON FUNCTION public.urlencode(string bytea) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.urlencode(string bytea) TO frontend;
 GRANT ALL ON FUNCTION public.urlencode(string bytea) TO token_5;
+GRANT ALL ON FUNCTION public.urlencode(string bytea) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.urlencode(string bytea) TO token_7;
+GRANT ALL ON FUNCTION public.urlencode(string bytea) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.urlencode(string bytea) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.urlencode(string bytea) TO test4;
+GRANT ALL ON FUNCTION public.urlencode(string bytea) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.urlencode(string bytea) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.urlencode(string bytea) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.urlencode(string bytea) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25212,6 +28239,21 @@ GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO frontend;
 GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO token_5;
+GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO token_7;
+GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO test4;
+GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25224,6 +28266,21 @@ GRANT ALL ON FUNCTION public.urlencode(string character varying) TO token_1 WITH
 GRANT ALL ON FUNCTION public.urlencode(string character varying) TO admin WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.urlencode(string character varying) TO frontend;
 GRANT ALL ON FUNCTION public.urlencode(string character varying) TO token_5;
+GRANT ALL ON FUNCTION public.urlencode(string character varying) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.urlencode(string character varying) TO token_7;
+GRANT ALL ON FUNCTION public.urlencode(string character varying) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.urlencode(string character varying) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.urlencode(string character varying) TO test4;
+GRANT ALL ON FUNCTION public.urlencode(string character varying) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.urlencode(string character varying) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.urlencode(string character varying) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.urlencode(string character varying) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25235,6 +28292,21 @@ GRANT ALL ON FUNCTION public.word_similarity(text, text) TO sz WITH GRANT OPTION
 GRANT ALL ON FUNCTION public.word_similarity(text, text) TO frontend;
 GRANT ALL ON FUNCTION public.word_similarity(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.word_similarity(text, text) TO token_5;
+GRANT ALL ON FUNCTION public.word_similarity(text, text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.word_similarity(text, text) TO token_7;
+GRANT ALL ON FUNCTION public.word_similarity(text, text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.word_similarity(text, text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.word_similarity(text, text) TO test4;
+GRANT ALL ON FUNCTION public.word_similarity(text, text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.word_similarity(text, text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.word_similarity(text, text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.word_similarity(text, text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25246,6 +28318,21 @@ GRANT ALL ON FUNCTION public.word_similarity_commutator_op(text, text) TO sz WIT
 GRANT ALL ON FUNCTION public.word_similarity_commutator_op(text, text) TO frontend;
 GRANT ALL ON FUNCTION public.word_similarity_commutator_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.word_similarity_commutator_op(text, text) TO token_5;
+GRANT ALL ON FUNCTION public.word_similarity_commutator_op(text, text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.word_similarity_commutator_op(text, text) TO token_7;
+GRANT ALL ON FUNCTION public.word_similarity_commutator_op(text, text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.word_similarity_commutator_op(text, text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.word_similarity_commutator_op(text, text) TO test4;
+GRANT ALL ON FUNCTION public.word_similarity_commutator_op(text, text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.word_similarity_commutator_op(text, text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.word_similarity_commutator_op(text, text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.word_similarity_commutator_op(text, text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25257,6 +28344,21 @@ GRANT ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) TO s
 GRANT ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) TO frontend;
 GRANT ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) TO token_5;
+GRANT ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) TO token_7;
+GRANT ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) TO test4;
+GRANT ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25268,6 +28370,21 @@ GRANT ALL ON FUNCTION public.word_similarity_dist_op(text, text) TO sz WITH GRAN
 GRANT ALL ON FUNCTION public.word_similarity_dist_op(text, text) TO frontend;
 GRANT ALL ON FUNCTION public.word_similarity_dist_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.word_similarity_dist_op(text, text) TO token_5;
+GRANT ALL ON FUNCTION public.word_similarity_dist_op(text, text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.word_similarity_dist_op(text, text) TO token_7;
+GRANT ALL ON FUNCTION public.word_similarity_dist_op(text, text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.word_similarity_dist_op(text, text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.word_similarity_dist_op(text, text) TO test4;
+GRANT ALL ON FUNCTION public.word_similarity_dist_op(text, text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.word_similarity_dist_op(text, text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.word_similarity_dist_op(text, text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.word_similarity_dist_op(text, text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25279,6 +28396,21 @@ GRANT ALL ON FUNCTION public.word_similarity_op(text, text) TO sz WITH GRANT OPT
 GRANT ALL ON FUNCTION public.word_similarity_op(text, text) TO frontend;
 GRANT ALL ON FUNCTION public.word_similarity_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.word_similarity_op(text, text) TO token_5;
+GRANT ALL ON FUNCTION public.word_similarity_op(text, text) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.word_similarity_op(text, text) TO token_7;
+GRANT ALL ON FUNCTION public.word_similarity_op(text, text) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.word_similarity_op(text, text) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.word_similarity_op(text, text) TO test4;
+GRANT ALL ON FUNCTION public.word_similarity_op(text, text) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.word_similarity_op(text, text) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.word_similarity_op(text, text) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.word_similarity_op(text, text) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25290,6 +28422,21 @@ GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO admin WITH GRANT OPT
 GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO token_5;
 GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO frontend;
+GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO token_7;
+GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO test4;
+GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25301,6 +28448,21 @@ GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO admin WITH GRANT OPTI
 GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO token_5;
 GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO frontend;
+GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO test WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO token_7;
+GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO test4;
+GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25312,7 +28474,22 @@ GRANT ALL ON TABLE public.acorn_calendar_calendars TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_calendar_calendars TO frontend;
 GRANT ALL ON TABLE public.acorn_calendar_calendars TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_calendars TO token_5;
-GRANT SELECT ON TABLE public.acorn_calendar_calendars TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_calendar_calendars TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_calendar_calendars TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_calendars TO token_7;
+GRANT ALL ON TABLE public.acorn_calendar_calendars TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_calendar_calendars TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_calendar_calendars TO test4;
+GRANT ALL ON TABLE public.acorn_calendar_calendars TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_calendar_calendars TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_calendar_calendars TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_calendar_calendars TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25324,7 +28501,22 @@ GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO admin WITH GRANT OPT
 GRANT SELECT,TRIGGER ON TABLE public.acorn_calendar_event_part_user TO frontend;
 GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO token_5;
-GRANT SELECT ON TABLE public.acorn_calendar_event_part_user TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_calendar_event_part_user TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO token_7;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO test4;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25336,7 +28528,22 @@ GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO admin WITH GRA
 GRANT SELECT,TRIGGER ON TABLE public.acorn_calendar_event_part_user_group TO frontend;
 GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO token_5;
-GRANT SELECT ON TABLE public.acorn_calendar_event_part_user_group TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_calendar_event_part_user_group TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO token_7;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO test4;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25348,7 +28555,22 @@ GRANT ALL ON TABLE public.acorn_calendar_event_parts TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_calendar_event_parts TO frontend;
 GRANT ALL ON TABLE public.acorn_calendar_event_parts TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_event_parts TO token_5;
-GRANT SELECT ON TABLE public.acorn_calendar_event_parts TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_calendar_event_parts TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_calendar_event_parts TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_parts TO token_7;
+GRANT ALL ON TABLE public.acorn_calendar_event_parts TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_calendar_event_parts TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_calendar_event_parts TO test4;
+GRANT ALL ON TABLE public.acorn_calendar_event_parts TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_calendar_event_parts TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_calendar_event_parts TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_calendar_event_parts TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25360,7 +28582,22 @@ GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO admin WITH GRANT OPTI
 GRANT SELECT,TRIGGER ON TABLE public.acorn_calendar_event_statuses TO frontend;
 GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO token_5;
-GRANT SELECT ON TABLE public.acorn_calendar_event_statuses TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_calendar_event_statuses TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO token_7;
+GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO test4;
+GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25372,7 +28609,22 @@ GRANT ALL ON TABLE public.acorn_calendar_event_types TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_calendar_event_types TO frontend;
 GRANT ALL ON TABLE public.acorn_calendar_event_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_event_types TO token_5;
-GRANT SELECT ON TABLE public.acorn_calendar_event_types TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_calendar_event_types TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_calendar_event_types TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_event_types TO token_7;
+GRANT ALL ON TABLE public.acorn_calendar_event_types TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_calendar_event_types TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_calendar_event_types TO test4;
+GRANT ALL ON TABLE public.acorn_calendar_event_types TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_calendar_event_types TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_calendar_event_types TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_calendar_event_types TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25384,7 +28636,22 @@ GRANT ALL ON TABLE public.acorn_calendar_events TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_calendar_events TO frontend;
 GRANT ALL ON TABLE public.acorn_calendar_events TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_events TO token_5;
-GRANT SELECT ON TABLE public.acorn_calendar_events TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_calendar_events TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_calendar_events TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_events TO token_7;
+GRANT ALL ON TABLE public.acorn_calendar_events TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_calendar_events TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_calendar_events TO test4;
+GRANT ALL ON TABLE public.acorn_calendar_events TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_calendar_events TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_calendar_events TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_calendar_events TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25396,7 +28663,22 @@ GRANT ALL ON TABLE public.acorn_calendar_instances TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_calendar_instances TO frontend;
 GRANT ALL ON TABLE public.acorn_calendar_instances TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_instances TO token_5;
-GRANT SELECT ON TABLE public.acorn_calendar_instances TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_calendar_instances TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_calendar_instances TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_calendar_instances TO token_7;
+GRANT ALL ON TABLE public.acorn_calendar_instances TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_calendar_instances TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_calendar_instances TO test4;
+GRANT ALL ON TABLE public.acorn_calendar_instances TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_calendar_instances TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_calendar_instances TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_calendar_instances TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25405,9 +28687,24 @@ GRANT SELECT ON TABLE public.acorn_calendar_instances TO PUBLIC;
 
 GRANT SELECT ON TABLE public.acorn_enrollment_course_entry_requirements TO frontend;
 GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.acorn_enrollment_course_entry_requirements TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_enrollment_course_entry_requirements TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO token_5;
 GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO token_7;
+GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO test4;
+GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25416,9 +28713,24 @@ GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO sz WITH 
 
 GRANT SELECT ON TABLE public.acorn_enrollment_desires TO frontend;
 GRANT ALL ON TABLE public.acorn_enrollment_desires TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.acorn_enrollment_desires TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_enrollment_desires TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_enrollment_desires TO token_5;
 GRANT ALL ON TABLE public.acorn_enrollment_desires TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_enrollment_desires TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_enrollment_desires TO token_7;
+GRANT ALL ON TABLE public.acorn_enrollment_desires TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_enrollment_desires TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_enrollment_desires TO test4;
+GRANT ALL ON TABLE public.acorn_enrollment_desires TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_enrollment_desires TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_enrollment_desires TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_enrollment_desires TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25430,7 +28742,22 @@ GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO token_1 WIT
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_calculation_course_materials TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO token_5;
-GRANT SELECT ON TABLE public.acorn_exam_calculation_course_materials TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_calculation_course_materials TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO test4;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25442,7 +28769,22 @@ GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO token_1 WITH GR
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_calculation_course_types TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO token_5;
-GRANT SELECT ON TABLE public.acorn_exam_calculation_course_types TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_calculation_course_types TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO test4;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25454,7 +28796,22 @@ GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO admin WITH GRANT OPT
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_calculation_courses TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO token_5;
-GRANT SELECT ON TABLE public.acorn_exam_calculation_courses TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_calculation_courses TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO test4;
+GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25466,7 +28823,22 @@ GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO token_1 WITH 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_calculation_material_types TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO token_5;
-GRANT SELECT ON TABLE public.acorn_exam_calculation_material_types TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_calculation_material_types TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO test4;
+GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25478,7 +28850,22 @@ GRANT ALL ON TABLE public.acorn_exam_calculation_types TO admin WITH GRANT OPTIO
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_calculation_types TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_calculation_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculation_types TO token_5;
-GRANT SELECT ON TABLE public.acorn_exam_calculation_types TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_calculation_types TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_calculation_types TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_calculation_types TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_calculation_types TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_calculation_types TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_calculation_types TO test4;
+GRANT ALL ON TABLE public.acorn_exam_calculation_types TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_calculation_types TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_calculation_types TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_calculation_types TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25490,7 +28877,22 @@ GRANT ALL ON TABLE public.acorn_exam_calculations TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_calculations TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_calculations TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculations TO token_5;
-GRANT SELECT ON TABLE public.acorn_exam_calculations TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_calculations TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_calculations TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_calculations TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_calculations TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_calculations TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_calculations TO test4;
+GRANT ALL ON TABLE public.acorn_exam_calculations TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_calculations TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_calculations TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_calculations TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25499,9 +28901,24 @@ GRANT SELECT ON TABLE public.acorn_exam_calculations TO PUBLIC;
 
 GRANT SELECT ON TABLE public.acorn_exam_centres TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_centres TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.acorn_exam_centres TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_centres TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_centres TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_centres TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_centres TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_centres TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_centres TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_centres TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_centres TO test4;
+GRANT ALL ON TABLE public.acorn_exam_centres TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_centres TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_centres TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_centres TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25513,7 +28930,22 @@ GRANT ALL ON TABLE public.acorn_exam_exam_materials TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_exam_materials TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_exam_materials TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_exam_materials TO token_5;
-GRANT SELECT ON TABLE public.acorn_exam_exam_materials TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_exam_materials TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_exam_materials TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_exam_materials TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_exam_materials TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_exam_materials TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_exam_materials TO test4;
+GRANT ALL ON TABLE public.acorn_exam_exam_materials TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_exam_materials TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_exam_materials TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_exam_materials TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25525,7 +28957,22 @@ GRANT ALL ON TABLE public.acorn_exam_exams TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_exams TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_exams TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_exams TO token_5;
-GRANT SELECT ON TABLE public.acorn_exam_exams TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_exams TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_exams TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_exams TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_exams TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_exams TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_exams TO test4;
+GRANT ALL ON TABLE public.acorn_exam_exams TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_exams TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_exams TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_exams TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25534,9 +28981,24 @@ GRANT SELECT ON TABLE public.acorn_exam_exams TO PUBLIC;
 
 GRANT SELECT ON TABLE public.acorn_exam_instances TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_instances TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.acorn_exam_instances TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_instances TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_instances TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_instances TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_instances TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_instances TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_instances TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_instances TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_instances TO test4;
+GRANT ALL ON TABLE public.acorn_exam_instances TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_instances TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_instances TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_instances TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25548,7 +29010,22 @@ GRANT ALL ON TABLE public.acorn_exam_interview_students TO admin WITH GRANT OPTI
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_interview_students TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_interview_students TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_interview_students TO token_5;
-GRANT SELECT ON TABLE public.acorn_exam_interview_students TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_interview_students TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_interview_students TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_interview_students TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_interview_students TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_interview_students TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_interview_students TO test4;
+GRANT ALL ON TABLE public.acorn_exam_interview_students TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_interview_students TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_interview_students TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_interview_students TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25560,7 +29037,22 @@ GRANT ALL ON TABLE public.acorn_exam_interviews TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_interviews TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_interviews TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_interviews TO token_5;
-GRANT SELECT ON TABLE public.acorn_exam_interviews TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_interviews TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_interviews TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_interviews TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_interviews TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_interviews TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_interviews TO test4;
+GRANT ALL ON TABLE public.acorn_exam_interviews TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_interviews TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_interviews TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_interviews TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25571,7 +29063,22 @@ GRANT ALL ON TABLE public.acorn_exam_score_names TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_score_names TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_score_names TO token_5;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_score_names TO frontend;
-GRANT SELECT ON TABLE public.acorn_exam_score_names TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_score_names TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_score_names TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_score_names TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_score_names TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_score_names TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_score_names TO test4;
+GRANT ALL ON TABLE public.acorn_exam_score_names TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_score_names TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_score_names TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_score_names TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25583,7 +29090,22 @@ GRANT ALL ON TABLE public.acorn_exam_scores TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_scores TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_scores TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_scores TO token_5;
-GRANT SELECT ON TABLE public.acorn_exam_scores TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_scores TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_scores TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_scores TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_scores TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_scores TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_scores TO test4;
+GRANT ALL ON TABLE public.acorn_exam_scores TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_scores TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_scores TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_scores TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25595,7 +29117,22 @@ GRANT ALL ON TABLE public.acorn_exam_types TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_types TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_types TO token_5;
-GRANT SELECT ON TABLE public.acorn_exam_types TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_types TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_types TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_types TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_types TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_types TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_types TO test4;
+GRANT ALL ON TABLE public.acorn_exam_types TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_types TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_types TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_types TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25607,7 +29144,22 @@ GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO admin WITH
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_academic_year_semesters TO frontend;
 GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_academic_year_semesters TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_academic_year_semesters TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO token_7;
+GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO test4;
+GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25618,7 +29170,22 @@ GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO token_1 WITH GRANT OPT
 GRANT SELECT,USAGE ON SEQUENCE public.acorn_university_year_seq TO frontend;
 GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.acorn_university_year_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO token_7;
+GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO test4;
+GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25630,7 +29197,22 @@ GRANT ALL ON TABLE public.acorn_university_academic_years TO admin WITH GRANT OP
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_academic_years TO frontend;
 GRANT ALL ON TABLE public.acorn_university_academic_years TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_academic_years TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_academic_years TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_academic_years TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_academic_years TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_academic_years TO token_7;
+GRANT ALL ON TABLE public.acorn_university_academic_years TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_academic_years TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_academic_years TO test4;
+GRANT ALL ON TABLE public.acorn_university_academic_years TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_academic_years TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_academic_years TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_academic_years TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25642,7 +29224,22 @@ GRANT ALL ON TABLE public.acorn_university_course_materials TO admin WITH GRANT 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_course_materials TO frontend;
 GRANT ALL ON TABLE public.acorn_university_course_materials TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_materials TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_course_materials TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_course_materials TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_course_materials TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_course_materials TO token_7;
+GRANT ALL ON TABLE public.acorn_university_course_materials TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_course_materials TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_course_materials TO test4;
+GRANT ALL ON TABLE public.acorn_university_course_materials TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_course_materials TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_course_materials TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_course_materials TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25654,7 +29251,22 @@ GRANT SELECT,TRIGGER ON TABLE public.acorn_university_course_types TO frontend;
 GRANT ALL ON TABLE public.acorn_university_course_types TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_types TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_course_types TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_course_types TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_course_types TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_course_types TO token_7;
+GRANT ALL ON TABLE public.acorn_university_course_types TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_course_types TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_course_types TO test4;
+GRANT ALL ON TABLE public.acorn_university_course_types TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_course_types TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_course_types TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_course_types TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25664,6 +29276,22 @@ GRANT SELECT ON TABLE public.acorn_university_course_types TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_course_year_settings TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_year_settings TO token_5;
 GRANT ALL ON TABLE public.acorn_university_course_year_settings TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_course_year_settings TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_course_year_settings TO token_7;
+GRANT ALL ON TABLE public.acorn_university_course_year_settings TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_course_year_settings TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_course_year_settings TO test4;
+GRANT ALL ON TABLE public.acorn_university_course_year_settings TO test7 WITH GRANT OPTION;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_course_year_settings TO PUBLIC;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_course_year_settings TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_course_year_settings TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_course_year_settings TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25675,7 +29303,22 @@ GRANT ALL ON TABLE public.acorn_university_course_years TO admin WITH GRANT OPTI
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_course_years TO frontend;
 GRANT ALL ON TABLE public.acorn_university_course_years TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_years TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_course_years TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_course_years TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_course_years TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_course_years TO token_7;
+GRANT ALL ON TABLE public.acorn_university_course_years TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_course_years TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_course_years TO test4;
+GRANT ALL ON TABLE public.acorn_university_course_years TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_course_years TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_course_years TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_course_years TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25687,7 +29330,22 @@ GRANT ALL ON TABLE public.acorn_university_entities TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_entities TO frontend;
 GRANT ALL ON TABLE public.acorn_university_entities TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_entities TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_entities TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_entities TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_entities TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_entities TO token_7;
+GRANT ALL ON TABLE public.acorn_university_entities TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_entities TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_entities TO test4;
+GRANT ALL ON TABLE public.acorn_university_entities TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_entities TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_entities TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_entities TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25699,7 +29357,22 @@ GRANT ALL ON TABLE public.acorn_university_hierarchies TO admin WITH GRANT OPTIO
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_hierarchies TO frontend;
 GRANT ALL ON TABLE public.acorn_university_hierarchies TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_hierarchies TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_hierarchies TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_hierarchies TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_hierarchies TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_hierarchies TO token_7;
+GRANT ALL ON TABLE public.acorn_university_hierarchies TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_hierarchies TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_hierarchies TO test4;
+GRANT ALL ON TABLE public.acorn_university_hierarchies TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_hierarchies TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_hierarchies TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_hierarchies TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25708,9 +29381,24 @@ GRANT SELECT ON TABLE public.acorn_university_hierarchies TO PUBLIC;
 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_identity_types TO frontend;
 GRANT ALL ON TABLE public.acorn_university_identity_types TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.acorn_university_identity_types TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_identity_types TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_identity_types TO token_5;
 GRANT ALL ON TABLE public.acorn_university_identity_types TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_identity_types TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_identity_types TO token_7;
+GRANT ALL ON TABLE public.acorn_university_identity_types TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_identity_types TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_identity_types TO test4;
+GRANT ALL ON TABLE public.acorn_university_identity_types TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_identity_types TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_identity_types TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_identity_types TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25721,7 +29409,22 @@ GRANT ALL ON TABLE public.acorn_university_lectures TO token_1 WITH GRANT OPTION
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_lectures TO frontend;
 GRANT ALL ON TABLE public.acorn_university_lectures TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_lectures TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_lectures TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_lectures TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_lectures TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_lectures TO token_7;
+GRANT ALL ON TABLE public.acorn_university_lectures TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_lectures TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_lectures TO test4;
+GRANT ALL ON TABLE public.acorn_university_lectures TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_lectures TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_lectures TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_lectures TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25733,7 +29436,22 @@ GRANT ALL ON TABLE public.acorn_university_material_types TO admin WITH GRANT OP
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_material_types TO frontend;
 GRANT ALL ON TABLE public.acorn_university_material_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_material_types TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_material_types TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_material_types TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_material_types TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_material_types TO token_7;
+GRANT ALL ON TABLE public.acorn_university_material_types TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_material_types TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_material_types TO test4;
+GRANT ALL ON TABLE public.acorn_university_material_types TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_material_types TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_material_types TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_material_types TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25745,7 +29463,22 @@ GRANT ALL ON TABLE public.acorn_university_materials TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_materials TO frontend;
 GRANT ALL ON TABLE public.acorn_university_materials TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_materials TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_materials TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_materials TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_materials TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_materials TO token_7;
+GRANT ALL ON TABLE public.acorn_university_materials TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_materials TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_materials TO test4;
+GRANT ALL ON TABLE public.acorn_university_materials TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_materials TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_materials TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_materials TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25757,7 +29490,22 @@ GRANT ALL ON TABLE public.acorn_university_project_students TO admin WITH GRANT 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_project_students TO frontend;
 GRANT ALL ON TABLE public.acorn_university_project_students TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_project_students TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_project_students TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_project_students TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_project_students TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_project_students TO token_7;
+GRANT ALL ON TABLE public.acorn_university_project_students TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_project_students TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_project_students TO test4;
+GRANT ALL ON TABLE public.acorn_university_project_students TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_project_students TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_project_students TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_project_students TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25769,7 +29517,22 @@ GRANT ALL ON TABLE public.acorn_university_projects TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_projects TO frontend;
 GRANT ALL ON TABLE public.acorn_university_projects TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_projects TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_projects TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_projects TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_projects TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_projects TO token_7;
+GRANT ALL ON TABLE public.acorn_university_projects TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_projects TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_projects TO test4;
+GRANT ALL ON TABLE public.acorn_university_projects TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_projects TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_projects TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_projects TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25781,7 +29544,22 @@ GRANT ALL ON TABLE public.acorn_university_semesters TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_semesters TO frontend;
 GRANT ALL ON TABLE public.acorn_university_semesters TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_semesters TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_semesters TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_semesters TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_semesters TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_semesters TO token_7;
+GRANT ALL ON TABLE public.acorn_university_semesters TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_semesters TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_semesters TO test4;
+GRANT ALL ON TABLE public.acorn_university_semesters TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_semesters TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_semesters TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_semesters TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25792,7 +29570,22 @@ GRANT ALL ON TABLE public.acorn_university_student_codes TO token_1 WITH GRANT O
 GRANT ALL ON TABLE public.acorn_university_student_codes TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_codes TO token_5;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_student_codes TO frontend;
-GRANT SELECT ON TABLE public.acorn_university_student_codes TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_student_codes TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_student_codes TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_student_codes TO token_7;
+GRANT ALL ON TABLE public.acorn_university_student_codes TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_student_codes TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_student_codes TO test4;
+GRANT ALL ON TABLE public.acorn_university_student_codes TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_student_codes TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_student_codes TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_student_codes TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25801,9 +29594,24 @@ GRANT SELECT ON TABLE public.acorn_university_student_codes TO PUBLIC;
 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_student_identities TO frontend;
 GRANT ALL ON TABLE public.acorn_university_student_identities TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.acorn_university_student_identities TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_student_identities TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_student_identities TO token_5;
 GRANT ALL ON TABLE public.acorn_university_student_identities TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_student_identities TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_student_identities TO token_7;
+GRANT ALL ON TABLE public.acorn_university_student_identities TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_student_identities TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_student_identities TO test4;
+GRANT ALL ON TABLE public.acorn_university_student_identities TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_student_identities TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_student_identities TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_student_identities TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25812,9 +29620,24 @@ GRANT ALL ON TABLE public.acorn_university_student_identities TO sz WITH GRANT O
 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_student_notes TO frontend;
 GRANT ALL ON TABLE public.acorn_university_student_notes TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.acorn_university_student_notes TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_student_notes TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_student_notes TO token_5;
 GRANT ALL ON TABLE public.acorn_university_student_notes TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_student_notes TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_student_notes TO token_7;
+GRANT ALL ON TABLE public.acorn_university_student_notes TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_student_notes TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_student_notes TO test4;
+GRANT ALL ON TABLE public.acorn_university_student_notes TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_student_notes TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_student_notes TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_student_notes TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25825,7 +29648,22 @@ GRANT ALL ON TABLE public.acorn_university_student_statuses TO token_1 WITH GRAN
 GRANT ALL ON TABLE public.acorn_university_student_statuses TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_statuses TO token_5;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_student_statuses TO frontend;
-GRANT SELECT ON TABLE public.acorn_university_student_statuses TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_student_statuses TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_student_statuses TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_student_statuses TO token_7;
+GRANT ALL ON TABLE public.acorn_university_student_statuses TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_student_statuses TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_student_statuses TO test4;
+GRANT ALL ON TABLE public.acorn_university_student_statuses TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_student_statuses TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_student_statuses TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_student_statuses TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25837,19 +29675,49 @@ GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_result_internal2s TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO token_5;
-GRANT SELECT ON TABLE public.acorn_exam_result_internal2s TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_result_internal2s TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO test4;
+GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
 -- Name: TABLE acorn_exam_results; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT SELECT ON TABLE public.acorn_exam_results TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_results TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_results TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_results TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_results TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_results TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_results TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_results TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_results TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_results TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_results TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_results TO test4;
+GRANT ALL ON TABLE public.acorn_exam_results TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_results TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_results TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_results TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25861,7 +29729,22 @@ GRANT ALL ON TABLE public.acorn_university_courses TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_courses TO frontend;
 GRANT ALL ON TABLE public.acorn_university_courses TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_courses TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_courses TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_courses TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_courses TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_courses TO token_7;
+GRANT ALL ON TABLE public.acorn_university_courses TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_courses TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_courses TO test4;
+GRANT ALL ON TABLE public.acorn_university_courses TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_courses TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_courses TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_courses TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25870,9 +29753,24 @@ GRANT SELECT ON TABLE public.acorn_university_courses TO PUBLIC;
 
 GRANT SELECT ON SEQUENCE public.acorn_university_students_number TO frontend;
 GRANT ALL ON SEQUENCE public.acorn_university_students_number TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON SEQUENCE public.acorn_university_students_number TO PUBLIC;
+GRANT ALL ON SEQUENCE public.acorn_university_students_number TO PUBLIC;
 GRANT ALL ON SEQUENCE public.acorn_university_students_number TO token_5;
 GRANT ALL ON SEQUENCE public.acorn_university_students_number TO sz WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.acorn_university_students_number TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.acorn_university_students_number TO token_7;
+GRANT ALL ON SEQUENCE public.acorn_university_students_number TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.acorn_university_students_number TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.acorn_university_students_number TO test4;
+GRANT ALL ON SEQUENCE public.acorn_university_students_number TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.acorn_university_students_number TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.acorn_university_students_number TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.acorn_university_students_number TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25884,7 +29782,22 @@ GRANT ALL ON TABLE public.acorn_university_students TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_students TO frontend;
 GRANT ALL ON TABLE public.acorn_university_students TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_students TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_students TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_students TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_students TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_students TO token_7;
+GRANT ALL ON TABLE public.acorn_university_students TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_students TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_students TO test4;
+GRANT ALL ON TABLE public.acorn_university_students TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_students TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_students TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_students TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25896,7 +29809,22 @@ GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_group_version TO frontend;
 GRANT ALL ON TABLE public.acorn_user_user_group_version TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_group_version TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_group_version TO token_5;
-GRANT SELECT ON TABLE public.acorn_user_user_group_version TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_user_user_group_version TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_user_user_group_version TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group_version TO token_7;
+GRANT ALL ON TABLE public.acorn_user_user_group_version TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_user_user_group_version TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_user_group_version TO test4;
+GRANT ALL ON TABLE public.acorn_user_user_group_version TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_user_user_group_version TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_user_group_version TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_user_user_group_version TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25907,7 +29835,22 @@ GRANT ALL ON TABLE public.acorn_user_user_group_versions TO token_1 WITH GRANT O
 GRANT ALL ON TABLE public.acorn_user_user_group_versions TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_group_versions TO token_5;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_group_versions TO frontend;
-GRANT SELECT ON TABLE public.acorn_user_user_group_versions TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_user_user_group_versions TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_user_user_group_versions TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group_versions TO token_7;
+GRANT ALL ON TABLE public.acorn_user_user_group_versions TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_user_user_group_versions TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_user_group_versions TO test4;
+GRANT ALL ON TABLE public.acorn_user_user_group_versions TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_user_user_group_versions TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_user_group_versions TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_user_user_group_versions TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25919,7 +29862,22 @@ GRANT ALL ON TABLE public.acorn_user_user_groups TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_groups TO frontend;
 GRANT ALL ON TABLE public.acorn_user_user_groups TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_groups TO token_5;
-GRANT SELECT ON TABLE public.acorn_user_user_groups TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_user_user_groups TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_user_user_groups TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_groups TO token_7;
+GRANT ALL ON TABLE public.acorn_user_user_groups TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_user_user_groups TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_user_groups TO test4;
+GRANT ALL ON TABLE public.acorn_user_user_groups TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_user_user_groups TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_user_groups TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_user_user_groups TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25931,7 +29889,22 @@ GRANT ALL ON TABLE public.acorn_user_users TO admin WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_users TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_users TO token_5;
 GRANT SELECT,INSERT,TRIGGER,UPDATE ON TABLE public.acorn_user_users TO frontend;
-GRANT SELECT ON TABLE public.acorn_user_users TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_user_users TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_user_users TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_users TO token_7;
+GRANT ALL ON TABLE public.acorn_user_users TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_user_users TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_users TO test4;
+GRANT ALL ON TABLE public.acorn_user_users TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_user_users TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_users TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_user_users TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25943,19 +29916,49 @@ GRANT ALL ON TABLE public.winter_translate_attributes TO admin WITH GRANT OPTION
 GRANT SELECT,TRIGGER ON TABLE public.winter_translate_attributes TO frontend;
 GRANT ALL ON TABLE public.winter_translate_attributes TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_translate_attributes TO token_5;
-GRANT SELECT ON TABLE public.winter_translate_attributes TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.winter_translate_attributes TO PUBLIC;
+GRANT ALL ON TABLE public.winter_translate_attributes TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_translate_attributes TO token_7;
+GRANT ALL ON TABLE public.winter_translate_attributes TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.winter_translate_attributes TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.winter_translate_attributes TO test4;
+GRANT ALL ON TABLE public.winter_translate_attributes TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.winter_translate_attributes TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.winter_translate_attributes TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.winter_translate_attributes TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
 -- Name: TABLE acorn_exam_data_entry_scores; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT SELECT ON TABLE public.acorn_exam_data_entry_scores TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_data_entry_scores TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_data_entry_scores TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO test4;
+GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25967,7 +29970,22 @@ GRANT ALL ON TABLE public.acorn_user_languages TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_languages TO frontend;
 GRANT ALL ON TABLE public.acorn_user_languages TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_languages TO token_5;
-GRANT SELECT ON TABLE public.acorn_user_languages TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_user_languages TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_user_languages TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_languages TO token_7;
+GRANT ALL ON TABLE public.acorn_user_languages TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_user_languages TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_languages TO test4;
+GRANT ALL ON TABLE public.acorn_user_languages TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_user_languages TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_languages TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_user_languages TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25979,17 +29997,47 @@ GRANT ALL ON TABLE public.acorn_user_user_languages TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_languages TO frontend;
 GRANT ALL ON TABLE public.acorn_user_user_languages TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_languages TO token_5;
-GRANT SELECT ON TABLE public.acorn_user_user_languages TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_user_user_languages TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_user_user_languages TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_languages TO token_7;
+GRANT ALL ON TABLE public.acorn_user_user_languages TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_user_user_languages TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_user_languages TO test4;
+GRANT ALL ON TABLE public.acorn_user_user_languages TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_user_user_languages TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_user_languages TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_user_user_languages TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
 -- Name: TABLE acorn_exam_certificates; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT SELECT ON TABLE public.acorn_exam_certificates TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_certificates TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_certificates TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_certificates TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_certificates TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_certificates TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_certificates TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_certificates TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_certificates TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_certificates TO test4;
+GRANT ALL ON TABLE public.acorn_exam_certificates TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_certificates TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_certificates TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_certificates TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -25998,9 +30046,24 @@ GRANT ALL ON TABLE public.acorn_exam_certificates TO token_5;
 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_exam_token2s TO frontend;
 GRANT ALL ON TABLE public.acorn_exam_token2s TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.acorn_exam_token2s TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_exam_token2s TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_token2s TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_token2s TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_token2s TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_token2s TO token_7;
+GRANT ALL ON TABLE public.acorn_exam_token2s TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_exam_token2s TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_token2s TO test4;
+GRANT ALL ON TABLE public.acorn_exam_token2s TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_exam_token2s TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_exam_token2s TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_exam_token2s TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26012,7 +30075,22 @@ GRANT ALL ON TABLE public.acorn_location_addresses TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_addresses TO frontend;
 GRANT ALL ON TABLE public.acorn_location_addresses TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_addresses TO token_5;
-GRANT SELECT ON TABLE public.acorn_location_addresses TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_location_addresses TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_location_addresses TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_addresses TO token_7;
+GRANT ALL ON TABLE public.acorn_location_addresses TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_location_addresses TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_addresses TO test4;
+GRANT ALL ON TABLE public.acorn_location_addresses TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_location_addresses TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_addresses TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_location_addresses TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26024,7 +30102,22 @@ GRANT ALL ON TABLE public.acorn_location_area_types TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_area_types TO frontend;
 GRANT ALL ON TABLE public.acorn_location_area_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_area_types TO token_5;
-GRANT SELECT ON TABLE public.acorn_location_area_types TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_location_area_types TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_location_area_types TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_area_types TO token_7;
+GRANT ALL ON TABLE public.acorn_location_area_types TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_location_area_types TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_area_types TO test4;
+GRANT ALL ON TABLE public.acorn_location_area_types TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_location_area_types TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_area_types TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_location_area_types TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26036,7 +30129,22 @@ GRANT ALL ON TABLE public.acorn_location_areas TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_areas TO frontend;
 GRANT ALL ON TABLE public.acorn_location_areas TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_areas TO token_5;
-GRANT SELECT ON TABLE public.acorn_location_areas TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_location_areas TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_location_areas TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_areas TO token_7;
+GRANT ALL ON TABLE public.acorn_location_areas TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_location_areas TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_areas TO test4;
+GRANT ALL ON TABLE public.acorn_location_areas TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_location_areas TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_areas TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_location_areas TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26048,7 +30156,22 @@ GRANT ALL ON TABLE public.acorn_location_gps TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_gps TO frontend;
 GRANT ALL ON TABLE public.acorn_location_gps TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_gps TO token_5;
-GRANT SELECT ON TABLE public.acorn_location_gps TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_location_gps TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_location_gps TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_gps TO token_7;
+GRANT ALL ON TABLE public.acorn_location_gps TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_location_gps TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_gps TO test4;
+GRANT ALL ON TABLE public.acorn_location_gps TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_location_gps TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_gps TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_location_gps TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26060,7 +30183,22 @@ GRANT ALL ON TABLE public.acorn_location_locations TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_locations TO frontend;
 GRANT ALL ON TABLE public.acorn_location_locations TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_locations TO token_5;
-GRANT SELECT ON TABLE public.acorn_location_locations TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_location_locations TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_location_locations TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_locations TO token_7;
+GRANT ALL ON TABLE public.acorn_location_locations TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_location_locations TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_locations TO test4;
+GRANT ALL ON TABLE public.acorn_location_locations TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_location_locations TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_locations TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_location_locations TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26072,7 +30210,22 @@ GRANT ALL ON TABLE public.acorn_location_lookup TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_lookup TO frontend;
 GRANT ALL ON TABLE public.acorn_location_lookup TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_lookup TO token_5;
-GRANT SELECT ON TABLE public.acorn_location_lookup TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_location_lookup TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_location_lookup TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_lookup TO token_7;
+GRANT ALL ON TABLE public.acorn_location_lookup TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_location_lookup TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_lookup TO test4;
+GRANT ALL ON TABLE public.acorn_location_lookup TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_location_lookup TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_lookup TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_location_lookup TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26084,7 +30237,22 @@ GRANT ALL ON TABLE public.acorn_location_types TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_types TO frontend;
 GRANT ALL ON TABLE public.acorn_location_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_types TO token_5;
-GRANT SELECT ON TABLE public.acorn_location_types TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_location_types TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_location_types TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_types TO token_7;
+GRANT ALL ON TABLE public.acorn_location_types TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_location_types TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_types TO test4;
+GRANT ALL ON TABLE public.acorn_location_types TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_location_types TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_types TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_location_types TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26093,9 +30261,24 @@ GRANT SELECT ON TABLE public.acorn_location_types TO PUBLIC;
 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_user_address TO frontend;
 GRANT ALL ON TABLE public.acorn_location_user_address TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.acorn_location_user_address TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_location_user_address TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_location_user_address TO token_5;
 GRANT ALL ON TABLE public.acorn_location_user_address TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_user_address TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_user_address TO token_7;
+GRANT ALL ON TABLE public.acorn_location_user_address TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_location_user_address TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_user_address TO test4;
+GRANT ALL ON TABLE public.acorn_location_user_address TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_location_user_address TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_user_address TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_location_user_address TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26104,9 +30287,24 @@ GRANT ALL ON TABLE public.acorn_location_user_address TO sz WITH GRANT OPTION;
 
 GRANT SELECT,TRIGGER ON TABLE public.acorn_location_user_group_location TO frontend;
 GRANT ALL ON TABLE public.acorn_location_user_group_location TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.acorn_location_user_group_location TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_location_user_group_location TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_location_user_group_location TO token_5;
 GRANT ALL ON TABLE public.acorn_location_user_group_location TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_user_group_location TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_location_user_group_location TO token_7;
+GRANT ALL ON TABLE public.acorn_location_user_group_location TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_location_user_group_location TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_user_group_location TO test4;
+GRANT ALL ON TABLE public.acorn_location_user_group_location TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_location_user_group_location TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_location_user_group_location TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_location_user_group_location TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26118,7 +30316,22 @@ GRANT ALL ON TABLE public.acorn_messaging_action TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_action TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_action TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_action TO token_5;
-GRANT SELECT ON TABLE public.acorn_messaging_action TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_messaging_action TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_messaging_action TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_action TO token_7;
+GRANT ALL ON TABLE public.acorn_messaging_action TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_messaging_action TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_action TO test4;
+GRANT ALL ON TABLE public.acorn_messaging_action TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_messaging_action TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_action TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_messaging_action TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26130,7 +30343,22 @@ GRANT ALL ON TABLE public.acorn_messaging_label TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_label TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_label TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_label TO token_5;
-GRANT SELECT ON TABLE public.acorn_messaging_label TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_messaging_label TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_messaging_label TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_label TO token_7;
+GRANT ALL ON TABLE public.acorn_messaging_label TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_messaging_label TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_label TO test4;
+GRANT ALL ON TABLE public.acorn_messaging_label TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_messaging_label TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_label TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_messaging_label TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26142,7 +30370,22 @@ GRANT ALL ON TABLE public.acorn_messaging_message TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_message TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_message TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_message TO token_5;
-GRANT SELECT ON TABLE public.acorn_messaging_message TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_messaging_message TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_messaging_message TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message TO token_7;
+GRANT ALL ON TABLE public.acorn_messaging_message TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_messaging_message TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_message TO test4;
+GRANT ALL ON TABLE public.acorn_messaging_message TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_messaging_message TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_message TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_messaging_message TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26154,7 +30397,22 @@ GRANT ALL ON TABLE public.acorn_messaging_message_instance TO admin WITH GRANT O
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_message_instance TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_message_instance TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_message_instance TO token_5;
-GRANT SELECT ON TABLE public.acorn_messaging_message_instance TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_messaging_message_instance TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_messaging_message_instance TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message_instance TO token_7;
+GRANT ALL ON TABLE public.acorn_messaging_message_instance TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_messaging_message_instance TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_message_instance TO test4;
+GRANT ALL ON TABLE public.acorn_messaging_message_instance TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_messaging_message_instance TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_message_instance TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_messaging_message_instance TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26166,7 +30424,22 @@ GRANT ALL ON TABLE public.acorn_messaging_message_message TO admin WITH GRANT OP
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_message_message TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_message_message TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_message_message TO token_5;
-GRANT SELECT ON TABLE public.acorn_messaging_message_message TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_messaging_message_message TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_messaging_message_message TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message_message TO token_7;
+GRANT ALL ON TABLE public.acorn_messaging_message_message TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_messaging_message_message TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_message_message TO test4;
+GRANT ALL ON TABLE public.acorn_messaging_message_message TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_messaging_message_message TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_message_message TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_messaging_message_message TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26178,7 +30451,22 @@ GRANT ALL ON TABLE public.acorn_messaging_message_user TO admin WITH GRANT OPTIO
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_message_user TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_message_user TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_message_user TO token_5;
-GRANT SELECT ON TABLE public.acorn_messaging_message_user TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_messaging_message_user TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_messaging_message_user TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message_user TO token_7;
+GRANT ALL ON TABLE public.acorn_messaging_message_user TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_messaging_message_user TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_message_user TO test4;
+GRANT ALL ON TABLE public.acorn_messaging_message_user TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_messaging_message_user TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_message_user TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_messaging_message_user TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26190,7 +30478,22 @@ GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO admin WITH GRANT
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_message_user_group TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO token_5;
-GRANT SELECT ON TABLE public.acorn_messaging_message_user_group TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_messaging_message_user_group TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO token_7;
+GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO test4;
+GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26202,7 +30505,22 @@ GRANT ALL ON TABLE public.acorn_messaging_status TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_status TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_status TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_status TO token_5;
-GRANT SELECT ON TABLE public.acorn_messaging_status TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_messaging_status TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_messaging_status TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_status TO token_7;
+GRANT ALL ON TABLE public.acorn_messaging_status TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_messaging_status TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_status TO test4;
+GRANT ALL ON TABLE public.acorn_messaging_status TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_messaging_status TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_status TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_messaging_status TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26214,7 +30532,22 @@ GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO admin WITH GRAN
 GRANT SELECT,TRIGGER ON TABLE public.acorn_messaging_user_message_status TO frontend;
 GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO token_5;
-GRANT SELECT ON TABLE public.acorn_messaging_user_message_status TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_messaging_user_message_status TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO token_7;
+GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO test4;
+GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26226,7 +30559,22 @@ GRANT ALL ON TABLE public.acorn_reporting_reports TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_reporting_reports TO frontend;
 GRANT ALL ON TABLE public.acorn_reporting_reports TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_reporting_reports TO token_5;
-GRANT SELECT ON TABLE public.acorn_reporting_reports TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_reporting_reports TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_reporting_reports TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_reporting_reports TO token_7;
+GRANT ALL ON TABLE public.acorn_reporting_reports TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_reporting_reports TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_reporting_reports TO test4;
+GRANT ALL ON TABLE public.acorn_reporting_reports TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_reporting_reports TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_reporting_reports TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_reporting_reports TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26238,7 +30586,22 @@ GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO admin WITH GRANT 
 GRANT SELECT,USAGE ON SEQUENCE public.acorn_reporting_reports_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.acorn_reporting_reports_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26250,7 +30613,22 @@ GRANT ALL ON TABLE public.acorn_servers TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_servers TO frontend;
 GRANT ALL ON TABLE public.acorn_servers TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_servers TO token_5;
-GRANT SELECT ON TABLE public.acorn_servers TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_servers TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_servers TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_servers TO token_7;
+GRANT ALL ON TABLE public.acorn_servers TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_servers TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_servers TO test4;
+GRANT ALL ON TABLE public.acorn_servers TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_servers TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_servers TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_servers TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26262,7 +30640,22 @@ GRANT ALL ON TABLE public.acorn_university_course_language TO admin WITH GRANT O
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_course_language TO frontend;
 GRANT ALL ON TABLE public.acorn_university_course_language TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_language TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_course_language TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_course_language TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_course_language TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_course_language TO token_7;
+GRANT ALL ON TABLE public.acorn_university_course_language TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_course_language TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_course_language TO test4;
+GRANT ALL ON TABLE public.acorn_university_course_language TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_course_language TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_course_language TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_course_language TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26274,7 +30667,22 @@ GRANT ALL ON TABLE public.acorn_university_departments TO admin WITH GRANT OPTIO
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_departments TO frontend;
 GRANT ALL ON TABLE public.acorn_university_departments TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_departments TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_departments TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_departments TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_departments TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_departments TO token_7;
+GRANT ALL ON TABLE public.acorn_university_departments TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_departments TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_departments TO test4;
+GRANT ALL ON TABLE public.acorn_university_departments TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_departments TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_departments TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_departments TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26286,7 +30694,22 @@ GRANT ALL ON TABLE public.acorn_university_education_authorities TO admin WITH G
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_education_authorities TO frontend;
 GRANT ALL ON TABLE public.acorn_university_education_authorities TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_education_authorities TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_education_authorities TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_education_authorities TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_education_authorities TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_education_authorities TO token_7;
+GRANT ALL ON TABLE public.acorn_university_education_authorities TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_education_authorities TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_education_authorities TO test4;
+GRANT ALL ON TABLE public.acorn_university_education_authorities TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_education_authorities TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_education_authorities TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_education_authorities TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26298,7 +30721,22 @@ GRANT ALL ON TABLE public.acorn_university_faculties TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_faculties TO frontend;
 GRANT ALL ON TABLE public.acorn_university_faculties TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_faculties TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_faculties TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_faculties TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_faculties TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_faculties TO token_7;
+GRANT ALL ON TABLE public.acorn_university_faculties TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_faculties TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_faculties TO test4;
+GRANT ALL ON TABLE public.acorn_university_faculties TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_faculties TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_faculties TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_faculties TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26310,18 +30748,48 @@ GRANT ALL ON TABLE public.acorn_university_schools TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_schools TO frontend;
 GRANT ALL ON TABLE public.acorn_university_schools TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_schools TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_schools TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_schools TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_schools TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_schools TO token_7;
+GRANT ALL ON TABLE public.acorn_university_schools TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_schools TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_schools TO test4;
+GRANT ALL ON TABLE public.acorn_university_schools TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_schools TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_schools TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_schools TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
 -- Name: TABLE acorn_university_student_lookups; Type: ACL; Schema: public; Owner: university
 --
 
-GRANT SELECT ON TABLE public.acorn_university_student_lookups TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_student_lookups TO PUBLIC;
 GRANT SELECT ON TABLE public.acorn_university_student_lookups TO frontend;
 GRANT ALL ON TABLE public.acorn_university_student_lookups TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_lookups TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_lookups TO token_5;
+GRANT ALL ON TABLE public.acorn_university_student_lookups TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_student_lookups TO token_7;
+GRANT ALL ON TABLE public.acorn_university_student_lookups TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_student_lookups TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_student_lookups TO test4;
+GRANT ALL ON TABLE public.acorn_university_student_lookups TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_student_lookups TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_student_lookups TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_student_lookups TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26332,7 +30800,22 @@ GRANT ALL ON TABLE public.acorn_university_student_status TO token_1 WITH GRANT 
 GRANT ALL ON TABLE public.acorn_university_student_status TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_status TO token_5;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_student_status TO frontend;
-GRANT SELECT ON TABLE public.acorn_university_student_status TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_student_status TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_student_status TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_student_status TO token_7;
+GRANT ALL ON TABLE public.acorn_university_student_status TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_student_status TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_student_status TO test4;
+GRANT ALL ON TABLE public.acorn_university_student_status TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_student_status TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_student_status TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_student_status TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26344,7 +30827,22 @@ GRANT ALL ON TABLE public.acorn_university_teachers TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_teachers TO frontend;
 GRANT ALL ON TABLE public.acorn_university_teachers TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_teachers TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_teachers TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_teachers TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_teachers TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_teachers TO token_7;
+GRANT ALL ON TABLE public.acorn_university_teachers TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_teachers TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_teachers TO test4;
+GRANT ALL ON TABLE public.acorn_university_teachers TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_teachers TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_teachers TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_teachers TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26356,7 +30854,22 @@ GRANT ALL ON TABLE public.acorn_university_universities TO admin WITH GRANT OPTI
 GRANT SELECT,TRIGGER ON TABLE public.acorn_university_universities TO frontend;
 GRANT ALL ON TABLE public.acorn_university_universities TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_universities TO token_5;
-GRANT SELECT ON TABLE public.acorn_university_universities TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_universities TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_universities TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_universities TO token_7;
+GRANT ALL ON TABLE public.acorn_university_universities TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_universities TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_universities TO test4;
+GRANT ALL ON TABLE public.acorn_university_universities TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_universities TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_universities TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_universities TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26367,8 +30880,23 @@ GRANT ALL ON TABLE public.acorn_user_ethnicities TO admin WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_ethnicities TO sz WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_ethnicities TO frontend;
 GRANT ALL ON TABLE public.acorn_user_ethnicities TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.acorn_user_ethnicities TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_user_ethnicities TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_ethnicities TO token_5;
+GRANT ALL ON TABLE public.acorn_user_ethnicities TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_ethnicities TO token_7;
+GRANT ALL ON TABLE public.acorn_user_ethnicities TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_user_ethnicities TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_ethnicities TO test4;
+GRANT ALL ON TABLE public.acorn_user_ethnicities TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_user_ethnicities TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_ethnicities TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_user_ethnicities TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26380,7 +30908,22 @@ GRANT ALL ON TABLE public.acorn_user_mail_blockers TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_mail_blockers TO frontend;
 GRANT ALL ON TABLE public.acorn_user_mail_blockers TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_mail_blockers TO token_5;
-GRANT SELECT ON TABLE public.acorn_user_mail_blockers TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_user_mail_blockers TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_user_mail_blockers TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_mail_blockers TO token_7;
+GRANT ALL ON TABLE public.acorn_user_mail_blockers TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_user_mail_blockers TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_mail_blockers TO test4;
+GRANT ALL ON TABLE public.acorn_user_mail_blockers TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_user_mail_blockers TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_mail_blockers TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_user_mail_blockers TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26391,8 +30934,23 @@ GRANT ALL ON TABLE public.acorn_user_religions TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_religions TO frontend;
 GRANT ALL ON TABLE public.acorn_user_religions TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_religions TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.acorn_user_religions TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_user_religions TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_religions TO token_5;
+GRANT ALL ON TABLE public.acorn_user_religions TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_religions TO token_7;
+GRANT ALL ON TABLE public.acorn_user_religions TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_user_religions TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_religions TO test4;
+GRANT ALL ON TABLE public.acorn_user_religions TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_user_religions TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_religions TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_user_religions TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26404,7 +30962,22 @@ GRANT ALL ON TABLE public.acorn_user_role_user TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_role_user TO frontend;
 GRANT ALL ON TABLE public.acorn_user_role_user TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_role_user TO token_5;
-GRANT SELECT ON TABLE public.acorn_user_role_user TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_user_role_user TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_user_role_user TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_role_user TO token_7;
+GRANT ALL ON TABLE public.acorn_user_role_user TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_user_role_user TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_role_user TO test4;
+GRANT ALL ON TABLE public.acorn_user_role_user TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_user_role_user TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_role_user TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_user_role_user TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26416,7 +30989,22 @@ GRANT ALL ON TABLE public.acorn_user_roles TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_roles TO frontend;
 GRANT ALL ON TABLE public.acorn_user_roles TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_roles TO token_5;
-GRANT SELECT ON TABLE public.acorn_user_roles TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_user_roles TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_user_roles TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_roles TO token_7;
+GRANT ALL ON TABLE public.acorn_user_roles TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_user_roles TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_roles TO test4;
+GRANT ALL ON TABLE public.acorn_user_roles TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_user_roles TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_roles TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_user_roles TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26428,7 +31016,22 @@ GRANT ALL ON TABLE public.acorn_user_throttle TO admin WITH GRANT OPTION;
 GRANT SELECT,INSERT,DELETE,TRIGGER,UPDATE ON TABLE public.acorn_user_throttle TO frontend;
 GRANT ALL ON TABLE public.acorn_user_throttle TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_throttle TO token_5;
-GRANT SELECT ON TABLE public.acorn_user_throttle TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_user_throttle TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_user_throttle TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_throttle TO token_7;
+GRANT ALL ON TABLE public.acorn_user_throttle TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_user_throttle TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_throttle TO test4;
+GRANT ALL ON TABLE public.acorn_user_throttle TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_user_throttle TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_throttle TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_user_throttle TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26440,7 +31043,22 @@ GRANT ALL ON TABLE public.acorn_user_user_group TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_group TO frontend;
 GRANT ALL ON TABLE public.acorn_user_user_group TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_group TO token_5;
-GRANT SELECT ON TABLE public.acorn_user_user_group TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_user_user_group TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_user_user_group TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group TO token_7;
+GRANT ALL ON TABLE public.acorn_user_user_group TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_user_user_group TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_user_group TO test4;
+GRANT ALL ON TABLE public.acorn_user_user_group TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_user_user_group TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_user_group TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_user_user_group TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26452,7 +31070,22 @@ GRANT ALL ON TABLE public.acorn_user_user_group_types TO admin WITH GRANT OPTION
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_group_types TO frontend;
 GRANT ALL ON TABLE public.acorn_user_user_group_types TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_group_types TO token_5;
-GRANT SELECT ON TABLE public.acorn_user_user_group_types TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_user_user_group_types TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_user_user_group_types TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group_types TO token_7;
+GRANT ALL ON TABLE public.acorn_user_user_group_types TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_user_user_group_types TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_user_group_types TO test4;
+GRANT ALL ON TABLE public.acorn_user_user_group_types TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_user_user_group_types TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_user_group_types TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_user_user_group_types TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26464,7 +31097,22 @@ GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO admin WITH GRA
 GRANT SELECT,TRIGGER ON TABLE public.acorn_user_user_group_version_usages TO frontend;
 GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO token_5;
-GRANT SELECT ON TABLE public.acorn_user_user_group_version_usages TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_user_user_group_version_usages TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO token_7;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO test4;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26476,7 +31124,22 @@ GRANT ALL ON TABLE public.backend_access_log TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.backend_access_log TO frontend;
 GRANT ALL ON TABLE public.backend_access_log TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_access_log TO token_5;
-GRANT SELECT ON TABLE public.backend_access_log TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.backend_access_log TO PUBLIC;
+GRANT ALL ON TABLE public.backend_access_log TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_access_log TO token_7;
+GRANT ALL ON TABLE public.backend_access_log TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.backend_access_log TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.backend_access_log TO test4;
+GRANT ALL ON TABLE public.backend_access_log TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.backend_access_log TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.backend_access_log TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.backend_access_log TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26488,7 +31151,22 @@ GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO admin WITH GRANT OPTIO
 GRANT SELECT,USAGE ON SEQUENCE public.backend_access_log_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.backend_access_log_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26500,7 +31178,22 @@ GRANT ALL ON TABLE public.backend_user_groups TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.backend_user_groups TO frontend;
 GRANT ALL ON TABLE public.backend_user_groups TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_user_groups TO token_5;
-GRANT SELECT ON TABLE public.backend_user_groups TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.backend_user_groups TO PUBLIC;
+GRANT ALL ON TABLE public.backend_user_groups TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_user_groups TO token_7;
+GRANT ALL ON TABLE public.backend_user_groups TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.backend_user_groups TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.backend_user_groups TO test4;
+GRANT ALL ON TABLE public.backend_user_groups TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.backend_user_groups TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.backend_user_groups TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.backend_user_groups TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26512,7 +31205,22 @@ GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO admin WITH GRANT OPTI
 GRANT SELECT,USAGE ON SEQUENCE public.backend_user_groups_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.backend_user_groups_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26524,7 +31232,22 @@ GRANT ALL ON TABLE public.backend_user_preferences TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.backend_user_preferences TO frontend;
 GRANT ALL ON TABLE public.backend_user_preferences TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_user_preferences TO token_5;
-GRANT SELECT ON TABLE public.backend_user_preferences TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.backend_user_preferences TO PUBLIC;
+GRANT ALL ON TABLE public.backend_user_preferences TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_user_preferences TO token_7;
+GRANT ALL ON TABLE public.backend_user_preferences TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.backend_user_preferences TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.backend_user_preferences TO test4;
+GRANT ALL ON TABLE public.backend_user_preferences TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.backend_user_preferences TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.backend_user_preferences TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.backend_user_preferences TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26536,7 +31259,22 @@ GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO admin WITH GRANT
 GRANT SELECT,USAGE ON SEQUENCE public.backend_user_preferences_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.backend_user_preferences_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26548,7 +31286,22 @@ GRANT ALL ON TABLE public.backend_user_roles TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.backend_user_roles TO frontend;
 GRANT ALL ON TABLE public.backend_user_roles TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_user_roles TO token_5;
-GRANT SELECT ON TABLE public.backend_user_roles TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.backend_user_roles TO PUBLIC;
+GRANT ALL ON TABLE public.backend_user_roles TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_user_roles TO token_7;
+GRANT ALL ON TABLE public.backend_user_roles TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.backend_user_roles TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.backend_user_roles TO test4;
+GRANT ALL ON TABLE public.backend_user_roles TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.backend_user_roles TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.backend_user_roles TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.backend_user_roles TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26560,7 +31313,22 @@ GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO admin WITH GRANT OPTIO
 GRANT SELECT,USAGE ON SEQUENCE public.backend_user_roles_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.backend_user_roles_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26572,7 +31340,22 @@ GRANT ALL ON TABLE public.backend_user_throttle TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.backend_user_throttle TO frontend;
 GRANT ALL ON TABLE public.backend_user_throttle TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_user_throttle TO token_5;
-GRANT SELECT ON TABLE public.backend_user_throttle TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.backend_user_throttle TO PUBLIC;
+GRANT ALL ON TABLE public.backend_user_throttle TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_user_throttle TO token_7;
+GRANT ALL ON TABLE public.backend_user_throttle TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.backend_user_throttle TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.backend_user_throttle TO test4;
+GRANT ALL ON TABLE public.backend_user_throttle TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.backend_user_throttle TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.backend_user_throttle TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.backend_user_throttle TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26584,7 +31367,22 @@ GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO admin WITH GRANT OP
 GRANT SELECT,USAGE ON SEQUENCE public.backend_user_throttle_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.backend_user_throttle_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26596,7 +31394,22 @@ GRANT ALL ON TABLE public.backend_users TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.backend_users TO frontend;
 GRANT ALL ON TABLE public.backend_users TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_users TO token_5;
-GRANT SELECT ON TABLE public.backend_users TO PUBLIC;
+GRANT ALL ON TABLE public.backend_users TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_users TO token_7;
+GRANT ALL ON TABLE public.backend_users TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.backend_users TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.backend_users TO test4;
+GRANT ALL ON TABLE public.backend_users TO test7 WITH GRANT OPTION;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.backend_users TO PUBLIC;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.backend_users TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.backend_users TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.backend_users TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26608,7 +31421,22 @@ GRANT ALL ON TABLE public.backend_users_groups TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.backend_users_groups TO frontend;
 GRANT ALL ON TABLE public.backend_users_groups TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_users_groups TO token_5;
-GRANT SELECT ON TABLE public.backend_users_groups TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.backend_users_groups TO PUBLIC;
+GRANT ALL ON TABLE public.backend_users_groups TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.backend_users_groups TO token_7;
+GRANT ALL ON TABLE public.backend_users_groups TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.backend_users_groups TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.backend_users_groups TO test4;
+GRANT ALL ON TABLE public.backend_users_groups TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.backend_users_groups TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.backend_users_groups TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.backend_users_groups TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26620,7 +31448,22 @@ GRANT ALL ON SEQUENCE public.backend_users_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.backend_users_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.backend_users_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_users_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.backend_users_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.backend_users_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.backend_users_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.backend_users_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.backend_users_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.backend_users_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.backend_users_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.backend_users_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.backend_users_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.backend_users_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.backend_users_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26632,7 +31475,22 @@ GRANT ALL ON TABLE public.cache TO admin WITH GRANT OPTION;
 GRANT SELECT,INSERT,DELETE,TRIGGER,UPDATE ON TABLE public.cache TO frontend;
 GRANT ALL ON TABLE public.cache TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.cache TO token_5;
-GRANT SELECT ON TABLE public.cache TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.cache TO PUBLIC;
+GRANT ALL ON TABLE public.cache TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.cache TO token_7;
+GRANT ALL ON TABLE public.cache TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.cache TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.cache TO test4;
+GRANT ALL ON TABLE public.cache TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.cache TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.cache TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.cache TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26644,7 +31502,22 @@ GRANT ALL ON TABLE public.cms_theme_data TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.cms_theme_data TO frontend;
 GRANT ALL ON TABLE public.cms_theme_data TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.cms_theme_data TO token_5;
-GRANT SELECT ON TABLE public.cms_theme_data TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.cms_theme_data TO PUBLIC;
+GRANT ALL ON TABLE public.cms_theme_data TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.cms_theme_data TO token_7;
+GRANT ALL ON TABLE public.cms_theme_data TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.cms_theme_data TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.cms_theme_data TO test4;
+GRANT ALL ON TABLE public.cms_theme_data TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.cms_theme_data TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.cms_theme_data TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.cms_theme_data TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26656,7 +31529,22 @@ GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.cms_theme_data_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.cms_theme_data_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26668,7 +31556,22 @@ GRANT ALL ON TABLE public.cms_theme_logs TO admin WITH GRANT OPTION;
 GRANT SELECT,INSERT,DELETE,TRIGGER,UPDATE ON TABLE public.cms_theme_logs TO frontend;
 GRANT ALL ON TABLE public.cms_theme_logs TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.cms_theme_logs TO token_5;
-GRANT SELECT ON TABLE public.cms_theme_logs TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.cms_theme_logs TO PUBLIC;
+GRANT ALL ON TABLE public.cms_theme_logs TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.cms_theme_logs TO token_7;
+GRANT ALL ON TABLE public.cms_theme_logs TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.cms_theme_logs TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.cms_theme_logs TO test4;
+GRANT ALL ON TABLE public.cms_theme_logs TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.cms_theme_logs TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.cms_theme_logs TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.cms_theme_logs TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26680,7 +31583,22 @@ GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.cms_theme_logs_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.cms_theme_logs_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26692,7 +31610,22 @@ GRANT ALL ON TABLE public.cms_theme_templates TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.cms_theme_templates TO frontend;
 GRANT ALL ON TABLE public.cms_theme_templates TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.cms_theme_templates TO token_5;
-GRANT SELECT ON TABLE public.cms_theme_templates TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.cms_theme_templates TO PUBLIC;
+GRANT ALL ON TABLE public.cms_theme_templates TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.cms_theme_templates TO token_7;
+GRANT ALL ON TABLE public.cms_theme_templates TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.cms_theme_templates TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.cms_theme_templates TO test4;
+GRANT ALL ON TABLE public.cms_theme_templates TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.cms_theme_templates TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.cms_theme_templates TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.cms_theme_templates TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26704,7 +31637,22 @@ GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO admin WITH GRANT OPTI
 GRANT SELECT,USAGE ON SEQUENCE public.cms_theme_templates_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.cms_theme_templates_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26716,7 +31664,22 @@ GRANT ALL ON TABLE public.deferred_bindings TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.deferred_bindings TO frontend;
 GRANT ALL ON TABLE public.deferred_bindings TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.deferred_bindings TO token_5;
-GRANT SELECT ON TABLE public.deferred_bindings TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.deferred_bindings TO PUBLIC;
+GRANT ALL ON TABLE public.deferred_bindings TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.deferred_bindings TO token_7;
+GRANT ALL ON TABLE public.deferred_bindings TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.deferred_bindings TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.deferred_bindings TO test4;
+GRANT ALL ON TABLE public.deferred_bindings TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.deferred_bindings TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.deferred_bindings TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.deferred_bindings TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26728,7 +31691,22 @@ GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO admin WITH GRANT OPTION
 GRANT SELECT,USAGE ON SEQUENCE public.deferred_bindings_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.deferred_bindings_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26740,7 +31718,22 @@ GRANT ALL ON TABLE public.failed_jobs TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.failed_jobs TO frontend;
 GRANT ALL ON TABLE public.failed_jobs TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.failed_jobs TO token_5;
-GRANT SELECT ON TABLE public.failed_jobs TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.failed_jobs TO PUBLIC;
+GRANT ALL ON TABLE public.failed_jobs TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.failed_jobs TO token_7;
+GRANT ALL ON TABLE public.failed_jobs TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.failed_jobs TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.failed_jobs TO test4;
+GRANT ALL ON TABLE public.failed_jobs TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.failed_jobs TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.failed_jobs TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.failed_jobs TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26752,7 +31745,22 @@ GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.failed_jobs_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.failed_jobs_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26764,7 +31772,22 @@ GRANT ALL ON TABLE public.job_batches TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.job_batches TO frontend;
 GRANT ALL ON TABLE public.job_batches TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.job_batches TO token_5;
-GRANT SELECT ON TABLE public.job_batches TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.job_batches TO PUBLIC;
+GRANT ALL ON TABLE public.job_batches TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.job_batches TO token_7;
+GRANT ALL ON TABLE public.job_batches TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.job_batches TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.job_batches TO test4;
+GRANT ALL ON TABLE public.job_batches TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.job_batches TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.job_batches TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.job_batches TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26776,7 +31799,22 @@ GRANT ALL ON TABLE public.jobs TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.jobs TO frontend;
 GRANT ALL ON TABLE public.jobs TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.jobs TO token_5;
-GRANT SELECT ON TABLE public.jobs TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.jobs TO PUBLIC;
+GRANT ALL ON TABLE public.jobs TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.jobs TO token_7;
+GRANT ALL ON TABLE public.jobs TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.jobs TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.jobs TO test4;
+GRANT ALL ON TABLE public.jobs TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.jobs TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.jobs TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.jobs TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26788,7 +31826,22 @@ GRANT ALL ON SEQUENCE public.jobs_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.jobs_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.jobs_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.jobs_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.jobs_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.jobs_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.jobs_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.jobs_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.jobs_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.jobs_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.jobs_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.jobs_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.jobs_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.jobs_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.jobs_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26800,7 +31853,22 @@ GRANT ALL ON TABLE public.migrations TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.migrations TO frontend;
 GRANT ALL ON TABLE public.migrations TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.migrations TO token_5;
-GRANT SELECT ON TABLE public.migrations TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.migrations TO PUBLIC;
+GRANT ALL ON TABLE public.migrations TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.migrations TO token_7;
+GRANT ALL ON TABLE public.migrations TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.migrations TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.migrations TO test4;
+GRANT ALL ON TABLE public.migrations TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.migrations TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.migrations TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.migrations TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26812,7 +31880,22 @@ GRANT ALL ON SEQUENCE public.migrations_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.migrations_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.migrations_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.migrations_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.migrations_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.migrations_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.migrations_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.migrations_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.migrations_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.migrations_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.migrations_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.migrations_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.migrations_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.migrations_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.migrations_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26824,7 +31907,22 @@ GRANT ALL ON TABLE public.winter_location_countries TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.winter_location_countries TO frontend;
 GRANT ALL ON TABLE public.winter_location_countries TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_location_countries TO token_5;
-GRANT SELECT ON TABLE public.winter_location_countries TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.winter_location_countries TO PUBLIC;
+GRANT ALL ON TABLE public.winter_location_countries TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_location_countries TO token_7;
+GRANT ALL ON TABLE public.winter_location_countries TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.winter_location_countries TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.winter_location_countries TO test4;
+GRANT ALL ON TABLE public.winter_location_countries TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.winter_location_countries TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.winter_location_countries TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.winter_location_countries TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26836,7 +31934,22 @@ GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO admin WITH GRA
 GRANT SELECT,USAGE ON SEQUENCE public.rainlab_location_countries_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.rainlab_location_countries_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26848,7 +31961,22 @@ GRANT ALL ON TABLE public.winter_location_states TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.winter_location_states TO frontend;
 GRANT ALL ON TABLE public.winter_location_states TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_location_states TO token_5;
-GRANT SELECT ON TABLE public.winter_location_states TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.winter_location_states TO PUBLIC;
+GRANT ALL ON TABLE public.winter_location_states TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_location_states TO token_7;
+GRANT ALL ON TABLE public.winter_location_states TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.winter_location_states TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.winter_location_states TO test4;
+GRANT ALL ON TABLE public.winter_location_states TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.winter_location_states TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.winter_location_states TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.winter_location_states TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26860,7 +31988,22 @@ GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO admin WITH GRANT 
 GRANT SELECT,USAGE ON SEQUENCE public.rainlab_location_states_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.rainlab_location_states_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26872,7 +32015,22 @@ GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO admin WITH G
 GRANT SELECT,USAGE ON SEQUENCE public.rainlab_translate_attributes_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.rainlab_translate_attributes_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26884,7 +32042,22 @@ GRANT ALL ON TABLE public.winter_translate_indexes TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.winter_translate_indexes TO frontend;
 GRANT ALL ON TABLE public.winter_translate_indexes TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_translate_indexes TO token_5;
-GRANT SELECT ON TABLE public.winter_translate_indexes TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.winter_translate_indexes TO PUBLIC;
+GRANT ALL ON TABLE public.winter_translate_indexes TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_translate_indexes TO token_7;
+GRANT ALL ON TABLE public.winter_translate_indexes TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.winter_translate_indexes TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.winter_translate_indexes TO test4;
+GRANT ALL ON TABLE public.winter_translate_indexes TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.winter_translate_indexes TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.winter_translate_indexes TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.winter_translate_indexes TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26896,7 +32069,22 @@ GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO admin WITH GRAN
 GRANT SELECT,USAGE ON SEQUENCE public.rainlab_translate_indexes_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.rainlab_translate_indexes_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26908,7 +32096,22 @@ GRANT ALL ON TABLE public.winter_translate_locales TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.winter_translate_locales TO frontend;
 GRANT ALL ON TABLE public.winter_translate_locales TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_translate_locales TO token_5;
-GRANT SELECT ON TABLE public.winter_translate_locales TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.winter_translate_locales TO PUBLIC;
+GRANT ALL ON TABLE public.winter_translate_locales TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_translate_locales TO token_7;
+GRANT ALL ON TABLE public.winter_translate_locales TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.winter_translate_locales TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.winter_translate_locales TO test4;
+GRANT ALL ON TABLE public.winter_translate_locales TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.winter_translate_locales TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.winter_translate_locales TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.winter_translate_locales TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26920,7 +32123,22 @@ GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO admin WITH GRAN
 GRANT SELECT,USAGE ON SEQUENCE public.rainlab_translate_locales_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.rainlab_translate_locales_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26932,7 +32150,22 @@ GRANT ALL ON TABLE public.winter_translate_messages TO admin WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_translate_messages TO frontend;
 GRANT ALL ON TABLE public.winter_translate_messages TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_translate_messages TO token_5;
-GRANT SELECT ON TABLE public.winter_translate_messages TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.winter_translate_messages TO PUBLIC;
+GRANT ALL ON TABLE public.winter_translate_messages TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.winter_translate_messages TO token_7;
+GRANT ALL ON TABLE public.winter_translate_messages TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.winter_translate_messages TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.winter_translate_messages TO test4;
+GRANT ALL ON TABLE public.winter_translate_messages TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.winter_translate_messages TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.winter_translate_messages TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.winter_translate_messages TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26944,7 +32177,22 @@ GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO admin WITH GRA
 GRANT SELECT,USAGE ON SEQUENCE public.rainlab_translate_messages_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.rainlab_translate_messages_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26956,7 +32204,22 @@ GRANT ALL ON TABLE public.sessions TO admin WITH GRANT OPTION;
 GRANT SELECT,INSERT,DELETE,TRIGGER,UPDATE ON TABLE public.sessions TO frontend;
 GRANT ALL ON TABLE public.sessions TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.sessions TO token_5;
-GRANT SELECT ON TABLE public.sessions TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.sessions TO PUBLIC;
+GRANT ALL ON TABLE public.sessions TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.sessions TO token_7;
+GRANT ALL ON TABLE public.sessions TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.sessions TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.sessions TO test4;
+GRANT ALL ON TABLE public.sessions TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.sessions TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.sessions TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.sessions TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26968,7 +32231,22 @@ GRANT ALL ON TABLE public.system_event_logs TO admin WITH GRANT OPTION;
 GRANT SELECT,INSERT,DELETE,TRIGGER,UPDATE ON TABLE public.system_event_logs TO frontend;
 GRANT ALL ON TABLE public.system_event_logs TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_event_logs TO token_5;
-GRANT SELECT ON TABLE public.system_event_logs TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.system_event_logs TO PUBLIC;
+GRANT ALL ON TABLE public.system_event_logs TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_event_logs TO token_7;
+GRANT ALL ON TABLE public.system_event_logs TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.system_event_logs TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_event_logs TO test4;
+GRANT ALL ON TABLE public.system_event_logs TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.system_event_logs TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_event_logs TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.system_event_logs TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26980,7 +32258,22 @@ GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO admin WITH GRANT OPTION
 GRANT SELECT,USAGE ON SEQUENCE public.system_event_logs_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.system_event_logs_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -26992,7 +32285,22 @@ GRANT ALL ON TABLE public.system_files TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_files TO frontend;
 GRANT ALL ON TABLE public.system_files TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_files TO token_5;
-GRANT SELECT ON TABLE public.system_files TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.system_files TO PUBLIC;
+GRANT ALL ON TABLE public.system_files TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_files TO token_7;
+GRANT ALL ON TABLE public.system_files TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.system_files TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_files TO test4;
+GRANT ALL ON TABLE public.system_files TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.system_files TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_files TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.system_files TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27004,7 +32312,22 @@ GRANT ALL ON SEQUENCE public.system_files_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.system_files_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_files_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_files_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.system_files_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_files_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_files_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_files_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.system_files_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.system_files_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_files_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.system_files_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.system_files_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_files_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.system_files_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27016,7 +32339,22 @@ GRANT ALL ON TABLE public.system_mail_layouts TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_mail_layouts TO frontend;
 GRANT ALL ON TABLE public.system_mail_layouts TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_mail_layouts TO token_5;
-GRANT SELECT ON TABLE public.system_mail_layouts TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.system_mail_layouts TO PUBLIC;
+GRANT ALL ON TABLE public.system_mail_layouts TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_mail_layouts TO token_7;
+GRANT ALL ON TABLE public.system_mail_layouts TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.system_mail_layouts TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_mail_layouts TO test4;
+GRANT ALL ON TABLE public.system_mail_layouts TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.system_mail_layouts TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_mail_layouts TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.system_mail_layouts TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27028,7 +32366,22 @@ GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO admin WITH GRANT OPTI
 GRANT SELECT,USAGE ON SEQUENCE public.system_mail_layouts_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.system_mail_layouts_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27040,7 +32393,22 @@ GRANT ALL ON TABLE public.system_mail_partials TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_mail_partials TO frontend;
 GRANT ALL ON TABLE public.system_mail_partials TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_mail_partials TO token_5;
-GRANT SELECT ON TABLE public.system_mail_partials TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.system_mail_partials TO PUBLIC;
+GRANT ALL ON TABLE public.system_mail_partials TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_mail_partials TO token_7;
+GRANT ALL ON TABLE public.system_mail_partials TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.system_mail_partials TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_mail_partials TO test4;
+GRANT ALL ON TABLE public.system_mail_partials TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.system_mail_partials TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_mail_partials TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.system_mail_partials TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27052,7 +32420,22 @@ GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO admin WITH GRANT OPT
 GRANT SELECT,USAGE ON SEQUENCE public.system_mail_partials_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.system_mail_partials_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27064,7 +32447,22 @@ GRANT ALL ON TABLE public.system_mail_templates TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_mail_templates TO frontend;
 GRANT ALL ON TABLE public.system_mail_templates TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_mail_templates TO token_5;
-GRANT SELECT ON TABLE public.system_mail_templates TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.system_mail_templates TO PUBLIC;
+GRANT ALL ON TABLE public.system_mail_templates TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_mail_templates TO token_7;
+GRANT ALL ON TABLE public.system_mail_templates TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.system_mail_templates TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_mail_templates TO test4;
+GRANT ALL ON TABLE public.system_mail_templates TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.system_mail_templates TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_mail_templates TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.system_mail_templates TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27076,7 +32474,22 @@ GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO admin WITH GRANT OP
 GRANT SELECT,USAGE ON SEQUENCE public.system_mail_templates_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.system_mail_templates_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27088,7 +32501,22 @@ GRANT ALL ON TABLE public.system_parameters TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_parameters TO frontend;
 GRANT ALL ON TABLE public.system_parameters TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_parameters TO token_5;
-GRANT SELECT ON TABLE public.system_parameters TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.system_parameters TO PUBLIC;
+GRANT ALL ON TABLE public.system_parameters TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_parameters TO token_7;
+GRANT ALL ON TABLE public.system_parameters TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.system_parameters TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_parameters TO test4;
+GRANT ALL ON TABLE public.system_parameters TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.system_parameters TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_parameters TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.system_parameters TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27100,7 +32528,22 @@ GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO admin WITH GRANT OPTION
 GRANT SELECT,USAGE ON SEQUENCE public.system_parameters_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.system_parameters_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27112,7 +32555,22 @@ GRANT ALL ON TABLE public.system_plugin_history TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_plugin_history TO frontend;
 GRANT ALL ON TABLE public.system_plugin_history TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_plugin_history TO token_5;
-GRANT SELECT ON TABLE public.system_plugin_history TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.system_plugin_history TO PUBLIC;
+GRANT ALL ON TABLE public.system_plugin_history TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_plugin_history TO token_7;
+GRANT ALL ON TABLE public.system_plugin_history TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.system_plugin_history TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_plugin_history TO test4;
+GRANT ALL ON TABLE public.system_plugin_history TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.system_plugin_history TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_plugin_history TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.system_plugin_history TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27124,7 +32582,22 @@ GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO admin WITH GRANT OP
 GRANT SELECT,USAGE ON SEQUENCE public.system_plugin_history_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.system_plugin_history_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27136,7 +32609,22 @@ GRANT ALL ON TABLE public.system_plugin_versions TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_plugin_versions TO frontend;
 GRANT ALL ON TABLE public.system_plugin_versions TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_plugin_versions TO token_5;
-GRANT SELECT ON TABLE public.system_plugin_versions TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.system_plugin_versions TO PUBLIC;
+GRANT ALL ON TABLE public.system_plugin_versions TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_plugin_versions TO token_7;
+GRANT ALL ON TABLE public.system_plugin_versions TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.system_plugin_versions TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_plugin_versions TO test4;
+GRANT ALL ON TABLE public.system_plugin_versions TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.system_plugin_versions TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_plugin_versions TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.system_plugin_versions TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27148,7 +32636,22 @@ GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO admin WITH GRANT O
 GRANT SELECT,USAGE ON SEQUENCE public.system_plugin_versions_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.system_plugin_versions_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27160,7 +32663,22 @@ GRANT ALL ON TABLE public.system_request_logs TO admin WITH GRANT OPTION;
 GRANT SELECT,INSERT,DELETE,TRIGGER,UPDATE ON TABLE public.system_request_logs TO frontend;
 GRANT ALL ON TABLE public.system_request_logs TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_request_logs TO token_5;
-GRANT SELECT ON TABLE public.system_request_logs TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.system_request_logs TO PUBLIC;
+GRANT ALL ON TABLE public.system_request_logs TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_request_logs TO token_7;
+GRANT ALL ON TABLE public.system_request_logs TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.system_request_logs TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_request_logs TO test4;
+GRANT ALL ON TABLE public.system_request_logs TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.system_request_logs TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_request_logs TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.system_request_logs TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27172,7 +32690,22 @@ GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO admin WITH GRANT OPTI
 GRANT SELECT,USAGE ON SEQUENCE public.system_request_logs_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.system_request_logs_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27184,7 +32717,22 @@ GRANT ALL ON TABLE public.system_revisions TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_revisions TO frontend;
 GRANT ALL ON TABLE public.system_revisions TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_revisions TO token_5;
-GRANT SELECT ON TABLE public.system_revisions TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.system_revisions TO PUBLIC;
+GRANT ALL ON TABLE public.system_revisions TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_revisions TO token_7;
+GRANT ALL ON TABLE public.system_revisions TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.system_revisions TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_revisions TO test4;
+GRANT ALL ON TABLE public.system_revisions TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.system_revisions TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_revisions TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.system_revisions TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27196,7 +32744,22 @@ GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.system_revisions_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.system_revisions_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27208,7 +32771,22 @@ GRANT ALL ON TABLE public.system_settings TO admin WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.system_settings TO frontend;
 GRANT ALL ON TABLE public.system_settings TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_settings TO token_5;
-GRANT SELECT ON TABLE public.system_settings TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.system_settings TO PUBLIC;
+GRANT ALL ON TABLE public.system_settings TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.system_settings TO token_7;
+GRANT ALL ON TABLE public.system_settings TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.system_settings TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_settings TO test4;
+GRANT ALL ON TABLE public.system_settings TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.system_settings TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.system_settings TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.system_settings TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27220,7 +32798,22 @@ GRANT ALL ON SEQUENCE public.system_settings_id_seq TO admin WITH GRANT OPTION;
 GRANT SELECT,USAGE ON SEQUENCE public.system_settings_id_seq TO frontend;
 GRANT ALL ON SEQUENCE public.system_settings_id_seq TO sz WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_settings_id_seq TO token_5;
-GRANT SELECT ON SEQUENCE public.system_settings_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_settings_id_seq TO PUBLIC;
+GRANT ALL ON SEQUENCE public.system_settings_id_seq TO test WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.system_settings_id_seq TO token_7;
+GRANT ALL ON SEQUENCE public.system_settings_id_seq TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON SEQUENCE public.system_settings_id_seq TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_settings_id_seq TO test4;
+GRANT ALL ON SEQUENCE public.system_settings_id_seq TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON SEQUENCE public.system_settings_id_seq TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON SEQUENCE public.system_settings_id_seq TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON SEQUENCE public.system_settings_id_seq TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27228,6 +32821,23 @@ GRANT SELECT ON SEQUENCE public.system_settings_id_seq TO PUBLIC;
 --
 
 GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_7;
+GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_5;
+GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO test4;
+GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO test7 WITH GRANT OPTION;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.university_mofadala_baccalaureate_marks TO PUBLIC;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27239,7 +32849,22 @@ GRANT ALL ON TABLE public.university_mofadala_branches TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_branches TO token_1 WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.university_mofadala_branches TO frontend;
 GRANT ALL ON TABLE public.university_mofadala_branches TO token_5;
-GRANT SELECT ON TABLE public.university_mofadala_branches TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.university_mofadala_branches TO PUBLIC;
+GRANT ALL ON TABLE public.university_mofadala_branches TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.university_mofadala_branches TO token_7;
+GRANT ALL ON TABLE public.university_mofadala_branches TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.university_mofadala_branches TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_branches TO test4;
+GRANT ALL ON TABLE public.university_mofadala_branches TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.university_mofadala_branches TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_branches TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.university_mofadala_branches TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27250,8 +32875,23 @@ REVOKE ALL ON TABLE public.university_mofadala_candidate_exam_material_marks FRO
 GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO sz WITH GRANT OPTION;
 GRANT SELECT ON TABLE public.university_mofadala_candidate_exam_material_marks TO frontend;
 GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.university_mofadala_candidate_exam_material_marks TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.university_mofadala_candidate_exam_material_marks TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO token_5;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO token_7;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO test4;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27262,8 +32902,23 @@ REVOKE ALL ON TABLE public.university_mofadala_candidate_exam_materials FROM sz;
 GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO sz WITH GRANT OPTION;
 GRANT SELECT ON TABLE public.university_mofadala_candidate_exam_materials TO frontend;
 GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.university_mofadala_candidate_exam_materials TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.university_mofadala_candidate_exam_materials TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO token_5;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO token_7;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO test4;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27274,8 +32929,23 @@ REVOKE ALL ON TABLE public.university_mofadala_candidate_exams FROM sz;
 GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO sz WITH GRANT OPTION;
 GRANT SELECT ON TABLE public.university_mofadala_candidate_exams TO frontend;
 GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.university_mofadala_candidate_exams TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.university_mofadala_candidate_exams TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO token_5;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO token_7;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO test4;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27286,8 +32956,23 @@ REVOKE ALL ON TABLE public.university_mofadala_certificate_languages FROM sz;
 GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO sz WITH GRANT OPTION;
 GRANT SELECT ON TABLE public.university_mofadala_certificate_languages TO frontend;
 GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.university_mofadala_certificate_languages TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.university_mofadala_certificate_languages TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO token_5;
+GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO token_7;
+GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO test4;
+GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27298,8 +32983,23 @@ REVOKE ALL ON TABLE public.university_mofadala_cities FROM sz;
 GRANT ALL ON TABLE public.university_mofadala_cities TO sz WITH GRANT OPTION;
 GRANT SELECT ON TABLE public.university_mofadala_cities TO frontend;
 GRANT ALL ON TABLE public.university_mofadala_cities TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.university_mofadala_cities TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.university_mofadala_cities TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_cities TO token_5;
+GRANT ALL ON TABLE public.university_mofadala_cities TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.university_mofadala_cities TO token_7;
+GRANT ALL ON TABLE public.university_mofadala_cities TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.university_mofadala_cities TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_cities TO test4;
+GRANT ALL ON TABLE public.university_mofadala_cities TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.university_mofadala_cities TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_cities TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.university_mofadala_cities TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27310,8 +33010,23 @@ REVOKE ALL ON TABLE public.university_mofadala_department_details FROM sz;
 GRANT ALL ON TABLE public.university_mofadala_department_details TO sz WITH GRANT OPTION;
 GRANT SELECT ON TABLE public.university_mofadala_department_details TO frontend;
 GRANT ALL ON TABLE public.university_mofadala_department_details TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.university_mofadala_department_details TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.university_mofadala_department_details TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_department_details TO token_5;
+GRANT ALL ON TABLE public.university_mofadala_department_details TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.university_mofadala_department_details TO token_7;
+GRANT ALL ON TABLE public.university_mofadala_department_details TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.university_mofadala_department_details TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_department_details TO test4;
+GRANT ALL ON TABLE public.university_mofadala_department_details TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.university_mofadala_department_details TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_department_details TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.university_mofadala_department_details TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27323,7 +33038,22 @@ GRANT ALL ON TABLE public.university_mofadala_departments TO sz WITH GRANT OPTIO
 GRANT ALL ON TABLE public.university_mofadala_departments TO token_1 WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.university_mofadala_departments TO frontend;
 GRANT ALL ON TABLE public.university_mofadala_departments TO token_5;
-GRANT SELECT ON TABLE public.university_mofadala_departments TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.university_mofadala_departments TO PUBLIC;
+GRANT ALL ON TABLE public.university_mofadala_departments TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.university_mofadala_departments TO token_7;
+GRANT ALL ON TABLE public.university_mofadala_departments TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.university_mofadala_departments TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_departments TO test4;
+GRANT ALL ON TABLE public.university_mofadala_departments TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.university_mofadala_departments TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_departments TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.university_mofadala_departments TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27334,8 +33064,23 @@ REVOKE ALL ON TABLE public.university_mofadala_exam_centers FROM sz;
 GRANT ALL ON TABLE public.university_mofadala_exam_centers TO sz WITH GRANT OPTION;
 GRANT SELECT ON TABLE public.university_mofadala_exam_centers TO frontend;
 GRANT ALL ON TABLE public.university_mofadala_exam_centers TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.university_mofadala_exam_centers TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.university_mofadala_exam_centers TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_exam_centers TO token_5;
+GRANT ALL ON TABLE public.university_mofadala_exam_centers TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.university_mofadala_exam_centers TO token_7;
+GRANT ALL ON TABLE public.university_mofadala_exam_centers TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.university_mofadala_exam_centers TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_exam_centers TO test4;
+GRANT ALL ON TABLE public.university_mofadala_exam_centers TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.university_mofadala_exam_centers TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_exam_centers TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.university_mofadala_exam_centers TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27346,8 +33091,23 @@ REVOKE ALL ON TABLE public.university_mofadala_mofadala_years FROM sz;
 GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO sz WITH GRANT OPTION;
 GRANT SELECT ON TABLE public.university_mofadala_mofadala_years TO frontend;
 GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.university_mofadala_mofadala_years TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.university_mofadala_mofadala_years TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO token_5;
+GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO token_7;
+GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO test4;
+GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27358,8 +33118,23 @@ REVOKE ALL ON TABLE public.university_mofadala_student_desire_details FROM sz;
 GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO sz WITH GRANT OPTION;
 GRANT SELECT ON TABLE public.university_mofadala_student_desire_details TO frontend;
 GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.university_mofadala_student_desire_details TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.university_mofadala_student_desire_details TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO token_5;
+GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO token_7;
+GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO test4;
+GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27371,7 +33146,22 @@ GRANT ALL ON TABLE public.university_mofadala_students TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_students TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_students TO token_5;
 GRANT SELECT,TRIGGER ON TABLE public.university_mofadala_students TO frontend;
-GRANT SELECT ON TABLE public.university_mofadala_students TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.university_mofadala_students TO PUBLIC;
+GRANT ALL ON TABLE public.university_mofadala_students TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.university_mofadala_students TO token_7;
+GRANT ALL ON TABLE public.university_mofadala_students TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.university_mofadala_students TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_students TO test4;
+GRANT ALL ON TABLE public.university_mofadala_students TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.university_mofadala_students TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_students TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.university_mofadala_students TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27382,8 +33172,23 @@ REVOKE ALL ON TABLE public.university_mofadala_type_certificates FROM sz;
 GRANT ALL ON TABLE public.university_mofadala_type_certificates TO sz WITH GRANT OPTION;
 GRANT SELECT ON TABLE public.university_mofadala_type_certificates TO frontend;
 GRANT ALL ON TABLE public.university_mofadala_type_certificates TO token_1 WITH GRANT OPTION;
-GRANT SELECT ON TABLE public.university_mofadala_type_certificates TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.university_mofadala_type_certificates TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_type_certificates TO token_5;
+GRANT ALL ON TABLE public.university_mofadala_type_certificates TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.university_mofadala_type_certificates TO token_7;
+GRANT ALL ON TABLE public.university_mofadala_type_certificates TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.university_mofadala_type_certificates TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_type_certificates TO test4;
+GRANT ALL ON TABLE public.university_mofadala_type_certificates TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.university_mofadala_type_certificates TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_type_certificates TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.university_mofadala_type_certificates TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27395,7 +33200,22 @@ GRANT ALL ON TABLE public.university_mofadala_universities TO sz WITH GRANT OPTI
 GRANT ALL ON TABLE public.university_mofadala_universities TO token_1 WITH GRANT OPTION;
 GRANT SELECT,TRIGGER ON TABLE public.university_mofadala_universities TO frontend;
 GRANT ALL ON TABLE public.university_mofadala_universities TO token_5;
-GRANT SELECT ON TABLE public.university_mofadala_universities TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.university_mofadala_universities TO PUBLIC;
+GRANT ALL ON TABLE public.university_mofadala_universities TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.university_mofadala_universities TO token_7;
+GRANT ALL ON TABLE public.university_mofadala_universities TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.university_mofadala_universities TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_universities TO test4;
+GRANT ALL ON TABLE public.university_mofadala_universities TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.university_mofadala_universities TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_universities TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.university_mofadala_universities TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
@@ -27407,10 +33227,27 @@ GRANT ALL ON TABLE public.university_mofadala_university_categories TO sz WITH G
 GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_5;
 GRANT SELECT,TRIGGER ON TABLE public.university_mofadala_university_categories TO frontend;
-GRANT SELECT ON TABLE public.university_mofadala_university_categories TO PUBLIC;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.university_mofadala_university_categories TO PUBLIC;
+GRANT ALL ON TABLE public.university_mofadala_university_categories TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_7;
+GRANT ALL ON TABLE public.university_mofadala_university_categories TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_university_categories TO test4;
+GRANT ALL ON TABLE public.university_mofadala_university_categories TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.university_mofadala_university_categories TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_13;
+RESET SESSION AUTHORIZATION;
 
 
 --
 -- PostgreSQL database dump complete
 --
+
+\unrestrict emusFksvORuUhYfhLzB9k3W7PMgbeGd7wlnJnJlPzp2AiRGW4kDHp6RHkL1bUEP
 

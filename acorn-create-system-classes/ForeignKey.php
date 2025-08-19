@@ -29,6 +29,8 @@ class ForeignKey {
     public $tableTo;
     public $columnTo;
 
+    static public $implied1to1 = array();
+
     // Comment
     public $comment;
     public $fieldComment;
@@ -67,7 +69,7 @@ class ForeignKey {
     public $showSearch; // In relationmanager, default: TRUE
     public $dependsOn;  // Array of field names
     public $flags; // e.g. hierarchy flag for global scope
-
+    public $filterSearchNameSelect; // Special select useful for 1to1 filter term search
 
     public static function fromRow(Column &$column, bool $to, array $row)
     {
@@ -229,10 +231,15 @@ class ForeignKey {
     public function is1to1(): bool
     {
         // Foreign ID => ID
-        // 1to1 cannot be ascertained programmatically
-        // because the schema is identical to 1toX
+        // 1to1 can be ascertained programmatically: 
+        //   1toX WITH a UNIQUE CONSTRAINT on the ForeignIDField
+        // for example: entities.user_group_id
+        $schemaIs   = (
+            $this->columnFrom->isSingularUnique()
+        );
+        if ($schemaIs) self::$implied1to1[$this->name] = $this;
         $explicitIs = ($this->type == '1to1');
-        return ($explicitIs || $this->isLeaf());
+        return ($explicitIs || $schemaIs || $this->isLeaf());
     }
 
     public function isXto1(): bool
@@ -246,6 +253,7 @@ class ForeignKey {
             && $this->tableTo->isContentTable()  // True still if central
             && !$this->tableTo->isCentralTable()
             && $this->columnTo->isTheIdColumn()
+            && !$this->columnFrom->isSingularUnique() // 1to1s do this
         );
         return (!$isExplicitNot && ($schemaIs || $explicitIs));
     }

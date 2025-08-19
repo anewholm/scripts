@@ -158,8 +158,8 @@ class Field {
     public $filterType;
     public $yearRange;
     public $filterConditions;
-    public $autoRelationCanFilter;
     public $filters; // Custom filters
+    public $filterSearchNameSelect;
 
     // --------------------------------------------- Construction
     protected function __construct(Model &$model, array $definition, Column $column = NULL, array $relations = array())
@@ -210,7 +210,7 @@ class Field {
         
         if (!isset($this->invisible))     $this->invisible  = FALSE;
         if (!isset($this->searchable))    $this->searchable = TRUE;
-        if (!isset($this->canFilter))     $this->canFilter  = FALSE;
+        if (!isset($this->canFilter))     $this->canFilter  = FALSE; // What would the options be anyway?
         if (!isset($this->sortable))      $this->sortable   = FALSE;
         if (!isset($this->span))          $this->span       = 'storm';
 
@@ -235,6 +235,7 @@ class Field {
         if ($this->column && $this->column->isCustom()) {
             $permissionNameStub = $this->permissionStub();
             array_push($this->permissions, "{$permissionNameStub}_view");
+            array_push($this->permissions, "{$permissionNameStub}_change");
         }
 
         // Checks
@@ -480,6 +481,11 @@ class Field {
         return $this->column->isStandard();
     }
 
+    public function isSingularUnique(): bool
+    {
+        return $this->column?->isSingularUnique();
+    }
+
     public function isCustom():   bool {
         // TODO: Change this to Field name checks to include _qrcode etc.?
         if (!$this->column) throw new Exception("Field [$this->name] is not related to a column");
@@ -527,8 +533,6 @@ class Field {
 
     public function permissionStub(): string
     {
-        if (!$this->column) 
-            throw new Exception("Field [$this->name] is not related to a column");
         $plugin = $this->model->plugin->dotName();
         $model  = $this->model->dirName();
         $field  = $this->name;
@@ -589,16 +593,20 @@ class Field {
     {
         $permissions = array();
 
-        if ($this->column && $this->column->isCustom()) {
+        if (!$this->column || ($this->column && $this->column->isCustom())) {
             $permissionNameStub = $this->permissionStub();
             // TODO: Translation of permission names
-            $view               = 'View field';
             $modelTitle         = Str::title($this->model->name);
             $title              = Str::title($this->name);
+            
+            $aciotnName         = 'View field';
             $permissions["{$permissionNameStub}_view"] = array(
-                'labels' => array('en' => "$view $modelTitle $title")
+                'labels' => array('en' => "$aciotnName $modelTitle $title")
             );
-            // TODO: $permissions["{$permissionNameStub}_change"] = TRUE; 
+            $aciotnName         = 'Change field';
+            $permissions["{$permissionNameStub}_change"] = array(
+                'labels' => array('en' => "$aciotnName $modelTitle $title")
+            );
         }
 
         if ($this->permissionSettings) {

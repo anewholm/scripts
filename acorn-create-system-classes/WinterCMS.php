@@ -699,7 +699,7 @@ PHP;
                             $url  = $controller->relativeUrl();
                             $modelFQN        = $model->absoluteFullyQualifiedName();
                             $langSectionName = $model->langSectionName();
-                            $permissionFQN   = $model->permissionFQN();
+                            $permissionFQN   = $model->permissionFQN('view_menu');
 
                             if ($controller->qrCodeScan) {
                                 $qrUrl = "$url/qrcodescan";
@@ -1261,7 +1261,15 @@ PHP
             // ----------------------------------------------------------------- Columns commenting in header
             $indent         = str_repeat(' ', 1*4);
             $commentHeader  = "$indent/* Generated Fields:\n";
-            foreach ($model->getTable()->columns as $name => &$column) $commentHeader .= "$indent * $column\n";
+            foreach ($model->getTable()->columns as $name => &$column) {
+                $flags = array();
+                if ($column->isSingularUnique()) array_push($flags, 'singular-unique');
+                $flagsString = implode(', ', $flags);
+                $commentHeader   .= "$indent *   $column $flagsString\n";
+            }
+            $commentHeader .= "\n";
+            $commentHeader .= "$indent * Settings:\n";
+            $commentHeader .= "$indent *   noRelationManagerDefault: " . var_export($model->noRelationManagerDefault, TRUE) . "\n";
             $commentHeader .= "$indent */\n";
             $this->replaceInFile($modelFilePath, '/^{$/m', "{\n$commentHeader");
         } // Model exists
@@ -1654,7 +1662,8 @@ PHP
                         'type'       => $field->filterType,
                         'conditions' => $field->filterConditions,
                         'nameFrom'   => ($nameFromEmbedded ? FALSE : $field->nameFrom), 
-                        'noRelationManager' => $field->noRelationManager
+                        'noRelationManager' => $field->noRelationManager,
+                        'searchNameSelect'  => $field->filterSearchNameSelect,
                     );
 
                     if (count($field->relations)) {
@@ -1730,6 +1739,9 @@ PHP
                 //           formulae: Formulae
                 if ($field->filters) {
                     foreach ($field->filters as $name => $filter) {
+                        $comment  = (isset($filter['#']) ? $filter['#'] : '');
+                        $comment .= "Custom filter on $field->name field.";
+                        $filter['#'] = $comment;
                         $this->yamlFileSet($configFilterPath, "scopes.$name", $filter, Framework::NO_THROW);
                     }
                 }                
@@ -1760,6 +1772,10 @@ PHP
             //           formulae: Formulae
             if ($controller->model->filters) {
                 foreach ($controller->model->filters as $name => $filter) {
+                    $table    = $controller->model->getTable();
+                    $comment  = (isset($filter['#']) ? $filter['#'] : '');
+                    $comment .= "Custom filter on $table->name table.";
+                    $filter['#'] = $comment;
                     $this->yamlFileSet($configFilterPath, "scopes.$name", $filter);
                 }
             }                

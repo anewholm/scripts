@@ -39,6 +39,7 @@ class Relation {
 
     // Filter config_filter.yaml
     public $canFilter;
+    public static $canFilterDefault = TRUE; // We have group options
     public $globalScope; // Chaining from|to
     public $hasManyDeepInclude; // Process this non 1-1 has many deep link
     public $conditions;  // config_relation.yaml conditions
@@ -50,6 +51,7 @@ class Relation {
     public $noRelationManager;
     public $nameFrom;
     public $explicitLabelKey;
+    public $filterSearchNameSelect; // Special select useful for 1to1 filter term search
 
     // Translation arrays
     public $labels;
@@ -88,7 +90,6 @@ class Relation {
             if (property_exists($this, $nameCamel)) $this->$nameCamel = $value;
         }
         if (!isset($this->nameObject)) $this->nameObject = $this->foreignKey?->nameObject;
-        if (!isset($this->canFilter))  $this->canFilter  = TRUE;
         if (!isset($this->readOnly))   $this->readOnly   = $this->to->readOnly;
         if (!isset($this->span))       $this->span       = 'storm';
         if (!isset($this->advanced))   $this->advanced   = $this->foreignKey?->advanced;
@@ -244,6 +245,8 @@ class Relation1from1 extends RelationFrom {
 }
 
 class RelationXto1 extends Relation {
+    public static $canFilterDefault = TRUE;
+
     public function __construct(
         string $name, 
         Model  $from, 
@@ -260,7 +263,6 @@ class RelationXto1 extends Relation {
         $fieldDefinitions = array();
         $from->standardTargetModelFieldDefinitions($column, $relations, $fieldDefinitions); // &$fieldDefinitions pass-by-reference
         $to->standardTargetModelFieldDefinitions(  $column, $relations, $fieldDefinitions); // &$fieldDefinitions pass-by-reference
-        $this->canFilter = (isset($fieldDefinitions['canFilter']) ? $fieldDefinitions['canFilter'] : TRUE);
     }
 }
 
@@ -268,7 +270,7 @@ class RelationXfromXSemi extends RelationFrom {
     public $pivot;
     public $pivotModel;
     public $keyColumn;
-    public $canFilter = TRUE;
+    public static $canFilterDefault = TRUE;
     public $rlButtons = array(
         'create' => TRUE,
         'delete' => TRUE,
@@ -303,7 +305,7 @@ class RelationXfromXSemi extends RelationFrom {
 class RelationXfromX extends RelationFrom {
     public $pivot;
     public $keyColumn;
-    public $canFilter = TRUE;
+    public static $canFilterDefault = TRUE;
     public $rlButtons = array(
         'create' => TRUE,
         'delete' => TRUE,

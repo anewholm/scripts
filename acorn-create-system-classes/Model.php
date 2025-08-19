@@ -71,6 +71,9 @@ class Model {
     public $import;
     public $export;
     public $batchPrint;
+    public $showColumnActions;
+    public $noRelationManagerDefault;
+    public $canFilterDefault;
 
     // Class components
     public $uses      = array();
@@ -381,6 +384,7 @@ class Model {
 
     public function permissionFQN(string|array $qualifier = NULL): string
     {
+        // acorn.university.student [_<qualifier>]
         if (is_array($qualifier)) $qualifier = implode('_', $qualifier);
 
         $permissionFQN = $this->fullyQualifiedDotName();
@@ -419,10 +423,9 @@ class Model {
                     'columnPartial' => 'datetime',
                     'sqlSelect'     => "(select aacep.start from acorn_calendar_event_parts aacep where aacep.event_id = $column->column_name order by aacep.start limit 1)",
                     'autoFKType'    => 'Xto1', // Because these fields also appear on pivot tables, causing them to be XtoXSemi
-                    'autoRelationCanFilter' => TRUE,
 
                     // Filter settings
-                    'canFilter'  => TRUE,
+                    'canFilter'  => TRUE, // $this->isAcornEvent()
                     'filterType' => 'daterange',
                     'yearRange'  => 10,
                     'filterConditions' => "((select aacep.start from acorn_calendar_event_parts aacep where aacep.event_id = $column->column_name order by start limit 1) between ':after' and ':before')",
@@ -434,10 +437,9 @@ class Model {
                 'columnType' => 'text',
                 'sqlSelect'  => "(select aauu.name from acorn_user_users aauu where aauu.id = $column->column_name)",
                 'autoFKType' => 'Xto1', // Because these fields also appear on pivot tables, causing them to be XtoXSemi
-                'autoRelationCanFilter' => TRUE,
 
                 // Filter settings
-                'canFilter'  => TRUE,
+                'canFilter'  => TRUE, // $this->isAcornUser()
             );
         }
 
@@ -454,14 +456,29 @@ class Model {
         //      trials__access:
         //         labels: 
         //         en: Create a Trial
-        $permissions = array();
-
-        // Standard view menu item
-        // acorn.university.entity
-        $view           = 'View';
+        $permissions    = array();
         $menuitemPlural = Str::plural(Str::title($this->name));
-        $permissions[$this->permissionFQN()] = array(
-            'labels' => array('en' => "$view $menuitemPlural")
+
+        // TODO: Translation
+        // Standard view menu item: acorn.university.entity_view_menu
+        $labelAction = 'View menu for ';
+        $permissions[$this->permissionFQN('view_menu')] = array(
+            'labels' => array('en' => "$labelAction $menuitemPlural")
+        );
+        // Standard create: acorn.university.entity_create
+        $labelAction = 'Create';
+        $permissions[$this->permissionFQN('create')] = array(
+            'labels' => array('en' => "$labelAction $menuitemPlural")
+        );
+        // Standard update: acorn.university.entity_update
+        $labelAction = 'Update';
+        $permissions[$this->permissionFQN('update')] = array(
+            'labels' => array('en' => "$labelAction $menuitemPlural")
+        );
+        // Standard delete: acorn.university.entity_delete
+        $labelAction = 'Delete';
+        $permissions[$this->permissionFQN('delete')] = array(
+            'labels' => array('en' => "$labelAction $menuitemPlural")
         );
 
         if ($this->permissionSettings) {
@@ -1482,6 +1499,10 @@ class Model {
             $cssClasses      = $relation->cssClasses($useRelationManager);
             $dependsOn       = ($relation->dependsOn ? $relation->dependsOn : array());
             $dependsOn['_paste'] = TRUE;
+            $canFilter       = (isset($relation->canFilter) 
+                ? $relation->canFilter 
+                : (isset($this->canFilterDefault) ? $this->canFilterDefault : $relation::$canFilterDefault)
+            );
 
             print("    {$indentString}Creating column _multi for HasManyDeep({$YELLOW}$relation{$NC})\n");
             $thisIdRelation  = array($name => $relation);
@@ -1493,7 +1514,8 @@ class Model {
                 'columnExclude'  => $relation->columnExclude,
                 'icon'           => $relation->to->icon,
                 'debugComment'   => "Column _multi for $relation on $plugin->name.$this->name",
-                'canFilter'      => TRUE, // These are linked only to fieldTabthe content table
+                // These are linked only to the content table
+                'canFilter'      => $canFilter, 
                 'columnType'     => 'partial',
                 'columnPartial'  => 'multi',
                 'multi'          => $relation->multi,
@@ -1504,7 +1526,8 @@ class Model {
                 'readOnly'       => $relation->readOnly,
                 'fieldComment'   => $relation->fieldComment,
                 'commentHtml'    => $relation->commentHtml,
-                'noRelationManager' => $relation->noRelationManager,
+                'noRelationManager' => (isset($relation->noRelationManager) ? $relation->noRelationManager : $this->noRelationManagerDefault),
+                'filterSearchNameSelect' => $relation->filterSearchNameSelect,
                 'filterConditions' => $relation->filterConditions,
                 'explicitLabelKey' => $relation->explicitLabelKey,
                 
@@ -1531,7 +1554,7 @@ class Model {
                     'useRelationCount' => TRUE,
                     'searchable'       => FALSE,
                     'valueFrom'        => NULL,
-                    'canFilter'        => FALSE,
+                    'canFilter'        => FALSE, // Count
                 ));
             }
             $fields[$name] = new PseudoFromForeignIdField($this, $fieldDefinition, $thisIdRelation);
@@ -1561,6 +1584,11 @@ class Model {
                 ? 'acorn::lang.models.general.children'
                 : $relation->to->translationKey(Model::PLURAL)
             ));
+            // These 1fromX are linked only to the content table
+            $canFilter      = (isset($relation->canFilter) 
+                ? $relation->canFilter 
+                : (isset($this->canFilterDefault) ? $this->canFilterDefault : $relation::$canFilterDefault)
+            );
             $cssClasses    = $relation->cssClasses($useRelationManager);
             $comment       = '';
             $valueFrom     = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
@@ -1590,13 +1618,14 @@ class Model {
                 'comment'        => $relation->comment,
                 'commentHtml'    => TRUE,
                 'relatedModel'   => $relation->to->fullyQualifiedName(),
-                'canFilter'      => FALSE, // These are linked only to the content table
+                'canFilter'      => $canFilter, 
                 'readOnly'       => $relation->readOnly,
                 'multi'          => $relation->multi,
                 'nameObject'     => $relation->nameObject,
                 'span'           => $relation->span,
                 'tab'            => 'INHERIT',
-                'noRelationManager' => $relation->noRelationManager,
+                'noRelationManager' => (isset($relation->noRelationManager) ? $relation->noRelationManager : $this->noRelationManagerDefault),
+                'filterSearchNameSelect' => $relation->filterSearchNameSelect,
                 'explicitLabelKey'  => $relation->explicitLabelKey,
 
                 // List
@@ -1643,7 +1672,11 @@ class Model {
             if ($relation->status == 'broken') continue;
 
             print("    {$indentString}Creating tab multi-select for {$YELLOW}$relation{$NC}\n");
-            $thisIdRelation         = array($name => $relation);
+            $thisIdRelation = array($name => $relation);
+            $canFilter      = (isset($relation->canFilter) 
+                ? $relation->canFilter 
+                : (isset($this->canFilterDefault) ? $this->canFilterDefault : $relation::$canFilterDefault)
+            );
             $fieldObj       = new PseudoFromForeignIdField($this, array(
                 '#'              => "Tab multi-select for relationsXfromXSemi($relationClass($relationType) $relation)",
                 'name'           => $name,
@@ -1667,14 +1700,16 @@ class Model {
                 'comment'        => $relation->comment,
                 'commentHtml'    => TRUE,
                 'relatedModel'   => $relation->to->fullyQualifiedName(),
-                'canFilter'      => TRUE,
+                // These are linked only to the content table
+                'canFilter'      => $canFilter, 
                 'readOnly'       => $relation->readOnly,
                 'span'           => $relation->span,
                 'tab'            => 'INHERIT',
                 'multi'          => $relation->multi,
                 'nameObject'     => $relation->nameObject,
                 'dependsOn'      => $dependsOn,
-                'noRelationManager' => $relation->noRelationManager,
+                'noRelationManager' => (isset($relation->noRelationManager) ? $relation->noRelationManager : $this->noRelationManagerDefault),
+                'filterSearchNameSelect' => $relation->filterSearchNameSelect,
                 'explicitLabelKey'  => $relation->explicitLabelKey,
 
                 // List
@@ -1714,6 +1749,10 @@ class Model {
             $cssClasses      = $relation->cssClasses($useRelationManager);
             $valueFrom       = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
             if ($relation->status == 'broken') continue;
+            $canFilter       = (isset($relation->canFilter) 
+                ? $relation->canFilter 
+                : (isset($this->canFilterDefault) ? $this->canFilterDefault : $relation::$canFilterDefault)
+            );
 
             // TODO: Translatable "create new" comment
             $dataFieldName = "_lc_$name";
@@ -1745,14 +1784,16 @@ class Model {
                 'debugComment'   => "Tab multi-select for $relation on $plugin->name.$this->name",
                 'commentHtml'    => TRUE,
                 'relatedModel'   => $relation->to->fullyQualifiedName(),
-                'canFilter'      => TRUE,
+                // These are linked only to the content table
+                'canFilter'      => $canFilter, 
                 'readOnly'       => $relation->readOnly,
                 'span'           => $relation->span,
                 'tab'            => $tab,
                 'multi'          => $relation->multi,
                 'nameObject'     => $relation->nameObject,
                 'dependsOn'      => $dependsOn,
-                'noRelationManager' => $relation->noRelationManager,
+                'noRelationManager' => (isset($relation->noRelationManager) ? $relation->noRelationManager : $this->noRelationManagerDefault),
+                'filterSearchNameSelect' => $relation->filterSearchNameSelect,
                 'explicitLabelKey'  => $relation->explicitLabelKey,
 
                 // List
@@ -1799,7 +1840,7 @@ class Model {
             'columnPartial' => 'actions',
             'sortable'      => FALSE,
             'searchable'    => FALSE,
-            'invisible'     => FALSE,
+            'invisible'     => ($this->showColumnActions ? FALSE : TRUE),
         ));
 
         // ------------------------------------------------------------- Debug / Checks

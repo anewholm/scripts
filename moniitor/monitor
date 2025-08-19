@@ -1,0 +1,19 @@
+#!/bin/bash
+# Install in /etc/init.d/ on systemd systems like Ubuntu
+
+while [ 1 ]; do
+  alive=`ping -q -c 1 google.com | grep "1 received"`
+  if [ -n "$alive" ]; then
+    wget https://nabu.acorn.org/student/login -o /tmp/nabu 
+    ok=`grep -o "200 OK" /tmp/nabu`
+    if [ -z "$ok" ]; then
+	notify-send-all "NABU down"
+	echo "NABU down"
+    else
+	echo "NABU up"
+    fi
+  else
+	echo "Ping failed. Probably no internet"
+  fi
+  sleep 10
+done

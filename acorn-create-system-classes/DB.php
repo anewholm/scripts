@@ -1,8 +1,10 @@
 <?php namespace Acorn\CreateSystem;
 
+require_once('Schema.php');
 require_once('Table.php');
 require_once('View.php');
 require_once('MaterializedView.php');
+require_once('UniqueConstraint.php');
 
 class DB {
     public    $nc;
@@ -113,10 +115,91 @@ class DB {
 
     // --------------------------------------- Schema Queries
     // PostGres supports ANSI information_schema and proprietry pg_* information
-    // https://www.postgresql.org/docs/current/functions-info.html
-    // https://www.postgresql.org/docs/current/functions-info.html#FUNCTIONS-INFO-COMMENT
+    public function schema(string $name = 'public'): Schema
+    {
+        $schema    = NULL;
+        $statement = $this->connection->prepare("select nspname as name, 
+            obj_description(oid, 'pg_namespace') as comment
+            from pg_namespace
+            where nspname = :name;
+        ");
+        $statement->bindParam(':name', $name);
+        $statement->execute();
+        $results = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        if (count($results))
+            $schema = Schema::fromRow($this, $results[0]);
+
+        return $schema;
+    }
+
+    public function contraintsForTable(string|Table $table): array
+    {
+        $constraints = array(
+            'unique'  => array(),
+            'columns' => array()
+        );
+
+        $schema = NULL;
+        $name   = NULL;
+        if ($table instanceof Table) {
+            $schema = $table->schema;
+            $name   = $table->name;
+        } else {
+            $tableParts = explode('.', $table);
+            $isFQN      = (count($tableParts) > 1);
+            $schema     = ($isFQN ? $tableParts[0] : 'public');
+            $name       = ($isFQN ? $tableParts[1] : $tableParts[0]);
+            $table      = Table::get($table);
+        }
+
+        $statement = $this->connection->prepare("SELECT 
+            con.conname as name, con.contype as type, array_agg(col.column_name) as columns
+            FROM pg_catalog.pg_constraint con
+            INNER JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid
+            INNER JOIN pg_catalog.pg_namespace nsp ON nsp.oid = connamespace
+            left join information_schema.columns col on col.table_schema = nsp.nspname 
+                and col.table_name = rel.relname
+                and not array_position(con.conkey, col.ordinal_position) is null
+            WHERE nsp.nspname = :schema
+            AND rel.relname   = :table
+            group by con.conname, con.contype;
+        ");
+        $statement->bindParam(':schema', $schema);
+        $statement->bindParam(':table',  $name);
+        $statement->execute();
+
+        // There could be multiple rows for the _same_ contraint
+        // in the case where it references many columns in conkey
+        $results     = $statement->fetchAll(\PDO::FETCH_OBJ);
+        foreach ($results as &$result) {
+            $columns = ($result->columns == '{}'
+                ? array()
+                : explode(',', preg_replace('/^{|}$/', '', $result->columns))
+            );
+            $constraint = NULL;
+            switch ($result->type) {
+                case 'u':
+                    // Unique Constraint
+                    $constraint = new UniqueConstraint($table, $columns);
+                    $constraints['unique'][$result->name] = $constraint;
+                    break;
+            }
+            if ($constraint) {
+                foreach ($columns as $column) {
+                    if (!isset($constraints['columns'][$column]))
+                        $constraints['columns'][$column] = array();
+                    array_push($constraints['columns'][$column], $constraint);
+                }
+            }
+        }
+
+        return $constraints;
+    }
+
     public function actionFunctionsForTable(string $table): array
     {
+        // https://www.postgresql.org/docs/current/functions-info.html
+        // https://www.postgresql.org/docs/current/functions-info.html#FUNCTIONS-INFO-COMMENT
         $tableParts     = explode('_', $table); // acorn_justice_legalcases
         $tableQualifier = implode('_', array_slice($tableParts, 2)); // legalcases_*
         return (isset($tableParts[1]) ? $this->functions($tableParts[0], $tableParts[1], 'action', $tableQualifier) : array());

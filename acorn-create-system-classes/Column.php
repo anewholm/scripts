@@ -71,6 +71,7 @@ class Column {
     public $columnExclude;
     public $filters;
     public $noRelationManager;
+    public $singularUniqueConstraint;
 
     // --------------------- Database column settings
     // information_schema.columns.* SQL standard
@@ -199,6 +200,7 @@ class Column {
     public $keyFrom;
 
     public $canFilter;
+    public $filterSearchNameSelect;
 
     // Translation arrays
     public $labels;
@@ -352,6 +354,16 @@ class Column {
                 print("  Added extra {$YELLOW}reverse{$NC} foreign key $YELLOW$name$NC to column $YELLOW$toTable.$toColumn$NC\n");
             }
         }
+    }
+
+    public function addUniqueConstraint(UniqueConstraint $constraint): void {
+        if ($constraint->isSingularColumn())
+            $this->singularUniqueConstraint = $constraint;
+    }
+
+    public function isSingularUnique(): bool
+    {
+        return ($this->singularUniqueConstraint ? TRUE : FALSE);
     }
 
     public function db(): DB

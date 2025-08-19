@@ -13,6 +13,7 @@ require_once('acorn-create-system-classes/GlobalHelpers.php');
 require_once('acorn-create-system-classes/Spyc.php'); // YAML parser
 require_once('acorn-create-system-classes/DatabaseNamingConvention.php');
 require_once('acorn-create-system-classes/DB.php');
+require_once('acorn-create-system-classes/Schema.php');
 require_once('acorn-create-system-classes/Module.php');
 require_once('acorn-create-system-classes/Plugin.php');
 require_once('acorn-create-system-classes/Framework.php');
@@ -77,6 +78,7 @@ file_put_contents('acorn_created_bys_view.sql', "CREATE OR REPLACE VIEW acorn_cr
 // ------------------------------------------- Read DB
 $nc      = new AcornNamingConvention();
 $db      = new DB($nc, $framework); // TODO: Also db->comment => properties heye
+$schema  = $db->schema('public');
 do {
     $tables  = array_merge($db->tables(), $db->views(), $db->materializedViews());
     foreach ($tables as &$table) {
@@ -84,6 +86,7 @@ do {
         $table->loadActionFunctions();
         $table->loadALESFunctions();
         $table->loadTriggers();
+        $table->loadConstraints(); // Unique constraints etc...
     }
 
     // Standard column list and fix checks

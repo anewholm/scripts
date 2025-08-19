@@ -63,6 +63,7 @@ class Table {
     public $attributeFunctions = array();
     public $methods            = array();
     public $staticMethods      = array();
+    public $contraints = array();
 
     public $defaultSort;
     public $showSorting;
@@ -79,6 +80,9 @@ class Table {
 
     public $filters = array();
     public $listRecordUrl;
+    public $showColumnActions;
+    public $noRelationManagerDefault;
+    public $canFilterDefault;
 
     // This is set when models are created
     public $model;
@@ -518,6 +522,21 @@ class Table {
     {
         foreach ($this->columns as &$column) {
             if ($column->shouldProcess()) $column->loadForeignKeys();
+        }
+    }
+
+    public function loadConstraints(): void
+    {
+        $this->contraints = $this->db->contraintsForTable($this);
+        foreach ($this->columns as $columnName => &$column) {
+            foreach ($this->contraints['columns'] as $constraintColumnName => $constraints) {
+                if ($columnName == $constraintColumnName) {
+                    foreach ($constraints as $constraint) {
+                        if ($constraint instanceof UniqueConstraint)
+                           $column->addUniqueConstraint($constraint);
+                    }
+                }
+            }
         }
     }
 
