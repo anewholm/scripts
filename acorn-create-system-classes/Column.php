@@ -159,7 +159,7 @@ class Column {
     public $rules = array();
     public $partial;
     public $default;
-    public $required;
+    public $required; // $is_nullable == NO && !$column_default
     public $trigger;
     public $showSearch;
     public $span;
@@ -203,10 +203,13 @@ class Column {
     public $filterSearchNameSelect;
 
     // Translation arrays
+    public $explicitLabelKey; // From YAML Models and views sometimes
     public $labels;
     public $labelsPlural;
     public $extraTranslations; // array
     public $translatable;
+
+    public $olap; // array|string, olap: measure for data
 
     public static function fromRow(Table &$table, array $row): Column
     {
@@ -364,6 +367,11 @@ class Column {
     public function isSingularUnique(): bool
     {
         return ($this->singularUniqueConstraint ? TRUE : FALSE);
+    }
+
+    public function isRequired(): bool
+    {
+        return ($this->is_nullable == 'NO' && !$this->column_default);
     }
 
     public function db(): DB

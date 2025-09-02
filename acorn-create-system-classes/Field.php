@@ -6,6 +6,8 @@ use Spyc;
 
 class Field {
     public const NO_COLUMN = NULL;
+    public const FORCE_GENERAL_LABEL = TRUE;
+    public static $inheritedLabels = array();
 
     public $model;
     public $column;    // Can be Null
@@ -50,15 +52,15 @@ class Field {
     public $columnExclude;
     public $default;
     public $length;
-    public $hidden       = FALSE; // Set during __construct
-    public $disabled     = FALSE;
-    public $required     = TRUE;
+    public $hidden; // Set during __construct
+    public $disabled;
+    public $required; // !$column->is_nullable == NO && !$column->column_default
     public $trigger;
     public $showSearch;
 
-    public $readOnly     = FALSE;
-    public $newRow       = FALSE; // From column comment
-    public $noLabel      = FALSE; // From column comment
+    public $readOnly;
+    public $newRow;  // From column comment
+    public $noLabel; // From column comment
     public $contexts     = array();
     public $span;
     public $cssClasses;
@@ -119,7 +121,7 @@ class Field {
     public $includePath;
     public $includeContext;
     public $buttons      = array(); // Of new ButtonField()s
-    public $rlButtons    = array('create' => TRUE, 'delete' => TRUE); // On the relationmanager
+    public $rlButtons; // On the relationmanager
     public $goto;
     public $rules = array();
     public $controller; // For popups
@@ -160,6 +162,8 @@ class Field {
     public $filterConditions;
     public $filters; // Custom filters
     public $filterSearchNameSelect;
+
+    public $olap;
 
     // --------------------------------------------- Construction
     protected function __construct(Model &$model, array $definition, Column $column = NULL, array $relations = array())
@@ -230,9 +234,38 @@ class Field {
             }
         }
 
+        // Views often get their labels from the original tables
+        // so labels-from: can be set to indicate which tables to scan
+        // for identical columns and auto-copy the labels
+        if (!isset($this->labels) && !isset($this->explicitLabelKey)) {
+            // Model transforms the labels-from table names in to Table objects
+            foreach ($this->model->labelsFrom as $labelsFromTable) {
+                // We use the Model because it might not be create-system
+                // meaning that labels would not be loaded
+                if ($labelsFromModel = $labelsFromTable->model) {
+                    if ($labelsFromField = $labelsFromModel->getField($this->name)) {
+                        $this->labels           = $labelsFromField->labels;
+                        $this->labelsPlural     = $labelsFromField->labelsPlural;
+                        $this->explicitLabelKey = $labelsFromField->explicitLabelKey;
+                        self::$inheritedLabels[$this->fullyQualifiedName()] = $labelsFromField->fullyQualifiedName();
+                    }
+                }
+            }
+        }
+
+        // Standard columns should reference the standard models.general translation arrays
+        if (   !isset($this->labels) 
+            && !isset($this->explicitLabelKey)
+            && get_class($this) == Field::class // Doesn't work with ForeignIdFields
+        ) {
+            if (isset(Framework::$standardTranslations['en'][$this->name])) {
+                $this->explicitLabelKey = $this->translationKey($this->name, self::FORCE_GENERAL_LABEL);
+            }
+        }
+
         // All fields can be controlled by a permission
         // permissions are expandable/collapsable in the list screen
-        if ($this->column && $this->column->isCustom()) {
+        if (!$this->column || $this->column->isCustom()) {
             $permissionNameStub = $this->permissionStub();
             array_push($this->permissions, "{$permissionNameStub}_view");
             array_push($this->permissions, "{$permissionNameStub}_change");
@@ -241,6 +274,14 @@ class Field {
         // Checks
         if (!$this->name) 
             throw new Exception("Field has no name");
+    }
+
+    public function fullyQualifiedName(): string
+    {
+        return ($this->column 
+            ? $this->column->fullyQualifiedName() 
+            : $this->model->name . '.' . $this->name
+        );
     }
 
     public static function createFromYamlConfigs(Model &$model, string $fieldName, string|NULL $nameContext, array $fieldConfig, array $columnConfig = NULL, int $tabLocation = NULL): Field
@@ -326,6 +367,11 @@ class Field {
             $fieldDefinition['explicitLabelKey'] = ''; // Prevent label writing
         }
 
+        // column|field-type are used for fieldExclude, so we always provide a default
+        // This is YAML source so it will not be defaulted/altered later
+        if (!isset($fieldDefinition['fieldType']))  $fieldDefinition['fieldType']  = 'text';
+        if (!isset($fieldDefinition['columnType'])) $fieldDefinition['columnType'] = 'text';
+
         return self::create($model, $fieldDefinition, $column, $relations);
     }
 
@@ -350,8 +396,8 @@ class Field {
             'valueFrom'  => $column->valueFrom,
         );
 
-        if ($column->is_nullable == 'YES' || $column->column_default) {
-            $fieldDefinition['required']    = FALSE;
+        $fieldDefinition['required'] = ($column->is_nullable == 'NO' && !$column->column_default);
+        if (!$fieldDefinition['required']) {
             $fieldDefinition['placeholder'] = 'backend::lang.form.select';
         }
 
@@ -593,7 +639,7 @@ class Field {
     {
         $permissions = array();
 
-        if (!$this->column || ($this->column && $this->column->isCustom())) {
+        if (!$this->column || $this->column->isCustom()) {
             $permissionNameStub = $this->permissionStub();
             // TODO: Translation of permission names
             $modelTitle         = Str::title($this->model->name);
@@ -688,7 +734,7 @@ class Field {
         return preg_replace('/^lang\./', '', $localTranslationKey);
     }
 
-    public function translationKey(string $name = NULL): string
+    public function translationKey(string $name = NULL, bool $forceGeneral = FALSE): string
     {
         /* Translation:
          *  TODO: Maybe this should be in WinterCMS?
@@ -701,7 +747,7 @@ class Field {
         $group    = 'models';
         $subgroup = $this->model->dirName(); // squished usergroup | invoice
         $name     = ($name ?: $this->name);  // amount | id | name
-        if ($this->isStandard()) $subgroup = 'general';
+        if ($forceGeneral || $this->isStandard()) $subgroup = 'general';
 
         return "$domain::lang.$group.$subgroup.$name";
     }
@@ -885,7 +931,7 @@ class ForeignIdField extends Field {
         }
     }
 
-    public function translationKey(string $name = NULL): string
+    public function translationKey(string $name = NULL, bool $forceGeneral = FALSE): string
     {
         /* Translation:
          *  For foreign keys:           acorn.user::lang.models.usergroup.label (pointing TO the user plugin)
@@ -898,7 +944,7 @@ class ForeignIdField extends Field {
         $hasExplicitTranslations = ($this->labels && count($this->labels));
         if ($qualifier || $hasExplicitTranslations) {
             // Point to our local plugin translations
-            $key = parent::translationKey();
+            $key = parent::translationKey(NULL, $forceGeneral);
         } else {
             // Point to foreign label
             // acorn.user::lang.models.usergroup.label
@@ -917,7 +963,6 @@ class PseudoField extends Field {
     // These do not have a column on this table
     // They are extra fields from external from relations
     // and QR code field
-    public $required   = FALSE;
     public $isStandard = FALSE;
     public $translationKey;
     public $recordsPerPage = 10;
@@ -937,12 +982,12 @@ class PseudoField extends Field {
         return NULL;
     }
 
-    public function translationKey(string $name = NULL): string
+    public function translationKey(string $name = NULL, bool $forceGeneral = FALSE): string
     {
         // parent::translationKey() will return a local domain key
         // which will use explicit labels if there are any
         $realname = preg_replace('/^_/', '', $this->name);
-        return ($this->translationKey && !$this->labels ? $this->translationKey : parent::translationKey($realname));
+        return ($this->translationKey && !$this->labels ? $this->translationKey : parent::translationKey($realname, $forceGeneral));
     }
 }
 
@@ -1025,7 +1070,6 @@ class ButtonField extends PseudoField {
     // These do not have a column on this table
     // They are extra fields from external from relations
     // and QR code field
-    public $required = FALSE;
 
     public function __construct(Model &$model, array $definition, array $relations = array())
     {

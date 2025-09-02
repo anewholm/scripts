@@ -25,6 +25,7 @@ class Relation {
     public $isFrom      = TRUE; // From this column, attached to it
     public $nameObject;
     public $readOnly;
+    public $required;
     public $cssClasses;
     public $placeholder = 'backend::lang.form.select';
     public $newRow;
@@ -35,11 +36,10 @@ class Relation {
     public $showSearch; // In relationmanager, default: TRUE
     public $tabLocation; // primary|secondary|tertiary
     public $span;
-    public $rlButtons = array('create' => TRUE, 'delete' => TRUE);
+    public $rlButtons;
 
     // Filter config_filter.yaml
     public $canFilter;
-    public static $canFilterDefault = TRUE; // We have group options
     public $globalScope; // Chaining from|to
     public $hasManyDeepInclude; // Process this non 1-1 has many deep link
     public $conditions;  // config_relation.yaml conditions
@@ -96,14 +96,25 @@ class Relation {
         if (!isset($this->columnExclude)) {
             // Causes slow-down for large user sets in column views, and usless
             // leave to the fields view
-            if ($this->to->isAcornUser()) $this->columnExclude = TRUE;
+            if ($this->to->isAcornUser() && !$this->isCount) $this->columnExclude = TRUE;
         }
+        // Only RelationXto1|1fromX, shown as dropdowns, can be required or not
+        // For example: event.id <= lecture.event_id can be nullable or not
+        // RelationXto1|1fromX::__construct() will set required based on Column::isRequired()
+        if (!isset($this->required)) $this->required = FALSE;
+        if (!isset($this->fieldExclude) && $this->isCount) $this->fieldExclude = TRUE;
+    }
+
+    public function canFilterDefault(): bool
+    {
+        return TRUE;
     }
 
     public function __toString()
     {
         $qualifier = $this->qualifier();
         $qualifierString = ($qualifier ? " ($qualifier)" : '');
+        if ($this->isCount) $qualifierString .= '(count)';
         return "$this->foreignKey$qualifierString";
     }
 
@@ -231,6 +242,23 @@ class RelationFrom extends Relation {
 }
 
 class Relation1to1 extends Relation {
+    public $required = TRUE;
+
+    public function __construct(
+        string $name, 
+        Model  $from, 
+        Model  $to, 
+        Column $column, 
+        ForeignKey $foreignKey = NULL,
+        bool $isCount = FALSE,
+        string $conditions = NULL
+    ) {
+        parent::__construct($name, $from, $to, $column, $foreignKey, $isCount, $conditions);
+        
+        // Only the derived relation can know its default buttons
+        // TODO: 1to1 should never be a relationmanager
+        if (!isset($this->rlButtons)) $this->rlButtons = FALSE;
+    }
 }
 
 class RelationLeaf extends Relation1to1 {
@@ -238,14 +266,37 @@ class RelationLeaf extends Relation1to1 {
 
 class Relation1fromX extends RelationFrom {
     public $isFrom    = FALSE;
+    public static $rlButtonsDefault = array('create', 'delete');
+
+    public function __construct(
+        string $name, 
+        Model  $from, 
+        Model  $to, 
+        Column $column, 
+        ForeignKey $foreignKey = NULL,
+        bool $isCount = FALSE,
+        string $conditions = NULL
+    ) {
+        parent::__construct($name, $from, $to, $column, $foreignKey, $isCount, $conditions);
+
+        // Only RelationXto1|1fromX can be required or not
+        // For example: event.id <= lecture.event_id can be nullable or not
+        if (!isset($this->required) && $this->foreignKey) {
+            $this->required = $this->foreignKey->columnFrom->isRequired();
+        }
+
+        // Only the derived relation can know its default buttons
+        if (!isset($this->rlButtons)) $this->rlButtons = self::$rlButtonsDefault;
+    }
 }
 
 class Relation1from1 extends RelationFrom {
-    public $isFrom = FALSE;
+    public $isFrom   = FALSE;
+    public $required = TRUE;
 }
 
 class RelationXto1 extends Relation {
-    public static $canFilterDefault = TRUE;
+    public static $rlButtonsDefault = array('create', 'delete');
 
     public function __construct(
         string $name, 
@@ -263,6 +314,20 @@ class RelationXto1 extends Relation {
         $fieldDefinitions = array();
         $from->standardTargetModelFieldDefinitions($column, $relations, $fieldDefinitions); // &$fieldDefinitions pass-by-reference
         $to->standardTargetModelFieldDefinitions(  $column, $relations, $fieldDefinitions); // &$fieldDefinitions pass-by-reference
+
+        // Only RelationXto1|1fromX can be required or not
+        // For example: event.id <= lecture.event_id can be nullable or not
+        if (!isset($this->required) && $this->foreignKey) {
+            $this->required = $this->foreignKey->columnFrom->isRequired();
+        }
+
+        // Only the derived relation can know its default buttons
+        if (!isset($this->rlButtons)) $this->rlButtons = self::$rlButtonsDefault;
+    }
+
+    public function canFilterDefault(): bool
+    {
+        return TRUE;
     }
 }
 
@@ -270,13 +335,7 @@ class RelationXfromXSemi extends RelationFrom {
     public $pivot;
     public $pivotModel;
     public $keyColumn;
-    public static $canFilterDefault = TRUE;
-    public $rlButtons = array(
-        'create' => TRUE,
-        'delete' => TRUE,
-        'link'   => TRUE,
-        'unlink' => TRUE,
-    );
+    public static $rlButtonsDefault = array('create', 'delete', 'link', 'unlink');
 
     public function __construct(
         string $name, 
@@ -294,24 +353,27 @@ class RelationXfromXSemi extends RelationFrom {
         $this->pivotModel = &$pivotModel;
         $this->pivot      = &$table;
         $this->keyColumn  = &$keyColumn;
+
+        // Only the derived relation can know its default buttons
+        if (!isset($this->rlButtons)) $this->rlButtons = self::$rlButtonsDefault;
     }
 
     public function __toString()
     {
         return parent::__toString() . " through semi [$this->pivot]";
     }
+
+    public function canFilterDefault(): bool
+    {
+        return TRUE;
+    }
 }
 
 class RelationXfromX extends RelationFrom {
     public $pivot;
     public $keyColumn;
-    public static $canFilterDefault = TRUE;
-    public $rlButtons = array(
-        'create' => TRUE,
-        'delete' => TRUE,
-        'link'   => TRUE,
-        'unlink' => TRUE,
-    );
+
+    public static $rlButtonsDefault = array('create', 'delete', 'link', 'unlink');
 
     public function __construct(
         string $name, 
@@ -328,11 +390,19 @@ class RelationXfromX extends RelationFrom {
 
         $this->pivot     = &$pivot;
         $this->keyColumn = &$keyColumn;
+
+        // Only the derived relation can know its default buttons
+        if (!isset($this->rlButtons)) $this->rlButtons = self::$rlButtonsDefault;
     }
 
     public function __toString()
     {
         return parent::__toString() . " through [$this->pivot]";
+    }
+
+    public function canFilterDefault(): bool
+    {
+        return TRUE;
     }
 }
 
@@ -356,7 +426,7 @@ class RelationHasManyDeep extends Relation {
         Model  $from,          // Entity
         Model  $to,            // User
         Column $column,
-        ForeignKey $lastForeignKey,
+        ForeignKey|NULL $lastForeignKey, // WinterModels will not have an FK associated
         array $throughRelations, // name => relation
         bool  $containsLeaf,
         bool  $nameObject,
@@ -366,22 +436,26 @@ class RelationHasManyDeep extends Relation {
         $firstRelation = current($throughRelations);
         $lastRelation  = end($throughRelations);
         $isCount       = $lastRelation->isCount;
-        $fieldAllow    = TRUE;
+        $fieldExclude  = FALSE;
+        $columnExclude = FALSE;
         
         // Any relation in the chain can exclude
         foreach ($throughRelations as &$relation) {
-            $fieldAllow = !$relation->fieldExclude;
-            if (!$fieldAllow) break;
+            if ($relation->fieldExclude  === TRUE) $fieldExclude  = TRUE;
+            if ($relation->columnExclude === TRUE) $columnExclude = TRUE;
         }
         // Last relation requirements
-        $fieldAllow = ($fieldAllow && !$lastRelation->isCount && (
+        $validRelation = (
             $lastRelation instanceof Relation1fromX || 
             $lastRelation instanceof RelationXfromX || // Includes RelationXfromXSemi
             $lastRelation instanceof RelationXto1      // user_user_languages apparently... User::$hasMany
-        ));
-
+        );
+        if (!$validRelation) $fieldExclude  = TRUE;
+        if (!$validRelation) $columnExclude = TRUE;
+        
+        // isCount will be processed by the parent
         parent::__construct($name, $from, $to, $column, $lastForeignKey, $isCount, $conditions);
-
+        
         // Check for Model repetition
         // which can cause duplicated tables in the from clause
         // TODO: At the moment, we do not know how to alias the tables in same model joins
@@ -401,8 +475,8 @@ class RelationHasManyDeep extends Relation {
         $this->nameObject       = $nameObject;
         $this->repeatingModels  = $repeatingModels;
         // 1toX, XtoX, XtoXSemi
-        if (!isset($this->fieldExclude))  $this->fieldExclude     = !$fieldAllow;
-        if (!isset($this->columnExclude)) $this->columnExclude    = !$fieldAllow;
+        if (!isset($this->fieldExclude))  $this->fieldExclude     = $fieldExclude;
+        if (!isset($this->columnExclude)) $this->columnExclude    = $columnExclude;
         $this->rlButtons        = $lastRelation->rlButtons;
 
         if ($firstRelation->hasManyDeepSettings) {
@@ -431,9 +505,25 @@ class RelationHasManyDeep extends Relation {
 
     public function __toString()
     {
-        $to1String    = '';
+        // Including (count) label
         $parentString = parent::__toString();
-        foreach ($this->throughRelations as $name => $relation) $to1String .= "=[$name]> ";
+        
+        // Last Relation
+        $lastRelation   = $this->lastRelation();
+        $lastClassParts = explode('\\', get_class());
+        $lastClass      = end($lastClassParts);
+
+        // Steps
+        $to1String    = '{';
+        foreach ($this->throughRelations as $name => $relation) {
+            $to1String .= "=[$name";
+            if ($relation->columnExclude)   $to1String .= ' Cx';
+            if ($relation->fieldExclude)    $to1String .= ' Fx';
+            if ($relation == $lastRelation) $to1String .= " $lastClass";
+            $to1String .= "]> ";
+        }
+        $to1String   .= '}';
+
         return "$to1String$parentString";
     }
 

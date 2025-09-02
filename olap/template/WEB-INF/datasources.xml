@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!--
+
+  http://mondrian.pentaho.com/documentation/installation.php#5_1_Describe_the_data_sources_in_datasources.xml
+  
+-->
+<DataSources>
+  <DataSource>
+    <DataSourceName>universityacceptance</DataSourceName>
+    <DataSourceDescription>University Cubes</DataSourceDescription>
+    <URL>http://localhost:8080/xmondrian/demo/xmla</URL>
+    <DataSourceInfo>
+      Provider=mondrian;
+      Jdbc=jdbc:postgresql://localhost:5432/universityacceptance;
+      JdbcDrivers=org.postgresql.Driver;
+      JdbcUser=universityacceptance;
+      JdbcPassword=QueenPool1@;
+      Catalog=/demo/WEB-INF/schema/universityacceptance.xml;
+      UseSchemaPool=false
+    </DataSourceInfo>
+    <ProviderName>Mondrian</ProviderName>
+    <ProviderType>MDP</ProviderType>
+    <AuthenticationMode>Unauthenticated</AuthenticationMode>
+    <Catalogs>
+        <Catalog name="universityacceptance">
+            <Definition>/demo/WEB-INF/schema/universityacceptance.xml</Definition>
+        </Catalog>
+    </Catalogs>
+  </DataSource>
+</DataSources>

@@ -1,0 +1,653 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Schema name="University">
+  <!-- ################################################### Materials AVG cube ########################################################## -->
+  <!-- ################################################### Materials AVG cube ########################################################## -->
+  <!-- ################################################### Materials AVG cube ########################################################## -->
+  <Cube name="Mofadala-materials" defaultMeasure="Num Students">
+    <Table name="university_mofadala_marks">
+      <AggName name="agg_c_count_fact">
+        <AggFactCount column="id"/>
+        <AggLevel name="[Time].[Year]" column="id" />
+      </AggName>
+    </Table>
+
+    <Dimension name="Mark grouping" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="student_id" primaryKeyTable="university_mofadala_mark_groupings">
+        <Table name="university_mofadala_mark_groupings"/>
+        <Level name="Mark group 10%" column="mark_group_10_id" nameColumn="mark_group_10" uniqueMembers="false" />
+        <Level name="Mark group 5%" column="mark_group_5_id" nameColumn="mark_group_5" uniqueMembers="false" />
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Material">
+      <Hierarchy hasAll="true" primaryKey="id">
+        <Level name="Exam Type" column="exam_type_id" nameColumn="exam_type" uniqueMembers="true"/>
+        <Level name="Certificate Type" column="type_certificate_id" nameColumn="type_certificate_name" uniqueMembers="false"/>
+        <Level name="Material" column="material_id" nameColumn="material_name" uniqueMembers="false"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Certificate Source" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="id">
+        <Table name="university_mofadala_students"/>
+        <Level name="Certificate Source" column="certificate_source" uniqueMembers="false">
+          <NameExpression><SQL dialect="postgres">replace(certificate_source, '_', ' ')</SQL></NameExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Department Entry" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="student_id">
+        <Table name="university_mofadala_department_entry" alias="umde"/>
+        <Level name="Education Authority" column="education_authority_id" nameColumn="education_authority" uniqueMembers="true"/>
+        <Level name="University" column="university_id" nameColumn="university" uniqueMembers="true"/>
+        <Level name="Faculty" column="branche_id" nameColumn="faculty" uniqueMembers="true"/>
+        <Level name="Department" column="department_id" uniqueMembers="true">
+          <NameExpression><SQL dialect="postgres">concat(department, ' (', n_minimum, ')')</SQL></NameExpression>
+          <Property name="Minimum attendees" column="n_minimum" type="Integer"/>
+        </Level>
+        <Level name="Department Entry" column="department_detail_id" uniqueMembers="true">
+          <NameExpression><SQL dialect="postgres">concat(umde.type_certificate_name, ' (', n_maximum, '@', minimum, ')')</SQL></NameExpression>
+          <Property name="Capacity" column="n_maximum" type="Integer"/>
+          <Property name="Minimum mark" column="minimum" type="Integer"/>
+        </Level>
+        <Level name="Mark group 10%" column="mark_group_10_id" nameColumn="mark_group_10" uniqueMembers="false" />
+        <Level name="Mark group 5%" column="mark_group_5_id" nameColumn="mark_group_5" uniqueMembers="false" />
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Time" type="TimeDimension" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="id">
+        <Table name="university_mofadala_students"/>
+        <Level name="Year" type="Numeric" uniqueMembers="true" levelType="TimeYears">
+          <KeyExpression><SQL dialect="postgres">extract(year from university_mofadala_students.created_at)</SQL></KeyExpression>
+        </Level>
+        <Level name="Month" type="String" uniqueMembers="false" levelType="TimeMonths">
+          <KeyExpression><SQL dialect="postgres">TO_CHAR(university_mofadala_students.created_at, 'Month')</SQL></KeyExpression>
+        </Level>
+        <Level name="Day" type="Numeric" uniqueMembers="false" levelType="TimeDays">
+          <KeyExpression><SQL dialect="postgres">extract(day from university_mofadala_students.created_at)</SQL></KeyExpression>
+        </Level>
+        <Level name="Hour" type="Numeric" uniqueMembers="false" levelType="TimeHours">
+          <KeyExpression><SQL dialect="postgres">extract(hour from university_mofadala_students.created_at)</SQL></KeyExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Certificate Date" type="TimeDimension" foreignKey="student_id">
+      <!-- NOTE: This dimension will be sparse because there are no pre-2024 marks -->
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="university_mofadala_students">
+        <Table name="university_mofadala_students"/>
+        <Level name="Year" type="Numeric" uniqueMembers="true" levelType="TimeYears">
+          <KeyExpression><SQL>extract(year from university_mofadala_students.certificate_date)</SQL></KeyExpression>
+        </Level>
+        <Level name="Month" type="String" uniqueMembers="false" levelType="TimeMonths">
+          <KeyExpression><SQL>TO_CHAR(university_mofadala_students.certificate_date, 'Month')</SQL></KeyExpression>
+        </Level>
+        <Level name="Day" type="Numeric" uniqueMembers="false" levelType="TimeDays">
+          <KeyExpression><SQL>extract(day from university_mofadala_students.certificate_date)</SQL></KeyExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Certificate Language" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="university_mofadala_students">
+        <Join leftKey="certificate_language_id" rightKey="id">
+          <Table name="university_mofadala_students"/>
+          <Table name="university_mofadala_certificate_languages"/>
+        </Join>
+        <Level name="Certificate Language" table="university_mofadala_certificate_languages" column="id" nameColumn="name" uniqueMembers="true"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Mofadala Center" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="university_mofadala_students">
+        <Join leftKey="center_id" rightKey="id">
+          <Table name="university_mofadala_students"/>
+          <Join leftKey="city_id" rightKey="id">
+            <Table name="university_mofadala_centers"/>
+            <Table name="university_mofadala_cities"/>
+          </Join>
+        </Join>
+        <Level name="City" table="university_mofadala_cities" column="name" nameColumn="name" uniqueMembers="true"/>
+        <Level name="Mofadala Center" table="university_mofadala_centers" column="name" nameColumn="name" uniqueMembers="true"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Exam Center" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="university_mofadala_students">
+        <Join leftKey="exam_center_id" rightKey="id">
+          <Table name="university_mofadala_students"/>
+          <Table name="university_mofadala_exam_centers"/>
+        </Join>
+        <Level name="Exam Center" table="university_mofadala_exam_centers" column="id" nameColumn="name" uniqueMembers="true" />
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Gender" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="id">
+        <Table name="university_mofadala_students"/>
+        <Level name="Gender" column="gender" nameColumn="gender" uniqueMembers="true"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Marital Status" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="id">
+        <Table name="university_mofadala_students"/>
+        <Level name="Marital Status" column="marital_status" nameColumn="marital_status" uniqueMembers="true" />
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Age" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="id">
+        <Table name="university_mofadala_students"/>
+        <Level name="Age" uniqueMembers="true">
+          <KeyExpression><SQL dialect="postgres">extract(year from age(university_mofadala_students.birth_date))</SQL></KeyExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Special Status" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="student_id" primaryKeyTable="university_mofadala_special_status">
+        <Table name="university_mofadala_special_status"/>
+        <Level name="Special Status" column="special_status_id" nameColumn="name" uniqueMembers="false"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Status" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="student_id" primaryKeyTable="university_mofadala_status">
+        <Table name="university_mofadala_status"/>
+        <Level name="Status" column="status_id" nameColumn="name" uniqueMembers="false"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Measure name="Num Students" column="student_id" aggregator="distinct-count" formatString="Standard"/>
+    <Measure name="Mark" column="mark" aggregator="avg" formatString="#,##0.00"/>
+    <Measure name="Weighted mark" column="weighted_mark" aggregator="avg" formatString="#,##0.00"/>
+    <Measure name="Status mark" column="status_mark" aggregator="avg" formatString="#,##0.00"/>
+    <Measure name="Weighted status mark" column="status_weighted_mark" aggregator="avg" formatString="#,##0.00"/>
+  </Cube>
+
+  <!-- ################################################### Printed cube *_the_total ########################################################## -->
+  <!-- ################################################### Printed cube *_the_total ########################################################## -->
+  <!-- ################################################### Printed cube *_the_total ########################################################## -->
+  <!-- Cube name="Mofadala-printed" defaultMeasure="Num Students">
+    <Table name="university_mofadala_marks_the_total">
+      <AggName name="agg_c_count_fact">
+        <AggFactCount column="id"/>
+        <AggLevel name="[Time].[Year]" column="id" />
+      </AggName>
+    </Table>
+
+    <Dimension name="Mark grouping" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="student_id" primaryKeyTable="university_mofadala_mark_groupings_the_total">
+        <Table name="university_mofadala_mark_groupings_the_total"/>
+        <Level name="Mark group 10%" column="mark_group_10_id" nameColumn="mark_group_10" uniqueMembers="false" />
+        <Level name="Mark group 5%" column="mark_group_5_id" nameColumn="mark_group_5" uniqueMembers="false" />
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Material">
+      <Hierarchy hasAll="true" primaryKey="id">
+        <Level name="Exam Type" column="exam_type_id" nameColumn="exam_type" uniqueMembers="true"/>
+        <Level name="Certificate Type" column="type_certificate_id" nameColumn="type_certificate_name" uniqueMembers="false"/>
+        <Level name="Material" column="material_id" nameColumn="material_name" uniqueMembers="false"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Certificate Source" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="id">
+        <Table name="university_mofadala_students"/>
+        <Level name="Certificate Source" column="certificate_source" uniqueMembers="false">
+          <NameExpression><SQL dialect="postgres">replace(certificate_source, '_', ' ')</SQL></NameExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Department Entry" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="student_id">
+        <Table name="university_mofadala_department_entry_the_total" alias="umde"/>
+        <Level name="Education Authority" column="education_authority_id" nameColumn="education_authority" uniqueMembers="true"/>
+        <Level name="University" column="university_id" nameColumn="university" uniqueMembers="true"/>
+        <Level name="Faculty" column="branche_id" nameColumn="faculty" uniqueMembers="true"/>
+        <Level name="Department" column="department_id" uniqueMembers="true">
+          <NameExpression><SQL dialect="postgres">concat(department, ' (', n_minimum, ')')</SQL></NameExpression>
+          <Property name="Minimum attendees" column="n_minimum" type="Integer"/>
+        </Level>
+        <Level name="Department Entry" column="department_detail_id" uniqueMembers="true">
+          <NameExpression><SQL dialect="postgres">concat(umde.type_certificate_name, ' (', n_maximum, '@', minimum, ')')</SQL></NameExpression>
+          <Property name="Capacity" column="n_maximum" type="Integer"/>
+          <Property name="Minimum mark" column="minimum" type="Integer"/>
+        </Level>
+        <Level name="Mark group 10%" column="mark_group_10_id" nameColumn="mark_group_10" uniqueMembers="false" />
+        <Level name="Mark group 5%" column="mark_group_5_id" nameColumn="mark_group_5" uniqueMembers="false" />
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Time" type="TimeDimension" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="id">
+        <Table name="university_mofadala_students"/>
+        <Level name="Year" type="Numeric" uniqueMembers="true" levelType="TimeYears">
+          <KeyExpression><SQL dialect="postgres">extract(year from university_mofadala_students.created_at)</SQL></KeyExpression>
+        </Level>
+        <Level name="Month" type="String" uniqueMembers="false" levelType="TimeMonths">
+          <KeyExpression><SQL dialect="postgres">TO_CHAR(university_mofadala_students.created_at, 'Month')</SQL></KeyExpression>
+        </Level>
+        <Level name="Day" type="Numeric" uniqueMembers="false" levelType="TimeDays">
+          <KeyExpression><SQL dialect="postgres">extract(day from university_mofadala_students.created_at)</SQL></KeyExpression>
+        </Level>
+        <Level name="Hour" type="Numeric" uniqueMembers="false" levelType="TimeHours">
+          <KeyExpression><SQL dialect="postgres">extract(hour from university_mofadala_students.created_at)</SQL></KeyExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Certificate Date" type="TimeDimension" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="university_mofadala_students">
+        <Table name="university_mofadala_students"/>
+        <Level name="Year" type="Numeric" uniqueMembers="true" levelType="TimeYears">
+          <KeyExpression><SQL>extract(year from university_mofadala_students.certificate_date)</SQL></KeyExpression>
+        </Level>
+        <Level name="Month" type="String" uniqueMembers="false" levelType="TimeMonths">
+          <KeyExpression><SQL>TO_CHAR(university_mofadala_students.certificate_date, 'Month')</SQL></KeyExpression>
+        </Level>
+        <Level name="Day" type="Numeric" uniqueMembers="false" levelType="TimeDays">
+          <KeyExpression><SQL>extract(day from university_mofadala_students.certificate_date)</SQL></KeyExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Certificate Language" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="university_mofadala_students">
+        <Join leftKey="certificate_language_id" rightKey="id">
+          <Table name="university_mofadala_students"/>
+          <Table name="university_mofadala_certificate_languages"/>
+        </Join>
+        <Level name="Certificate Language" table="university_mofadala_certificate_languages" column="id" nameColumn="name" uniqueMembers="true"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Mofadala Center" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="university_mofadala_students">
+        <Join leftKey="center_id" rightKey="id">
+          <Table name="university_mofadala_students"/>
+          <Join leftKey="city_id" rightKey="id">
+            <Table name="university_mofadala_centers"/>
+            <Table name="university_mofadala_cities"/>
+          </Join>
+        </Join>
+        <Level name="City" table="university_mofadala_cities" column="name" nameColumn="name" uniqueMembers="true"/>
+        <Level name="Mofadala Center" table="university_mofadala_centers" column="name" nameColumn="name" uniqueMembers="true"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Exam Center" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="university_mofadala_students">
+        <Join leftKey="exam_center_id" rightKey="id">
+          <Table name="university_mofadala_students"/>
+          <Table name="university_mofadala_exam_centers"/>
+        </Join>
+        <Level name="Exam Center" table="university_mofadala_exam_centers" column="id" nameColumn="name" uniqueMembers="true" />
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Gender" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="id">
+        <Table name="university_mofadala_students"/>
+        <Level name="Gender" column="gender" nameColumn="gender" uniqueMembers="true"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Marital Status" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="id">
+        <Table name="university_mofadala_students"/>
+        <Level name="Marital Status" column="marital_status" nameColumn="marital_status" uniqueMembers="true" />
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Age" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="id">
+        <Table name="university_mofadala_students"/>
+        <Level name="Age" uniqueMembers="true">
+          <KeyExpression><SQL dialect="postgres">extract(year from age(university_mofadala_students.birth_date))</SQL></KeyExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Special Status" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="student_id" primaryKeyTable="university_mofadala_special_status">
+        <Table name="university_mofadala_special_status"/>
+        <Level name="Special Status" column="special_status_id" nameColumn="name" uniqueMembers="false"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Status" foreignKey="student_id">
+      <Hierarchy hasAll="true" primaryKey="student_id" primaryKeyTable="university_mofadala_status">
+        <Table name="university_mofadala_status"/>
+        <Level name="Status" column="status_id" nameColumn="name" uniqueMembers="false"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Measure name="Num Students" column="student_id" aggregator="distinct-count" formatString="Standard"/>
+    <Measure name="Mark" column="mark" aggregator="avg" formatString="#,##0.00"/>
+    <Measure name="Weighted mark" column="weighted_mark" aggregator="avg" formatString="#,##0.00"/>
+    <Measure name="Status mark" column="status_mark" aggregator="avg" formatString="#,##0.00"/>
+    <Measure name="Weighted status mark" column="status_weighted_mark" aggregator="avg" formatString="#,##0.00"/>
+  </Cube -->
+
+  <!-- ################################################### student level the_total Cube ########################################################## -->
+  <!-- ################################################### student level the_total Cube ########################################################## -->
+  <!-- ################################################### student level the_total Cube ########################################################## -->
+  <Cube name="Mofadala-the_total" defaultMeasure="Num Students">
+    <Table name="university_mofadala_students_the_total_only"> <!-- Includes all university_mofadala_students fields -->
+      <AggName name="agg_c_count_fact">
+        <AggFactCount column="id"/>
+        <AggLevel name="[Time].[Year]" column="id" />
+      </AggName>
+    </Table>
+
+    <Dimension name="Mark grouping" foreignKey="id">
+      <Hierarchy hasAll="true" primaryKey="student_id" primaryKeyTable="university_mofadala_mark_groupings_the_total_only">
+        <Table name="university_mofadala_mark_groupings_the_total_only"/>
+        <Level name="Mark group 10%" column="mark_group_10_id" nameColumn="mark_group_10" uniqueMembers="true" />
+        <Level name="Mark group 5%" column="mark_group_5_id" nameColumn="mark_group_5" uniqueMembers="true" />
+        <Level name="Mark group 1%" column="mark_group_1_id" nameColumn="mark_group_1" uniqueMembers="true" />
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Certificate Type" foreignKey="type_certificate_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="university_mofadala_type_certificates">
+        <Table name="university_mofadala_type_certificates"/>
+        <Level name="Certificate Type" column="id" nameColumn="name" uniqueMembers="true"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Certificate Source">
+      <Hierarchy hasAll="true">
+        <Level name="Certificate Source" column="certificate_source" uniqueMembers="true">
+          <NameExpression><SQL dialect="postgres">replace(certificate_source, '_', ' ')</SQL></NameExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Department Entry" foreignKey="id">
+      <Hierarchy hasAll="true" primaryKey="student_id" primaryKeyTable="university_mofadala_department_entry_the_total_only">
+        <Table name="university_mofadala_department_entry_the_total_only"/>
+        <Level name="Education Authority" column="education_authority_id" nameColumn="education_authority" uniqueMembers="true"/>
+        <Level name="University" column="university_id" nameColumn="university" uniqueMembers="true"/>
+        <Level name="Faculty" column="branche_id" nameColumn="faculty" uniqueMembers="true"/>
+        <Level name="Department" column="department_id" uniqueMembers="true">
+          <NameExpression><SQL dialect="postgres">concat(department, ' (', n_minimum, ')')</SQL></NameExpression>
+          <Property name="Minimum attendees" column="n_minimum" type="Integer"/>
+        </Level>
+        <Level name="Department Entry" column="department_detail_id" uniqueMembers="true">
+          <NameExpression><SQL dialect="postgres">concat(university_mofadala_department_entry_the_total_only.type_certificate_name, ' (', n_maximum, '@', minimum, ')')</SQL></NameExpression>
+          <Property name="Capacity" column="n_maximum" type="Integer"/>
+          <Property name="Minimum mark" column="minimum" type="Integer"/>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Desire Priority" foreignKey="id">
+      <Hierarchy hasAll="true" primaryKey="student_id" primaryKeyTable="university_mofadala_student_desire_details">
+        <Table name="university_mofadala_student_desire_details"/>
+        <Level name="Desire Priorities" column="number_list" uniqueMembers="true">
+          <NameExpression><SQL dialect="postgres">case university_mofadala_student_desire_details.number_list
+              when 1 then '1st'
+              when 2 then '2nd'
+              when 3 then '3rd'
+              else concat(university_mofadala_student_desire_details.number_list, 'th')
+            end
+          </SQL></NameExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Interview Status" foreignKey="id">
+      <Hierarchy hasAll="true" primaryKey="student_id" primaryKeyTable="university_mofadala_student_desire_details">
+        <Table name="university_mofadala_student_desire_details"/>
+        <Level name="Interview Statuses" column="interview_status" nameColumn="interview_status" uniqueMembers="true" />
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Desire" foreignKey="id">
+      <Hierarchy hasAll="true" primaryKey="student_id" primaryKeyTable="university_mofadala_student_desire_details">
+        <Join leftKey="department_detail_id" rightKey="id">
+          <Table name="university_mofadala_student_desire_details"/>
+          <!-- Department => Faculty => University => Education Authority -->
+          <Join leftKey="department_id" rightKey="id">
+            <Table name="university_mofadala_department_details"/>
+            <Join leftKey="branche_id" rightKey="id">>
+              <Table name="university_mofadala_departments"/>
+              <Join leftKey="university_id" rightKey="id">>
+                <Table name="university_mofadala_branches"/>
+                <Join leftKey="university_category_id" rightKey="id">>
+                  <Table name="university_mofadala_universities"/>
+                  <Table name="university_mofadala_university_categories"/>
+                </Join>
+              </Join>
+            </Join>
+          </Join>
+        </Join>
+
+        <Level name="Education Authority" table="university_mofadala_university_categories" column="id" nameColumn="name" uniqueMembers="true"/>
+        <Level name="University" table="university_mofadala_universities" column="id" nameColumn="name" uniqueMembers="true"/>
+        <Level name="Faculty" table="university_mofadala_branches" column="id" nameColumn="name" uniqueMembers="true"/>
+        <Level name="Department" table="university_mofadala_departments" column="id" uniqueMembers="true">
+          <NameExpression><SQL dialect="postgres">case university_mofadala_departments.name
+              when '' then 'Main'
+              else coalesce(university_mofadala_departments.name, 'Main')
+            end
+          </SQL></NameExpression>
+        </Level>
+        <Level name="Certificate Type" table="university_mofadala_student_desire_details" column="department_detail_id" uniqueMembers="true">
+          <NameExpression><SQL dialect="postgres">
+              (select concat(tc.name, ' (', minimum, ')')
+                from university_mofadala_department_details dd
+                inner join university_mofadala_type_certificates tc on dd.type_certificate_id = tc.id
+                where dd.id = university_mofadala_student_desire_details.department_detail_id)
+          </SQL></NameExpression>
+        </Level>
+        <Level name="Student" table="university_mofadala_student_desire_details" column="id" uniqueMembers="false">
+          <NameExpression><SQL dialect="postgres">
+              concat((select code from university_mofadala_students stu where stu.id = university_mofadala_student_desire_details.student_id),  ' (',
+                case university_mofadala_student_desire_details.number_list
+                  when 1 then '1st'
+                  when 2 then '2nd'
+                  when 3 then '3rd'
+                  else concat(university_mofadala_student_desire_details.number_list, 'th')
+                end,
+              ')')
+          </SQL></NameExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Department Final" foreignKey="department_detail_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="university_mofadala_department_details">
+        <Join leftKey="department_id" rightKey="id">
+          <Table name="university_mofadala_department_details" alias="dd1"/>
+          <Join leftKey="branche_id" rightKey="id">
+            <Table name="university_mofadala_departments" alias="d1"/>
+            <Join leftKey="university_id" rightKey="id">
+              <Table name="university_mofadala_branches"/>
+              <Join leftKey="university_category_id" rightKey="id">
+                <Table name="university_mofadala_universities"/>
+                <Table name="university_mofadala_university_categories"/>
+              </Join>
+            </Join>
+          </Join>
+        </Join>
+
+        <Level name="Education Authority" table="university_mofadala_university_categories" column="id" nameColumn="name" uniqueMembers="true"/>
+        <Level name="University" table="university_mofadala_universities" column="id" nameColumn="name" uniqueMembers="true"/>
+        <Level name="Faculty" table="university_mofadala_branches" column="id" nameColumn="name" uniqueMembers="true"/>
+        <Level name="Department Final" table="d1" column="id" uniqueMembers="true">
+          <NameExpression><SQL dialect="postgres">concat(case d1.name
+              when '' then 'Main'
+              else coalesce(d1.name, 'Main')
+            end, ' (', d1.n_minimum, 'min)')
+          </SQL></NameExpression>
+        </Level>
+        <Level name="Department Entry" table="dd1" column="id" uniqueMembers="true">
+          <NameExpression><SQL dialect="postgres">
+              (select concat(tc2.name, ' (', dd1.minimum, '%, ', dd1.n_maximum, 'max)') from university_mofadala_type_certificates tc2
+                where tc2.id = dd1.type_certificate_id)
+          </SQL></NameExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Sorting Algorithm">
+      <Hierarchy hasAll="true">
+        <Level name="Run" type="Numeric" uniqueMembers="true">
+          <KeyExpression><SQL dialect="postgres">
+              case (enrollment_process_notes ~ '2024-09-26')::int + (enrollment_process_notes ~ '2024-10-06')::int*2
+                when 0 then 'None'
+                when 1 then '1st only'
+                when 2 then '2nd only'
+                when 3 then '1st &amp; 2nd'
+              end
+          </SQL></KeyExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Desire Times" type="TimeDimension" foreignKey="id">
+      <Hierarchy hasAll="true" primaryKey="student_id" primaryKeyTable="university_mofadala_student_desire_details">
+        <Table name="university_mofadala_student_desire_details" />
+        <Level name="Year" type="Numeric" uniqueMembers="true" levelType="TimeYears">
+          <KeyExpression><SQL dialect="postgres">extract(year from university_mofadala_student_desire_details.created_at)</SQL></KeyExpression>
+        </Level>
+        <Level name="Month" type="String" uniqueMembers="false" levelType="TimeMonths">
+          <KeyExpression><SQL dialect="postgres">TO_CHAR(university_mofadala_student_desire_details.created_at, 'Month')</SQL></KeyExpression>
+        </Level>
+        <Level name="Day" type="Numeric" uniqueMembers="false" levelType="TimeDays">
+          <KeyExpression><SQL dialect="postgres">extract(day from university_mofadala_student_desire_details.created_at)</SQL></KeyExpression>
+        </Level>
+        <Level name="Hour" type="Numeric" uniqueMembers="false" levelType="TimeHours">
+          <KeyExpression><SQL dialect="postgres">extract(hour from university_mofadala_student_desire_details.created_at)</SQL></KeyExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Time" type="TimeDimension">
+      <Hierarchy hasAll="true">
+        <Level name="Year" type="Numeric" uniqueMembers="true" levelType="TimeYears">
+          <KeyExpression><SQL dialect="postgres">extract(year from university_mofadala_students_the_total_only.created_at)</SQL></KeyExpression>
+        </Level>
+        <Level name="Month" type="String" uniqueMembers="false" levelType="TimeMonths">
+          <KeyExpression><SQL dialect="postgres">TO_CHAR(university_mofadala_students_the_total_only.created_at, 'Month')</SQL></KeyExpression>
+        </Level>
+        <Level name="Day" type="Numeric" uniqueMembers="false" levelType="TimeDays">
+          <KeyExpression><SQL dialect="postgres">extract(day from university_mofadala_students_the_total_only.created_at)</SQL></KeyExpression>
+        </Level>
+        <Level name="Hour" type="Numeric" uniqueMembers="false" levelType="TimeHours">
+          <KeyExpression><SQL dialect="postgres">extract(hour from university_mofadala_students_the_total_only.created_at)</SQL></KeyExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Enrollment Date" type="TimeDimension">
+      <Hierarchy hasAll="true">
+        <Level name="Year" type="Numeric" uniqueMembers="true" levelType="TimeYears">
+          <KeyExpression><SQL dialect="postgres">extract(year from university_mofadala_students_the_total_only.date_of_enrollment)</SQL></KeyExpression>
+        </Level>
+        <Level name="Month" type="String" uniqueMembers="false" levelType="TimeMonths">
+          <KeyExpression><SQL dialect="postgres">TO_CHAR(university_mofadala_students_the_total_only.date_of_enrollment, 'Month')</SQL></KeyExpression>
+        </Level>
+        <Level name="Day" type="Numeric" uniqueMembers="false" levelType="TimeDays">
+          <KeyExpression><SQL dialect="postgres">extract(day from university_mofadala_students_the_total_only.date_of_enrollment)</SQL></KeyExpression>
+        </Level>
+        <Level name="Hour" type="Numeric" uniqueMembers="false" levelType="TimeHours">
+          <KeyExpression><SQL dialect="postgres">extract(hour from university_mofadala_students_the_total_only.date_of_enrollment)</SQL></KeyExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Certificate Date" type="TimeDimension">
+      <!-- NOTE: This dimension will be sparse because there are no pre-2024 marks -->
+      <Hierarchy hasAll="true">
+        <Level name="Year" type="Numeric" uniqueMembers="true" levelType="TimeYears">
+          <KeyExpression><SQL>extract(year from university_mofadala_students_the_total_only.certificate_date)</SQL></KeyExpression>
+        </Level>
+        <Level name="Month" type="String" uniqueMembers="false" levelType="TimeMonths">
+          <KeyExpression><SQL>TO_CHAR(university_mofadala_students_the_total_only.certificate_date, 'Month')</SQL></KeyExpression>
+        </Level>
+        <Level name="Day" type="Numeric" uniqueMembers="false" levelType="TimeDays">
+          <KeyExpression><SQL>extract(day from university_mofadala_students_the_total_only.certificate_date)</SQL></KeyExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Certificate Language" foreignKey="certificate_language_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="university_mofadala_certificate_languages">
+        <Table name="university_mofadala_certificate_languages"/>
+        <Level name="Certificate Language" column="id" nameColumn="name" uniqueMembers="true"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Mofadala Center" foreignKey="center_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="university_mofadala_centers">
+        <Join leftKey="city_id" rightKey="id">
+          <Table name="university_mofadala_centers"/>
+          <Table name="university_mofadala_cities"/>
+        </Join>
+        <Level name="City" table="university_mofadala_cities" column="name" nameColumn="name" uniqueMembers="true"/>
+        <Level name="Mofadala Center" table="university_mofadala_centers" column="name" nameColumn="name" uniqueMembers="true"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Exam Center" foreignKey="exam_center_id">
+      <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="university_mofadala_exam_centers">
+        <Table name="university_mofadala_exam_centers" />
+        <Level name="Exam Center" table="university_mofadala_exam_centers" column="id" nameColumn="name" uniqueMembers="true" />
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Gender">
+      <Hierarchy hasAll="true">
+        <Level name="Gender" column="gender" nameColumn="gender" uniqueMembers="true"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Marital Status">
+      <Hierarchy hasAll="true">
+        <Level name="Marital Status" column="marital_status" nameColumn="marital_status" uniqueMembers="true" />
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Age">
+      <Hierarchy hasAll="true">
+        <Level name="Age" uniqueMembers="true" type="Numeric">
+          <KeyExpression><SQL dialect="postgres">extract(year from age(university_mofadala_students_the_total_only.birth_date))</SQL></KeyExpression>
+        </Level>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Special Status" foreignKey="id">
+      <Hierarchy hasAll="true" primaryKey="student_id" primaryKeyTable="university_mofadala_special_status">
+        <Table name="university_mofadala_special_status"/>
+        <Level name="Special Status" column="special_status_id" nameColumn="name" uniqueMembers="true"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Dimension name="Status" foreignKey="id">
+      <Hierarchy hasAll="true" primaryKey="student_id" primaryKeyTable="university_mofadala_status">
+        <Table name="university_mofadala_status"/>
+        <Level name="Status" column="status_id" nameColumn="name" uniqueMembers="true"/>
+      </Hierarchy>
+    </Dimension>
+
+    <Measure name="Num Students" column="id" aggregator="distinct-count" formatString="Standard"/>
+    <Measure name="High-School average Mark" column="the_total" aggregator="avg" formatString="#,##0.00"/>
+    <Measure name="Candidate Exam average Mark" aggregator="avg" formatString="#,##0.00">
+      <MeasureExpression>
+        <SQL dialect="generic">candidacy_examination_score * 4.0</SQL>
+      </MeasureExpression>
+    </Measure>
+    <Measure name="Weighted mark" column="weighted_mark" aggregator="avg" formatString="#,##0.00"/>
+    <Measure name="Status mark" column="status_mark" aggregator="avg" formatString="#,##0.00"/>
+    <Measure name="Weighted status mark" column="status_weighted_mark" aggregator="avg" formatString="#,##0.00"/>
+  </Cube>
+</Schema>

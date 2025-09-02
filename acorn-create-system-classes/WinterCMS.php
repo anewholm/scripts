@@ -213,156 +213,17 @@ class WinterCMS extends Framework
         }
 
         // English General
-        // TODO: Move these in to Semantic
-        $this->arrayFileSet($langEnPath, 'models.general', array(
-            'id'     => 'ID',
-            'name'   => 'Name',
-            'short_name'  => 'Short name',
-            'description' => 'Description',
-            'type'   => 'Type',
-            'image'  => 'Image',
-            'select' => 'Select',
-            'select_existing' => 'Selected existing',
-            'created_at_event' => 'Created At',
-            'updated_at_event' => 'Updated At',
-            'created_by_user'  => 'Created By',
-            'updated_by_user'  => 'Updated By',
-            'created_at'   => 'Created At',
-            'updated_at'   => 'Updated At',
-            'created_by'   => 'Created By',
-
-            // Some fields
-            'quantity' => 'Quantity',
-            'distance' => 'Distance',
-            'parent'   => 'Parent',
-
-            // Menus
-            'actions' => 'Actions',
-            'setup'   => 'Setup',
-            'reports' => 'Reports',
-
-            // In-built QR codes
-            'qrcode'          => 'QR Code',
-            'qrcode_scan'     => 'QR Code Scan',
-            'find_by_qrcode'  => 'Find by QR code',
-            'state_indicator' => 'Status',
-
-            // Standard Buttons
-            'create'     => 'Create',
-            'new'        => 'New',
-            'add'        => 'Add',
-            'print'      => 'Print',
-            'save_and_print'    => 'Save and Print',
-            'correct_and_print' => 'Correct and Print',
-            'advanced'   => 'Advanced',
-
-            // System
-            'response'                   => 'HTTP call response',
-            'replication_debug'          => 'Replication Debug',
-            'trigger_http_call_response' => 'Trigger HTTP call response',
-        ), FALSE);
+        $this->arrayFileSet($langEnPath, 'models.general', Framework::$standardTranslations['en'], FALSE);
         if (isset($plugin->pluginNames['en']))        $this->arrayFileSet("$langDirPath/en/lang.php", 'plugin.name',        $plugin->pluginNames['en'],        FALSE);
         if (isset($plugin->pluginDescriptions['en'])) $this->arrayFileSet("$langDirPath/en/lang.php", 'plugin.description', $plugin->pluginDescriptions['en'], FALSE);
 
         // Arabic general
-        $this->arrayFileSet("$langDirPath/ar/lang.php", 'models.general', array(
-            'id'     => 'المعرف',
-            'name'   => 'الأسم',
-            'short_name'  => 'الاسم المختصر',
-            'description' => 'Description',
-            'type'   => 'النوع',
-            'image'  => 'الصور',
-            'select' => 'إختيار',
-            'select_existing' => 'حدد عنوانًا موجودًا',
-            'created_at_event' => 'تم التسجيل في',
-            'updated_at_event' => 'تم التحديث في',
-            'created_by_user'  => 'Created By',
-            'updated_by_user'  => 'Updated By',
-            'created_at'   => 'تم التسجيل في',
-            'updated_at'   => 'تم التحديث في',
-            'created_by'   => 'Created By',
-
-            // Some fields
-            'quantity' => 'الكمية',
-            'distance' => 'المسافة',
-            'parent' => 'محتوى المنطقة',
-
-            // Menus
-            'actions' => 'الخدمات اللوجستية',
-            'setup' => 'تثبيت',
-            'reports' => 'التقارير',
-
-            // In-built QR codes
-            'qrcode'          => 'رمز QR',
-            'qrcode_scan'     => 'مسح الرمز',
-            'find_by_qrcode'  => 'البحث بواسطة الرمز',
-            'state_indicator' => 'Status',
-
-            // Standard Buttons
-            'create'     => 'نشاء ماركة جديدة',
-            'new'        => 'ماركة جديدة',
-            'add'        => 'إضافة',
-            'print'      => 'Print',
-            'save_and_print'    => 'حفظ وطباعة',
-            'correct_and_print' => 'حفظ التصحيح وطباعته',
-            'advanced'   => 'Advanced',
-
-            // System
-            'response'                   => 'HTTP call response',
-            'replication_debug'          => 'تصحيح أخطاء التكرار',
-            'trigger_http_call_response' => 'تشغيل استجابة اتصال HTTP',
-        ), FALSE);
+        $this->arrayFileSet("$langDirPath/ar/lang.php", 'models.general', Framework::$standardTranslations['ar'], FALSE);
         if (isset($plugin->pluginNames['ar']))        $this->arrayFileSet("$langDirPath/ar/lang.php", 'plugin.name',        $plugin->pluginNames['ar'],        FALSE);
         if (isset($plugin->pluginDescriptions['ar'])) $this->arrayFileSet("$langDirPath/ar/lang.php", 'plugin.description', $plugin->pluginDescriptions['ar'], FALSE);
 
         // Kurdish general
-        $this->arrayFileSet("$langDirPath/ku/lang.php", 'models.general', array(
-            'id'     => 'Hejmara',
-            'name'   => 'Nav',
-            'short_name'  => 'Nave kin',
-            'description' => 'Têbînî',
-            'type'   => 'Cure',
-            'image'  => 'Wêne',
-            'select' => 'Hilbijêre',
-            'select_existing' => 'Vebijêrkek heyî hilbijêre',
-            'created_at_event' => 'Dîrokê afirandin',
-            'updated_at_event' => 'Dîrokê gûherrandin',
-            'created_by_user'  => 'Bikaranîvan afirandin',
-            'updated_by_user'  => 'Bikaranîvan gûherrandin',
-            'created_at'  => 'Dîrokê afirandin',
-            'updated_at'  => 'Dîrokê gûherrandin',
-            'created_by'  => 'Bikaranîvan afirandin',
-
-            // Some fields
-            'quantity' => 'Jimarî',
-            'distance' => 'Dûrî',
-            'parent'   => 'Pêşî',
-
-            // Menus
-            'actions' => 'Çalakîyên',
-            'setup'   => 'Veavakirin',
-            'reports' => 'Raporên',
-
-            // In-built QR codes
-            'qrcode'        => 'QR Koda',
-            'qrcode_scan'   => 'QR Koda Xwendin',
-            'find_by_qrcode' => 'Bi koda QR-ê bibînin',
-            'state_indicator' => 'Status',
-
-            // Standard Buttons
-            'create'     => 'Afirandin',
-            'new'        => 'Nû',
-            'add'        => 'Lêzêdedike',
-            'print'      => 'Çap',
-            'save_and_print'    => 'Rizgardike û Çap',
-            'correct_and_print' => 'Lihevanîn û Çap',
-            'advanced'   => 'Advanced',
-
-            // System
-            'response'                   => 'HTTP call response', // TODO: Rename "response" to "http_response"
-            'replication_debug'          => 'Replication Debug',
-            'trigger_http_call_response' => 'Trigger HTTP call response',
-        ), FALSE);
+        $this->arrayFileSet("$langDirPath/ku/lang.php", 'models.general', Framework::$standardTranslations['ku'], FALSE);
         if (isset($plugin->pluginNames['ku']))        $this->arrayFileSet("$langDirPath/ku/lang.php", 'plugin.name',        $plugin->pluginNames['ku'],        FALSE);
         if (isset($plugin->pluginDescriptions['ku'])) $this->arrayFileSet("$langDirPath/ku/lang.php", 'plugin.description', $plugin->pluginDescriptions['ku'], FALSE);
 
@@ -816,7 +677,7 @@ PHP;
             $scriptsUpdatesPath = "$this->scriptDirPath/SQL/updates";
             $pluginUpdatePath   = "$pluginDirectoryPath/updates";
             copy("$scriptsUpdatesPath/version.yaml", "$pluginUpdatePath/version.yaml");
-            $this->removeDir("$pluginDirectoryPath/updates/v1.0.1/", TRUE, TRUE, FALSE);
+            self::removeDir("$pluginDirectoryPath/updates/v1.0.1/", TRUE, TRUE, FALSE);
 
             // Explicit plural name injection
             // Otherwise PathsHelper will get confused when making URLs and things
@@ -1363,10 +1224,12 @@ PHP
         // ---------------------------------------- Main fields.yaml
         // fields(TRUE) call output
         $this->yamlFileUnSet($fieldsPath, 'fields.id');
-        $fields = $model->fields(Model::PRINT);
+        $fields = $model->fields();
         foreach ($fields as $name => &$field) {
             $indentString = str_repeat(' ', ($field->nestLevel ?: 0) * 2);
-            $typeString   = ($field->fieldType ?: '<no field type>') . ' / ' . ($field->columnType ?: '<no column type>');
+            $fieldTypeV   = var_export($field->fieldType, TRUE);
+            $columnTypeV  = var_export($field->columnType, TRUE);
+            $typeString   = "$fieldTypeV / $columnTypeV";
             if ($field->canDisplayAsField()) { // fieldExclude
                 print("    $indentString+{$YELLOW}$name{$NC}($typeString): to {$YELLOW}fields.yaml{$NC}\n");
                 $dotPath = "fields.$field->fieldKey$field->fieldKeyQualifier";
@@ -1480,7 +1343,13 @@ PHP
         foreach ($model->fields() as $name => &$field) {
             $fieldRules = $field->rules;
             if (!$field->isStandard()) {
-                if ($field->required && !$field->nested) array_push($fieldRules, 'required');
+                if (   $field->required 
+                    && !$field->nested 
+                    && $field->canDisplayAsField() 
+                    && !$field->hidden
+                    && !$field->fieldExclude
+                ) 
+                    array_push($fieldRules, 'required');
                 // TODO: max length (Currency needs this)
                 if ($field->length) array_push($fieldRules, "max:$field->length");
             }
@@ -1796,7 +1665,31 @@ PHP
                 $relationControllerDirName = $relationModel->controller()->dirName();
                 $relationModelDirPath      = "$relationPluginDirectory/models/$relationModelDirName";
                 $relationControllerDirPath = "$relationPluginDirectory/controllers/$relationControllerDirName";
-                $rlButtons                 = ($field->rlButtons ?: array('create' => TRUE, 'delete' => TRUE));
+
+                // Relation Manager toolbarButtons can be:
+                //   NULL (default buttons), 
+                //   false (none), 
+                //   an |array or 
+                //   an associative array
+                // toolbarButtons: create|delete
+                // toolbarButtons:
+                //     create: Add a line item
+                //     delete: Remove line item
+                $rlButtonsValue = NULL; // no toolbarButtons value, which sets default for that RM type
+                if ($field->rlButtons === FALSE) {
+                    $rlButtonsValue = FALSE;
+                } else if (is_array($field->rlButtons) && count($field->rlButtons)) {
+                    if (is_int(array_keys($field->rlButtons)[0])) {
+                        // create, link
+                        $rlButtonsValue = implode('|', $field->rlButtons);
+                    } else if (array_values($field->rlButtons)[0] === TRUE) {
+                        // create: true, link: true
+                        $rlButtonsValue = implode('|', array_keys($field->rlButtons));
+                    } else {
+                        // create: Create this, link: Link this
+                        $rlButtonsValue = $field->rlButtons;
+                    }
+                }
 
                 print("    +{$YELLOW}$field->fieldKey{$NC} filter\n");
                 $relationDefinition = NULL;
@@ -1817,7 +1710,6 @@ PHP
                         'label' => $field->translationKey(),
                         'view' => array(
                             'list' => "\$/$relationModelDirPath/columns.yaml",
-                            'toolbarButtons' => implode('|', array_keys($rlButtons)),
                             'recordsPerPage' => $field->recordsPerPage, // Can be false
                         ),
                         'manage' => array(
@@ -1825,6 +1717,7 @@ PHP
                             'recordsPerPage' => $field->recordsPerPage,
                         ),
                     );
+                    if (!is_null($rlButtonsValue)) $relationDefinition['view']['toolbarButtons'] = $rlButtonsValue;
                     if ($relationModel->hasField('sort_order')) $relationDefinition['view']['defaultSort'] = 'sort_order asc';
                     if ($relationModel->hasField('ordinal'))    $relationDefinition['view']['defaultSort'] = 'ordinal asc';
                 }

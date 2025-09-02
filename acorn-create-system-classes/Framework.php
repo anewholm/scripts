@@ -43,6 +43,167 @@ class Framework
     // All translations should be added in to this file
     protected $LANG        = array();
 
+    // These have identical keys
+    // and should be referenced from columns 
+    // with the same name where explicit labels are empty
+    // [en] keys should be checked for column names, others assumed correct
+    // WinterCMS.php will write the locale array in to each plugin lang.php's
+    public static $standardTranslations = array(
+        'en' => array(
+            'id'     => 'ID',
+            'name'   => 'Name',
+            'short_name'  => 'Short name',
+            'description' => 'Description',
+            'type'   => 'Type',
+            'image'  => 'Image',
+            'select' => 'Select',
+            'select_existing' => 'Selected existing',
+            'created_at_event' => 'Created At',
+            'updated_at_event' => 'Updated At',
+            'created_by_user'  => 'Created By',
+            'updated_by_user'  => 'Updated By',
+            'created_at'   => 'Created At',
+            'updated_at'   => 'Updated At',
+            'created_by'   => 'Created By',
+
+            // Some fields
+            'quantity' => 'Quantity',
+            'distance' => 'Distance',
+            'parent'   => 'Parent',
+            'current' => 'Current',
+            'primary' => 'Primary',
+            'translation' => 'Translation',
+
+            // Menus
+            'actions' => 'Actions',
+            'setup'   => 'Setup',
+            'reports' => 'Reports',
+
+            // In-built QR codes
+            'qrcode'          => 'QR Code',
+            'qrcode_scan'     => 'QR Code Scan',
+            'find_by_qrcode'  => 'Find by QR code',
+            'state_indicator' => 'Status',
+
+            // Standard Buttons
+            'create'     => 'Create',
+            'new'        => 'New',
+            'add'        => 'Add',
+            'print'      => 'Print',
+            'save_and_print'    => 'Save and Print',
+            'correct_and_print' => 'Correct and Print',
+            'advanced'   => 'Advanced',
+
+            // System
+            'response'                   => 'HTTP call response',
+            'replication_debug'          => 'Replication Debug',
+            'trigger_http_call_response' => 'Trigger HTTP call response',
+            'import_source'              => 'Import Source',
+        ),
+        'ar' => array(
+            'id'     => 'المعرف',
+            'name'   => 'الأسم',
+            'short_name'  => 'الاسم المختصر',
+            'description' => 'التفاصيل',
+            'type'   => 'النوع',
+            'image'  => 'الصور',
+            'select' => 'إختيار',
+            'select_existing' => 'حدد عنوانًا موجودًا',
+            'created_at_event' => 'تم التسجيل في',
+            'updated_at_event' => 'تم التحديث في',
+            'created_by_user'  => 'الانشاء بواسطة',
+            'updated_by_user'  => 'التحديث بواسطة',
+            'created_at'   => 'تم التسجيل في',
+            'updated_at'   => 'تم التحديث في',
+            'created_by'   => 'الانشاء بواسطة',
+
+            // Some fields
+            'quantity' => 'الكمية',
+            'distance' => 'المسافة',
+            'parent' => 'محتوى المنطقة',
+            'current' => 'الحالي',
+            'primary' => 'اساسي',
+            'translation' => 'الترجمة',
+
+            // Menus
+            'actions' => 'النشاط',
+            'setup' => 'تثبيت',
+            'reports' => 'التقارير',
+
+            // In-built QR codes
+            'qrcode'          => 'رمز QR',
+            'qrcode_scan'     => 'مسح الرمز',
+            'find_by_qrcode'  => 'البحث بواسطة الرمز',
+            'state_indicator' => 'حالة',
+
+            // Standard Buttons
+            'create'     => 'نشاء ماركة جديدة',
+            'new'        => 'ماركة جديدة',
+            'add'        => 'إضافة',
+            'print'      => 'مطبعة',
+            'save_and_print'    => 'حفظ وطباعة',
+            'correct_and_print' => 'حفظ التصحيح وطباعته',
+            'advanced'   => 'متقدم',
+
+            // System
+            'response'                   => 'HTTP call response',
+            'replication_debug'          => 'تصحيح أخطاء التكرار',
+            'trigger_http_call_response' => 'تشغيل استجابة اتصال HTTP',
+            'import_source'              => 'مصدر الاستيراد',
+        ),
+        'ku' => array(
+            'id'     => 'Hejmara',
+            'name'   => 'Nav',
+            'short_name'  => 'Nave kin',
+            'description' => 'Têbînî',
+            'type'   => 'Cure',
+            'image'  => 'Wêne',
+            'select' => 'Hilbijêre',
+            'select_existing' => 'Vebijêrkek heyî hilbijêre',
+            'created_at_event' => 'Dîrokê afirandin',
+            'updated_at_event' => 'Dîrokê gûherrandin',
+            'created_by_user'  => 'Bikaranîvan afirandin',
+            'updated_by_user'  => 'Bikaranîvan gûherrandin',
+            'created_at'  => 'Dîrokê afirandin',
+            'updated_at'  => 'Dîrokê gûherrandin',
+            'created_by'  => 'Bikaranîvan afirandin',
+
+            // Some fields
+            'quantity' => 'Jimarî',
+            'distance' => 'Dûrî',
+            'parent'   => 'Pêşî',
+            'current' => 'Vêga',
+            'primary' => 'Bingehîn',
+            'translation' => 'Werger',
+
+            // Menus
+            'actions' => 'Çalakîyên',
+            'setup'   => 'Veavakirin',
+            'reports' => 'Raporên',
+
+            // In-built QR codes
+            'qrcode'        => 'QR Koda',
+            'qrcode_scan'   => 'QR Koda Xwendin',
+            'find_by_qrcode' => 'Bi koda QR-ê bibînin',
+            'state_indicator' => 'Rewş',
+
+            // Standard Buttons
+            'create'     => 'Afirandin',
+            'new'        => 'Nû',
+            'add'        => 'Lêzêdedike',
+            'print'      => 'Çap',
+            'save_and_print'    => 'Rizgardike û Çap',
+            'correct_and_print' => 'Lihevanîn û Çap',
+            'advanced'   => 'Pêşveçû',
+
+            // System
+            'response'                   => 'HTTP call response', // TODO: Rename "response" to "http_response"
+            'replication_debug'          => 'Replication Debug',
+            'trigger_http_call_response' => 'Trigger HTTP call response',
+            'import_source'              => 'Çavkaniya importkirinê',
+        ),
+    );
+
     // ----------------------------------------- Construct
     protected function __construct(string $cwd, string $scriptDirPath, string $script = 'acorn-create-system', string $version = '1.0')
     {
@@ -323,7 +484,24 @@ class Framework
     }
 
     // ---------------------------------------------- Filesystem
-    protected function removeDir(string $dirPath, bool $removeTopLevelHidden = TRUE, bool $removeTopLevel = TRUE, bool $throwIfNotFound = TRUE): void
+    public static function copyDir(string $source, string $dest, bool $overwrite = TRUE, int $permissions = 0755): void
+    {
+        if (file_exists($dest) && $overwrite) self::removeDir($dest);
+
+        mkdir($dest, $permissions);
+
+        foreach (
+            $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($source, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST) as $item
+        ) {
+            if ($item->isDir()) mkdir($dest . DIRECTORY_SEPARATOR . $iterator->getSubPathname());
+            else                copy($item, $dest . DIRECTORY_SEPARATOR . $iterator->getSubPathname());
+        }
+    }
+
+
+    public static function removeDir(string $dirPath, bool $removeTopLevelHidden = TRUE, bool $removeTopLevel = TRUE, bool $throwIfNotFound = TRUE): void
     {
         if (!$dirPath) throw new Exception("removeDir path is empty");
         if (is_dir($dirPath)) {
@@ -333,7 +511,7 @@ class Framework
             foreach($files as $file) {
                 $isHidden = (substr($file, 0, 1) == '.');
                 if ($removeTopLevelHidden || !$isHidden) {
-                    if (is_dir($file)) $this->removeDir($file);
+                    if (is_dir($file)) self::removeDir($file);
                     else               unlink($file);
                 }
             }
@@ -352,7 +530,7 @@ class Framework
 
     protected function getNextIcon(): string
     {
-        $array    = &$this->yamlFileLoad($this->iconFile, self::NO_CACHE);
+        $array    = $this->yamlFileLoad($this->iconFile, self::NO_CACHE);
         $fqn      = $array[0]['icons'][$this->iconCurrent++];
         $fqnParts = explode(' ', $fqn);
         return end($fqnParts);
@@ -702,7 +880,7 @@ FUNCTION
         if ($this->pluginExists($plugin)) {
             $pluginDirectoryPath = $this->pluginDirectoryPath($plugin);
             print("{$GREEN}REMOVING{$NC} existing plugin sub-directories and files from [$pluginDirectoryPath]...\n");
-            $this->removeDir($pluginDirectoryPath, FALSE, FALSE);
+            self::removeDir($pluginDirectoryPath, FALSE, FALSE);
         }
         if ($writeREADME) ob_start(); // README.md content
 

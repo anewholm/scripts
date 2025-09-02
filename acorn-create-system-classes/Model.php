@@ -9,9 +9,9 @@ require_once('Field.php');
 
 class Model {
     protected static $models = array();
+    protected $fieldsCacheDirect = NULL;
+    protected $fieldsCacheRecursing = NULL;
 
-    public const PRINT     = TRUE;
-    public const NO_OUTPUT = FALSE;
     public const PLURAL    = TRUE;
     public const SINGULAR  = FALSE;
     public const THROW_IF_NOT_ONLY_1 = TRUE;
@@ -74,6 +74,7 @@ class Model {
     public $showColumnActions;
     public $noRelationManagerDefault;
     public $canFilterDefault;
+    public $labelsFrom = array(); // Inherit labels from another table. Useful for views
 
     // Class components
     public $uses      = array();
@@ -122,6 +123,13 @@ class Model {
         }
 
         if (!isset($this->readOnly) && $table instanceof View) $this->readOnly = TRUE;
+
+        // Turn labels-from tables into Table
+        foreach ($this->labelsFrom as &$labelsFromTableName) {
+            $labelsFromTableName = Table::get($labelsFromTableName);
+            if (is_null($labelsFromTableName))
+                throw new Exception("labels-from [$labelsFromTableName] table not found");
+        }
 
         // Link back
         $this->table->model = &$this;
@@ -363,7 +371,7 @@ class Model {
             }
             
             print("{$indentString}  Fields:\n");
-            foreach ($this->fields(self::PRINT) as &$field) {
+            foreach ($this->fields() as &$field) {
                 $field->show($indent+2);
             }
         }
@@ -679,7 +687,7 @@ class Model {
         return $relationsName;
     }
 
-    public function relations1to1(Column &$forColumn = NULL, bool $hasManyDeepInclude = FALSE): array
+    public function relations1to1(Column &$forColumn = NULL, bool $hasManyDeepInclude = FALSE, bool $winterModels = FALSE): array
     {
         // 1-1 & leaf relations
         // $foreignKeysFrom this column: All $this->table's ($tableFrom) ForeignIdField(*_id) $columns 
@@ -718,10 +726,22 @@ class Model {
                 }
             }
         } else {
-            // Non-create-system relations
-            // cannot have 1-1 relations
-            // because there is no annotation
-            // to distinguish them from X-1
+            // Non-create system plugins do not represent their FKs correctly
+            // so we need to read the actual class definition relations, not the database FKs
+            if ($winterModels) {
+                if ($winterModel = $this->winterModel(FALSE)) {
+                    foreach ($winterModel->belongsTo as $relationName => $config) {
+                        // If the relation config has a ModelTo setting, usually config[0]
+                        // $finalModel is a create-system Model wrapper
+                        $finalModel = $this->relationConfigModel($config);
+                        $key        = (isset($config['key']) ? $config['key'] : $this->standardBareReferencingField());
+                        $conditions = (isset($config['conditions']) ? $config['conditions'] : NULL);
+                        $columnFrom = Column::dummy($finalModel->table, $key);
+                        if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
+                            $relations[$relationName] = new Relation1to1($relationName, $this, $finalModel, $columnFrom, NULL, FALSE, $conditions);
+                    }
+                }
+            }
         }
 
         return $relations;
@@ -738,63 +758,73 @@ class Model {
         global $YELLOW, $GREEN, $RED, $NC;
 
         if (is_null($stepModel)) $stepModel = $forModel;
-
+        
         $relations = array();
         // relations1to1() returns empty for non-Create-System models
         // because their foreign keys & relations are not adorned
         $relations1to1 = $stepModel->relations1to1($forColumn, self::HAS_MANY_DEEP_INCLUDE);
         foreach ($relations1to1 as $name => $relation) {
-            $isLeaf       = ($relation instanceof RelationLeaf);
-            $nameObject   = $relation->nameObject;
-            $modelTo      = &$relation->to;
-            $subRelations = array_merge(
-                $modelTo->relations1fromX(),
-                $modelTo->relationsXfromX(),
-                $modelTo->relationsXfromXSemi(),
-                // We also want a relation entry for this 1to1 step
-                $modelTo->relations1to1(), 
-                // We do not want to chain other sub-HasManyDeep relations
-            );
-            $thisThroughRelations        = $throughRelations;
-            $thisThroughRelations[$name] = $relation; // Still in order for array_keys()
-
-            // Normal relations
-            foreach ($subRelations as $subName => $deepRelation) {
-                $subthroughRelations           = $thisThroughRelations;
-                $subthroughRelations[$subName] = $deepRelation;
-                $subthroughRelationsNames      = array_keys($subthroughRelations);
-                $deepName = Model::nestedFieldName($subthroughRelationsNames);
-                if (isset($relations[$deepName])) 
-                    throw new Exception("Conflicting relations with [$deepName] on [$stepModel->name]");
-
-                if ($deepRelation->conditions)
-                    print("      {$RED}WARNING{$NC}: Relation HasManyDeep $deepName has conditions\n");
-
-                $relations[$deepName] = new RelationHasManyDeep(
-                    $deepName,
-                    $forModel,       // model from
-                    $deepRelation->to, // model to
-                    $relation->column,
-                    // If the last relation has a real FK, use it, for the comment
-                    // otherwise use this first one
-                    $deepRelation->foreignKey ?: $relation->foreignKey,
-                    // name => relation
-                    $subthroughRelations, 
-                    $isLeaf,
-                    // All steps must be nameObjects
-                    ($nameObject && $deepRelation->nameObject), 
-                    // Type is important because we can immediately identify 
-                    // fully 1to1 deep relations for embedding
-                    // 1to1 means all steps are 1to1
-                    // because $relation above will only be 1to1 traversal
-                    // other (XfromX, etc.) indicates the LAST step only
-                    $deepRelation->type(),
-                    $deepRelation->conditions
+            if (isset($throughRelations[$name])) {
+                // This can happen with parent relations
+                print("      HasManyDeep recursion1 detected in {$YELLOW}$forModel->name::$name{$NC}\n");
+            } else {
+                $isLeaf       = ($relation instanceof RelationLeaf);
+                $nameObject   = $relation->nameObject;
+                $modelTo      = &$relation->to;
+                $subRelations = array_merge(
+                    $modelTo->relations1fromX(),
+                    $modelTo->relationsXfromX(),
+                    $modelTo->relationsXfromXSemi(),
+                    // We also want a relation entry for this 1to1 step
+                    $modelTo->relations1to1(), 
+                    // We do not want to chain other sub-HasManyDeep relations
                 );
-            }
+                $thisThroughRelations        = $throughRelations;
+                $thisThroughRelations[$name] = $relation; // Still in order for array_keys()
 
-            // Deep 1to1 relation recursion
-            $relations = array_merge($relations, $this->recursive1to1Relations($forModel, NULL, $modelTo, $thisThroughRelations));
+                // Normal relations
+                foreach ($subRelations as $subName => $deepRelation) {
+                    if (isset($subthroughRelations[$subName])) {
+                        // This can happen with parent relations
+                        print("      HasManyDeep recursion2 detected in {$YELLOW}$forModel->name::$subName{$NC}\n");
+                    } else {
+                        $subthroughRelations           = $thisThroughRelations;
+                        $subthroughRelations[$subName] = $deepRelation;
+                        $subthroughRelationsNames      = array_keys($subthroughRelations);
+                        $deepName = Model::nestedFieldName($subthroughRelationsNames);
+                        if (isset($relations[$deepName])) 
+                            throw new Exception("Conflicting relations with [$deepName] on [$stepModel->name]");
+
+                        if ($deepRelation->conditions)
+                            print("      {$RED}WARNING{$NC}: Relation HasManyDeep $deepName has conditions\n");
+
+                        $relations[$deepName] = new RelationHasManyDeep(
+                            $deepName,
+                            $forModel,       // model from
+                            $deepRelation->to, // model to
+                            $relation->column,
+                            // If the last relation has a real FK, use it, for the comment
+                            // otherwise use this first one
+                            $deepRelation->foreignKey ?: $relation->foreignKey,
+                            // name => relation
+                            $subthroughRelations, 
+                            $isLeaf,
+                            // All steps must be nameObjects
+                            ($nameObject && $deepRelation->nameObject), 
+                            // Type is important because we can immediately identify 
+                            // fully 1to1 deep relations for embedding
+                            // 1to1 means all steps are 1to1
+                            // because $relation above will only be 1to1 traversal
+                            // other (XfromX, etc.) indicates the LAST step only
+                            $deepRelation->type(),
+                            $deepRelation->conditions
+                        );
+                    }
+                }
+
+                // Deep 1to1 relation recursion
+                $relations = array_merge($relations, $this->recursive1to1Relations($forModel, NULL, $modelTo, $thisThroughRelations));
+            }
         }
 
         return $relations;
@@ -1198,27 +1228,40 @@ class Model {
         return $fieldObjects;
     }
 
-    public function fields(bool $print = self::NO_OUTPUT, int $recursing = 0): array
+    public function getField(string $name, bool $throwIfNotFound = FALSE): Field|NULL
+    {
+        // TODO: Very slow, cache this fields call...
+        $fields = $this->fields();
+        if (!isset($fields[$name]) && $throwIfNotFound)
+            throw new Exception("Field [$name] not found on $this");
+        return (isset($fields[$name]) ? $fields[$name] : NULL);
+    }
+
+    public function fields(int $recursing = 0): array
     {
         global $YELLOW, $GREEN, $RED, $NC;
+
+        // Cacheing
+        $cacheArray = ($recursing ? $this->fieldsCacheRecursing : $this->fieldsCacheDirect);
+        if ($cacheArray) {
+            // We clone otherwise property changes will back-affect the cache objects
+            $newCacheArray = array();
+            foreach ($cacheArray as $name => $fieldObj) $newCacheArray[$name] = clone $fieldObj;
+            return $newCacheArray;
+        }
 
         // TODO: Relations should reference their Fields, not columns
         $plugin = &$this->plugin;
         $fields = array();
         $useRelationManager = TRUE; //!$isNested;
-        $indentString       = str_repeat(' ', $recursing*2);
-        // Output Buffer level++, discarded at end
-        // No need to do it when recursing because the outer call is buffering
-        $suppressOutput = !$print;
-        if ($suppressOutput) ob_start(); 
+        $indentString = str_repeat(' ', $recursing * 2);
 
         if ($this->isCreateSystem()) {
             // ---------------------------------------------------------------- Database Columns => Fields
-            foreach ($this->table->columns as $columnName => &$column) {
+            foreach ($this->table->columns as &$column) {
                 if ($column->shouldProcess()) { // !system && !todo
                     $relations       = $this->relations($column); // Includes HasManyDeep
                     $fieldObj        = Field::createFromColumn($this, $column, $relations);
-                    $recursingNext   = $recursing + 1;
 
                     // Debug
                     $fieldClassParts = explode('\\', get_class($fieldObj));
@@ -1227,16 +1270,16 @@ class Model {
 
                     // 1to1 embedding 
                     if (   $fieldObj instanceof ForeignIdField
-                        && $relations1to1 = $fieldObj->relations1to1() // Includes HasManyDeep(1to1)
+                        && ($relations1to1 = $fieldObj->relations1to1()) // Includes HasManyDeep(1to1)
                     ) {
                         // 1to1, leaf & hasManyDeep(1to1) relations.
                         // Known AA plugins are Final
                         // they do not continue 1to1 hasManyDeep recursion
-                        foreach ($relations1to1 as &$relation1to1) {
+                        foreach ($relations1to1 as $relation1to1) {
                             // Static 1to1 whole form/list include
                             //   fields.yaml:  entity[user_group][name]
                             //   columns.yaml: name: name, relation: entity_user_group
-                            $modelTo            = &$relation1to1->to;
+                            $modelTo            = $relation1to1->to;
                             $modelToClass       = $modelTo->name;
                             $classParts         = explode('\\', get_class($relation1to1));
                             $relationClass      = end($classParts);
@@ -1251,9 +1294,7 @@ class Model {
                                 //
                                 // This call also returns Fields from non-create-system Yaml. See below
                                 // NOT RECURSIVE: !$recursing only
-                                print("      {$indentString}Processing 1to1 columns for $relationClass({$YELLOW}$relation1to1->name{$NC})->is1to1($type) @level {$YELLOW}$recursingNext{$NC} on ForeignIdField({$YELLOW}$columnName{$NC})\n");
-                                $relation1to1Fields = $modelTo->fields($print, $recursing+1);
-                                $columnUsed         = FALSE;
+                                $relation1to1Fields = $modelTo->fields($recursing+1);
                                 foreach ($relation1to1Fields as $subFieldName => $subFieldObj) {
                                     // Exclude fields that have the same local name as fields in the parent form
                                     // this naturally exlcudes id and created_*
@@ -1295,10 +1336,6 @@ class Model {
                                         // We use relation: and the single <name>:
                                         // For 1-1 Models, also a name|valueFrom: nested[field][name]
                                         // using nameFromPath()
-                                        if ($subFieldObj->relation) {
-                                            // throw new Exception("$modelTo->name::$subFieldName on $relationClass($relation1to1->name) column already has a relation [$subFieldObj->relation] during shallow column embed");
-                                            print("      $indentString{$RED}WARNING{$NC}: $modelTo->name::$subFieldName on $relationClass($relation1to1->name) column already has a relation [$subFieldObj->relation] during shallow column embed");
-                                        }
                                         $subFieldObj->columnKey = $subFieldName;
                                         $subFieldObj->relation  = $relation1to1->name;
                                         // Custom relation scopes based on relations, not SQL
@@ -1316,7 +1353,6 @@ class Model {
                                             $subFieldObj->sqlSelect = $subFieldObj->column->fullyQualifiedName(); 
                                         }    
 
-                                        $columnUsed = TRUE;
                                         $fields[$subFieldObj->columnKey] = $subFieldObj;
                                     } else {
                                         $explanation = '';
@@ -1327,11 +1363,7 @@ class Model {
                                         if ($isPseudoFieldName)   $explanation .= "pseudo($subFieldName) ";
                                         if ($hasSubRelation)      $explanation .= "hasSubRelation($subFieldObj->relation) ";
                                         if ($isAlreadyNested)     $explanation .= "alreadyNested($subFieldName) ";
-                                        print("      $indentString{$YELLOW}WARNING{$NC}: [$modelToClass::$subFieldName] column ignored ($explanation)\n");
-                                    }
-
-                                    if (!$columnUsed) {
-                                        print("      $indentString{$YELLOW}WARNING{$NC}: $type($relation1to1->name) had no suitable columns\n");
+                                        print("  {$indentString}Field $modelTo->name::$subFieldName ignored because $explanation\n");
                                     }
                                 }
                             }
@@ -1342,8 +1374,7 @@ class Model {
                                 // stepping along the chain 1-1 belongsTo relations
                                 // A $relation1to1Path indicates that the caller routine, also this method, wants these fields nested
                                 // TODO: dependsOn morphing
-                                print("      {$indentString}Processing 1to1 fields for $relationClass({$YELLOW}$relation1to1->name{$NC})->is1to1($type) @level {$YELLOW}$recursingNext{$NC} on ForeignIdField({$YELLOW}$columnName{$NC})\n");
-                                $relation1to1Fields = $modelTo->fields($print, $recursing+1);
+                                $relation1to1Fields = $modelTo->fields($recursing+1);
                                 foreach ($relation1to1Fields as $subFieldName => $subFieldObj) {
                                     // Exclude fields that have the same local name as fields in the parent form
                                     // this naturally exlcudes id and created_*
@@ -1374,8 +1405,6 @@ class Model {
                                         $nestingMode,
                                     );
                                     $isDuplicateField  = isset($fields[$fieldKey]);
-                                    if ($nestingMode == self::RELATION_MODE) 
-                                        print("      $indentString{$YELLOW}WARNING{$NC}: [$modelToClass::$subFieldName] field will have a relation style name [$fieldKey]\n");
 
                                     if (   !$isSpecialField
                                         && $includeContext 
@@ -1397,21 +1426,29 @@ class Model {
 
                                         if ($subFieldObj->fieldType == 'fileupload') {
                                             // TODO: Fix embedded 1to1 file uploads
-                                            print("      $indentString{$RED}WARNING{$NC}: $modelTo->name::$fieldKey($subFieldObj->fieldType) on $relationClass($relation1to1->name) field cannot work on @create during deep field embed. Thus disabled\n");
                                             $subFieldObj->contexts = array('update' => TRUE);
                                         }
 
                                         if ($subFieldObj->fieldType == 'relation') {
                                             // TODO: Handle type: relation deep embed these situations
-                                            // throw new Exception("$modelTo->name::$fieldKey($subFieldObj->fieldType) on $relationClass($relation1to1->name) field already has a relation [$subFieldObj->relation] during deep field embed");
-                                            print("      $indentString{$RED}WARNING{$NC}: $modelTo->name::$fieldKey($subFieldObj->fieldType) on $relationClass($relation1to1->name) field already has a relation [$subFieldObj->relation] during deep field embed\n");
+                                            // TODO: Has this not already happened in Field? relation => dropdown
+                                            // type: relation fields
+                                            // Never nested
+                                            // For example: UserGroup(Yaml) columns: type: type: relation
+                                            //   => columns: user_group[type]: type: dropdown 
+                                            $subFieldObj->debugComment .= 'relationToEmbedMorph';
+                                            $subFieldObj->fieldKey  = $fieldKey;
+                                            $subFieldObj->fieldType = 'dropdown';
+
+                                            $message = "$modelTo->name::$fieldKey($subFieldObj->fieldType) on $relationClass($relation1to1->name) field already has a relation [$subFieldObj->relation] during deep field embed";
+                                            print("  $indentString$message\n");
                                         } else {
                                             // Force field display
                                             if (!$subFieldObj->fieldType) $subFieldObj->fieldType = 'text';
-                                            
                                             $subFieldObj->fieldKey = $fieldKey;
-                                            $fields[$fieldKey] = $subFieldObj;
                                         }
+
+                                        $fields[$subFieldObj->fieldKey] = $subFieldObj;
                                     } else {
                                         $explanation = '';
                                         if ($isSpecialField)     $explanation .= "special($subFieldName) ";
@@ -1419,7 +1456,7 @@ class Model {
                                         if (!$canDisplayAsField) $explanation .= "cannot display as field($subFieldName) ";
                                         if ($isDuplicateField)   $explanation .= "duplicate($subFieldObj->fieldKey) ";
                                         if ($isPseudoFieldName)  $explanation .= "pseudo($subFieldName) ";
-                                        print("      $indentString{$YELLOW}WARNING{$NC}: [$modelToClass::$subFieldName] field ignored ($explanation)\n");
+                                        print("  {$indentString}Field $modelTo->name::$subFieldName ignored because $explanation\n");
                                     }
                                 }
                             }
@@ -1428,8 +1465,6 @@ class Model {
                         // Direct entry in fields array
                         $fields[$fieldObj->name] = $fieldObj;
                     }
-                } else {
-                    print("      $indentString{$YELLOW}WARNING{$NC}: [$columnName] shouldNotProcess()\n");
                 }
             }
         } else {
@@ -1437,13 +1472,11 @@ class Model {
             // Load the config yaml files
             // No 1to1 recursion because normal Laravel does not indicate 1to1s
             $fieldsPath       = $this->plugin->framework->modelFileDirectoryPath($this, 'fields.yaml');
-            $subFieldsConfig  = $this->plugin->framework->yamlFileLoad($fieldsPath, Framework::NO_CACHE, Framework::THROW);
-            $subFieldsConfig  = (object) $subFieldsConfig;
-            print("      {$indentString}Loaded {$YELLOW}$fieldsPath{$NC}\n");
+            $subFieldsYaml    = $this->plugin->framework->yamlFileLoad($fieldsPath, Framework::NO_CACHE, Framework::THROW);
+            $subFieldsConfig  = (object) $subFieldsYaml;
             $columnsPath      = $this->plugin->framework->modelFileDirectoryPath($this, 'columns.yaml');
-            $subColumnsConfig = $this->plugin->framework->yamlFileLoad($columnsPath, Framework::NO_CACHE, Framework::THROW);
-            $subColumnsConfig = (object) $subColumnsConfig;
-            print("      {$indentString}Loaded {$YELLOW}$columnsPath{$NC}\n");
+            $subColumnsYaml   = $this->plugin->framework->yamlFileLoad($columnsPath, Framework::NO_CACHE, Framework::THROW);
+            $subColumnsConfig = (object) $subColumnsYaml;
 
             // Inject fields, and tab fields
             if (property_exists($subFieldsConfig, 'fields')) {
@@ -1464,8 +1497,6 @@ class Model {
             }
             foreach ($fields as $name => $field) {
                 $field->fromYaml = TRUE;
-                $typeString = ($field->fieldType ?: '<no field type>') . ' / ' . ($field->columnType ?: '<no column type>');
-                print("      $indentString+[{$YELLOW}$name{$NC}]($typeString)\n");
             }
         }
 
@@ -1494,17 +1525,15 @@ class Model {
             $relationClass   = get_class($relation);
             $relationType    = $relation->type();
             $valueFrom       = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
-            $tab             = ($relation->tab ?: 'INHERIT'); 
             $translationKey  = $relation->to->translationKey(Model::PLURAL);
             $cssClasses      = $relation->cssClasses($useRelationManager);
             $dependsOn       = ($relation->dependsOn ? $relation->dependsOn : array());
             $dependsOn['_paste'] = TRUE;
             $canFilter       = (isset($relation->canFilter) 
                 ? $relation->canFilter 
-                : (isset($this->canFilterDefault) ? $this->canFilterDefault : $relation::$canFilterDefault)
+                : (isset($this->canFilterDefault) ? $this->canFilterDefault : $relation->canFilterDefault())
             );
 
-            print("    {$indentString}Creating column _multi for HasManyDeep({$YELLOW}$relation{$NC})\n");
             $thisIdRelation  = array($name => $relation);
             $fieldDefinition = array(
                 '#'              => "Tab multi-select for relations1fromX($relationClass($relationType) $relation)",
@@ -1539,8 +1568,9 @@ class Model {
                 'fieldExclude'   => $relation->fieldExclude,
                 'advanced'       => $relation->advanced,
                 'hidden'         => $relation->hidden,
+                'required'       => $relation->required,
                 'span'           => $relation->span,
-                'tab'            => $tab,
+                'tab'            => ($relation->tab ?: 'INHERIT'),
                 'cssClasses'     => $cssClasses,
                 'rlButtons'      => $relation->rlButtons,
                 'dependsOn'      => $dependsOn,
@@ -1587,14 +1617,13 @@ class Model {
             // These 1fromX are linked only to the content table
             $canFilter      = (isset($relation->canFilter) 
                 ? $relation->canFilter 
-                : (isset($this->canFilterDefault) ? $this->canFilterDefault : $relation::$canFilterDefault)
+                : (isset($this->canFilterDefault) ? $this->canFilterDefault : $relation->canFilterDefault())
             );
             $cssClasses    = $relation->cssClasses($useRelationManager);
             $comment       = '';
             $valueFrom     = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
             if ($relation->status == 'broken') continue;
 
-            print("    {$indentString}Creating tab multi-select for {$YELLOW}$relation{$NC}\n");
             $thisIdRelation = array($name => $relation);
             $fieldObj       = new PseudoFromForeignIdField($this, array(
                 '#'              => "Tab multi-select for relations1fromX($relationClass($relationType) $relation)",
@@ -1609,6 +1638,7 @@ class Model {
                 'nameFrom'       => $nameFrom,
                 'cssClasses'     => $cssClasses,
                 'bootstraps'     => $relation->bootstraps,
+                'rlButtons'      => $relation->rlButtons,
                 'dependsOn'      => $dependsOn,
                 'tabLocation'    => $relation->tabLocation,
                 'advanced'       => $relation->advanced,
@@ -1620,10 +1650,11 @@ class Model {
                 'relatedModel'   => $relation->to->fullyQualifiedName(),
                 'canFilter'      => $canFilter, 
                 'readOnly'       => $relation->readOnly,
+                'required'       => $relation->required,
                 'multi'          => $relation->multi,
                 'nameObject'     => $relation->nameObject,
                 'span'           => $relation->span,
-                'tab'            => 'INHERIT',
+                'tab'            => ($relation->tab ?: 'INHERIT'),
                 'noRelationManager' => (isset($relation->noRelationManager) ? $relation->noRelationManager : $this->noRelationManagerDefault),
                 'filterSearchNameSelect' => $relation->filterSearchNameSelect,
                 'explicitLabelKey'  => $relation->explicitLabelKey,
@@ -1671,11 +1702,10 @@ class Model {
             $valueFrom       = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
             if ($relation->status == 'broken') continue;
 
-            print("    {$indentString}Creating tab multi-select for {$YELLOW}$relation{$NC}\n");
             $thisIdRelation = array($name => $relation);
             $canFilter      = (isset($relation->canFilter) 
                 ? $relation->canFilter 
-                : (isset($this->canFilterDefault) ? $this->canFilterDefault : $relation::$canFilterDefault)
+                : (isset($this->canFilterDefault) ? $this->canFilterDefault : $relation->canFilterDefault())
             );
             $fieldObj       = new PseudoFromForeignIdField($this, array(
                 '#'              => "Tab multi-select for relationsXfromXSemi($relationClass($relationType) $relation)",
@@ -1703,8 +1733,9 @@ class Model {
                 // These are linked only to the content table
                 'canFilter'      => $canFilter, 
                 'readOnly'       => $relation->readOnly,
+                'required'       => $relation->required,
                 'span'           => $relation->span,
-                'tab'            => 'INHERIT',
+                'tab'            => ($relation->tab ?: 'INHERIT'),
                 'multi'          => $relation->multi,
                 'nameObject'     => $relation->nameObject,
                 'dependsOn'      => $dependsOn,
@@ -1751,7 +1782,7 @@ class Model {
             if ($relation->status == 'broken') continue;
             $canFilter       = (isset($relation->canFilter) 
                 ? $relation->canFilter 
-                : (isset($this->canFilterDefault) ? $this->canFilterDefault : $relation::$canFilterDefault)
+                : (isset($this->canFilterDefault) ? $this->canFilterDefault : $relation->canFilterDefault())
             );
 
             // TODO: Translatable "create new" comment
@@ -1759,7 +1790,6 @@ class Model {
             //$comment     = "create new <a href='#' class='popup-add' data-field-name='$dataFieldName' data-handler='onPopupRoute' data-request-data=\"route:'{$table_from_controller//\\/\\\\}@create',fieldName:'$dataFieldName'\" data-control='popup' tabindex='-1'>{$table_from_name_singular//_/-}</a>"
             $dependsOn[$dataFieldName] = TRUE;
 
-            print("    {$indentString}Creating tab multi-select with for {$YELLOW}$relation{$NC}\n");
             $thisIdRelation         = array($name => $relation);
             $fieldObj = new PseudoFromForeignIdField($this, array(
                 '#'              => "Tab multi-select for relationsXfromX($relationClass($relationType) $relation)",
@@ -1787,8 +1817,9 @@ class Model {
                 // These are linked only to the content table
                 'canFilter'      => $canFilter, 
                 'readOnly'       => $relation->readOnly,
+                'required'       => $relation->required,
                 'span'           => $relation->span,
-                'tab'            => $tab,
+                'tab'            => ($relation->tab ?: 'INHERIT'),
                 'multi'          => $relation->multi,
                 'nameObject'     => $relation->nameObject,
                 'dependsOn'      => $dependsOn,
@@ -1808,7 +1839,6 @@ class Model {
         }
 
         // ---------------------------------------------------------------- QR code support fields
-        print("    {$indentString}Injecting _qrcode field\n");
         // TODO: Move to QRCode FormField when available
         $fields['_qrcode'] = new PseudoField($this, array(
             'name'        => '_qrcode',
@@ -1828,11 +1858,11 @@ class Model {
             'sortable'    => FALSE,
             'searchable'  => FALSE,
             'invisible'   => TRUE,
+            'permissions' => array('acorn.view_qrcode'),
         ));
 
         // ---------------------------------------------------------------- Actions
         // These also appear in columns.yaml
-        print("    {$indentString}Injecting list actions column\n");
         $fields['_actions'] = new PseudoField($this, array(
             'name'          => '_actions',
             'hidden'        => TRUE,
@@ -1852,10 +1882,29 @@ class Model {
             )
                 throw new Exception("Model [$this->name] relation [$field->fieldKey] is missing for RelationManager field [$field->fieldKey]");
 
+            if (   $field->fieldType == 'relationmanager'
+                && $field->required
+            ) {
+                // Actually, only X-1 relations, shown as dropdowns, like event_id, can be required
+                throw new Exception("Model [$this->name::$field->fieldKey] is a relationmanager and required. This will enter the field in to the \$rules array as required and prevent saving");
+            }
+
+            if (   $this->isCreateSystem()
+                && $field->fieldType == 'relationmanager'
+                && !isset($field->rlButtons) // Can be FALSE
+            ) {
+                throw new Exception("Model [$this->name::$field->fieldKey] is a relationmanager without buttons");
+            }
+
             if ($field->columnKey 
                 && in_array($field->columnType, array('richeditor' , 'relationmanager'))
             )
                 throw new Exception("Model [$this->name] column [$field->columnKey] has illegal type [$field->columnType]");
+
+            if (!isset($field->fieldType) || !$field->fieldType) {
+                $fromYaml = ($field->fromYaml ? '(from YAML)' : '');
+                // throw new Exception("Model [$this->name] field [$name]$fromYaml has no field-type");
+            }
 
             if ($field->sortable) {
                 if (!$field->sqlSelect)
@@ -1906,7 +1955,16 @@ HTML;
                 */
             }
         }
-        if ($suppressOutput) ob_end_clean();
+
+        // Cacheing
+        // We clone otherwise property changes will back-affect the cache objects
+        $cacheArray = array();
+        foreach ($fields as $name => $fieldObj) $cacheArray[$name] = clone $fieldObj;
+        if ($recursing) {
+            $this->fieldsCacheRecursing = $cacheArray;
+        } else {
+            $this->fieldsCacheDirect = $cacheArray;
+        }
 
         return $fields;
     }

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict emusFksvORuUhYfhLzB9k3W7PMgbeGd7wlnJnJlPzp2AiRGW4kDHp6RHkL1bUEP
+\restrict n5dZgx7Wf7DQOAbOQgYDVdrQA7i1CB18BUi7AtWOgqIBqfnDaWWyfxCF9TsMyWH
 
 -- Dumped from database version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
 -- Dumped by pg_dump version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
@@ -304,6 +304,7 @@ DROP TRIGGER IF EXISTS tr_acorn_university_delete_entity ON public.acorn_univers
 DROP TRIGGER IF EXISTS tr_acorn_university_delete_entity ON public.acorn_university_departments;
 DROP TRIGGER IF EXISTS tr_acorn_university_delete_entity ON public.acorn_university_courses;
 DROP TRIGGER IF EXISTS tr_acorn_university_courses_unique_name_type ON public.acorn_university_courses;
+DROP TRIGGER IF EXISTS tr_acorn_university_cm_order ON public.acorn_university_course_materials;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_student_statuses;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_student_notes;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_student_identities;
@@ -686,7 +687,6 @@ DROP FOREIGN TABLE IF EXISTS public.university_mofadala_candidate_exams;
 DROP FOREIGN TABLE IF EXISTS public.university_mofadala_candidate_exam_materials;
 DROP FOREIGN TABLE IF EXISTS public.university_mofadala_candidate_exam_material_marks;
 DROP FOREIGN TABLE IF EXISTS public.university_mofadala_branches;
-DROP FOREIGN TABLE IF EXISTS public.university_mofadala_baccalaureate_marks;
 DROP SEQUENCE IF EXISTS public.system_settings_id_seq;
 DROP TABLE IF EXISTS public.system_settings;
 DROP SEQUENCE IF EXISTS public.system_revisions_id_seq;
@@ -761,9 +761,11 @@ DROP TABLE IF EXISTS public.acorn_user_mail_blockers;
 DROP TABLE IF EXISTS public.acorn_user_ethnicities;
 DROP TABLE IF EXISTS public.acorn_university_universities;
 DROP TABLE IF EXISTS public.acorn_university_teachers;
-DROP TABLE IF EXISTS public.acorn_university_student_status;
 DROP VIEW IF EXISTS public.acorn_university_student_lookups;
 DROP TABLE IF EXISTS public.acorn_university_schools;
+DROP VIEW IF EXISTS public.acorn_university_legacy_updates;
+DROP FOREIGN TABLE IF EXISTS public.university_mofadala_baccalaureate_marks;
+DROP TABLE IF EXISTS public.acorn_university_student_status;
 DROP TABLE IF EXISTS public.acorn_university_faculties;
 DROP TABLE IF EXISTS public.acorn_university_education_authorities;
 DROP TABLE IF EXISTS public.acorn_university_departments;
@@ -891,6 +893,7 @@ DROP FUNCTION IF EXISTS public.fn_acorn_university_enrollment_year();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_delete_user_group();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_delete_entity();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_courses_unique_name_type();
+DROP FUNCTION IF EXISTS public.fn_acorn_university_cm_order();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean);
@@ -2047,7 +2050,14 @@ begin
 						and (ugs.name  = p_course         or p_course = '.*')
 						and (ct.name   = p_course_type    or p_course_type = '.*')
 						and (m.name    = p_material       or p_material = '.*')
-						and (mt.name   = p_material_type  or p_material_type = '.*')
+						and (  mt.name = p_material_type  
+							or p_material_type = '.*'
+							-- TODO: Expensive, maybe require a leading !?
+							-- TODO: Also great risk of accidental matches without ^...$
+							-- string, pattern
+							-- For example: (material|language)
+							or regexp_like(mt.name, p_material_type) 
+						)
 						and (coalesce(camt.name, cacm.name)   = p_algorithm      or p_algorithm = '.*')
 						and (coalesce(ectmt.name, ectcm.name) = p_algorithm_type or p_algorithm_type = '.*')
 						and (cm.required or not p_required)
@@ -2907,6 +2917,27 @@ comment:
     The final results are calculated and cached. 
 	If scores and data has changed, the results can be refreshed here.';
 
+
+--
+-- Name: fn_acorn_university_cm_order(); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_university_cm_order() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+	-- Runs before INSERT on acorn_university_course_materials
+	if new.order is null then
+		select max("order") + 100 into new.order 
+		from acorn_university_course_materials;
+	end if;
+    return new;
+end;
+            
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_university_cm_order() OWNER TO university;
 
 --
 -- Name: fn_acorn_university_courses_unique_name_type(); Type: FUNCTION; Schema: public; Owner: university
@@ -4776,17 +4807,20 @@ begin
 					case
 						when ugs.name = 'Dêrelzor'     then 'دير الزور'
 						when ugs.name = 'Reqa'  then 'الرقة'
+						when ugs.name = 'Aleppo'  then 'حلب'
+						when ugs.name = 'Heleb'  then 'حلب'
 						when ugs.name = 'Cizîrê'   then 'الجزيرة'
 						when ugs.name = 'Fûrat' then 'الفرات'
 						when ugs.name = 'Tebqa'     then 'الطبقة'
 						when ugs.name = 'Efrîn' then 'عفرين'
 						when ugs.name = 'Efrîn Û Şehba' then 'عفرين وشهبا'
+						when ugs.name = 'Şehba' then 'وشهبا'
 						else ''
 					end
 				|| '","description":""}' as attribute_data
 			FROM acorn_user_user_groups ugs
 			-- Actually we translate anything with these names, if not already translated
-			where ugs.name in('Dêrelzor', 'Reqa', 'Cizîrê', 'Fûrat', 'Tebqa', 'Efrîn', 'Efrîn Û Şehba')
+			where ugs.name in('Dêrelzor', 'Reqa', 'Aleppo', 'Heleb', 'Cizîrê', 'Fûrat', 'Tebqa', 'Efrîn', 'Efrîn Û Şehba')
 			on conflict on constraint model_locale do update
 				set model_id = EXCLUDED.id;
 
@@ -4900,6 +4934,8 @@ begin
 							when ugs.name = 'Electricity' then 'Elektrîkî'
 							when ugs.name = 'Electronic'  then 'Elektronîkî'
 							when ugs.name = 'Electronics' then 'Elektronîkî'
+							when ugs.name = 'Torno'       then 'Torno'
+							when ugs.name = 'Lathe'       then 'Torno'
 							else ''
 						end
 					|| '","description":""}' as attribute_data
@@ -4938,6 +4974,8 @@ begin
 							when ugs.name = 'Electricity' then 'كهرباء'
 							when ugs.name = 'Electronic'  then 'الإلكترونيات'
 							when ugs.name = 'Electronics' then 'الإلكترونيات'
+							when ugs.name = 'Torno'       then 'مخرطة'
+							when ugs.name = 'Lathe'       then 'مخرطة'
 							else ''
 						end
 					|| '","description":""}' as attribute_data
@@ -4946,7 +4984,7 @@ begin
 				where ugs.name in('Science', 'Literature', 
 					'Economics', 'Agriculture', 'Medical', 
 					'Apprentice - Computer', 'Apprentice - Mechanical', 'Apprentice - Electronic', 'Apprentice - Electrical',
-					'Commerce', 'Medicine', 'Computer', 'Mechanics', 'Electricity', 'Electronics'
+					'Commerce', 'Medicine', 'Computer', 'Mechanics', 'Electricity', 'Electronics', 'Torno'
 				)
 				on conflict on constraint model_locale do update
 					set model_id = EXCLUDED.id;
@@ -5398,92 +5436,95 @@ begin
 	if p_messages then raise notice '% Students-placements on to Year 12 distributed and 11,10,9 static Bakeloria courses in schools', array_upper(p_uuids, 1); end if;
 
 	-- ######################################### Materials & Course materials
-	-- These materials should be seeded, but we add just in case
-	-- we assume the material type
-	-- Literature (adabi) & Science (el) Bakeloria, etc.
-	WITH inserted as (
-		insert into acorn_university_materials(id, name, description, material_type_id, created_by_user_id)
-			-- Science
-			select 'cdc800ae-28be-11f0-a8a6-334555029afd'::uuid, 'Math',       NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select 'd675a530-28be-11f0-a2c9-9bb10fa15bd3'::uuid, 'Biology',    NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select 'dd494c0e-28be-11f0-94e1-a7b2083dd749'::uuid, 'Physics',    NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select 'ecf3dae8-28be-11f0-91f7-f31527b6ca23'::uuid, 'Chemistry',  NULL, p_material_type_normal_id, p_created_by_user_id union all
-			-- Literature
-			select 'e427a282-28be-11f0-8856-a7abd8a449c5'::uuid, 'Geography',  NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select 'd43af2a2-2bd9-11f0-b08b-5fd59b502470'::uuid, 'History',    NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select 'd8168f4e-2bd9-11f0-97a5-1b42cf640b5b'::uuid, 'Philosophy', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select 'd84f8434-2bd9-11f0-bfa1-7b92380571bd'::uuid, 'Sociology',  NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select p_jineologi_material, 'Jineologi',  NULL, p_material_type_normal_id, p_created_by_user_id union all
-			-- Year 10,11 Bakeloria
-			select '7f5c3dc8-2e53-11f0-8600-6ff513625846'::uuid, 'Year 10',    NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '7f5c4156-2e53-11f0-8601-43470f236a9e'::uuid, 'Year 11',    NULL, p_material_type_normal_id, p_created_by_user_id union all
-			-- Year 9 Middle school
-			select 'ee22cafe-502e-11f0-90c2-3702c192c6ec'::uuid, 'Year 9',     NULL, p_material_type_normal_id, p_created_by_user_id union all
-			-- Language
-			select 'b025cfe2-50f3-11f0-96d9-13090f80441e'::uuid, 'Community Language',  NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select 'f3c853a8-28be-11f0-8938-73b157eb85a1'::uuid, 'Kurdish',    NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select 'fa61ead0-28be-11f0-9fb3-2bbf7e1c7c7c'::uuid, 'English',    NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '005bba60-28bf-11f0-bf7f-cff663f8102b'::uuid, 'Arabic',     NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- -- These materials should be seeded, but we add just in case
+	-- -- we assume the material type
+	-- -- Literature (adabi) & Science (el) Bakeloria, etc.
+	-- WITH inserted as (
+	-- 	insert into acorn_university_materials(id, name, description, material_type_id, created_by_user_id)
+	-- 		-- Science
+	-- 		select 'cdc800ae-28be-11f0-a8a6-334555029afd'::uuid, 'Math',       NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select 'd675a530-28be-11f0-a2c9-9bb10fa15bd3'::uuid, 'Biology',    NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select 'dd494c0e-28be-11f0-94e1-a7b2083dd749'::uuid, 'Physics',    NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select 'ecf3dae8-28be-11f0-91f7-f31527b6ca23'::uuid, 'Chemistry',  NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		-- Literature
+	-- 		select 'e427a282-28be-11f0-8856-a7abd8a449c5'::uuid, 'Geography',  NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select 'd43af2a2-2bd9-11f0-b08b-5fd59b502470'::uuid, 'History',    NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select 'd8168f4e-2bd9-11f0-97a5-1b42cf640b5b'::uuid, 'Philosophy', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select 'd84f8434-2bd9-11f0-bfa1-7b92380571bd'::uuid, 'Sociology',  NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select p_jineologi_material, 'Jineologi',  NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		-- Year 10,11 Bakeloria
+	-- 		select '7f5c3dc8-2e53-11f0-8600-6ff513625846'::uuid, 'Year 10',    NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '7f5c4156-2e53-11f0-8601-43470f236a9e'::uuid, 'Year 11',    NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		-- Year 9 Middle school
+	-- 		select 'ee22cafe-502e-11f0-90c2-3702c192c6ec'::uuid, 'Year 9',     NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		-- Language
+	-- 		select 'b025cfe2-50f3-11f0-96d9-13090f80441e'::uuid, 'Community Language',  NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select 'f3c853a8-28be-11f0-8938-73b157eb85a1'::uuid, 'Kurdish',    NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select 'fa61ead0-28be-11f0-9fb3-2bbf7e1c7c7c'::uuid, 'English',    NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '005bba60-28bf-11f0-bf7f-cff663f8102b'::uuid, 'Arabic',     NULL, p_material_type_normal_id, p_created_by_user_id union all
 			
-			-- Medicine
-			select '9f7d3005-1327-40a4-9d99-ad83d2358741'::uuid, 'Physics and Chemistry', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d3043-29c9-4a93-9417-374158b3fb10'::uuid, 'Anatomy', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d3073-300e-44a0-aa45-b738e474e871'::uuid, 'Nursing', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d30cd-6ceb-4841-bfd3-5b7de5f8085f'::uuid, 'Rays', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d310c-48de-40c8-a5a8-b9c406a779de'::uuid, 'Anesthetization', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d3139-9d3f-4965-970c-972c8824c6b4'::uuid, 'Physical therapy', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d3165-47e2-4239-9373-6f5bb82464a1'::uuid, 'Pharmacy', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d319d-bf6f-4662-a864-de0c7c1f35a0'::uuid, 'Lab', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		-- Medicine
+	-- 		select '9f7d3005-1327-40a4-9d99-ad83d2358741'::uuid, 'Physics and Chemistry', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d3043-29c9-4a93-9417-374158b3fb10'::uuid, 'Anatomy', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d3073-300e-44a0-aa45-b738e474e871'::uuid, 'Nursing', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d30cd-6ceb-4841-bfd3-5b7de5f8085f'::uuid, 'Rays', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d310c-48de-40c8-a5a8-b9c406a779de'::uuid, 'Anesthetization', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d3139-9d3f-4965-970c-972c8824c6b4'::uuid, 'Physical therapy', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d3165-47e2-4239-9373-6f5bb82464a1'::uuid, 'Pharmacy', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d319d-bf6f-4662-a864-de0c7c1f35a0'::uuid, 'Lab', NULL, p_material_type_normal_id, p_created_by_user_id union all
 			
-			-- Mechanics
-			select '9f7d3210-28c4-4b3d-a914-568d1b2b7987'::uuid, 'Internal Combustion Engines', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d32e0-2739-4ad6-9d1b-253a034c1ac2'::uuid, 'Mechanical Engineering Drawing 3', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d3312-291e-41a9-a5fe-e297d597e2dc'::uuid, 'Vehicle control systems', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d3342-ed04-4edd-a956-da51c02f58f4'::uuid, 'Diesel fuel injection systems', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		-- Mechanics
+	-- 		select '9f7d3210-28c4-4b3d-a914-568d1b2b7987'::uuid, 'Internal Combustion Engines', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d32e0-2739-4ad6-9d1b-253a034c1ac2'::uuid, 'Mechanical Engineering Drawing 3', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d3312-291e-41a9-a5fe-e297d597e2dc'::uuid, 'Vehicle control systems', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d3342-ed04-4edd-a956-da51c02f58f4'::uuid, 'Diesel fuel injection systems', NULL, p_material_type_normal_id, p_created_by_user_id union all
 
-			-- Electricity
-			select '9f7d35eb-1782-4478-9e13-cc08eac51af5'::uuid, 'Electrical appliances 2', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d3615-0c25-4950-b326-01e832505ccc'::uuid, 'Automated command and control', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d363a-d062-4f98-8b96-6a8fdaa7e6eb'::uuid, 'Electrical Engineering Drawing 3', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d5a21-3c5c-4242-a091-5a3bf4fd829a'::uuid, 'Electronics 3', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		-- Electricity
+	-- 		select '9f7d35eb-1782-4478-9e13-cc08eac51af5'::uuid, 'Electrical appliances 2', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d3615-0c25-4950-b326-01e832505ccc'::uuid, 'Automated command and control', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d363a-d062-4f98-8b96-6a8fdaa7e6eb'::uuid, 'Electrical Engineering Drawing 3', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d5a21-3c5c-4242-a091-5a3bf4fd829a'::uuid, 'Electronics 3', NULL, p_material_type_normal_id, p_created_by_user_id union all
 
-			-- Computer
-			select '9f83484d-e6cb-49c3-994b-fdb976ceba92'::uuid, 'Web Design', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d3661-f29f-4b5c-bf18-b49df3d424c7'::uuid, 'Hardware and software maintenance 2', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d368c-0ca7-4f3a-abc5-7991ce322b9f'::uuid, 'Programming 3', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d36b3-24d8-4537-a12b-a666197847c1'::uuid, 'Network management', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d36da-d87f-4fe2-83fe-fb6269b26c7b'::uuid, 'Computer applications', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		-- Computer
+	-- 		select '9f83484d-e6cb-49c3-994b-fdb976ceba92'::uuid, 'Web Design', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d3661-f29f-4b5c-bf18-b49df3d424c7'::uuid, 'Hardware and software maintenance 2', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d368c-0ca7-4f3a-abc5-7991ce322b9f'::uuid, 'Programming 3', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d36b3-24d8-4537-a12b-a666197847c1'::uuid, 'Network management', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d36da-d87f-4fe2-83fe-fb6269b26c7b'::uuid, 'Computer applications', NULL, p_material_type_normal_id, p_created_by_user_id union all
 			
-			-- Commerce
-			select '9f7d3700-135b-4322-9c21-aa8ad1e49c1e'::uuid, 'Marketing', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d3735-b592-45f9-bb09-f3cb237c1f76'::uuid, 'Bank accounting', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d375d-0c8d-4587-81d2-208632503d48'::uuid, 'Financial Institutions Accounting', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d3835-0cdf-487b-8daf-846854567178'::uuid, 'Private accounting', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d3861-f5b4-4e32-8de6-613fa2935b32'::uuid, 'Computer', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d3886-ce95-4120-bf5e-c26355e1cc6d'::uuid, 'Financial Mathematics', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d38a9-a00b-45a7-88dc-e1ca69b0f92d'::uuid, 'Statistics', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		-- Commerce
+	-- 		select '9f7d3700-135b-4322-9c21-aa8ad1e49c1e'::uuid, 'Marketing', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d3735-b592-45f9-bb09-f3cb237c1f76'::uuid, 'Bank accounting', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d375d-0c8d-4587-81d2-208632503d48'::uuid, 'Financial Institutions Accounting', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d3835-0cdf-487b-8daf-846854567178'::uuid, 'Private accounting', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d3861-f5b4-4e32-8de6-613fa2935b32'::uuid, 'Computer', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d3886-ce95-4120-bf5e-c26355e1cc6d'::uuid, 'Financial Mathematics', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d38a9-a00b-45a7-88dc-e1ca69b0f92d'::uuid, 'Statistics', NULL, p_material_type_normal_id, p_created_by_user_id union all
 
-			-- Agriculture
-			select '9f7d38d4-7ee0-432a-a613-13f1e8fc470d'::uuid, 'Food industries', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d38fb-2d86-4697-aaaa-2c7c744d2eed'::uuid, 'Dairy', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d391f-7aff-4a7c-a689-c3c58f72b430'::uuid, 'Gardening', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d3948-80cc-4fd1-bca2-774b7eea6b1a'::uuid, 'Farm animal', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d3976-aa21-471b-8a43-c4c5072e7a85'::uuid, 'Agricultural pests', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f83489a-47d5-47ad-8a11-d877272a51ee'::uuid, 'Micro Organisms', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		-- Agriculture
+	-- 		select '9f7d38d4-7ee0-432a-a613-13f1e8fc470d'::uuid, 'Food industries', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d38fb-2d86-4697-aaaa-2c7c744d2eed'::uuid, 'Dairy', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d391f-7aff-4a7c-a689-c3c58f72b430'::uuid, 'Gardening', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d3948-80cc-4fd1-bca2-774b7eea6b1a'::uuid, 'Farm animal', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d3976-aa21-471b-8a43-c4c5072e7a85'::uuid, 'Agricultural pests', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f83489a-47d5-47ad-8a11-d877272a51ee'::uuid, 'Micro Organisms', NULL, p_material_type_normal_id, p_created_by_user_id union all
 
-			-- Electronics
-			select '9f8d429b-fd97-437b-9a8f-dfaac8432db2'::uuid, 'Protection and Alarm Systems', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f8d42ca-567a-4106-b583-28281ba8ec35'::uuid, 'Antennas', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f8d42fb-0e1e-4459-8351-cac9a6828060'::uuid, 'Electronic Device Maintenance', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f8d4247-f04c-4bc5-9328-62a186e45574'::uuid, 'Televison', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			
-			select '9f7d3a1a-b218-44a0-b285-c58ed0749a5a'::uuid, 'Sport', NULL, p_material_type_normal_id, p_created_by_user_id union all
-			select '9f7d3a4c-ef31-444d-b9ce-e0277d883c69'::uuid, 'Art', NULL, p_material_type_normal_id, p_created_by_user_id
-			on conflict(id) do nothing
-			returning id
-		)
-		select array_agg(inserted.id) into p_uuids from inserted;
-	if p_messages then raise notice 'Bakeloria materials checked, % inserted', array_upper(p_uuids, 1); end if;
+	-- 		-- Electronics
+	-- 		select '9f8d429b-fd97-437b-9a8f-dfaac8432db2'::uuid, 'Protection and Alarm Systems', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f8d42ca-567a-4106-b583-28281ba8ec35'::uuid, 'Antennas', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f8d42fb-0e1e-4459-8351-cac9a6828060'::uuid, 'Electronic Device Maintenance', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f8d4247-f04c-4bc5-9328-62a186e45574'::uuid, 'Televison', NULL, p_material_type_normal_id, p_created_by_user_id union all
+
+	-- 		-- Torno (Lathe)
+	-- 		-- We have given up
+	
+	-- 		select '9f7d3a1a-b218-44a0-b285-c58ed0749a5a'::uuid, 'Sport', NULL, p_material_type_normal_id, p_created_by_user_id union all
+	-- 		select '9f7d3a4c-ef31-444d-b9ce-e0277d883c69'::uuid, 'Art', NULL, p_material_type_normal_id, p_created_by_user_id
+	-- 		on conflict(id) do nothing
+	-- 		returning id
+	-- 	)
+	-- 	select array_agg(inserted.id) into p_uuids from inserted;
+	-- if p_messages then raise notice 'Bakeloria materials checked, % inserted', array_upper(p_uuids, 1); end if;
 
 	-- Year 12 materials only
 	p_bakeloria_materials = ARRAY[
@@ -5547,6 +5588,13 @@ begin
 		'9f8d42fb-0e1e-4459-8351-cac9a6828060'::uuid,
 		'9f8d4247-f04c-4bc5-9328-62a186e45574'::uuid,
 
+		-- Torno
+		'9fc5c7b4-ce62-48dc-ab40-3b867f68aeb9'::uuid,
+		'9fc5c768-a4b5-4a84-9af0-3a068ea51aaf'::uuid,
+		'9fc5c724-21a2-400c-9971-4009a27b3d5c'::uuid,
+		'9fc5c6fa-c451-4549-8196-cd4239e9c959'::uuid,
+
+		-- Sport & Art
 		'9f7d3a1a-b218-44a0-b285-c58ed0749a5a'::uuid,
 		'9f7d3a4c-ef31-444d-b9ce-e0277d883c69'::uuid
 	];
@@ -7473,6 +7521,143 @@ begin
 		select array_agg(inserted.id) into p_uuids from inserted;
 	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
 
+	-- New Torno
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.turning, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Turning'              -- Material name (Mathc, etc.)
+					and not bm.turning is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.industrial_drawing, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Industrial Drawing'              -- Material name (Mathc, etc.)
+					and not bm.industrial_drawing is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.cnc, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Cnc'              -- Material name (Mathc, etc.)
+					and not bm.cnc is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
+	WITH inserted as (
+		insert into acorn_exam_scores(student_id, exam_material_id, score, created_by_user_id)
+			select st.id, em.id, bm.separator, p_created_by_user_id
+				from university_mofadala_baccalaureate_marks bm
+				inner join acorn_university_students st on st.import_source = p_imported || ' university_mofadala_baccalaureate_marks:' || bm.id
+				inner join acorn_user_users u on st.user_id = u.id
+				inner join acorn_user_user_group_version ugv on ugv.user_id = u.id
+				-- Hierarchy Course
+				inner join acorn_university_hierarchies hi
+					on hi.user_group_version_id = ugv.user_group_version_id and hi.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_cs on hi.entity_id = en_cs.id
+				inner join acorn_user_user_groups ugs_cs on en_cs.user_group_id = ugs_cs.id
+				inner join acorn_university_courses cs on cs.entity_id = en_cs.id
+				-- Parent hierarchy School
+				inner join acorn_university_hierarchies hiP
+					on hiP.id = hi.parent_id and hiP.academic_year_id = p_bakeloria_academic_year_id
+				inner join acorn_university_entities en_sch on hiP.entity_id = en_sch.id
+				inner join acorn_user_user_groups ugs_sch on en_sch.user_group_id = ugs_sch.id
+				inner join acorn_university_schools sch on sch.entity_id = en_sch.id
+				-- Course materials + exam
+				inner join acorn_university_course_materials cm
+					on cs.id = cm.course_id and cm.academic_year_semester_id = p_bakeloria_semester1
+				inner join acorn_exam_exam_materials em on em.course_material_id = cm.id
+				inner join acorn_university_materials m on cm.material_id = m.id
+
+				where fn_acorn_university_legacy_import_certificate_code(fn_acorn_university_legacy_import_county(bm.county), bm.certificate) = ugs_cs.code
+
+					and m.name = 'Separator'              -- Material name (Mathc, etc.)
+					and not bm.separator is null
+			returning id
+		)
+		select array_agg(inserted.id) into p_uuids from inserted;
+	if p_messages then raise notice '% Baccalaureate Marks inserted', array_upper(p_uuids, 1); end if;
+
 	-- ##################################### Set course_materials minimums
 	-- Prune Science and Literature Specializations
 	-- p_standard text[] := ARRAY['Maths', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'Philosophy', 'Sociology', 'Jineologi', 'Sport', 'Art'];
@@ -8872,7 +9057,9 @@ CREATE TABLE public.acorn_calendar_events (
     updated_at timestamp(0) without time zone,
     owner_user_id uuid NOT NULL,
     owner_user_group_id uuid,
-    permissions integer DEFAULT 79 NOT NULL
+    permissions integer DEFAULT 79 NOT NULL,
+    linked_model character varying(2048),
+    linked_model_id uuid
 );
 
 
@@ -8943,12 +9130,38 @@ ALTER TABLE public.acorn_enrollment_course_entry_requirements OWNER TO universit
 COMMENT ON TABLE public.acorn_enrollment_course_entry_requirements IS 'plugin-names:
   en: Enrollment
   ku: Mofadala
+  ar: التسجيل
 qr-code-scan: true
 labels:
   en: Course Entry Requirement
+  ku: Mercê Têketina Kursê
+  ar: متطلبات الفرع
 labels-plural:
   en: Course Entry Requirements
+  ku: Mercê Têketinan Kursê
+  ar: متطلبات الفرع
 ';
+
+
+--
+-- Name: COLUMN acorn_enrollment_course_entry_requirements.minimum_students; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.minimum_students IS 'field-comment: The course will automatically marked as Failed if this minimum quota is not achieved during the enrollment process. ';
+
+
+--
+-- Name: COLUMN acorn_enrollment_course_entry_requirements.high_school_course_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.high_school_course_id IS 'field-comment: These entry requirement criteria are only applicable to students with this specific High-School certificate. Create new Entry requirements for other Certificates.';
+
+
+--
+-- Name: COLUMN acorn_enrollment_course_entry_requirements.failed_course; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.failed_course IS 'field-comment: This course will not be considered in the enrollment recursive student allocation process. This happens automatically when not enough students are allocated on a course and the enrollment process re-runs to re-allocate everyone again _without_ this course.';
 
 
 --
@@ -8986,9 +9199,13 @@ ALTER TABLE public.acorn_enrollment_desires OWNER TO university;
 --
 
 COMMENT ON TABLE public.acorn_enrollment_desires IS 'labels:
-  en: Student desire
+  en: Enrollment desire
+  ku: Xwastîn mofadala
+  ar: تسجيل الرغبات
 labels-plural:
-  en: Student desires
+  en: Enrollment desires
+  ku: Xwastînên mofadala
+  ar: تسجيل الرغبات
 ';
 
 
@@ -9013,8 +9230,13 @@ COMMENT ON COLUMN public.acorn_enrollment_desires.course_entry_requirements_id I
 COMMENT ON COLUMN public.acorn_enrollment_desires.sort_order IS 'list-editable: true
 labels:
   en: Priority
+  ku: Pêşeyî
+  ar: الأولوية
 labels-plural:
-  en: Priorities';
+  en: Priorities
+  ku: Pêşeyîyên
+  ar: الأولوية
+field-comment: Students will be allocated during the enrollment process according to these priorities.';
 
 
 --
@@ -9086,23 +9308,28 @@ labels:
 labels-plural:
   en: Course Type Calculations
 seeding:
-  # Avg of materials for 2023-2024, 2024-2025, 2025-2026
-  # and required success counts
-  - [''9ee73c3e-665d-4044-b6f2-f7c8211e4ac0'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''958b8af0-2e7f-11f0-b4b4-9f4a22fbe4eb'', ''543d0928-1b6c-11f0-abc1-8bd8fff1240d'']
-  - [''a3e436a8-3edb-11f0-970f-0321a187dddf'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''9ee46f13-b23e-4ab7-998a-b2585f1a41ad'', ''543d0928-1b6c-11f0-abc1-8bd8fff1240d'']
-  - [''a3e43702-3edb-11f0-9710-6f6c1ee08369'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''9ee52bda-2631-48db-ac33-44630c76e83c'', ''543d0928-1b6c-11f0-abc1-8bd8fff1240d'']
-  - [''a3e43766-3edb-11f0-9711-17612a9bbf3c'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''958b8af0-2e7f-11f0-b4b4-9f4a22fbe4eb'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'']
-  - [''a3e437c0-3edb-11f0-9712-67755e07b7c2'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''9ee46f13-b23e-4ab7-998a-b2585f1a41ad'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'']
-  - [''a3e43806-3edb-11f0-9713-9bdb8430f1f1'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''9ee52bda-2631-48db-ac33-44630c76e83c'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'']
-  - [''a3e43860-3edb-11f0-9714-afe20ccedc67'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''958b8af0-2e7f-11f0-b4b4-9f4a22fbe4eb'', ''dee7d1e6-33ba-11f0-9757-0b77f37bff0c'']
-  - [''a3e438b0-3edb-11f0-9715-d7aa1522f5e3'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''9ee46f13-b23e-4ab7-998a-b2585f1a41ad'', ''dee7d1e6-33ba-11f0-9757-0b77f37bff0c'']
-  - [''a3e43914-3edb-11f0-9716-3f3e64d72c5d'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''9ee52bda-2631-48db-ac33-44630c76e83c'', ''dee7d1e6-33ba-11f0-9757-0b77f37bff0c'']
-  # Avg of materials for 2023-2024, 2024-2025, 2025-2026
-  # Optional
-  - [''bf536b82-3f9b-11f0-994d-d779ccbf9d4d'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''958b8af0-2e7f-11f0-b4b4-9f4a22fbe4eb'', ''543d0928-1b6c-11f0-abc1-8bd8fff1240d'']
-  - [''bf536d4e-3f9b-11f0-994e-e34c5b7d6055'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''958b8af0-2e7f-11f0-b4b4-9f4a22fbe4eb'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'']
-  - [''bf536da8-3f9b-11f0-994f-c7e528cbaac8'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''958b8af0-2e7f-11f0-b4b4-9f4a22fbe4eb'', ''dee7d1e6-33ba-11f0-9757-0b77f37bff0c'']
-
+  # acorn_exam_calculation_course_types
+  # id, course_type_id, calculation_id, academic_year_id, created_by_user_id
+  - [''9ee73c3e-665d-4044-b6f2-f7c8211e4ac0'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''958b8af0-2e7f-11f0-b4b4-9f4a22fbe4eb'', ''543d0928-1b6c-11f0-abc1-8bd8fff1240d'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''a3e436a8-3edb-11f0-970f-0321a187dddf'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''9ee46f13-b23e-4ab7-998a-b2585f1a41ad'', ''543d0928-1b6c-11f0-abc1-8bd8fff1240d'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''a3e43702-3edb-11f0-9710-6f6c1ee08369'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''9ee52bda-2631-48db-ac33-44630c76e83c'', ''543d0928-1b6c-11f0-abc1-8bd8fff1240d'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''a3e43766-3edb-11f0-9711-17612a9bbf3c'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''958b8af0-2e7f-11f0-b4b4-9f4a22fbe4eb'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''a3e437c0-3edb-11f0-9712-67755e07b7c2'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''9ee46f13-b23e-4ab7-998a-b2585f1a41ad'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''a3e43806-3edb-11f0-9713-9bdb8430f1f1'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''9ee52bda-2631-48db-ac33-44630c76e83c'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''a3e43860-3edb-11f0-9714-afe20ccedc67'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''958b8af0-2e7f-11f0-b4b4-9f4a22fbe4eb'', ''dee7d1e6-33ba-11f0-9757-0b77f37bff0c'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''a3e438b0-3edb-11f0-9715-d7aa1522f5e3'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''9ee46f13-b23e-4ab7-998a-b2585f1a41ad'', ''dee7d1e6-33ba-11f0-9757-0b77f37bff0c'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''a3e43914-3edb-11f0-9716-3f3e64d72c5d'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''9ee52bda-2631-48db-ac33-44630c76e83c'', ''dee7d1e6-33ba-11f0-9757-0b77f37bff0c'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''9f30f390-1c37-4f4b-bbcf-b410f4664a67'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''9f30f314-4c4c-4a4c-bfe8-9cc4f25b1593'', ''543d0928-1b6c-11f0-abc1-8bd8fff1240d'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f30f3a1-8ba7-4ca9-9bbc-69ccc529343e'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''9f30f314-4c4c-4a4c-bfe8-9cc4f25b1593'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f30f3ae-bc19-4d90-ad88-52dae6505fc3'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''9f30f314-4c4c-4a4c-bfe8-9cc4f25b1593'', ''dee7d1e6-33ba-11f0-9757-0b77f37bff0c'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f47bb99-fa17-46db-a17d-36d9ec4f48b6'', ''801fb8af-5ed3-4436-b89e-9151e9558c24'', ''958b8af0-2e7f-11f0-b4b4-9f4a22fbe4eb'', ''543d0928-1b6c-11f0-abc1-8bd8fff1240d'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f47bbad-1051-4715-8bde-73b9bb3ced5d'', ''801fb8af-5ed3-4436-b89e-9151e9558c24'', ''958b8af0-2e7f-11f0-b4b4-9f4a22fbe4eb'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9fc5c075-2ca2-4ad1-9bb1-cce9ae1ee430'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''4adde423-f7d0-4965-9425-151e6b3e2697'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9fc5c088-6ece-4ddd-bbe4-8fab116b8843'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''4adde423-f7d0-4965-9425-151e6b3e2697'', ''543d0928-1b6c-11f0-abc1-8bd8fff1240d'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9fc5c09d-9d9d-44ea-890e-731c94d36a60'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''4adde423-f7d0-4965-9425-151e6b3e2697'', ''dee7d1e6-33ba-11f0-9757-0b77f37bff0c'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9fc5c0f9-5464-47cb-b293-bf793e072d1d'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''803b5d0b-5fc8-4451-8808-dba9da22ad42'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9fc5c107-195e-47d6-9252-bbd1bcc4798e'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''803b5d0b-5fc8-4451-8808-dba9da22ad42'', ''543d0928-1b6c-11f0-abc1-8bd8fff1240d'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9fc5c117-210c-4340-b7e4-743cd14115f3'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''803b5d0b-5fc8-4451-8808-dba9da22ad42'', ''dee7d1e6-33ba-11f0-9757-0b77f37bff0c'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
 ';
 
 
@@ -9248,15 +9475,17 @@ ALTER TABLE public.acorn_exam_calculations OWNER TO university;
 
 COMMENT ON TABLE public.acorn_exam_calculations IS 'order: 40
 seeding:
-# acorn_exam_calculations
+  # acorn_exam_calculations
   # id, name, description, expression, created_by_user_id, minimum, maximum, required, calculation_type_id, parent_id, owner_entity_id, academic_year_id, code
   - [''15f02b5c-2bff-11f0-8074-4bf737ba6a74'', ''Avg of material exams'', ''<p>For course &lt;course&gt;/&lt;material&gt;</p>'', ''avg(:score/<student>/<year>/<course>/<material>/material/.*/.*:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', NULL, NULL, false, ''56013d6e-3247-11f0-8e96-2f232943abf8'', ''958b952c-2e7f-11f0-b4b6-0f8c2c07f33e'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', NULL, NULL]
   - [''958b8af0-2e7f-11f0-b4b4-9f4a22fbe4eb'', ''Avg of materials'', ''<p>For course &lt;course&gt;</p>'', ''avg(:material/<student>/<year>/<course>/<course-type>/.*/material/.*/score/result:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', ''40'', ''100'', true, ''56013d6e-3247-11f0-8e96-2f232943abf8'', ''958b952c-2e7f-11f0-b4b6-0f8c2c07f33e'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', NULL, ''BKCRS'']
   - [''958b952c-2e7f-11f0-b4b6-0f8c2c07f33e'', ''Bakeloria final mark'', '''', ''avg(:course/<student>/<year>/.*/High School/.*/score/required/result:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', ''40'', ''100'', true, ''56013d6e-3247-11f0-8e96-2f232943abf8'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', NULL, ''BKFM'']
-  - [''9f30f314-4c4c-4a4c-bfe8-9cc4f25b1593'', ''Mother language passed'', '''', ''case when :student/<student>/<year>/locale/ku=0: = 1 then :?material/<student>/<year>/.*/High School/Kurdish/material/.*/score/result=0: when :student/<student>/<year>/locale/ar=0: = 1 then :?material/<student>/<year>/.*/High School/Arabic/material/.*/score/result=0: else 0 end'', ''9e95e479-9690-4091-a730-aecdf51f9258'', ''1'', ''1'', true, ''56013ed6-3247-11f0-8e98-478677b2ee2a'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', NULL]
-  - [''9ee46f13-b23e-4ab7-998a-b2585f1a41ad'', ''Count of required materials failed'', ''<p>For course &lt;course&gt;</p>'', ''count(:material/<student>/<year>/<course>/<course-type>/.*/material/.*/score/required/result:) - sum(:?material/<student>/<year>/<course>/<course-type>/.*/material/.*/score/required/result:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', ''0'', ''0'', true, ''56013e90-3247-11f0-8e97-9b91890119b6'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', NULL, NULL]
-  - [''9ee52bda-2631-48db-ac33-44630c76e83c'', ''Count of optional materials failed'', ''<p>For course &lt;course&gt;</p>'', ''count(:material/<student>/<year>/<course>/<course-type>/.*/material/.*/score/result:) - sum(:?material/<student>/<year>/<course>/<course-type>/.*/material/.*/score/result:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', ''0'', ''3'', true, ''56013e90-3247-11f0-8e97-9b91890119b6'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', NULL, NULL]
-  - [''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''Bakeloria pass'', '''', ''sum(:?course/<student>/<year>/.*/High School/Count of required materials failed/count/required/result=1:, :?course/<student>/<year>/.*/High School/Count of optional materials failed/count/required/result=1:, :?calculation/<student>/<year>/Bakeloria final mark/score=0:, :?calculation/<student>/<year>/Mother language passed/boolean/required/result=0:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', ''4'', ''4'', true, ''56013ed6-3247-11f0-8e98-478677b2ee2a'', NULL, ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', ''BKPS'']
+  - [''803b5d0b-5fc8-4451-8808-dba9da22ad42'', ''Maximum of Material and Language materials failed'', ''<p>For course</p>'', ''count(:material/<student>/<year>/<course>/<course-type>/.*/(material|language)/.*/score/result:) - sum(:?material/<student>/<year>/<course>/<course-type>/.*/(material|language)/.*/score/result:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', ''0'', ''2'', true, ''56013e90-3247-11f0-8e97-9b91890119b6'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', NULL, ''MMLF'']
+  - [''9f30f314-4c4c-4a4c-bfe8-9cc4f25b1593'', ''Mother language passed'', '''', ''case when :student/<student>/<year>/locale/ku=0: = 1 then :?material/<student>/<year>/.*/High School/Kurdish/language/.*/score/result=0: when :student/<student>/<year>/locale/ar=0: = 1 then :?material/<student>/<year>/.*/High School/Arabic/language/.*/score/result=0: else 0 end'', ''9e95e479-9690-4091-a730-aecdf51f9258'', ''1'', ''1'', true, ''56013ed6-3247-11f0-8e98-478677b2ee2a'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', NULL]
+  - [''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''Bakeloria pass'', '''', ''sum( :?course/<student>/<year>/.*/High School/Check any required materials failed/count/required/result=1:, :?course/<student>/<year>/.*/High School/Maximum of Material and Language materials failed/count/required/result=1:, :?course/<student>/<year>/.*/High School/Maximum of Specialization materials failed/count/required/result=1:, :?course/<student>/<year>/.*/High School/Maximum of all materials failed/count/required/result=1:, :?calculation/<student>/<year>/Bakeloria final mark/score=0:, :?calculation/<student>/<year>/Mother language passed/boolean/required/result=0: )'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', ''6'', ''6'', true, ''56013ed6-3247-11f0-8e98-478677b2ee2a'', NULL, ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', ''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', ''BKPS'']
+  - [''9ee46f13-b23e-4ab7-998a-b2585f1a41ad'', ''Check any Required materials failed'', ''<p>For course &lt;course&gt;</p>'', ''count(:material/<student>/<year>/<course>/<course-type>/.*/material/.*/score/required/result:) - sum(:?material/<student>/<year>/<course>/<course-type>/.*/material/.*/score/required/result:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', ''0'', ''0'', true, ''56013e90-3247-11f0-8e97-9b91890119b6'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', NULL, ''CRMF'']
+  - [''9ee52bda-2631-48db-ac33-44630c76e83c'', ''Maximum of all materials failed'', ''<p>For course &lt;course&gt;</p>'', ''count(:material/<student>/<year>/<course>/<course-type>/.*/.*/.*/score/result:) - sum(:?material/<student>/<year>/<course>/<course-type>/.*/.*/.*/score/result:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', ''0'', ''2'', true, ''56013e90-3247-11f0-8e97-9b91890119b6'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', NULL, '''']
+  - [''4adde423-f7d0-4965-9425-151e6b3e2697'', ''Maximum of Specialization materials failed'', ''<p>For course</p>'', ''count(:material/<student>/<year>/<course>/<course-type>/.*/specialization/.*/score/result:) - sum(:?material/<student>/<year>/<course>/<course-type>/.*/specialization/.*/score/result:)'', ''a11d6172-6565-4195-a62e-038358aa9fa9'', ''0'', ''2'', true, ''56013e90-3247-11f0-8e97-9b91890119b6'', ''9ee52f50-d22a-471e-bdeb-b13d81b1afb2'', ''f56c6e68-0546-4f18-b6e1-5180da9c8dc1'', NULL, ''MSZF'']
 labels:
   en: Calculation
   ku: Algoritum
@@ -9412,15 +9641,18 @@ COMMENT ON TABLE public.acorn_exam_exams IS 'order: 50
 plugin-names:
   en: Exams
   ku: Ezmûnên
+  ar: الامتحانات
 seeding:
   - [''0816bbee-2bdd-11f0-8400-57e43cb8bcc9'', ''Theory'', '''', ''cb58f452-28e3-11f0-bf77-eb3094eae79e'']
   - [''fb9806d4-2beb-11f0-9893-2ba7af07260a'', ''Laboratory'', '''', ''c2975b06-28e3-11f0-a996-1f7fab9642e9'']
 labels:
   en: Exam
   ku: Ezmûn
+  ar: الامتحان
 labels-plural:
   en: Exams
   ku: Ezmûnên
+  ar: الامتحان
 ';
 
 
@@ -9475,9 +9707,13 @@ COMMENT ON TABLE public.acorn_exam_interview_students IS 'menu: false
 attribute-functions:
   name: return $this->interview->name;
 labels:
-  en: Student Interview
+  en: Interview
+  ku: Bihevditin
+  ar: المقابلات
 labels-plural:
-  en: Student Interviews';
+  en: Interviews
+  ku: Bihevditinên
+  ar: المقابلات';
 
 
 --
@@ -9505,7 +9741,15 @@ COMMENT ON COLUMN public.acorn_exam_interview_students.event_id IS 'can-filter: 
 -- Name: COLUMN acorn_exam_interview_students.score; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_exam_interview_students.score IS 'list-editable: true';
+COMMENT ON COLUMN public.acorn_exam_interview_students.score IS 'list-editable: true
+labels:
+  en: Score
+  ku: Pila
+  ar: علامة المادة
+labels:
+  en: Scores
+  ku: Pilayên
+  ar: علامة المادة';
 
 
 --
@@ -9543,9 +9787,11 @@ ALTER TABLE public.acorn_exam_interviews OWNER TO university;
 COMMENT ON TABLE public.acorn_exam_interviews IS 'labels:
   en: Interview
   ku: Bihevditin
+  ar: المقابلات
 labels-plural:
   en: Interviews
-  ku: Bihevditinên';
+  ku: Bihevditinên
+  ar: المقابلات';
 
 
 --
@@ -9806,16 +10052,16 @@ ALTER TABLE public.acorn_exam_scores OWNER TO university;
 --
 
 COMMENT ON TABLE public.acorn_exam_scores IS 'order: 35
-attribute-functions:
-  name: return $this->exam_material->name;
-# Handled by data_entry_view
 menu: false
 labels:
   en: Score
   ku: Sitand
+  ar: علامة المادة
 labels-plural:
   en: Scores
-  ku: Sitandên';
+  ku: Sitandên
+  ar: علامة المادة
+';
 
 
 --
@@ -9824,7 +10070,16 @@ labels-plural:
 
 COMMENT ON COLUMN public.acorn_exam_scores.score IS 'list-editable: delete-on-null
 format: "%.2f%%"
-revisionable: true';
+revisionable: true
+labels:
+  en: Score
+  ku: Pila
+  ar: علامة المادة
+labels:
+  en: Scores
+  ku: Pilayên
+  ar: علامة المادة
+olap: measure';
 
 
 --
@@ -9902,9 +10157,12 @@ seeding:
 labels:
   en: Year semester
   ku: Werzê Sal
+  ar: الفصل الدراسي
 labels-plural:
   en: Year semesters
-  ku: Werzên Sal';
+  ku: Werzên Sal
+  ar: الفصل الدراسي
+';
 
 
 --
@@ -9963,9 +10221,11 @@ seeding:
 labels:
   en: Academic Year
   ku: Sale Akademik
+  ar: السنة الدراسية
 labels-plural:
   en: Academic Years
   ku: Salên Akademik
+  ar: السنة الدراسية
 ';
 
 
@@ -10023,9 +10283,11 @@ COMMENT ON TABLE public.acorn_university_course_materials IS 'attribute-function
 labels:
   en: Course material
   ku: Kors material
+  ar: مادة الفرع
 labels-plural:
   en: Course materials
   ku: Kors materialên
+  ar: مواد الفرع
 no-relation-manager-default: true
 ';
 
@@ -10128,9 +10390,12 @@ seeding:
 labels:
   en: Course type
   ku: Cura kors
+  ar: نوع الفرع
 labels-plural:
   en: Course types
-  ku: Curên kors';
+  ku: Curên kors
+  ar: نوع الفرع
+';
 
 
 --
@@ -10259,6 +10524,14 @@ ALTER TABLE public.acorn_university_entities OWNER TO university;
 COMMENT ON TABLE public.acorn_university_entities IS 'global-scope: fn_acorn_university_scope_entities
 menu: false
 order: -100
+labels:
+  en: Entity
+  ku: Tişt
+  ar: الكيان
+labels-plural:
+  en: Entities
+  ku: Tiştên
+  ar: الكيان
 ';
 
 
@@ -10311,9 +10584,12 @@ menu-splitter: true
 labels:
   en: Relationship
   ku: Teklî
+  ar: العلاقات
 labels-plural:
   en: Relationships
-  ku: Teklîyên';
+  ku: Teklîyên
+  ar: العلاقات
+';
 
 
 --
@@ -10407,16 +10683,16 @@ read-only: true';
 -- Name: COLUMN acorn_university_hierarchies.nest_ascendants; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_hierarchies.nest_ascendants IS 'invisible: true
-hidden: true';
+COMMENT ON COLUMN public.acorn_university_hierarchies.nest_ascendants IS 'column-exclude: true
+field-exclude: true';
 
 
 --
 -- Name: COLUMN acorn_university_hierarchies.nest_descendants; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_hierarchies.nest_descendants IS 'invisible: true
-hidden: true';
+COMMENT ON COLUMN public.acorn_university_hierarchies.nest_descendants IS 'column-exclude: true
+field-exclude: true';
 
 
 --
@@ -10456,7 +10732,15 @@ ALTER TABLE public.acorn_university_identity_types OWNER TO university;
 -- Name: TABLE acorn_university_identity_types; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_university_identity_types IS 'seeding:
+COMMENT ON TABLE public.acorn_university_identity_types IS 'labels:
+  en: Identity type
+  ku: Cûra nasname
+  ar: نوع الهوية
+labels-plural:
+  en: Identity types
+  ku: Cûran nasname
+  ar: نوع الهوية
+seeding:
   - [''d9f5affa-4873-11f0-8711-cb311b854057'', ''Syrian National ID'']
   - [''d9f5b0ea-4873-11f0-8712-4779f8bb335f'', ''British passport'']
   - [''d9f5b130-4873-11f0-8713-432262224658'', ''Driving License'']';
@@ -10515,8 +10799,9 @@ seeding:
   # id, name, description, created_by_user_id
   - [''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''material'', NULL, ''a11d6172-6565-4195-a62e-038358aa9fa9'']
   - [''d0fcbfae-f745-4f1c-a99c-30372a6aa128'', ''language'', NULL, ''a11d6172-6565-4195-a62e-038358aa9fa9'']
-  - [''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''specialization'', NULL, ''a11d6172-6565-4195-a62e-038358aa9fa9'']
   - [''ece9328c-430c-4183-a34b-ab3fd4de3589'', ''standard'', NULL, ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''specialization'', ''Material is specific to this, or a few, courses only'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''fdc21104-548c-4341-9ac1-fb4fa1b3fd0b'', ''single'', ''Course has only 1 material'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
 labels:
   en: Material type
   ku: Cura material
@@ -10555,53 +10840,63 @@ seeding:
   - [''d675a530-28be-11f0-a2c9-9bb10fa15bd3'', ''Biology'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
   - [''dd494c0e-28be-11f0-94e1-a7b2083dd749'', ''Physics'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
   - [''e427a282-28be-11f0-8856-a7abd8a449c5'', ''Geography'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
-  - [''ecf3dae8-28be-11f0-91f7-f31527b6ca23'', ''Chemistry'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
-  - [''f3c853a8-28be-11f0-8938-73b157eb85a1'', ''Kurdish'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
-  - [''fa61ead0-28be-11f0-9fb3-2bbf7e1c7c7c'', ''English'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
-  - [''005bba60-28bf-11f0-bf7f-cff663f8102b'', ''Arabic'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
   - [''d43af2a2-2bd9-11f0-b08b-5fd59b502470'', ''History'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
   - [''d8168f4e-2bd9-11f0-97a5-1b42cf640b5b'', ''Philosophy'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
   - [''d84f8434-2bd9-11f0-bfa1-7b92380571bd'', ''Sociology'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
-  - [''d88f0f6e-2bd9-11f0-8846-8bc9dcb96017'', ''Jineologi'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
   - [''7f5c3dc8-2e53-11f0-8600-6ff513625846'', ''Year 10'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
   - [''7f5c4156-2e53-11f0-8601-43470f236a9e'', ''Year 11'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
-  - [''b025cfe2-50f3-11f0-96d9-13090f80441e'', ''Community Language'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
   - [''ee22cafe-502e-11f0-90c2-3702c192c6ec'', ''Year 9'', NULL, ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
   - [''cdc800ae-28be-11f0-a8a6-334555029afd'', ''Maths'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
-  - [''9f7d3005-1327-40a4-9d99-ad83d2358741'', ''Physics and Chemistry'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d3043-29c9-4a93-9417-374158b3fb10'', ''Anatomy'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d3073-300e-44a0-aa45-b738e474e871'', ''Nursing'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d30cd-6ceb-4841-bfd3-5b7de5f8085f'', ''Rays'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d310c-48de-40c8-a5a8-b9c406a779de'', ''Anesthetization'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d3139-9d3f-4965-970c-972c8824c6b4'', ''Physical therapy'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d3165-47e2-4239-9373-6f5bb82464a1'', ''Pharmacy'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d319d-bf6f-4662-a864-de0c7c1f35a0'', ''Lab'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d3210-28c4-4b3d-a914-568d1b2b7987'', ''Internal Combustion Engines'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d32e0-2739-4ad6-9d1b-253a034c1ac2'', ''Mechanical Engineering Drawing 3'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d3312-291e-41a9-a5fe-e297d597e2dc'', ''Vehicle control systems'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d3342-ed04-4edd-a956-da51c02f58f4'', ''Diesel fuel injection systems'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d35eb-1782-4478-9e13-cc08eac51af5'', ''Electrical appliances 2'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d3615-0c25-4950-b326-01e832505ccc'', ''Automated command and control'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d363a-d062-4f98-8b96-6a8fdaa7e6eb'', ''Electrical Engineering Drawing 3'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d3661-f29f-4b5c-bf18-b49df3d424c7'', ''Hardware and software maintenance 2'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d368c-0ca7-4f3a-abc5-7991ce322b9f'', ''Programming 3'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d36b3-24d8-4537-a12b-a666197847c1'', ''Network management'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d36da-d87f-4fe2-83fe-fb6269b26c7b'', ''Computer applications'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d3700-135b-4322-9c21-aa8ad1e49c1e'', ''Marketing'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d3735-b592-45f9-bb09-f3cb237c1f76'', ''Bank accounting'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d375d-0c8d-4587-81d2-208632503d48'', ''Financial Institutions Accounting'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d3835-0cdf-487b-8daf-846854567178'', ''Private accounting'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d3861-f5b4-4e32-8de6-613fa2935b32'', ''Computer'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d3886-ce95-4120-bf5e-c26355e1cc6d'', ''Financial Mathematics'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d38a9-a00b-45a7-88dc-e1ca69b0f92d'', ''Statistics'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d38d4-7ee0-432a-a613-13f1e8fc470d'', ''Food industries'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d38fb-2d86-4697-aaaa-2c7c744d2eed'', ''Dairy'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d391f-7aff-4a7c-a689-c3c58f72b430'', ''Gardening'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d3948-80cc-4fd1-bca2-774b7eea6b1a'', ''Farm animal'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d3976-aa21-471b-8a43-c4c5072e7a85'', ''Agricultural pests'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
   - [''9f7d3a1a-b218-44a0-b285-c58ed0749a5a'', ''Sport'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
   - [''9f7d3a4c-ef31-444d-b9ce-e0277d883c69'', ''Art'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
-  - [''9f7d5a21-3c5c-4242-a091-5a3bf4fd829a'', ''Electronics 3'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''ecf3dae8-28be-11f0-91f7-f31527b6ca23'', ''Chemistry'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''9f7d3043-29c9-4a93-9417-374158b3fb10'', ''Anatomy'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''d88f0f6e-2bd9-11f0-8846-8bc9dcb96017'', ''Jineologi'', '''', ''6b4bae9a-149f-11f0-a4e5-779d31ace22e'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''9f7d3005-1327-40a4-9d99-ad83d2358741'', ''Physics and Chemistry'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3073-300e-44a0-aa45-b738e474e871'', ''Nursing'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d30cd-6ceb-4841-bfd3-5b7de5f8085f'', ''Rays'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d310c-48de-40c8-a5a8-b9c406a779de'', ''Anesthetization'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3139-9d3f-4965-970c-972c8824c6b4'', ''Physical therapy'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3165-47e2-4239-9373-6f5bb82464a1'', ''Pharmacy'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d319d-bf6f-4662-a864-de0c7c1f35a0'', ''Lab'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3886-ce95-4120-bf5e-c26355e1cc6d'', ''Financial Mathematics'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d38a9-a00b-45a7-88dc-e1ca69b0f92d'', ''Statistics'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d38d4-7ee0-432a-a613-13f1e8fc470d'', ''Food industries'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d38fb-2d86-4697-aaaa-2c7c744d2eed'', ''Dairy'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d391f-7aff-4a7c-a689-c3c58f72b430'', ''Gardening'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3948-80cc-4fd1-bca2-774b7eea6b1a'', ''Farm animal'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3976-aa21-471b-8a43-c4c5072e7a85'', ''Agricultural pests'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d5a21-3c5c-4242-a091-5a3bf4fd829a'', ''Electronics 3'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f83484d-e6cb-49c3-994b-fdb976ceba92'', ''Web Design'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f83489a-47d5-47ad-8a11-d877272a51ee'', ''Micro Organisms'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f8d4247-f04c-4bc5-9328-62a186e45574'', ''Televison'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f8d429b-fd97-437b-9a8f-dfaac8432db2'', ''Protection and Alarm Systems'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f8d42ca-567a-4106-b583-28281ba8ec35'', ''Antennas'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f8d42fb-0e1e-4459-8351-cac9a6828060'', ''Electronic Device Maintenance'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''005bba60-28bf-11f0-bf7f-cff663f8102b'', ''Arabic'', NULL, ''d0fcbfae-f745-4f1c-a99c-30372a6aa128'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''b025cfe2-50f3-11f0-96d9-13090f80441e'', ''Community Language'', NULL, ''d0fcbfae-f745-4f1c-a99c-30372a6aa128'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''f3c853a8-28be-11f0-8938-73b157eb85a1'', ''Kurdish'', NULL, ''d0fcbfae-f745-4f1c-a99c-30372a6aa128'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''fa61ead0-28be-11f0-9fb3-2bbf7e1c7c7c'', ''English'', '''', ''d0fcbfae-f745-4f1c-a99c-30372a6aa128'', ''a11d6172-6565-4195-a62e-038358aa9fa9'']
+  - [''9f7d3210-28c4-4b3d-a914-568d1b2b7987'', ''Internal Combustion Engines'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d32e0-2739-4ad6-9d1b-253a034c1ac2'', ''Mechanical Engineering Drawing 3'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3312-291e-41a9-a5fe-e297d597e2dc'', ''Vehicle control systems'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3342-ed04-4edd-a956-da51c02f58f4'', ''Diesel fuel injection systems'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d35eb-1782-4478-9e13-cc08eac51af5'', ''Electrical appliances 2'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3615-0c25-4950-b326-01e832505ccc'', ''Automated command and control'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d363a-d062-4f98-8b96-6a8fdaa7e6eb'', ''Electrical Engineering Drawing 3'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3661-f29f-4b5c-bf18-b49df3d424c7'', ''Hardware and software maintenance 2'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d368c-0ca7-4f3a-abc5-7991ce322b9f'', ''Programming 3'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d36b3-24d8-4537-a12b-a666197847c1'', ''Network management'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d36da-d87f-4fe2-83fe-fb6269b26c7b'', ''Computer applications'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3700-135b-4322-9c21-aa8ad1e49c1e'', ''Marketing'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3735-b592-45f9-bb09-f3cb237c1f76'', ''Bank accounting'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d375d-0c8d-4587-81d2-208632503d48'', ''Financial Institutions Accounting'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3835-0cdf-487b-8daf-846854567178'', ''Private accounting'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9f7d3861-f5b4-4e32-8de6-613fa2935b32'', ''Computer'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9fc5c6fa-c451-4549-8196-cd4239e9c959'', ''Separator'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9fc5c724-21a2-400c-9971-4009a27b3d5c'', ''Turning'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9fc5c768-a4b5-4a84-9af0-3a068ea51aaf'', ''Cnc'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
+  - [''9fc5c7b4-ce62-48dc-ab40-3b867f68aeb9'', ''Industrial Drawing'', '''', ''cef98b97-a61a-4e3f-9270-8ffe718db38b'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
 labels:
   en: Material
   ku: Material
@@ -10638,16 +10933,42 @@ ALTER TABLE public.acorn_university_project_students OWNER TO university;
 --
 
 COMMENT ON TABLE public.acorn_university_project_students IS 'labels:
-  en: Student Project
+  en: Project
+  ku: Projê
+  ar: المشاريع الخاصة
 labels-plural:
-  en: Student Projects';
+  en: Projects
+  ku: Projên
+  ar: المشاريع الخاصة';
+
+
+--
+-- Name: COLUMN acorn_university_project_students.owner_student_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_project_students.owner_student_id IS 'labels:
+  en: Owned Project
+  ku: Projê xwede
+  ar: المشاريع الخاصة
+labels-plural:
+  en: Owned Projects
+  ku: Projên xwede
+  ar: المشاريع الخاصة';
 
 
 --
 -- Name: COLUMN acorn_university_project_students.score; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_project_students.score IS 'list-editable: true';
+COMMENT ON COLUMN public.acorn_university_project_students.score IS 'list-editable: true
+labels:
+  en: Score
+  ku: Pila
+  ar: علامة المادة
+labels:
+  en: Scores
+  ku: Pilayên
+  ar: علامة المادة';
 
 
 --
@@ -10692,9 +11013,11 @@ ALTER TABLE public.acorn_university_projects OWNER TO university;
 COMMENT ON TABLE public.acorn_university_projects IS 'labels:
   en: Project
   ku: Projê
+  ar: المشاريع الخاصة
 labels-plural:
   en: Projects
-  ku: Projên';
+  ku: Projên
+  ar: المشاريع الخاصة';
 
 
 --
@@ -10761,7 +11084,15 @@ ALTER TABLE public.acorn_university_student_codes OWNER TO university;
 -- Name: TABLE acorn_university_student_codes; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_university_student_codes IS 'menu: false';
+COMMENT ON TABLE public.acorn_university_student_codes IS 'menu: false
+labels:
+  en: Code
+  ku: Kod
+  ar: رقم الاكتتاب
+labels-plural:
+  en: Codes
+  ku: Kodên
+  ar: رقم الاكتتاب';
 
 
 --
@@ -10811,7 +11142,30 @@ ALTER TABLE public.acorn_university_student_identities OWNER TO university;
 -- Name: TABLE acorn_university_student_identities; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_university_student_identities IS 'menu: false';
+COMMENT ON TABLE public.acorn_university_student_identities IS 'menu: false
+labels:
+  en: Identity
+  ku: Nasname
+  ar: الرقم الوطني
+labels-plural:
+  en: Identities
+  ku: Nasnamên
+  ar: الرقم الوطني';
+
+
+--
+-- Name: COLUMN acorn_university_student_identities.number; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_student_identities.number IS 'labels:
+  en: Number
+  ku: Hecmar
+  ar: رقم
+labels-plural:
+  en: Numbers
+  ku: Hejmarên
+  ar: رقم
+';
 
 
 --
@@ -10859,7 +11213,16 @@ ALTER TABLE public.acorn_university_student_notes OWNER TO university;
 -- Name: TABLE acorn_university_student_notes; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_university_student_notes IS 'menu: false';
+COMMENT ON TABLE public.acorn_university_student_notes IS 'menu: false
+labels:
+  en: Notes
+  ku: Notên
+  ar: ملحوظة
+labels-plural:
+  en: Notes
+  ku: Notên
+  ar: ملحوظة
+';
 
 
 --
@@ -10900,7 +11263,15 @@ ALTER TABLE public.acorn_university_student_statuses OWNER TO university;
 -- Name: TABLE acorn_university_student_statuses; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_university_student_statuses IS 'seeding:
+COMMENT ON TABLE public.acorn_university_student_statuses IS 'labels:
+  en: Status
+  ku: Rewş
+  ar: الحالات الخاصة
+labels-plural:
+  en: Statuses
+  ku: Rewşên
+  ar: الحالات الخاصة
+seeding:
   - [''021c0f46-3b96-11f0-add5-1fdf3952358b'', ''Families of Martyrs'']
   - [''9b7bab3e-5102-11f0-9cd9-7fb657bb3130'', ''Families Of Martyrs brother'']
   - [''9b7baeb8-5102-11f0-9cda-bffc4b023c0d'', ''Families Of Martyrs sister'']
@@ -10913,6 +11284,21 @@ COMMENT ON TABLE public.acorn_university_student_statuses IS 'seeding:
   - [''021c1022-3b96-11f0-add6-9b77f9e97678'', ''From the occupied territories'']
   - [''021c104a-3b96-11f0-add7-bf3af6dabafb'', ''Served in the army'']
   - [''021c1068-3b96-11f0-add8-a7fe27552a6d'', ''Needs housing'']';
+
+
+--
+-- Name: COLUMN acorn_university_student_statuses.score; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_student_statuses.score IS 'list-editable: true
+labels:
+  en: Score
+  ku: Pila
+  ar: علامة المادة
+labels:
+  en: Scores
+  ku: Pilayên
+  ar: علامة المادة';
 
 
 --
@@ -11256,6 +11642,22 @@ UNION ALL
     acorn_university_student_identities.updated_at AS datetime
    FROM public.acorn_university_student_identities
 UNION ALL
+ SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
+    acorn_university_student_statuses.id AS model_id,
+    'acorn_university_student_statuses'::text AS "table",
+    acorn_university_student_statuses.name,
+    0 AS update,
+    acorn_university_student_statuses.created_at AS datetime
+   FROM public.acorn_university_student_statuses
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
+    acorn_university_student_statuses.id AS model_id,
+    'acorn_university_student_statuses'::text AS "table",
+    acorn_university_student_statuses.name,
+    1 AS update,
+    acorn_university_student_statuses.updated_at AS datetime
+   FROM public.acorn_university_student_statuses
+UNION ALL
  SELECT 'Acorn\University\Models\CourseMaterial'::text AS model_type,
     acorn_university_course_materials.id AS model_id,
     'acorn_university_course_materials'::text AS "table",
@@ -11287,22 +11689,6 @@ UNION ALL
     1 AS update,
     acorn_university_project_students.updated_at AS datetime
    FROM public.acorn_university_project_students
-UNION ALL
- SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
-    acorn_university_student_statuses.id AS model_id,
-    'acorn_university_student_statuses'::text AS "table",
-    acorn_university_student_statuses.name,
-    0 AS update,
-    acorn_university_student_statuses.created_at AS datetime
-   FROM public.acorn_university_student_statuses
-UNION ALL
- SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
-    acorn_university_student_statuses.id AS model_id,
-    'acorn_university_student_statuses'::text AS "table",
-    acorn_university_student_statuses.name,
-    1 AS update,
-    acorn_university_student_statuses.updated_at AS datetime
-   FROM public.acorn_university_student_statuses
 UNION ALL
  SELECT 'Acorn\University\Models\IdentityType'::text AS model_type,
     acorn_university_identity_types.id AS model_id,
@@ -11798,6 +12184,20 @@ UNION ALL
     acorn_university_student_identities.updated_by_user_id AS by
    FROM public.acorn_university_student_identities
 UNION ALL
+ SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
+    acorn_university_student_statuses.id AS model_id,
+    'acorn_university_student_statuses'::text AS "table",
+    0 AS update,
+    acorn_university_student_statuses.created_by_user_id AS by
+   FROM public.acorn_university_student_statuses
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
+    acorn_university_student_statuses.id AS model_id,
+    'acorn_university_student_statuses'::text AS "table",
+    1 AS update,
+    acorn_university_student_statuses.updated_by_user_id AS by
+   FROM public.acorn_university_student_statuses
+UNION ALL
  SELECT 'Acorn\University\Models\CourseMaterial'::text AS model_type,
     acorn_university_course_materials.id AS model_id,
     'acorn_university_course_materials'::text AS "table",
@@ -11825,20 +12225,6 @@ UNION ALL
     1 AS update,
     acorn_university_project_students.updated_by_user_id AS by
    FROM public.acorn_university_project_students
-UNION ALL
- SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
-    acorn_university_student_statuses.id AS model_id,
-    'acorn_university_student_statuses'::text AS "table",
-    0 AS update,
-    acorn_university_student_statuses.created_by_user_id AS by
-   FROM public.acorn_university_student_statuses
-UNION ALL
- SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
-    acorn_university_student_statuses.id AS model_id,
-    'acorn_university_student_statuses'::text AS "table",
-    1 AS update,
-    acorn_university_student_statuses.updated_by_user_id AS by
-   FROM public.acorn_university_student_statuses
 UNION ALL
  SELECT 'Acorn\University\Models\IdentityType'::text AS model_type,
     acorn_university_identity_types.id AS model_id,
@@ -12174,9 +12560,12 @@ ALTER VIEW public.acorn_exam_results OWNER TO university;
 COMMENT ON VIEW public.acorn_exam_results IS 'labels:
   en: Student Result
   ku: Encamên Xwendekar
+  ar: نتيجة الطالب
 labels-plural:
   en: Student Result
-  ku: Encamên Xwendekarên';
+  ku: Encamên Xwendekarên
+  ar: نتيجة الطالب
+';
 
 
 --
@@ -12189,6 +12578,14 @@ COMMENT ON COLUMN public.acorn_exam_results.student_id IS 'extra-foreign-key:
     tab-location: 2
     advanced: true
     invisible: true
+    labels:
+      en: Student Result
+      ku: Encamên Xwendekar
+      ar: نتيجة الطالب
+    labels-plural:
+      en: Student Result
+      ku: Encamên Xwendekarên
+      ar: نتيجة الطالب
 ';
 
 
@@ -12373,6 +12770,14 @@ bar: true';
 
 COMMENT ON COLUMN public.acorn_exam_results.passed IS 'css-classes-column:
   - show-cross
+labels:
+  en: Passed
+  ku: Serket
+  ar: ناجح
+labels-plural:
+  en: Passed
+  ku: Serket
+  ar: ناجح
 filters:
   passed:
     label: acorn.exam::lang.models.result.passed
@@ -12384,7 +12789,9 @@ filters:
     conditions: not passed
 extra-translations:
   not_passed:
-    en: Failed';
+    en: Failed
+    ku: binket
+    ar: راسب';
 
 
 --
@@ -12426,9 +12833,11 @@ seeding:
 labels:
   en: Course
   ku: Kors
+  ar: المنهج
 labels-plural:
   en: Courses
   ku: Korsên
+  ar: المنهج
 ';
 
 
@@ -12483,9 +12892,11 @@ menu-splitter: true
 labels:
   en: Student
   ku: Xwendekar
+  ar: الطالب
 labels-plural:
   en: Students
   ku: Xwendekarên
+  ar: الطالب
 filters:
   religion:
     label: acorn.user::lang.models.religion.label_plural
@@ -12525,7 +12936,15 @@ readOnly: true
 tabLocation: 2
 advanced: true
 invisible: true
-comment: Binket, serket, Serket, Serkeftî';
+comment: Binket, serket, Serket, Serkeftî
+labels:
+  en: Legacy Import Result
+  ku: Importkirina Mîrasî encam
+  ar: نتيجة استيراد الإصدار القديم
+labels-plural:
+  en: Legacy Import Results
+  ku: Importkirina Mîrasî encamên
+  ar: نتيجة استيراد الإصدار القديم';
 
 
 --
@@ -12537,7 +12956,15 @@ tabLocation: 2
 advanced: true
 readOnly: true
 invisible: true
-comment: Final University enrollment score';
+comment: Final University enrollment score
+labels:
+  en: Legacy Import Average
+  ku: Importkirina Mîrasî ort
+  ar: معدل استيراد الإصدار القديم
+labels-plural:
+  en: Legacy Import Averages
+  ku: Importkirina Mîrasî ortên
+  ar: معدل استيراد الإصدار القديم';
 
 
 --
@@ -12549,7 +12976,15 @@ tabLocation: 2
 advanced: true
 invisible: true
 readOnly: true
-comment: Final University enrollment score';
+comment: Final University enrollment score
+labels:
+  en: Legacy Import Total mark
+  ku: Importkirina Mîrasî Nîşeya giştî
+  ar: النتيجة النهائية استيراد الإصدار القديم
+labels-plural:
+  en: Legacy Import Total marks
+  ku: Importkirina Nîşeya giştîyên
+  ar: النتيجة النهائية استيراد الإصدار القديم';
 
 
 --
@@ -12573,7 +13008,15 @@ tabLocation: 2
 advanced: true
 invisible: true
 readOnly: true
-comment: Final University enrollment score with Year 10 & 11';
+comment: Final University enrollment score with Year 10 & 11
+labels:
+  en: Legacy Import Final average
+  ku: Importkirina Mîrasî ortê dawî
+  ar: المعدل النهائي استيراد الإصدار القديم
+labels-plural:
+  en: Legacy Import Family places
+  ku: Importkirina Mîrasî ortê dawîyên
+  ar: المعدل النهائي استيراد الإصدار القديم';
 
 
 --
@@ -12585,7 +13028,15 @@ tabLocation: 2
 advanced: true
 readOnly: true
 invisible: true
-comment: Primary subjects passed';
+comment: Primary subjects passed
+labels:
+  en: Legacy Import Passed primaries
+  ku: Importkirina Mîrasî Seretayî derbas bû
+  ar: المواد الاساسية الناجحة استيراد الإصدار القديم
+labels-plural:
+  en: Legacy Import Passed primaries
+  ku: Importkirina Mîrasî Seretayî derbas bû
+  ar: المواد الاساسية الناجحة استيراد الإصدار القديم';
 
 
 --
@@ -12597,7 +13048,15 @@ tabLocation: 2
 advanced: true
 readOnly: true
 invisible: true
-comment: Secondary subjects passed minimum';
+comment: Secondary subjects passed minimum
+labels:
+  en: Legacy Import Passed secondaries
+  ku: Importkirina Mîrasî Derbasbûyî ya duyemîn
+  ar: المواد الفرعية الناجحة استيراد الإصدار القديم
+labels-plural:
+  en: Legacy Import Passed secondaries
+  ku: Importkirina Mîrasî Derbasbûyî ya duyemîn
+  ar: المواد الفرعية الناجحة استيراد الإصدار القديم';
 
 
 --
@@ -12609,7 +13068,15 @@ tabLocation: 2
 advanced: true
 readOnly: true
 invisible: true
-comment: Number of materials required (non-blank score)';
+comment: Number of materials required (non-blank score)
+labels:
+  en: Legacy Import Attendance
+  ku: Importkirina Mîrasî Amadetî
+  ar: خضور المواد استيراد الإصدار القديم
+labels-plural:
+  en: Legacy Import Attendances
+  ku: Importkirina Mîrasî Amadetîyên
+  ar: خضور المواد استيراد الإصدار القديم';
 
 
 --
@@ -12624,9 +13091,11 @@ tab: acorn.university::lang.models.student.university_student_codes__student
 labels:
   en: Unique System number
   ku: Hejmara pergalî
+  ar: الرقم الفريد للنظام
 labels-plural:
   en: Unique System numbers
   ku: Hejmaran pergalî
+  ar: الرقم الفريد للنظام
 field-comment: This is a unique NABU system number for this student. It is used internally for calculations and identity
 advanced: true';
 
@@ -12639,7 +13108,15 @@ COMMENT ON COLUMN public.acorn_university_students.legacy_import_school IS 'tab:
 tabLocation: 2
 advanced: true
 readOnly: true
-comment: Actual school, to be processed later';
+comment: Actual school, to be processed later
+labels:
+  en: Legacy Import School
+  ku: Importkirina Mîrasî dibistan
+  ar: المدرسة
+labels-plural:
+  en: Legacy Import Schools
+  ku: Importkirina Mîrasî dibistanên
+  ar: المدرسة';
 
 
 --
@@ -12650,7 +13127,15 @@ COMMENT ON COLUMN public.acorn_university_students.legacy_import_qeyd IS 'tab: L
 tabLocation: 2
 advanced: true
 readOnly: true
-comment: School enrollment place. To be processed later on';
+comment: School enrollment place. To be processed later on
+labels:
+  en: Legacy Import Family place
+  ku: Cihê Malbatê yê Importkirina Mîrasî
+  ar: القيد
+labels-plural:
+  en: Legacy Import Family places
+  ku: Cihê Malbatên yê Importkirina Mîrasî
+  ar: القيد';
 
 
 --
@@ -12664,13 +13149,20 @@ readOnly: true
 comment: Regular or Irregular, concerning Year 10 and 11
 filters:
   student_type:
-    label: acorn.exam::lang.models.certificate.legacy_import_student_type
+    label: acorn.university::lang.models.student.legacy_import_student_type
     type: group
     options:
       regular: acorn.exam::lang.models.certificate.regular
       irregular: acorn.exam::lang.models.certificate.irregular
     conditions: legacy_import_student_type in(:filtered)
-';
+labels:
+  en: Legacy Import Student type
+  ku: Importkirina Mîrasî Cureyê Xwendekar
+  ar: نظام التقديم
+labels-plural:
+  en: Legacy Import Student types
+  ku: Importkirina Mîrasî Cureyê Xwendekarên
+  ar: نظام التقديم';
 
 
 --
@@ -12686,8 +13178,13 @@ readOnly: true
 comment: Legacy import ID
 labels:
   en: Legacy Import ID
+  ku: ID Importê ya Mîrasî
+  ar: الرقم الوطني استيراد الإصدار القديم
 labels-plural:
-  en: Legacy Import IDs';
+  en: Legacy Import IDs
+  ku: IDên Importê ya Mîrasî
+  ar: الرقم الوطني استيراد الإصدار القديم
+';
 
 
 --
@@ -12699,14 +13196,30 @@ tabLocation: 2
 advanced: true
 invisible: true
 readOnly: true
-comment: Birth place because location cleaning is difficult';
+comment: Birth place because location cleaning is difficult
+labels:
+  en: Legacy Import Birth place
+  ku: Importkirina Mîrasî Cihê jidayikbûnê
+  ar: تاريخ الميلاد استيراد الإصدار القديم
+labels-plural:
+  en: Legacy Import Birth places
+  ku: Importkirina Mîrasî Cihên jidayikbûnê
+  ar: تاريخ الميلاد استيراد الإصدار القديم';
 
 
 --
 -- Name: COLUMN acorn_university_students.printed; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_students.printed IS 'column-type: text
+COMMENT ON COLUMN public.acorn_university_students.printed IS 'labels:
+  en: Printed
+  ku: Çap
+  ar: تم الطباعة
+labels-plural:
+  en: Printed
+  ku: Çap
+  ar: تم الطباعة
+column-type: text
 field-type: datatable
 adding: false
 invisible: true
@@ -12717,7 +13230,7 @@ css-classes:
 columns:
   0:
     type: string
-    title: Name
+    title: acorn.university::lang.models.general.name
 tab: INHERIT
 tab-location: 2
 
@@ -12734,9 +13247,11 @@ extra-translations:
   documents_printed:
     en: Documents printed
     ku: Belgeyên çapkirî
+    ar: المستندات المطبوعة
   documents_not_printed:
     en: Documents not printed
     ku: Belgeyên ne çapkirî
+    ar: المستندات غير المطبوعة
 ';
 
 
@@ -12862,8 +13377,8 @@ CREATE TABLE public.acorn_user_users (
     ethnicity_id uuid,
     global_scope_entity_id uuid,
     global_scope_academic_year_id uuid,
-    CONSTRAINT gender_enum CHECK (((gender IS NULL) OR (gender = ANY (ARRAY['M'::"char", 'F'::"char", 'O'::"char"])))),
-    CONSTRAINT marital_status_enum CHECK (((marital_status IS NULL) OR (marital_status = ANY (ARRAY['M'::"char", 'S'::"char", 'O'::"char"]))))
+    CONSTRAINT gender_enum CHECK (((gender IS NULL) OR (gender = ANY (ARRAY['M'::"char", 'F'::"char", 'O'::"char", 'N'::"char"])))),
+    CONSTRAINT marital_status_enum CHECK (((marital_status IS NULL) OR (marital_status = ANY (ARRAY['M'::"char", 'S'::"char", 'O'::"char", 'N'::"char"]))))
 );
 
 
@@ -12956,11 +13471,13 @@ ALTER VIEW public.acorn_exam_data_entry_scores OWNER TO university;
 
 COMMENT ON VIEW public.acorn_exam_data_entry_scores IS 'batch-print: true
 labels:
-  en: Data Entry Score
-  ku: Sitand Diyar Kirin
+  en: Data Entry Scores
+  ku: Pûanên Têketina Daneyan
+  ar: نتائج إدخال البيانات
 labels-plural:
   en: Data Entry Scores
-  ku: Sitandên Diyar Kirin
+  ku: Pûanên Têketina Daneyan
+  ar: نتائج إدخال البيانات
 ';
 
 
@@ -12994,6 +13511,14 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.student_id IS 'extra-forei
     name-object: true
     depends-on:
       user_user_group_versions: true
+    labels:
+      en: Data Entry Scores
+      ku: Pûanên Têketina Daneyan
+      ar: نتائج إدخال البيانات
+    labels-plural:
+      en: Data Entry Scores
+      ku: Pûanên Têketina Daneyan
+      ar: نتائج إدخال البيانات
 labels:
   en: Student
 labels-plural:
@@ -13048,8 +13573,12 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.course_user_group_id IS 'e
 no-relation-manager: true
 labels:
   en: Course
+  ku: Kors
+  ar: المنهج
 labels-plural:
   en: Courses
+  ku: Kors
+  ar: المنهج
 invisible: true';
 
 
@@ -13064,9 +13593,13 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.organisation_user_group_id
     name-object: true
 no-relation-manager: true
 labels:
-  en: Organisation
+  en: School
+  ku: Dibistan
+  ar: مدرسة
 labels-plural:
-  en: Organisations
+  en: Schools
+  ku: Dibistanên
+  ar: مدرسة
 sortable: false';
 
 
@@ -13081,8 +13614,13 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.course_id IS 'extra-foreig
 no-relation-manager: true
 labels:
   en: Course
+  ku: Kors
+  ar: المنهج
 labels-plural:
-  en: Courses';
+  en: Courses
+  ku: Korsên
+  ar: المنهج
+';
 
 
 --
@@ -13094,9 +13632,11 @@ sql-select: acorn_exam_data_entry_scores.course_code
 labels:
   en: Course Code
   ku: Kode kors
+  ar: رمز الفرع
 labels-plural:
   en: Courses
   ku: Kode korsên
+  ar: رمز الفرع
 invisible: true';
 
 
@@ -13130,8 +13670,13 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.scores IS 'list-editable: 
 type-editable: number
 labels:
   en: Material Score
+  ku: Pila
+  ar: علامة المادة
 labels-plural:
-  en: Materials Scores';
+  en: Materials Scores
+  ku: Pilayên
+  ar: علامة المادة
+';
 
 
 --
@@ -13152,14 +13697,32 @@ labels-plural:
 -- Name: COLUMN acorn_exam_data_entry_scores.sum; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.sum IS 'invisible: true';
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.sum IS 'invisible: true
+labels:
+  en: Sum
+  ku: Giş
+  ar: المجموع
+labels-plural:
+  en: Sums
+  ku: Gişên
+  ar: المجموع
+';
 
 
 --
 -- Name: COLUMN acorn_exam_data_entry_scores.attendance; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.attendance IS 'invisible: true';
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.attendance IS 'invisible: true
+labels:
+  en: Attendance
+  ku: Amadetî
+  ar: الحضور
+labels-plural:
+  en: Attendances
+  ku: Amadetîyên
+  ar: الحضور
+';
 
 
 --
@@ -13182,9 +13745,11 @@ filters:
 labels:
   en: Course Passed
   ku: Kors Serket
+  ar: النجاح في الفرع
 labels-plural:
   en: Course Passes
   ku: Kors Serketên
+  ar: النجاح في الفرع
 invisible: true';
 
 
@@ -13199,9 +13764,26 @@ bar: true
 labels:
   en: Result
   ku: Encam
+  ar: العلامة
 labels-plural:
   en: Results
   ku: Encamên
+  ar: العلامة
+';
+
+
+--
+-- Name: COLUMN acorn_exam_data_entry_scores.minimum; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.minimum IS 'labels:
+  en: Minimum
+  ku: Kêmtirîn
+  ar: الحد الاعلى
+labels-plural:
+  en: Minimums
+  ku: Kêmtirînên
+  ar: الحد الاعلى
 ';
 
 
@@ -13209,7 +13791,16 @@ labels-plural:
 -- Name: COLUMN acorn_exam_data_entry_scores.maximum; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_exam_data_entry_scores.maximum IS 'invisible: true';
+COMMENT ON COLUMN public.acorn_exam_data_entry_scores.maximum IS 'invisible: true
+labels:
+  en: Maximum
+  ku: Zêdetirîn
+  ar: الحد الدنى
+labels-plural:
+  en: Maximums
+  ku: Zêdetirînên
+  ar: الحد الدنى
+';
 
 
 --
@@ -13344,10 +13935,14 @@ default-sort: id
 labels:
   en: Certificate Information
   ku: Bawername agahî
+  ar: معلومات الشهادة
 labels-plural:
   en: Certificate Informations
   ku: Bawername agahîyên
-';
+  ar: معلومات الشهادة
+labels-from:
+  - acorn_university_students
+  - acorn_user_users';
 
 
 --
@@ -13385,10 +13980,22 @@ COMMENT ON COLUMN public.acorn_exam_certificates.student_id IS 'extra-foreign-ke
     name-object: true
     invisible: true
     field-exclude: true
+    labels:
+      en: Certificate Information
+      ku: Bawername agahî
+      ar: معلومات الشهادة
+    labels-plural:
+      en: Certificate Informations
+      ku: Bawername agahîyên
+      ar: معلومات الشهادة
 labels:
   en: Student
+  ku: Xwendekar
+  ar: طالب
 labels-plural:
   en: Students
+  ku: Xwendekarên
+  ar: طالب
 invisible: true
 qrcode-object: true';
 
@@ -13683,15 +14290,19 @@ extra-translations:
   regular:
     en: Regular
     ku: Rêzbirêz
+    ar: عادي
   irregular:
     en: Irregular
     ku: Serbixwe
+    ar: غير منتظم
 labels:
   en: Legacy Import Student Type
   ku: Legacy Import Cura Xwendekar
+  ar: نوع الطالب المستورد القديم
 labels-plural:
   en: Legacy Import Student Types
   ku: Legacy Import Cura Xwendekarên
+  ar: نوع الطالب المستورد القديم
 sortable: false';
 
 
@@ -14665,20 +15276,6 @@ UNION ALL
     acorn_university_student_identities.description AS content
    FROM public.acorn_university_student_identities
 UNION ALL
- SELECT 'Acorn\University\Models\ProjectStudent'::text AS model_type,
-    acorn_university_project_students.id AS model_id,
-    'acorn_university_project_students'::text AS "table",
-    'name'::text AS field,
-    (acorn_university_project_students.name)::text AS content
-   FROM public.acorn_university_project_students
-UNION ALL
- SELECT 'Acorn\University\Models\ProjectStudent'::text AS model_type,
-    acorn_university_project_students.id AS model_id,
-    'acorn_university_project_students'::text AS "table",
-    'description'::text AS field,
-    acorn_university_project_students.description AS content
-   FROM public.acorn_university_project_students
-UNION ALL
  SELECT 'Acorn\University\Models\StudentStatus'::text AS model_type,
     acorn_university_student_statuses.id AS model_id,
     'acorn_university_student_statuses'::text AS "table",
@@ -14692,6 +15289,20 @@ UNION ALL
     'description'::text AS field,
     acorn_university_student_statuses.description AS content
    FROM public.acorn_university_student_statuses
+UNION ALL
+ SELECT 'Acorn\University\Models\ProjectStudent'::text AS model_type,
+    acorn_university_project_students.id AS model_id,
+    'acorn_university_project_students'::text AS "table",
+    'name'::text AS field,
+    (acorn_university_project_students.name)::text AS content
+   FROM public.acorn_university_project_students
+UNION ALL
+ SELECT 'Acorn\University\Models\ProjectStudent'::text AS model_type,
+    acorn_university_project_students.id AS model_id,
+    'acorn_university_project_students'::text AS "table",
+    'description'::text AS field,
+    acorn_university_project_students.description AS content
+   FROM public.acorn_university_project_students
 UNION ALL
  SELECT 'Acorn\University\Models\IdentityType'::text AS model_type,
     acorn_university_identity_types.id AS model_id,
@@ -14968,6 +15579,493 @@ labels-plural:
 
 
 --
+-- Name: acorn_university_student_status; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_university_student_status (
+    student_id uuid NOT NULL,
+    student_status_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.acorn_university_student_status OWNER TO university;
+
+--
+-- Name: TABLE acorn_university_student_status; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_university_student_status IS 'labels:
+  en: Status
+  ku: Rewş
+  ar: الحالات الخاصة
+labels-plural:
+  en: Statuses
+  ku: Rewşên
+  ar: الحالات الخاصة';
+
+
+--
+-- Name: university_mofadala_baccalaureate_marks; Type: FOREIGN TABLE; Schema: public; Owner: sz
+--
+
+CREATE FOREIGN TABLE public.university_mofadala_baccalaureate_marks (
+    id integer NOT NULL,
+    county character varying(255) NOT NULL,
+    code text,
+    certificate character varying(255) NOT NULL,
+    full_name character varying(255) NOT NULL,
+    father_name character varying(255),
+    mother_name character varying(255),
+    place_and_date_of_birth text,
+    total_mark double precision NOT NULL,
+    avg double precision NOT NULL,
+    certificate_language character varying(255) NOT NULL,
+    kurdish_language double precision,
+    english_language double precision,
+    arabic_language double precision,
+    science_of_woman double precision,
+    history double precision,
+    geography double precision,
+    philosophy double precision,
+    sociology double precision,
+    math double precision,
+    biology double precision,
+    chemistry double precision,
+    physics double precision,
+    result character varying(255) NOT NULL,
+    created_at timestamp(0) without time zone,
+    updated_at timestamp(0) without time zone,
+    community_language double precision,
+    birth_date character varying(1024),
+    year_9 double precision,
+    year_10 double precision,
+    year_11 double precision,
+    family_of_martyrs character varying(1024),
+    final_avg double precision,
+    passed_primaries "char",
+    passed_secondaries "char",
+    attendance integer,
+    national_id character varying(1024),
+    other_language character varying(1024),
+    school character varying(1024),
+    qeyd character varying(1024),
+    gender character varying(1024),
+    religion character varying(1024),
+    ethnicity character varying(1024),
+    surname character varying(1024),
+    number integer NOT NULL,
+    marital_status character varying(1024),
+    student_type character varying(1024),
+    physics_and_chemistry double precision,
+    anatomy double precision,
+    nursing double precision,
+    rays double precision,
+    anesthetization double precision,
+    physical_therapy double precision,
+    pharmacy double precision,
+    lab double precision,
+    internal_combustion_engines double precision,
+    mechanical_engineering_drawing_3 double precision,
+    vehicle_control_systems double precision,
+    diesel_fuel_injection_systems double precision,
+    electrical_appliances_2 double precision,
+    automated_command_and_control double precision,
+    electrical_engineering_drawing_3 double precision,
+    electronics_3 double precision,
+    hardware_and_software_maintenance_2 double precision,
+    programming_3 double precision,
+    network_management double precision,
+    computer_applications double precision,
+    marketing double precision,
+    bank_accounting double precision,
+    financial_institutions_accounting double precision,
+    private_accounting double precision,
+    computer double precision,
+    financial_mathematics double precision,
+    statistics double precision,
+    food_industries double precision,
+    dairy double precision,
+    gardening double precision,
+    farm_animal double precision,
+    agricultural_pests double precision,
+    sport double precision,
+    art double precision,
+    certificate_date timestamp without time zone NOT NULL,
+    micro_organisms double precision,
+    web_design double precision,
+    department character varying(2048),
+    televison double precision,
+    electronic_device_maintenance double precision,
+    antennas double precision,
+    protection_and_alarm_systems double precision,
+    import_irregularity character varying(1024),
+    turning double precision,
+    industrial_drawing double precision,
+    cnc double precision,
+    separator double precision
+)
+SERVER localserver_universityacceptance
+OPTIONS (
+    schema_name 'public',
+    table_name 'university_mofadala_baccalaureate_marks'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN id OPTIONS (
+    column_name 'id'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN county OPTIONS (
+    column_name 'county'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN code OPTIONS (
+    column_name 'code'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN certificate OPTIONS (
+    column_name 'certificate'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN full_name OPTIONS (
+    column_name 'full_name'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN father_name OPTIONS (
+    column_name 'father_name'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN mother_name OPTIONS (
+    column_name 'mother_name'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN place_and_date_of_birth OPTIONS (
+    column_name 'place_and_date_of_birth'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN total_mark OPTIONS (
+    column_name 'total_mark'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN avg OPTIONS (
+    column_name 'avg'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN certificate_language OPTIONS (
+    column_name 'certificate_language'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN kurdish_language OPTIONS (
+    column_name 'kurdish_language'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN english_language OPTIONS (
+    column_name 'english_language'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN arabic_language OPTIONS (
+    column_name 'arabic_language'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN science_of_woman OPTIONS (
+    column_name 'science_of_woman'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN history OPTIONS (
+    column_name 'history'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN geography OPTIONS (
+    column_name 'geography'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN philosophy OPTIONS (
+    column_name 'philosophy'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN sociology OPTIONS (
+    column_name 'sociology'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN math OPTIONS (
+    column_name 'math'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN biology OPTIONS (
+    column_name 'biology'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN chemistry OPTIONS (
+    column_name 'chemistry'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN physics OPTIONS (
+    column_name 'physics'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN result OPTIONS (
+    column_name 'result'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN created_at OPTIONS (
+    column_name 'created_at'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN updated_at OPTIONS (
+    column_name 'updated_at'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN community_language OPTIONS (
+    column_name 'community_language'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN birth_date OPTIONS (
+    column_name 'birth_date'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN year_9 OPTIONS (
+    column_name 'year_9'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN year_10 OPTIONS (
+    column_name 'year_10'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN year_11 OPTIONS (
+    column_name 'year_11'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN family_of_martyrs OPTIONS (
+    column_name 'family_of_martyrs'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN final_avg OPTIONS (
+    column_name 'final_avg'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN passed_primaries OPTIONS (
+    column_name 'passed_primaries'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN passed_secondaries OPTIONS (
+    column_name 'passed_secondaries'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN attendance OPTIONS (
+    column_name 'attendance'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN national_id OPTIONS (
+    column_name 'national_id'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN other_language OPTIONS (
+    column_name 'other_language'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN school OPTIONS (
+    column_name 'school'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN qeyd OPTIONS (
+    column_name 'qeyd'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN gender OPTIONS (
+    column_name 'gender'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN religion OPTIONS (
+    column_name 'religion'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN ethnicity OPTIONS (
+    column_name 'ethnicity'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN surname OPTIONS (
+    column_name 'surname'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN number OPTIONS (
+    column_name 'number'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN marital_status OPTIONS (
+    column_name 'marital_status'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN student_type OPTIONS (
+    column_name 'student_type'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN physics_and_chemistry OPTIONS (
+    column_name 'physics_and_chemistry'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN anatomy OPTIONS (
+    column_name 'anatomy'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN nursing OPTIONS (
+    column_name 'nursing'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN rays OPTIONS (
+    column_name 'rays'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN anesthetization OPTIONS (
+    column_name 'anesthetization'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN physical_therapy OPTIONS (
+    column_name 'physical_therapy'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN pharmacy OPTIONS (
+    column_name 'pharmacy'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN lab OPTIONS (
+    column_name 'lab'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN internal_combustion_engines OPTIONS (
+    column_name 'internal_combustion_engines'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN mechanical_engineering_drawing_3 OPTIONS (
+    column_name 'mechanical_engineering_drawing_3'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN vehicle_control_systems OPTIONS (
+    column_name 'vehicle_control_systems'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN diesel_fuel_injection_systems OPTIONS (
+    column_name 'diesel_fuel_injection_systems'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN electrical_appliances_2 OPTIONS (
+    column_name 'electrical_appliances_2'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN automated_command_and_control OPTIONS (
+    column_name 'automated_command_and_control'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN electrical_engineering_drawing_3 OPTIONS (
+    column_name 'electrical_engineering_drawing_3'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN electronics_3 OPTIONS (
+    column_name 'electronics_3'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN hardware_and_software_maintenance_2 OPTIONS (
+    column_name 'hardware_and_software_maintenance_2'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN programming_3 OPTIONS (
+    column_name 'programming_3'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN network_management OPTIONS (
+    column_name 'network_management'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN computer_applications OPTIONS (
+    column_name 'computer_applications'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN marketing OPTIONS (
+    column_name 'marketing'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN bank_accounting OPTIONS (
+    column_name 'bank_accounting'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN financial_institutions_accounting OPTIONS (
+    column_name 'financial_institutions_accounting'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN private_accounting OPTIONS (
+    column_name 'private_accounting'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN computer OPTIONS (
+    column_name 'computer'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN financial_mathematics OPTIONS (
+    column_name 'financial_mathematics'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN statistics OPTIONS (
+    column_name 'statistics'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN food_industries OPTIONS (
+    column_name 'food_industries'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN dairy OPTIONS (
+    column_name 'dairy'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN gardening OPTIONS (
+    column_name 'gardening'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN farm_animal OPTIONS (
+    column_name 'farm_animal'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN agricultural_pests OPTIONS (
+    column_name 'agricultural_pests'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN sport OPTIONS (
+    column_name 'sport'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN art OPTIONS (
+    column_name 'art'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN certificate_date OPTIONS (
+    column_name 'certificate_date'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN micro_organisms OPTIONS (
+    column_name 'micro_organisms'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN web_design OPTIONS (
+    column_name 'web_design'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN department OPTIONS (
+    column_name 'department'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN televison OPTIONS (
+    column_name 'televison'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN electronic_device_maintenance OPTIONS (
+    column_name 'electronic_device_maintenance'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN antennas OPTIONS (
+    column_name 'antennas'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN protection_and_alarm_systems OPTIONS (
+    column_name 'protection_and_alarm_systems'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN import_irregularity OPTIONS (
+    column_name 'import_irregularity'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN turning OPTIONS (
+    column_name 'turning'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN industrial_drawing OPTIONS (
+    column_name 'industrial_drawing'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN cnc OPTIONS (
+    column_name 'cnc'
+);
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN separator OPTIONS (
+    column_name 'separator'
+);
+
+
+ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks OWNER TO sz;
+
+--
+-- Name: acorn_university_legacy_updates; Type: VIEW; Schema: public; Owner: university
+--
+
+CREATE VIEW public.acorn_university_legacy_updates AS
+ SELECT NULL::integer AS bmid,
+    s.id AS student_id,
+    'created'::text AS status
+   FROM public.acorn_university_students s
+  WHERE (s.legacy_import_id IS NULL)
+UNION ALL
+ SELECT s.legacy_import_id AS bmid,
+    s.id AS student_id,
+    'missing'::text AS status
+   FROM public.acorn_university_students s
+  WHERE (NOT (EXISTS ( SELECT bm.id
+           FROM public.university_mofadala_baccalaureate_marks bm
+          WHERE (s.legacy_import_id = bm.id))))
+UNION ALL
+ SELECT bm.id AS bmid,
+    s.id AS student_id,
+    'Updated'::text AS status
+   FROM (((((((((public.university_mofadala_baccalaureate_marks bm
+     JOIN public.acorn_university_students s ON ((s.legacy_import_id = bm.id)))
+     JOIN public.acorn_university_student_codes co ON (((co.student_id = s.id) AND co.current)))
+     JOIN public.acorn_user_users u ON ((s.user_id = u.id)))
+     LEFT JOIN public.acorn_university_student_status sst ON ((sst.student_id = s.id)))
+     LEFT JOIN public.acorn_university_student_statuses st ON ((sst.student_status_id = st.id)))
+     JOIN public.acorn_exam_scores sc ON ((sc.student_id = s.id)))
+     JOIN public.acorn_exam_exam_materials em ON ((sc.exam_material_id = em.id)))
+     JOIN public.acorn_university_course_materials cm ON ((em.course_material_id = cm.id)))
+     JOIN public.acorn_university_materials m ON ((cm.material_id = m.id)))
+  WHERE ((bm.code <> (co.code)::text) OR ((NOT (bm.family_of_martyrs IS NULL)) AND (NOT ((bm.family_of_martyrs)::text = 'No'::text)) AND (st.id IS NULL)) OR ((bm.father_name)::text <> (u.fathers_name)::text) OR ((bm.mother_name)::text <> (u.mothers_name)::text) OR ((bm.full_name)::text <> (u.name)::text) OR ((bm.surname)::text <> (u.surname)::text) OR (((m.name)::text = 'Arabic'::text) AND (sc.score <> bm.arabic_language)) OR (((m.name)::text = 'Year 10'::text) AND (sc.score <> bm.year_10)) OR (((m.name)::text = 'Year 11'::text) AND (sc.score <> bm.year_11)) OR (((m.name)::text = 'Physics and Chemistry'::text) AND (sc.score <> bm.physics_and_chemistry)) OR (((m.name)::text = 'Anatomy'::text) AND (sc.score <> bm.anatomy)) OR (((m.name)::text = 'Nursing'::text) AND (sc.score <> bm.nursing)) OR (((m.name)::text = 'Rays'::text) AND (sc.score <> bm.rays)) OR (((m.name)::text = 'Anesthetization'::text) AND (sc.score <> bm.anesthetization)) OR (((m.name)::text = 'Physical therapy'::text) AND (sc.score <> bm.physical_therapy)) OR (((m.name)::text = 'Pharmacy'::text) AND (sc.score <> bm.pharmacy)) OR (((m.name)::text = 'Lab'::text) AND (sc.score <> bm.lab)) OR (((m.name)::text = 'Internal Combustion Engines'::text) AND (sc.score <> bm.internal_combustion_engines)) OR (((m.name)::text = 'Mechanical Engineering Drawing 3'::text) AND (sc.score <> bm.mechanical_engineering_drawing_3)) OR (((m.name)::text = 'Vehicle control systems'::text) AND (sc.score <> bm.vehicle_control_systems)) OR (((m.name)::text = 'Diesel fuel injection systems'::text) AND (sc.score <> bm.diesel_fuel_injection_systems)) OR (((m.name)::text = 'Electrical appliances 2'::text) AND (sc.score <> bm.electrical_appliances_2)) OR (((m.name)::text = 'Automated command and control'::text) AND (sc.score <> bm.automated_command_and_control)) OR (((m.name)::text = 'Electrical Engineering Drawing 3'::text) AND (sc.score <> bm.electrical_engineering_drawing_3)) OR (((m.name)::text = 'Hardware and software maintenance 2'::text) AND (sc.score <> bm.hardware_and_software_maintenance_2)) OR (((m.name)::text = 'Programming 3'::text) AND (sc.score <> bm.programming_3)) OR (((m.name)::text = 'Network management'::text) AND (sc.score <> bm.network_management)) OR (((m.name)::text = 'Computer applications'::text) AND (sc.score <> bm.computer_applications)) OR (((m.name)::text = 'Marketing'::text) AND (sc.score <> bm.marketing)) OR (((m.name)::text = 'Bank accounting'::text) AND (sc.score <> bm.bank_accounting)) OR (((m.name)::text = 'Financial Institutions Accounting'::text) AND (sc.score <> bm.financial_institutions_accounting)) OR (((m.name)::text = 'Private accounting'::text) AND (sc.score <> bm.private_accounting)) OR (((m.name)::text = 'Computer'::text) AND (sc.score <> bm.computer)) OR (((m.name)::text = 'Financial Mathematics'::text) AND (sc.score <> bm.financial_mathematics)) OR (((m.name)::text = 'Statistics'::text) AND (sc.score <> bm.statistics)) OR (((m.name)::text = 'Food industries'::text) AND (sc.score <> bm.food_industries)) OR (((m.name)::text = 'Dairy'::text) AND (sc.score <> bm.dairy)) OR (((m.name)::text = 'Gardening'::text) AND (sc.score <> bm.gardening)) OR (((m.name)::text = 'Farm animal'::text) AND (sc.score <> bm.farm_animal)) OR (((m.name)::text = 'Agricultural pests'::text) AND (sc.score <> bm.agricultural_pests)) OR (((m.name)::text = 'Sport'::text) AND (sc.score <> bm.sport)) OR (((m.name)::text = 'Art'::text) AND (sc.score <> bm.art)) OR (((m.name)::text = 'Electronics 3'::text) AND (sc.score <> bm.electronics_3)) OR (((m.name)::text = 'Web Design'::text) AND (sc.score <> bm.web_design)) OR (((m.name)::text = 'Micro Organisms'::text) AND (sc.score <> bm.micro_organisms)) OR (((m.name)::text = 'Televison'::text) AND (sc.score <> bm.televison)) OR (((m.name)::text = 'Protection and Alarm Systems'::text) AND (sc.score <> bm.protection_and_alarm_systems)) OR (((m.name)::text = 'Antennas'::text) AND (sc.score <> bm.antennas)) OR (((m.name)::text = 'Electronic Device Maintenance'::text) AND (sc.score <> bm.electronic_device_maintenance)) OR (((m.name)::text = 'Community Language'::text) AND (sc.score <> bm.community_language)) OR (((m.name)::text = 'Maths'::text) AND (sc.score <> bm.math)) OR (((m.name)::text = 'History'::text) AND (sc.score <> bm.history)) OR (((m.name)::text = 'Biology'::text) AND (sc.score <> bm.biology)) OR (((m.name)::text = 'Philosophy'::text) AND (sc.score <> bm.philosophy)) OR (((m.name)::text = 'Sociology'::text) AND (sc.score <> bm.sociology)) OR (((m.name)::text = 'Jineologi'::text) AND (sc.score <> bm.science_of_woman)) OR (((m.name)::text = 'Physics'::text) AND (sc.score <> bm.physics)) OR (((m.name)::text = 'Geography'::text) AND (sc.score <> bm.geography)) OR (((m.name)::text = 'Chemistry'::text) AND (sc.score <> bm.chemistry)) OR (((m.name)::text = 'Year 9'::text) AND (sc.score <> bm.year_9)) OR (((m.name)::text = 'Kurdish'::text) AND (sc.score <> bm.kurdish_language)) OR (((m.name)::text = 'English'::text) AND (sc.score <> bm.english_language)));
+
+
+ALTER VIEW public.acorn_university_legacy_updates OWNER TO university;
+
+--
+-- Name: VIEW acorn_university_legacy_updates; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON VIEW public.acorn_university_legacy_updates IS 'menu: false
+labels:
+  en: Legacy update
+labels-plural:
+  en: Legacy updates
+';
+
+
+--
+-- Name: COLUMN acorn_university_legacy_updates.student_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_legacy_updates.student_id IS 'extra-foreign-key: 
+  table: acorn_university_students
+  comment:
+    tab-location: 2
+    invisible: true
+    name-object: true
+    advanced: true
+    labels:
+      en: Legacy diff
+    labels-plural:
+      en: Legacy diffs
+labels:
+  en: Student
+labels-plural:
+  en: Students';
+
+
+--
 -- Name: acorn_university_schools; Type: TABLE; Schema: public; Owner: university
 --
 
@@ -14987,9 +16085,11 @@ COMMENT ON TABLE public.acorn_university_schools IS 'order: 30
 labels:
   en: School
   ku: Dibistan
+  ar: مدرسة
 labels-plural:
   en: Schools
-  ku: Dibistanên';
+  ku: Dibistanên
+  ar: مدرسة';
 
 
 --
@@ -15018,13 +16118,19 @@ ALTER VIEW public.acorn_university_student_lookups OWNER TO university;
 -- Name: VIEW acorn_university_student_lookups; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON VIEW public.acorn_university_student_lookups IS 'list-record-url: acorn/university/students/update/:id
+COMMENT ON VIEW public.acorn_university_student_lookups IS 'menu: false
+list-record-url: acorn/university/students/update/:id
 labels:
   en: Student Lookup
-  ku: Digerîn Xwendekar
+  ku: Lêgerîna Xwendekaran
+  ar: عمليات البحث عن الطلاب
 labels-plural:
   en: Student Lookups
-  ku: Digerîn Xwendekarên';
+  ku: Lêgerînan Xwendekaran
+  ar: عمليات البحث عن الطلاب
+labels-from:
+  - acorn_university_students
+  - acorn_user_users';
 
 
 --
@@ -15038,6 +16144,14 @@ COMMENT ON COLUMN public.acorn_university_student_lookups.student_id IS 'extra-f
     tab-location: 2
     invisible: true
     advanced: true
+    labels:
+      en: Student Lookup
+      ku: Lêgerîna Xwendekaran
+      ar: عمليات البحث عن الطلاب
+    labels-plural:
+      en: Student Lookups
+      ku: Lêgerînan Xwendekaran
+      ar: عمليات البحث عن الطلاب
 can-filter: false';
 
 
@@ -15093,18 +16207,6 @@ COMMENT ON COLUMN public.acorn_university_student_lookups.academic_year_id IS 'e
 
 
 --
--- Name: acorn_university_student_status; Type: TABLE; Schema: public; Owner: university
---
-
-CREATE TABLE public.acorn_university_student_status (
-    student_id uuid NOT NULL,
-    student_status_id uuid NOT NULL
-);
-
-
-ALTER TABLE public.acorn_university_student_status OWNER TO university;
-
---
 -- Name: acorn_university_teachers; Type: TABLE; Schema: public; Owner: university
 --
 
@@ -15124,9 +16226,12 @@ COMMENT ON TABLE public.acorn_university_teachers IS 'order: 510
 labels:
   en: Teacher
   ku: Mamoste
+  ar: مدرس
 labels-plural:
   en: Teachers
-  ku: Mamostên';
+  ku: Mamostên
+  ar: مدرس
+';
 
 
 --
@@ -15146,17 +16251,22 @@ ALTER TABLE public.acorn_university_universities OWNER TO university;
 --
 
 COMMENT ON TABLE public.acorn_university_universities IS 'plugin-icon: book
+plugin-url: acorn/university/students
 plugin-names:
   en: Universities
   ku: Zaningehên
+  ar: الجامعات
 all-controllers: true
 order: 20
 labels:
   en: University
   ku: Zaningeh
+  ar: الجامعات
 labels-plural:
   en: Universities
-  ku: Zaningehên';
+  ku: Zaningehên
+  ar: الجامعات
+';
 
 
 --
@@ -16516,381 +17626,6 @@ ALTER SEQUENCE public.system_settings_id_seq OWNER TO university;
 
 ALTER SEQUENCE public.system_settings_id_seq OWNED BY public.system_settings.id;
 
-
---
--- Name: university_mofadala_baccalaureate_marks; Type: FOREIGN TABLE; Schema: public; Owner: sz
---
-
-CREATE FOREIGN TABLE public.university_mofadala_baccalaureate_marks (
-    id integer NOT NULL,
-    county character varying(255) NOT NULL,
-    code text,
-    certificate character varying(255) NOT NULL,
-    full_name character varying(255) NOT NULL,
-    father_name character varying(255),
-    mother_name character varying(255),
-    place_and_date_of_birth text,
-    total_mark double precision NOT NULL,
-    avg double precision NOT NULL,
-    certificate_language character varying(255) NOT NULL,
-    kurdish_language double precision,
-    english_language double precision,
-    arabic_language double precision,
-    science_of_woman double precision,
-    history double precision,
-    geography double precision,
-    philosophy double precision,
-    sociology double precision,
-    math double precision,
-    biology double precision,
-    chemistry double precision,
-    physics double precision,
-    result character varying(255) NOT NULL,
-    created_at timestamp(0) without time zone,
-    updated_at timestamp(0) without time zone,
-    community_language double precision,
-    birth_date character varying(1024),
-    year_9 double precision,
-    year_10 double precision,
-    year_11 double precision,
-    family_of_martyrs character varying(1024),
-    final_avg double precision,
-    passed_primaries "char",
-    passed_secondaries "char",
-    attendance integer,
-    national_id character varying(1024),
-    other_language character varying(1024),
-    school character varying(1024),
-    qeyd character varying(1024),
-    gender character varying(1024),
-    religion character varying(1024),
-    ethnicity character varying(1024),
-    surname character varying(1024),
-    number integer NOT NULL,
-    marital_status character varying(1024),
-    student_type character varying(1024),
-    physics_and_chemistry double precision,
-    anatomy double precision,
-    nursing double precision,
-    rays double precision,
-    anesthetization double precision,
-    physical_therapy double precision,
-    pharmacy double precision,
-    lab double precision,
-    internal_combustion_engines double precision,
-    mechanical_engineering_drawing_3 double precision,
-    vehicle_control_systems double precision,
-    diesel_fuel_injection_systems double precision,
-    electrical_appliances_2 double precision,
-    automated_command_and_control double precision,
-    electrical_engineering_drawing_3 double precision,
-    electronics_3 double precision,
-    hardware_and_software_maintenance_2 double precision,
-    programming_3 double precision,
-    network_management double precision,
-    computer_applications double precision,
-    marketing double precision,
-    bank_accounting double precision,
-    financial_institutions_accounting double precision,
-    private_accounting double precision,
-    computer double precision,
-    financial_mathematics double precision,
-    statistics double precision,
-    food_industries double precision,
-    dairy double precision,
-    gardening double precision,
-    farm_animal double precision,
-    agricultural_pests double precision,
-    sport double precision,
-    art double precision,
-    certificate_date timestamp without time zone NOT NULL,
-    micro_organisms double precision,
-    web_design double precision,
-    department character varying(2048),
-    televison double precision,
-    electronic_device_maintenance double precision,
-    antennas double precision,
-    protection_and_alarm_systems double precision,
-    import_irregularity character varying(1024)
-)
-SERVER localserver_universityacceptance
-OPTIONS (
-    schema_name 'public',
-    table_name 'university_mofadala_baccalaureate_marks'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN id OPTIONS (
-    column_name 'id'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN county OPTIONS (
-    column_name 'county'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN code OPTIONS (
-    column_name 'code'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN certificate OPTIONS (
-    column_name 'certificate'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN full_name OPTIONS (
-    column_name 'full_name'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN father_name OPTIONS (
-    column_name 'father_name'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN mother_name OPTIONS (
-    column_name 'mother_name'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN place_and_date_of_birth OPTIONS (
-    column_name 'place_and_date_of_birth'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN total_mark OPTIONS (
-    column_name 'total_mark'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN avg OPTIONS (
-    column_name 'avg'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN certificate_language OPTIONS (
-    column_name 'certificate_language'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN kurdish_language OPTIONS (
-    column_name 'kurdish_language'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN english_language OPTIONS (
-    column_name 'english_language'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN arabic_language OPTIONS (
-    column_name 'arabic_language'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN science_of_woman OPTIONS (
-    column_name 'science_of_woman'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN history OPTIONS (
-    column_name 'history'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN geography OPTIONS (
-    column_name 'geography'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN philosophy OPTIONS (
-    column_name 'philosophy'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN sociology OPTIONS (
-    column_name 'sociology'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN math OPTIONS (
-    column_name 'math'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN biology OPTIONS (
-    column_name 'biology'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN chemistry OPTIONS (
-    column_name 'chemistry'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN physics OPTIONS (
-    column_name 'physics'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN result OPTIONS (
-    column_name 'result'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN created_at OPTIONS (
-    column_name 'created_at'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN updated_at OPTIONS (
-    column_name 'updated_at'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN community_language OPTIONS (
-    column_name 'community_language'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN birth_date OPTIONS (
-    column_name 'birth_date'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN year_9 OPTIONS (
-    column_name 'year_9'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN year_10 OPTIONS (
-    column_name 'year_10'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN year_11 OPTIONS (
-    column_name 'year_11'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN family_of_martyrs OPTIONS (
-    column_name 'family_of_martyrs'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN final_avg OPTIONS (
-    column_name 'final_avg'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN passed_primaries OPTIONS (
-    column_name 'passed_primaries'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN passed_secondaries OPTIONS (
-    column_name 'passed_secondaries'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN attendance OPTIONS (
-    column_name 'attendance'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN national_id OPTIONS (
-    column_name 'national_id'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN other_language OPTIONS (
-    column_name 'other_language'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN school OPTIONS (
-    column_name 'school'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN qeyd OPTIONS (
-    column_name 'qeyd'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN gender OPTIONS (
-    column_name 'gender'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN religion OPTIONS (
-    column_name 'religion'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN ethnicity OPTIONS (
-    column_name 'ethnicity'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN surname OPTIONS (
-    column_name 'surname'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN number OPTIONS (
-    column_name 'number'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN marital_status OPTIONS (
-    column_name 'marital_status'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN student_type OPTIONS (
-    column_name 'student_type'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN physics_and_chemistry OPTIONS (
-    column_name 'physics_and_chemistry'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN anatomy OPTIONS (
-    column_name 'anatomy'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN nursing OPTIONS (
-    column_name 'nursing'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN rays OPTIONS (
-    column_name 'rays'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN anesthetization OPTIONS (
-    column_name 'anesthetization'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN physical_therapy OPTIONS (
-    column_name 'physical_therapy'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN pharmacy OPTIONS (
-    column_name 'pharmacy'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN lab OPTIONS (
-    column_name 'lab'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN internal_combustion_engines OPTIONS (
-    column_name 'internal_combustion_engines'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN mechanical_engineering_drawing_3 OPTIONS (
-    column_name 'mechanical_engineering_drawing_3'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN vehicle_control_systems OPTIONS (
-    column_name 'vehicle_control_systems'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN diesel_fuel_injection_systems OPTIONS (
-    column_name 'diesel_fuel_injection_systems'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN electrical_appliances_2 OPTIONS (
-    column_name 'electrical_appliances_2'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN automated_command_and_control OPTIONS (
-    column_name 'automated_command_and_control'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN electrical_engineering_drawing_3 OPTIONS (
-    column_name 'electrical_engineering_drawing_3'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN electronics_3 OPTIONS (
-    column_name 'electronics_3'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN hardware_and_software_maintenance_2 OPTIONS (
-    column_name 'hardware_and_software_maintenance_2'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN programming_3 OPTIONS (
-    column_name 'programming_3'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN network_management OPTIONS (
-    column_name 'network_management'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN computer_applications OPTIONS (
-    column_name 'computer_applications'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN marketing OPTIONS (
-    column_name 'marketing'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN bank_accounting OPTIONS (
-    column_name 'bank_accounting'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN financial_institutions_accounting OPTIONS (
-    column_name 'financial_institutions_accounting'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN private_accounting OPTIONS (
-    column_name 'private_accounting'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN computer OPTIONS (
-    column_name 'computer'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN financial_mathematics OPTIONS (
-    column_name 'financial_mathematics'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN statistics OPTIONS (
-    column_name 'statistics'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN food_industries OPTIONS (
-    column_name 'food_industries'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN dairy OPTIONS (
-    column_name 'dairy'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN gardening OPTIONS (
-    column_name 'gardening'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN farm_animal OPTIONS (
-    column_name 'farm_animal'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN agricultural_pests OPTIONS (
-    column_name 'agricultural_pests'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN sport OPTIONS (
-    column_name 'sport'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN art OPTIONS (
-    column_name 'art'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN certificate_date OPTIONS (
-    column_name 'certificate_date'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN micro_organisms OPTIONS (
-    column_name 'micro_organisms'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN web_design OPTIONS (
-    column_name 'web_design'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN department OPTIONS (
-    column_name 'department'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN televison OPTIONS (
-    column_name 'televison'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN electronic_device_maintenance OPTIONS (
-    column_name 'electronic_device_maintenance'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN antennas OPTIONS (
-    column_name 'antennas'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN protection_and_alarm_systems OPTIONS (
-    column_name 'protection_and_alarm_systems'
-);
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks ALTER COLUMN import_irregularity OPTIONS (
-    column_name 'import_irregularity'
-);
-
-
-ALTER FOREIGN TABLE public.university_mofadala_baccalaureate_marks OWNER TO sz;
 
 --
 -- Name: university_mofadala_branches; Type: FOREIGN TABLE; Schema: public; Owner: sz
@@ -20437,6 +21172,13 @@ CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_stude
 
 
 --
+-- Name: acorn_university_course_materials tr_acorn_university_cm_order; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_university_cm_order BEFORE INSERT ON public.acorn_university_course_materials FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_university_cm_order();
+
+
+--
 -- Name: acorn_university_courses tr_acorn_university_courses_unique_name_type; Type: TRIGGER; Schema: public; Owner: university
 --
 
@@ -21189,7 +21931,7 @@ ALTER TABLE ONLY public.acorn_university_course_materials
 --
 
 COMMENT ON CONSTRAINT course_id ON public.acorn_university_course_materials IS 'name-object: true
-has-many-deep-include: true';
+';
 
 
 --
@@ -21319,7 +22061,13 @@ ALTER TABLE ONLY public.acorn_exam_calculation_course_materials
 -- Name: CONSTRAINT course_material_id ON acorn_exam_calculation_course_materials; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT course_material_id ON public.acorn_exam_calculation_course_materials IS 'name-object: true';
+COMMENT ON CONSTRAINT course_material_id ON public.acorn_exam_calculation_course_materials IS 'name-object: true
+labels:
+  en: Calculation
+  ku: Algorithm
+labels-plural:
+  en: Calculations
+  ku: Algorithmên';
 
 
 --
@@ -21891,7 +22639,10 @@ ALTER TABLE ONLY public.acorn_university_lectures
 -- Name: CONSTRAINT event_id ON acorn_university_lectures; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT event_id ON public.acorn_university_lectures IS 'type: 1to1';
+COMMENT ON CONSTRAINT event_id ON public.acorn_university_lectures IS 'type: 1to1
+has-many-deep-settings:
+  event_event_parts:
+    field-exclude: true';
 
 
 --
@@ -21947,7 +22698,8 @@ ALTER TABLE ONLY public.acorn_exam_scores
 -- Name: CONSTRAINT exam_material_id ON acorn_exam_scores; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT exam_material_id ON public.acorn_exam_scores IS 'type: Xto1';
+COMMENT ON CONSTRAINT exam_material_id ON public.acorn_exam_scores IS 'type: Xto1
+name-object: true';
 
 
 --
@@ -22165,12 +22917,13 @@ ALTER TABLE ONLY public.acorn_university_project_students
 COMMENT ON CONSTRAINT owner_student_id ON public.acorn_university_project_students IS 'tab-location: 2
 invisible: true
 labels:
-  en: Owned projects
-  ku: Xwedê projê
+  en: Owned Project
+  ku: Projê xwede
+  ar: المشاريع الخاصة
 labels-plural:
   en: Owned Projects
-  ku: Xwedê projên
-';
+  ku: Projên xwede
+  ar: المشاريع الخاصة';
 
 
 --
@@ -22194,6 +22947,7 @@ ALTER TABLE ONLY public.acorn_university_hierarchies
 --
 
 COMMENT ON CONSTRAINT parent_id ON public.acorn_university_hierarchies IS 'name-object: true
+column-exclude: true
 multi:
   valueFrom: htmlName
   html: true
@@ -22655,9 +23409,11 @@ invisible: true
 labels:
   en: Interview
   ku: Bihevditîn
+  ar: المقابلات
 labels-plural:
   en: Interviews
-  ku: Bihevditînên';
+  ku: Bihevditînên
+  ar: المقابلات';
 
 
 --
@@ -22675,10 +23431,15 @@ ALTER TABLE ONLY public.acorn_university_student_status
 COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_status IS 'labels:
   en: Status
   ku: Rewş
+  ar: الحالات الخاصة
 labels-plural:
   en: Statuses
   ku: Rewşên
+  ar: الحالات الخاصة
 tab: acorn.user::lang.models.user.statuses
+rl-buttons:
+  link: true
+  unlink: true
 order: 20';
 
 
@@ -22714,9 +23475,11 @@ ALTER TABLE ONLY public.acorn_university_student_codes
 COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_codes IS 'labels:
   en: Code
   ku: Kod
+  ar: رقم الاكتتاب
 labels-plural:
   en: Codes
-  ku: Kodên';
+  ku: Kodên
+  ar: رقم الاكتتاب';
 
 
 --
@@ -22752,9 +23515,11 @@ COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_notes IS 'in
 labels:
   en: Notes
   ku: Notên
+  ar: ملحوظة
 labels-plural:
   en: Notes
   ku: Notên
+  ar: ملحوظة
 order: 1000
 ';
 
@@ -22793,9 +23558,11 @@ COMMENT ON CONSTRAINT student_id ON public.acorn_enrollment_desires IS 'invisibl
 labels:
   en: Enrollment desire
   ku: Mofadala xwast
+  ar: تسجيل الرغبات
 labels-plural:
   en: Enrollment desires
   ku: Mofadala xwastîn
+  ar: تسجيل الرغبات
 tab-location: 2';
 
 
@@ -23206,10 +23973,10 @@ has-many-deep-settings:
       ku: Xwendekarên
   user_group_version_users_count:
     labels:
-      en: Çend Student
+      en: Member Count
       ku: Çend Xwendekar
     labels-plural:
-      en: Çend Students
+      en: Member Counts
       ku: Çend Xwendekarên
 ';
 
@@ -23299,6 +24066,7 @@ has-many-deep-settings:
     can-filter: false
     invisible: true
   user_languages:
+    explicit-label-key: acorn.user::lang.models.language.label_plural 
     field-exclude: true
     column-exclude: true
     can-filter: true
@@ -25149,6 +25917,9 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_
 SET SESSION AUTHORIZATION test10;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO token_13;
 RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO token_12;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO token_13;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO token_8;
 
 
 --
@@ -25818,6 +26589,14 @@ RESET SESSION AUTHORIZATION;
 
 
 --
+-- Name: FUNCTION fn_acorn_university_cm_order(); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_cm_order() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_cm_order() TO token_5;
+
+
+--
 -- Name: FUNCTION fn_acorn_university_courses_unique_name_type(); Type: ACL; Schema: public; Owner: university
 --
 
@@ -26192,6 +26971,9 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_de
 SET SESSION AUTHORIZATION test10;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO token_13;
 RESET SESSION AUTHORIZATION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO token_12;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO token_13;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO token_8;
 
 
 --
@@ -30740,6 +31522,46 @@ RESET SESSION AUTHORIZATION;
 
 
 --
+-- Name: TABLE acorn_university_student_status; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_university_student_status TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_student_status TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_student_status TO token_5;
+GRANT SELECT,TRIGGER ON TABLE public.acorn_university_student_status TO frontend;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_student_status TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_student_status TO test WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_student_status TO token_7;
+GRANT ALL ON TABLE public.acorn_university_student_status TO test1 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test1;
+GRANT ALL ON TABLE public.acorn_university_student_status TO token_8;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_student_status TO test4;
+GRANT ALL ON TABLE public.acorn_university_student_status TO test7 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test7;
+GRANT ALL ON TABLE public.acorn_university_student_status TO token_12;
+RESET SESSION AUTHORIZATION;
+GRANT ALL ON TABLE public.acorn_university_student_status TO test10 WITH GRANT OPTION;
+SET SESSION AUTHORIZATION test10;
+GRANT ALL ON TABLE public.acorn_university_student_status TO token_13;
+RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: TABLE university_mofadala_baccalaureate_marks; Type: ACL; Schema: public; Owner: sz
+--
+
+GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_5;
+
+
+--
+-- Name: TABLE acorn_university_legacy_updates; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_university_legacy_updates TO token_5;
+
+
+--
 -- Name: TABLE acorn_university_schools; Type: ACL; Schema: public; Owner: university
 --
 
@@ -30789,32 +31611,6 @@ RESET SESSION AUTHORIZATION;
 GRANT ALL ON TABLE public.acorn_university_student_lookups TO test10 WITH GRANT OPTION;
 SET SESSION AUTHORIZATION test10;
 GRANT ALL ON TABLE public.acorn_university_student_lookups TO token_13;
-RESET SESSION AUTHORIZATION;
-
-
---
--- Name: TABLE acorn_university_student_status; Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON TABLE public.acorn_university_student_status TO token_1 WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_university_student_status TO sz WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_university_student_status TO token_5;
-GRANT SELECT,TRIGGER ON TABLE public.acorn_university_student_status TO frontend;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.acorn_university_student_status TO PUBLIC;
-GRANT ALL ON TABLE public.acorn_university_student_status TO test WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_university_student_status TO token_7;
-GRANT ALL ON TABLE public.acorn_university_student_status TO test1 WITH GRANT OPTION;
-SET SESSION AUTHORIZATION test1;
-GRANT ALL ON TABLE public.acorn_university_student_status TO token_8;
-RESET SESSION AUTHORIZATION;
-GRANT ALL ON TABLE public.acorn_university_student_status TO test4;
-GRANT ALL ON TABLE public.acorn_university_student_status TO test7 WITH GRANT OPTION;
-SET SESSION AUTHORIZATION test7;
-GRANT ALL ON TABLE public.acorn_university_student_status TO token_12;
-RESET SESSION AUTHORIZATION;
-GRANT ALL ON TABLE public.acorn_university_student_status TO test10 WITH GRANT OPTION;
-SET SESSION AUTHORIZATION test10;
-GRANT ALL ON TABLE public.acorn_university_student_status TO token_13;
 RESET SESSION AUTHORIZATION;
 
 
@@ -32817,30 +33613,6 @@ RESET SESSION AUTHORIZATION;
 
 
 --
--- Name: TABLE university_mofadala_baccalaureate_marks; Type: ACL; Schema: public; Owner: sz
---
-
-GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_1 WITH GRANT OPTION;
-GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO test WITH GRANT OPTION;
-GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_7;
-GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO test1 WITH GRANT OPTION;
-SET SESSION AUTHORIZATION test1;
-GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_8;
-RESET SESSION AUTHORIZATION;
-GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_5;
-GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO test4;
-GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO test7 WITH GRANT OPTION;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.university_mofadala_baccalaureate_marks TO PUBLIC;
-SET SESSION AUTHORIZATION test7;
-GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_12;
-RESET SESSION AUTHORIZATION;
-GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO test10 WITH GRANT OPTION;
-SET SESSION AUTHORIZATION test10;
-GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_13;
-RESET SESSION AUTHORIZATION;
-
-
---
 -- Name: TABLE university_mofadala_branches; Type: ACL; Schema: public; Owner: sz
 --
 
@@ -33249,5 +34021,5 @@ RESET SESSION AUTHORIZATION;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict emusFksvORuUhYfhLzB9k3W7PMgbeGd7wlnJnJlPzp2AiRGW4kDHp6RHkL1bUEP
+\unrestrict n5dZgx7Wf7DQOAbOQgYDVdrQA7i1CB18BUi7AtWOgqIBqfnDaWWyfxCF9TsMyWH
 

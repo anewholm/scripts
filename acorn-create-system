@@ -18,10 +18,11 @@ require_once('acorn-create-system-classes/Module.php');
 require_once('acorn-create-system-classes/Plugin.php');
 require_once('acorn-create-system-classes/Framework.php');
 require_once('acorn-create-system-classes/WinterCMS.php');
+require_once('acorn-create-system-classes/OLAP.php');
 
 // ------------------------------------------- Inputs
 $file = basename(__FILE__);
-print("Usage: $file [<plugin-name|all|lang.yaml> <git command (push|ask|leave)> <write README (y|n)>]\n");
+print("Usage: $file [<plugin-name|all|olap|lang.yaml> <git command (push|ask|leave)> <write README (y|n)>]\n");
 $installPlugins = (isset($argv[1]) ? $argv[1] : NULL);
 $gitPolicy      = (isset($argv[2]) ? $argv[2] : NULL);
 $writeREADME    = ((isset($argv[3]) ? $argv[3] : 'n') == 'y');
@@ -67,7 +68,7 @@ $framework     = Framework::detect($cwd, $scriptDirPath, __FILE__, $version);
 if (!$framework) throw new \Exception("No framework found at [$cwd]");
 $framework->show();
 
-// ------------------------------------------- Auto viewa
+// ------------------------------------------- Auto views
 file_put_contents('date_tables_view.sql', "DROP VIEW IF EXISTS acorn_calendar_upcreated_ats;\n");
 file_put_contents('date_tables_view.sql', "CREATE OR REPLACE VIEW acorn_calendar_upcreated_ats as\n", FILE_APPEND);
 file_put_contents('name_tables_view.sql', "DROP VIEW IF EXISTS acorn_names;\n");
@@ -113,44 +114,49 @@ $db->runSQLFile('name_tables_view.sql');
 $db->runSQLFile('acorn_created_bys_view.sql');
 
 // ------------------------------------------- Choose which plugin to create()
-if ($installPlugins == '*') {
-    $chosenPlugins = &$plugins;
-} else if ($installPlugins) {
-    $chosenPlugins = array();
-    foreach (explode(',', $installPlugins) as $pluginName) {
-        $plugin = Plugin::get(ucfirst(trim($pluginName)));
-        if (!$plugin) throw new \Exception("Plugin [$pluginName] not found");
-        array_push($chosenPlugins, $plugin);
-    }
-} else {
-    print("\n");
-    print("{$YELLOW}CHOOSE{$NC}: No plugin name has been provided\n");
-    $i = 1;
-    $choices = array();
-    print("[{$GREEN}0{$NC}] all\n");
-    foreach ($plugins as $plugin) {
-        if ($plugin->isOurs()) {
-            print("[{$GREEN}$i{$NC}] ");
-            $framework->showPluginStatus($plugin);
-            $choices["$i"] = $plugin;
-            print("\n");
-            $i++;
+if ($installPlugins != 'olap') {
+    if ($installPlugins == '*') {
+        $chosenPlugins = &$plugins;
+    } else if ($installPlugins) {
+        $chosenPlugins = array();
+        foreach (explode(',', $installPlugins) as $pluginName) {
+            $plugin = Plugin::get(ucfirst(trim($pluginName)));
+            if (!$plugin) throw new \Exception("Plugin [$pluginName] not found");
+            array_push($chosenPlugins, $plugin);
+        }
+    } else {
+        print("\n");
+        print("{$YELLOW}CHOOSE{$NC}: No plugin name has been provided\n");
+        $i = 1;
+        $choices = array();
+        print("[{$GREEN}0{$NC}] all\n");
+        foreach ($plugins as $plugin) {
+            if ($plugin->isOurs()) {
+                print("[{$GREEN}$i{$NC}] ");
+                $framework->showPluginStatus($plugin);
+                $choices["$i"] = $plugin;
+                print("\n");
+                $i++;
+            }
+        }
+        $i = readline("Which plugin would you like to process? ");
+        if ($i == '0') $chosenPlugins = &$plugins;
+        else {
+            if (!isset($choices[$i])) throw new \Exception("Option [$i] not valid");
+            $plugin = $choices[$i];
+            print("{$YELLOW}CHOICE{$NC}: $plugin->name\n");
+            $chosenPlugins = array($plugin);
         }
     }
-    $i = readline("Which plugin would you like to process? ");
-    if ($i == '0') $chosenPlugins = &$plugins;
-    else {
-        if (!isset($choices[$i])) throw new \Exception("Option [$i] not valid");
-        $plugin = $choices[$i];
-        print("{$YELLOW}CHOICE{$NC}: $plugin->name\n");
-        $chosenPlugins = array($plugin);
+
+
+    // ------------------------------------------- Write the plugins
+    // to the framework
+    // README.md generation is buffered in the plugin create
+    foreach ($chosenPlugins as $plugin) {
+        $framework->create($plugin, $writeREADME);
     }
 }
 
-
-// ------------------------------------------- Write the plugins
-// to the framework
-// README.md generation is buffered in the plugin create
-foreach ($chosenPlugins as $plugin) {
-    $framework->create($plugin, $writeREADME);
-}
+// TomCat9 OLAP Cube reporting integration (if root found)
+OLAP::create($db, $schema, $tables);

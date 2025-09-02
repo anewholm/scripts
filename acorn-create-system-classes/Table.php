@@ -32,6 +32,7 @@ class Table {
     public $parsedComment; // array
     public $packageType; // plugin|module
     public $pluginIcon;
+    public $pluginUrl;
     public $system; // Internal do not process
     public $todo;   // TODO: This structure has not been analysed / enabled yet
     public $addMissingColumns; // Add missing columns
@@ -53,6 +54,7 @@ class Table {
     public $menuIndent;
     public $seedingOther;
     public $seeding;
+    public $labelsFrom = array(); // Inherit labels from another table. Useful for views
 
     // Translation arrays
     public $pluginNames;
@@ -556,6 +558,28 @@ class Table {
         $this->triggers = $this->db->triggers($this);
     }
 
+    public function allForeignKeysFrom(): array
+    {
+        $fks = array();
+        foreach ($this->columns as &$column) {
+            if ($column->shouldProcess()) {
+                $fks = array_merge($fks, $column->foreignKeysFrom);
+            }
+        }
+        return $fks;
+    }
+
+    public function allForeignKeysTo(): array
+    {
+        $fks = array();
+        foreach ($this->columns as &$column) {
+            if ($column->shouldProcess()) {
+                $fks = array_merge($fks, $column->foreignKeysTo);
+            }
+        }
+        return $fks;
+    }
+
     public function db(): DB
     {
         return $this->db;
@@ -609,7 +633,8 @@ class Table {
     // ------------------------------------------------ Table interrogation
     public function &getColumn(string $name): Column
     {
-        if (!isset($this->columns[$name])) throw new Exception("Column $name does not exist on table $this->name");
+        if (!isset($this->columns[$name])) 
+            throw new Exception("Column $name does not exist on table $this->name");
         return $this->columns[$name];
     }
 
@@ -927,7 +952,7 @@ class Table {
 
     public function isKnownAcornPlugin(): bool
     {
-        return (array_search($this->pluginName(), self::$knownAcornPlugins) !== FALSE);
+        return (!$this->pluginName() || array_search($this->pluginName(), self::$knownAcornPlugins) !== FALSE);
     }
 
     public function authorName(): string

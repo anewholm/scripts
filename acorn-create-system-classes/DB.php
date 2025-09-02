@@ -9,7 +9,7 @@ require_once('UniqueConstraint.php');
 class DB {
     public    $nc;
     protected $framework;
-    protected $database;
+    public $database;
     protected $connection;
     protected $comment;
 

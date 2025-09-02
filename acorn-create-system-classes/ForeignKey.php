@@ -70,6 +70,7 @@ class ForeignKey {
     public $dependsOn;  // Array of field names
     public $flags; // e.g. hierarchy flag for global scope
     public $filterSearchNameSelect; // Special select useful for 1to1 filter term search
+    public $rlButtons; // On the relationmanager
 
     public static function fromRow(Column &$column, bool $to, array $row)
     {
