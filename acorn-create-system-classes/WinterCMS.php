@@ -773,6 +773,25 @@ PHP;
             }
             $this->setPropertyInClassFile($modelFilePath, 'actionFunctions', $model->actionFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
 
+            // ---------------------------------------------------------------- Model based action links
+            // Write the labels to lang, and the translationKeys to the YAML
+            if ($model->actionLinks) {
+                foreach ($model->actionLinks as $name => &$defintion) {
+                    foreach (scandir($langDirPath) as $langName) {
+                        $langFilePath = "$langDirPath/$langName/lang.php";
+                        if (!in_array($langName, array('.','..')) && file_exists($langFilePath)) {
+                            if (isset($defintion['labels'][$langName])) {
+                                $label = $defintion['labels'][$langName];
+                                $this->arrayFileSet($langFilePath, "actions.$name", $label, FALSE);
+                            }
+                        }
+                    }
+                    unset($defintion['labels']);
+                    $defintion['label'] = "$translationDomain::lang.actions.$name";
+                }
+                $this->setPropertyInClassFile($modelFilePath, 'actionLinks', $model->actionLinks, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
+            }
+
             // ---------------------------------------------------------------- Global Scope
             // This table restricts ALL related Models to the current selection
             // Relations (Foreign Keys) should be marked as global_scope=<from|to> 
@@ -1256,6 +1275,14 @@ PHP
                         }
                     }
                 }
+                // Dropdown defaults do not work
+                // The JS will check the attributes and apply the default
+                if ($field->fieldType == 'dropdown' && $field->default) {
+                    $attributes = ($field->attributes ?: array());
+                    $attributes['default'] = $field->default;
+                    $field->attributes = $attributes;
+                }
+
                 $labelKey = (isset($field->explicitLabelKey) ? $field->explicitLabelKey : $field->translationKey());
                 $fieldTab = ($field->tab === 'INHERIT' ? $labelKey : $field->tab); // Can be NULL
                 $fieldDefinition = array(
@@ -1501,6 +1528,7 @@ PHP
                     'list'       => "\$$modelDirPath/columns.yaml",
                     'dataModel'  => $controller->model->fullyQualifiedName(),
                     'useListQuery' => true, // Custom
+                    'redirect'   => $controller->relativeUrl(),
                     'form'       => '$/../modules/acorn/behaviors/batchprintcontroller/partials/fields_export.yaml',
                     'fileName'   => 'print.zip',
                 ));
@@ -1579,6 +1607,7 @@ PHP
                             } else {
                                 // Relation !canDisplayAsFilter()
                                 $relationClass = preg_replace('/.*\\\\/', '', get_class($relation));
+                                $fieldClass    = preg_replace('/.*\\\\/', '', get_class($field));
                                 $this->yamlFileSet($configFilterPath, "# $fieldClass($fieldName)::$relationClass($relationName)", 'relation !canDisplayAsFilter()');
                             }
                         }
@@ -1587,8 +1616,8 @@ PHP
                         // Non-relation fields, like dates
                         // Nothing comes here at the moment
                         // because everything is a foreign key: dates, users, etc.
-                        throw new Exception("Un-considered filter [$fieldClass($fieldName)]");
-                        // $this->yamlFileSet($configFilterPath, "scopes.$name", $filterDefinition);
+                        // throw new Exception("Un-considered filter [$fieldClass($fieldName)]");
+                        $this->yamlFileSet($configFilterPath, "scopes.$fieldName", $filterDefinition);
                     }
                 } else { 
                     // !canDisplayAsFilter()
@@ -1803,12 +1832,6 @@ PHP
             $indentString = str_repeat(' ', ($field->nestLevel ?: 0) * 2);
             $typeString   = ($field->fieldType ?: '<no field type>') . ' / ' . ($field->columnType ?: '<no column type>');
             if ($field->canDisplayAsColumn()) {
-                // Columns.yaml checks
-                if ($field->sqlSelect && $field->valueFrom)              
-                    throw new Exception("select: and valueFrom: are mutually exclusive on [$field->name]");
-                if ($field->relation  && strstr($field->columnKey, '[')) 
-                    throw new Exception("relation: and nesting are mutually exclusive on [$field->name]");
-
                 print("    $indentString+{$YELLOW}$name{$NC}($typeString): to {$YELLOW}columns.yaml{$NC}\n");
                 $labelKey = ($field->explicitLabelKey ?: $field->translationKey());
                 $columnDefinition = array(
@@ -1840,6 +1863,12 @@ PHP
                     'qrcodeObject' => $field->qrcodeObject,
                     'typeEditable' => $field->typeEditable,
 
+                    // MorphConfig.php
+                    // Complex permissions
+                    'permissionSettings' => $field->permissionSettings,
+                    'permissions'        => $field->permissions,
+                    'setting'            => $field->setting,
+
                     // MorphConfig.php dynamic include
                     'include'      => $field->include,          // Only include: 1to1
                     'includeModel' => $field->includeModel,     // Required for include
@@ -1853,12 +1882,13 @@ PHP
                 if ($name == 'name' && $field->translatable) {
                     // TODO: fields.translations does not support 1-1 yet
                     $this->yamlFileSet($columnsPath, 'columns.translations', array(
-                        'label'    => 'winter.translate::lang.plugin.tab',
-                        'relation' => 'translations',
-                        'type'     => 'partial',
-                        'path'     => 'translations',
-                        'sortable' => false,
-                        'searchable' => false
+                        'label'      => 'winter.translate::lang.plugin.tab',
+                        'relation'   => 'translations',
+                        'type'       => 'partial',
+                        'path'       => 'translations',
+                        'invisible'  => TRUE,
+                        'sortable'   => FALSE,
+                        'searchable' => FALSE
                     ));
                 }
             } else {

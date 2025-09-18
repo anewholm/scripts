@@ -29,6 +29,7 @@ class Model {
 
     public $controllers = array();
     public $actionFunctions;
+    public $actionLinks;
     public $alesFunctions;
     public $printable;
     public $readOnly;
@@ -291,7 +292,7 @@ class Model {
 
     public function hasSoftDelete(): bool
     {
-        return $this->table->hasColumn('deleted-at', 'timestamp');
+        return $this->table->hasColumn('deleted_at', 'timestamp');
     }
 
     public function dirName(): string
@@ -483,6 +484,10 @@ class Model {
         $permissions[$this->permissionFQN('update')] = array(
             'labels' => array('en' => "$labelAction $menuitemPlural")
         );
+        $labelAction = 'Print';
+        $permissions[$this->permissionFQN('print')] = array(
+            'labels' => array('en' => "$labelAction $menuitemPlural")
+        );
         // Standard delete: acorn.university.entity_delete
         $labelAction = 'Delete';
         $permissions[$this->permissionFQN('delete')] = array(
@@ -546,8 +551,20 @@ class Model {
                 $permissions[$qualifiedPermissionName] = $config;
             }
         }
+
+        // View all fields|columns: acorn.university.entity_view|change_all_fields
+        $labelAction = 'View all fields for';
+        $permissions[$this->permissionFQN('view_all_fields')] = array(
+            'labels' => array('en' => "$labelAction $menuitemPlural")
+        );
+        $labelAction = 'Change all fields for';
+        $permissions[$this->permissionFQN('change_all_fields')] = array(
+            'labels' => array('en' => "$labelAction $menuitemPlural")
+        );
         
         // The field->allPermissionNames() keys are already fully-qualified
+        // They will already include the view|change_all_fields above
+        // but we add them twice for documentation purposes
         foreach ($this->fields() as &$field) {
             $permissions = array_merge($permissions, $field->allPermissionNames());
         }
@@ -648,8 +665,10 @@ class Model {
                             // created_at_event_id is 1to1 and can be from a pivot table
                             // so there is no final model to report
                             if (!$finalTableFrom->isPivotTable()) {
-                                if (!$finalTableFrom->model)            throw new Exception("Foreign key [$foreignKeyTo] on [$this->table.id] has no to model");
-                                if ($finalColumnFrom->isTheIdColumn())  throw new Exception("Foreign 1to1 key [$foreignKeyTo] on [$this->table.id] is from an id column");
+                                if (!$finalTableFrom->model)            
+                                    throw new Exception("Foreign key [$foreignKeyTo] on [$this->table.id] has no to model");
+                                if ($finalColumnFrom->isTheIdColumn())  
+                                    throw new Exception("Foreign 1to1 key [$foreignKeyTo] on [$this->table.id] is from an id column");
                                 $finalModel   = &$finalTableFrom->model;
                                 $relationName = $foreignKeyTo->fromRelationName();
                                 if (isset($relations[$relationName])) throw new Exception("Relation for [$relationName] on [$this->table.id] already exists on [$this->name]");
@@ -1117,6 +1136,7 @@ class Model {
         //   a normal text field without valueFrom
         // $localFieldName is appended
         // $valueFrom will be appended in NESTED_MODE
+        // May have a name-context, e.g. password@create
         if ($relation1to1Path instanceof Field)    $relation1to1Path = $relation1to1Path->name;
         if ($relation1to1Path instanceof Relation) $relation1to1Path = $relation1to1Path->name;
         if (is_string($relation1to1Path))   $relation1to1Path = self::nameToArray($relation1to1Path);
@@ -1132,31 +1152,47 @@ class Model {
         if ($nameValueFrom && $relationMode == self::NESTED_MODE) {
             array_push($relation1to1Path, $nameValueFrom);
         }
-
         if (!count($relation1to1Path))
             throw new Exception("Request for empty nested field name");
 
         $nestedFieldName = '';
+        $nameContextPrev = NULL;
         foreach ($relation1to1Path as $fieldObj) {
-            if ($fieldObj instanceof Field)    $fieldObj = $fieldObj->name;
-            if ($fieldObj instanceof Relation) $fieldObj = $fieldObj->name;
-            if (empty($fieldObj))
+            $fieldName = NULL;
+            if      ($fieldObj instanceof Field)    $fieldName = $fieldObj->name;
+            else if ($fieldObj instanceof Relation) $fieldName = $fieldObj->name;
+            else                                    $fieldName = $fieldObj;
+            if (empty($fieldName))
                 throw new Exception("Empty step in [$nestedFieldName]");
+
+            // Name contexts like password@create
+            $fieldNameParts = explode('@', $fieldName);
+            $fieldName      = $fieldNameParts[0];
+            $nameContext    = (isset($fieldNameParts[1]) ? $fieldNameParts[1] : NULL);
+            if ($nameContext) {
+                if ($nameContextPrev && $nameContext != $nameContextPrev)
+                    throw new Exception("Mixed multiple name contexts for $fieldName: $nameContextPrev => $nameContext");
+                $nameContextPrev = $nameContext;
+            }
+
             if ($relationMode) {
                 // name, [office, location, address] => office_location_address_name
                 // For use with relation and select directives
                 // searchable and sortable will also work with this
                 if ($nestedFieldName) $nestedFieldName .= '_';
-                $nestedFieldName .= $fieldObj;
+                $nestedFieldName .= $fieldName;
             } else {
                 // name, [office, location, address] => office[location][address][name]
                 // select does not work with this. It would select the value from the first step, office
                 // relation does not work with this
                 // searchable and sortable also will not work
-                if ($nestedFieldName) $nestedFieldName .= "[$fieldObj]";
-                else                  $nestedFieldName .= $fieldObj;
+                if ($nestedFieldName) $nestedFieldName .= "[$fieldName]";
+                else                  $nestedFieldName .= $fieldName;
             }
         }
+
+        if ($nameContextPrev)
+            $nestedFieldName .= "@$nameContextPrev";
 
         return $nestedFieldName;
     }
@@ -1220,7 +1256,9 @@ class Model {
         $fieldObjects = array();
         foreach ($fieldsConfigs as $fieldName => $fieldConfig) {
             $fieldNameParts = explode('@', $fieldName);
-            $fieldName      = $fieldNameParts[0];
+            // We do not alter the fieldname because fields will overwrite each other
+            // for example: User password@create and password@update
+            // $fieldName      = $fieldNameParts[0];
             $nameContext    = (isset($fieldNameParts[1]) ? $fieldNameParts[1] : NULL);
             $columnConfig   = (isset($columnsConfigs[$fieldName]) ? $columnsConfigs[$fieldName] : NULL);
             $fieldObjects[$fieldName] = Field::createFromYamlConfigs($this, $fieldName, $nameContext, $fieldConfig, $columnConfig, $tabLocation);
@@ -1306,12 +1344,10 @@ class Model {
                                     $isPseudoFieldName  = self::isPseudo($subFieldName);
                                     // We could change the id name to also allow them...
                                     $isSpecialField     = ($subFieldName == 'id');
-                                    // We cannot do anything with nested fields
-                                    $isAlreadyNested    = self::isNested($subFieldName);
+                                    // TODO: Remove: We cannot do anything with nested fields
+                                    // $isAlreadyNested    = self::isNested($subFieldName);
                                     // Sub relation fields should generate another HasManyDeep and include them
                                     $hasSubRelation     = isset($subFieldObj->relation);
-                                    // Normal field
-                                    $noRelations        = (count($subFieldObj->relations) == 0);
                                     // If this comes from a field only field
                                     // columnKey & columnType === FALSE
                                     $canDisplayAsColumn = $subFieldObj->canDisplayAsColumn();
@@ -1322,7 +1358,7 @@ class Model {
                                         && !$isDuplicateField
                                         && !$isPseudoFieldName
                                         && !$hasSubRelation
-                                        && !$isAlreadyNested
+                                        // && !$isAlreadyNested
                                     ) {
                                         $subFieldObj->nested        = TRUE;
                                         $subFieldObj->nestLevel     = 1;
@@ -1349,8 +1385,9 @@ class Model {
                                         // valueFrom cannot be sorted
                                         // UnQualified 'name' will cause ambiguity
                                         // Also, these relation embeds need a select: for the value apparently
+                                        // unless of course it is a Yaml field without a column
                                         if (!isset($subFieldObj->sqlSelect)) {
-                                            $subFieldObj->sqlSelect = $subFieldObj->column->fullyQualifiedName(); 
+                                            $subFieldObj->sqlSelect = $subFieldObj->column?->fullyQualifiedName(); 
                                         }    
 
                                         $fields[$subFieldObj->columnKey] = $subFieldObj;
@@ -1362,7 +1399,7 @@ class Model {
                                         if ($isDuplicateField)    $explanation .= "duplicate($subFieldObj->fieldKey) ";
                                         if ($isPseudoFieldName)   $explanation .= "pseudo($subFieldName) ";
                                         if ($hasSubRelation)      $explanation .= "hasSubRelation($subFieldObj->relation) ";
-                                        if ($isAlreadyNested)     $explanation .= "alreadyNested($subFieldName) ";
+                                        // if ($isAlreadyNested)     $explanation .= "alreadyNested($subFieldName) ";
                                         print("  {$indentString}Field $modelTo->name::$subFieldName ignored because $explanation\n");
                                     }
                                 }
@@ -1888,6 +1925,13 @@ class Model {
                 // Actually, only X-1 relations, shown as dropdowns, like event_id, can be required
                 throw new Exception("Model [$this->name::$field->fieldKey] is a relationmanager and required. This will enter the field in to the \$rules array as required and prevent saving");
             }
+
+            if ($field->sqlSelect && $field->valueFrom)              
+                throw new Exception("select: and valueFrom: are mutually exclusive on [$field->name]");
+            
+            // Not true
+            // if ($field->relation && strstr($field->columnKey, '[')) 
+            //     throw new Exception("relation: and nesting are mutually exclusive on [$field->name]");
 
             if (   $this->isCreateSystem()
                 && $field->fieldType == 'relationmanager'

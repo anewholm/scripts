@@ -64,9 +64,11 @@ class ForeignKey {
 
     public $globalScope; // Chaining from|to
     public $noRelationManager;
+    public $filterConditions;
     public $hasManyDeepInclude; // Process this non 1-1 has many deep link
     public $showFilter; // In relationmanager, default: TRUE
     public $showSearch; // In relationmanager, default: TRUE
+    public $canFilter;
     public $dependsOn;  // Array of field names
     public $flags; // e.g. hierarchy flag for global scope
     public $filterSearchNameSelect; // Special select useful for 1to1 filter term search

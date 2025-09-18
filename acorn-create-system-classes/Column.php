@@ -190,6 +190,7 @@ class Column {
     public $icon;
     public $tabLocation; // primary|secondary|tertiary
     public $advanced; // Toggle advanced to show
+    public $disabled;
 
     // DataTable field type
     public $adding;
@@ -201,7 +202,8 @@ class Column {
 
     public $canFilter;
     public $filterSearchNameSelect;
-
+    public $filterConditions;
+    
     // Translation arrays
     public $explicitLabelKey; // From YAML Models and views sometimes
     public $labels;

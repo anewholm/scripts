@@ -101,7 +101,7 @@ class Relation {
         // Only RelationXto1|1fromX, shown as dropdowns, can be required or not
         // For example: event.id <= lecture.event_id can be nullable or not
         // RelationXto1|1fromX::__construct() will set required based on Column::isRequired()
-        if (!isset($this->required)) $this->required = FALSE;
+        if (!isset($this->required))  $this->required  = FALSE;
         if (!isset($this->fieldExclude) && $this->isCount) $this->fieldExclude = TRUE;
     }
 

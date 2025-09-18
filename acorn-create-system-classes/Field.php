@@ -202,11 +202,18 @@ class Field {
         // Fields.yaml uses partial, columns.yaml uses columnPartial
         if (!isset($this->columnPartial)) $this->columnPartial = $this->partial;
         if (!isset($this->default) && $column) {
-            if (is_numeric($column->column_default)) $this->default = (int) $column->column_default;
-            else {
-                $defaultStripped = preg_replace("/^'|'\$/", '', $column->column_default);
-                if (strlen($defaultStripped) && $defaultStripped[0] == "'")
-                    $this->default = preg_replace("/^'|'\$/", '', $defaultStripped);
+            // Strip conversions 'This'::character varying
+            if (!is_null($column->column_default)) {
+                if (   $column->column_default != 'gen_random_uuid()' 
+                    && $column->column_default != 'now()'
+                    && substr($column->column_default, 0, 8) != 'nextval('
+                ) {
+                    $defaultStripped = preg_replace("/::[a-z0-9() ]+\$/", '', $column->column_default);
+                    // Change ' to " for JSON compat
+                    $defaultStripped = preg_replace("/^'|'\$/", '"', $defaultStripped);
+                    $jsonObject      = json_decode($defaultStripped);
+                    $this->default   = $jsonObject;
+                }
             }
         }
         if (!isset($this->translatable))  $this->translatable = $this->column?->translatable;
@@ -269,6 +276,9 @@ class Field {
             $permissionNameStub = $this->permissionStub();
             array_push($this->permissions, "{$permissionNameStub}_view");
             array_push($this->permissions, "{$permissionNameStub}_change");
+
+            array_push($this->permissions, $this->model->permissionFQN('view_all_fields'));
+            array_push($this->permissions, $this->model->permissionFQN('change_all_fields'));
         }
 
         // Checks
@@ -290,7 +300,6 @@ class Field {
 
         // Loading from non-create-system fields & columns.yaml
         $table           = $model->getTable();
-        $column          = Column::dummy($table, $fieldName);
         $relations       = array();
         $tabLocationStr  = ($tabLocation  ? "TabLocation:$tabLocation" : '');
         $columnConfigStr = ($columnConfig ? 'with column config'       : 'without column config');
@@ -301,6 +310,9 @@ class Field {
             'tabLocation' => $tabLocation,
         );
         if ($nameContext) $fieldDefinition['contexts'] = array($nameContext => TRUE);
+        $column = NULL;
+        if ($table->hasColumn($fieldName))
+            $column = $table->getColumn($fieldName);
 
         // --------------------------- fields.yaml => Field settings
         foreach ($fieldConfig as $yamlName => $yamlValue) {
@@ -375,11 +387,11 @@ class Field {
         return self::create($model, $fieldDefinition, $column, $relations);
     }
 
-    protected static function create(Model $model, array $fieldDefinition, Column $column, array $relations): Field
+    protected static function create(Model $model, array $fieldDefinition, Column|NULL $column, array $relations): Field
     {
-        if      ($column->isTheIdColumn()) $field = new IdField(       $model, $fieldDefinition, $column, $relations);
-        else if ($column->isForeignID())   $field = new ForeignIdField($model, $fieldDefinition, $column, $relations);
-        else                               $field = new Field(         $model, $fieldDefinition, $column);
+        if      ($column && $column->isTheIdColumn()) $field = new IdField(       $model, $fieldDefinition, $column, $relations);
+        else if ($column && $column->isForeignID())   $field = new ForeignIdField($model, $fieldDefinition, $column, $relations);
+        else $field = new Field($model, $fieldDefinition, $column);
 
         return $field;
     }
@@ -427,6 +439,8 @@ class Field {
             case 'date':
             case 'datetime':
                 $fieldDefinition['fieldType']     = 'datepicker';
+                $fieldDefinition['filterType']    = 'daterange';
+                $fieldDefinition['filterConditions'] = "$column->name >= ':after' AND $column->name <= ':before'";
                 $fieldDefinition['columnType']    = 'partial';
                 $fieldDefinition['columnPartial'] = 'datetime'; // 2 line with tooltip
                 $fieldDefinition['sortable']  = TRUE;
@@ -523,8 +537,7 @@ class Field {
 
     // --------------------------------------------- Info
     public function isStandard(): bool {
-        if (!$this->column) throw new Exception("Field [$this->name] is not related to a column");
-        return $this->column->isStandard();
+        return ($this->column && $this->column->isStandard());
     }
 
     public function isSingularUnique(): bool
@@ -533,9 +546,7 @@ class Field {
     }
 
     public function isCustom():   bool {
-        // TODO: Change this to Field name checks to include _qrcode etc.?
-        if (!$this->column) throw new Exception("Field [$this->name] is not related to a column");
-        return $this->column->isCustom();
+        return (!$this->column || $this->column->isCustom());
     }
 
     public function canDisplayAsColumn(): bool
@@ -637,7 +648,8 @@ class Field {
 
     public function allPermissionNames(): array
     {
-        $permissions = array();
+        $permissions    = array();
+        $menuitemPlural = Str::plural(Str::title($this->model->name));
 
         if (!$this->column || $this->column->isCustom()) {
             $permissionNameStub = $this->permissionStub();
@@ -645,13 +657,13 @@ class Field {
             $modelTitle         = Str::title($this->model->name);
             $title              = Str::title($this->name);
             
-            $aciotnName         = 'View field';
+            $actionName         = 'View field';
             $permissions["{$permissionNameStub}_view"] = array(
-                'labels' => array('en' => "$aciotnName $modelTitle $title")
+                'labels' => array('en' => "$actionName $modelTitle $title")
             );
-            $aciotnName         = 'Change field';
+            $actionName         = 'Change field';
             $permissions["{$permissionNameStub}_change"] = array(
-                'labels' => array('en' => "$aciotnName $modelTitle $title")
+                'labels' => array('en' => "$actionName $modelTitle $title")
             );
         }
 
