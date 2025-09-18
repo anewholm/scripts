@@ -1,23 +1,23 @@
 #!/usr/bin/python3
 # Arabic number words for 0-10 and basics
 arabic_words_0_10 = [
-    "صفر", "واحد", "اثنان", "ثلاثة", "أربعة",
-    "خمسة", "ستة", "سبعة", "ثمانية", "تسعة", "عشرة"
+    "صفر", "إحدى", "اثنتان", "ثلاث", "أربع",
+    "خمس", "ست", "سبع", "ثمان", "تسع", "عشر"
 ]
 
 arabic_tens = [
-    "", "", "عشرون", "ثلاثون", "أربعون", "خمسون",
+    "", "", "عشرون", "ثلاثون", "اربعون", "خمسون",
     "ستون", "سبعون", "ثمانون", "تسعون"
 ]
 
 arabic_teens = [
-    "أحد عشر", "اثنا عشر", "ثلاثة عشر", "أربعة عشر",
-    "خمسة عشر", "ستة عشر", "سبعة عشر", "ثمانية عشر", "تسعة عشر"
+    "إحدى عشر", "اثنتا عشر", "ثلاث عشرة", "أربع عشرة",
+    "خمس عشرة", "ست عشرة", "سبع عشرة", "ثماني عشرة", "تسع عشرة"
 ]
 
 arabic_hundreds = [
-    "", "مائة", "مائتان", "ثلاثمائة", "أربعمائة",
-    "خمسمائة", "ستمائة", "سبعمائة", "ثمانمائة", "تسعمائة"
+    "", "مئة", "مئتان", "ثلاثمئة", "أربعمئة",
+    "خمسمئة", "ستمئة", "سبعمئة", "ثمانمئة", "تسعمئة"
 ]
 
 arabic_thousands = [
@@ -68,7 +68,7 @@ def to_arabic_numeral(n):
     return ''.join(arabic_digits[int(d)] for d in str(n))
 
 lines = []
-for i in range(10001):
+for i in range(2001):
     arabic_num = to_arabic_numeral(i)
     arabic_word = number_to_arabic_words(i)
     lines.append(f"{i}\t{arabic_num}\t{arabic_word}")
@@ -79,7 +79,7 @@ with open("numbers_0_to_10000_arabic.txt", "w", encoding="utf-8") as f:
 lines = []
 with open("winter_inserts_numbers_0_to_10000_arabic.sql", "w", encoding="utf-8") as f:
     f.write("delete from winter_translate_attributes where model_type='Acorn\\Exam\\Models\\ScoreName' and locale='ar';\n")
-for i in range(10001):
+for i in range(2001):
     arabic_num = to_arabic_numeral(i)
     arabic_word = number_to_arabic_words(i)
     sql = "insert into winter_translate_attributes(locale, model_id, model_type, attribute_data)"

@@ -5,12 +5,12 @@ kurmanji_words_0_10 = [
 ]
 
 kurmanji_teens = [
-    "yanzdeh", "dozdeh", "sêzdeh", "çardeh", "panzdeh",
-    "şanzdeh", "hevdezdeh", "hêvdeh", "nozdeh"
+    "yazdeh", "duwazdeh", "sêzdeh", "çardeh", "pazdeh",
+    "şazdeh", "hevdeh", "hejdeh", "nozdeh"
 ]
 
 kurmanji_tens = [
-    "", "", "bîst", "sî", "çil", "pêncî", "şêst", "heftî", "heştî", "nod"
+    "", "", "bîst", "sih", "çil", "pêncî", "şêst", "heftê", "heştê", "nod"
 ]
 
 kurmanji_hundreds = [
@@ -54,7 +54,7 @@ def to_arabic_numeral(n):
 
 # Generate and save the file
 lines = []
-for i in range(10001):
+for i in range(2001):
     arabic_num = to_arabic_numeral(i)
     kurmanji_word = number_to_kurmanji(i)
     lines.append(f"{i}\t{arabic_num}\t{kurmanji_word}")
@@ -65,7 +65,7 @@ with open("numbers_0_to_10000_kurmanji.txt", "w", encoding="utf-8") as f:
 lines = []
 with open("winter_inserts_numbers_0_to_10000_kurmanji.sql", "w", encoding="utf-8") as f:
     f.write("delete from winter_translate_attributes where model_type='Acorn\\Exam\\Models\\ScoreName' and locale='ku';\n")
-for i in range(10001):
+for i in range(2001):
     arabic_num = to_arabic_numeral(i)
     kurmanji_word = number_to_kurmanji(i)
     sql = "insert into winter_translate_attributes(locale, model_id, model_type, attribute_data)"
