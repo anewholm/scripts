@@ -273,6 +273,13 @@ class Framework
         return array();
     }
 
+    public function appUrl(): string {return NULL;}
+    public function dbHost(): string {return NULL;}
+    public function dbPort(): string {return NULL;}
+    public function dbDatabase(): string {return NULL;}
+    public function dbUsername(): string {return NULL;}
+    public function dbPassword(): string {return NULL;}
+
     public static function detect(string $cwd, string $scriptDirPath, string $script = 'acorn-create-system', string $version = '1.0')
     {
         $framework = NULL;

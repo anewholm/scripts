@@ -4,11 +4,12 @@ require_once('Schema.php');
 require_once('Table.php');
 require_once('View.php');
 require_once('MaterializedView.php');
+require_once('OLAPMaterializedView.php');
 require_once('UniqueConstraint.php');
 
 class DB {
     public    $nc;
-    protected $framework;
+    public $framework;
     public $database;
     protected $connection;
     protected $comment;
@@ -34,6 +35,12 @@ class DB {
 
         $this->setup();
     }
+
+    public function dbHost(): string {return $this->framework->dbHost();}
+    public function dbPort(): string {return $this->framework->dbPort();}
+    public function dbDatabase(): string {return $this->framework->dbDatabase();}
+    public function dbUsername(): string {return $this->framework->dbUsername();}
+    public function dbPassword(): string {return $this->framework->dbPassword();}
 
     public function isFrameworkTable(string &$tablename): bool
     {
@@ -387,7 +394,10 @@ class DB {
         $statement->bindParam(':tableMatch',  $tableMatch);
         $statement->execute();
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
-            $view = MaterializedView::fromRow($this, $row);
+            // OLAPMaterializedView inherits from MaterializedView
+            $schema = $row['schema'];
+            if ($schema == 'olap') $view = OLAPMaterializedView::fromRow($this, $row);
+            else                   $view = MaterializedView::fromRow($this, $row);
             if ($view->shouldProcess()) $results[$view->fullyQualifiedName()] = $view;
         }
 

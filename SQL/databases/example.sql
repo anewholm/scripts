@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 2p1DDGkvTSEZ3007O0zlurnKF8OzEoJGQ8GTLdITQrbh8WLafzZnQXvDByh8U6b
+\restrict cdubjgyL9EFGUN3GTs8birQwoHag61NKwX11nuYOBiyOX5UbUEh63GFlaSDTkYS
 
 -- Dumped from database version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
 -- Dumped by pg_dump version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
@@ -1149,6 +1149,7 @@ DROP FUNCTION IF EXISTS public.fn_acorn_justice_action_warrants_request_notary(m
 DROP FUNCTION IF EXISTS public.fn_acorn_justice_action_legalcases_reopen_case(model_id uuid, user_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_justice_action_legalcases_close_case(model_id uuid, user_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_first(anyelement, anyelement);
+DROP FUNCTION IF EXISTS public.fn_acorn_enrollment_enrollments_state_indicator(p_enrollment record);
 DROP FUNCTION IF EXISTS public.fn_acorn_criminal_action_legalcases_transfer_case(model_id uuid, user_id uuid, owner_user_group_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_criminal_action_legalcase_related_events_can(primary_id uuid, user_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_criminal_action_legalcase_defendants_cw(model_id uuid, user_id uuid);
@@ -1864,6 +1865,30 @@ COMMENT ON FUNCTION public.fn_acorn_criminal_action_legalcases_transfer_case(mod
 result-action: model-uuid-redirect
 condition: not id is null';
 
+
+--
+-- Name: fn_acorn_enrollment_enrollments_state_indicator(record); Type: FUNCTION; Schema: public; Owner: justice
+--
+
+CREATE FUNCTION public.fn_acorn_enrollment_enrollments_state_indicator(p_enrollment record) RETURNS character varying[]
+    LANGUAGE plpgsql
+    AS $$
+declare
+	state_indicator character varying[];
+begin
+	-- BEFORE update or insert
+	-- Set the state_indicator for the row
+	case
+		when not p_enrollment.applied_at is null then state_indicator = '{applied, valid}'; 
+		else state_indicator = '{new, valid}';
+	end case;
+	
+	return state_indicator;
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_enrollment_enrollments_state_indicator(p_enrollment record) OWNER TO justice;
 
 --
 -- Name: fn_acorn_first(anyelement, anyelement); Type: FUNCTION; Schema: public; Owner: justice
@@ -19283,5 +19308,5 @@ GRANT ALL ON SEQUENCE public.system_settings_id_seq TO token_8_no WITH GRANT OPT
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 2p1DDGkvTSEZ3007O0zlurnKF8OzEoJGQ8GTLdITQrbh8WLafzZnQXvDByh8U6b
+\unrestrict cdubjgyL9EFGUN3GTs8birQwoHag61NKwX11nuYOBiyOX5UbUEh63GFlaSDTkYS
 

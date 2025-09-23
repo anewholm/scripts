@@ -134,6 +134,7 @@ class Column {
     public $bar;
     public $parsedComment; // array
     public $fieldOptions;  // array
+    public $optionsWhere; // Custom AA extension
     public $searchable;
     public $cssClassesColumn;
     public $sortable;
@@ -173,6 +174,7 @@ class Column {
     public $bootstraps;   // bootstrap: xs: 12 sm: 4
     public $popupClasses; // popup-classes: h
     public $attributes;
+    public $dependsOn;
     public $containerAttributes;
     // Assemble all field permission-settings directives names
     // for Plugin registerPermissions()
@@ -298,7 +300,7 @@ class Column {
         return ($this->table->shouldProcess() && !$this->system && !$this->todo);
     }
 
-    public function loadForeignKeys(): void
+    public function loadForeignKeys(bool $addReverse = NULL): void
     {
         global $YELLOW, $NC;
 
@@ -314,9 +316,17 @@ class Column {
             $table    = $this->table;
             $toSchema = $this->extraForeignKey['schema']  ?? 'public';
             $toTable  = $this->extraForeignKey['table'];
+            $toTableParts = explode('.', $toTable);
+            if (isset($toTableParts[1])) {
+                $toSchema = $toTableParts[0];
+                $toTable  = $toTableParts[1];
+            }
             $toColumn = $this->extraForeignKey['column']  ?? 'id';
             $comment  = $this->extraForeignKey['comment'] ?? array();
-            $addReverse  = $this->extraForeignKey['add-reverse'] ?? TRUE;
+            $addReverse  = (!is_null($addReverse) 
+                ? $addReverse 
+                : (isset($this->extraForeignKey['add-reverse']) ? $this->extraForeignKey['add-reverse'] : TRUE)
+            );
             $commentTo   = $this->extraForeignKey['comment-to'] ?? array();
             $commentFrom = $this->extraForeignKey['comment-from'] ?? array();
             

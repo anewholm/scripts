@@ -13,6 +13,8 @@ class Table {
     public const INCLUDE_SCHEMA_PUBLIC = FALSE;
     public const OR_LEAF = TRUE;
     public const ALL_COLUMNS = TRUE;
+    public const ADD_REVERSE = TRUE;
+    public const NO_REVERSE = FALSE;
 
     // TODO: These should be in the WinterCMS framework abstraction
     protected static $knownAcornPlugins = array('User', 'Location', 'Messaging', 'Calendar', 'Reporting', 'BackendLocalization', 'Rtler');
@@ -639,10 +641,10 @@ SQL
         return (!$this->system && !$this->todo);
     }
 
-    public function loadForeignKeys()
+    public function loadForeignKeys(bool $addReverse = NULL)
     {
         foreach ($this->columns as &$column) {
-            if ($column->shouldProcess()) $column->loadForeignKeys();
+            if ($column->shouldProcess()) $column->loadForeignKeys($addReverse);
         }
     }
 
@@ -697,6 +699,11 @@ SQL
             }
         }
         return $fks;
+    }
+
+    public function allForeignKeys(): array
+    {
+        return array_merge($this->allForeignKeysFrom(), $this->allForeignKeysTo());
     }
 
     public function db(): DB

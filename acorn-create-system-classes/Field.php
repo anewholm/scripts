@@ -87,9 +87,10 @@ class Field {
     public $hierarchical;
     public $useRelationCount;
     public $optionsStaticMethod = 'dropdownOptions';
+    public $optionsWhere; // Custom AA extension
     public $fieldOptions;
     public $fieldOptionsModel;
-    public $dependsOn = array();
+    public $dependsOn;
     public $containerAttributes;
     public $attributes;
     public $tab;
@@ -434,6 +435,8 @@ class Field {
                 $fieldDefinition['sortable']  = TRUE;
                 if (!isset($fieldDefinition['sqlSelect'])) $fieldDefinition['sqlSelect'] = $column->fullyQualifiedName();
                 break;
+            case 'timestamp(0) with time zone':
+            case 'timestamp(0) without time zone':
             case 'timestamp with time zone':
             case 'timestamp without time zone':
             case 'date':

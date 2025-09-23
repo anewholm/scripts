@@ -45,7 +45,7 @@ class Plugin {
         return self::$plugins;
     }
 
-    public static function &get(string $pluginName, string $authorName = 'Acorn'): Plugin
+    public static function &get(string $pluginName, string $authorName = 'Acorn'): Plugin|NULL
     {
         $pluginFullyQualifiedName = "$authorName\\$pluginName";
         return self::$plugins[$pluginFullyQualifiedName];

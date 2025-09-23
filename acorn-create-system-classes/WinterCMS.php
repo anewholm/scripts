@@ -12,6 +12,7 @@ class WinterCMS extends Framework
     protected const WINTER_TABLES  = array('cache', 'jobs', 'failed_jobs', 'job_batches', 'migrations', 'sessions', 'deferred_bindings');
     protected const WINTER_MODULES = array('cms', 'backend', 'system');
 
+    protected $APP_URL;
     protected $DB_CONNECTION;
     protected $DB_HOST;
     protected $DB_PORT;
@@ -88,6 +89,13 @@ class WinterCMS extends Framework
         if (!$env) throw new Exception("WinterCMS .env file not found or empty at [$this->cwd]");
         return explode("\n", $env);
     }
+
+    public function appUrl(): string {return $this->APP_URL;}
+    public function dbHost(): string {return $this->DB_HOST;}
+    public function dbPort(): string {return $this->DB_PORT;}
+    public function dbDatabase(): string {return $this->DB_DATABASE;}
+    public function dbUsername(): string {return $this->DB_USERNAME;}
+    public function dbPassword(): string {return $this->DB_PASSWORD;}
 
     public function isFrameworkTable(string &$tablename): bool
     {
@@ -1275,6 +1283,35 @@ PHP
                         }
                     }
                 }
+
+                // DependsOn
+                // 4 formats are allowed:
+                //   qrcode (single string)
+                //   qrcode => TRUE|FALSE
+                //   0 => qrcode
+                //   qrcode => field settings array clause
+                // where field settings array clause contains settings for the field
+                // TODO: This dependsOn re-organisation should maybe be in Field.php
+                $dependsOn         = NULL;
+                $dependsOnSettings = NULL;
+                if ($field->dependsOn) {
+                    $dependsOn         = array();
+                    $dependsOnSettings = array();
+
+                    $dependsOnArray    = $field->dependsOn;
+                    if (is_string($dependsOnArray)) $dependsOnArray = array($dependsOnArray);
+
+                    // Transform items in to fieldName => clause
+                    foreach ($dependsOnArray as $dependsOnKey => $dependsOnClause) {
+                        if (is_numeric($dependsOnKey)) {
+                            array_push($dependsOn, $dependsOnClause);
+                        } else if ($dependsOnClause !== FALSE) {
+                            array_push($dependsOn, $dependsOnKey);
+                            if (!is_bool($dependsOnClause)) $dependsOnSettings[$dependsOnKey] = $dependsOnClause;
+                        }
+                    }
+                }
+
                 // Dropdown defaults do not work
                 // The JS will check the attributes and apply the default
                 if ($field->fieldType == 'dropdown' && $field->default) {
@@ -1318,12 +1355,14 @@ PHP
                 
                     'options'      => $field->fieldOptions,      // Function call
                     'optionsModel' => $field->fieldOptionsModel, // Model name
+                    'optionsWhere' => $field->optionsWhere,
                     'placeholder'  => $field->placeholder,
                     'hierarchical' => $field->hierarchical,
                     'relatedModel' => $field->relatedModel,      // Model name
                     'nameFrom'     => $field->nameFrom,
-                    'dependsOn'    => array_keys($field->dependsOn),
                     'attributes'   => $field->attributes,
+                    'dependsOn'    => $dependsOn,
+                    'dependsOnSettings' => $dependsOnSettings,
                     
                     // Extended info
                     'nested'       => ($field->nested    ?: NULL),
