@@ -47,7 +47,7 @@
 
     <init-param>
       <param-name>DataSourcesConfig</param-name>
-      <param-value>demo/WEB-INF/datasources.xml</param-value>
+      <param-value>WEB-INF/datasources.xml</param-value>
     </init-param>
     -->
 
@@ -66,7 +66,7 @@
     
   <servlet-mapping>
     <servlet-name>MondrianXmlaServlet</servlet-name>
-    <url-pattern>/demo/xmla</url-pattern>
+    <url-pattern>/xmla</url-pattern>
   </servlet-mapping>
   
 </web-app>
