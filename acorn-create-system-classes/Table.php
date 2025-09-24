@@ -25,7 +25,7 @@ class Table {
     protected $db;
 
     public $schema;
-    public $name;
+    public $name; // Un-qualified, see schema 
     public $order;
     protected $owner;
     static $generalOwner;

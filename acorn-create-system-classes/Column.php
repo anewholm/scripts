@@ -54,6 +54,7 @@ class Column {
     public    const DATA_COLUMN_ONLY = TRUE;
     public    const INCLUDE_CONTENT_COLUMNS = FALSE;
     public    const INCLUDE_SCHEMA   = TRUE;
+    public    const NOT_SCHEMA_PUBLIC   = TRUE;
     public    const NO_SCHEMA   = FALSE;
     public    const PLURAL   = TRUE;
     public    const SINGULAR = FALSE;
@@ -527,11 +528,14 @@ class Column {
         return ($plural ? Str::plural($fieldName) : $fieldName);
     }
 
-    public function fullyQualifiedName(bool $includeSchema = self::INCLUDE_SCHEMA): string
+    public function fullyQualifiedName(bool $includeSchema = self::INCLUDE_SCHEMA, bool $excludePublic = FALSE): string
     {
         $table = &$this->table;
         $fqn   = "$table->name.$this->name";
-        if ($includeSchema) $fqn = "$table->schema.$fqn";
+        if ($includeSchema) {
+            if (!$excludePublic || $table->schema != 'public')
+                $fqn = "$table->schema.$fqn";
+        }
         return $fqn;
     }
 }

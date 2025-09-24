@@ -178,6 +178,10 @@ if ($installPlugins != 'olap') {
 // This is better because we have 1 cubes.xml schema 
 // and one cube collection for the entire application
 print("{$YELLOW}OLAP{$NC}: Re-creating ALL cubes for entire application\n");
-$olapViews = $db->materializedViews('olap');
-foreach ($olapViews as &$olapView) $olapView->loadForeignKeys(Table::NO_REVERSE);
-OLAP::createAndDeploy($db, $olapViews, $tables);
+$olapViews = $db->materializedViews('%', '%_olapcube%');
+if ($olapViews) {
+    foreach ($olapViews as &$olapView) $olapView->loadForeignKeys(Table::NO_REVERSE);
+    OLAP::createAndDeploy($db, $olapViews, $tables);
+} else {
+    print("  {$RED}WARNING{$NC}: No cubes found");
+}

@@ -4,7 +4,6 @@ require_once('Schema.php');
 require_once('Table.php');
 require_once('View.php');
 require_once('MaterializedView.php');
-require_once('OLAPMaterializedView.php');
 require_once('UniqueConstraint.php');
 
 class DB {
@@ -394,10 +393,7 @@ class DB {
         $statement->bindParam(':tableMatch',  $tableMatch);
         $statement->execute();
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
-            // OLAPMaterializedView inherits from MaterializedView
-            $schema = $row['schema'];
-            if ($schema == 'olap') $view = OLAPMaterializedView::fromRow($this, $row);
-            else                   $view = MaterializedView::fromRow($this, $row);
+            $view = MaterializedView::fromRow($this, $row);
             if ($view->shouldProcess()) $results[$view->fullyQualifiedName()] = $view;
         }
 

@@ -6,16 +6,16 @@
 -->
 <DataSources>
   <DataSource>
-    <DataSourceName>universityacceptance</DataSourceName>
-    <DataSourceDescription>University Cubes</DataSourceDescription>
-    <URL>http://localhost:8080/xmondrian/demo/xmla</URL>
+    <DataSourceName>databasename</DataSourceName>
+    <DataSourceDescription>DatabaseName Cubes</DataSourceDescription>
+    <URL>http://localhost:8080/xmondrian/xmla</URL>
     <DataSourceInfo>
       Provider=mondrian;
-      Jdbc=jdbc:postgresql://localhost:5432/universityacceptance;
+      Jdbc=jdbc:postgresql://localhost:5432/databasename;
       JdbcDrivers=org.postgresql.Driver;
-      JdbcUser=universityacceptance;
+      JdbcUser=olap;
       JdbcPassword=QueenPool1@;
-      Catalog=/demo/WEB-INF/schema/universityacceptance.xml;
+      Catalog=/WEB-INF/schema/cubes.xml;
       UseSchemaPool=false
     </DataSourceInfo>
     <ProviderName>Mondrian</ProviderName>
@@ -23,7 +23,7 @@
     <AuthenticationMode>Unauthenticated</AuthenticationMode>
     <Catalogs>
         <Catalog name="universityacceptance">
-            <Definition>/demo/WEB-INF/schema/universityacceptance.xml</Definition>
+            <Definition>/WEB-INF/schema/cubes.xml</Definition>
         </Catalog>
     </Catalogs>
   </DataSource>
