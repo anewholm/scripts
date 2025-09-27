@@ -1390,6 +1390,18 @@ class Model {
                                             $subFieldObj->sqlSelect = $subFieldObj->column?->fullyQualifiedName(); 
                                         }    
 
+                                        // Fields Settings from relation
+                                        if (is_array($relation1to1->fieldsSettings)) {
+                                            $fieldsSettings = $relation1to1->fieldsSettings;
+                                            if (isset($fieldsSettings[$subFieldObj->columnKey])) {
+                                                $fieldSettings = $fieldsSettings[$subFieldObj->columnKey];
+                                                foreach ($fieldSettings as $name => $value) {
+                                                    $nameCamel = Str::camel($name);
+                                                    $subFieldObj->$nameCamel = $value;
+                                                }
+                                            }
+                                        }
+
                                         $fields[$subFieldObj->columnKey] = $subFieldObj;
                                     } else {
                                         $explanation = '';
@@ -1483,6 +1495,18 @@ class Model {
                                             // Force field display
                                             if (!$subFieldObj->fieldType) $subFieldObj->fieldType = 'text';
                                             $subFieldObj->fieldKey = $fieldKey;
+                                        }
+
+                                        // Fields Settings from relation
+                                        if (is_array($relation1to1->fieldsSettings)) {
+                                            $fieldsSettings = $relation1to1->fieldsSettings;
+                                            if (isset($fieldsSettings[$subFieldObj->fieldKey])) {
+                                                $fieldSettings = $fieldsSettings[$subFieldObj->fieldKey];
+                                                foreach ($fieldSettings as $name => $value) {
+                                                    $nameCamel = Str::camel($name);
+                                                    $subFieldObj->$nameCamel = $value;
+                                                }
+                                            }
                                         }
 
                                         $fields[$subFieldObj->fieldKey] = $subFieldObj;
@@ -1596,6 +1620,8 @@ class Model {
                 'filterSearchNameSelect' => $relation->filterSearchNameSelect,
                 'filterConditions' => $relation->filterConditions,
                 'explicitLabelKey' => $relation->explicitLabelKey,
+                'prefix'           => $relation->prefix,
+                'suffix'           => $relation->suffix,
                 
                 // The relation decides about its presentation with fieldExclude
                 // Essentially, only for 1toX and XtoX final relations

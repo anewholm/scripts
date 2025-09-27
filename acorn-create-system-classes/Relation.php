@@ -18,8 +18,11 @@ class Relation {
     public $fieldExclude;
     public $columnExclude;
     public $hasManyDeepSettings; // HasManyDeep control
+    public $fieldsSettings; // Adjust embedded 3rd party fields.yaml
     public $status; // ok|exclude|broken
     public $multi;  // _multi.php config
+    public $prefix;
+    public $suffix;
     public $type;   // explicit typing
     public $delete; // Relation delete: true will cause reverse cascade deletion of associated object
     public $isFrom      = TRUE; // From this column, attached to it

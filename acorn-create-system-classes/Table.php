@@ -507,6 +507,8 @@ class Table {
                     print("{$RED}WARNING$NC: $error\n");
                     $yn = readline("Create [$columnCheck] (y) ?");
                     if ($yn != 'n') {
+                        // NOT NULL DEFAULT 0
+                        // because errors otherwise
                         $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'integer', NULL, FALSE, 0);
                         print("Added [$columnCheck]\n");
                         $changes = TRUE;
@@ -518,6 +520,8 @@ class Table {
                     print("{$RED}WARNING$NC: $error\n");
                     $yn = readline("Create [$columnCheck] (y) ?");
                     if ($yn != 'n') {
+                        // NOT NULL DEFAULT 0
+                        // because errors otherwise
                         $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'integer', NULL, FALSE, 0);
                         print("Added [$columnCheck]\n");
                         $changes = TRUE;
@@ -529,6 +533,8 @@ class Table {
                     print("{$RED}WARNING$NC: $error\n");
                     $yn = readline("Create [$columnCheck] (y) ?");
                     if ($yn != 'n') {
+                        // NOT NULL DEFAULT 0
+                        // because errors otherwise
                         $this->db->addColumn($this->fullyQualifiedName(), $columnCheck, 'integer', NULL, FALSE, 0);
                         print("Added [$columnCheck]\n");
                         $changes = TRUE;

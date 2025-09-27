@@ -12,7 +12,7 @@ port=$2
 type=$3
 
 if [ -z "$database" ]; then database=winter; fi
-if [ -z "$port" ]; then port=8090; fi
+if [ -z "$port" ]; then port=8080; fi
 if [ -z "$type" ]; then type=xmondrian; fi
 
 echo "Using settings: SQLDatabase:${YELLOW}$database${NC}, Port:${YELLOW}$port${NC}, Type:${YELLOW}$type${NC}"
@@ -63,12 +63,16 @@ if [ -z "$(groups | grep tomcat)" ]; then
 fi
 
 # Set TomCat port
-if [ -f /etc/tomcat9/server.xml ]; then
-  echo "${GREEN}INFO${NC}: Setting TomCat 9 port to $port"
-  sudo sed -i "s#<Connector port=\"8080\"#<Connector port=\"$port\"#" /etc/tomcat9/server.xml
+if [ $port = 8080 ]; then
+  echo "${GREEN}INFO${NC}: TomCat 9 port is already the default 8080"
 else
-  echo "${RED}ERROR${NC}: /etc/tomcat9/server.xml Tomcat 9 config not found"
-  exit 0
+  if [ -f /etc/tomcat9/server.xml ]; then
+    echo "${GREEN}INFO${NC}: Setting TomCat 9 port to $port"
+    sudo sed -i "s#<Connector port=\"8080\"#<Connector port=\"$port\"#" /etc/tomcat9/server.xml
+  else
+    echo "${RED}ERROR${NC}: /etc/tomcat9/server.xml Tomcat 9 config not found"
+    exit 0
+  fi
 fi
 
 # Install XMondrian WAR in to the tomcat9
@@ -133,8 +137,8 @@ fi
 sudo cp /usr/share/java/postgresql.jar $webapps/$type/WEB-INF/lib/
 
 # Custom files
-if [ -f olap/index.html ]; then cp -f olap/index.html $webapps/$type/xavier/index.html; fi
-cp -f olap/*.js $webapps/$type/xavier/resources/js/
+if [ -f olap/index.html ];          then cp -f olap/index.html $webapps/$type/xavier/index.html; fi
+if [ -f olap ];                     then cp -f olap/*.js $webapps/$type/xavier/resources/js/; fi
 if [ -f olap/mondrian.properties ]; then cp -f olap/mondrian.properties $webapps/$type/WEB-INF/classes/; fi
 
 # Our patches

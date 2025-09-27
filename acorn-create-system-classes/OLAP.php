@@ -13,22 +13,24 @@ class OLAP
     protected $olapViews;
     protected $tables;
     protected $tomcatRoot = '/var/lib/tomcat9/webapps';
+    protected $tomcat9Port = 8080;
 
     protected $cubes = array();
     protected $xDatasource;
 
-    protected function __construct(DB &$db, array $olapViews, array $tables, string $tomcatRoot = '/var/lib/tomcat9/webapps')
+    protected function __construct(DB &$db, array $olapViews, array $tables, string $tomcatRoot = '/var/lib/tomcat9/webapps', int $tomcat9Port = 8080)
     {
-        $this->db         = $db;
-        $this->olapViews  = $olapViews; // schema: olap
-        $this->tables     = $tables;
-        $this->tomcatRoot = $tomcatRoot;
-        $this->name       = $this->db->database;
+        $this->db          = $db;
+        $this->olapViews   = $olapViews; // schema: olap
+        $this->tables      = $tables;
+        $this->tomcatRoot  = $tomcatRoot;
+        $this->tomcat9Port = $tomcat9Port;
+        $this->name        = $this->db->database;
     }
 
-    public static function createAndDeploy(DB &$db, array $olapViews, array $tables, string $tomcatRoot = '/var/lib/tomcat9/webapps'): void {
+    public static function createAndDeploy(DB &$db, array $olapViews, array $tables, string $tomcatRoot = '/var/lib/tomcat9/webapps', int $tomcat9Port = 8080): void {
         global $GREEN, $YELLOW, $RED, $NC;
-        $olap = new static($db, $olapViews, $tables, $tomcatRoot);
+        $olap = new static($db, $olapViews, $tables, $tomcatRoot, $tomcat9Port);
         
         print("OLAP report for database {$YELLOW}$olap->name{$NC}\n");
         $olap->createCubes();
@@ -74,9 +76,8 @@ class OLAP
 
         // Assumes the TomCat9 is deployed on the same domain
         // forwarded by Apache from port 8080
-        $tomcat9Port   = 8080;
         $appUrl        = trim($this->db->framework->appUrl(), '/');
-        $url           = "$appUrl:$tomcat9Port/xmondrian/xmla";
+        $url           = "$appUrl:$this->tomcat9Port/xmondrian/xmla";
         $schemaPath    = '/WEB-INF/schema/cubes.xml';
         $useSchemaPool = FALSE; // Cacheing of dimension members
         $useSchemaPoolString = var_export($useSchemaPool, TRUE);
@@ -216,9 +217,11 @@ INFO
                     $viewName = $cube->olapView->name;
                     print("  Creating OLAPCube {$YELLOW}$cubeTitle{$NC} for view {$YELLOW}$viewName{$NC}\n");
                     $xCubeDoc  = $cube->document();
-                    $xCubeElem = $xCubeDoc->firstElementChild; // Cube
-                    $xCubeElem = $xCubesDoc->importNode($xCubeElem, TRUE);
-                    $xSchemaNode->appendChild($xCubeElem);
+                    $xSchemaNode->appendChild($xCubesDoc->importNode($xCubeDoc->firstElementChild, TRUE));
+                    $xCubeDoc  = $cube->document('ku');
+                    $xSchemaNode->appendChild($xCubesDoc->importNode($xCubeDoc->firstElementChild, TRUE));
+                    $xCubeDoc  = $cube->document('ar');
+                    $xSchemaNode->appendChild($xCubesDoc->importNode($xCubeDoc->firstElementChild, TRUE));
                 }
                 print("  Writing main {$YELLOW}$cubesSchemaPath{$NC}\n");
                 file_put_contents($cubesSchemaPath, $xCubesDoc->saveXML());
@@ -255,8 +258,17 @@ INFO
                 if (file_exists($imagePath)) $imageHtml = "<img src='/images/$webapp.png'/>";
                 $title = Str::title($webapp);
 
+                $alternateLanguagesHtml = '';
                 $cubesHtml = '';
                 if ($webapp == $this->name) {
+                    // Language list
+                    $alternateLanguagesHtml  = '(';
+                    $alternateLanguagesHtml .= "<a href='/$webapp/xavier/index.html'>In English</a>, ";
+                    $alternateLanguagesHtml .= "<a href='/$webapp/xavier/index-ku.html'>Bi Kurdî</a>, ";
+                    $alternateLanguagesHtml .= "<a href='/$webapp/xavier/index-ar.html'>باللغة العربية</a>";
+                    $alternateLanguagesHtml .= ')';
+
+                    // Cube list
                     $cubesHtml = '<ul class="cubes">';
                     foreach ($this->cubes as $cube) {
                         $cubeTitle = $cube->title();
@@ -265,20 +277,33 @@ INFO
                     $cubesHtml .= '</ul>';
                 }
 
-                $linksHtml .= "<li><a href='/$webapp/xavier/index.html'>$title $cubesHtml $imageHtml</a></li>";
+                $linksHtml .= <<<HTML
+                    <li>
+                        <a href='/$webapp/xavier/index.html'>$title</a>
+                        $alternateLanguagesHtml
+                        $cubesHtml $imageHtml
+                    </li>
+HTML
+                ;
             }
-            $linksHtml .= '<ul>';
+            $linksHtml .= '</ul>';
 
             // ROOT/index.html
             file_put_contents($tomcat9IndexPath, <<<HTML
-                <?xml version="1.0" encoding="ISO-8859-1"?>
+                <?xml version="1.0" encoding="UTF-8"?>
                 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
                 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
                     <head>
+                        <meta http-equiv="Content-Type" content="type=text/html; charset=utf-8" />
                         <title>Acorn OLAP Cubes</title>
+                        <link rel="icon" type="image/png" href="/images/favicon.png">
                         <style>
                             body {
                                 font: Verdana;
+                                background-image: url(/images/olap.png);
+                                background-position: right top;
+                                background-repeat: no-repeat;
+                                color: #555;
                             }
                             img {
                                 display: block;
@@ -299,11 +324,20 @@ INFO
                                 color: #777;
                                 font-weight: normal;
                             }
+                            #tech {
+                                position: fixed;
+                                bottom: 5px;
+                                right: 5px;
+                                color: #999;
+                            }
                         </style>
                     </head>
                     <body>
-                        <h1>Acorn OLAP Cubes</h1>
+                        <h1>OLAP Cubes</h1>
+
                         $linksHtml
+
+                        <a id="tech" href="https://mondrian.pentaho.com/documentation/olap.php">Technical implementation documentation</a>
                     </body>
                 </html>
 HTML
@@ -312,9 +346,8 @@ HTML
 
 
         // Report cube URI
-        $tomcat9Port   = 8080;
         $appUrl        = trim($this->db->framework->appUrl(), '/');
-        $url           = "$appUrl:$tomcat9Port/$this->name/xavier/index.html";
+        $url           = "$appUrl:$this->tomcat9Port/$this->name/xavier/index.html";
         print("Cube now available, maybe, on {$YELLOW}$url{$NC}\n");
 
         $logPath         = '/var/log/tomcat9';
@@ -332,7 +365,33 @@ HTML
     }
 }
 
-class OLAPDimension {
+class OLAPEntity {
+    public function addTranslateableName(DOMNode &$xElement, Table $tableTo, string $locale): void
+    {
+        if ($locale == 'en') {
+            $xElement->setAttribute('nameColumn', 'name');
+        } else {
+            // Translation
+            //   <NameExpression>
+            //      <SQL dialect="postgres">
+            //          fn_acorn_translate(
+            //              acorn_exam_calculations.name, 
+            //              'acorn_exam_calculations', 
+            //              acorn_exam_calculations.id, 
+            //              'ar'
+            //          )
+            //      </SQL>
+            //   </NameExpression>
+            $tableTo = $tableTo->fullyQualifiedName();
+            $sql     = "fn_acorn_translate($tableTo.name, '$tableTo', $tableTo.id, '$locale')";
+            $xNameExpression = $xElement->appendChild($xElement->ownerDocument->createElement('NameExpression'));
+            $xSQL = $xNameExpression->appendChild($xElement->ownerDocument->createElement('SQL', $sql));
+            $xSQL->setAttribute('dialect', 'postgres');
+        }
+    }
+}
+
+class OLAPDimension extends OLAPEntity {
     public $name;
     public $column;
 
@@ -342,7 +401,7 @@ class OLAPDimension {
         $this->column = $column;
     }
 
-    public function node(DOMDocument $xDoc): DOMNode
+    public function node(DOMDocument $xDoc, string $locale = 'en'): DOMNode
     {
         $xDimension = $xDoc->createElement('Dimension');
         $xDimension->setAttribute('name', $this->name);
@@ -356,7 +415,7 @@ class OLAPSimpleIncludedDimension extends OLAPDimension {
         parent::__construct($name, $column);
     }
 
-    public function node(DOMDocument $xDoc): DOMNode
+    public function node(DOMDocument $xDoc, string $locale = 'en'): DOMNode
     {
         // <Dimension name="Material">
         //   <Hierarchy hasAll="true" primaryKey="id">
@@ -366,7 +425,7 @@ class OLAPSimpleIncludedDimension extends OLAPDimension {
         $columnStub = $this->column->nameWithoutId();
         $columnName = "{$columnStub}_name";
 
-        $xDimension = parent::node($xDoc);
+        $xDimension = parent::node($xDoc, $locale);
         $xHierarchy = $xDimension->appendChild($xDoc->createElement('Hierarchy'));
         $xHierarchy->setAttribute('hasAll', 'true');
         $xHierarchy->setAttribute('primaryKey', 'id');
@@ -390,7 +449,7 @@ class OLAPForeignKeyDimension extends OLAPDimension {
         $this->fk = $fk;
     }
 
-    public function node(DOMDocument $xDoc): DOMNode
+    public function node(DOMDocument $xDoc, string $locale = 'en'): DOMNode
     {
         switch ($this->fk->type()) {
             case 'Xto1':
@@ -402,10 +461,20 @@ class OLAPForeignKeyDimension extends OLAPDimension {
                 //       <Table name="university_mofadala_students"/>
                 //       <Table name="university_mofadala_exam_centers"/>
                 //     </Join>
-                //     <Level name="Exam Center" table="university_mofadala_exam_centers" column="id" nameColumn="name" uniqueMembers="true" />
+                //     <Level name="Exam Center" table="university_mofadala_exam_centers" column="id" uniqueMembers="true">
+                //       <NameExpression>
+                //          <SQL dialect="postgres">
+                //              fn_acorn_translate(
+                //                  acorn_exam_calculations.name, 
+                //                  'acorn_exam_calculations', 
+                //                  acorn_exam_calculations.id, 
+                //                  'ar'
+                //              )
+                //          </SQL>
+                //       </NameExpression>
                 //   </Hierarchy>
                 // </Dimension>
-                $xDimension = parent::node($xDoc);
+                $xDimension = parent::node($xDoc, $locale);
                 $xDimension->setAttribute('foreignKey', $this->fk->columnFrom->column_name);
 
                 $xHierarchy = $xDimension->appendChild($xDoc->createElement('Hierarchy'));
@@ -430,8 +499,10 @@ class OLAPForeignKeyDimension extends OLAPDimension {
                 $xLevel->setAttribute('name', $this->name);
                 $xLevel->setAttribute('table', $this->fk->tableTo->fullyQualifiedName());
                 $xLevel->setAttribute('column', 'id');
-                $xLevel->setAttribute('nameColumn', 'name');
                 $xLevel->setAttribute('uniqueMembers', 'true');
+
+                $tableTo = $this->fk->tableTo;
+                $this->addTranslateableName($xLevel, $tableTo, $locale);
                 
                 break;
         }
@@ -441,7 +512,7 @@ class OLAPForeignKeyDimension extends OLAPDimension {
 }
 
 class OLAPTimeDimension extends OLAPDimension {
-    public function node(DOMDocument $xDoc): DOMNode
+    public function node(DOMDocument $xDoc, string $locale = 'en'): DOMNode
     {
         // <Dimension name="Time" type="TimeDimension" foreignKey="student_id">
         //     <Hierarchy hasAll="true" primaryKey="id">
@@ -460,7 +531,7 @@ class OLAPTimeDimension extends OLAPDimension {
         //         </Level>
         //     </Hierarchy>
         // </Dimension>
-        $xDimension = parent::node($xDoc);
+        $xDimension = parent::node($xDoc, $locale);
         $xDimension->setAttribute('type', 'TimeDimension');
         $columnFQN  = $this->column->fullyQualifiedName(Column::INCLUDE_SCHEMA, Column::NOT_SCHEMA_PUBLIC);
 
@@ -518,7 +589,7 @@ class OLAPMeasure {
         $this->column = $column;
     }
 
-    public function node(DOMDocument $xDoc): DOMNode
+    public function node(DOMDocument $xDoc, string $locale = 'en'): DOMNode
     {
         // <Measure name="Num Students" column="student_id" aggregator="distinct-count" formatString="Standard"/>
         $xMeasure = $xDoc->createElement('Measure');
@@ -545,23 +616,25 @@ class OLAPCube {
         $this->defaultMeasure = 'Count';
     }
 
-    public function title(): string
+    public function title(string $locale = 'en'): string
     {
         // [olap.]acorn_enrollment_olapcube => Enrollment
         // [olap.]acorn_enrollment_olapcube_things => Enrollment Things
         $viewNameParts  = explode('_', $this->olapView->name);
         $viewNameParts  = array_filter($viewNameParts, function($value){return $value != 'olapcube';});
         $viewTitleParts = array_slice($viewNameParts, 1);
-        return Str::title(implode(' ', $viewTitleParts));
+        $title          = Str::title(implode(' ', $viewTitleParts));
+        if ($locale != 'en') $title .= " ($locale)";
+        return $title;
     }
 
-    public function document(): DOMDocument
+    public function document(string $locale = 'en'): DOMDocument
     {
         $xDoc = new DOMDocument();
 
         // Cube
         $cubeNode = $xDoc->appendChild($xDoc->createElement('Cube'));
-        $cubeNode->setAttribute('name', $this->title());
+        $cubeNode->setAttribute('name', $this->title($locale));
         $cubeNode->setAttribute('for-view', $this->olapView->name);
         if ($this->defaultMeasure) $cubeNode->setAttribute('defaultMeasure', $this->defaultMeasure);
 
@@ -582,11 +655,11 @@ class OLAPCube {
         $xAggFactCount->setAttribute('column', 'id');
 
         // ----------------------------- Add dimensions & Measures
-        foreach ($this->dimensions as $name => $dimension) {
-            $cubeNode->appendChild($dimension->node($xDoc));
+        foreach ($this->dimensions as $dimension) {
+            $cubeNode->appendChild($dimension->node($xDoc, $locale));
         }
-        foreach ($this->measures as $name => $measure) {
-            $cubeNode->appendChild($measure->node($xDoc));
+        foreach ($this->measures as $measure) {
+            $cubeNode->appendChild($measure->node($xDoc, $locale));
         }
 
         return $xDoc;

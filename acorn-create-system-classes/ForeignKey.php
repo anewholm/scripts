@@ -39,6 +39,7 @@ class ForeignKey {
     public $fieldExclude;
     public $columnExclude;
     public $hasManyDeepSettings; // HasManyDeep control
+    public $fieldsSettings; // Adjust embedded 3rd party fields.yaml
     public $order;  // Appearance in tab pools. See DB::foreignKeys() SQL request
     public $type;
     public $multi;  // _multi.php config
@@ -48,6 +49,8 @@ class ForeignKey {
     public $status; // ok|exclude|broken
     public $include;
     public $advanced;
+    public $prefix;
+    public $suffix;
     public $nameObject;
     public $readOnly;
     public $cssClasses;
@@ -91,8 +94,10 @@ class ForeignKey {
         }
         foreach (\Spyc::YAMLLoadString(preg_replace('/^\t/m', '    ', $this->comment)) as $name => $value) {
             $nameCamel = Str::camel($name);
-            if (!property_exists($this, $nameCamel)) 
-                throw new Exception("Property [$nameCamel] does not exist on [$this->table_from_name.$column->name] => [$this->name]");
+            if (!property_exists($this, $nameCamel)) {
+                $valueString = var_export($value, TRUE);
+                throw new Exception("Property [$nameCamel] does not exist on [$this->table_from_name.$column->name] => [$this->name] with value [$valueString]");
+            }
             if (!isset($this->$nameCamel)) $this->$nameCamel = $value;
         }
 
