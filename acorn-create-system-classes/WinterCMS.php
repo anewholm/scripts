@@ -412,6 +412,16 @@ class WinterCMS extends Framework
                 if ($isToCustomModel) {
                     $customModelFQN    = $relation->to->absoluteFullyQualifiedName();
                     $customController  = $relation->to->controller();
+                    $listFields        = array(
+                        $thisRelationName => [
+                            'label'     => $thisLabel,
+                            'relation'  => $thisRelationName,
+                            'valueFrom' => 'name',
+                        ]
+                    );
+                    if ($relation->fieldsSettingsTo) 
+                        $listFields = array_merge($listFields, $relation->fieldsSettingsTo);
+                    $listFieldsString = var_export($listFields, TRUE);
 
                     $bootMethodPhp    .= <<<PHP
 // ------------------ $customModelFQN
@@ -438,11 +448,7 @@ PHP;
                         $bootMethodPhp    .= <<<PHP
 \Acorn\Controller::extendListColumnsGeneral(function (\$list, \$model) {
     if (\$model instanceof $customModelFQN) {
-        \$list->addColumns(['$thisRelationName' => [
-            'label'     => '$thisLabel',
-            'relation'  => '$thisRelationName',
-            'valueFrom' => 'name',
-        ]]);
+        \$list->addColumns($listFieldsString);
     }
 });
 
@@ -561,11 +567,12 @@ PHP;
 
                 $sideMenu      = array();
                 $firstModelUrl = NULL;
-                foreach ($plugin->models as $name => &$model) {
+                foreach ($plugin->models as $modelName => &$model) {
                     if ($controller = $model->controller(FALSE)) {
                         if ($controller->menu) {
-                            $icon = $controller->icon;
-                            $url  = $controller->relativeUrl();
+                            $sideMenuName    = strtolower($controller->name); // educationauthorities
+                            $icon            = $controller->icon;
+                            $url             = $controller->relativeUrl();
                             $modelFQN        = $model->absoluteFullyQualifiedName();
                             $langSectionName = $model->langSectionName();
                             $permissionFQN   = $model->permissionFQN('view_menu');
@@ -584,17 +591,18 @@ PHP;
                                 );
                             }
 
-                            if ($controller->allControllers) {
+                            if ($controller->allControllers === TRUE || $controller->allControllers === 'before') {
                                 // All controllers item
-                                $sideMenu['All'] = array(
+                                $sideMenu['all'] = array(
                                     'label' => 'acorn::lang.models.general.all_controllers',
                                     'url'   => $controller->relativeUrl('all'),
                                     'icon'  => 'icon-map',
                                     'permissions' => array($model->permissionFQN('all')),
                                 );
+                                print(", all");
                             }
 
-                            print("    +Side-menu entry [$name] @{$YELLOW}$url{$NC}");
+                            print("    +Side-menu entry [$sideMenuName] @{$YELLOW}$url{$NC}");
                             if ($icon) {
                                 if (substr($icon, 0, 5) != 'icon-') $icon = "icon-$icon";
                             } else {
@@ -602,8 +610,8 @@ PHP;
                                 print(" with auto-selected icon {$YELLOW}$icon{$NC}");
                             }
                             
-                            if ($controller->menuSplitter) {
-                                $sideMenu["_splitter_$name"] = array(
+                            if ($controller->menuSplitter === TRUE || $controller->menuSplitter === 'before') {
+                                $sideMenu["_splitter_$sideMenuName"] = array(
                                     'label' => 'splitter',
                                     'url'   => 'splitter',
                                     'icon'  => 'acorn-splitter',
@@ -612,7 +620,7 @@ PHP;
                             }
                             
                             // CRUD Navigation item
-                            $sideMenu[$name] = array(
+                            $sideMenu[$sideMenuName] = array(
                                 'label'   => "$translationDomain::lang.models.$langSectionName.label_plural",
                                 'url'     => $url,
                                 'icon'    => $icon,
@@ -622,7 +630,27 @@ PHP;
                             if (!$firstModelUrl) $firstModelUrl = $url;
                             // menuitemCount() adversely affects performance. Can it be cached?
                             // use ?count on URL to show
-                            $sideMenu[$name]['counter'] = "$modelFQN::menuitemCount";
+                            $sideMenu[$sideMenuName]['counter'] = "$modelFQN::menuitemCount";
+
+                            if ($controller->menuSplitter === 'after') {
+                                $sideMenu["_splitter_$sideMenuName"] = array(
+                                    'label' => 'splitter',
+                                    'url'   => 'splitter',
+                                    'icon'  => 'acorn-splitter',
+                                );
+                                print(", menu-splitter(after)");
+                            }
+
+                            if ($controller->allControllers === 'after') {
+                                // All controllers item
+                                $sideMenu['all'] = array(
+                                    'label' => 'acorn::lang.models.general.all_controllers',
+                                    'url'   => $controller->relativeUrl('all'),
+                                    'icon'  => 'icon-map',
+                                    'permissions' => array($model->permissionFQN('all')),
+                                );
+                                print(", all(after)");
+                            }
 
                             print("\n");
                         }
@@ -638,7 +666,7 @@ PHP;
                 }
                 $permissionFQN = $plugin->permissionFQN();
                 $navigationDefinition = array(
-                    "$pluginMenuName-setup" => array(
+                    $pluginMenuName => array(
                         'label'       => "$translationDomain::lang.plugin.name",
                         'url'         => ($plugin->pluginUrl ?: ($firstModelUrl ?: '#')),
                         'icon'        => $icon,
@@ -1456,6 +1484,8 @@ PHP
                 foreach ($field->extraTranslations as $code => $labels) {
                     print("    Add {$YELLOW}$code{$NC} to {$YELLOW}lang/*{$NC} for {$YELLOW}$name{$NC}\n");
                     $localTranslationKey = "$modelKey.$code";
+                    if (!is_array($labels)) 
+                        throw new Exception("Field $field->fieldKey on $model->name has non-array labels");
                     foreach ($labels as $langName => &$translation) {
                         $langFilePath = "$langDirPath/$langName/lang.php";
                         if (!file_exists($langFilePath)) 

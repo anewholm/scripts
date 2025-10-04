@@ -104,6 +104,7 @@ class Field {
     public $thumbOptions;
     public $fieldConfig;
     public $setting; // Only show the column if a Setting is TRUE
+    public $settingNot; // Only show the column if a Setting is FALSE
     public $env;     // Only show the column if an env VAR is TRUE
 
     // DataTable field type
@@ -539,6 +540,11 @@ class Field {
     }
 
     // --------------------------------------------- Info
+    public function isNestedFieldKey(): bool
+    {
+        return Model::isNestedFieldKey($this->fieldKey);
+    }
+
     public function isStandard(): bool {
         return ($this->column && $this->column->isStandard());
     }
@@ -875,9 +881,15 @@ class ForeignIdField extends Field {
                     // Allows 1to1 Models
                     $this->sqlSelect  = NULL;
                     if (!isset($this->valueFrom)) {
-                        $this->valueFrom = $this->relation1->to->nameFromPath(); // Can be null
-                        if (is_null($this->valueFrom)) 
+                        if ($this->model->hasNameObjectRelation()) {
+                            // Still we need to trigger the request for the name objects
+                            // otherwise we will get the JSON full object result 
                             $this->valueFrom = 'name';
+                        } else {
+                            // No name-object, so let's at least try to get a 1-1 name
+                            $this->valueFrom = $this->relation1->to->nameFromPath(); // Can be null
+                            if (is_null($this->valueFrom)) $this->valueFrom = 'name';
+                        }
                     }
                     $this->sortable   = FALSE;
                     $this->searchable = FALSE;
@@ -923,7 +935,8 @@ class ForeignIdField extends Field {
 
                 // ----------------------- Fields.yaml Dropdown
                 // NOTE: custom handling of embedded nameFrom in AA module
-                if (!isset($this->nameFrom))   $this->nameFrom   = $this->relation1->to->nameFromPath();
+                if (!isset($this->nameFrom) && !$this->model->hasNameObjectRelation()) 
+                    $this->nameFrom = $this->relation1->to->nameFromPath();
                 if (!isset($this->cssClasses)) $this->cssClasses = array('popup-col-xs-6');
                 if (!isset($this->bootstraps)) $this->bootstraps = array('xs' => 5);
                 if (!isset($this->readOnly))   $this->readOnly   = $this->relation1->to->readOnly;

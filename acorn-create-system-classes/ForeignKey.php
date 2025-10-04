@@ -40,6 +40,7 @@ class ForeignKey {
     public $columnExclude;
     public $hasManyDeepSettings; // HasManyDeep control
     public $fieldsSettings; // Adjust embedded 3rd party fields.yaml
+    public $fieldsSettingsTo; // Adjust 3rd party embedded columns.yaml
     public $order;  // Appearance in tab pools. See DB::foreignKeys() SQL request
     public $type;
     public $multi;  // _multi.php config

@@ -145,6 +145,7 @@ class Column {
     public $system;  // Internal column, do not process
     public $todo;    // TODO: This column structure has not been analysed / enabled yet
     public $setting; // Only show the column if a Setting is TRUE
+    public $settingNot; // Only show the column if a Setting is FALSE
     public $env;     // Only show the column if an env VAR is TRUE
     public $listEditable;
     public $columnType;
@@ -156,6 +157,7 @@ class Column {
 
     // --------------------- Field comment accepted values
     public $fieldType;
+    public $nameFrom;
     public $fieldComment; // HTML field comment
     public $typeEditable; // For list-editable row partial
     public $rules = array();

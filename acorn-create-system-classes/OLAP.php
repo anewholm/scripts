@@ -244,7 +244,6 @@ INFO
                     switch ($item->getFileName()) {
                         case 'ROOT':
                         case 'xmondrian':
-                        case 'images':
                             break;
                         default:
                             array_push($webapps, $item->getFilename());
@@ -254,8 +253,8 @@ INFO
             $linksHtml = '<ul class="webapps">';
             foreach ($webapps as $webapp) {
                 $imageHtml = NULL;
-                $imagePath = "$this->tomcatRoot/images/$webapp.png";
-                if (file_exists($imagePath)) $imageHtml = "<img src='/images/$webapp.png'/>";
+                $imagePath = "$this->tomcatRoot/ROOT/images/$webapp.png";
+                if (file_exists($imagePath)) $imageHtml = "<img src='/ROOT/images/$webapp.png'/>";
                 $title = Str::title($webapp);
 
                 $alternateLanguagesHtml = '';

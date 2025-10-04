@@ -264,6 +264,18 @@ class Model {
         return isset($this->attributeFunctions[$name]);
     }
 
+    public function hasNameObjectRelation(): bool
+    {
+        $has = FALSE;
+        foreach ($this->relations() as $relation) {
+            if ($relation->isNameObject()) {
+                $has = TRUE;
+                break;
+            }
+        }
+        return $has;
+    }
+
     public function attributeFunctions(): array
     {
         $attributeFunctions = $this->attributeFunctions;
@@ -1241,7 +1253,7 @@ class Model {
         return self::arrayToName($nestedFieldPath);
     }
 
-    protected static function isNested(string $fieldName): bool
+    public static function isNestedFieldKey(string $fieldName): bool
     {
         return (count(self::nameToArray($fieldName)) > 1);
     }
@@ -1291,7 +1303,7 @@ class Model {
         // TODO: Relations should reference their Fields, not columns
         $plugin = &$this->plugin;
         $fields = array();
-        $useRelationManager = TRUE; //!$isNested;
+        $useRelationManager = TRUE; //!$isNestedFieldKey;
         $indentString = str_repeat(' ', $recursing * 2);
 
         if ($this->isCreateSystem()) {
@@ -1345,7 +1357,7 @@ class Model {
                                     // We could change the id name to also allow them...
                                     $isSpecialField     = ($subFieldName == 'id');
                                     // TODO: Remove: We cannot do anything with nested fields
-                                    // $isAlreadyNested    = self::isNested($subFieldName);
+                                    // $isAlreadyNested    = self::isNestedFieldKey($subFieldName);
                                     // Sub relation fields should generate another HasManyDeep and include them
                                     $hasSubRelation     = isset($subFieldObj->relation);
                                     // If this comes from a field only field
@@ -1942,6 +1954,7 @@ class Model {
             if (   $field->fieldKey 
                 && $field->fieldType == 'relationmanager' 
                 && !isset($relations[$field->fieldKey])
+                // && !$field->isNestedFieldKey() // TODO: Do relationmanagers work on nested relations?!?!?
             )
                 throw new Exception("Model [$this->name] relation [$field->fieldKey] is missing for RelationManager field [$field->fieldKey]");
 
@@ -1950,6 +1963,36 @@ class Model {
             ) {
                 // Actually, only X-1 relations, shown as dropdowns, like event_id, can be required
                 throw new Exception("Model [$this->name::$field->fieldKey] is a relationmanager and required. This will enter the field in to the \$rules array as required and prevent saving");
+            }
+
+            // Dropdowns (1 item select) that show 1|X-X will error that the value is an array
+            // For example:
+            //   first_event_part[users]: 
+            //     type: dropdown
+            if ($field->fieldType == 'dropdown') {
+                $nameParts     = self::nameToArray($name);
+                $lastNameParts = explode('_', end($nameParts));
+                $lastName      = end($lastNameParts);
+                $lastNameSing  = Str::singular($lastName);
+                if ($lastNameSing != $lastName) {
+                    throw new Exception("Field $name ($lastNameSing) looks plural but is handled by a single select dropdown");
+                }
+            }
+
+            // Lists.php (modules/backend/widgets/Lists.php) will force set valueFrom = column name
+            // for all nested[columns]:
+            //   elseif (strpos($name, '[') !== false && strpos($name, ']') !== false) {
+            //     $config['valueFrom'] = $name;
+            // For example, overwriting a valueFrom: name to:
+            //   valueFrom: first_event_part[groups]
+            // In order to display correctly with a partial: multi 
+            // we will need to set our: 
+            //   multi: 
+            //     valueFrom: name
+            if ($field->nested && $field->columnType == 'partial' && $field->columnPartial == 'multi') {
+                if (!$field->multi || !isset($field->multi['valueFrom'])) {
+                    throw new Exception("Column [$this->name::$field->columnKey] is set to partial multi but has no explicit multi:valueFrom:");
+                }
             }
 
             if ($field->sqlSelect && $field->valueFrom)              

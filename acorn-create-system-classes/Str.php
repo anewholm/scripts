@@ -7,12 +7,17 @@ class Str
     protected static $inflector;
 
     protected static $pluralExceptions = array(
-        'gps' => 'gps'
+        'gps' => 'gps',
+        // We use the academic option in order to differentiate
+        'status' => 'statuses', 
     );
     protected static $singularExceptions = array(
         'gps' => 'gps',
         'job_batches' => 'job_batch',
-        'offices' => 'office', // Fix offices => offix!
+        // Fix offices => offix!
+        'offices' => 'office', 
+        // We use the academic option in order to differentiate
+        'statuses' => 'status',
     );
 
     // Copied and commented from Laravel

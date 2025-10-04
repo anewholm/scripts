@@ -19,6 +19,7 @@ class Relation {
     public $columnExclude;
     public $hasManyDeepSettings; // HasManyDeep control
     public $fieldsSettings; // Adjust embedded 3rd party fields.yaml
+    public $fieldsSettingsTo; // Adjust 3rd party embedded columns.yaml
     public $status; // ok|exclude|broken
     public $multi;  // _multi.php config
     public $prefix;
