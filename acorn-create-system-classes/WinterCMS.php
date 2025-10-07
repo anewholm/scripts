@@ -789,6 +789,9 @@ PHP;
                 }
             }
 
+            // ---------------------------------------------------------------- Conditional hints
+            if ($model->hints) $this->setPropertyInClassFile($modelFilePath, 'hints', $model->hints, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
+
             // ---------------------------------------------------------------- Model based ALES functions
             $this->setPropertyInClassFile($modelFilePath, 'alesFunctions', $model->alesFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
 
@@ -1279,6 +1282,15 @@ PHP
         // ---------------------------------------- Main fields.yaml
         // fields(TRUE) call output
         $this->yamlFileUnSet($fieldsPath, 'fields.id');
+        // Model level hints come first
+        if ($model->hints) {
+            foreach ($model->hints as $hintName => $hintConfig) {
+                $this->yamlFileSet($fieldsPath, "fields._$hintName", array_merge(array(
+                    'type' => 'partial',
+                    'path' => 'standard_conditional_hint',
+                ), $hintConfig));
+            }
+        }
         $fields = $model->fields();
         foreach ($fields as $name => &$field) {
             $indentString = str_repeat(' ', ($field->nestLevel ?: 0) * 2);
@@ -1287,12 +1299,14 @@ PHP
             $typeString   = "$fieldTypeV / $columnTypeV";
             if ($field->canDisplayAsField()) { // fieldExclude
                 print("    $indentString+{$YELLOW}$name{$NC}($typeString): to {$YELLOW}fields.yaml{$NC}\n");
-                $dotPath = "fields.$field->fieldKey$field->fieldKeyQualifier";
+                $dotPathStub = 'fields';
                 if (!$field->include) {
-                    if      ($field->tabLocation == 2) $dotPath = "secondaryTabs.$dotPath";
-                    else if ($field->tabLocation == 3) $dotPath = "tertiaryTabs.$dotPath";
-                    else if ($field->tab)              $dotPath = "tabs.$dotPath";
+                    if      ($field->tabLocation == 2) $dotPathStub = "secondaryTabs.$dotPathStub";
+                    else if ($field->tabLocation == 3) $dotPathStub = "tertiaryTabs.$dotPathStub";
+                    else if ($field->tab)              $dotPathStub = "tabs.$dotPathStub";
                 }
+                $fieldKey = "$field->fieldKey$field->fieldKeyQualifier";
+                $dotPath  = "$dotPathStub.$fieldKey";
                 if (is_array($field->fieldOptions)) {
                     // options: can be in the format of translated codes:
                     // options:
@@ -1350,6 +1364,19 @@ PHP
 
                 $labelKey = (isset($field->explicitLabelKey) ? $field->explicitLabelKey : $field->translationKey());
                 $fieldTab = ($field->tab === 'INHERIT' ? $labelKey : $field->tab); // Can be NULL
+
+                // Field hints come first
+                if ($field->hints) {
+                    foreach ($field->hints as $hintName => $hintConfig) {
+                        $hintDotPath  = "$dotPathStub._{$fieldKey}_hint";
+                        $this->yamlFileSet($fieldsPath, $hintDotPath, array_merge(array(
+                            'type' => 'partial',
+                            'path' => 'standard_conditional_hint',
+                            'tab'  => $fieldTab,
+                        ), $hintConfig));
+                    }
+                }
+
                 $fieldDefinition = array(
                     '#'         => $field->yamlComment,
                     'label'     => $labelKey,

@@ -66,6 +66,7 @@ class ForeignKey {
     public $labels;
     public $labelsPlural;
 
+    public $hints;
     public $globalScope; // Chaining from|to
     public $noRelationManager;
     public $filterConditions;

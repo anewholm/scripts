@@ -58,6 +58,7 @@ class Model {
     //         labels: 
     //           en: Update owning Group
     public $permissionSettings; // Database column Input settings
+    public $hints;
     // PHP model methods
     public $attributeFunctions = array();
     public $methods            = array();
@@ -430,6 +431,7 @@ class Model {
         // TODO: This needs to be rationalised with Column->standardFieldDefinitions()
         $modifiers = array();
 
+        $columnNameFQN = $column->fullyQualifiedName(); // To reference the outer table
         if ($this->isAcornEvent()) {
             // This modifier is for when we set only the date,
             // using Event::setStartAttribute()
@@ -442,21 +444,21 @@ class Model {
                     'fieldType'     => 'datepicker',
                     'columnType'    => 'partial',
                     'columnPartial' => 'datetime',
-                    'sqlSelect'     => "(select aacep.start from acorn_calendar_event_parts aacep where aacep.event_id = $column->column_name order by aacep.start limit 1)",
+                    'sqlSelect'     => "(select aacep.start from acorn_calendar_event_parts aacep where aacep.event_id = $columnNameFQN order by aacep.start limit 1)",
                     'autoFKType'    => 'Xto1', // Because these fields also appear on pivot tables, causing them to be XtoXSemi
 
                     // Filter settings
                     'canFilter'  => TRUE, // $this->isAcornEvent()
                     'filterType' => 'daterange',
                     'yearRange'  => 10,
-                    'filterConditions' => "((select aacep.start from acorn_calendar_event_parts aacep where aacep.event_id = $column->column_name order by start limit 1) between ':after' and ':before')",
+                    'filterConditions' => "((select aacep.start from acorn_calendar_event_parts aacep where aacep.event_id = $columnNameFQN order by start limit 1) between ':after' and ':before')",
                 );
             }
         } else if ($this->isAcornUser()) {
             $modifiers = array(
                 'fieldType'  => 'text',
                 'columnType' => 'text',
-                'sqlSelect'  => "(select aauu.name from acorn_user_users aauu where aauu.id = $column->column_name)",
+                'sqlSelect'  => "(select aauu.name from acorn_user_users aauu where aauu.id = $columnNameFQN)",
                 'autoFKType' => 'Xto1', // Because these fields also appear on pivot tables, causing them to be XtoXSemi
 
                 // Filter settings
@@ -1641,6 +1643,7 @@ class Model {
                 // TODO: $relation->isToMany() ? 'relationmanager' : 'relation'
                 'fieldType'      => 'relationmanager',
                 'fieldExclude'   => $relation->fieldExclude,
+                'hints'          => $relation->hints,
                 'advanced'       => $relation->advanced,
                 'hidden'         => $relation->hidden,
                 'required'       => $relation->required,
@@ -1725,6 +1728,7 @@ class Model {
                 'relatedModel'   => $relation->to->fullyQualifiedName(),
                 'canFilter'      => $canFilter, 
                 'readOnly'       => $relation->readOnly,
+                'hints'          => $relation->hints,
                 'required'       => $relation->required,
                 'multi'          => $relation->multi,
                 'nameObject'     => $relation->nameObject,
@@ -1809,6 +1813,7 @@ class Model {
                 'canFilter'      => $canFilter, 
                 'readOnly'       => $relation->readOnly,
                 'required'       => $relation->required,
+                'hints'          => $relation->hints,
                 'span'           => $relation->span,
                 'tab'            => ($relation->tab ?: 'INHERIT'),
                 'multi'          => $relation->multi,
@@ -1892,6 +1897,7 @@ class Model {
                 // These are linked only to the content table
                 'canFilter'      => $canFilter, 
                 'readOnly'       => $relation->readOnly,
+                'hints'          => $relation->hints,
                 'required'       => $relation->required,
                 'span'           => $relation->span,
                 'tab'            => ($relation->tab ?: 'INHERIT'),

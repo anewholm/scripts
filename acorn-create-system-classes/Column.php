@@ -158,6 +158,7 @@ class Column {
     // --------------------- Field comment accepted values
     public $fieldType;
     public $nameFrom;
+    public $hints;
     public $fieldComment; // HTML field comment
     public $typeEditable; // For list-editable row partial
     public $rules = array();

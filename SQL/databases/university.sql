@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict s3zJP53lJz3dBSjkrMDE7K1M3k42fz6fMZRVf03MaBRcSVMnUgv2mePZ72DA8Nn
+\restrict agDlbnyxqcraEJs0kgZun2DMs8inuiwVpUmaA0GPKJbO2YcDHwMXWyq2xlFO0i9
 
 -- Dumped from database version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
 -- Dumped by pg_dump version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
@@ -31,6 +31,8 @@ ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_versions DROP CONSTRAINT
 ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group DROP CONSTRAINT IF EXISTS user_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_entities DROP CONSTRAINT IF EXISTS user_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_project_students DROP CONSTRAINT IF EXISTS user_group_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_exceptions DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_specializations DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_sections DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_answers DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_questions DROP CONSTRAINT IF EXISTS updated_by_user_id;
@@ -84,6 +86,7 @@ ALTER TABLE IF EXISTS ONLY public.acorn_location_locations DROP CONSTRAINT IF EX
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS teacher_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_type DROP CONSTRAINT IF EXISTS student_type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_status DROP CONSTRAINT IF EXISTS student_status_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_exceptions DROP CONSTRAINT IF EXISTS student_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_type DROP CONSTRAINT IF EXISTS student_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_students DROP CONSTRAINT IF EXISTS student_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_identities DROP CONSTRAINT IF EXISTS student_id;
@@ -93,6 +96,8 @@ ALTER TABLE IF EXISTS ONLY public.acorn_university_student_codes DROP CONSTRAINT
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_scores DROP CONSTRAINT IF EXISTS student_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_status DROP CONSTRAINT IF EXISTS student_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS student_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_exceptions DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_specializations DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_sections DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_answers DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_questions DROP CONSTRAINT IF EXISTS server_id;
@@ -189,6 +194,7 @@ ALTER TABLE IF EXISTS ONLY public.acorn_exam_instances DROP CONSTRAINT IF EXISTS
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS exam_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_exam_materials DROP CONSTRAINT IF EXISTS exam_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_instances DROP CONSTRAINT IF EXISTS exam_centre_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_years DROP CONSTRAINT IF EXISTS event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_lectures DROP CONSTRAINT IF EXISTS event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_year_semesters DROP CONSTRAINT IF EXISTS event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS event_id;
@@ -211,6 +217,8 @@ ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_courses DROP CONSTRAINT IF EX
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_students DROP CONSTRAINT IF EXISTS enrollment_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_course_entry_requirements DROP CONSTRAINT IF EXISTS enrollment_course_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_semesters DROP CONSTRAINT IF EXISTS enrollment_academic_year_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_exceptions DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_specializations DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_sections DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_answers DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_questions DROP CONSTRAINT IF EXISTS created_by_user_id;
@@ -257,16 +265,21 @@ ALTER TABLE IF EXISTS ONLY public.acorn_university_materials DROP CONSTRAINT IF 
 ALTER TABLE IF EXISTS ONLY public.acorn_university_material_types DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_years DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_semesters DROP CONSTRAINT IF EXISTS course_year_setting_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_exceptions DROP CONSTRAINT IF EXISTS course_year_semester_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_materials DROP CONSTRAINT IF EXISTS course_year_semester_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_semesters DROP CONSTRAINT IF EXISTS course_year_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_types DROP CONSTRAINT IF EXISTS course_type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_courses DROP CONSTRAINT IF EXISTS course_type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_semesters DROP CONSTRAINT IF EXISTS course_specialization_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_exceptions DROP CONSTRAINT IF EXISTS course_material_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS course_material_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_exam_materials DROP CONSTRAINT IF EXISTS course_material_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_materials DROP CONSTRAINT IF EXISTS course_material_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_lectures DROP CONSTRAINT IF EXISTS course_material_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_project_students DROP CONSTRAINT IF EXISTS course_material_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS course_material_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_specializations DROP CONSTRAINT IF EXISTS course_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_semesters DROP CONSTRAINT IF EXISTS course_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_settings DROP CONSTRAINT IF EXISTS course_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS course_id;
@@ -329,6 +342,7 @@ ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_part_user DROP CONSTRAINT
 ALTER TABLE IF EXISTS ONLY public.acorn_calendar_calendars DROP CONSTRAINT IF EXISTS acorn_calendar_calendars_owner_user_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.acorn_calendar_calendars DROP CONSTRAINT IF EXISTS acorn_calendar_calendars_owner_user_group_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_semesters DROP CONSTRAINT IF EXISTS academic_year_semester_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_year_semesters DROP CONSTRAINT IF EXISTS academic_year_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_settings DROP CONSTRAINT IF EXISTS academic_year_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculations DROP CONSTRAINT IF EXISTS academic_year_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_centres DROP CONSTRAINT IF EXISTS academic_year_id;
@@ -337,7 +351,6 @@ ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_types DROP CONST
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_materials DROP CONSTRAINT IF EXISTS academic_year_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_material_types DROP CONSTRAINT IF EXISTS academic_year_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_courses DROP CONSTRAINT IF EXISTS academic_year_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_year_semesters DROP CONSTRAINT IF EXISTS academic_year_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS academic_year_id;
 DROP TRIGGER IF EXISTS tr_acorn_user_user_languages_current ON public.acorn_user_user_languages;
 DROP TRIGGER IF EXISTS tr_acorn_user_user_group_version_current ON public.acorn_user_user_group_versions;
@@ -347,6 +360,7 @@ DROP TRIGGER IF EXISTS tr_acorn_updated_by_user_id ON public.acorn_university_st
 DROP TRIGGER IF EXISTS tr_acorn_updated_by_user_id ON public.acorn_university_student_statuses;
 DROP TRIGGER IF EXISTS tr_acorn_updated_by_user_id ON public.acorn_university_student_notes;
 DROP TRIGGER IF EXISTS tr_acorn_updated_by_user_id ON public.acorn_university_student_identities;
+DROP TRIGGER IF EXISTS tr_acorn_updated_by_user_id ON public.acorn_university_student_course_material_exceptions;
 DROP TRIGGER IF EXISTS tr_acorn_updated_by_user_id ON public.acorn_university_student_codes;
 DROP TRIGGER IF EXISTS tr_acorn_updated_by_user_id ON public.acorn_university_semesters;
 DROP TRIGGER IF EXISTS tr_acorn_updated_by_user_id ON public.acorn_university_projects;
@@ -360,6 +374,7 @@ DROP TRIGGER IF EXISTS tr_acorn_updated_by_user_id ON public.acorn_university_en
 DROP TRIGGER IF EXISTS tr_acorn_updated_by_user_id ON public.acorn_university_course_years;
 DROP TRIGGER IF EXISTS tr_acorn_updated_by_user_id ON public.acorn_university_course_year_settings;
 DROP TRIGGER IF EXISTS tr_acorn_updated_by_user_id ON public.acorn_university_course_types;
+DROP TRIGGER IF EXISTS tr_acorn_updated_by_user_id ON public.acorn_university_course_specializations;
 DROP TRIGGER IF EXISTS tr_acorn_updated_by_user_id ON public.acorn_university_course_materials;
 DROP TRIGGER IF EXISTS tr_acorn_updated_by_user_id ON public.acorn_university_academic_years;
 DROP TRIGGER IF EXISTS tr_acorn_updated_by_user_id ON public.acorn_university_academic_year_semesters;
@@ -415,6 +430,7 @@ DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_student_typ
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_student_statuses;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_student_notes;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_student_identities;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_student_course_material_exceptions;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_student_codes;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_semesters;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_projects;
@@ -428,6 +444,7 @@ DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_entities;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_course_years;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_course_year_settings;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_course_types;
+DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_course_specializations;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_course_materials;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_academic_years;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_academic_year_semesters;
@@ -477,6 +494,7 @@ DROP TRIGGER IF EXISTS tr_acorn_created_by_user_id ON public.acorn_university_st
 DROP TRIGGER IF EXISTS tr_acorn_created_by_user_id ON public.acorn_university_student_statuses;
 DROP TRIGGER IF EXISTS tr_acorn_created_by_user_id ON public.acorn_university_student_notes;
 DROP TRIGGER IF EXISTS tr_acorn_created_by_user_id ON public.acorn_university_student_identities;
+DROP TRIGGER IF EXISTS tr_acorn_created_by_user_id ON public.acorn_university_student_course_material_exceptions;
 DROP TRIGGER IF EXISTS tr_acorn_created_by_user_id ON public.acorn_university_student_codes;
 DROP TRIGGER IF EXISTS tr_acorn_created_by_user_id ON public.acorn_university_semesters;
 DROP TRIGGER IF EXISTS tr_acorn_created_by_user_id ON public.acorn_university_projects;
@@ -490,6 +508,7 @@ DROP TRIGGER IF EXISTS tr_acorn_created_by_user_id ON public.acorn_university_en
 DROP TRIGGER IF EXISTS tr_acorn_created_by_user_id ON public.acorn_university_course_years;
 DROP TRIGGER IF EXISTS tr_acorn_created_by_user_id ON public.acorn_university_course_year_settings;
 DROP TRIGGER IF EXISTS tr_acorn_created_by_user_id ON public.acorn_university_course_types;
+DROP TRIGGER IF EXISTS tr_acorn_created_by_user_id ON public.acorn_university_course_specializations;
 DROP TRIGGER IF EXISTS tr_acorn_created_by_user_id ON public.acorn_university_course_materials;
 DROP TRIGGER IF EXISTS tr_acorn_created_by_user_id ON public.acorn_university_academic_years;
 DROP TRIGGER IF EXISTS tr_acorn_created_by_user_id ON public.acorn_university_academic_year_semesters;
@@ -611,8 +630,10 @@ DROP INDEX IF EXISTS public.fki_enrollment_student_id;
 DROP INDEX IF EXISTS public.fki_enrollment_course_id;
 DROP INDEX IF EXISTS public.fki_enrollment_academic_year_id;
 DROP INDEX IF EXISTS public.fki_created_by_user_id;
+DROP INDEX IF EXISTS public.fki_course_year_setting_id;
 DROP INDEX IF EXISTS public.fki_course_year_semester_id;
 DROP INDEX IF EXISTS public.fki_course_type_id;
+DROP INDEX IF EXISTS public.fki_course_specialization_id;
 DROP INDEX IF EXISTS public.fki_course_material_id;
 DROP INDEX IF EXISTS public.fki_course_id;
 DROP INDEX IF EXISTS public.fki_course_entry_requirements_id;
@@ -747,6 +768,7 @@ ALTER TABLE IF EXISTS ONLY public.backend_user_preferences DROP CONSTRAINT IF EX
 ALTER TABLE IF EXISTS ONLY public.backend_user_groups DROP CONSTRAINT IF EXISTS backend_user_groups_pkey;
 ALTER TABLE IF EXISTS ONLY public.backend_access_log DROP CONSTRAINT IF EXISTS backend_access_log_pkey;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_areas DROP CONSTRAINT IF EXISTS area_area_type;
+ALTER TABLE IF EXISTS public.acorn_university_student_course_material_exceptions DROP CONSTRAINT IF EXISTS action;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_users DROP CONSTRAINT IF EXISTS acorn_user_users_pkey;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_users DROP CONSTRAINT IF EXISTS acorn_user_users_login_unique;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_users DROP CONSTRAINT IF EXISTS acorn_user_users_email_unique;
@@ -774,6 +796,7 @@ ALTER TABLE IF EXISTS ONLY public.acorn_university_student_type DROP CONSTRAINT 
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_statuses DROP CONSTRAINT IF EXISTS acorn_university_student_statuses_pkey;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_notes DROP CONSTRAINT IF EXISTS acorn_university_student_notes_pkey;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_identities DROP CONSTRAINT IF EXISTS acorn_university_student_identities_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_exceptions DROP CONSTRAINT IF EXISTS acorn_university_student_course_material_exceptions_p;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_codes DROP CONSTRAINT IF EXISTS acorn_university_student_codes_pkey;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_semesters DROP CONSTRAINT IF EXISTS acorn_university_semesters_pkey;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_year_semesters DROP CONSTRAINT IF EXISTS acorn_university_semester_year_pkey;
@@ -790,6 +813,7 @@ ALTER TABLE IF EXISTS ONLY public.acorn_university_departments DROP CONSTRAINT I
 ALTER TABLE IF EXISTS ONLY public.acorn_university_courses DROP CONSTRAINT IF EXISTS acorn_university_courses_pkey;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_settings DROP CONSTRAINT IF EXISTS acorn_university_course_year_settings_pkey;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_semesters DROP CONSTRAINT IF EXISTS acorn_university_course_year_semesters_pkey;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_specializations DROP CONSTRAINT IF EXISTS acorn_university_course_specializations_pkey;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_materials DROP CONSTRAINT IF EXISTS acorn_university_course_material_pkey;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_language DROP CONSTRAINT IF EXISTS acorn_university_course_language_pkey;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_years DROP CONSTRAINT IF EXISTS acorn_university_academic_years_pkey;
@@ -962,6 +986,7 @@ DROP TABLE IF EXISTS public.acorn_university_universities;
 DROP TABLE IF EXISTS public.acorn_university_teachers;
 DROP TABLE IF EXISTS public.acorn_university_student_type;
 DROP VIEW IF EXISTS public.acorn_university_student_lookups;
+DROP TABLE IF EXISTS public.acorn_university_student_course_material_exceptions;
 DROP TABLE IF EXISTS public.acorn_university_schools;
 DROP VIEW IF EXISTS public.acorn_university_legacy_updates;
 DROP FOREIGN TABLE IF EXISTS public.university_mofadala_baccalaureate_marks;
@@ -1036,9 +1061,8 @@ DROP TABLE IF EXISTS public.acorn_university_entities;
 DROP TABLE IF EXISTS public.acorn_university_course_years;
 DROP TABLE IF EXISTS public.acorn_university_course_year_settings;
 DROP TABLE IF EXISTS public.acorn_university_course_types;
+DROP TABLE IF EXISTS public.acorn_university_course_specializations;
 DROP TABLE IF EXISTS public.acorn_university_course_materials;
-DROP TABLE IF EXISTS public.acorn_university_academic_years;
-DROP SEQUENCE IF EXISTS public.acorn_university_year_seq;
 DROP TABLE IF EXISTS public.acorn_exam_types;
 DROP TABLE IF EXISTS public.acorn_exam_sections;
 DROP TABLE IF EXISTS public.acorn_exam_scores;
@@ -1063,6 +1087,8 @@ DROP TABLE IF EXISTS public.acorn_enrollment_desires;
 DROP TABLE IF EXISTS public.acorn_enrollment_course_entry_requirements;
 DROP VIEW IF EXISTS public.acorn_calendar_linked_events;
 DROP TABLE IF EXISTS public.acorn_university_lectures;
+DROP TABLE IF EXISTS public.acorn_university_academic_years;
+DROP SEQUENCE IF EXISTS public.acorn_university_year_seq;
 DROP TABLE IF EXISTS public.acorn_university_academic_year_semesters;
 DROP TABLE IF EXISTS public.acorn_exam_interview_students;
 DROP TABLE IF EXISTS public.acorn_calendar_instances;
@@ -1123,14 +1149,16 @@ DROP FUNCTION IF EXISTS public.fn_acorn_university_action_students_refresh(model
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_hierarchies_append_child(p_model_id uuid, p_user_id uuid);
+DROP FUNCTION IF EXISTS public.fn_acorn_university_action_course_year_settings_plan(p_model_id uuid, p_user_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_course_materials_cm_copy2(p_course_id uuid, p_academic_year_semester_id uuid, p_course_year_id uuid, p_copy_exams boolean, p_copy_projects boolean, p_copy_interviews boolean, p_copy_calculations boolean, p_copy_students boolean, p_delete_existing boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid);
+DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_provision(p_model_id uuid, p_user_id uuid, p_copy_academic_year_id uuid, p_num_years integer, p_enabled boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean);
-DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean);
+DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean);
-DROP FUNCTION IF EXISTS public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid);
+DROP FUNCTION IF EXISTS public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_truncate_database(schema_like character varying, table_like character varying);
 DROP FUNCTION IF EXISTS public.fn_acorn_translate(p_fallback_name character varying, p_table character varying, p_id uuid, p_locale character);
 DROP FUNCTION IF EXISTS public.fn_acorn_table_counts(_schema character varying);
@@ -1177,7 +1205,7 @@ DROP FUNCTION IF EXISTS public.fn_acorn_calendar_lazy_create_event(calendar_name
 DROP FUNCTION IF EXISTS public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone);
 DROP FUNCTION IF EXISTS public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record);
 DROP FUNCTION IF EXISTS public.fn_acorn_calendar_events_generate_event_instances();
-DROP FUNCTION IF EXISTS public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone);
+DROP FUNCTION IF EXISTS public.fn_acorn_calendar_create_event(p_calendar_id uuid, p_owner_user_id uuid, p_event_type_id uuid, p_event_status_id uuid, p_name character varying, p_date_from timestamp without time zone, p_date_to timestamp without time zone);
 DROP FUNCTION IF EXISTS public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying);
 DROP FUNCTION IF EXISTS public.fn_acorn_avg(VARIADIC ints double precision[]);
 DROP FUNCTION IF EXISTS public.fn_acorn_avg();
@@ -1414,23 +1442,23 @@ ALTER FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_use
 -- Name: fn_acorn_calendar_create_event(uuid, uuid, uuid, uuid, character varying, timestamp without time zone, timestamp without time zone); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) RETURNS uuid
+CREATE FUNCTION public.fn_acorn_calendar_create_event(p_calendar_id uuid, p_owner_user_id uuid, p_event_type_id uuid, p_event_status_id uuid, p_name character varying, p_date_from timestamp without time zone, p_date_to timestamp without time zone) RETURNS uuid
     LANGUAGE plpgsql
     AS $$
-            declare
-
-                new_event_id uuid;
-            begin
-            insert into public.acorn_calendar_events(calendar_id, owner_user_id) 
-                values(calendar_id, owner_user_id) returning id into new_event_id;
-            insert into public.acorn_calendar_event_parts(event_id, type_id, status_id, name, start, "end") 
-                values(new_event_id, event_type_id, event_status_id, name, date_from, date_to);
-            return new_event_id;
+declare
+	p_new_event_id uuid;
+begin
+	insert into public.acorn_calendar_events(calendar_id, owner_user_id) 
+		values(p_calendar_id, p_owner_user_id) returning id into p_new_event_id;
+	insert into public.acorn_calendar_event_parts(event_id, type_id, status_id, name, start, "end") 
+		values(p_new_event_id, p_event_type_id, p_event_status_id, p_name, p_date_from, p_date_to);
+	return p_new_event_id;
 end;
-            $$;
+            
+$$;
 
 
-ALTER FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_calendar_create_event(p_calendar_id uuid, p_owner_user_id uuid, p_event_type_id uuid, p_event_status_id uuid, p_name character varying, p_date_from timestamp without time zone, p_date_to timestamp without time zone) OWNER TO university;
 
 --
 -- Name: fn_acorn_calendar_events_generate_event_instances(); Type: FUNCTION; Schema: public; Owner: university
@@ -3462,14 +3490,15 @@ end;
 ALTER FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) OWNER TO university;
 
 --
--- Name: fn_acorn_university_academic_years_copy_to(uuid, uuid, uuid, boolean, boolean, boolean, boolean, uuid, uuid); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_university_academic_years_copy_to(uuid, uuid, uuid, boolean, boolean, boolean, boolean, boolean, uuid, uuid); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean DEFAULT true, p_copy_materials boolean DEFAULT true, p_copy_seminars boolean DEFAULT true, p_copy_calculations boolean DEFAULT true, p_old_parent_id uuid DEFAULT NULL::uuid, p_new_parent_id uuid DEFAULT NULL::uuid) RETURNS uuid
+CREATE FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_copy_hierarchy boolean DEFAULT false, p_copy_semesters boolean DEFAULT false, p_copy_materials boolean DEFAULT false, p_copy_seminars boolean DEFAULT false, p_copy_calculations boolean DEFAULT false, p_old_parent_id uuid DEFAULT NULL::uuid, p_new_parent_id uuid DEFAULT NULL::uuid) RETURNS uuid
     LANGUAGE plpgsql
     AS $$
 declare
 	p_description text;
+	p_year_diff interval;
 	-- p_new_hids uuid[];
 	p_nowhere uuid[];
 begin
@@ -3477,46 +3506,86 @@ begin
 		from acorn_university_academic_years 
 		where id = p_old_academic_year_id;
 
+	-- ------------------------------------------------ Copy Semesters
+	if p_copy_semesters then
+		-- Year Diff between new and old to add to the dates of the semesters
+		select ('P' || extract(year from ep_new.start) - extract(year from ep_old.start) || 'Y')::interval into p_year_diff
+			from acorn_university_academic_years ay_old
+			inner join acorn_calendar_events ev_old on ev_old.id = ay_old.event_id
+			inner join acorn_calendar_event_parts ep_old on ep_old.event_id = ev_old.id,
+			
+			acorn_university_academic_years ay_new
+			inner join acorn_calendar_events ev_new on ev_new.id = ay_new.event_id
+			inner join acorn_calendar_event_parts ep_new on ep_new.event_id = ev_new.id
+
+			where ay_old.id = p_old_academic_year_id
+			and ay_new.id = p_new_academic_year_id;			
+		
+		insert into acorn_university_academic_year_semesters(academic_year_id, semester_id, created_by_user_id, event_id)
+			select p_new_academic_year_id, ays_old.semester_id, p_user_id,
+			fn_acorn_calendar_create_event(
+				ev_old.calendar_id, p_user_id, ep_old.type_id, ep_old.status_id, 
+				'Semester ' || ay_new.name || '::' || sem_old.name,
+				ep_old.start + p_year_diff, 
+				ep_old.end   + p_year_diff
+			)
+			-- From Academic Year
+			from acorn_university_academic_years ay_old
+			inner join acorn_university_academic_year_semesters ays_old on ay_old.id = ays_old.academic_year_id
+			inner join acorn_university_semesters sem_old on sem_old.id = ays_old.semester_id
+			inner join acorn_calendar_events ev_old on ev_old.id = ays_old.event_id
+			inner join acorn_calendar_event_parts ep_old on ep_old.event_id = ev_old.id
+			-- New Academic Year (semesters being insterted)
+			cross join acorn_university_academic_years ay_new
+			
+			where ay_old.id = p_old_academic_year_id
+			and ay_new.id = p_new_academic_year_id
+			on conflict do nothing; -- Don't overwrite existing entries
+	end if;
+
+	-- ------------------------------------------------ Copy Hierarchy
 	-- Recursive
 	-- Note that entities can have multiple hierarchy parents
 	-- thus the recursive copy
-	with inserted as (
-		insert into acorn_university_hierarchies(
-			entity_id, academic_year_id, 
-			parent_id, 
-			created_by_user_id, description, 
-			import_source
-		)
-			select 
-				hi_old.entity_id, p_new_academic_year_id, 
-				p_new_parent_id, -- NULL at top level
-				p_user_id, hi_old.description, 
-				-- import_source: Ugly temp solution, because we are not sure how to pass through the old id
-				hi_old.id::character varying(64) 
-			from acorn_university_hierarchies hi_old
-			where hi_old.academic_year_id = p_old_academic_year_id
-			and (hi_old.parent_id = p_old_parent_id or 
-				(p_old_parent_id is NULL and hi_old.parent_id is NULL)
+	if p_copy_hierarchy then
+		with inserted as (
+			insert into acorn_university_hierarchies(
+				entity_id, academic_year_id, 
+				parent_id, 
+				created_by_user_id, description, 
+				import_source
 			)
-			returning import_source::uuid as old_id, id as new_id
-		)
-		select array_agg(fn_acorn_university_academic_years_copy_to(
-				p_old_academic_year_id, p_new_academic_year_id, p_user_id,
-				p_promote_successful_students, p_copy_materials, p_copy_seminars, p_copy_calculations,
-				inserted.old_id, inserted.new_id
-			)) into p_nowhere
-		from inserted;
-
-	-- TODO: Get inserted in to p_new_hids, and update things...
-	-- update acorn_university_hierarchies set import_source = p_description || ':' || import_source
-	-- 	where id in(select unnest from unnest(p_new_hids));
+				select 
+					hi_old.entity_id, p_new_academic_year_id, 
+					p_new_parent_id, -- NULL at top level
+					p_user_id, hi_old.description, 
+					-- import_source: Ugly temp solution, because we are not sure how to pass through the old id
+					hi_old.id::character varying(64) 
+				from acorn_university_hierarchies hi_old
+				where hi_old.academic_year_id = p_old_academic_year_id
+				and (hi_old.parent_id = p_old_parent_id or 
+					(p_old_parent_id is NULL and hi_old.parent_id is NULL)
+				)
+				returning import_source::uuid as old_id, id as new_id
+			)
+			select array_agg(fn_acorn_university_academic_years_copy_to(
+					p_old_academic_year_id, p_new_academic_year_id, p_user_id,
+					p_copy_hierarchy, p_copy_semesters, p_copy_materials, p_copy_seminars, p_copy_calculations,
+					inserted.old_id, inserted.new_id
+				)) into p_nowhere
+			from inserted;
+	
+		-- TODO: Get inserted in to p_new_hids, and update things...
+		-- update acorn_university_hierarchies set import_source = p_description || ':' || import_source
+		-- 	where id in(select unnest from unnest(p_new_hids));
+	end if;
 		
 	return p_new_academic_year_id;
 end;
 $$;
 
 
-ALTER FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) OWNER TO university;
 
 --
 -- Name: fn_acorn_university_action_academic_years_clear(uuid, uuid, boolean, boolean, boolean, boolean); Type: FUNCTION; Schema: public; Owner: university
@@ -3573,31 +3642,33 @@ comment:
 
 
 --
--- Name: fn_acorn_university_action_academic_years_copy_to(uuid, uuid, uuid, boolean, boolean, boolean, boolean); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_university_action_academic_years_copy_to(uuid, uuid, uuid, boolean, boolean, boolean, boolean, boolean); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean DEFAULT true, p_copy_materials boolean DEFAULT true, p_copy_seminars boolean DEFAULT true, p_copy_calculations boolean DEFAULT true) RETURNS void
+CREATE FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_copy_hierarchy boolean DEFAULT false, p_copy_semesters boolean DEFAULT false, p_copy_materials boolean DEFAULT false, p_copy_seminars boolean DEFAULT false, p_copy_calculations boolean DEFAULT false) RETURNS void
     LANGUAGE plpgsql
     AS $$
 begin
 	perform fn_acorn_university_academic_years_copy_to(
 		model_id, p_academic_year_id, user_id,
-		p_promote_successful_students, p_copy_materials, p_copy_seminars, p_copy_calculations
+		p_copy_hierarchy, p_copy_semesters, p_copy_materials, p_copy_seminars, p_copy_calculations
 	);
-	perform fn_acorn_university_hierarchies_counts(id)
-		from acorn_university_hierarchies
-		where parent_id is NULL;
+
+	-- TODO: Do this fn_acorn_university_hierarchies_counts with a trigger?
+	-- perform fn_acorn_university_hierarchies_counts(id)
+	-- 	from acorn_university_hierarchies
+	-- 	where parent_id is NULL;
 end;
 $$;
 
 
-ALTER FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) OWNER TO university;
+ALTER FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) OWNER TO university;
 
 --
--- Name: FUNCTION fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean); Type: COMMENT; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean); Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) IS 'labels:
+COMMENT ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) IS 'labels:
   en: Copy year data to
 result-action: refresh
 condition: exists(select * from acorn_university_hierarchies where academic_year_id = acorn_university_academic_years.id)';
@@ -3704,6 +3775,113 @@ comment:
 
 
 --
+-- Name: fn_acorn_university_action_academic_years_provision(uuid, uuid, uuid, integer, boolean); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_university_action_academic_years_provision(p_model_id uuid, p_user_id uuid, p_copy_academic_year_id uuid, p_num_years integer DEFAULT 5, p_enabled boolean DEFAULT true) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+declare
+	p_max_academic_year_id uuid;
+	p_new_academic_year_ids uuid[];
+	p_calendar_id     uuid;
+	p_event_type_id   uuid;
+	p_event_status_id uuid;
+begin
+	-- Max year so far
+	select id into p_max_academic_year_id
+		from acorn_university_academic_years
+		order by ordinal desc
+		limit 1;
+
+	-- Copy event settings
+	select ev_copy.calendar_id, ep_copy.type_id, ep_copy.status_id into p_calendar_id, p_event_type_id, p_event_status_id
+		from acorn_university_academic_years ay_copy
+		inner join acorn_calendar_events ev_copy on ev_copy.id = ay_copy.event_id
+		inner join acorn_calendar_event_parts ep_copy on ep_copy.event_id = ev_copy.id
+		where ay_copy.id = p_copy_academic_year_id
+		order by ep_copy.start asc
+		limit 1;
+			
+	-- Provision the Years
+	with inserted as (
+		insert into acorn_university_academic_years(name, ordinal, enabled, event_id)
+			select (extract(year from ep_max.start) + cy.ordinal)::text || '-' || (extract(year from ep_max.end) + cy.ordinal)::text,
+				ay_max.ordinal + cy.ordinal, 
+				p_enabled, 
+				fn_acorn_calendar_create_event(
+					p_calendar_id, p_user_id, p_event_type_id, p_event_status_id, 
+					'Academic Year ' || (extract(year from ep_max.start) + cy.ordinal)::text || '-' || (extract(year from ep_max.end) + cy.ordinal)::text,
+					ep_max.start + ('P' || cy.ordinal || 'Y')::interval, 
+					ep_max.end   + ('P' || cy.ordinal || 'Y')::interval
+				)
+			-- Use the Course Years as our counter
+			from acorn_university_course_years cy
+			-- Get the current years semester from/to to copy from
+			cross join acorn_university_academic_years ay_max
+			inner join acorn_calendar_events ev_max on ev_max.id = ay_max.event_id
+			inner join acorn_calendar_event_parts ep_max on ep_max.event_id = ev_max.id
+			where ay_max.id = p_max_academic_year_id
+			and cy.ordinal <= p_num_years
+			returning id
+	) select array_agg(id) into p_new_academic_year_ids from inserted;
+
+	-- Provision semesters
+	-- TODO: Container event
+	insert into acorn_university_academic_year_semesters(academic_year_id, semester_id, event_id)
+		select ay_new.id, ays_copy.semester_id, 
+			-- Create the event
+			fn_acorn_calendar_create_event(
+				p_calendar_id, p_user_id, p_event_type_id, p_event_status_id, 
+				'Semester ' || ay_new.name || '::' || sem_copy.name,
+				ep_copy.start + ('P' || (ay_new.ordinal - ay_copy.ordinal) || 'Y')::interval, 
+				ep_copy.end   + ('P' || (ay_new.ordinal - ay_copy.ordinal) || 'Y')::interval
+			)
+		from acorn_university_academic_years ay_new
+		-- Get the current years semester from/to to copy from
+		-- TODO: It is an error for a semester to have multiple event_parts
+		cross join acorn_university_academic_years ay_copy
+		inner join acorn_calendar_events ev_copy on ev_copy.id = ay_copy.event_id
+		inner join acorn_calendar_event_parts ep_copy on ep_copy.event_id = ev_copy.id
+		-- Copy Semesters
+		inner join acorn_university_academic_year_semesters ays_copy on ay_copy.id = ays_copy.academic_year_id
+		inner join acorn_university_semesters sem_copy on ays_copy.semester_id = sem_copy.id
+		where ay_copy.id = p_copy_academic_year_id
+		-- Newly created years
+		and not array_position(p_new_academic_year_ids, ay_new.id) is null;
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_university_action_academic_years_provision(p_model_id uuid, p_user_id uuid, p_copy_academic_year_id uuid, p_num_years integer, p_enabled boolean) OWNER TO university;
+
+--
+-- Name: FUNCTION fn_acorn_university_action_academic_years_provision(p_model_id uuid, p_user_id uuid, p_copy_academic_year_id uuid, p_num_years integer, p_enabled boolean); Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON FUNCTION public.fn_acorn_university_action_academic_years_provision(p_model_id uuid, p_user_id uuid, p_copy_academic_year_id uuid, p_num_years integer, p_enabled boolean) IS 'labels:
+  en: Provision years and semesters
+result-action: refresh
+type: list
+fields:
+  p_copy_academic_year_id:
+    options: Acorn\University\Models\AcademicYear::dropdownOptions
+    type: dropdown
+    required: true
+  p_enabled:
+    label: Enable new years
+    cssClass: col-xs-6
+    default: true
+  p_num_years:
+    label: Number of new years
+    cssClass: col-xs-6
+	default: 5
+comment:
+  en: >
+    Provision multiple Academic years and semesters into the future. Semesters will be copied from the most recent Academic Year setup.';
+
+
+--
 -- Name: fn_acorn_university_action_academic_years_res_ref(uuid, uuid); Type: FUNCTION; Schema: public; Owner: university
 --
 
@@ -3793,6 +3971,44 @@ fields:
     span: storm
     css-class: col-xs-4
 comment-icon: info';
+
+
+--
+-- Name: fn_acorn_university_action_course_year_settings_plan(uuid, uuid); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_university_action_course_year_settings_plan(p_model_id uuid, p_user_id uuid) RETURNS character varying
+    LANGUAGE plpgsql
+    AS $$
+begin
+	return (select 
+		'/backend/acorn/university/courseyearsemesters'
+		|| '?title=' || 'Course Planner for ' || ugs.name || ', ' || ay.name
+		|| '&theme=document'
+		|| '&course_year_settings_id=' || cys.id
+		from acorn_university_course_year_settings cys
+		inner join acorn_university_courses c on c.id = cys.course_id
+		inner join acorn_university_entities en on en.id = c.entity_id
+		inner join acorn_user_user_groups ugs on ugs.id = en.user_group_id
+		inner join acorn_university_academic_years ay on cys.enrollment_academic_year_id = ay.id
+		where cys.id = p_model_id
+	);
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_university_action_course_year_settings_plan(p_model_id uuid, p_user_id uuid) OWNER TO university;
+
+--
+-- Name: FUNCTION fn_acorn_university_action_course_year_settings_plan(p_model_id uuid, p_user_id uuid); Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON FUNCTION public.fn_acorn_university_action_course_year_settings_plan(p_model_id uuid, p_user_id uuid) IS 'labels:
+  en: Plan Course
+result-action: model-uuid-redirect
+comment:
+  en: >
+    Plan the materials, seminars and exams for the course for each of the course years and semesters.';
 
 
 --
@@ -4502,13 +4718,17 @@ begin
 			inner join acorn_university_hierarchies hi on hi.entity_id = en.id
 			where cm.id = new.course_material_id;
 
-		-- Sync and lock the event user_group_version
+		-- Sync event user_group_version
 		update acorn_calendar_event_parts 
-			set user_group_version_id = p_user_group_version_id,
-			user_group_version_locked_external = true
+			set user_group_version_id = p_user_group_version_id
 			where event_id = new.event_id;
 	end if;
 		
+	-- Always lock the event user_group_version, even if NULL
+	update acorn_calendar_event_parts 
+		set user_group_version_locked_external = true
+		where event_id = new.event_id;
+
 	return new;
 end;
             
@@ -9599,41 +9819,53 @@ CREATE FUNCTION public.fn_acorn_university_provision_year_semesters() RETURNS tr
     LANGUAGE plpgsql
     AS $$
 declare
+	p_enrollment_academic_year_ordinal int;
 	p_id uuid;
-	p_record record;
+	p_yearsemesters_record record;
 	p_academic_year_name character varying(1024);
 begin
 	-- Runs AFTER INSERT|UPDATE on acorn_university_course_year_settings
-	-- Provision every course year until new.length
-	-- every semester for this academic_year_id
-	-- For a 4 year course, 3 semesters, this will 12 rows
+	-- Provision every course year from this enrollment academic year until new.length
+	-- every semester for each academic year
+	-- For a 4 year course, 3 semesters, this will be 12 rows
+	-- 2024-2025 - Semester 1
+	-- 2024-2025 - Semester 2
+	-- 2024-2025 - Semester 3
+	-- 2025-2026 - Semester 1
+	-- 2025-2026 - Semester 2
+	-- 2025-2026 - Semester 3
+	-- ...
 
-	-- What if semesters have not been provisioned for this academic year?
-	if not exists(select * 
-		from acorn_university_academic_year_semesters
-		where academic_year_id = new.academic_year_id
-	) then
-		select name into p_academic_year_name from public.acorn_university_academic_years
-			where id = new.academic_year_id;
-		raise exception 'It looks like semesters have not been provisioned for this year %', p_academic_year_name;
-	end if;
+	-- Enrollment year
+	select ordinal into p_enrollment_academic_year_ordinal
+		from acorn_university_academic_years
+		where id = new.enrollment_academic_year_id;
+
+	-- TODO: What if semesters have not been provisioned for this academic year?
+	-- if not exists(select * 
+	-- 	from acorn_university_academic_year_semesters
+	-- 	where academic_year_id = p_years_record.academic_year_id
+	-- ) then
+	-- 	select name into p_academic_year_name from public.acorn_university_academic_years
+	-- 		where id = p_years_record.academic_year_id;
+	-- 	raise exception 'It looks like semesters have not been provisioned for this year %', p_academic_year_name;
+	-- end if;
 		
 	-- Provision any missing items
-	for p_record in select ugs.name || '::Year-' || cy.name || '::' || ay.name || '::' || sem.name as name,
-			new.course_id, cy.id as course_year_id, ays.id as academic_year_semester_id
-		from acorn_university_course_years cy,
-		
-		acorn_university_academic_year_semesters ays
-		inner join acorn_university_semesters sem on ays.semester_id = sem.id
-		inner join acorn_university_academic_years ay on ays.academic_year_id = ay.id,
-		
+	for p_yearsemesters_record in select ugs.name || '::Year-' || cy.name || '::' || ay.name || '::' || sem.name as name,
+			c.id as course_id, cy.id as course_year_id, ays.id as academic_year_semester_id
+		-- Year Semesters
+		from acorn_university_academic_years ay
+		inner join acorn_university_course_years cy on ay.ordinal - p_enrollment_academic_year_ordinal + 1 = cy.ordinal
+		inner join acorn_university_academic_year_semesters ays on ays.academic_year_id = ay.id
+		inner join acorn_university_semesters sem on ays.semester_id = sem.id,
+
+		-- Course details
 		acorn_university_courses c
 		inner join acorn_university_entities en on c.entity_id = en.id
 		inner join acorn_user_user_groups ugs on ugs.id = en.user_group_id
 		
-		where ays.academic_year_id = new.academic_year_id
-		and c.id = new.course_id
-		and cy.ordinal <= new.length
+		where c.id = new.course_id
 		-- Add un-provisioned items only
 		and not exists(
 			select * from acorn_university_course_year_semesters cys
@@ -9641,12 +9873,15 @@ begin
 			and course_year_id = cy.id
 			and academic_year_semester_id = ays.id
 		)
-		order by cy.ordinal asc, sem.ordinal asc
+		-- Restrict academic years to beginning => length of course
+		-- The inner join on ordinal above does the work here
+		and cy.ordinal <= new.length
+		order by ay.ordinal ASC, cy.ordinal ASC
 	loop
 		-- User group, Entity, CYS
 		-- CYS name is constructed, not 1-1 user_group
 		insert into acorn_user_user_groups(name)
-			select p_record.name
+			select p_yearsemesters_record.name
 			returning id into p_id;
 		insert into acorn_university_entities(user_group_id)
 			values(p_id)
@@ -9654,24 +9889,27 @@ begin
 		-- This will cascade another trigger
 		-- to sync all CYS under all Course nodes in the hierachies table
 		-- for the stated year
-		insert into acorn_university_course_year_semesters(course_id, course_year_id, academic_year_semester_id, entity_id)
-			values(p_record.course_id, p_record.course_year_id, p_record.academic_year_semester_id, p_id);
+		insert into acorn_university_course_year_semesters(course_year_setting_id, course_id, course_year_id, academic_year_semester_id, entity_id)
+			values(new.id, p_yearsemesters_record.course_id, p_yearsemesters_record.course_year_id, p_yearsemesters_record.academic_year_semester_id, p_id);
 	end loop;
-	
-	-- Remove excess course years in case of reductory length updates
+		
+	-- TODO: Remove excess course years in case of reductory length updates
 	-- This will also cause a sync trigger to delete the entities 
 	-- & cascade to hierarchies
-	delete from acorn_university_course_year_semesters
-		where course_id = new.course_id
-		and academic_year_semester_id in(
-			select id from acorn_university_academic_year_semesters 
-			where academic_year_id = new.academic_year_id
-		)
-		and course_year_id in(
-			select id from acorn_university_course_years 
-			where ordinal > new.length
-		);
-	
+	-- delete from acorn_university_course_year_semesters where id in(
+	-- 	select ays.id 
+	-- 	-- Year Semesters
+	-- 	from acorn_university_academic_years ay
+	-- 	inner join acorn_university_course_years cy on ay.ordinal - p_enrollment_academic_year_ordinal + 1 = cy.ordinal
+	-- 	inner join acorn_university_academic_year_semesters ays on ays.academic_year_id = ay.id
+	-- 	inner join acorn_university_course_year_semesters cys 
+	-- 		on cys.academic_year_semester_id = ays.id
+	-- 		and cys.course_year_id = cy.id
+	-- 	where cys.course_id = new.course_id
+	-- 	-- Restrict academic years to after length of course
+	-- 	-- The inner join on ordinal above does the work here
+	-- 	and cy.ordinal > new.length
+	-- );
     return new;
 end;
             
@@ -10458,6 +10696,7 @@ ALTER TABLE public.acorn_university_academic_year_semesters OWNER TO university;
 --
 
 COMMENT ON TABLE public.acorn_university_academic_year_semesters IS 'order: 1015
+menu: false
 seeding:
   # Year 2022-2023 (Bakeloria only)
   - [''17f6360c-4e8d-11f0-9162-77dce63310ae'', ''8fe62240-3546-11f0-bc4d-3f9721dbc106'', ''61c051fa-2b47-11f0-bc0f-ab4c8b696730'', EVENT(Default;Year 2022-2023 Semester 1)] 
@@ -10478,6 +10717,114 @@ labels-plural:
   ku: Werzên Sal
   ar: الفصل الدراسي
 ';
+
+
+--
+-- Name: acorn_university_year_seq; Type: SEQUENCE; Schema: public; Owner: university
+--
+
+CREATE SEQUENCE public.acorn_university_year_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.acorn_university_year_seq OWNER TO university;
+
+--
+-- Name: acorn_university_academic_years; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_university_academic_years (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    current boolean DEFAULT true NOT NULL,
+    description text,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL,
+    name character varying(1024) DEFAULT ''::character varying NOT NULL,
+    ordinal integer DEFAULT nextval('public.acorn_university_year_seq'::regclass),
+    enabled boolean DEFAULT true NOT NULL,
+    created_at timestamp(0) without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp(0) without time zone,
+    event_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.acorn_university_academic_years OWNER TO university;
+
+--
+-- Name: TABLE acorn_university_academic_years; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_university_academic_years IS 'global-scope: true
+menu-splitter: true
+order: 1000
+seeding:
+  # Historic required for Year 10, enrollment year calculation
+  - [''dee7d1e6-33ba-11f0-9757-0b77f37bff0c'', 01/09/2025, 30/05/2026, false, '''', ''2025-2026'', 107]
+  - [''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', 01/09/2024, 30/05/2025, true, '''', ''2024-2025'', 106]
+  - [''543d0928-1b6c-11f0-abc1-8bd8fff1240d'', 01/09/2023, 30/05/2024, false, '''', ''2023-2024'', 105]
+  - [''8fe62240-3546-11f0-bc4d-3f9721dbc106'', 01/09/2022, 30/05/2023, false, '''', ''2022-2023'', 104]
+  - [''8fe62420-3546-11f0-bc4e-67afd1391b00'', 01/09/2021, 30/05/2022, false, '''', ''2021-2022'', 103]
+  - [''8fe6248e-3546-11f0-bc4f-cf68964a0a8a'', 01/09/2020, 30/05/2021, false, '''', ''2020-2021'', 102]
+  - [''8fe624fc-3546-11f0-bc50-57d4a0995e07'', 01/09/2019, 30/05/2020, false, '''', ''2019-2020'', 101]
+  - [''8fe62560-3546-11f0-bc51-f7ceae4026bf'', 01/09/2018, 30/05/2019, false, '''', ''2018-2019'', 100]
+labels:
+  en: Academic Year
+  ku: Sale Akademik
+  ar: السنة الدراسية
+labels-plural:
+  en: Academic Years
+  ku: Salên Akademik
+  ar: السنة الدراسية
+';
+
+
+--
+-- Name: COLUMN acorn_university_academic_years.current; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_academic_years.current IS 'order: 2
+css-classes:
+  - col-xs-3';
+
+
+--
+-- Name: COLUMN acorn_university_academic_years.description; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_academic_years.description IS 'tab: acorn::lang.models.general.description';
+
+
+--
+-- Name: COLUMN acorn_university_academic_years.name; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_academic_years.name IS 'order: 1
+column-type: partial
+column-partial: current
+css-classes-column:
+  - tablet';
+
+
+--
+-- Name: COLUMN acorn_university_academic_years.ordinal; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_academic_years.ordinal IS 'invisible: true
+hidden: true';
+
+
+--
+-- Name: COLUMN acorn_university_academic_years.enabled; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_academic_years.enabled IS 'order: 3
+css-classes:
+  - col-xs-3';
 
 
 --
@@ -10517,6 +10864,14 @@ COMMENT ON COLUMN public.acorn_university_lectures.course_material_id IS 'span: 
 --
 
 CREATE VIEW public.acorn_calendar_linked_events AS
+ SELECT acorn_university_academic_years.event_id,
+    'public'::character varying(2048) AS schema,
+    'acorn_university_academic_years'::character varying(2048) AS "table",
+    'event_id'::character varying(2048) AS "column",
+    'Acorn\University\Models\AcademicYear'::text AS model_type,
+    acorn_university_academic_years.id AS model_id
+   FROM public.acorn_university_academic_years
+UNION ALL
  SELECT acorn_university_academic_year_semesters.event_id,
     'public'::character varying(2048) AS schema,
     'acorn_university_academic_year_semesters'::character varying(2048) AS "table",
@@ -11204,6 +11559,14 @@ seeding:
   - [''9fc5c107-195e-47d6-9252-bbd1bcc4798e'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''803b5d0b-5fc8-4451-8808-dba9da22ad42'', ''543d0928-1b6c-11f0-abc1-8bd8fff1240d'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
   - [''9fc5c117-210c-4340-b7e4-743cd14115f3'', ''a5d8016a-78ad-4296-aac7-fc5332045764'', ''803b5d0b-5fc8-4451-8808-dba9da22ad42'', ''dee7d1e6-33ba-11f0-9757-0b77f37bff0c'', ''9e95e479-9690-4091-a730-aecdf51f9258'']
 ';
+
+
+--
+-- Name: COLUMN acorn_exam_calculation_course_types.academic_year_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_calculation_course_types.academic_year_id IS 'field-exclude: true
+column-exclude: true';
 
 
 --
@@ -12060,89 +12423,6 @@ labels-plural:
 
 
 --
--- Name: acorn_university_year_seq; Type: SEQUENCE; Schema: public; Owner: university
---
-
-CREATE SEQUENCE public.acorn_university_year_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.acorn_university_year_seq OWNER TO university;
-
---
--- Name: acorn_university_academic_years; Type: TABLE; Schema: public; Owner: university
---
-
-CREATE TABLE public.acorn_university_academic_years (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    start timestamp(0) without time zone NOT NULL,
-    "end" timestamp(0) without time zone NOT NULL,
-    current boolean DEFAULT true NOT NULL,
-    description text,
-    created_by_user_id uuid NOT NULL,
-    updated_by_user_id uuid,
-    server_id uuid NOT NULL,
-    name character varying(1024) DEFAULT ''::character varying NOT NULL,
-    ordinal integer DEFAULT nextval('public.acorn_university_year_seq'::regclass),
-    enabled boolean DEFAULT true NOT NULL,
-    created_at timestamp(0) without time zone DEFAULT now() NOT NULL,
-    updated_at timestamp(0) without time zone
-);
-
-
-ALTER TABLE public.acorn_university_academic_years OWNER TO university;
-
---
--- Name: TABLE acorn_university_academic_years; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON TABLE public.acorn_university_academic_years IS 'global-scope: true
-menu-splitter: true
-order: 1000
-seeding:
-  # Historic required for Year 10, enrollment year calculation
-  - [''dee7d1e6-33ba-11f0-9757-0b77f37bff0c'', 01/09/2025, 30/05/2026, false, '''', ''2025-2026'', 107]
-  - [''529bd45a-1b6c-11f0-99b6-b7f647885dbc'', 01/09/2024, 30/05/2025, true, '''', ''2024-2025'', 106]
-  - [''543d0928-1b6c-11f0-abc1-8bd8fff1240d'', 01/09/2023, 30/05/2024, false, '''', ''2023-2024'', 105]
-  - [''8fe62240-3546-11f0-bc4d-3f9721dbc106'', 01/09/2022, 30/05/2023, false, '''', ''2022-2023'', 104]
-  - [''8fe62420-3546-11f0-bc4e-67afd1391b00'', 01/09/2021, 30/05/2022, false, '''', ''2021-2022'', 103]
-  - [''8fe6248e-3546-11f0-bc4f-cf68964a0a8a'', 01/09/2020, 30/05/2021, false, '''', ''2020-2021'', 102]
-  - [''8fe624fc-3546-11f0-bc50-57d4a0995e07'', 01/09/2019, 30/05/2020, false, '''', ''2019-2020'', 101]
-  - [''8fe62560-3546-11f0-bc51-f7ceae4026bf'', 01/09/2018, 30/05/2019, false, '''', ''2018-2019'', 100]
-labels:
-  en: Academic Year
-  ku: Sale Akademik
-  ar: السنة الدراسية
-labels-plural:
-  en: Academic Years
-  ku: Salên Akademik
-  ar: السنة الدراسية
-';
-
-
---
--- Name: COLUMN acorn_university_academic_years.name; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_university_academic_years.name IS 'column-type: partial
-column-partial: current
-css-classes-column:
-  - tablet';
-
-
---
--- Name: COLUMN acorn_university_academic_years.ordinal; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_university_academic_years.ordinal IS 'invisible: true
-hidden: true';
-
-
---
 -- Name: acorn_university_course_materials; Type: TABLE; Schema: public; Owner: university
 --
 
@@ -12170,6 +12450,7 @@ ALTER TABLE public.acorn_university_course_materials OWNER TO university;
 --
 
 COMMENT ON TABLE public.acorn_university_course_materials IS 'order: 62
+menu: false
 attribute-functions:
   academic_year_semester_ordinal: "return (is_int($this->course_year) ? ($this->course_year-1) * 3 + $this->academic_year_semester?->semester->ordinal : NULL);"
 labels:
@@ -12248,6 +12529,49 @@ css-classes:
 
 
 --
+-- Name: acorn_university_course_specializations; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_university_course_specializations (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    course_id uuid NOT NULL,
+    name character varying(1024) NOT NULL,
+    description text,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL,
+    created_at timestamp(0) without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp(0) without time zone
+);
+
+
+ALTER TABLE public.acorn_university_course_specializations OWNER TO university;
+
+--
+-- Name: TABLE acorn_university_course_specializations; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_university_course_specializations IS 'order: 62
+menu: false
+labels:
+  en: Course specialization
+  ku: Kors tibetên
+  ar: مادة الفرع
+labels-plural:
+  en: Course specializations
+  ku: Korsên tibetên
+  ar: مواد الفرع
+no-relation-manager-default: true';
+
+
+--
+-- Name: COLUMN acorn_university_course_specializations.course_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_specializations.course_id IS 'order: 2';
+
+
+--
 -- Name: acorn_university_course_types; Type: TABLE; Schema: public; Owner: university
 --
 
@@ -12297,7 +12621,7 @@ labels-plural:
 CREATE TABLE public.acorn_university_course_year_settings (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     course_id uuid NOT NULL,
-    academic_year_id uuid NOT NULL,
+    enrollment_academic_year_id uuid NOT NULL,
     minimum double precision,
     maximum double precision,
     women_only boolean DEFAULT false,
@@ -12317,28 +12641,66 @@ ALTER TABLE public.acorn_university_course_year_settings OWNER TO university;
 -- Name: TABLE acorn_university_course_year_settings; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_university_course_year_settings IS 'menu: false';
+COMMENT ON TABLE public.acorn_university_course_year_settings IS 'menu: false
+labels:
+  en: Course Planner
+labels-plural:
+  en: Course Planners';
+
+
+--
+-- Name: COLUMN acorn_university_course_year_settings.enrollment_academic_year_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_year_settings.enrollment_academic_year_id IS 'order: 1';
 
 
 --
 -- Name: COLUMN acorn_university_course_year_settings.minimum; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_course_year_settings.minimum IS 'list-editable: true';
+COMMENT ON COLUMN public.acorn_university_course_year_settings.minimum IS 'list-editable: true
+css-classes:
+  - col-xs-3';
 
 
 --
 -- Name: COLUMN acorn_university_course_year_settings.maximum; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_course_year_settings.maximum IS 'list-editable: true';
+COMMENT ON COLUMN public.acorn_university_course_year_settings.maximum IS 'list-editable: true
+css-classes:
+  - col-xs-3';
+
+
+--
+-- Name: COLUMN acorn_university_course_year_settings.women_only; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_year_settings.women_only IS 'css-classes:
+  - col-xs-3';
+
+
+--
+-- Name: COLUMN acorn_university_course_year_settings.required; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_year_settings.required IS 'css-classes:
+  - col-xs-3';
 
 
 --
 -- Name: COLUMN acorn_university_course_year_settings.length; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_course_year_settings.length IS 'field-comment: In years';
+COMMENT ON COLUMN public.acorn_university_course_year_settings.length IS 'order: 2
+field-comment: In years
+column-type: partial
+column-partial: number
+suffix: acorn.university::lang.models.courseyearsetting.years
+extra-translations:
+  years:
+    en: Years';
 
 
 --
@@ -12388,6 +12750,13 @@ labels-plural:
   ku: Salên Kors
 
 ';
+
+
+--
+-- Name: COLUMN acorn_university_course_years.description; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_years.description IS 'tab: acorn::lang.models.general.description';
 
 
 --
@@ -12983,6 +13352,13 @@ labels-plural:
 
 
 --
+-- Name: COLUMN acorn_university_semesters.description; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_semesters.description IS 'tab: acorn::lang.models.general.description';
+
+
+--
 -- Name: acorn_university_student_codes; Type: TABLE; Schema: public; Owner: university
 --
 
@@ -13467,6 +13843,22 @@ UNION ALL
     acorn_exam_exams.updated_at AS datetime
    FROM public.acorn_exam_exams
 UNION ALL
+ SELECT 'Acorn\University\Models\CourseSpecialization'::text AS model_type,
+    acorn_university_course_specializations.id AS model_id,
+    'acorn_university_course_specializations'::text AS "table",
+    acorn_university_course_specializations.name,
+    0 AS update,
+    acorn_university_course_specializations.created_at AS datetime
+   FROM public.acorn_university_course_specializations
+UNION ALL
+ SELECT 'Acorn\University\Models\CourseSpecialization'::text AS model_type,
+    acorn_university_course_specializations.id AS model_id,
+    'acorn_university_course_specializations'::text AS "table",
+    acorn_university_course_specializations.name,
+    1 AS update,
+    acorn_university_course_specializations.updated_at AS datetime
+   FROM public.acorn_university_course_specializations
+UNION ALL
  SELECT 'Acorn\University\Models\CourseMaterial'::text AS model_type,
     acorn_university_course_materials.id AS model_id,
     'acorn_university_course_materials'::text AS "table",
@@ -13723,22 +14115,6 @@ UNION ALL
     acorn_university_identity_types.updated_at AS datetime
    FROM public.acorn_university_identity_types
 UNION ALL
- SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
-    acorn_enrollment_student_notes.id AS model_id,
-    'acorn_enrollment_student_notes'::text AS "table",
-    (acorn_enrollment_student_notes.name)::character varying(1024) AS name,
-    0 AS update,
-    acorn_enrollment_student_notes.created_at AS datetime
-   FROM public.acorn_enrollment_student_notes
-UNION ALL
- SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
-    acorn_enrollment_student_notes.id AS model_id,
-    'acorn_enrollment_student_notes'::text AS "table",
-    (acorn_enrollment_student_notes.name)::character varying(1024) AS name,
-    1 AS update,
-    acorn_enrollment_student_notes.updated_at AS datetime
-   FROM public.acorn_enrollment_student_notes
-UNION ALL
  SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
     acorn_university_student_types.id AS model_id,
     'acorn_university_student_types'::text AS "table",
@@ -13754,6 +14130,22 @@ UNION ALL
     1 AS update,
     acorn_university_student_types.updated_at AS datetime
    FROM public.acorn_university_student_types
+UNION ALL
+ SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
+    acorn_enrollment_student_notes.id AS model_id,
+    'acorn_enrollment_student_notes'::text AS "table",
+    (acorn_enrollment_student_notes.name)::character varying(1024) AS name,
+    0 AS update,
+    acorn_enrollment_student_notes.created_at AS datetime
+   FROM public.acorn_enrollment_student_notes
+UNION ALL
+ SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
+    acorn_enrollment_student_notes.id AS model_id,
+    'acorn_enrollment_student_notes'::text AS "table",
+    (acorn_enrollment_student_notes.name)::character varying(1024) AS name,
+    1 AS update,
+    acorn_enrollment_student_notes.updated_at AS datetime
+   FROM public.acorn_enrollment_student_notes
 UNION ALL
  SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
     acorn_university_student_codes.id AS model_id,
@@ -13803,22 +14195,6 @@ UNION ALL
     acorn_exam_interview_students.updated_at AS datetime
    FROM public.acorn_exam_interview_students
 UNION ALL
- SELECT 'Acorn\University\Models\Project'::text AS model_type,
-    acorn_university_projects.id AS model_id,
-    'acorn_university_projects'::text AS "table",
-    (acorn_university_projects.name)::character varying(1024) AS name,
-    0 AS update,
-    acorn_university_projects.created_at AS datetime
-   FROM public.acorn_university_projects
-UNION ALL
- SELECT 'Acorn\University\Models\Project'::text AS model_type,
-    acorn_university_projects.id AS model_id,
-    'acorn_university_projects'::text AS "table",
-    (acorn_university_projects.name)::character varying(1024) AS name,
-    1 AS update,
-    acorn_university_projects.updated_at AS datetime
-   FROM public.acorn_university_projects
-UNION ALL
  SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
     acorn_exam_exam_materials.id AS model_id,
     'acorn_exam_exam_materials'::text AS "table",
@@ -13850,6 +14226,22 @@ UNION ALL
     1 AS update,
     acorn_university_lectures.updated_at AS datetime
    FROM public.acorn_university_lectures
+UNION ALL
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
+    (acorn_university_projects.name)::character varying(1024) AS name,
+    0 AS update,
+    acorn_university_projects.created_at AS datetime
+   FROM public.acorn_university_projects
+UNION ALL
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
+    (acorn_university_projects.name)::character varying(1024) AS name,
+    1 AS update,
+    acorn_university_projects.updated_at AS datetime
+   FROM public.acorn_university_projects
 UNION ALL
  SELECT 'Acorn\Exam\Models\ScoreName'::text AS model_type,
     acorn_exam_score_names.id AS model_id,
@@ -13899,22 +14291,6 @@ UNION ALL
     acorn_enrollment_runs.updated_at AS datetime
    FROM public.acorn_enrollment_runs
 UNION ALL
- SELECT 'Acorn\Exam\Models\Question'::text AS model_type,
-    acorn_exam_questions.id AS model_id,
-    'acorn_exam_questions'::text AS "table",
-    acorn_exam_questions.name,
-    0 AS update,
-    acorn_exam_questions.created_at AS datetime
-   FROM public.acorn_exam_questions
-UNION ALL
- SELECT 'Acorn\Exam\Models\Question'::text AS model_type,
-    acorn_exam_questions.id AS model_id,
-    'acorn_exam_questions'::text AS "table",
-    acorn_exam_questions.name,
-    1 AS update,
-    acorn_exam_questions.updated_at AS datetime
-   FROM public.acorn_exam_questions
-UNION ALL
  SELECT 'Acorn\Exam\Models\Instance'::text AS model_type,
     acorn_exam_instances.id AS model_id,
     'acorn_exam_instances'::text AS "table",
@@ -13930,6 +14306,22 @@ UNION ALL
     1 AS update,
     acorn_exam_instances.updated_at AS datetime
    FROM public.acorn_exam_instances
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Question'::text AS model_type,
+    acorn_exam_questions.id AS model_id,
+    'acorn_exam_questions'::text AS "table",
+    acorn_exam_questions.name,
+    0 AS update,
+    acorn_exam_questions.created_at AS datetime
+   FROM public.acorn_exam_questions
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Question'::text AS model_type,
+    acorn_exam_questions.id AS model_id,
+    'acorn_exam_questions'::text AS "table",
+    acorn_exam_questions.name,
+    1 AS update,
+    acorn_exam_questions.updated_at AS datetime
+   FROM public.acorn_exam_questions
 UNION ALL
  SELECT 'Acorn\Exam\Models\Section'::text AS model_type,
     acorn_exam_sections.id AS model_id,
@@ -14592,6 +14984,20 @@ UNION ALL
     acorn_exam_exams.updated_by_user_id AS by
    FROM public.acorn_exam_exams
 UNION ALL
+ SELECT 'Acorn\University\Models\CourseSpecialization'::text AS model_type,
+    acorn_university_course_specializations.id AS model_id,
+    'acorn_university_course_specializations'::text AS "table",
+    0 AS update,
+    acorn_university_course_specializations.created_by_user_id AS by
+   FROM public.acorn_university_course_specializations
+UNION ALL
+ SELECT 'Acorn\University\Models\CourseSpecialization'::text AS model_type,
+    acorn_university_course_specializations.id AS model_id,
+    'acorn_university_course_specializations'::text AS "table",
+    1 AS update,
+    acorn_university_course_specializations.updated_by_user_id AS by
+   FROM public.acorn_university_course_specializations
+UNION ALL
  SELECT 'Acorn\University\Models\CourseMaterial'::text AS model_type,
     acorn_university_course_materials.id AS model_id,
     'acorn_university_course_materials'::text AS "table",
@@ -14830,20 +15236,6 @@ UNION ALL
     acorn_university_identity_types.updated_by_user_id AS by
    FROM public.acorn_university_identity_types
 UNION ALL
- SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
-    acorn_enrollment_student_notes.id AS model_id,
-    'acorn_enrollment_student_notes'::text AS "table",
-    0 AS update,
-    acorn_enrollment_student_notes.created_by_user_id AS by
-   FROM public.acorn_enrollment_student_notes
-UNION ALL
- SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
-    acorn_enrollment_student_notes.id AS model_id,
-    'acorn_enrollment_student_notes'::text AS "table",
-    1 AS update,
-    acorn_enrollment_student_notes.updated_by_user_id AS by
-   FROM public.acorn_enrollment_student_notes
-UNION ALL
  SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
     acorn_university_student_types.id AS model_id,
     'acorn_university_student_types'::text AS "table",
@@ -14857,6 +15249,20 @@ UNION ALL
     1 AS update,
     acorn_university_student_types.updated_by_user_id AS by
    FROM public.acorn_university_student_types
+UNION ALL
+ SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
+    acorn_enrollment_student_notes.id AS model_id,
+    'acorn_enrollment_student_notes'::text AS "table",
+    0 AS update,
+    acorn_enrollment_student_notes.created_by_user_id AS by
+   FROM public.acorn_enrollment_student_notes
+UNION ALL
+ SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
+    acorn_enrollment_student_notes.id AS model_id,
+    'acorn_enrollment_student_notes'::text AS "table",
+    1 AS update,
+    acorn_enrollment_student_notes.updated_by_user_id AS by
+   FROM public.acorn_enrollment_student_notes
 UNION ALL
  SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
     acorn_university_student_codes.id AS model_id,
@@ -14900,20 +15306,6 @@ UNION ALL
     acorn_exam_interview_students.updated_by_user_id AS by
    FROM public.acorn_exam_interview_students
 UNION ALL
- SELECT 'Acorn\University\Models\Project'::text AS model_type,
-    acorn_university_projects.id AS model_id,
-    'acorn_university_projects'::text AS "table",
-    0 AS update,
-    acorn_university_projects.created_by_user_id AS by
-   FROM public.acorn_university_projects
-UNION ALL
- SELECT 'Acorn\University\Models\Project'::text AS model_type,
-    acorn_university_projects.id AS model_id,
-    'acorn_university_projects'::text AS "table",
-    1 AS update,
-    acorn_university_projects.updated_by_user_id AS by
-   FROM public.acorn_university_projects
-UNION ALL
  SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
     acorn_exam_exam_materials.id AS model_id,
     'acorn_exam_exam_materials'::text AS "table",
@@ -14941,6 +15333,20 @@ UNION ALL
     1 AS update,
     acorn_university_lectures.updated_by_user_id AS by
    FROM public.acorn_university_lectures
+UNION ALL
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
+    0 AS update,
+    acorn_university_projects.created_by_user_id AS by
+   FROM public.acorn_university_projects
+UNION ALL
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
+    1 AS update,
+    acorn_university_projects.updated_by_user_id AS by
+   FROM public.acorn_university_projects
 UNION ALL
  SELECT 'Acorn\Exam\Models\ScoreName'::text AS model_type,
     acorn_exam_score_names.id AS model_id,
@@ -14984,20 +15390,6 @@ UNION ALL
     acorn_enrollment_runs.updated_by_user_id AS by
    FROM public.acorn_enrollment_runs
 UNION ALL
- SELECT 'Acorn\Exam\Models\Question'::text AS model_type,
-    acorn_exam_questions.id AS model_id,
-    'acorn_exam_questions'::text AS "table",
-    0 AS update,
-    acorn_exam_questions.created_by_user_id AS by
-   FROM public.acorn_exam_questions
-UNION ALL
- SELECT 'Acorn\Exam\Models\Question'::text AS model_type,
-    acorn_exam_questions.id AS model_id,
-    'acorn_exam_questions'::text AS "table",
-    1 AS update,
-    acorn_exam_questions.updated_by_user_id AS by
-   FROM public.acorn_exam_questions
-UNION ALL
  SELECT 'Acorn\Exam\Models\Instance'::text AS model_type,
     acorn_exam_instances.id AS model_id,
     'acorn_exam_instances'::text AS "table",
@@ -15011,6 +15403,20 @@ UNION ALL
     1 AS update,
     acorn_exam_instances.updated_by_user_id AS by
    FROM public.acorn_exam_instances
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Question'::text AS model_type,
+    acorn_exam_questions.id AS model_id,
+    'acorn_exam_questions'::text AS "table",
+    0 AS update,
+    acorn_exam_questions.created_by_user_id AS by
+   FROM public.acorn_exam_questions
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Question'::text AS model_type,
+    acorn_exam_questions.id AS model_id,
+    'acorn_exam_questions'::text AS "table",
+    1 AS update,
+    acorn_exam_questions.updated_by_user_id AS by
+   FROM public.acorn_exam_questions
 UNION ALL
  SELECT 'Acorn\Exam\Models\Section'::text AS model_type,
     acorn_exam_sections.id AS model_id,
@@ -15201,7 +15607,9 @@ CREATE TABLE public.acorn_university_course_year_semesters (
     academic_year_semester_id uuid NOT NULL,
     entity_id uuid NOT NULL,
     enrollment_academic_year_id uuid NOT NULL,
-    academic_year_semester_ordinal integer
+    academic_year_semester_ordinal integer,
+    course_year_setting_id uuid,
+    course_specialization_id uuid
 );
 
 
@@ -15219,12 +15627,40 @@ menu: false
 
 
 --
+-- Name: COLUMN acorn_university_course_year_semesters.course_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_year_semesters.course_id IS 'can-filter: true';
+
+
+--
+-- Name: COLUMN acorn_university_course_year_semesters.course_year_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_year_semesters.course_year_id IS 'can-filter: true
+tab-location: 3
+column-type: partial
+column-partial: ordinal
+suffix: acorn::lang.models.general.dateformats.year
+';
+
+
+--
+-- Name: COLUMN acorn_university_course_year_semesters.academic_year_semester_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_year_semesters.academic_year_semester_id IS 'can-filter: true';
+
+
+--
 -- Name: COLUMN acorn_university_course_year_semesters.enrollment_academic_year_id; Type: COMMENT; Schema: public; Owner: university
 --
 
 COMMENT ON COLUMN public.acorn_university_course_year_semesters.enrollment_academic_year_id IS 'column-type: partial
+tab-location: 3
 column-partial: current
-read-only: true';
+read-only: true
+can-filter: true';
 
 
 --
@@ -15233,8 +15669,26 @@ read-only: true';
 
 COMMENT ON COLUMN public.acorn_university_course_year_semesters.academic_year_semester_ordinal IS 'column-partial: ordinal
 column-type: partial
+tab-location: 3
 suffix: acorn.university::lang.models.semester.label
 read-only: true';
+
+
+--
+-- Name: COLUMN acorn_university_course_year_semesters.course_year_setting_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_year_semesters.course_year_setting_id IS 'hidden: true
+invisible: true';
+
+
+--
+-- Name: COLUMN acorn_university_course_year_semesters.course_specialization_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_year_semesters.course_specialization_id IS 'labels:
+  en: Specialization
+  ku: Tibet';
 
 
 --
@@ -15288,14 +15742,25 @@ COMMENT ON COLUMN public.acorn_university_courses.weight IS 'tab-location: 3';
 -- Name: COLUMN acorn_university_courses.course_type_id; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_courses.course_type_id IS 'tab-location: 3';
+COMMENT ON COLUMN public.acorn_university_courses.course_type_id IS 'order: 2
+tab-location: 3
+';
 
 
 --
 -- Name: COLUMN acorn_university_courses.show_on_front_end; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_courses.show_on_front_end IS 'tab-location: 3';
+COMMENT ON COLUMN public.acorn_university_courses.show_on_front_end IS 'order: 1
+tab-location: 3
+hints:
+  public:
+    labels: 
+      en: Public
+    content:
+      en: The course is visible on the front end in calendars and results
+    conditions: acorn_university_courses.show_on_front_end
+    level: warning';
 
 
 --
@@ -16249,6 +16714,8 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.academic_year_id IS 'extra
   table: acorn_university_academic_years
   comment:
     tab-location: 2
+    field-exclude: true
+    column-exclude: true
     name-object: true
 	can-filter: true
 	global-scope: to
@@ -16741,6 +17208,8 @@ COMMENT ON COLUMN public.acorn_exam_certificates.academic_year_id IS 'extra-fore
   table: acorn_university_academic_years
   comment:
     tab-location: 2
+    field-exclude: true
+    column-exclude: true
     name-object: true
 	can-filter: true
 	global-scope: to
@@ -17289,7 +17758,7 @@ UNION ALL
      JOIN public.acorn_exam_calculation_courses cc ON (((c.id = cc.course_id) AND (cc.academic_year_id = ay.id))))
      JOIN public.acorn_exam_calculations cac ON ((cc.calculation_id = cac.id)))
      JOIN public.acorn_exam_calculation_types ect ON ((cac.calculation_type_id = ect.id)))
-     LEFT JOIN public.acorn_university_course_year_settings cyt ON (((c.id = cyt.course_id) AND (ay.id = cyt.academic_year_id))))
+     LEFT JOIN public.acorn_university_course_year_settings cyt ON (((c.id = cyt.course_id) AND (ay.id = cyt.enrollment_academic_year_id))))
 UNION ALL
  SELECT (concat(s.id, '::', public.fn_acorn_exam_token_name(VARIADIC ARRAY['course'::character varying, (s.number)::character varying, ay.name, ugs.name, cact.name, ect.name, (
         CASE
@@ -17329,7 +17798,7 @@ UNION ALL
      JOIN public.acorn_exam_calculation_course_types cct ON (((cct.course_type_id = c.course_type_id) AND (cct.academic_year_id = ay.id))))
      JOIN public.acorn_exam_calculations cact ON ((cct.calculation_id = cact.id)))
      JOIN public.acorn_exam_calculation_types ect ON ((cact.calculation_type_id = ect.id)))
-     LEFT JOIN public.acorn_university_course_year_settings cyt ON (((c.id = cyt.course_id) AND (ay.id = cyt.academic_year_id))))
+     LEFT JOIN public.acorn_university_course_year_settings cyt ON (((c.id = cyt.course_id) AND (ay.id = cyt.enrollment_academic_year_id))))
 UNION ALL
  SELECT (concat(s.id, '::', public.fn_acorn_exam_token_name(VARIADIC ARRAY['calculation'::character varying, (s.number)::character varying, ay.name, c.name, ect.name])))::character varying AS id,
     public.fn_acorn_exam_token_name(VARIADIC ARRAY['calculation'::character varying, (s.number)::character varying, ay.name, c.name, ect.name]) AS name,
@@ -18087,6 +18556,20 @@ UNION ALL
     acorn_exam_exams.description AS content
    FROM public.acorn_exam_exams
 UNION ALL
+ SELECT 'Acorn\University\Models\CourseSpecialization'::text AS model_type,
+    acorn_university_course_specializations.id AS model_id,
+    'acorn_university_course_specializations'::text AS "table",
+    'name'::text AS field,
+    (acorn_university_course_specializations.name)::text AS content
+   FROM public.acorn_university_course_specializations
+UNION ALL
+ SELECT 'Acorn\University\Models\CourseSpecialization'::text AS model_type,
+    acorn_university_course_specializations.id AS model_id,
+    'acorn_university_course_specializations'::text AS "table",
+    'description'::text AS field,
+    acorn_university_course_specializations.description AS content
+   FROM public.acorn_university_course_specializations
+UNION ALL
  SELECT 'Acorn\Enrollment\Models\CourseEntryRequirement'::text AS model_type,
     acorn_enrollment_course_entry_requirements.id AS model_id,
     'acorn_enrollment_course_entry_requirements'::text AS "table",
@@ -18199,20 +18682,6 @@ UNION ALL
     acorn_university_identity_types.description AS content
    FROM public.acorn_university_identity_types
 UNION ALL
- SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
-    acorn_enrollment_student_notes.id AS model_id,
-    'acorn_enrollment_student_notes'::text AS "table",
-    'name'::text AS field,
-    (acorn_enrollment_student_notes.name)::text AS content
-   FROM public.acorn_enrollment_student_notes
-UNION ALL
- SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
-    acorn_enrollment_student_notes.id AS model_id,
-    'acorn_enrollment_student_notes'::text AS "table",
-    'description'::text AS field,
-    acorn_enrollment_student_notes.description AS content
-   FROM public.acorn_enrollment_student_notes
-UNION ALL
  SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
     acorn_university_student_types.id AS model_id,
     'acorn_university_student_types'::text AS "table",
@@ -18226,6 +18695,20 @@ UNION ALL
     'description'::text AS field,
     acorn_university_student_types.description AS content
    FROM public.acorn_university_student_types
+UNION ALL
+ SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
+    acorn_enrollment_student_notes.id AS model_id,
+    'acorn_enrollment_student_notes'::text AS "table",
+    'name'::text AS field,
+    (acorn_enrollment_student_notes.name)::text AS content
+   FROM public.acorn_enrollment_student_notes
+UNION ALL
+ SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
+    acorn_enrollment_student_notes.id AS model_id,
+    'acorn_enrollment_student_notes'::text AS "table",
+    'description'::text AS field,
+    acorn_enrollment_student_notes.description AS content
+   FROM public.acorn_enrollment_student_notes
 UNION ALL
  SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
     acorn_university_student_codes.id AS model_id,
@@ -18311,20 +18794,6 @@ UNION ALL
     acorn_enrollment_runs.description AS content
    FROM public.acorn_enrollment_runs
 UNION ALL
- SELECT 'Acorn\Exam\Models\Question'::text AS model_type,
-    acorn_exam_questions.id AS model_id,
-    'acorn_exam_questions'::text AS "table",
-    'name'::text AS field,
-    (acorn_exam_questions.name)::text AS content
-   FROM public.acorn_exam_questions
-UNION ALL
- SELECT 'Acorn\Exam\Models\Question'::text AS model_type,
-    acorn_exam_questions.id AS model_id,
-    'acorn_exam_questions'::text AS "table",
-    'description'::text AS field,
-    acorn_exam_questions.description AS content
-   FROM public.acorn_exam_questions
-UNION ALL
  SELECT 'Acorn\Exam\Models\Instance'::text AS model_type,
     acorn_exam_instances.id AS model_id,
     'acorn_exam_instances'::text AS "table",
@@ -18338,6 +18807,20 @@ UNION ALL
     'description'::text AS field,
     acorn_exam_instances.description AS content
    FROM public.acorn_exam_instances
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Question'::text AS model_type,
+    acorn_exam_questions.id AS model_id,
+    'acorn_exam_questions'::text AS "table",
+    'name'::text AS field,
+    (acorn_exam_questions.name)::text AS content
+   FROM public.acorn_exam_questions
+UNION ALL
+ SELECT 'Acorn\Exam\Models\Question'::text AS model_type,
+    acorn_exam_questions.id AS model_id,
+    'acorn_exam_questions'::text AS "table",
+    'description'::text AS field,
+    acorn_exam_questions.description AS content
+   FROM public.acorn_exam_questions
 UNION ALL
  SELECT 'Acorn\Exam\Models\Section'::text AS model_type,
     acorn_exam_sections.id AS model_id,
@@ -18954,6 +19437,8 @@ COMMENT ON COLUMN public.acorn_university_legacy_scores.academic_year_id IS 'ext
   table: acorn_university_academic_years
   comment:
     tab-location: 2
+    field-exclude: true
+    column-exclude: true
 labels:
   en: Academic Year
 labels-plural:
@@ -19193,7 +19678,7 @@ labels-plural:
 COMMENT ON COLUMN public.acorn_university_legacy_fulls.academic_year_id IS 'extra-foreign-key: 
   table: acorn_university_academic_years
   comment:
-    tab-location: 2
+    tab-location: 1
     column-exclude: true
 labels:
   en: Academic Year
@@ -20453,6 +20938,42 @@ relation: entity_university_hierarchies__entity';
 
 
 --
+-- Name: acorn_university_student_course_material_exceptions; Type: TABLE; Schema: public; Owner: university
+--
+
+CREATE TABLE public.acorn_university_student_course_material_exceptions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    student_id uuid NOT NULL,
+    course_material_id uuid NOT NULL,
+    course_year_semester_id uuid NOT NULL,
+    created_by_user_id uuid NOT NULL,
+    updated_by_user_id uuid,
+    server_id uuid NOT NULL,
+    created_at timestamp(0) without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp(0) without time zone,
+    action "char" DEFAULT 'A'::"char" NOT NULL
+);
+
+
+ALTER TABLE public.acorn_university_student_course_material_exceptions OWNER TO university;
+
+--
+-- Name: TABLE acorn_university_student_course_material_exceptions; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_university_student_course_material_exceptions IS 'menu: false
+labels:
+  en: Student Exception
+  ku: Xwendekar cudahî
+  ar: ملحوظة
+labels-plural:
+  en: Student Exceptions
+  ku: Xwendekar cudahîyên
+  ar: ملحوظة
+';
+
+
+--
 -- Name: acorn_university_student_lookups; Type: VIEW; Schema: public; Owner: university
 --
 
@@ -20562,7 +21083,7 @@ COMMENT ON COLUMN public.acorn_university_student_lookups.academic_year_id IS 'e
   table: acorn_university_academic_years
   comment:
     global-scope: to
-    tab-location: 2
+    tab-location: 1
     invisible: true';
 
 
@@ -23514,6 +24035,14 @@ ALTER TABLE ONLY public.acorn_university_course_materials
 
 
 --
+-- Name: acorn_university_course_specializations acorn_university_course_specializations_pkey; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_specializations
+    ADD CONSTRAINT acorn_university_course_specializations_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: acorn_university_course_year_semesters acorn_university_course_year_semesters_pkey; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -23639,6 +24168,14 @@ ALTER TABLE ONLY public.acorn_university_semesters
 
 ALTER TABLE ONLY public.acorn_university_student_codes
     ADD CONSTRAINT acorn_university_student_codes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: acorn_university_student_course_material_exceptions acorn_university_student_course_material_exceptions_p; Type: CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_course_material_exceptions
+    ADD CONSTRAINT acorn_university_student_course_material_exceptions_p PRIMARY KEY (id);
 
 
 --
@@ -23858,6 +24395,14 @@ ALTER TABLE ONLY public.acorn_user_users
 
 
 --
+-- Name: acorn_university_student_course_material_exceptions action; Type: CHECK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE public.acorn_university_student_course_material_exceptions
+    ADD CONSTRAINT action CHECK (((action = 'A'::"char") OR (action = 'R'::"char"))) NOT VALID;
+
+
+--
 -- Name: acorn_location_areas area_area_type; Type: CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -23982,7 +24527,7 @@ ALTER TABLE ONLY public.acorn_university_student_codes
 --
 
 ALTER TABLE ONLY public.acorn_university_course_year_settings
-    ADD CONSTRAINT course_academic_year_unique UNIQUE (course_id, academic_year_id);
+    ADD CONSTRAINT course_academic_year_unique UNIQUE (course_id, enrollment_academic_year_id);
 
 
 --
@@ -24885,6 +25430,13 @@ CREATE INDEX fki_course_material_id ON public.acorn_exam_exam_materials USING bt
 
 
 --
+-- Name: fki_course_specialization_id; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX fki_course_specialization_id ON public.acorn_university_course_year_semesters USING btree (course_specialization_id);
+
+
+--
 -- Name: fki_course_type_id; Type: INDEX; Schema: public; Owner: university
 --
 
@@ -24896,6 +25448,13 @@ CREATE INDEX fki_course_type_id ON public.acorn_university_courses USING btree (
 --
 
 CREATE INDEX fki_course_year_semester_id ON public.acorn_university_course_materials USING btree (course_year_semester_id);
+
+
+--
+-- Name: fki_course_year_setting_id; Type: INDEX; Schema: public; Owner: university
+--
+
+CREATE INDEX fki_course_year_setting_id ON public.acorn_university_course_year_semesters USING btree (course_year_setting_id);
 
 
 --
@@ -25681,6 +26240,13 @@ CREATE TRIGGER tr_acorn_created_by_user_id BEFORE INSERT ON public.acorn_univers
 
 
 --
+-- Name: acorn_university_course_specializations tr_acorn_created_by_user_id; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_created_by_user_id BEFORE INSERT ON public.acorn_university_course_specializations FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_created_by_user_id();
+
+
+--
 -- Name: acorn_university_course_types tr_acorn_created_by_user_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
@@ -25769,6 +26335,13 @@ CREATE TRIGGER tr_acorn_created_by_user_id BEFORE INSERT ON public.acorn_univers
 --
 
 CREATE TRIGGER tr_acorn_created_by_user_id BEFORE INSERT ON public.acorn_university_student_codes FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_created_by_user_id();
+
+
+--
+-- Name: acorn_university_student_course_material_exceptions tr_acorn_created_by_user_id; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_created_by_user_id BEFORE INSERT ON public.acorn_university_student_course_material_exceptions FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_created_by_user_id();
 
 
 --
@@ -26129,6 +26702,13 @@ CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_cours
 
 
 --
+-- Name: acorn_university_course_specializations tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_course_specializations FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
+
+
+--
 -- Name: acorn_university_course_types tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
@@ -26217,6 +26797,13 @@ CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_semes
 --
 
 CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_student_codes FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
+
+
+--
+-- Name: acorn_university_student_course_material_exceptions tr_acorn_server_id; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_student_course_material_exceptions FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_server_id();
 
 
 --
@@ -26605,6 +27192,13 @@ CREATE TRIGGER tr_acorn_updated_by_user_id BEFORE UPDATE ON public.acorn_univers
 
 
 --
+-- Name: acorn_university_course_specializations tr_acorn_updated_by_user_id; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_updated_by_user_id BEFORE UPDATE ON public.acorn_university_course_specializations FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_updated_by_user_id();
+
+
+--
 -- Name: acorn_university_course_types tr_acorn_updated_by_user_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
@@ -26696,6 +27290,13 @@ CREATE TRIGGER tr_acorn_updated_by_user_id BEFORE UPDATE ON public.acorn_univers
 
 
 --
+-- Name: acorn_university_student_course_material_exceptions tr_acorn_updated_by_user_id; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_updated_by_user_id BEFORE UPDATE ON public.acorn_university_student_course_material_exceptions FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_updated_by_user_id();
+
+
+--
 -- Name: acorn_university_student_identities tr_acorn_updated_by_user_id; Type: TRIGGER; Schema: public; Owner: university
 --
 
@@ -26764,23 +27365,9 @@ ALTER TABLE ONLY public.acorn_university_hierarchies
 --
 
 COMMENT ON CONSTRAINT academic_year_id ON public.acorn_university_hierarchies IS 'global-scope: to
-name-object: true';
-
-
---
--- Name: acorn_university_academic_year_semesters academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_academic_year_semesters
-    ADD CONSTRAINT academic_year_id FOREIGN KEY (academic_year_id) REFERENCES public.acorn_university_academic_years(id) NOT VALID;
-
-
---
--- Name: CONSTRAINT academic_year_id ON acorn_university_academic_year_semesters; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT academic_year_id ON public.acorn_university_academic_year_semesters IS 'global-scope: to
-name-object: true';
+name-object: true
+field-exclude: true
+column-exclude: true';
 
 
 --
@@ -26795,7 +27382,9 @@ ALTER TABLE ONLY public.acorn_exam_calculation_courses
 -- Name: CONSTRAINT academic_year_id ON acorn_exam_calculation_courses; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculation_courses IS 'name-object: true';
+COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculation_courses IS 'name-object: true
+field-exclude: true
+column-exclude: true';
 
 
 --
@@ -26810,7 +27399,9 @@ ALTER TABLE ONLY public.acorn_exam_calculation_material_types
 -- Name: CONSTRAINT academic_year_id ON acorn_exam_calculation_material_types; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculation_material_types IS 'name-object: true';
+COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculation_material_types IS 'name-object: true
+field-exclude: true
+column-exclude: true';
 
 
 --
@@ -26825,7 +27416,9 @@ ALTER TABLE ONLY public.acorn_exam_calculation_course_materials
 -- Name: CONSTRAINT academic_year_id ON acorn_exam_calculation_course_materials; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculation_course_materials IS 'name-object: true';
+COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculation_course_materials IS 'name-object: true
+field-exclude: true
+column-exclude: true';
 
 
 --
@@ -26840,7 +27433,9 @@ ALTER TABLE ONLY public.acorn_exam_calculation_course_types
 -- Name: CONSTRAINT academic_year_id ON acorn_exam_calculation_course_types; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculation_course_types IS 'name-object: true';
+COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculation_course_types IS 'name-object: true
+field-exclude: true
+column-exclude: true';
 
 
 --
@@ -26869,6 +27464,14 @@ ALTER TABLE ONLY public.acorn_exam_centres
 
 
 --
+-- Name: CONSTRAINT academic_year_id ON acorn_exam_centres; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_centres IS 'field-exclude: true
+column-exclude: true';
+
+
+--
 -- Name: acorn_exam_calculations academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -26880,7 +27483,9 @@ ALTER TABLE ONLY public.acorn_exam_calculations
 -- Name: CONSTRAINT academic_year_id ON acorn_exam_calculations; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculations IS 'global-scope: to';
+COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculations IS 'global-scope: to
+field-exclude: true
+column-exclude: true';
 
 
 --
@@ -26888,14 +27493,33 @@ COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculations IS 'glo
 --
 
 ALTER TABLE ONLY public.acorn_university_course_year_settings
-    ADD CONSTRAINT academic_year_id FOREIGN KEY (academic_year_id) REFERENCES public.acorn_university_academic_years(id) ON DELETE CASCADE NOT VALID;
+    ADD CONSTRAINT academic_year_id FOREIGN KEY (enrollment_academic_year_id) REFERENCES public.acorn_university_academic_years(id) ON DELETE CASCADE NOT VALID;
 
 
 --
 -- Name: CONSTRAINT academic_year_id ON acorn_university_course_year_settings; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT academic_year_id ON public.acorn_university_course_year_settings IS 'name-object: true';
+COMMENT ON CONSTRAINT academic_year_id ON public.acorn_university_course_year_settings IS 'name-object: true
+field-exclude: true
+column-exclude: true';
+
+
+--
+-- Name: acorn_university_academic_year_semesters academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_academic_year_semesters
+    ADD CONSTRAINT academic_year_id FOREIGN KEY (academic_year_id) REFERENCES public.acorn_university_academic_years(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT academic_year_id ON acorn_university_academic_year_semesters; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT academic_year_id ON public.acorn_university_academic_year_semesters IS 'global-scope: to
+name-object: true
+';
 
 
 --
@@ -26910,7 +27534,8 @@ ALTER TABLE ONLY public.acorn_university_course_year_semesters
 -- Name: CONSTRAINT academic_year_semester_id ON acorn_university_course_year_semesters; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT academic_year_semester_id ON public.acorn_university_course_year_semesters IS 'name-object: true';
+COMMENT ON CONSTRAINT academic_year_semester_id ON public.acorn_university_course_year_semesters IS 'name-object: true
+can-filter: true';
 
 
 --
@@ -27258,6 +27883,14 @@ ALTER TABLE ONLY public.acorn_enrollment_enrollments
 
 
 --
+-- Name: CONSTRAINT calculation_academic_year_id ON acorn_enrollment_enrollments; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT calculation_academic_year_id ON public.acorn_enrollment_enrollments IS 'field-exclude: true
+column-exclude: true';
+
+
+--
 -- Name: acorn_enrollment_enrollments calculation_course_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -27266,11 +27899,27 @@ ALTER TABLE ONLY public.acorn_enrollment_enrollments
 
 
 --
+-- Name: CONSTRAINT calculation_course_id ON acorn_enrollment_enrollments; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT calculation_course_id ON public.acorn_enrollment_enrollments IS 'field-exclude: true
+column-exclude: true';
+
+
+--
 -- Name: acorn_enrollment_enrollments calculation_course_type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_enrollment_enrollments
     ADD CONSTRAINT calculation_course_type_id FOREIGN KEY (calculation_course_type_id) REFERENCES public.acorn_university_course_types(id) NOT VALID;
+
+
+--
+-- Name: CONSTRAINT calculation_course_type_id ON acorn_enrollment_enrollments; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT calculation_course_type_id ON public.acorn_enrollment_enrollments IS 'field-exclude: true
+column-exclude: true';
 
 
 --
@@ -27430,6 +28079,20 @@ ALTER TABLE ONLY public.acorn_university_course_language
 
 
 --
+-- Name: CONSTRAINT course_id ON acorn_university_course_language; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT course_id ON public.acorn_university_course_language IS 'hints:
+  no_languages:
+    contentHtml: true
+    labels:
+      en: Language restrictions
+    content:
+      en: No languages means that <i>all</i> languages are accepted. Adding a language will restrict it to that language only.
+    level: info';
+
+
+--
 -- Name: acorn_exam_calculation_courses course_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -27479,11 +28142,11 @@ ALTER TABLE ONLY public.acorn_university_course_year_settings
 --
 
 COMMENT ON CONSTRAINT course_id ON public.acorn_university_course_year_settings IS 'name-object: true
-tab-location: 2
+tab-location: 1
 labels:
-  en: Year Setting
+  en: Course Plan
 labels-plural:
-  en: Year Settings';
+  en: Course Plans';
 
 
 --
@@ -27498,7 +28161,18 @@ ALTER TABLE ONLY public.acorn_university_course_year_semesters
 -- Name: CONSTRAINT course_id ON acorn_university_course_year_semesters; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT course_id ON public.acorn_university_course_year_semesters IS 'name-object: true';
+COMMENT ON CONSTRAINT course_id ON public.acorn_university_course_year_semesters IS 'name-object: true
+field-exclude: true
+column-exclude: true
+can-filter: true';
+
+
+--
+-- Name: acorn_university_course_specializations course_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_specializations
+    ADD CONSTRAINT course_id FOREIGN KEY (course_id) REFERENCES public.acorn_university_courses(id) ON DELETE CASCADE;
 
 
 --
@@ -27579,6 +28253,22 @@ invisible: true';
 
 
 --
+-- Name: acorn_university_student_course_material_exceptions course_material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_course_material_exceptions
+    ADD CONSTRAINT course_material_id FOREIGN KEY (course_material_id) REFERENCES public.acorn_university_course_materials(id) ON DELETE CASCADE;
+
+
+--
+-- Name: acorn_university_course_year_semesters course_specialization_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_year_semesters
+    ADD CONSTRAINT course_specialization_id FOREIGN KEY (course_specialization_id) REFERENCES public.acorn_university_course_specializations(id) NOT VALID;
+
+
+--
 -- Name: acorn_university_courses course_type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -27613,7 +28303,8 @@ ALTER TABLE ONLY public.acorn_university_course_year_semesters
 -- Name: CONSTRAINT course_year_id ON acorn_university_course_year_semesters; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT course_year_id ON public.acorn_university_course_year_semesters IS 'name-object: true';
+COMMENT ON CONSTRAINT course_year_id ON public.acorn_university_course_year_semesters IS 'name-object: true
+can-filter: true';
 
 
 --
@@ -27621,14 +28312,35 @@ COMMENT ON CONSTRAINT course_year_id ON public.acorn_university_course_year_seme
 --
 
 ALTER TABLE ONLY public.acorn_university_course_materials
-    ADD CONSTRAINT course_year_semester_id FOREIGN KEY (course_year_semester_id) REFERENCES public.acorn_university_course_year_semesters(id) NOT VALID;
+    ADD CONSTRAINT course_year_semester_id FOREIGN KEY (course_year_semester_id) REFERENCES public.acorn_university_course_year_semesters(id) ON DELETE CASCADE NOT VALID;
 
 
 --
 -- Name: CONSTRAINT course_year_semester_id ON acorn_university_course_materials; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT course_year_semester_id ON public.acorn_university_course_materials IS 'can-filter: true';
+COMMENT ON CONSTRAINT course_year_semester_id ON public.acorn_university_course_materials IS 'can-filter: true
+multi:
+  cssClasses: inline
+  limit: 30
+
+';
+
+
+--
+-- Name: acorn_university_student_course_material_exceptions course_year_semester_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_course_material_exceptions
+    ADD CONSTRAINT course_year_semester_id FOREIGN KEY (course_year_semester_id) REFERENCES public.acorn_university_course_year_semesters(id) ON DELETE CASCADE;
+
+
+--
+-- Name: acorn_university_course_year_semesters course_year_setting_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_year_semesters
+    ADD CONSTRAINT course_year_setting_id FOREIGN KEY (course_year_setting_id) REFERENCES public.acorn_university_course_year_settings(id) ON DELETE CASCADE NOT VALID;
 
 
 --
@@ -28000,11 +28712,36 @@ ALTER TABLE ONLY public.acorn_exam_sections
 
 
 --
+-- Name: acorn_university_course_specializations created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_specializations
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_university_student_course_material_exceptions created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_course_material_exceptions
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
 -- Name: acorn_university_course_year_semesters enrollment_academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_university_course_year_semesters
     ADD CONSTRAINT enrollment_academic_year_id FOREIGN KEY (enrollment_academic_year_id) REFERENCES public.acorn_university_academic_years(id) NOT VALID;
+
+
+--
+-- Name: CONSTRAINT enrollment_academic_year_id ON acorn_university_course_year_semesters; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT enrollment_academic_year_id ON public.acorn_university_course_year_semesters IS 'field-exclude: true
+column-exclude: true
+can-filter: true';
 
 
 --
@@ -28577,6 +29314,14 @@ fields-settings:
 
 
 --
+-- Name: acorn_university_academic_years event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_academic_years
+    ADD CONSTRAINT event_id FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
 -- Name: acorn_exam_instances exam_centre_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -28630,7 +29375,7 @@ ALTER TABLE ONLY public.acorn_exam_sections
 --
 
 ALTER TABLE ONLY public.acorn_exam_scores
-    ADD CONSTRAINT exam_material_id FOREIGN KEY (exam_material_id) REFERENCES public.acorn_exam_exam_materials(id);
+    ADD CONSTRAINT exam_material_id FOREIGN KEY (exam_material_id) REFERENCES public.acorn_exam_exam_materials(id) ON DELETE CASCADE;
 
 
 --
@@ -28839,6 +29584,14 @@ COMMENT ON CONSTRAINT owner_entity_id ON public.acorn_exam_calculations IS 'fiel
 
 ALTER TABLE ONLY public.acorn_enrollment_enrollments
     ADD CONSTRAINT owner_entity_id FOREIGN KEY (owner_entity_id) REFERENCES public.acorn_university_entities(id) NOT VALID;
+
+
+--
+-- Name: CONSTRAINT owner_entity_id ON acorn_enrollment_enrollments; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT owner_entity_id ON public.acorn_enrollment_enrollments IS 'field-exclude: true
+column-exclude: true';
 
 
 --
@@ -29471,6 +30224,22 @@ ALTER TABLE ONLY public.acorn_exam_sections
 
 
 --
+-- Name: acorn_university_course_specializations server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_specializations
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_university_student_course_material_exceptions server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_course_material_exceptions
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
 -- Name: acorn_exam_interview_students student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -29660,6 +30429,14 @@ ALTER TABLE ONLY public.acorn_university_student_type
 COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_type IS 'tab-location: 3
 show-search: false
 can-filter: true';
+
+
+--
+-- Name: acorn_university_student_course_material_exceptions student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_course_material_exceptions
+    ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id) ON DELETE CASCADE;
 
 
 --
@@ -30087,6 +30864,22 @@ ALTER TABLE ONLY public.acorn_exam_sections
 
 
 --
+-- Name: acorn_university_course_specializations updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_specializations
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_university_student_course_material_exceptions updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_course_material_exceptions
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
 -- Name: acorn_university_project_students user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -30111,14 +30904,14 @@ field-exclude: true
 column-exclude: true
 fields-settings:
   user_group[colour]:
-    tab-location: 3
+    tab: acorn.user::lang.group.description_field
   user_group[code]:
     tab-location: 3
   user_group[type]:
     field-exclude: true
     column-exclude: true
   user_group[image]:
-    tab-location: 3
+    tab: acorn.user::lang.group.description_field
   user_group[parent_user_group]:
     field-exclude: true
     column-exclude: true';
@@ -30667,10 +31460,10 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, ow
 
 
 --
--- Name: FUNCTION fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_calendar_create_event(p_calendar_id uuid, p_owner_user_id uuid, p_event_type_id uuid, p_event_status_id uuid, p_name character varying, p_date_from timestamp without time zone, p_date_to timestamp without time zone); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, event_type_id uuid, event_status_id uuid, name character varying, date_from timestamp without time zone, date_to timestamp without time zone) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(p_calendar_id uuid, p_owner_user_id uuid, p_event_type_id uuid, p_event_status_id uuid, p_name character varying, p_date_from timestamp without time zone, p_date_to timestamp without time zone) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -30989,10 +31782,10 @@ GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character va
 
 
 --
--- Name: FUNCTION fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -31003,10 +31796,10 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(mod
 
 
 --
--- Name: FUNCTION fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -31042,6 +31835,13 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(m
 --
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_course_materials_cm_copy2(p_course_id uuid, p_academic_year_semester_id uuid, p_course_year_id uuid, p_copy_exams boolean, p_copy_projects boolean, p_copy_interviews boolean, p_copy_calculations boolean, p_copy_students boolean, p_delete_existing boolean) TO token_1 WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_action_course_year_settings_plan(p_model_id uuid, p_user_id uuid); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_course_year_settings_plan(p_model_id uuid, p_user_id uuid) TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -31874,6 +32674,22 @@ GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO PUBLIC;
 
 
 --
+-- Name: SEQUENCE acorn_university_year_seq; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO token_1 WITH GRANT OPTION;
+GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO PUBLIC;
+
+
+--
+-- Name: TABLE acorn_university_academic_years; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_university_academic_years TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_academic_years TO PUBLIC;
+
+
+--
 -- Name: TABLE acorn_university_lectures; Type: ACL; Schema: public; Owner: university
 --
 
@@ -32058,27 +32874,19 @@ GRANT ALL ON TABLE public.acorn_exam_types TO PUBLIC;
 
 
 --
--- Name: SEQUENCE acorn_university_year_seq; Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO token_1 WITH GRANT OPTION;
-GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO PUBLIC;
-
-
---
--- Name: TABLE acorn_university_academic_years; Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON TABLE public.acorn_university_academic_years TO token_1 WITH GRANT OPTION;
-GRANT ALL ON TABLE public.acorn_university_academic_years TO PUBLIC;
-
-
---
 -- Name: TABLE acorn_university_course_materials; Type: ACL; Schema: public; Owner: university
 --
 
 GRANT ALL ON TABLE public.acorn_university_course_materials TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_materials TO PUBLIC;
+
+
+--
+-- Name: TABLE acorn_university_course_specializations; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_university_course_specializations TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_course_specializations TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -32624,6 +33432,14 @@ GRANT ALL ON TABLE public.acorn_university_legacy_updates TO PUBLIC;
 
 GRANT ALL ON TABLE public.acorn_university_schools TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_schools TO PUBLIC;
+
+
+--
+-- Name: TABLE acorn_university_student_course_material_exceptions; Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON TABLE public.acorn_university_student_course_material_exceptions TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_student_course_material_exceptions TO token_1 WITH GRANT OPTION;
 
 
 --
@@ -33350,5 +34166,5 @@ GRANT ALL ON TABLE public.university_mofadala_university_categories TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict s3zJP53lJz3dBSjkrMDE7K1M3k42fz6fMZRVf03MaBRcSVMnUgv2mePZ72DA8Nn
+\unrestrict agDlbnyxqcraEJs0kgZun2DMs8inuiwVpUmaA0GPKJbO2YcDHwMXWyq2xlFO0i9
 

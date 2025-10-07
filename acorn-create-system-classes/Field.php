@@ -84,6 +84,7 @@ class Field {
     //         en: Update owning Group
     public $permissionSettings;    // Database column Input settings
     public $commentHtml = TRUE;
+    public $hints;
     public $hierarchical;
     public $useRelationCount;
     public $optionsStaticMethod = 'dropdownOptions';
