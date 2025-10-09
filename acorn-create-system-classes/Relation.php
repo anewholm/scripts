@@ -25,6 +25,7 @@ class Relation {
     public $multi;  // _multi.php config
     public $prefix;
     public $suffix;
+    public $valueFrom;
     public $type;   // explicit typing
     public $delete; // Relation delete: true will cause reverse cascade deletion of associated object
     public $isFrom      = TRUE; // From this column, attached to it

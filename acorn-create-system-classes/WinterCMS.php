@@ -1407,6 +1407,7 @@ PHP
                     'deleting' => $field->deleting,
                     'columns' => $field->columns,
                     'keyFrom' => $field->keyFrom,
+                    'listEditable' => $field->listEditable,
                 
                     'options'      => $field->fieldOptions,      // Function call
                     'optionsModel' => $field->fieldOptionsModel, // Model name
@@ -1442,7 +1443,23 @@ PHP
                     ['adding', 'searching', 'deleting', 'height']
                 ); // Remove FALSE
                 if ($field->goto) $fieldDefinition['containerAttributes'] = array('goto-form-group-selection' => $field->goto);
+
+                // Normal field create
                 $this->yamlFileSet($fieldsPath, $dotPath, $fieldDefinition);
+
+                // Setting these contexts causes extra fields to be created
+                if ($field->contextUpdate) {
+                    $fieldDefinitionUpdate = array_merge($fieldDefinition, $this->camelKeys($field->contextUpdate));
+                    $this->yamlFileSet($fieldsPath, "$dotPath@update", $fieldDefinitionUpdate);
+                }
+                if ($field->contextCreate) {
+                    $fieldDefinitionCreate = array_merge($fieldDefinition, $this->camelKeys($field->contextCreate));
+                    $this->yamlFileSet($fieldsPath, "$dotPath@create", $fieldDefinitionCreate);
+                }
+                if ($field->contextPreview) {
+                    $fieldDefinitionPreview = array_merge($fieldDefinition, $this->camelKeys($field->contextPreview));
+                    $this->yamlFileSet($fieldsPath, "$dotPath@preview", $fieldDefinitionPreview);
+                }
 
                 // Tabs and icons
                 if ($field->tabLocation == 2) $this->yamlFileSet($fieldsPath, 'secondaryTabs.cssClass', 'primary-tabs', FALSE);

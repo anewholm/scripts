@@ -640,6 +640,38 @@ SQL
             $firstCalendarLinkedEventsViewEntry = FALSE;
         }
 
+        // --------------------------------- Update acorn_calendar_linked_calendars_view
+        // Check all columns that foreign key to the calendar events table
+        static $firstCalendarLinkedCalendarsViewEntry = TRUE;
+        $calendarsTable = Table::get('acorn_calendar_calendars');
+        $tablesView     = array();
+        $modelName      = $this->fullyQualifiedModelName();
+        $idField        = ($this->hasIdColumn() ? 'id' : 'NULL::uuid');
+        foreach ($this->columns as $tableColumn) {
+            $columnCheck = $tableColumn->column_name;
+            if ($fk = $this->getColumnFK($columnCheck)) {
+                if ($fk->tableTo == $calendarsTable && $fk->columnTo->isTheIdColumn()) {
+                    array_push($tablesView, <<<SQL
+                        select 
+                                "$columnCheck" as calendar_id,
+                                '$this->schema'::character varying(2048) as schema, 
+                                '$this->name'::character varying(2048) as table, 
+                                '$columnCheck'::character varying(2048) as column, 
+                                '$modelName' as model_type,
+                                $idField as model_id
+                        from $this->name
+SQL
+                    );
+                }
+            }
+        }
+        if ($tablesView) {
+            $tablesViewString = implode("\nunion all\n", $tablesView);
+            if (!$firstCalendarLinkedCalendarsViewEntry) $tablesViewString = "\nunion all\n$tablesViewString";
+            file_put_contents('acorn_calendar_linked_calendars_view.sql', $tablesViewString, FILE_APPEND);
+            $firstCalendarLinkedCalendarsViewEntry = FALSE;
+        }
+
         return $changes;
     }
 

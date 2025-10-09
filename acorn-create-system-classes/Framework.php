@@ -544,6 +544,18 @@ class Framework
     }
 
     // ----------------------------------------- YAML
+    public function camelKeys(array $array, bool $recursive = TRUE): array
+    {
+        $camelArray = array();
+        foreach ($array as $name => $value) {
+            $camelName = (is_numeric($name) ? $name : Str::camel($name));
+            if ($recursive && is_array($value)) $value = $this->camelKeys($value);
+            $camelArray[$camelName] = $value;
+        }
+
+        return $camelArray;
+    }
+
     public function &yamlFileLoad(string $path, bool $cache = self::CACHE, bool $throwIfNotFound = self::NO_THROW): array
     {
         // TODO: We should still check the cache, even if we don't store it

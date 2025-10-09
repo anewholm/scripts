@@ -148,6 +148,7 @@ class Column {
     public $settingNot; // Only show the column if a Setting is FALSE
     public $env;     // Only show the column if an env VAR is TRUE
     public $listEditable;
+    public $on, $off;
     public $columnType;
     public $columnPartial;
     public $sqlSelect;
@@ -156,6 +157,11 @@ class Column {
     public $qrcodeObject;
 
     // --------------------- Field comment accepted values
+    // array of context specific field settings. Will create extra fields
+    public $contextUpdate;  
+    public $contextCreate;
+    public $contextPreview;
+
     public $fieldType;
     public $nameFrom;
     public $hints;

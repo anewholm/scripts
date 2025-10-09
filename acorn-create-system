@@ -77,6 +77,8 @@ file_put_contents('acorn_created_bys_view.sql', "DROP VIEW IF EXISTS acorn_creat
 file_put_contents('acorn_created_bys_view.sql', "CREATE OR REPLACE VIEW acorn_created_bys as\n", FILE_APPEND);
 file_put_contents('acorn_calendar_linked_events_view.sql', "DROP VIEW IF EXISTS acorn_calendar_linked_events;\n");
 file_put_contents('acorn_calendar_linked_events_view.sql', "CREATE OR REPLACE VIEW acorn_calendar_linked_events as\n", FILE_APPEND);
+file_put_contents('acorn_calendar_linked_calendars_view.sql', "DROP VIEW IF EXISTS acorn_calendar_linked_calendars;\n");
+file_put_contents('acorn_calendar_linked_calendars_view.sql', "CREATE OR REPLACE VIEW acorn_calendar_linked_calendars as\n", FILE_APPEND);
 file_put_contents('acorn_location_linked_view.sql', "DROP VIEW IF EXISTS acorn_location_location_links;\n");
 file_put_contents('acorn_location_linked_view.sql', "CREATE OR REPLACE VIEW acorn_location_location_links as\n", FILE_APPEND);
 file_put_contents('acorn_location_linked_address_view.sql', "DROP VIEW IF EXISTS acorn_location_address_links;\n");
@@ -123,6 +125,8 @@ echo "Running {$YELLOW}acorn_created_bys_view{$NC}.sql\n";
 $db->runSQLFile('acorn_created_bys_view.sql');
 echo "Running {$YELLOW}acorn_calendar_linked_events_view{$NC}.sql\n";
 $db->runSQLFile('acorn_calendar_linked_events_view.sql');
+echo "Running {$YELLOW}acorn_calendar_linked_calendars_view{$NC}.sql\n";
+$db->runSQLFile('acorn_calendar_linked_calendars_view.sql');
 echo "Running {$YELLOW}acorn_location_linked_view{$NC}.sql\n";
 $db->runSQLFile('acorn_location_linked_view.sql');
 echo "Running {$YELLOW}acorn_location_linked_address_view{$NC}.sql\n";

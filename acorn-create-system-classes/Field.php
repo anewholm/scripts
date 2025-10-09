@@ -43,6 +43,11 @@ class Field {
     public $system;
 
     // ------------------------- Forms fields.yaml
+    // array of context specific field settings. Will create extra fields
+    public $contextUpdate;  
+    public $contextCreate;
+    public $contextPreview;
+
     public $fieldKey;
     public $fieldKeyQualifier; // Should always be added on to the fields.yaml name
     public $fieldType;
@@ -149,6 +154,7 @@ class Field {
     public $relation;  // relation: user_group
     public $columnConfig;
     public $listEditable; // => partial list_editable
+    public $on, $off;
     public $jsonable; // Column type json! :)
     public $qrcodeObject;
     // Set during __construct

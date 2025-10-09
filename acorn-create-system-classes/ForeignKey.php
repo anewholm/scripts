@@ -65,7 +65,7 @@ class ForeignKey {
     // Translation arrays
     public $labels;
     public $labelsPlural;
-
+    public $valueFrom;
     public $hints;
     public $globalScope; // Chaining from|to
     public $noRelationManager;

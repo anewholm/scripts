@@ -1599,7 +1599,12 @@ class Model {
         foreach ($this->relationsHasManyDeep() as $name => &$relation) {
             $relationClass   = get_class($relation);
             $relationType    = $relation->type();
-            $valueFrom       = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
+            $valueFrom       = ($relation->valueFrom
+                ? $relation->valueFrom 
+                : ($relation->to->hasField('name') || $this->hasNameAttributeMethod() 
+                ? 'name' 
+                : NULL
+            )); 
             $translationKey  = $relation->to->translationKey(Model::PLURAL);
             $cssClasses      = $relation->cssClasses($useRelationManager);
             $dependsOn       = ($relation->dependsOn ? $relation->dependsOn : array());
@@ -1699,7 +1704,12 @@ class Model {
             );
             $cssClasses    = $relation->cssClasses($useRelationManager);
             $comment       = '';
-            $valueFrom     = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
+            $valueFrom     = ($relation->valueFrom
+                ? $relation->valueFrom 
+                : ($relation->to->hasField('name') || $this->hasNameAttributeMethod() 
+                ? 'name' 
+                : NULL
+            )); 
             if ($relation->status == 'broken') continue;
 
             $thisIdRelation = array($name => $relation);
@@ -1778,7 +1788,12 @@ class Model {
             $dependsOn['_paste'] = TRUE;
             $comment         = '';
             $cssClasses      = $relation->cssClasses($useRelationManager);
-            $valueFrom       = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
+            $valueFrom       = ($relation->valueFrom
+                ? $relation->valueFrom 
+                : ($relation->to->hasField('name') || $this->hasNameAttributeMethod() 
+                ? 'name' 
+                : NULL
+            )); 
             if ($relation->status == 'broken') continue;
 
             $thisIdRelation = array($name => $relation);
@@ -1858,7 +1873,12 @@ class Model {
             $dependsOn['_paste'] = TRUE;
             $comment         = '';
             $cssClasses      = $relation->cssClasses($useRelationManager);
-            $valueFrom       = ($relation->to->hasField('name') || $this->hasNameAttributeMethod() ? 'name' : NULL); // For searcheable
+            $valueFrom       = ($relation->valueFrom
+                ? $relation->valueFrom 
+                : ($relation->to->hasField('name') || $this->hasNameAttributeMethod() 
+                ? 'name' 
+                : NULL
+            )); 
             if ($relation->status == 'broken') continue;
             $canFilter       = (isset($relation->canFilter) 
                 ? $relation->canFilter 
