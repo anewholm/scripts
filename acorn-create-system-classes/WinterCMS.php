@@ -1039,7 +1039,8 @@ PHP
             foreach ($model->relationsXfromXSemi() as $name => &$relation) {
                 // This is a link to the primary through field
                 // For other through fields, the pivot model should be used, $hasMany[*_pivot], from above
-                if (isset($relations[$name])) throw new Exception("Conflicting relations with [$name] on [$model->name]");
+                if (isset($relations[$name])) 
+                    throw new Exception("Conflicting relations with [$name] on [$model->name]");
                 $relations[$name] = $this->removeEmpty(array(
                     $relation->to,
                     'table'    => $relation->pivot->name,      // Semi-Pivot Model
@@ -1285,9 +1286,13 @@ PHP
         // Model level hints come first
         if ($model->hints) {
             foreach ($model->hints as $hintName => $hintConfig) {
-                $this->yamlFileSet($fieldsPath, "fields._$hintName", array_merge(array(
+                $hintNameCamel = Str::camel($hintName);
+                $path = (isset($hintConfig['partial']) ? $hintConfig['partial'] : 'standard_conditional_hint');
+                $this->yamlFileSet($fieldsPath, "fields._$hintNameCamel", array_merge(array(
                     'type' => 'partial',
-                    'path' => 'standard_conditional_hint',
+                    'path' => $path,
+                    'span' => 'storm',
+                    'cssClass' => 'col-xs-6 col-md-4', // Also will CSS float: right
                 ), $hintConfig));
             }
         }
@@ -1301,9 +1306,9 @@ PHP
                 print("    $indentString+{$YELLOW}$name{$NC}($typeString): to {$YELLOW}fields.yaml{$NC}\n");
                 $dotPathStub = 'fields';
                 if (!$field->include) {
-                    if      ($field->tabLocation == 2) $dotPathStub = "secondaryTabs.$dotPathStub";
-                    else if ($field->tabLocation == 3) $dotPathStub = "tertiaryTabs.$dotPathStub";
-                    else if ($field->tab)              $dotPathStub = "tabs.$dotPathStub";
+                    if      ($field->tabLocation == 2)             $dotPathStub = "secondaryTabs.$dotPathStub";
+                    else if ($field->tabLocation == 3)             $dotPathStub = "tertiaryTabs.$dotPathStub";
+                    else if ($field->tab && $field->tab != 'none') $dotPathStub = "tabs.$dotPathStub";
                 }
                 $fieldKey = "$field->fieldKey$field->fieldKeyQualifier";
                 $dotPath  = "$dotPathStub.$fieldKey";
@@ -1326,7 +1331,7 @@ PHP
                     }
                 }
 
-                // DependsOn
+                // ---------------------- DependsOn
                 // 4 formats are allowed:
                 //   qrcode (single string)
                 //   qrcode => TRUE|FALSE
@@ -1354,6 +1359,14 @@ PHP
                     }
                 }
 
+                // Convert contexts to a numeric array
+                $contexts = array();
+                if (is_string($field->contexts)) $contexts = array($field->contexts);
+                else if (is_array($field->contexts) && $field->contexts) {
+                    if (is_numeric(array_keys($field->contexts)[0])) $contexts = $field->contexts;
+                    else $contexts = array_keys($field->contexts);
+                }
+
                 // Dropdown defaults do not work
                 // The JS will check the attributes and apply the default
                 if ($field->fieldType == 'dropdown' && $field->default) {
@@ -1363,7 +1376,10 @@ PHP
                 }
 
                 $labelKey = (isset($field->explicitLabelKey) ? $field->explicitLabelKey : $field->translationKey());
-                $fieldTab = ($field->tab === 'INHERIT' ? $labelKey : $field->tab); // Can be NULL
+                $fieldTab = ($field->tab === 'INHERIT' 
+                    ? $labelKey 
+                    : ($field->tab == 'none' || $field->tabLocation === 0 ? NULL : $field->tab)
+                ); 
 
                 // Field hints come first
                 if ($field->hints) {
@@ -1391,7 +1407,7 @@ PHP
                     'cssClass'  => $field->cssClass(),
                     'comment'      => $field->fieldComment,
                     'commentHtml'  => ($field->commentHtml && $field->fieldComment),
-                    'context'      => array_keys($field->contexts),
+                    'context'      => $contexts,
                     'tab'          => $fieldTab,
 
                     // Pass through
@@ -1449,16 +1465,31 @@ PHP
 
                 // Setting these contexts causes extra fields to be created
                 if ($field->contextUpdate) {
-                    $fieldDefinitionUpdate = array_merge($fieldDefinition, $this->camelKeys($field->contextUpdate));
-                    $this->yamlFileSet($fieldsPath, "$dotPath@update", $fieldDefinitionUpdate);
+                    $fieldContext = array_merge($fieldDefinition, $this->camelKeys($field->contextUpdate));
+                    $dotPathStub  = 'fields';
+                    if      (isset($fieldContext['tabLocation']) && $fieldContext['tabLocation'] == 2) $dotPathStub = "secondaryTabs.$dotPathStub";
+                    else if (isset($fieldContext['tabLocation']) && $fieldContext['tabLocation'] == 3) $dotPathStub = "tertiaryTabs.$dotPathStub";
+                    else if (isset($fieldContext['tab']) && $fieldContext['tab'])                      $dotPathStub = "tabs.$dotPathStub";
+                    $dotPath  = "$dotPathStub.$fieldKey";
+                    $this->yamlFileSet($fieldsPath, "$dotPath@update", $fieldContext);
                 }
                 if ($field->contextCreate) {
-                    $fieldDefinitionCreate = array_merge($fieldDefinition, $this->camelKeys($field->contextCreate));
-                    $this->yamlFileSet($fieldsPath, "$dotPath@create", $fieldDefinitionCreate);
+                    $fieldContext = array_merge($fieldDefinition, $this->camelKeys($field->contextCreate));
+                    $dotPathStub  = 'fields';
+                    if      (isset($fieldContext['tabLocation']) && $fieldContext['tabLocation'] == 2) $dotPathStub = "secondaryTabs.$dotPathStub";
+                    else if (isset($fieldContext['tabLocation']) && $fieldContext['tabLocation'] == 3) $dotPathStub = "tertiaryTabs.$dotPathStub";
+                    else if (isset($fieldContext['tab']) && $fieldContext['tab'])                      $dotPathStub = "tabs.$dotPathStub";
+                    $dotPath  = "$dotPathStub.$fieldKey";
+                    $this->yamlFileSet($fieldsPath, "$dotPath@create", $fieldContext);
                 }
                 if ($field->contextPreview) {
-                    $fieldDefinitionPreview = array_merge($fieldDefinition, $this->camelKeys($field->contextPreview));
-                    $this->yamlFileSet($fieldsPath, "$dotPath@preview", $fieldDefinitionPreview);
+                    $fieldContext = array_merge($fieldDefinition, $this->camelKeys($field->contextPreview));
+                    $dotPathStub  = 'fields';
+                    if      (isset($fieldContext['tabLocation']) && $fieldContext['tabLocation'] == 2) $dotPathStub = "secondaryTabs.$dotPathStub";
+                    else if (isset($fieldContext['tabLocation']) && $fieldContext['tabLocation'] == 3) $dotPathStub = "tertiaryTabs.$dotPathStub";
+                    else if (isset($fieldContext['tab']) && $fieldContext['tab'])                      $dotPathStub = "tabs.$dotPathStub";
+                    $dotPath  = "$dotPathStub.$fieldKey";
+                    $this->yamlFileSet($fieldsPath, "$dotPath@preview", $fieldContext);
                 }
 
                 // Tabs and icons
@@ -1859,9 +1890,10 @@ PHP
                             'recordsPerPage' => $field->recordsPerPage,
                         ),
                     );
-                    if (!is_null($rlButtonsValue)) $relationDefinition['view']['toolbarButtons'] = $rlButtonsValue;
-                    if ($relationModel->hasField('sort_order')) $relationDefinition['view']['defaultSort'] = 'sort_order asc';
-                    if ($relationModel->hasField('ordinal'))    $relationDefinition['view']['defaultSort'] = 'ordinal asc';
+                    if (!is_null($relation1->defaultSort)) $relationDefinition['view']['defaultSort'] = $relation1->defaultSort;
+                    if (!is_null($rlButtonsValue))         $relationDefinition['view']['toolbarButtons'] = $rlButtonsValue;
+                    if ($relationModel->hasField('sort_order'))   $relationDefinition['view']['defaultSort'] = 'sort_order asc';
+                    if ($relationModel->hasField('ordinal'))      $relationDefinition['view']['defaultSort'] = 'ordinal asc';
                 }
                 
                 if ($relation1->conditions) $relationDefinition['view']['conditions'] = $relation1->conditions;
@@ -1891,6 +1923,25 @@ PHP
         else          
             print("  No {$YELLOW}actionFunctions{$NC}\n");
         $this->yamlFileSet($configFormPath, 'actionFunctions', $controller->model->actionFunctions);
+
+        // ---------------------------------------- Controller context AJAX handlers
+        // If 1-1 with User
+        if ($controller->model->inheritsFrom('Acorn\User\Models\User')) {
+            // Allow indirect user activation
+            $this->addMethod($controllerFilePath, 'onActivate($code = NULL)', array(
+                'if ($student = \Acorn\University\Models\Student::find($code))',
+                '    $student->user->attemptActivation($student->user->activation_code);',
+                'return \Redirect::refresh();'
+            ));
+        }
+        if ($controller->model->actionAliases) {
+            // courseplanner => index
+            foreach ($controller->model->actionAliases as $actionAlias) {
+                $funcAlias = preg_replace('/[^a-zA-Z0-9]+/', '', strtolower($actionAlias));
+                $this->addMethod($controllerFilePath, $funcAlias, 'return $this->runAlias();');
+            }
+        }
+
 
         // ----------------------------------------------- Interface variants
         // TODO: Not used anymore. Superceeded by generic aa/partials/create|update.php

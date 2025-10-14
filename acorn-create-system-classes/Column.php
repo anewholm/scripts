@@ -169,6 +169,7 @@ class Column {
     public $typeEditable; // For list-editable row partial
     public $rules = array();
     public $partial;
+    public $contexts;
     public $default;
     public $required; // $is_nullable == NO && !$column_default
     public $trigger;

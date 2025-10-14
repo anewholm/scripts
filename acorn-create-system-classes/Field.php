@@ -66,7 +66,7 @@ class Field {
     public $readOnly;
     public $newRow;  // From column comment
     public $noLabel; // From column comment
-    public $contexts     = array();
+    public $contexts;
     public $span;
     public $cssClasses;
     public $bootstraps   = array('xs' => 6);
@@ -757,8 +757,11 @@ class Field {
     public function localTranslationKey(): string
     {
         // $group.$subgroup.$name
-        $translationKey = $this->translationKey();
-        $localTranslationKey = explode('::', $translationKey)[1];
+        $translationKey      = $this->translationKey();
+        $translationKeyParts = explode('::', $translationKey);
+        if (!isset($translationKeyParts[1]))
+            throw new Exception("Malformed translation key [$translationKey]");
+        $localTranslationKey = $translationKeyParts[1];
         return preg_replace('/^lang\./', '', $localTranslationKey);
     }
 

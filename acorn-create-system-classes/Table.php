@@ -58,6 +58,7 @@ class Table {
     public $seeding;
     public $labelsFrom = array(); // Inherit labels from another table. Useful for views
     public $hints;
+    public $actionAliases; // courseplanner => index
 
     // Translation arrays
     public $pluginNames;

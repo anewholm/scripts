@@ -28,6 +28,7 @@ class Model {
     public const WITH_CLASS_STRING = TRUE;
 
     public $controllers = array();
+    public $actionAliases; // courseplanner => index
     public $actionFunctions;
     public $actionLinks;
     public $alesFunctions;
@@ -720,6 +721,19 @@ class Model {
         return $relationsName;
     }
 
+    public function inheritsFrom(string $class): bool
+    {
+        // TODO: Deep recursive inheritsFrom check
+        $found = FALSE;
+        foreach ($this->relations1to1() as &$relation1to1) {
+            if ($relation1to1->to->fullyQualifiedName() == $class) {
+                $found = TRUE;
+                break;
+            }
+        }
+        return $found;
+    }
+
     public function relations1to1(Column &$forColumn = NULL, bool $hasManyDeepInclude = FALSE, bool $winterModels = FALSE): array
     {
         // 1-1 & leaf relations
@@ -731,30 +745,56 @@ class Model {
 
         // Non-create system plugins do not declare 1to1 nature
         if ($this->isCreateSystem()) {
-            // 1 column pointing to the parent content table
             foreach ($this->table->columns as &$column) {
-                foreach ($column->foreignKeysFrom as &$foreignKeyFrom) {
-                    if ($foreignKeyFrom->shouldProcess()) {
-                        // Returns true also if isLeaf()
-                        if ((      $foreignKeyFrom->is1to1() 
-                                || ($hasManyDeepInclude && $foreignKeyFrom->hasManyDeepInclude)
-                            )
+                // We include foreignKeysTo in case there is a $hasManyDeepInclude
+                // 1 column from another table pointing to this table
+                if ($hasManyDeepInclude) {
+                    foreach ($column->foreignKeysTo as $name => &$foreignKeyTo) {
+                        if ($foreignKeyTo->shouldProcess() 
+                            && $foreignKeyTo->hasManyDeepInclude
                             && (is_null($forColumn) || $forColumn->name == $column->name)
                         ) {
-                            $finalContentTable = &$foreignKeyFrom->tableTo;
-                            $finalColumnTo     = &$foreignKeyFrom->columnTo;
-                            if (!$finalContentTable->isContentTable()) throw new Exception("Final Content Table of [$foreignKeyFrom] on [$this->table.$column] is not type content");
-                            if (!$finalContentTable->model)            throw new Exception("Foreign key [$foreignKeyFrom] on [$this->table.$column] has no to model");
-                            if (!$finalColumnTo->isTheIdColumn())      throw new Exception("Foreign 1to1 key [$foreignKeyFrom] on [$this->table.$column] is not to the id column [$finalColumnTo->name]");
-
-                            $finalModel   = &$finalContentTable->model;
-                            $relationName = $foreignKeyFrom->columnFrom->relationName();
-                            if (isset($relations[$relationName])) throw new Exception("Relation for [$relationName] already exists on [$this->name] on [$this->table.$column]");
-                            $relations[$relationName] = ($foreignKeyFrom->isLeaf()
-                                ? new RelationLeaf($relationName, $this, $finalModel, $foreignKeyFrom->columnFrom, $foreignKeyFrom)
-                                : new Relation1to1($relationName, $this, $finalModel, $foreignKeyFrom->columnFrom, $foreignKeyFrom)
+                            // Relation name needs to be the same as the one on the source model
+                            // Copied from Relation1fromX hasMany
+                            $relationName = $foreignKeyTo->fromRelationName();
+                            if ($foreignKeyTo->type() != 'Xto1')
+                                throw new Exception("We are only supporting Xto1 at the moment during $foreignKeyTo->tableFrom::HasManyDeep($relationName) => $this->name");
+                            if (isset($relations[$relationName])) 
+                                throw new Exception("Relation for [$relationName] already exists on [$this->name] on [$this->table.$column]");
+                            // It is not a 1to1 of course...
+                            // This relationName will have to be the same as the subsequent relation on the step model
+                            $relations[$relationName] = new Relation1fromX(
+                                $relationName, // X hierarchy
+                                $this,         // Entity
+                                $foreignKeyTo->tableFrom->model, // Hierarchy
+                                $foreignKeyTo->columnTo,     // entity.id
+                                $foreignKeyTo
                             );
                         }
+                    }
+                }
+
+                // 1 column pointing from this table to the parent content table
+                foreach ($column->foreignKeysFrom as $name => &$foreignKeyFrom) {
+                    // Returns true also if isLeaf()
+                    if ($foreignKeyFrom->shouldProcess()
+                        && ($foreignKeyFrom->is1to1()  || ($hasManyDeepInclude && $foreignKeyFrom->hasManyDeepInclude))
+                        && (is_null($forColumn) || $forColumn->name == $column->name)
+                    ) {
+                        $finalContentTable = &$foreignKeyFrom->tableTo;
+                        $finalColumnTo     = &$foreignKeyFrom->columnTo;
+                        if (!$finalContentTable->isContentTable()) throw new Exception("Final Content Table of [$foreignKeyFrom] on [$this->table.$column] is not type content");
+                        if (!$finalContentTable->model)            throw new Exception("Foreign key [$foreignKeyFrom] on [$this->table.$column] has no to model");
+                        if (!$finalColumnTo->isTheIdColumn())      throw new Exception("Foreign 1to1 key [$foreignKeyFrom] on [$this->table.$column] is not to the id column [$finalColumnTo->name]");
+
+                        $finalModel   = &$finalContentTable->model;
+                        $relationName = $foreignKeyFrom->columnFrom->relationName();
+                        if (isset($relations[$relationName])) 
+                            throw new Exception("Relation for [$relationName] already exists on [$this->name] on [$this->table.$column]");
+                        $relations[$relationName] = ($foreignKeyFrom->isLeaf()
+                            ? new RelationLeaf($relationName, $this, $finalModel, $foreignKeyFrom->columnFrom, $foreignKeyFrom)
+                            : new Relation1to1($relationName, $this, $finalModel, $foreignKeyFrom->columnFrom, $foreignKeyFrom)
+                        );
                     }
                 }
             }
@@ -795,7 +835,23 @@ class Model {
         $relations = array();
         // relations1to1() returns empty for non-Create-System models
         // because their foreign keys & relations are not adorned
+        // It will return ANY from|to relation that is marked as HAS_MANY_DEEP_INCLUDE
         $relations1to1 = $stepModel->relations1to1($forColumn, self::HAS_MANY_DEEP_INCLUDE);
+        if (FALSE) {
+            // In-depth recursive output
+            $depth    = count($throughRelations);
+            $depthStr = '      ' . str_repeat('  ', $depth);
+            print("$depthStr{$stepModel->name}->relations1to1($forColumn?->column_name, HAS_MANY_DEEP_INCLUDE):\n");
+            if ($relations1to1) {
+                foreach ($relations1to1 as $name => $relation) {
+                    $type = $relation->type();
+                    print("  $depthStr$name($type)\n");
+                }
+            } else {
+                print("  $depthStr(empty)\n");
+            }
+        }
+
         foreach ($relations1to1 as $name => $relation) {
             if (isset($throughRelations[$name])) {
                 // This can happen with parent relations
@@ -831,6 +887,24 @@ class Model {
                         if ($deepRelation->conditions)
                             print("      {$RED}WARNING{$NC}: Relation HasManyDeep $deepName has conditions\n");
 
+                        // HasManyDeeps can have non-1to1 relations in them
+                        // because of HAS_MANY_DEEP_INCLUDE
+                        // In this case the type of the final relation in the chain is a lie
+                        // For example, if the final relation is a 1to1, after an Xto1, that is not real
+                        // a multi will need to express it
+                        // AND it should not be classed as a 1to1 because fields.yaml will start being included and stuff
+                        $type = $deepRelation->type(); // The last relation type
+                        $containsNon1to1s = FALSE;
+                        foreach ($thisThroughRelations as $throughRelation) {
+                            if (! $throughRelation instanceof Relation1to1) { // Includes leaf
+                                $type = $throughRelation->type();
+                                $containsNon1to1s = TRUE;
+                                // print("      {$RED}WARNING{$NC}: Relation HasManyDeep $deepName is fake (contains non-1to1 in stub-chain)\n");
+                            }
+                        }
+                        
+                        // We create HasManyDeeps for each step of the way
+                        // not just the final relation
                         $relations[$deepName] = new RelationHasManyDeep(
                             $deepName,
                             $forModel,       // model from
@@ -849,8 +923,9 @@ class Model {
                             // 1to1 means all steps are 1to1
                             // because $relation above will only be 1to1 traversal
                             // other (XfromX, etc.) indicates the LAST step only
-                            $deepRelation->type(),
-                            $deepRelation->conditions
+                            $type,
+                            $deepRelation->conditions,
+                            $containsNon1to1s
                         );
                     }
                 }
@@ -941,8 +1016,15 @@ class Model {
                             if (!$finalContentTable->model)            throw new Exception("Foreign key from table for [$foreignKeyFrom] on [$this->table.$column] has no model");
                             $finalModel   = &$finalContentTable->model;
                             $relationName = $foreignKeyFrom->columnFrom->relationName();
-                            if (isset($relations[$relationName])) throw new Exception("Relation for [$relationName] on [$this->table.$column] already exists on [$this->name]");
-                            $relations[$relationName] = new RelationXto1($relationName, $this, $finalModel, $foreignKeyFrom->columnFrom, $foreignKeyFrom);
+                            if (isset($relations[$relationName])) 
+                                throw new Exception("Relation for [$relationName] on [$this->table.$column] already exists on [$this->name]");
+                            $relations[$relationName] = new RelationXto1(
+                                $relationName, 
+                                $this, 
+                                $finalModel, 
+                                $foreignKeyFrom->columnFrom, 
+                                $foreignKeyFrom
+                            );
                         }
                     }
                 }
@@ -1321,8 +1403,10 @@ class Model {
                     $fieldObj->debugComment = "$fieldClass for column $column->column_name on $plugin->name.$this->name";
 
                     // 1to1 embedding 
+                    // Includes HasManyDeep(1to1) 
+                    // and HasManyDeep(containsNon1to1s)
                     if (   $fieldObj instanceof ForeignIdField
-                        && ($relations1to1 = $fieldObj->relations1to1()) // Includes HasManyDeep(1to1)
+                        && ($relations1to1 = $fieldObj->relations1to1()) 
                     ) {
                         // 1to1, leaf & hasManyDeep(1to1) relations.
                         // Known AA plugins are Final
@@ -1335,7 +1419,6 @@ class Model {
                             $modelToClass       = $modelTo->name;
                             $classParts         = explode('\\', get_class($relation1to1));
                             $relationClass      = end($classParts);
-                            $type               = $relation1to1->type();
 
                             if (!$recursing) {
                                 // -------------------------------------------------- HasManyDeep(*to*) & immediate 1to1 relation: columns
@@ -1343,7 +1426,7 @@ class Model {
                                 // which allows sorting and searching of 1-1 relation columns
                                 // that is not possible with nested 1-1 columns
                                 // RELATION_MODE: relation: <has_many_deep_name>
-                                //
+                                // 
                                 // This call also returns Fields from non-create-system Yaml. See below
                                 // NOT RECURSIVE: !$recursing only
                                 $relation1to1Fields = $modelTo->fields($recursing+1);
@@ -1597,80 +1680,86 @@ class Model {
         /* ---------- type: HasManyDeep relation managers and column _multi's 
         */
         foreach ($this->relationsHasManyDeep() as $name => &$relation) {
-            $relationClass   = get_class($relation);
-            $relationType    = $relation->type();
-            $valueFrom       = ($relation->valueFrom
-                ? $relation->valueFrom 
-                : ($relation->to->hasField('name') || $this->hasNameAttributeMethod() 
-                ? 'name' 
-                : NULL
-            )); 
-            $translationKey  = $relation->to->translationKey(Model::PLURAL);
-            $cssClasses      = $relation->cssClasses($useRelationManager);
-            $dependsOn       = ($relation->dependsOn ? $relation->dependsOn : array());
-            $dependsOn['_paste'] = TRUE;
-            $canFilter       = (isset($relation->canFilter) 
-                ? $relation->canFilter 
-                : (isset($this->canFilterDefault) ? $this->canFilterDefault : $relation->canFilterDefault())
-            );
+            if ($relation->containsNon1to1s && !$relation->hasManyDeepSettings) {
+                // We ignore HasManyDeep(containsNon1to1s) fields at the moment
+                // print("    HasManyDeep(containsNon1to1s) $name ignored for fields.yaml");
+            } else {
+                $relationClass   = get_class($relation);
+                $relationType    = $relation->type();
+                $valueFrom       = ($relation->valueFrom
+                    ? $relation->valueFrom 
+                    : ($relation->to->hasField('name') || $this->hasNameAttributeMethod() 
+                    ? 'name' 
+                    : NULL
+                )); 
+                $translationKey  = $relation->to->translationKey(Model::PLURAL);
+                $cssClasses      = $relation->cssClasses($useRelationManager);
+                $dependsOn       = ($relation->dependsOn ? $relation->dependsOn : array());
+                $dependsOn['_paste'] = TRUE;
+                $canFilter       = (isset($relation->canFilter) 
+                    ? $relation->canFilter 
+                    : (isset($this->canFilterDefault) ? $this->canFilterDefault : $relation->canFilterDefault())
+                );
 
-            $thisIdRelation  = array($name => $relation);
-            $fieldDefinition = array(
-                '#'              => "Tab multi-select for relations1fromX($relationClass($relationType) $relation)",
-                'name'           => $name,
-                'labels'         => $relation->labelsPlural, // Overrides translationKey to force a local key
-                'invisible'      => $relation->invisible,
-                'columnExclude'  => $relation->columnExclude,
-                'icon'           => $relation->to->icon,
-                'debugComment'   => "Column _multi for $relation on $plugin->name.$this->name",
-                // These are linked only to the content table
-                'canFilter'      => $canFilter, 
-                'columnType'     => 'partial',
-                'columnPartial'  => 'multi',
-                'multi'          => $relation->multi,
-                'nameObject'     => $relation->lastRelation()->nameObject,
-                'relation'       => $name,
-                'searchable'     => (bool) $valueFrom,
-                'valueFrom'      => $valueFrom, // Necessary for search to work, is removed in nested scenario
-                'readOnly'       => $relation->readOnly,
-                'fieldComment'   => $relation->fieldComment,
-                'commentHtml'    => $relation->commentHtml,
-                'noRelationManager' => (isset($relation->noRelationManager) ? $relation->noRelationManager : $this->noRelationManagerDefault),
-                'filterSearchNameSelect' => $relation->filterSearchNameSelect,
-                'filterConditions' => $relation->filterConditions,
-                'explicitLabelKey' => $relation->explicitLabelKey,
-                'prefix'           => $relation->prefix,
-                'suffix'           => $relation->suffix,
-                
-                // The relation decides about its presentation with fieldExclude
-                // Essentially, only for 1toX and XtoX final relations
-                // that need a relationmanager
-                // TODO: $relation->isToMany() ? 'relationmanager' : 'relation'
-                'fieldType'      => 'relationmanager',
-                'fieldExclude'   => $relation->fieldExclude,
-                'hints'          => $relation->hints,
-                'advanced'       => $relation->advanced,
-                'hidden'         => $relation->hidden,
-                'required'       => $relation->required,
-                'span'           => $relation->span,
-                'tab'            => ($relation->tab ?: 'INHERIT'),
-                'cssClasses'     => $cssClasses,
-                'rlButtons'      => $relation->rlButtons,
-                'dependsOn'      => $dependsOn,
-                'tabLocation'    => $relation->tabLocation,
-            );
-            if ($relation->isCount) {
-                $fieldDefinition = array_merge($fieldDefinition, array(
-                    'columnType'       => 'partial',
-                    'columnPartial'    => 'count',
-                    'multi'            => NULL,
-                    'useRelationCount' => TRUE,
-                    'searchable'       => FALSE,
-                    'valueFrom'        => NULL,
-                    'canFilter'        => FALSE, // Count
-                ));
+                $thisIdRelation  = array($name => $relation);
+                $fieldDefinition = array(
+                    '#'              => "Tab multi-select for relations1fromX($relationClass($relationType) $relation)",
+                    'name'           => $name,
+                    'labels'         => $relation->labelsPlural, // Overrides translationKey to force a local key
+                    'invisible'      => $relation->invisible,
+                    'columnExclude'  => $relation->columnExclude,
+                    'icon'           => $relation->to->icon,
+                    'debugComment'   => "Column _multi for $relation on $plugin->name.$this->name",
+                    // These are linked only to the content table
+                    'canFilter'      => $canFilter, 
+                    'columnType'     => ($relation->columnType    ?: 'partial'),
+                    'columnPartial'  => ($relation->columnPartial ?: 'multi'),
+                    'multi'          => $relation->multi,
+                    'nameObject'     => $relation->lastRelation()->nameObject,
+                    'relation'       => $name,
+                    'searchable'     => (bool) $valueFrom,
+                    'valueFrom'      => $valueFrom, // Necessary for search to work, is removed in nested scenario
+                    'readOnly'       => $relation->readOnly,
+                    'fieldComment'   => $relation->fieldComment,
+                    'commentHtml'    => $relation->commentHtml,
+                    'noRelationManager' => (isset($relation->noRelationManager) ? $relation->noRelationManager : $this->noRelationManagerDefault),
+                    'filterSearchNameSelect' => $relation->filterSearchNameSelect,
+                    'filterConditions' => $relation->filterConditions,
+                    'explicitLabelKey' => $relation->explicitLabelKey,
+                    'prefix'           => $relation->prefix,
+                    'suffix'           => $relation->suffix,
+                    
+                    // The relation decides about its presentation with fieldExclude
+                    // Essentially, only for 1toX and XtoX final relations
+                    // that need a relationmanager
+                    // TODO: $relation->isToMany() ? 'relationmanager' : 'relation'
+                    'fieldType'      => 'relationmanager',
+                    'fieldExclude'   => $relation->fieldExclude,
+                    'hints'          => $relation->hints,
+                    'advanced'       => $relation->advanced,
+                    'hidden'         => $relation->hidden,
+                    'required'       => $relation->required,
+                    'span'           => $relation->span,
+                    'tab'            => ($relation->tab ?: 'INHERIT'),
+                    'cssClasses'     => $cssClasses,
+                    'rlButtons'      => $relation->rlButtons,
+                    'dependsOn'      => $dependsOn,
+                    'tabLocation'    => $relation->tabLocation,
+                );
+                if ($relation->isCount && !$relation->containsNon1to1s) {
+                    // containsNon1to1s won't work because there will be multiple results
+                    $fieldDefinition = array_merge($fieldDefinition, array(
+                        'columnType'       => 'partial',
+                        'columnPartial'    => 'count',
+                        'multi'            => NULL,
+                        'useRelationCount' => TRUE,
+                        'searchable'       => FALSE,
+                        'valueFrom'        => NULL,
+                        'canFilter'        => FALSE, // Count
+                    ));
+                }
+                $fields[$name] = new PseudoFromForeignIdField($this, $fieldDefinition, $thisIdRelation);
             }
-            $fields[$name] = new PseudoFromForeignIdField($this, $fieldDefinition, $thisIdRelation);
         }
 
         /* ---------- type: 1fromX ($hasMany) => this table.id:
@@ -1749,8 +1838,8 @@ class Model {
                 'explicitLabelKey'  => $relation->explicitLabelKey,
 
                 // List
-                'columnType'     => 'partial',
-                'columnPartial'  => 'multi',
+                'columnType'     => ($relation->columnType    ?: 'partial'),
+                'columnPartial'  => ($relation->columnPartial ?: 'multi'),
                 // For searching
                 'relation'       => $name,
                 'searchable'     => (bool) $valueFrom,
@@ -1839,8 +1928,8 @@ class Model {
                 'explicitLabelKey'  => $relation->explicitLabelKey,
 
                 // List
-                'columnType'    => 'partial',
-                'columnPartial' => 'multi',
+                'columnType'     => ($relation->columnType    ?: 'partial'),
+                'columnPartial'  => ($relation->columnPartial ?: 'multi'),
                 // For searching
                 'relation'      => $name,
                 'searchable'    => (bool) $valueFrom,
@@ -1929,8 +2018,8 @@ class Model {
                 'explicitLabelKey'  => $relation->explicitLabelKey,
 
                 // List
-                'columnType'    => 'partial',
-                'columnPartial' => 'multi',
+                'columnType'     => ($relation->columnType    ?: 'partial'),
+                'columnPartial'  => ($relation->columnPartial ?: 'multi'),
                 // For searching
                 'relation'      => $name,
                 'searchable'    => (bool) $valueFrom,

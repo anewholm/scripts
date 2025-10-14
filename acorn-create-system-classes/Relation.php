@@ -12,6 +12,8 @@ class Relation {
 
     public $comment;
     public $fieldComment;
+    public $columnType;
+    public $columnPartial;
     public $commentHtml;
     public $hidden;
     public $invisible;
@@ -58,6 +60,7 @@ class Relation {
     public $nameFrom;
     public $explicitLabelKey;
     public $filterSearchNameSelect; // Special select useful for 1to1 filter term search
+    public $defaultSort;
 
     // Translation arrays
     public $labels;
@@ -426,6 +429,7 @@ class RelationHasManyDeep extends Relation {
     public $containsLeaf;
     public $nameObject;
     public $fieldExclude; // canDisplayAsField()
+    public $containsNon1to1s;
 
     public function __construct(
         string $name, 
@@ -437,7 +441,12 @@ class RelationHasManyDeep extends Relation {
         bool  $containsLeaf,
         bool  $nameObject,
         string $type, // Last relation type
-        string $conditions = NULL
+        string $conditions = NULL,
+        // Fake means that chain contains non-1to1 steps
+        // thus the last relation type does not really indicate the true type
+        // For example, a last relation of 1to1 in a chain that has Xto1 is not really a 1to1
+        // the same goes for parent & isSelfReferencing concepts
+        bool $containsNon1to1s = FALSE
     ) {
         $firstRelation = current($throughRelations);
         $lastRelation  = end($throughRelations);
@@ -480,20 +489,28 @@ class RelationHasManyDeep extends Relation {
         $this->containsLeaf     = $containsLeaf;
         $this->nameObject       = $nameObject;
         $this->repeatingModels  = $repeatingModels;
+        $this->containsNon1to1s = $containsNon1to1s;
         // 1toX, XtoX, XtoXSemi
         if (!isset($this->fieldExclude))  $this->fieldExclude     = $fieldExclude;
         if (!isset($this->columnExclude)) $this->columnExclude    = $columnExclude;
         $this->rlButtons        = $lastRelation->rlButtons;
 
-        if ($firstRelation->hasManyDeepSettings) {
-            if (isset($firstRelation->hasManyDeepSettings[$this->name])) {
-                $settings = $firstRelation->hasManyDeepSettings[$this->name];
-                foreach ($settings as $name => $value) {
-                    $nameCamel = Str::camel($name);
-                    if (!property_exists($this, $nameCamel)) 
-                        throw new Exception("Property [$nameCamel] does not exist on [$this]");
-                    $this->$nameCamel = $value;
-                }
+        if ($this->containsNon1to1s) {
+            if (!is_array($this->flags)) $this->flags = array();
+            $this->flags['containsNon1to1s'] = TRUE;
+        }
+
+        if ($firstRelation->hasManyDeepSettings && isset($firstRelation->hasManyDeepSettings[$this->name])) {
+            // Settings adopt
+            // If there are explicit settings it can cause containsNon1to1s fields / columns to render
+            // The first relation in the chain takes precedence over later has-many-deep-settings
+            $this->hasManyDeepSettings = $firstRelation->hasManyDeepSettings[$this->name];
+
+            foreach ($this->hasManyDeepSettings as $name => $value) {
+                $nameCamel = Str::camel($name);
+                if (!property_exists($this, $nameCamel)) 
+                    throw new Exception("Property [$nameCamel] does not exist on [$this]");
+                $this->$nameCamel = $value;
             }
         }
     }
@@ -507,6 +524,11 @@ class RelationHasManyDeep extends Relation {
     public function lastRelation(): Relation
     {
         return end($this->throughRelations);
+    }
+
+    public function isSelfReferencing(): bool
+    {
+        return (!$this->containsNon1to1s && parent::isSelfReferencing());
     }
 
     public function __toString()
