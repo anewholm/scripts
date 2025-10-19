@@ -32,6 +32,9 @@ class Table {
 
     public $comment;
     public $parsedComment; // array
+    public $formComment;   // Appears as a section on the top of forms
+    public $formCommentContexts;
+    public $commentHtml;   // For form-comment
     public $packageType; // plugin|module
     public $pluginIcon;
     public $pluginUrl;
@@ -49,6 +52,7 @@ class Table {
     public $icon;
     public $tableType; // TODO: create a Derived class instead?
     public $globalScope; // Limits all related models to here by the selection
+    public $globalScopeCssTheme; // CSS class applied to body when the global scope has a fixed value
     public $plural;
     public $singular;
     public $menu;
@@ -74,6 +78,8 @@ class Table {
     public $defaultSort;
     public $showSorting;
     public $columns;
+    public $beforeFunctions;
+    public $afterFunctions;
     public $actionFunctions;
     public $actionLinks;
     public $alesFunctions;
@@ -84,6 +90,7 @@ class Table {
     public $batchPrint;
     public $qrCodeScan;
     public $allControllers;
+    public $bodyClasses; // Controller
 
     public $filters = array();
     public $listRecordUrl;
@@ -706,6 +713,16 @@ SQL
     public function loadActionFunctions()
     {
         $this->actionFunctions = $this->db->actionFunctionsForTable($this->name);
+    }
+
+    public function loadBeforeFunctions()
+    {
+        $this->beforeFunctions = $this->db->beforeFunctionsForTable($this->name);
+    }
+
+    public function loadAfterFunctions()
+    {
+        $this->afterFunctions = $this->db->afterFunctionsForTable($this->name);
     }
 
     public function loadALESFunctions()

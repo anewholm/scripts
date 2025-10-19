@@ -211,6 +211,24 @@ class DB {
         return (isset($tableParts[1]) ? $this->functions($tableParts[0], $tableParts[1], 'action', $tableQualifier) : array());
     }
 
+    public function beforeFunctionsForTable(string $table): array
+    {
+        // https://www.postgresql.org/docs/current/functions-info.html
+        // https://www.postgresql.org/docs/current/functions-info.html#FUNCTIONS-INFO-COMMENT
+        $tableParts     = explode('_', $table); // acorn_justice_legalcases
+        $tableQualifier = implode('_', array_slice($tableParts, 2)); // legalcases_*
+        return (isset($tableParts[1]) ? $this->functions($tableParts[0], $tableParts[1], 'before', $tableQualifier) : array());
+    }
+
+    public function afterFunctionsForTable(string $table): array
+    {
+        // https://www.postgresql.org/docs/current/functions-info.html
+        // https://www.postgresql.org/docs/current/functions-info.html#FUNCTIONS-INFO-COMMENT
+        $tableParts     = explode('_', $table); // acorn_justice_legalcases
+        $tableQualifier = implode('_', array_slice($tableParts, 2)); // legalcases_*
+        return (isset($tableParts[1]) ? $this->functions($tableParts[0], $tableParts[1], 'after', $tableQualifier) : array());
+    }
+
     public function alesFunctionsForTable(string $table): array
     {
         // After List Editable Save
@@ -228,10 +246,12 @@ class DB {
         $like .= ($qualifier2 ? "_$qualifier2" : '_%');
         $like .= '_%';
         $statement = $this->connection->prepare("select 
-            proname as name, proargnames as parameters, proargtypes as types, oid, obj_description(oid) as comment, prorettype as returntype
+            proname as name, proargnames as parameters, proargdefaults as \"defaults\", proargtypes as types, 
+            oid, obj_description(oid) as comment, prorettype as returntype
             from pg_proc
             where proname like(:like)
-            ORDER BY proname");
+            ORDER BY coalesce(substring(obj_description(oid), 'order: ([0-9-]+)')::int, 10000) asc, proname
+        ");
         $statement->bindParam(':like', $like);
         $statement->execute();
         $results = $statement->fetchAll(\PDO::FETCH_OBJ);
@@ -246,6 +266,18 @@ class DB {
             foreach (explode(',', $dbParametersString) as $i => $name) {
                 $name = trim($name);
                 if ($name) {
+                    // TODO: Process parameter defaults... not so easy
+                    // ({CONST 
+                    //   :consttype 16 
+                    //   :consttypmod -1 
+                    //   :constcollid 0 
+                    //   :constlen 1 
+                    //   :constbyval true 
+                    //   :constisnull false 
+                    //   :location 487 
+                    //   :constvalue 1 [ 1 0 0 0 0 0 0 0 ]
+                    // })
+                    
                     // TODO: Translate type oids
                     $typeOID = (int) $types[$i];
                     $typeName = 'unknown';

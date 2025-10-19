@@ -544,12 +544,12 @@ class Framework
     }
 
     // ----------------------------------------- YAML
-    public function camelKeys(array $array, bool $recursive = TRUE): array
+    public static function camelKeys(array $array, bool $recursive = TRUE): array
     {
         $camelArray = array();
         foreach ($array as $name => $value) {
             $camelName = (is_numeric($name) ? $name : Str::camel($name));
-            if ($recursive && is_array($value)) $value = $this->camelKeys($value);
+            if ($recursive && is_array($value)) $value = self::camelKeys($value);
             $camelArray[$camelName] = $value;
         }
 

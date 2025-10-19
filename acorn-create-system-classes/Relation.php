@@ -27,6 +27,8 @@ class Relation {
     public $multi;  // _multi.php config
     public $prefix;
     public $suffix;
+    public $contexts;
+    public $recordUrl;
     public $valueFrom;
     public $type;   // explicit typing
     public $delete; // Relation delete: true will cause reverse cascade deletion of associated object
@@ -451,14 +453,27 @@ class RelationHasManyDeep extends Relation {
         $firstRelation = current($throughRelations);
         $lastRelation  = end($throughRelations);
         $isCount       = $lastRelation->isCount;
-        $fieldExclude  = FALSE;
-        $columnExclude = FALSE;
         
-        // Any relation in the chain can exclude
-        foreach ($throughRelations as &$relation) {
-            if ($relation->fieldExclude  === TRUE) $fieldExclude  = TRUE;
-            if ($relation->columnExclude === TRUE) $columnExclude = TRUE;
+        // Relation chain properties
+        // Check for Model repetition
+        // which can cause duplicated tables in the from clause
+        // TODO: At the moment, we do not know how to alias the tables in same model joins
+        $fieldExclude       = FALSE;
+        $columnExclude      = FALSE;
+        $repeatingModels    = FALSE;
+        $hasManyDeepInclude = FALSE;
+        $throughModels      = array();
+        foreach ($throughRelations as &$throughRelation) {
+            if ($throughRelation->fieldExclude       === TRUE) $fieldExclude  = TRUE;
+            if ($throughRelation->columnExclude      === TRUE) $columnExclude = TRUE;
+            if ($throughRelation->hasManyDeepInclude === TRUE) $hasManyDeepInclude = TRUE;
+
+            // Repeating models
+            $modeToName = $throughRelation->to->name;
+            if (isset($throughModels[$modeToName])) $repeatingModels = TRUE;
+            $throughModels[$modeToName] = TRUE;
         }
+
         // Last relation requirements
         $validRelation = (
             $lastRelation instanceof Relation1fromX || 
@@ -471,25 +486,13 @@ class RelationHasManyDeep extends Relation {
         // isCount will be processed by the parent
         parent::__construct($name, $from, $to, $column, $lastForeignKey, $isCount, $conditions);
         
-        // Check for Model repetition
-        // which can cause duplicated tables in the from clause
-        // TODO: At the moment, we do not know how to alias the tables in same model joins
-        $repeatingModels = FALSE;
-        /*
-        $throughModels   = array();
-        foreach ($throughRelations as $throughRelation) {
-            $modeToName = $throughRelation->to->name;
-            if (isset($throughModels[$modeToName])) $repeatingModels = TRUE;
-            $throughModels[$modeToName] = TRUE;
-        }
-        */
-
-        $this->type             = $type;
-        $this->throughRelations = $throughRelations;
-        $this->containsLeaf     = $containsLeaf;
-        $this->nameObject       = $nameObject;
-        $this->repeatingModels  = $repeatingModels;
-        $this->containsNon1to1s = $containsNon1to1s;
+        $this->type               = $type;
+        $this->throughRelations   = $throughRelations;
+        $this->containsLeaf       = $containsLeaf;
+        $this->nameObject         = $nameObject;
+        $this->repeatingModels    = $repeatingModels;
+        $this->containsNon1to1s   = $containsNon1to1s;
+        $this->hasManyDeepInclude = $hasManyDeepInclude;
         // 1toX, XtoX, XtoXSemi
         if (!isset($this->fieldExclude))  $this->fieldExclude     = $fieldExclude;
         if (!isset($this->columnExclude)) $this->columnExclude    = $columnExclude;
@@ -499,6 +502,9 @@ class RelationHasManyDeep extends Relation {
             if (!is_array($this->flags)) $this->flags = array();
             $this->flags['containsNon1to1s'] = TRUE;
         }
+
+        // Adopt stuff
+        $this->fieldsSettings = $firstRelation->fieldsSettings;
 
         if ($firstRelation->hasManyDeepSettings && isset($firstRelation->hasManyDeepSettings[$this->name])) {
             // Settings adopt

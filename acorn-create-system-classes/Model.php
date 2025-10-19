@@ -29,6 +29,8 @@ class Model {
 
     public $controllers = array();
     public $actionAliases; // courseplanner => index
+    public $beforeFunctions;
+    public $afterFunctions;
     public $actionFunctions;
     public $actionLinks;
     public $alesFunctions;
@@ -41,9 +43,14 @@ class Model {
     
     public $plugin;
     protected $table; // To mimick Winter Models. See getTable()
+    public $order;
     public $name;
+    public $bodyClasses; // Controller
 
     public $comment;
+    public $formComment;   // Appears as a section on the top of forms
+    public $formCommentContexts;
+    public $commentHtml;   // For form-comment
     public $menu = TRUE;
     public $menuSplitter = FALSE;
     public $menuIndent   = 0;
@@ -71,6 +78,7 @@ class Model {
     public $filters;
     public $listRecordUrl;
     public $globalScope; // Limits all related models to here by the selection
+    public $globalScopeCssTheme; // CSS class applied to body when the global scope has a fixed value
     public $import;
     public $export;
     public $batchPrint;
@@ -91,32 +99,10 @@ class Model {
         $this->table   = &$table;
         $this->name    = $table->modelName();
 
-        $this->actionFunctions = array();
-        foreach ($table->actionFunctions as $fnName => $definition) {
-            $fnNameBare  = str_replace($this->table->subName(), 'table', $fnName);
-            $fnNameParts = explode('_', $fnNameBare);
-            $nameParts   = array_slice($fnNameParts, 5);
-            $name        = implode('_', $nameParts);
-
-            $commentDef  = \Spyc::YAMLLoadString($definition['comment']);
-            $enDevLabel  = Str::title(implode(' ', $nameParts));
-            if (!isset($commentDef['labels']['en'])) $commentDef['labels']['en'] = $enDevLabel;
-            // Normalise names
-            foreach ($commentDef as $commentName => $commentValue) {
-                $camelName = Str::camel($commentName);
-                if ($commentName != $camelName) {
-                    $commentDef[$camelName] = $commentValue;
-                    unset($commentDef[$commentName]);
-                }
-            }
-
-            $this->actionFunctions[$name] = array_merge(array(
-                'fnDatabaseName' => $fnName,
-                'parameters'     => $definition['parameters'],
-                'returnType'     => $definition['returnType'],
-            ), $commentDef);
-        }
-        $this->alesFunctions = $table->alesFunctions;
+        $this->alesFunctions   = $table->alesFunctions;
+        $this->actionFunctions = $this->reorganiseDBFuncSpecs($table->actionFunctions);
+        $this->beforeFunctions = $this->reorganiseDBFuncSpecs($table->beforeFunctions);
+        $this->afterFunctions  = $this->reorganiseDBFuncSpecs($table->afterFunctions);
 
         // Adopt some of the tables comment statements
         $this->comment = $table->comment;
@@ -138,6 +124,33 @@ class Model {
         $this->table->model = &$this;
 
         self::$models[$this->fullyQualifiedName()] = &$this;
+    }
+
+    public function reorganiseDBFuncSpecs(array|NULL $dbFunctionSpecs): array
+    {
+        $modelFunctionSpecs = array();
+        if ($dbFunctionSpecs) {
+            foreach ($dbFunctionSpecs as $fnName => $definition) {
+                // Name parts
+                $fnNameBare  = str_replace($this->table->subName(), 'table', $fnName);
+                $fnNameParts = explode('_', $fnNameBare);
+                $nameParts   = array_slice($fnNameParts, 5);
+                $name        = implode('_', $nameParts);
+
+                // Process comment
+                $commentDef  = \Spyc::YAMLLoadString($definition['comment']);
+                $enDevLabel  = Str::title(implode(' ', $nameParts));
+                if (!isset($commentDef['labels']['en'])) $commentDef['labels']['en'] = $enDevLabel;
+                $commentDef = Framework::camelKeys($commentDef);
+
+                $modelFunctionSpecs[$name] = array_merge(array(
+                    'fnDatabaseName' => $fnName,
+                    'parameters'     => $definition['parameters'],
+                    'returnType'     => $definition['returnType'],
+                ), $commentDef);
+            }
+        }
+        return $modelFunctionSpecs;
     }
 
     public static function get(string $modelFQN): self|NULL
@@ -1420,6 +1433,14 @@ class Model {
                             $classParts         = explode('\\', get_class($relation1to1));
                             $relationClass      = end($classParts);
 
+                            // If it is an fake hasManyDeepInclude then we should include
+                            // the actual field still
+                            // It is likely to have come here because of further fake 1to1s
+                            // for example: hierarchy [Xto1]=> entity (fake HMD) [1to1]=> user_group
+                            if ($relation1to1->hasManyDeepInclude) {
+                                $fields[$fieldObj->name] = $fieldObj;
+                            }
+
                             if (!$recursing) {
                                 // -------------------------------------------------- HasManyDeep(*to*) & immediate 1to1 relation: columns
                                 // HasManyDeep(*to*) has chained 1-1 levels
@@ -1488,14 +1509,13 @@ class Model {
                                         }    
 
                                         // Fields Settings from relation
-                                        if (is_array($relation1to1->fieldsSettings)) {
-                                            $fieldsSettings = $relation1to1->fieldsSettings;
-                                            if (isset($fieldsSettings[$subFieldObj->columnKey])) {
-                                                $fieldSettings = $fieldsSettings[$subFieldObj->columnKey];
-                                                foreach ($fieldSettings as $name => $value) {
-                                                    $nameCamel = Str::camel($name);
-                                                    $subFieldObj->$nameCamel = $value;
-                                                }
+                                        if (   is_array($relation1to1->fieldsSettings)
+                                            && isset($relation1to1->fieldsSettings[$subFieldObj->columnKey])
+                                        ) {
+                                            $fieldSettings = $relation1to1->fieldsSettings[$subFieldObj->columnKey];
+                                            foreach ($fieldSettings as $name => $value) {
+                                                $nameCamel = Str::camel($name);
+                                                $subFieldObj->$nameCamel = $value;
                                             }
                                         }
 
@@ -1682,7 +1702,7 @@ class Model {
         foreach ($this->relationsHasManyDeep() as $name => &$relation) {
             if ($relation->containsNon1to1s && !$relation->hasManyDeepSettings) {
                 // We ignore HasManyDeep(containsNon1to1s) fields at the moment
-                // print("    HasManyDeep(containsNon1to1s) $name ignored for fields.yaml");
+                print("    HasManyDeep(containsNon1to1s) $name ignored for fields.yaml");
             } else {
                 $relationClass   = get_class($relation);
                 $relationType    = $relation->type();
@@ -1716,6 +1736,8 @@ class Model {
                     'columnPartial'  => ($relation->columnPartial ?: 'multi'),
                     'multi'          => $relation->multi,
                     'nameObject'     => $relation->lastRelation()->nameObject,
+                    'contexts'       => $relation->contexts,
+                    'recordUrl'      => $relation->recordUrl,
                     'relation'       => $name,
                     'searchable'     => (bool) $valueFrom,
                     'valueFrom'      => $valueFrom, // Necessary for search to work, is removed in nested scenario
@@ -1813,6 +1835,8 @@ class Model {
                 'fieldExclude'   => $relation->fieldExclude,
                 'columnExclude'  => $relation->columnExclude,
                 'nameFrom'       => $nameFrom,
+                'contexts'       => $relation->contexts,
+                'recordUrl'      => $relation->recordUrl,
                 'cssClasses'     => $cssClasses,
                 'bootstraps'     => $relation->bootstraps,
                 'rlButtons'      => $relation->rlButtons,
@@ -1902,6 +1926,8 @@ class Model {
                 'columnExclude'  => $relation->columnExclude,
                 'recordsPerPage' => FALSE, // TODO: Currently does not work for XtoXSemi
                 'nameFrom'       => $nameFrom,
+                'contexts'       => $relation->contexts,
+                'recordUrl'      => $relation->recordUrl,
                 'cssClasses'     => $cssClasses,
                 'bootstraps'     => $relation->bootstraps,
                 'rlButtons'      => $relation->rlButtons,
@@ -1992,6 +2018,8 @@ class Model {
                 'columnExclude'  => $relation->columnExclude,
                 'recordsPerPage' => FALSE, // TODO: Currently does not work for XtoXSemi
                 'nameFrom'       => $nameFrom,
+                'contexts'       => $relation->contexts,
+                'recordUrl'      => $relation->recordUrl,
                 'cssClasses'     => $cssClasses,
                 'bootstraps'     => $relation->bootstraps,
                 'placeholder'    => $relation->placeholder,

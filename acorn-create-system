@@ -93,6 +93,8 @@ do {
     foreach ($tables as &$table) {
         $table->loadForeignKeys();
         $table->loadActionFunctions();
+        $table->loadBeforeFunctions();
+        $table->loadAfterFunctions();
         $table->loadALESFunctions();
         $table->loadTriggers();
         $table->loadConstraints(); // Unique constraints etc...

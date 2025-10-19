@@ -67,6 +67,7 @@ class Field {
     public $newRow;  // From column comment
     public $noLabel; // From column comment
     public $contexts;
+    public $recordUrl; // Relevant for relation managers only
     public $span;
     public $cssClasses;
     public $bootstraps   = array('xs' => 6);
@@ -626,8 +627,7 @@ class Field {
     public function cssClasses(): array
     {
         // Array cssClasses
-        $cssClasses = ($this->cssClasses ?: array());
-        if (is_string($cssClasses)) $cssClasses = array($cssClasses);
+        $cssClasses = array();
 
         // Array bootstraps
         // bootstraps:
@@ -654,6 +654,11 @@ class Field {
                 }
             }
         }
+
+        // cssClasses
+        // Add after so that they take precedence
+        if      (is_string($this->cssClasses)) array_push($cssClasses, $this->cssClasses);
+        else if (is_array($this->cssClasses))  $cssClasses = array_merge($cssClasses, $this->cssClasses);
 
         // Individual settings
         if ($this->newRow)  array_push($cssClasses, 'new-row');

@@ -700,6 +700,7 @@ PHP;
 
             // Potentially rewrite $table because create:model will automatically plural it
             $this->setPropertyInClassFile($modelFilePath, 'table', $model->getTable()->fullyQualifiedName());
+            if (!is_null($model->order)) $this->setPropertyInClassFile($modelFilePath, 'order', $model->order, Framework::NEW_PROPERTY, 'public static');
 
             // Views create read-only models
             if ($model->readOnly)
@@ -797,20 +798,60 @@ PHP;
 
             // ---------------------------------------------------------------- Model based action functions
             // Write the labels to lang, and the translationKeys to the YAML
-            foreach ($model->actionFunctions as $name => &$defintion) {
-                foreach (scandir($langDirPath) as $langName) {
-                    $langFilePath = "$langDirPath/$langName/lang.php";
-                    if (!in_array($langName, array('.','..')) && file_exists($langFilePath)) {
-                        if (isset($defintion['labels'][$langName])) {
-                            $label = $defintion['labels'][$langName];
-                            $this->arrayFileSet($langFilePath, "actions.$name", $label, FALSE);
+            if ($model->actionFunctions) {
+                foreach ($model->actionFunctions as $name => &$defintion) {
+                    foreach (scandir($langDirPath) as $langName) {
+                        $langFilePath = "$langDirPath/$langName/lang.php";
+                        if (!in_array($langName, array('.','..')) && file_exists($langFilePath)) {
+                            if (isset($defintion['labels'][$langName])) {
+                                $label = $defintion['labels'][$langName];
+                                $this->arrayFileSet($langFilePath, "actions.$name", $label, FALSE);
+                            }
                         }
                     }
+                    unset($defintion['labels']);
+                    $defintion['label'] = "$translationDomain::lang.actions.$name";
                 }
-                unset($defintion['labels']);
-                $defintion['label'] = "$translationDomain::lang.actions.$name";
+                $this->setPropertyInClassFile($modelFilePath, 'actionFunctions', $model->actionFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
             }
-            $this->setPropertyInClassFile($modelFilePath, 'actionFunctions', $model->actionFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
+
+            // ---------------------------------------------------------------- Model based before functions
+            // Write the labels to lang, and the translationKeys to the YAML
+            if ($model->beforeFunctions) {
+                foreach ($model->beforeFunctions as $name => &$defintion) {
+                    foreach (scandir($langDirPath) as $langName) {
+                        $langFilePath = "$langDirPath/$langName/lang.php";
+                        if (!in_array($langName, array('.','..')) && file_exists($langFilePath)) {
+                            if (isset($defintion['labels'][$langName])) {
+                                $label = $defintion['labels'][$langName];
+                                $this->arrayFileSet($langFilePath, "befores.$name", $label, FALSE);
+                            }
+                        }
+                    }
+                    unset($defintion['labels']);
+                    $defintion['label'] = "$translationDomain::lang.befores.$name";
+                }
+                $this->setPropertyInClassFile($modelFilePath, 'beforeFunctions', $model->beforeFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
+            }
+
+            // ---------------------------------------------------------------- Model based after functions
+            // Write the labels to lang, and the translationKeys to the YAML
+            if ($model->afterFunctions) {
+                foreach ($model->afterFunctions as $name => &$defintion) {
+                    foreach (scandir($langDirPath) as $langName) {
+                        $langFilePath = "$langDirPath/$langName/lang.php";
+                        if (!in_array($langName, array('.','..')) && file_exists($langFilePath)) {
+                            if (isset($defintion['labels'][$langName])) {
+                                $label = $defintion['labels'][$langName];
+                                $this->arrayFileSet($langFilePath, "afters.$name", $label, FALSE);
+                            }
+                        }
+                    }
+                    unset($defintion['labels']);
+                    $defintion['label'] = "$translationDomain::lang.afters.$name";
+                }
+                $this->setPropertyInClassFile($modelFilePath, 'afterFunctions', $model->afterFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
+            }
 
             // ---------------------------------------------------------------- Model based action links
             // Write the labels to lang, and the translationKeys to the YAML
@@ -874,6 +915,7 @@ PHP
 
                 // Instruct this class to use this Scope directly
                 $this->setPropertyInClassFile($modelFilePath, 'globalScope', $scopeFQN, FALSE, 'public static');
+                if ($model->globalScopeCssTheme) $this->setPropertyInClassFile($modelFilePath, 'globalScopeCssTheme', $model->globalScopeCssTheme, FALSE, 'public static');
             }
 
             // ---------------------------------------------------------------- Create Seeding
@@ -1296,6 +1338,22 @@ PHP
                 ), $hintConfig));
             }
         }
+
+        // Form level comments
+        if ($model->formComment) {
+            $contexts = $model->formCommentContexts;
+            if (is_string($contexts)) $contexts = array($contexts);
+            $this->yamlFileSet($fieldsPath, "fields._form_comment", $this->removeEmpty(array(
+                'type'     => 'section',
+                'span'     => 'full',
+                'comment'  => $model->formComment,
+                'commentHtml' => $model->commentHtml,
+                'context'  => $contexts,
+                'cssClass' => 'form-comment',
+            )));
+        }
+
+        // Main fields
         $fields = $model->fields();
         foreach ($fields as $name => &$field) {
             $indentString = str_repeat(' ', ($field->nestLevel ?: 0) * 2);
@@ -1409,6 +1467,7 @@ PHP
                     'commentHtml'  => ($field->commentHtml && $field->fieldComment),
                     'context'      => $contexts,
                     'tab'          => $fieldTab,
+                    'tabLocation'  => $field->tabLocation, // Pass through for below @context
 
                     // Pass through
                     'mode'   => $field->mode,
@@ -1418,11 +1477,12 @@ PHP
                     'size'   => $field->size,
                     'emptyOption' => $field->emptyOption,
                     // DataTable field type
-                    'adding' => $field->adding,
+                    'adding'    => $field->adding,
                     'searching' => $field->searching,
-                    'deleting' => $field->deleting,
-                    'columns' => $field->columns,
-                    'keyFrom' => $field->keyFrom,
+                    'deleting'  => $field->deleting,
+                    'columns'   => $field->columns,
+                    'keyFrom'   => $field->keyFrom,
+                    'recordUrl' => $field->recordUrl,
                     'listEditable' => $field->listEditable,
                 
                     'options'      => $field->fieldOptions,      // Function call
@@ -1464,31 +1524,26 @@ PHP
                 $this->yamlFileSet($fieldsPath, $dotPath, $fieldDefinition);
 
                 // Setting these contexts causes extra fields to be created
+                // Main tabLocation passed through above
                 if ($field->contextUpdate) {
-                    $fieldContext = array_merge($fieldDefinition, $this->camelKeys($field->contextUpdate));
-                    $dotPathStub  = 'fields';
-                    if      (isset($fieldContext['tabLocation']) && $fieldContext['tabLocation'] == 2) $dotPathStub = "secondaryTabs.$dotPathStub";
-                    else if (isset($fieldContext['tabLocation']) && $fieldContext['tabLocation'] == 3) $dotPathStub = "tertiaryTabs.$dotPathStub";
-                    else if (isset($fieldContext['tab']) && $fieldContext['tab'])                      $dotPathStub = "tabs.$dotPathStub";
-                    $dotPath  = "$dotPathStub.$fieldKey";
+                    $fieldContext = array_merge($fieldDefinition, self::camelKeys($field->contextUpdate));
+                    if      ($fieldContext['tabLocation'] == 1) $dotPath = "tabs.fields.$fieldKey";
+                    else if ($fieldContext['tabLocation'] == 2) $dotPath = "secondaryTabs.fields.$fieldKey";
+                    else if ($fieldContext['tabLocation'] == 3) $dotPath = "tertiaryTabs.fields.$fieldKey";
                     $this->yamlFileSet($fieldsPath, "$dotPath@update", $fieldContext);
                 }
                 if ($field->contextCreate) {
-                    $fieldContext = array_merge($fieldDefinition, $this->camelKeys($field->contextCreate));
-                    $dotPathStub  = 'fields';
-                    if      (isset($fieldContext['tabLocation']) && $fieldContext['tabLocation'] == 2) $dotPathStub = "secondaryTabs.$dotPathStub";
-                    else if (isset($fieldContext['tabLocation']) && $fieldContext['tabLocation'] == 3) $dotPathStub = "tertiaryTabs.$dotPathStub";
-                    else if (isset($fieldContext['tab']) && $fieldContext['tab'])                      $dotPathStub = "tabs.$dotPathStub";
-                    $dotPath  = "$dotPathStub.$fieldKey";
+                    $fieldContext = array_merge($fieldDefinition, self::camelKeys($field->contextCreate));
+                    if      ($fieldContext['tabLocation'] == 1) $dotPath = "tabs.fields.$fieldKey";
+                    else if ($fieldContext['tabLocation'] == 2) $dotPath = "secondaryTabs.fields.$fieldKey";
+                    else if ($fieldContext['tabLocation'] == 3) $dotPath = "tertiaryTabs.fields.$fieldKey";
                     $this->yamlFileSet($fieldsPath, "$dotPath@create", $fieldContext);
                 }
                 if ($field->contextPreview) {
-                    $fieldContext = array_merge($fieldDefinition, $this->camelKeys($field->contextPreview));
-                    $dotPathStub  = 'fields';
-                    if      (isset($fieldContext['tabLocation']) && $fieldContext['tabLocation'] == 2) $dotPathStub = "secondaryTabs.$dotPathStub";
-                    else if (isset($fieldContext['tabLocation']) && $fieldContext['tabLocation'] == 3) $dotPathStub = "tertiaryTabs.$dotPathStub";
-                    else if (isset($fieldContext['tab']) && $fieldContext['tab'])                      $dotPathStub = "tabs.$dotPathStub";
-                    $dotPath  = "$dotPathStub.$fieldKey";
+                    $fieldContext = array_merge($fieldDefinition, self::camelKeys($field->contextPreview));
+                    if      ($fieldContext['tabLocation'] == 1) $dotPath = "tabs.fields.$fieldKey";
+                    else if ($fieldContext['tabLocation'] == 2) $dotPath = "secondaryTabs.fields.$fieldKey";
+                    else if ($fieldContext['tabLocation'] == 3) $dotPath = "tertiaryTabs.fields.$fieldKey";
                     $this->yamlFileSet($fieldsPath, "$dotPath@preview", $fieldContext);
                 }
 
@@ -1503,6 +1558,79 @@ PHP
                 }
             } else {
                 print("    $indentString{$YELLOW}WARNING{$NC}: Field [$name]($typeString) !canDisplayAs{$YELLOW}Field{$NC}() because fieldType($field->fieldType) is blank or fieldExclude($field->fieldExclude)\n");
+            }
+        }
+
+        // ---------------------------------------- Field like after functions
+        $stageFunctions = array_merge($model->beforeFunctions ?: array(), $model->afterFunctions ?: array());
+        foreach ($stageFunctions as $name => &$functionSpec) {
+            // A field for each additional parameter required
+            if (isset($functionSpec['parameters'])) {
+                foreach ($functionSpec['parameters'] as $paramName => $paramSpec) {
+                    switch ($paramName) {
+                        case 'model_id':
+                        case 'p_model_id':
+                        case 'user_id':
+                        case 'p_user_id':
+                            break;
+                        default:
+                            // Some parameters must come from the new, as yet not created, model
+                            $fieldName = preg_replace('/^p_/', '', $paramName);
+                            if ($model->hasAttribute($fieldName)) {
+                                print("    {$GREEN}INFO{$NC}: Parameter [$paramName] will come from the model $model->name\n");
+                            } else {
+                                // Add pseudo field
+                                $paramNameCamel  = Str::camel($paramName);
+                                $fieldDefinition = array();
+                                if (isset($functionSpec['fields'][$paramNameCamel])) {
+                                    $fieldDefinition = $functionSpec['fields'][$paramNameCamel];
+                                }
+
+                                // TODO: Process comment lang
+                                if (isset($fieldDefinition['comment']) && is_array($fieldDefinition['comment'])) {
+                                    $fieldDefinition['comment'] = $fieldDefinition['comment']['en'];
+                                }
+
+                                // Field key and location
+                                $fieldKey = "_{$name}_{$paramName}";
+                                $dotPath  = "fields.$fieldKey";
+                                if      (isset($fieldDefinition['tabLocation']) && $fieldDefinition['tabLocation'] == 2) $dotPath = "secondaryTabs.fields.$fieldKey";
+                                else if (isset($fieldDefinition['tabLocation']) && $fieldDefinition['tabLocation'] == 3) $dotPath = "tertiaryTabs.fields.$fieldKey";
+                                else if (isset($fieldDefinition['tab'])) $dotPath = "tabs.fields.$fieldKey";
+
+                                // TODO: Merge these param / function levels instead
+                                // Label
+                                $label = (isset($paramSpec['label']) 
+                                    ? $paramSpec['label']
+                                    : (isset($functionSpec['label']) ? $functionSpec['label'] : $name)
+                                );
+
+                                // Condition
+                                $condition = (isset($paramSpec['condition']) 
+                                    ? $paramSpec['condition']
+                                    : (isset($functionSpec['condition']) ? $functionSpec['condition'] : '')
+                                );
+                                
+                                // Contexts
+                                $contexts = (isset($paramSpec['contexts']) 
+                                    ? $paramSpec['contexts']
+                                    : (isset($functionSpec['contexts']) ? $functionSpec['contexts'] : '')
+                                );
+
+                                print("    {$GREEN}INFO{$NC}: Adding pseudo-field Parameter [$paramName] to the fields.yaml for $model->name\n");
+                                $this->yamlFileSet($fieldsPath, $dotPath, 
+                                    $this->removeEmpty(array_merge(array(
+                                        'label'     => $label,
+                                        'type'      => 'switch',
+                                        'condition' => $condition,
+                                        'context'   => $contexts,
+                                        'span'      => 'storm',
+                                        'cssClass'  => 'col-xs-12 col-md-6',
+                                    ), $fieldDefinition))
+                                );
+                            }
+                    }
+                }
             }
         }
 
@@ -1892,11 +2020,13 @@ PHP
                     );
                     if (!is_null($relation1->defaultSort)) $relationDefinition['view']['defaultSort'] = $relation1->defaultSort;
                     if (!is_null($rlButtonsValue))         $relationDefinition['view']['toolbarButtons'] = $rlButtonsValue;
-                    if ($relationModel->hasField('sort_order'))   $relationDefinition['view']['defaultSort'] = 'sort_order asc';
-                    if ($relationModel->hasField('ordinal'))      $relationDefinition['view']['defaultSort'] = 'ordinal asc';
+                    if ($relationModel->hasField('sort_order'))   $relationDefinition['view']['defaultSort'] = array('column' => 'sort_order', 'direction' => 'asc');
+                    if ($relationModel->hasField('ordinal'))      $relationDefinition['view']['defaultSort'] = array('column' => 'ordinal',    'direction' => 'asc');
                 }
                 
-                if ($relation1->conditions) $relationDefinition['view']['conditions'] = $relation1->conditions;
+                // Should be on the field, not the config-relation: 
+                //   if ($relation1->recordUrl) $relationDefinition['view']['recordUrl']  = $relation1->recordUrl;
+                if ($relation1->conditions)    $relationDefinition['view']['conditions'] = $relation1->conditions;
                 if ($relation1->showSearch !== FALSE) {
                     $relationDefinition['view']['showSearch']   = true;
                     $relationDefinition['manage']['showSearch'] = true;
@@ -1950,8 +2080,14 @@ PHP
         unlink("$controllerDirPath/update.php");
         print("    Unlink {$YELLOW}$controllerDirPath/create.php{$NC}\n");
         unlink("$controllerDirPath/create.php");
-        $this->setPropertyInClassFile($controllerFilePath, 'bodyClass', 'compact-container', FALSE);
-        /*
+
+        // Body class(es)
+        $bodyClasses = array('compact-container');
+        if      (is_string($controller->model->bodyClasses)) array_push($bodyClasses, $controller->model->bodyClasses);
+        else if (is_array($controller->model->bodyClasses))  $bodyClasses = array_merge($bodyClasses, $controller->model->bodyClasses);
+        $this->setPropertyInClassFile($controllerFilePath, 'bodyClass', implode(' ', $bodyClasses), FALSE);
+
+        /* TODO: Old max tab-location interface switcher
         $maxTabLocation = 0;
         foreach ($controller->model->fields() as $name => &$field) {
             if ($field->tabLocation > $maxTabLocation) $maxTabLocation = $field->tabLocation;
