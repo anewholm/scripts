@@ -1307,6 +1307,44 @@ PHP
         return $sqls;
     }
 
+    protected function buildHint(string $fieldsPath, string $hintName, array $hintConfig) 
+    {
+        // Relative plugins hint path
+        $hintsDir = dirname($fieldsPath);
+        $hintsDir = preg_replace('/^.*\/plugins\//', 'plugins/', $hintsDir);
+
+        // Type
+        if (isset($hintConfig['path'])) {
+            // Managed existing partial from other plugin
+            // path will flow through
+            $path = $hintConfig['path'];
+        } else if (isset($hintConfig['content'])) {
+            // Content to create in a file and reference
+            // TODO: Translation of content hints
+            $path           = "{$hintsDir}/_$hintName.php";
+            $levelEscaped   = e(isset($hintConfig['level']) ? $hintConfig['level'] : 'info');
+            $labelEscaped   = e(isset($hintConfig['label']['en']) ? $hintConfig['label']['en'] : '');
+            $content        = $hintConfig['content']['en'];
+            $contentHtml    = (isset($hintConfig['contentHtml']) && $hintConfig['contentHtml']);
+            $contentEscaped = ($contentHtml ? $content : e($content));
+            file_put_contents($path, <<<HTML
+                <i class="icon-$levelEscaped"></i>
+                <h3>$labelEscaped</h3>
+                <p class="content">$contentEscaped</p>
+HTML                        
+            );
+        } else {
+            throw new Exception("Hint $hintName has neither path nor content");
+        }
+
+        return array_merge(array(
+            'type' => 'hint',
+            'path' => $path,
+            'span' => 'storm',
+            'cssClass' => 'col-xs-6 col-md-4', // Also will CSS float: right
+        ), $hintConfig);
+    }
+
     protected function createFormInterface(Model &$model, bool $overwrite = FALSE) {
         global $GREEN, $YELLOW, $RED, $NC;
 
@@ -1328,14 +1366,10 @@ PHP
         // Model level hints come first
         if ($model->hints) {
             foreach ($model->hints as $hintName => $hintConfig) {
-                $hintNameCamel = Str::camel($hintName);
-                $path = (isset($hintConfig['partial']) ? $hintConfig['partial'] : 'standard_conditional_hint');
-                $this->yamlFileSet($fieldsPath, "fields._$hintNameCamel", array_merge(array(
-                    'type' => 'partial',
-                    'path' => $path,
-                    'span' => 'storm',
-                    'cssClass' => 'col-xs-6 col-md-4', // Also will CSS float: right
-                ), $hintConfig));
+                $hintName = str_replace('-', '_', $hintName);
+                $this->yamlFileSet($fieldsPath, "fields._$hintName", 
+                    $this->buildHint($fieldsPath, $hintName, $hintConfig)
+                );
             }
         }
 
@@ -1442,12 +1476,11 @@ PHP
                 // Field hints come first
                 if ($field->hints) {
                     foreach ($field->hints as $hintName => $hintConfig) {
-                        $hintDotPath  = "$dotPathStub._{$fieldKey}_hint";
-                        $this->yamlFileSet($fieldsPath, $hintDotPath, array_merge(array(
-                            'type' => 'partial',
-                            'path' => 'standard_conditional_hint',
-                            'tab'  => $fieldTab,
-                        ), $hintConfig));
+                        $hintName = str_replace('-', '_', $hintName);
+                        if (!isset($hintConfig['tab']) && $fieldTab) $hintConfig['tab'] = $fieldTab;
+                        $this->yamlFileSet($fieldsPath, "$dotPathStub._{$fieldKey}_hint", 
+                            $this->buildHint($fieldsPath, $hintName, $hintConfig)
+                        );
                     }
                 }
 
@@ -1605,11 +1638,14 @@ PHP
                                     : (isset($functionSpec['label']) ? $functionSpec['label'] : $name)
                                 );
 
-                                // Condition
-                                $condition = (isset($paramSpec['condition']) 
-                                    ? $paramSpec['condition']
-                                    : (isset($functionSpec['condition']) ? $functionSpec['condition'] : '')
-                                );
+                                // Condition(s)
+                                $condition = 
+                                    (isset($paramSpec['condition']) ? $paramSpec['condition'] :
+                                    (isset($paramSpec['conditions']) ? $paramSpec['conditions'] :
+                                    (isset($functionSpec['condition']) ? $functionSpec['condition'] :
+                                    (isset($functionSpec['conditions']) ? $functionSpec['conditions'] :
+                                    ''
+                                ))));
                                 
                                 // Contexts
                                 $contexts = (isset($paramSpec['contexts']) 
@@ -2011,11 +2047,13 @@ PHP
                         'label' => $field->translationKey(),
                         'view' => array(
                             'list' => "\$/$relationModelDirPath/columns.yaml",
-                            'recordsPerPage' => $field->recordsPerPage, // Can be false
+                            // TODO: Causes fail at the moment
+                            'recordsPerPage' => FALSE, //$field->recordsPerPage, 
                         ),
                         'manage' => array(
                             'form' => "\$/$relationModelDirPath/fields.yaml",
-                            'recordsPerPage' => $field->recordsPerPage,
+                            // TODO: Causes fail at the moment
+                            'recordsPerPage' => FALSE, // $field->recordsPerPage,
                         ),
                     );
                     if (!is_null($relation1->defaultSort)) $relationDefinition['view']['defaultSort'] = $relation1->defaultSort;

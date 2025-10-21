@@ -49,6 +49,7 @@ class ForeignKey {
     public $todo;   // TODO: This column structure has not been analysed / enabled yet
     public $contexts;
     public $recordUrl;
+    public $recordsPerPage;
     public $status; // ok|exclude|broken
     public $include;
     public $advanced;

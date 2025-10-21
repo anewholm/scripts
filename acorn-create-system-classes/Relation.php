@@ -29,6 +29,7 @@ class Relation {
     public $suffix;
     public $contexts;
     public $recordUrl;
+    public $recordsPerPage;
     public $valueFrom;
     public $type;   // explicit typing
     public $delete; // Relation delete: true will cause reverse cascade deletion of associated object

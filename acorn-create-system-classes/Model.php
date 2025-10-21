@@ -1738,6 +1738,7 @@ class Model {
                     'nameObject'     => $relation->lastRelation()->nameObject,
                     'contexts'       => $relation->contexts,
                     'recordUrl'      => $relation->recordUrl,
+                    'recordsPerPage' => ($relation->recordsPerPage ?: 10),
                     'relation'       => $name,
                     'searchable'     => (bool) $valueFrom,
                     'valueFrom'      => $valueFrom, // Necessary for search to work, is removed in nested scenario
@@ -1837,6 +1838,7 @@ class Model {
                 'nameFrom'       => $nameFrom,
                 'contexts'       => $relation->contexts,
                 'recordUrl'      => $relation->recordUrl,
+                'recordsPerPage' => ($relation->recordsPerPage ?: 10),
                 'cssClasses'     => $cssClasses,
                 'bootstraps'     => $relation->bootstraps,
                 'rlButtons'      => $relation->rlButtons,
@@ -1924,7 +1926,7 @@ class Model {
                 'invisible'      => $relation->invisible,
                 'fieldExclude'   => $relation->fieldExclude,
                 'columnExclude'  => $relation->columnExclude,
-                'recordsPerPage' => FALSE, // TODO: Currently does not work for XtoXSemi
+                'recordsPerPage' => ($relation->recordsPerPage ?: 10),
                 'nameFrom'       => $nameFrom,
                 'contexts'       => $relation->contexts,
                 'recordUrl'      => $relation->recordUrl,
@@ -2016,7 +2018,7 @@ class Model {
                 'invisible'      => $relation->invisible,
                 'fieldExclude'   => $relation->fieldExclude,
                 'columnExclude'  => $relation->columnExclude,
-                'recordsPerPage' => FALSE, // TODO: Currently does not work for XtoXSemi
+                'recordsPerPage' => ($relation->recordsPerPage ?: 10),
                 'nameFrom'       => $nameFrom,
                 'contexts'       => $relation->contexts,
                 'recordUrl'      => $relation->recordUrl,
