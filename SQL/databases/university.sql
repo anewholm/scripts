@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict xmEX33jOMb4J5wKmWbUgqUbSlixYMOYlfnCiRKWjIZODhKGS3sFCegb9xqGtmF6
+\restrict 4eXkMuUN1gpsfzvtvFwZBGCu1OfJ3y0FAzcCgyjrvTUm8W1TLp0sWunvre2jfRg
 
 -- Dumped from database version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
 -- Dumped by pg_dump version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
@@ -1834,12 +1834,8 @@ declare
 begin
 	-- On update of tables with updated_by_user_id
 	-- DBAuth required
-	if regexp_like(CURRENT_USER, '^token_[0-9]+$') then
-		select u.id into new.created_by_user_id 
-			from public.backend_users b
-			inner join public.acorn_user_users u on b.acorn_user_user_id = u.id
-			where b.id = regexp_replace(CURRENT_USER, 'token_', '')::int;
-	end if;
+	-- Will return NULL if not regexp_like(CURRENT_USER, '^token_[0-9]+$')
+	select u.id into new.created_by_user_id from acorn_dbauth_user u;
     return new;
 end;
             
@@ -10652,12 +10648,8 @@ declare
 begin
 	-- On update of tables with updated_by_user_id
 	-- DBAuth required
-	if regexp_like(CURRENT_USER, '^token_[0-9]+$') then
-		select u.id into new.updated_by_user_id 
-			from public.backend_users b
-			inner join public.acorn_user_users u on b.acorn_user_user_id = u.id
-			where b.id = regexp_replace(CURRENT_USER, 'token_', '')::int;
-	end if;
+	-- Will return NULL if not regexp_like(CURRENT_USER, '^token_[0-9]+$')
+	select u.id into new.updated_by_user_id from acorn_dbauth_user u;
     return new;
 end;
             
@@ -11358,7 +11350,7 @@ labels-plural:
   en: Types
   ku: Curên
 hidden: true
-sql-select: initcap(trim(regexp_replace(leaf_table, ''^[^_]+_[^_]+_|_''::text, '' ''::text, ''g'')))
+sql-select: initcap(trim(regexp_replace(acorn_university_hierarchies.leaf_table, ''^[^_]+_[^_]+_|_''::text, '' ''::text, ''g'')))
 ';
 
 
@@ -13859,7 +13851,7 @@ labels-plural:
   en: Types
   ku: Curên
 hidden: true
-sql-select: initcap(trim(regexp_replace(leaf_table, ''^[^_]+_[^_]+_|_''::text, '' ''::text, ''g'')))
+sql-select: initcap(trim(regexp_replace(acorn_university_entities.leaf_table, ''^[^_]+_[^_]+_|_''::text, '' ''::text, ''g'')))
 ';
 
 
@@ -15458,8 +15450,9 @@ hints:
   introduction:
     labels:
       en: Introduction
+    contentHtml: true
     content:
-      en: Welcome to Student registration! You can update students after you create them.
+      en: Welcome to Student registration! You can update students after you create them. Fields marked with a <span class="required"></span> are required. All other fields are optional.
     level: info
   school:
     labels:
@@ -15824,7 +15817,9 @@ labels-plural:
 -- Name: COLUMN acorn_university_students.printed; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_students.printed IS 'field-exclude: true
+COMMENT ON COLUMN public.acorn_university_students.printed IS '# Superceeded by documents table
+field-exclude: true
+column-exclude: true
 labels:
   en: Printed
   ku: Çap
@@ -17051,14 +17046,14 @@ labels-plural:
   ku: Korsên
   ar: المنهج
 hints:
-  no-hierarchy:
-    label:
+  no_hierarchy:
+    labels:
       en: Not connected
     content:
       en: This course is not connected to any organisation
     level: warning
     conditions: not exists(select * from acorn_university_hierarchies where entity_id = acorn_university_courses.entity_id)
-    contexts: update';
+    context: update';
 
 
 --
@@ -18575,7 +18570,9 @@ COMMENT ON COLUMN public.acorn_exam_certificates.exam_id IS 'extra-foreign-key:
   table: acorn_exam_exams
   comment:
     tab-location: 2
-	can-filter: true
+    can-filter: true
+    field-exclude: true
+    column-exclude: true
 sortable: false';
 
 
@@ -18865,7 +18862,8 @@ labels-plural:
 -- Name: COLUMN acorn_exam_certificates.printed; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_exam_certificates.printed IS 'filters:
+COMMENT ON COLUMN public.acorn_exam_certificates.printed IS 'column-exclude: true
+filters:
   printed:
     label: acorn.university::lang.models.student.documents_printed
     type: checkbox
@@ -29660,6 +29658,13 @@ ALTER TABLE ONLY public.acorn_enrollment_enrollments
 
 
 --
+-- Name: CONSTRAINT calculation_exam_id ON acorn_enrollment_enrollments; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT calculation_exam_id ON public.acorn_enrollment_enrollments IS 'tab-location: 2';
+
+
+--
 -- Name: acorn_exam_calculation_courses calculation_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -31695,6 +31700,13 @@ ALTER TABLE ONLY public.acorn_enrollment_course_entry_requirements
 
 
 --
+-- Name: CONSTRAINT required_exam_id ON acorn_enrollment_course_entry_requirements; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT required_exam_id ON public.acorn_enrollment_course_entry_requirements IS 'tab-location: 2';
+
+
+--
 -- Name: acorn_enrollment_course_entry_requirements required_interview_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -32987,6 +32999,8 @@ fields-settings:
   user_group[colour]:
     tab: acorn.user::lang.group.description_field
   user_group[code]:
+    tab-location: 3
+  user_group[code_read_only]:
     tab-location: 3
   user_group[type]:
     field-exclude: true
@@ -36848,5 +36862,5 @@ GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_5;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict xmEX33jOMb4J5wKmWbUgqUbSlixYMOYlfnCiRKWjIZODhKGS3sFCegb9xqGtmF6
+\unrestrict 4eXkMuUN1gpsfzvtvFwZBGCu1OfJ3y0FAzcCgyjrvTUm8W1TLp0sWunvre2jfRg
 

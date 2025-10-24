@@ -181,6 +181,11 @@ class Relation {
         return ($this instanceof Relation1to1 || $this->type() == '1to1');
     }
 
+    public function isFromLeaf(): bool
+    {
+        return ($this->type == 'leaf');
+    }
+
     public function isNameObject(): bool
     {
         return (bool) $this->nameObject;

@@ -199,7 +199,7 @@ class WinterCMS extends Framework
         }
         $this->setPropertyInClassFile($pluginFilePath, 'require', array_keys($requirePlugins), FALSE);
 
-        // --------------------------------------------- Lang files
+        // --------------------------------------------- Lang.php plugin section
         $langDirPath = "$pluginDirectoryPath/lang";
         $langEnPath  = "$langDirPath/en/lang.php";
 
@@ -938,7 +938,7 @@ PHP
                 $this->appendToFile($seederPath, $sql);
             }
 
-            // ----------------------------------------------------------------- Language
+            // ----------------------------------------------------------------- Lang.php model labels section
             // These non-en files will not have been updated by the create:model command
             $modelSectionName = $model->langSectionName();
             $langEnPath       = "$langDirPath/en/lang.php";
@@ -1102,6 +1102,7 @@ PHP
             $relations = array();
             foreach ($model->relations1from1() as $name => &$relation) {
                 if (isset($relations[$name])) throw new Exception("Conflicting relations with [$name] on [$model->name]");
+                $isLeaf = $relation->isFromLeaf();
                 $relations[$name] = $this->removeEmpty(array($relation->to,
                     'key'    => $relation->column->name,
                     'type'   => $relation->type(),
@@ -1109,7 +1110,8 @@ PHP
                     'delete' => $relation->delete, // This can be done by a DELETE CASCADE FK
                     'count'  => $relation->isCount,
                     'flags'  => $relation->flags,
-                    'conditions' => $relation->conditions
+                    'conditions' => $relation->conditions,
+                    // 'leaf'   => $isLeaf,
                 ), Framework::AND_FALSES);
             }
             $this->setPropertyInClassFile($modelFilePath, 'hasOne', $relations);
@@ -1294,9 +1296,10 @@ PHP
                     array_push($values, 'fn_acorn_user_get_seed_user()');
                 }
             
-                $namesSQL  = '"' . implode('","', $names) . '"';
-                $valuesSQL = implode(',', $values);
-                $insertSQL = "insert into $schema.$table($namesSQL) values($valuesSQL)";
+                $namesString = implode('","', $names);
+                $namesSQL    = "\"$namesString\"";
+                $valuesSQL   = implode(',', $values);
+                $insertSQL   = "insert into $schema.$table($namesSQL) values($valuesSQL)";
                 if ($names[0] == 'id' && $values[0] != 'DEFAULT') $insertSQL .= ' ON CONFLICT(id) DO NOTHING';
                 
                 $insertSQL .= ';';
@@ -1307,40 +1310,59 @@ PHP
         return $sqls;
     }
 
-    protected function buildHint(string $fieldsPath, string $hintName, array $hintConfig) 
+    protected function buildHint(Model $model, string $hintName, array $hintConfig, string|NULL $fieldsPath = NULL) 
     {
-        // Relative plugins hint path
-        $hintsDir = dirname($fieldsPath);
-        $hintsDir = preg_replace('/^.*\/plugins\//', 'plugins/', $hintsDir);
+        $path = NULL;
 
-        // Type
         if (isset($hintConfig['path'])) {
             // Managed existing partial from other plugin
             // path will flow through
             $path = $hintConfig['path'];
         } else if (isset($hintConfig['content'])) {
-            // Content to create in a file and reference
-            // TODO: Translation of content hints
-            $path           = "{$hintsDir}/_$hintName.php";
-            $levelEscaped   = e(isset($hintConfig['level']) ? $hintConfig['level'] : 'info');
-            $labelEscaped   = e(isset($hintConfig['label']['en']) ? $hintConfig['label']['en'] : '');
-            $content        = $hintConfig['content']['en'];
-            $contentHtml    = (isset($hintConfig['contentHtml']) && $hintConfig['contentHtml']);
-            $contentEscaped = ($contentHtml ? $content : e($content));
-            file_put_contents($path, <<<HTML
-                <i class="icon-$levelEscaped"></i>
-                <h3>$labelEscaped</h3>
-                <p class="content">$contentEscaped</p>
+            // Custom content => file
+            $level      = (isset($hintConfig['level']) ? $hintConfig['level'] : 'info');
+            if (!isset($hintConfig['labels']))
+                throw new Exception("labels: are required for content hint $hintName");
+            if (!isset($hintConfig['content']))
+                throw new Exception("Content: is required for content hint $hintName");
+
+            // Labels => Translation keys
+            // values are placed in to the lang.php files later
+            $modelKey   = $model->translationDomain(); // acorn.university::lang.models.thing
+            $labelKey   = "$modelKey.hints.$hintName.label";
+            $contentKey = "$modelKey.hints.$hintName.content";
+            $hintConfig['label']   = $labelKey;
+            $hintConfig['content'] = $contentKey;
+
+            if ($fieldsPath) {
+                // Make the actual referenced hint file
+                // Content to create in a file and reference
+                // Relative plugins hint path
+                $hintsDir       = dirname($fieldsPath);
+                $hintsDir       = preg_replace('/^.*\/plugins\//', 'plugins/', $hintsDir);
+                $hintFileName   = preg_replace('/-+/', '_', $hintName);
+                $path           = "{$hintsDir}/_$hintFileName.php";
+                $levelEscaped   = e($level);
+                $contentHtml    = (isset($hintConfig['contentHtml']) && $hintConfig['contentHtml']);
+                $e              = ($contentHtml ? '' : 'e');
+                file_put_contents($path, <<<HTML
+                    <i class="icon-$levelEscaped"></i>
+                    <h3><?= e(trans('$labelKey')) ?></h3>
+                    <p class="content"><?= $e(trans('$contentKey')) ?></p>
 HTML                        
-            );
+                );
+            }
         } else {
             throw new Exception("Hint $hintName has neither path nor content");
         }
 
+        // Some useful translations
+        if (isset($hintConfig['contexts'])) $hintConfig['context'] = $hintConfig['contexts'];
+
         return array_merge(array(
-            'type' => 'hint',
-            'path' => $path,
-            'span' => 'storm',
+            'type' => 'hint',  // hints can be hidden
+            'path' => $path,   // Path to created file above
+            'span' => 'storm', // Usually, many are shown side-by-side
             'cssClass' => 'col-xs-6 col-md-4', // Also will CSS float: right
         ), $hintConfig);
     }
@@ -1366,9 +1388,8 @@ HTML
         // Model level hints come first
         if ($model->hints) {
             foreach ($model->hints as $hintName => $hintConfig) {
-                $hintName = str_replace('-', '_', $hintName);
                 $this->yamlFileSet($fieldsPath, "fields._$hintName", 
-                    $this->buildHint($fieldsPath, $hintName, $hintConfig)
+                    $this->buildHint($model, $hintName, $hintConfig, $fieldsPath)
                 );
             }
         }
@@ -1476,10 +1497,9 @@ HTML
                 // Field hints come first
                 if ($field->hints) {
                     foreach ($field->hints as $hintName => $hintConfig) {
-                        $hintName = str_replace('-', '_', $hintName);
                         if (!isset($hintConfig['tab']) && $fieldTab) $hintConfig['tab'] = $fieldTab;
                         $this->yamlFileSet($fieldsPath, "$dotPathStub._{$fieldKey}_hint", 
-                            $this->buildHint($fieldsPath, $hintName, $hintConfig)
+                            $this->buildHint($model, $hintName, $hintConfig, $fieldsPath)
                         );
                     }
                 }
@@ -1539,6 +1559,7 @@ HTML
                     'permissionSettings' => $field->permissionSettings,
                     'permissions'        => $field->permissions,
                     'setting'            => $field->setting,
+                    'settingNot'         => $field->settingNot,
                     // Dynamic include
                     'include'      => $field->include,          // Only include: 1to1
                     'includeModel' => $field->includeModel,     // Required for include
@@ -1694,11 +1715,41 @@ HTML
             $this->setPropertyInClassFile($modelFilePath, 'rules', $allRules);
         }
 
-        // ---------------------------------------- Lang
+        // ---------------------------------------- Lang.php field labels, hints & extraTranslations
         print("  LANG:\n");
         $langDirPath   = "$pluginDirectoryPath/lang";
         $langEnPath    = "$pluginDirectoryPath/lang/en/lang.php";
         $modelKey      = $model->localTranslationKey();
+
+        if ($model->hints) {
+            foreach ($model->hints as $hintName => $hintConfig) {
+                // Get the translation keys
+                $hintFieldConfig = $this->buildHint($model, $hintName, $hintConfig);
+                
+                if (isset($hintConfig['labels']) && is_array($hintConfig['labels'])) {
+                    $absoluteDomainKey   = $hintFieldConfig['label'];
+                    $localTranslationKey = preg_replace('/^.*::lang./', '', $absoluteDomainKey);
+                    foreach ($hintConfig['labels'] as $langName => &$translation) {
+                        $langFilePath = "$langDirPath/$langName/lang.php";
+                        if (!file_exists($langFilePath)) 
+                            throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
+                        $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
+                    }
+                }
+                
+                if (isset($hintConfig['content']) && is_array($hintConfig['content'])) {
+                    $absoluteDomainKey   = $hintFieldConfig['content'];
+                    $localTranslationKey = preg_replace('/^.*::lang./', '', $absoluteDomainKey);
+                    foreach ($hintConfig['content'] as $langName => &$translation) {
+                        $langFilePath = "$langDirPath/$langName/lang.php";
+                        if (!file_exists($langFilePath)) 
+                            throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
+                        $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
+                    }
+                }
+            }
+        }
+
         foreach ($model->fields() as $name => &$field) {
             $localTranslationKey = $field->localTranslationKey();
             if ($field->isLocalTranslationKey() && !$field->isStandard() && !$this->arrayFileValueExists($langEnPath, $localTranslationKey)) {
@@ -1715,6 +1766,35 @@ HTML
                         if (!file_exists($langFilePath)) 
                             throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
                         $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
+                    }
+                }
+            }
+
+            if ($field->hints) {
+                foreach ($field->hints as $hintName => $hintConfig) {
+                    // Get the translation keys
+                    $hintFieldConfig = $this->buildHint($model, $hintName, $hintConfig);
+                    
+                    if (isset($hintConfig['labels']) && is_array($hintConfig['labels'])) {
+                        $absoluteDomainKey   = $hintFieldConfig['label'];
+                        $localTranslationKey = preg_replace('/^.*::lang./', '', $absoluteDomainKey);
+                        foreach ($hintConfig['labels'] as $langName => &$translation) {
+                            $langFilePath = "$langDirPath/$langName/lang.php";
+                            if (!file_exists($langFilePath)) 
+                                throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
+                            $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
+                        }
+                    }
+                    
+                    if (isset($hintConfig['content']) && is_array($hintConfig['content'])) {
+                        $absoluteDomainKey   = $hintFieldConfig['content'];
+                        $localTranslationKey = preg_replace('/^.*::lang./', '', $absoluteDomainKey);
+                        foreach ($hintConfig['content'] as $langName => &$translation) {
+                            $langFilePath = "$langDirPath/$langName/lang.php";
+                            if (!file_exists($langFilePath)) 
+                                throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
+                            $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
+                        }
                     }
                 }
             }
