@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 4eXkMuUN1gpsfzvtvFwZBGCu1OfJ3y0FAzcCgyjrvTUm8W1TLp0sWunvre2jfRg
+\restrict TghnK73JyePOPur5Ggfu8tXWQc8nIJufaGG3jKHBM5cWXB97f7bn9aBEOCRtXGx
 
 -- Dumped from database version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
 -- Dumped by pg_dump version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
@@ -446,10 +446,10 @@ DROP TRIGGER IF EXISTS tr_acorn_university_lecture_sync_lock_event ON public.aco
 DROP TRIGGER IF EXISTS tr_acorn_university_import_source_empty ON public.acorn_university_entities;
 DROP TRIGGER IF EXISTS tr_acorn_university_hierarchy_lock_event ON public.acorn_university_hierarchy_event;
 DROP TRIGGER IF EXISTS tr_acorn_university_hierarchies_update_version ON public.acorn_university_hierarchies;
-DROP TRIGGER IF EXISTS tr_acorn_university_hierarchies_new_version ON public.acorn_university_hierarchies;
 DROP TRIGGER IF EXISTS tr_acorn_university_hierarchies_manage_cys ON public.acorn_university_hierarchies;
-DROP TRIGGER IF EXISTS tr_acorn_university_hierarchies_descendants_update ON public.acorn_user_user_group_version;
+DROP TRIGGER IF EXISTS tr_acorn_university_hierarchies_descendants_user_cnts ON public.acorn_user_user_group_version;
 DROP TRIGGER IF EXISTS tr_acorn_university_hierarchies_delete_version ON public.acorn_university_hierarchies;
+DROP TRIGGER IF EXISTS tr_acorn_university_hierarchies_create_version ON public.acorn_university_hierarchies;
 DROP TRIGGER IF EXISTS tr_acorn_university_entities_leaf_table ON public.acorn_university_universities;
 DROP TRIGGER IF EXISTS tr_acorn_university_entities_leaf_table ON public.acorn_university_schools;
 DROP TRIGGER IF EXISTS tr_acorn_university_entities_leaf_table ON public.acorn_university_faculties;
@@ -1211,12 +1211,12 @@ DROP FUNCTION IF EXISTS public.fn_acorn_university_lecture_sync_lock_event();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_import_source_empty();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchy_lock_event();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_update_version();
-DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_new_version();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_manage_cys();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid, p_throw_invalid boolean);
-DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_descendants_update();
+DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_descendants_user_cnts();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_descendants(p_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_delete_version();
+DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_create_version();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_ascendants(p_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_entities_leaf_table();
@@ -1233,6 +1233,7 @@ DROP FUNCTION IF EXISTS public.fn_acorn_university_after_students_set_code(p_mod
 DROP FUNCTION IF EXISTS public.fn_acorn_university_after_students_add_to_courses(p_model_id uuid, p_user_id uuid, p_course_ids uuid[]);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_after_courses_add_to_hierarchy(p_model_id uuid, p_user_id uuid, p_add boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid);
+DROP FUNCTION IF EXISTS public.fn_acorn_university_action_hierarchies_refresh_counts(p_model_id uuid, p_user_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_hierarchies_append_child(p_model_id uuid, p_user_id uuid);
@@ -2268,7 +2269,7 @@ $$;
 ALTER FUNCTION public.fn_acorn_enrollment_desires_ordinal() OWNER TO university;
 
 --
--- Name: fn_acorn_enrollment_enrollments_state_indicator(record); Type: FUNCTION; Schema: public; Owner: justice
+-- Name: fn_acorn_enrollment_enrollments_state_indicator(record); Type: FUNCTION; Schema: public; Owner: university
 --
 
 CREATE FUNCTION public.fn_acorn_enrollment_enrollments_state_indicator(p_enrollment record) RETURNS character varying[]
@@ -2294,7 +2295,7 @@ end;
 $$;
 
 
-ALTER FUNCTION public.fn_acorn_enrollment_enrollments_state_indicator(p_enrollment record) OWNER TO justice;
+ALTER FUNCTION public.fn_acorn_enrollment_enrollments_state_indicator(p_enrollment record) OWNER TO university;
 
 --
 -- Name: fn_acorn_enrollment_score_first(uuid, uuid); Type: FUNCTION; Schema: public; Owner: university
@@ -4069,8 +4070,10 @@ declare
 	p_ids uuid[];
 begin
 	-- CYS - Entity - User Group
-	insert into acorn_user_user_groups(name)
-		select ugs.name || ' ' || spec.name from acorn_university_course_year_semesters cys
+	insert into acorn_user_user_groups(name, code)
+		select ugs.name || ' ' || spec.name, 
+		 	'CYS-SPEC-' || p_model_id || '::' || p_course_specialization_id
+		from acorn_university_course_year_semesters cys
 		inner join acorn_university_entities en on cys.entity_id = en.id
 		inner join acorn_user_user_groups ugs on en.user_group_id = ugs.id,
 		acorn_university_course_specializations spec
@@ -4198,6 +4201,36 @@ COMMENT ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_
   en: Copy year data to
 result-action: refresh
 condition: parent_id is null';
+
+
+--
+-- Name: fn_acorn_university_action_hierarchies_refresh_counts(uuid, uuid); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_university_action_hierarchies_refresh_counts(p_model_id uuid, p_user_id uuid) RETURNS character varying
+    LANGUAGE plpgsql
+    AS $$
+begin
+	update acorn_university_hierarchies hi
+		set nest_descendants       = fn_acorn_university_hierarchies_descendants(id),
+		    nest_ascendants        = fn_acorn_university_hierarchies_ascendants(id);
+	perform fn_acorn_university_hierarchies_counts();
+
+	return 'SUCCESS';
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_university_action_hierarchies_refresh_counts(p_model_id uuid, p_user_id uuid) OWNER TO university;
+
+--
+-- Name: FUNCTION fn_acorn_university_action_hierarchies_refresh_counts(p_model_id uuid, p_user_id uuid); Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON FUNCTION public.fn_acorn_university_action_hierarchies_refresh_counts(p_model_id uuid, p_user_id uuid) IS 'labels:
+  en: Refresh Counts
+result-action: refresh
+type: list';
 
 
 --
@@ -4661,9 +4694,7 @@ declare
 	p_name character varying;
 	p_descendant_users_count int := 0;
 begin
-	-- A trigger runs this AFTER acorn_user_user_group_version changes
-	-- when a user is inserted, deleted or updated
-	-- or BEFORE UPDATE ON acorn_university_hierarchies 
+	-- AFTER INSERT, DELETE or UPDATE on acorn_user_user_group_version
 	-- Update the whole hierarchy for this academic year
 	-- recursing down from the ancestors and then updating our way back up
 
@@ -4673,8 +4704,8 @@ begin
 		p_nest_depth := -1;
 	else
 		update acorn_university_hierarchies
-			set nest_left              = p_nest_left,
-				nest_depth             = p_nest_depth
+			set nest_left              = coalesce(p_nest_left, 0),
+				nest_depth             = coalesce(p_nest_depth, 0)
 			where id = p_id;
 	end if;
 
@@ -4691,8 +4722,7 @@ begin
 	end loop;
 
 	update acorn_university_hierarchies
-		set descendant_users_count = p_descendant_users_count,
-		    descendants_count      = array_upper(fn_acorn_university_hierarchies_descendants(id), 1)
+		set descendant_users_count = p_descendant_users_count
 		where id = p_id;
 
 	-- Get the count for just this group version
@@ -4701,7 +4731,8 @@ begin
 		inner join acorn_user_user_group_version uugv on hi.user_group_version_id = uugv.user_group_version_id
 		where hi.id = p_id;
 
-	select name into p_name 
+	-- Report name and counts
+	select ugs.name into p_name 
 		from acorn_university_hierarchies hi
 		inner join acorn_user_user_group_versions ugv on hi.user_group_version_id = ugv.id
 		inner join acorn_user_user_groups ugs on ugv.user_group_id = ugs.id
@@ -4716,6 +4747,44 @@ $$;
 ALTER FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) OWNER TO university;
 
 --
+-- Name: fn_acorn_university_hierarchies_create_version(); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_university_hierarchies_create_version() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+	-- BEFORE INSERT
+	-- Add a new version for this entity/user_group
+	insert into acorn_user_user_group_versions(user_group_id)
+		select user_group_id 
+			from acorn_university_entities en
+			where en.id = new.entity_id
+		returning id into new.user_group_version_id;
+
+	-- new.id not present in table yet
+	-- Cache values, very useful for seeding, scopes and names
+	new.nest_ascendants  = fn_acorn_university_hierarchies_ascendants(new.parent_id) || new.parent_id;
+	new.nest_descendants = ARRAY[]::uuid[];
+	new.leaf_table       = fn_acorn_university_hierarchies_entity_leaf_type(new.entity_id);
+
+	-- Update the nest_descendants of the ascendants
+	-- to add this node
+	update acorn_university_hierarchies hi
+		set nest_descendants = fn_acorn_university_hierarchies_descendants(id) || new.id
+		where not array_position(new.nest_ascendants, id) is null;
+
+	-- UNIQUE
+	if new.import_source = '' then new.import_source = NULL; end if;
+
+	return new;
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_university_hierarchies_create_version() OWNER TO university;
+
+--
 -- Name: fn_acorn_university_hierarchies_delete_version(); Type: FUNCTION; Schema: public; Owner: university
 --
 
@@ -4723,6 +4792,9 @@ CREATE FUNCTION public.fn_acorn_university_hierarchies_delete_version() RETURNS 
     LANGUAGE plpgsql
     AS $$
 begin
+	-- parent_id CONSTRAINT is CASCADE DELETE
+
+	-- Remove the associated UGV
 	delete from public.acorn_user_user_group_versions
 		where id = old.user_group_version_id;
 
@@ -4769,10 +4841,10 @@ $$;
 ALTER FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) OWNER TO university;
 
 --
--- Name: fn_acorn_university_hierarchies_descendants_update(); Type: FUNCTION; Schema: public; Owner: university
+-- Name: fn_acorn_university_hierarchies_descendants_user_cnts(); Type: FUNCTION; Schema: public; Owner: university
 --
 
-CREATE FUNCTION public.fn_acorn_university_hierarchies_descendants_update() RETURNS trigger
+CREATE FUNCTION public.fn_acorn_university_hierarchies_descendants_user_cnts() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 declare
@@ -4802,7 +4874,7 @@ end;
 $$;
 
 
-ALTER FUNCTION public.fn_acorn_university_hierarchies_descendants_update() OWNER TO university;
+ALTER FUNCTION public.fn_acorn_university_hierarchies_descendants_user_cnts() OWNER TO university;
 
 --
 -- Name: fn_acorn_university_hierarchies_entity_leaf_type(uuid, boolean); Type: FUNCTION; Schema: public; Owner: university
@@ -4893,44 +4965,6 @@ $$;
 
 
 ALTER FUNCTION public.fn_acorn_university_hierarchies_manage_cys() OWNER TO university;
-
---
--- Name: fn_acorn_university_hierarchies_new_version(); Type: FUNCTION; Schema: public; Owner: university
---
-
-CREATE FUNCTION public.fn_acorn_university_hierarchies_new_version() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-begin
-	-- BEFORE INSERT
-	-- Add a new version for this entity/user_group
-	insert into acorn_user_user_group_versions(user_group_id)
-		select user_group_id 
-			from acorn_university_entities en
-			where en.id = new.entity_id
-		returning id into new.user_group_version_id;
-
-	-- new.id not present in table yet
-	-- Cache values, very useful for seeding, scopes and names
-	new.nest_ascendants  = fn_acorn_university_hierarchies_ascendants(new.parent_id) || new.parent_id;
-	new.nest_descendants = ARRAY[]::uuid[];
-	new.leaf_table       = fn_acorn_university_hierarchies_entity_leaf_type(new.entity_id);
-
-	-- Update the nest_descendants of the ascendants
-	-- to add this node
-	update acorn_university_hierarchies hi
-		set nest_descendants = fn_acorn_university_hierarchies_descendants(id) || new.id
-		where not array_position(new.nest_ascendants, id) is null;
-
-	-- UNIQUE
-	if new.import_source = '' then new.import_source = NULL; end if;
-
-	return new;
-end;
-$$;
-
-
-ALTER FUNCTION public.fn_acorn_university_hierarchies_new_version() OWNER TO university;
 
 --
 -- Name: fn_acorn_university_hierarchies_update_version(); Type: FUNCTION; Schema: public; Owner: university
@@ -10242,7 +10276,9 @@ begin
 	-- end if;
 		
 	-- Provision any missing items
-	for p_yearsemesters_record in select ugs.name || '::Year-' || cy.name || '::' || ay.name || '::' || sem.name as name,
+	for p_yearsemesters_record in select 
+			c.id || '::' || cy.id || '::' || ays.id || '::' || new.id as id,
+			ugs.name || '::Year-' || cy.name || '::' || ay.name || '::' || sem.name as name,
 			c.id as course_id, cy.id as course_year_id, ays.id as academic_year_semester_id
 		-- Year Semesters
 		from acorn_university_academic_years ay
@@ -10271,8 +10307,8 @@ begin
 	loop
 		-- User group, Entity, CYS
 		-- CYS name is constructed, not 1-1 user_group
-		insert into acorn_user_user_groups(name)
-			select p_yearsemesters_record.name
+		insert into acorn_user_user_groups(name, code)
+			select p_yearsemesters_record.name, 'CYS-' || p_yearsemesters_record.id
 			returning id into p_id;
 		insert into acorn_university_entities(user_group_id)
 			values(p_id)
@@ -11184,7 +11220,6 @@ CREATE TABLE public.acorn_university_hierarchies (
     description text,
     user_group_version_id uuid NOT NULL,
     descendant_users_count integer,
-    descendants_count integer,
     import_source character varying(1024),
     nest_ascendants uuid[],
     nest_descendants uuid[],
@@ -11192,7 +11227,8 @@ CREATE TABLE public.acorn_university_hierarchies (
     created_at timestamp(0) without time zone DEFAULT now() NOT NULL,
     updated_at timestamp(0) without time zone,
     default_semester_group_id uuid,
-    default_calendar_id uuid
+    default_calendar_id uuid,
+    descendants_count integer GENERATED ALWAYS AS (array_upper(nest_descendants, 1)) STORED
 );
 
 
@@ -11300,22 +11336,6 @@ suffix: acorn.user::lang.models.user.label_plural
 
 
 --
--- Name: COLUMN acorn_university_hierarchies.descendants_count; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON COLUMN public.acorn_university_hierarchies.descendants_count IS 'readOnly: true
-columnPartial: count
-columnType: partial
-hidden: true
-labels:
-  en: Descendant Organisations
-labels-plural:
-  en: Descendant Organisations
-suffix: acorn.user::lang.models.usergroup.label_plural
-';
-
-
---
 -- Name: COLUMN acorn_university_hierarchies.import_source; Type: COMMENT; Schema: public; Owner: university
 --
 
@@ -11350,7 +11370,7 @@ labels-plural:
   en: Types
   ku: Curên
 hidden: true
-sql-select: initcap(trim(regexp_replace(acorn_university_hierarchies.leaf_table, ''^[^_]+_[^_]+_|_''::text, '' ''::text, ''g'')))
+
 ';
 
 
@@ -11366,6 +11386,21 @@ COMMENT ON COLUMN public.acorn_university_hierarchies.default_semester_group_id 
 --
 
 COMMENT ON COLUMN public.acorn_university_hierarchies.default_calendar_id IS 'tab-location: 3';
+
+
+--
+-- Name: COLUMN acorn_university_hierarchies.descendants_count; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_hierarchies.descendants_count IS 'readOnly: true
+columnPartial: count
+columnType: partial
+hidden: true
+labels:
+  en: Descendant Organisations
+labels-plural:
+  en: Descendant Organisations
+suffix: acorn.user::lang.models.usergroup.label_plural';
 
 
 --
@@ -13851,7 +13886,6 @@ labels-plural:
   en: Types
   ku: Curên
 hidden: true
-sql-select: initcap(trim(regexp_replace(acorn_university_entities.leaf_table, ''^[^_]+_[^_]+_|_''::text, '' ''::text, ''g'')))
 ';
 
 
@@ -15168,6 +15202,38 @@ UNION ALL
     acorn_university_identity_types.updated_at AS datetime
    FROM public.acorn_university_identity_types
 UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    acorn_university_student_notes.name,
+    0 AS update,
+    acorn_university_student_notes.created_at AS datetime
+   FROM public.acorn_university_student_notes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    acorn_university_student_notes.name,
+    1 AS update,
+    acorn_university_student_notes.updated_at AS datetime
+   FROM public.acorn_university_student_notes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    acorn_university_student_codes.name,
+    0 AS update,
+    acorn_university_student_codes.created_at AS datetime
+   FROM public.acorn_university_student_codes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    acorn_university_student_codes.name,
+    1 AS update,
+    acorn_university_student_codes.updated_at AS datetime
+   FROM public.acorn_university_student_codes
+UNION ALL
  SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
     acorn_enrollment_student_notes.id AS model_id,
     'acorn_enrollment_student_notes'::text AS "table",
@@ -15200,37 +15266,21 @@ UNION ALL
     acorn_university_student_types.updated_at AS datetime
    FROM public.acorn_university_student_types
 UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
-    acorn_university_student_codes.name,
+ SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
+    acorn_university_course_plans.id AS model_id,
+    'acorn_university_course_plans'::text AS "table",
+    NULL::text AS name,
     0 AS update,
-    acorn_university_student_codes.created_at AS datetime
-   FROM public.acorn_university_student_codes
+    acorn_university_course_plans.created_at AS datetime
+   FROM public.acorn_university_course_plans
 UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
-    acorn_university_student_codes.name,
+ SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
+    acorn_university_course_plans.id AS model_id,
+    'acorn_university_course_plans'::text AS "table",
+    NULL::text AS name,
     1 AS update,
-    acorn_university_student_codes.updated_at AS datetime
-   FROM public.acorn_university_student_codes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
-    acorn_university_student_notes.id AS model_id,
-    'acorn_university_student_notes'::text AS "table",
-    acorn_university_student_notes.name,
-    0 AS update,
-    acorn_university_student_notes.created_at AS datetime
-   FROM public.acorn_university_student_notes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
-    acorn_university_student_notes.id AS model_id,
-    'acorn_university_student_notes'::text AS "table",
-    acorn_university_student_notes.name,
-    1 AS update,
-    acorn_university_student_notes.updated_at AS datetime
-   FROM public.acorn_university_student_notes
+    acorn_university_course_plans.updated_at AS datetime
+   FROM public.acorn_university_course_plans
 UNION ALL
  SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
     acorn_exam_interview_students.id AS model_id,
@@ -15248,37 +15298,21 @@ UNION ALL
     acorn_exam_interview_students.updated_at AS datetime
    FROM public.acorn_exam_interview_students
 UNION ALL
- SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
-    acorn_university_course_plans.id AS model_id,
-    'acorn_university_course_plans'::text AS "table",
-    NULL::text AS name,
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
+    (acorn_university_projects.name)::character varying(1024) AS name,
     0 AS update,
-    acorn_university_course_plans.created_at AS datetime
-   FROM public.acorn_university_course_plans
+    acorn_university_projects.created_at AS datetime
+   FROM public.acorn_university_projects
 UNION ALL
- SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
-    acorn_university_course_plans.id AS model_id,
-    'acorn_university_course_plans'::text AS "table",
-    NULL::text AS name,
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
+    (acorn_university_projects.name)::character varying(1024) AS name,
     1 AS update,
-    acorn_university_course_plans.updated_at AS datetime
-   FROM public.acorn_university_course_plans
-UNION ALL
- SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
-    acorn_exam_exam_materials.id AS model_id,
-    'acorn_exam_exam_materials'::text AS "table",
-    NULL::text AS name,
-    0 AS update,
-    acorn_exam_exam_materials.created_at AS datetime
-   FROM public.acorn_exam_exam_materials
-UNION ALL
- SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
-    acorn_exam_exam_materials.id AS model_id,
-    'acorn_exam_exam_materials'::text AS "table",
-    NULL::text AS name,
-    1 AS update,
-    acorn_exam_exam_materials.updated_at AS datetime
-   FROM public.acorn_exam_exam_materials
+    acorn_university_projects.updated_at AS datetime
+   FROM public.acorn_university_projects
 UNION ALL
  SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
     acorn_university_lectures.id AS model_id,
@@ -15296,21 +15330,21 @@ UNION ALL
     acorn_university_lectures.updated_at AS datetime
    FROM public.acorn_university_lectures
 UNION ALL
- SELECT 'Acorn\University\Models\Project'::text AS model_type,
-    acorn_university_projects.id AS model_id,
-    'acorn_university_projects'::text AS "table",
-    (acorn_university_projects.name)::character varying(1024) AS name,
+ SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
+    acorn_exam_exam_materials.id AS model_id,
+    'acorn_exam_exam_materials'::text AS "table",
+    NULL::text AS name,
     0 AS update,
-    acorn_university_projects.created_at AS datetime
-   FROM public.acorn_university_projects
+    acorn_exam_exam_materials.created_at AS datetime
+   FROM public.acorn_exam_exam_materials
 UNION ALL
- SELECT 'Acorn\University\Models\Project'::text AS model_type,
-    acorn_university_projects.id AS model_id,
-    'acorn_university_projects'::text AS "table",
-    (acorn_university_projects.name)::character varying(1024) AS name,
+ SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
+    acorn_exam_exam_materials.id AS model_id,
+    'acorn_exam_exam_materials'::text AS "table",
+    NULL::text AS name,
     1 AS update,
-    acorn_university_projects.updated_at AS datetime
-   FROM public.acorn_university_projects
+    acorn_exam_exam_materials.updated_at AS datetime
+   FROM public.acorn_exam_exam_materials
 UNION ALL
  SELECT 'Acorn\Exam\Models\ScoreName'::text AS model_type,
     acorn_exam_score_names.id AS model_id,
@@ -16381,6 +16415,34 @@ UNION ALL
     acorn_university_identity_types.updated_by_user_id AS by
    FROM public.acorn_university_identity_types
 UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    0 AS update,
+    acorn_university_student_notes.created_by_user_id AS by
+   FROM public.acorn_university_student_notes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    1 AS update,
+    acorn_university_student_notes.updated_by_user_id AS by
+   FROM public.acorn_university_student_notes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    0 AS update,
+    acorn_university_student_codes.created_by_user_id AS by
+   FROM public.acorn_university_student_codes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    1 AS update,
+    acorn_university_student_codes.updated_by_user_id AS by
+   FROM public.acorn_university_student_codes
+UNION ALL
  SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
     acorn_enrollment_student_notes.id AS model_id,
     'acorn_enrollment_student_notes'::text AS "table",
@@ -16409,33 +16471,19 @@ UNION ALL
     acorn_university_student_types.updated_by_user_id AS by
    FROM public.acorn_university_student_types
 UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
+ SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
+    acorn_university_course_plans.id AS model_id,
+    'acorn_university_course_plans'::text AS "table",
     0 AS update,
-    acorn_university_student_codes.created_by_user_id AS by
-   FROM public.acorn_university_student_codes
+    acorn_university_course_plans.created_by_user_id AS by
+   FROM public.acorn_university_course_plans
 UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
+ SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
+    acorn_university_course_plans.id AS model_id,
+    'acorn_university_course_plans'::text AS "table",
     1 AS update,
-    acorn_university_student_codes.updated_by_user_id AS by
-   FROM public.acorn_university_student_codes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
-    acorn_university_student_notes.id AS model_id,
-    'acorn_university_student_notes'::text AS "table",
-    0 AS update,
-    acorn_university_student_notes.created_by_user_id AS by
-   FROM public.acorn_university_student_notes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
-    acorn_university_student_notes.id AS model_id,
-    'acorn_university_student_notes'::text AS "table",
-    1 AS update,
-    acorn_university_student_notes.updated_by_user_id AS by
-   FROM public.acorn_university_student_notes
+    acorn_university_course_plans.updated_by_user_id AS by
+   FROM public.acorn_university_course_plans
 UNION ALL
  SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
     acorn_exam_interview_students.id AS model_id,
@@ -16451,33 +16499,19 @@ UNION ALL
     acorn_exam_interview_students.updated_by_user_id AS by
    FROM public.acorn_exam_interview_students
 UNION ALL
- SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
-    acorn_university_course_plans.id AS model_id,
-    'acorn_university_course_plans'::text AS "table",
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
     0 AS update,
-    acorn_university_course_plans.created_by_user_id AS by
-   FROM public.acorn_university_course_plans
+    acorn_university_projects.created_by_user_id AS by
+   FROM public.acorn_university_projects
 UNION ALL
- SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
-    acorn_university_course_plans.id AS model_id,
-    'acorn_university_course_plans'::text AS "table",
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
     1 AS update,
-    acorn_university_course_plans.updated_by_user_id AS by
-   FROM public.acorn_university_course_plans
-UNION ALL
- SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
-    acorn_exam_exam_materials.id AS model_id,
-    'acorn_exam_exam_materials'::text AS "table",
-    0 AS update,
-    acorn_exam_exam_materials.created_by_user_id AS by
-   FROM public.acorn_exam_exam_materials
-UNION ALL
- SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
-    acorn_exam_exam_materials.id AS model_id,
-    'acorn_exam_exam_materials'::text AS "table",
-    1 AS update,
-    acorn_exam_exam_materials.updated_by_user_id AS by
-   FROM public.acorn_exam_exam_materials
+    acorn_university_projects.updated_by_user_id AS by
+   FROM public.acorn_university_projects
 UNION ALL
  SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
     acorn_university_lectures.id AS model_id,
@@ -16493,19 +16527,19 @@ UNION ALL
     acorn_university_lectures.updated_by_user_id AS by
    FROM public.acorn_university_lectures
 UNION ALL
- SELECT 'Acorn\University\Models\Project'::text AS model_type,
-    acorn_university_projects.id AS model_id,
-    'acorn_university_projects'::text AS "table",
+ SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
+    acorn_exam_exam_materials.id AS model_id,
+    'acorn_exam_exam_materials'::text AS "table",
     0 AS update,
-    acorn_university_projects.created_by_user_id AS by
-   FROM public.acorn_university_projects
+    acorn_exam_exam_materials.created_by_user_id AS by
+   FROM public.acorn_exam_exam_materials
 UNION ALL
- SELECT 'Acorn\University\Models\Project'::text AS model_type,
-    acorn_university_projects.id AS model_id,
-    'acorn_university_projects'::text AS "table",
+ SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
+    acorn_exam_exam_materials.id AS model_id,
+    'acorn_exam_exam_materials'::text AS "table",
     1 AS update,
-    acorn_university_projects.updated_by_user_id AS by
-   FROM public.acorn_university_projects
+    acorn_exam_exam_materials.updated_by_user_id AS by
+   FROM public.acorn_exam_exam_materials
 UNION ALL
  SELECT 'Acorn\Exam\Models\ScoreName'::text AS model_type,
     acorn_exam_score_names.id AS model_id,
@@ -17049,8 +17083,9 @@ hints:
   no_hierarchy:
     labels:
       en: Not connected
+    contentHtml: true
     content:
-      en: This course is not connected to any organisation
+      en: This course is not connected to any organisation. <a href="/backend/acorn/university/hierarchies">Add to an organisation</a>.
     level: warning
     conditions: not exists(select * from acorn_university_hierarchies where entity_id = acorn_university_courses.entity_id)
     context: update';
@@ -17164,7 +17199,7 @@ ALTER TABLE public.acorn_user_user_group_version OWNER TO university;
 CREATE TABLE public.acorn_user_user_groups (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255) NOT NULL,
-    code character varying(255) NOT NULL,
+    code character varying(2048) NOT NULL,
     description text,
     created_at timestamp(0) without time zone,
     updated_at timestamp(0) without time zone,
@@ -20158,6 +20193,34 @@ UNION ALL
     acorn_university_identity_types.description AS content
    FROM public.acorn_university_identity_types
 UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    'name'::text AS field,
+    (acorn_university_student_notes.name)::text AS content
+   FROM public.acorn_university_student_notes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    'description'::text AS field,
+    acorn_university_student_notes.description AS content
+   FROM public.acorn_university_student_notes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    'name'::text AS field,
+    (acorn_university_student_codes.name)::text AS content
+   FROM public.acorn_university_student_codes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    'description'::text AS field,
+    acorn_university_student_codes.description AS content
+   FROM public.acorn_university_student_codes
+UNION ALL
  SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
     acorn_enrollment_student_notes.id AS model_id,
     'acorn_enrollment_student_notes'::text AS "table",
@@ -20185,34 +20248,6 @@ UNION ALL
     'description'::text AS field,
     acorn_university_student_types.description AS content
    FROM public.acorn_university_student_types
-UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
-    'name'::text AS field,
-    (acorn_university_student_codes.name)::text AS content
-   FROM public.acorn_university_student_codes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
-    'description'::text AS field,
-    acorn_university_student_codes.description AS content
-   FROM public.acorn_university_student_codes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
-    acorn_university_student_notes.id AS model_id,
-    'acorn_university_student_notes'::text AS "table",
-    'name'::text AS field,
-    (acorn_university_student_notes.name)::text AS content
-   FROM public.acorn_university_student_notes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
-    acorn_university_student_notes.id AS model_id,
-    'acorn_university_student_notes'::text AS "table",
-    'description'::text AS field,
-    acorn_university_student_notes.description AS content
-   FROM public.acorn_university_student_notes
 UNION ALL
  SELECT 'Acorn\University\Models\Project'::text AS model_type,
     acorn_university_projects.id AS model_id,
@@ -28583,6 +28618,13 @@ CREATE TRIGGER tr_acorn_university_entities_leaf_table AFTER INSERT ON public.ac
 
 
 --
+-- Name: acorn_university_hierarchies tr_acorn_university_hierarchies_create_version; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_university_hierarchies_create_version BEFORE INSERT ON public.acorn_university_hierarchies FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_university_hierarchies_create_version();
+
+
+--
 -- Name: acorn_university_hierarchies tr_acorn_university_hierarchies_delete_version; Type: TRIGGER; Schema: public; Owner: university
 --
 
@@ -28590,10 +28632,10 @@ CREATE TRIGGER tr_acorn_university_hierarchies_delete_version AFTER DELETE ON pu
 
 
 --
--- Name: acorn_user_user_group_version tr_acorn_university_hierarchies_descendants_update; Type: TRIGGER; Schema: public; Owner: university
+-- Name: acorn_user_user_group_version tr_acorn_university_hierarchies_descendants_user_cnts; Type: TRIGGER; Schema: public; Owner: university
 --
 
-CREATE TRIGGER tr_acorn_university_hierarchies_descendants_update AFTER INSERT OR DELETE OR UPDATE ON public.acorn_user_user_group_version FOR EACH STATEMENT EXECUTE FUNCTION public.fn_acorn_university_hierarchies_descendants_update();
+CREATE TRIGGER tr_acorn_university_hierarchies_descendants_user_cnts AFTER INSERT OR DELETE OR UPDATE ON public.acorn_user_user_group_version FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_university_hierarchies_descendants_user_cnts();
 
 
 --
@@ -28601,13 +28643,6 @@ CREATE TRIGGER tr_acorn_university_hierarchies_descendants_update AFTER INSERT O
 --
 
 CREATE TRIGGER tr_acorn_university_hierarchies_manage_cys AFTER INSERT ON public.acorn_university_hierarchies FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_university_hierarchies_manage_cys();
-
-
---
--- Name: acorn_university_hierarchies tr_acorn_university_hierarchies_new_version; Type: TRIGGER; Schema: public; Owner: university
---
-
-CREATE TRIGGER tr_acorn_university_hierarchies_new_version BEFORE INSERT ON public.acorn_university_hierarchies FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_university_hierarchies_new_version();
 
 
 --
@@ -33202,12 +33237,15 @@ REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 GRANT ALL ON SCHEMA public TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SCHEMA public TO token_5;
+GRANT ALL ON SCHEMA public TO sz WITH GRANT OPTION;
 
 
 --
 -- Name: FUNCTION cube_in(cstring); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_in(cstring) FROM sz;
+GRANT ALL ON FUNCTION public.cube_in(cstring) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_in(cstring) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_in(cstring) TO token_5;
 
@@ -33216,6 +33254,8 @@ GRANT ALL ON FUNCTION public.cube_in(cstring) TO token_5;
 -- Name: FUNCTION cube_out(public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_out(public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_out(public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_out(public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_out(public.cube) TO token_5;
 
@@ -33224,6 +33264,8 @@ GRANT ALL ON FUNCTION public.cube_out(public.cube) TO token_5;
 -- Name: FUNCTION cube_recv(internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_recv(internal) FROM sz;
+GRANT ALL ON FUNCTION public.cube_recv(internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_recv(internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_recv(internal) TO token_5;
 
@@ -33232,6 +33274,8 @@ GRANT ALL ON FUNCTION public.cube_recv(internal) TO token_5;
 -- Name: FUNCTION cube_send(public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_send(public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_send(public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_send(public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_send(public.cube) TO token_5;
 
@@ -33240,6 +33284,8 @@ GRANT ALL ON FUNCTION public.cube_send(public.cube) TO token_5;
 -- Name: FUNCTION gtrgm_in(cstring); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.gtrgm_in(cstring) FROM sz;
+GRANT ALL ON FUNCTION public.gtrgm_in(cstring) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_in(cstring) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_in(cstring) TO token_5;
 
@@ -33248,6 +33294,8 @@ GRANT ALL ON FUNCTION public.gtrgm_in(cstring) TO token_5;
 -- Name: FUNCTION gtrgm_out(public.gtrgm); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.gtrgm_out(public.gtrgm) FROM sz;
+GRANT ALL ON FUNCTION public.gtrgm_out(public.gtrgm) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_out(public.gtrgm) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_out(public.gtrgm) TO token_5;
 
@@ -33256,6 +33304,8 @@ GRANT ALL ON FUNCTION public.gtrgm_out(public.gtrgm) TO token_5;
 -- Name: FUNCTION bytea_to_text(data bytea); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.bytea_to_text(data bytea) FROM sz;
+GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO token_5;
 
@@ -33264,6 +33314,8 @@ GRANT ALL ON FUNCTION public.bytea_to_text(data bytea) TO token_5;
 -- Name: FUNCTION cube(double precision[]); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube(double precision[]) FROM sz;
+GRANT ALL ON FUNCTION public.cube(double precision[]) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(double precision[]) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(double precision[]) TO token_5;
 
@@ -33272,6 +33324,8 @@ GRANT ALL ON FUNCTION public.cube(double precision[]) TO token_5;
 -- Name: FUNCTION cube(double precision); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube(double precision) FROM sz;
+GRANT ALL ON FUNCTION public.cube(double precision) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(double precision) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(double precision) TO token_5;
 
@@ -33280,6 +33334,8 @@ GRANT ALL ON FUNCTION public.cube(double precision) TO token_5;
 -- Name: FUNCTION cube(double precision[], double precision[]); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube(double precision[], double precision[]) FROM sz;
+GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO token_5;
 
@@ -33288,6 +33344,8 @@ GRANT ALL ON FUNCTION public.cube(double precision[], double precision[]) TO tok
 -- Name: FUNCTION cube(double precision, double precision); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube(double precision, double precision) FROM sz;
+GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO token_5;
 
@@ -33296,6 +33354,8 @@ GRANT ALL ON FUNCTION public.cube(double precision, double precision) TO token_5
 -- Name: FUNCTION cube(public.cube, double precision); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube(public.cube, double precision) FROM sz;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO token_5;
 
@@ -33304,6 +33364,8 @@ GRANT ALL ON FUNCTION public.cube(public.cube, double precision) TO token_5;
 -- Name: FUNCTION cube(public.cube, double precision, double precision); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube(public.cube, double precision, double precision) FROM sz;
+GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precision) TO token_5;
 
@@ -33312,6 +33374,8 @@ GRANT ALL ON FUNCTION public.cube(public.cube, double precision, double precisio
 -- Name: FUNCTION cube_cmp(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO token_5;
 
@@ -33320,6 +33384,8 @@ GRANT ALL ON FUNCTION public.cube_cmp(public.cube, public.cube) TO token_5;
 -- Name: FUNCTION cube_contained(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_contained(public.cube, public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO token_5;
 
@@ -33328,6 +33394,8 @@ GRANT ALL ON FUNCTION public.cube_contained(public.cube, public.cube) TO token_5
 -- Name: FUNCTION cube_contains(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_contains(public.cube, public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO token_5;
 
@@ -33336,6 +33404,8 @@ GRANT ALL ON FUNCTION public.cube_contains(public.cube, public.cube) TO token_5;
 -- Name: FUNCTION cube_coord(public.cube, integer); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_coord(public.cube, integer) FROM sz;
+GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO token_5;
 
@@ -33344,6 +33414,8 @@ GRANT ALL ON FUNCTION public.cube_coord(public.cube, integer) TO token_5;
 -- Name: FUNCTION cube_coord_llur(public.cube, integer); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) FROM sz;
+GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO token_5;
 
@@ -33352,6 +33424,8 @@ GRANT ALL ON FUNCTION public.cube_coord_llur(public.cube, integer) TO token_5;
 -- Name: FUNCTION cube_dim(public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_dim(public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO token_5;
 
@@ -33360,6 +33434,8 @@ GRANT ALL ON FUNCTION public.cube_dim(public.cube) TO token_5;
 -- Name: FUNCTION cube_distance(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_distance(public.cube, public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO token_5;
 
@@ -33368,6 +33444,8 @@ GRANT ALL ON FUNCTION public.cube_distance(public.cube, public.cube) TO token_5;
 -- Name: FUNCTION cube_enlarge(public.cube, double precision, integer); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) FROM sz;
+GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer) TO token_5;
 
@@ -33376,6 +33454,8 @@ GRANT ALL ON FUNCTION public.cube_enlarge(public.cube, double precision, integer
 -- Name: FUNCTION cube_eq(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_eq(public.cube, public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO token_5;
 
@@ -33384,6 +33464,8 @@ GRANT ALL ON FUNCTION public.cube_eq(public.cube, public.cube) TO token_5;
 -- Name: FUNCTION cube_ge(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_ge(public.cube, public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO token_5;
 
@@ -33392,6 +33474,8 @@ GRANT ALL ON FUNCTION public.cube_ge(public.cube, public.cube) TO token_5;
 -- Name: FUNCTION cube_gt(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_gt(public.cube, public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO token_5;
 
@@ -33400,6 +33484,8 @@ GRANT ALL ON FUNCTION public.cube_gt(public.cube, public.cube) TO token_5;
 -- Name: FUNCTION cube_inter(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_inter(public.cube, public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO token_5;
 
@@ -33408,6 +33494,8 @@ GRANT ALL ON FUNCTION public.cube_inter(public.cube, public.cube) TO token_5;
 -- Name: FUNCTION cube_is_point(public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_is_point(public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO token_5;
 
@@ -33416,6 +33504,8 @@ GRANT ALL ON FUNCTION public.cube_is_point(public.cube) TO token_5;
 -- Name: FUNCTION cube_le(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_le(public.cube, public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO token_5;
 
@@ -33424,6 +33514,8 @@ GRANT ALL ON FUNCTION public.cube_le(public.cube, public.cube) TO token_5;
 -- Name: FUNCTION cube_ll_coord(public.cube, integer); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) FROM sz;
+GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO token_5;
 
@@ -33432,6 +33524,8 @@ GRANT ALL ON FUNCTION public.cube_ll_coord(public.cube, integer) TO token_5;
 -- Name: FUNCTION cube_lt(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_lt(public.cube, public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO token_5;
 
@@ -33440,6 +33534,8 @@ GRANT ALL ON FUNCTION public.cube_lt(public.cube, public.cube) TO token_5;
 -- Name: FUNCTION cube_ne(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_ne(public.cube, public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO token_5;
 
@@ -33448,6 +33544,8 @@ GRANT ALL ON FUNCTION public.cube_ne(public.cube, public.cube) TO token_5;
 -- Name: FUNCTION cube_overlap(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO token_5;
 
@@ -33456,6 +33554,8 @@ GRANT ALL ON FUNCTION public.cube_overlap(public.cube, public.cube) TO token_5;
 -- Name: FUNCTION cube_size(public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_size(public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_size(public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_size(public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_size(public.cube) TO token_5;
 
@@ -33464,6 +33564,8 @@ GRANT ALL ON FUNCTION public.cube_size(public.cube) TO token_5;
 -- Name: FUNCTION cube_subset(public.cube, integer[]); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_subset(public.cube, integer[]) FROM sz;
+GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO token_5;
 
@@ -33472,6 +33574,8 @@ GRANT ALL ON FUNCTION public.cube_subset(public.cube, integer[]) TO token_5;
 -- Name: FUNCTION cube_union(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_union(public.cube, public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO token_5;
 
@@ -33480,6 +33584,8 @@ GRANT ALL ON FUNCTION public.cube_union(public.cube, public.cube) TO token_5;
 -- Name: FUNCTION cube_ur_coord(public.cube, integer); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) FROM sz;
+GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO token_5;
 
@@ -33488,6 +33594,8 @@ GRANT ALL ON FUNCTION public.cube_ur_coord(public.cube, integer) TO token_5;
 -- Name: FUNCTION daitch_mokotoff(text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.daitch_mokotoff(text) FROM sz;
+GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO token_5;
 
@@ -33496,6 +33604,8 @@ GRANT ALL ON FUNCTION public.daitch_mokotoff(text) TO token_5;
 -- Name: FUNCTION difference(text, text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.difference(text, text) FROM sz;
+GRANT ALL ON FUNCTION public.difference(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.difference(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.difference(text, text) TO token_5;
 
@@ -33504,6 +33614,8 @@ GRANT ALL ON FUNCTION public.difference(text, text) TO token_5;
 -- Name: FUNCTION distance_chebyshev(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO token_5;
 
@@ -33512,6 +33624,8 @@ GRANT ALL ON FUNCTION public.distance_chebyshev(public.cube, public.cube) TO tok
 -- Name: FUNCTION distance_taxicab(public.cube, public.cube); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) FROM sz;
+GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO token_5;
 
@@ -33520,6 +33634,8 @@ GRANT ALL ON FUNCTION public.distance_taxicab(public.cube, public.cube) TO token
 -- Name: FUNCTION dmetaphone(text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.dmetaphone(text) FROM sz;
+GRANT ALL ON FUNCTION public.dmetaphone(text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.dmetaphone(text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.dmetaphone(text) TO token_5;
 
@@ -33528,6 +33644,8 @@ GRANT ALL ON FUNCTION public.dmetaphone(text) TO token_5;
 -- Name: FUNCTION dmetaphone_alt(text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.dmetaphone_alt(text) FROM sz;
+GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO token_5;
 
@@ -33536,6 +33654,8 @@ GRANT ALL ON FUNCTION public.dmetaphone_alt(text) TO token_5;
 -- Name: FUNCTION earth(); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.earth() FROM sz;
+GRANT ALL ON FUNCTION public.earth() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.earth() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.earth() TO token_5;
 
@@ -33544,6 +33664,8 @@ GRANT ALL ON FUNCTION public.earth() TO token_5;
 -- Name: FUNCTION gc_to_sec(double precision); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.gc_to_sec(double precision) FROM sz;
+GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO token_5;
 
@@ -33552,6 +33674,8 @@ GRANT ALL ON FUNCTION public.gc_to_sec(double precision) TO token_5;
 -- Name: FUNCTION earth_box(public.earth, double precision); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.earth_box(public.earth, double precision) FROM sz;
+GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO token_5;
 
@@ -33560,6 +33684,8 @@ GRANT ALL ON FUNCTION public.earth_box(public.earth, double precision) TO token_
 -- Name: FUNCTION sec_to_gc(double precision); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.sec_to_gc(double precision) FROM sz;
+GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO token_5;
 
@@ -33568,6 +33694,8 @@ GRANT ALL ON FUNCTION public.sec_to_gc(double precision) TO token_5;
 -- Name: FUNCTION earth_distance(public.earth, public.earth); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.earth_distance(public.earth, public.earth) FROM sz;
+GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO token_5;
 
@@ -33578,6 +33706,7 @@ GRANT ALL ON FUNCTION public.earth_distance(public.earth, public.earth) TO token
 
 GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character varying, table_prefix character varying) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33586,12 +33715,15 @@ GRANT ALL ON FUNCTION public.fn_acorn_add_websockets_triggers(schema character v
 
 GRANT ALL ON FUNCTION public.fn_acorn_avg() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_avg() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_avg() TO sz WITH GRANT OPTION;
 
 
 --
 -- Name: FUNCTION fn_acorn_avg(VARIADIC ints double precision[]); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) FROM sz;
+GRANT ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) TO token_5;
 
@@ -33602,6 +33734,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_avg(VARIADIC ints double precision[]) TO t
 
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, owner_user_id uuid, type_id uuid, status_id uuid, name character varying) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33610,6 +33743,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(calendar_id uuid, ow
 
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(p_calendar_id uuid, p_owner_user_id uuid, p_event_type_id uuid, p_event_status_id uuid, p_name character varying, p_date_from timestamp without time zone, p_date_to timestamp without time zone) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(p_calendar_id uuid, p_owner_user_id uuid, p_event_type_id uuid, p_event_status_id uuid, p_name character varying, p_date_from timestamp without time zone, p_date_to timestamp without time zone) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(p_calendar_id uuid, p_owner_user_id uuid, p_event_type_id uuid, p_event_status_id uuid, p_name character varying, p_date_from timestamp without time zone, p_date_to timestamp without time zone) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33618,6 +33752,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_create_event(p_calendar_id uuid, 
 
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances() TO sz WITH GRANT OPTION;
 
 
 --
@@ -33626,6 +33761,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_events_generate_event_instances()
 
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33634,6 +33770,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_generate_event_instances(new_even
 
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d timestamp without time zone) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33642,6 +33779,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_is_date(s character varying, d ti
 
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name character varying, owner_user_id uuid, type_name character varying, status_name character varying, event_name character varying) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33650,6 +33788,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_lazy_create_event(calendar_name c
 
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO sz WITH GRANT OPTION;
 
 
 --
@@ -33658,6 +33797,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_calendar_seed() TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_count() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_count() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_count() TO sz WITH GRANT OPTION;
 
 
 --
@@ -33666,6 +33806,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_count() TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33674,6 +33815,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_count(VARIADIC ints double precision[]) TO
 
 GRANT ALL ON FUNCTION public.fn_acorn_created_by_user_id() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_created_by_user_id() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_created_by_user_id() TO sz WITH GRANT OPTION;
 
 
 --
@@ -33682,6 +33824,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_created_by_user_id() TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_add_cs_hi(p_model_id uuid, p_user_id uuid, p_ancestor_hierarchy_id uuid, p_define_entry_requirements boolean, p_related_course_id uuid, p_related_exam_id uuid, p_required_interview_id uuid, p_minimum_students integer, p_maximum_students integer, p_minimum_entry_score double precision) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_add_cs_hi(p_model_id uuid, p_user_id uuid, p_ancestor_hierarchy_id uuid, p_define_entry_requirements boolean, p_related_course_id uuid, p_related_exam_id uuid, p_required_interview_id uuid, p_minimum_students integer, p_maximum_students integer, p_minimum_entry_score double precision) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_add_cs_hi(p_model_id uuid, p_user_id uuid, p_ancestor_hierarchy_id uuid, p_define_entry_requirements boolean, p_related_course_id uuid, p_related_exam_id uuid, p_required_interview_id uuid, p_minimum_students integer, p_maximum_students integer, p_minimum_entry_score double precision) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33690,6 +33833,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_add_cs_hi(p_
 
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_add_st_hi(p_model_id uuid, p_user_id uuid, p_hierarchy_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_add_st_hi(p_model_id uuid, p_user_id uuid, p_hierarchy_id uuid) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_add_st_hi(p_model_id uuid, p_user_id uuid, p_hierarchy_id uuid) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33698,6 +33842,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_add_st_hi(p_
 
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_apply(p_model_id uuid, p_user_id uuid, p_confirm boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_apply(p_model_id uuid, p_user_id uuid, p_confirm boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_apply(p_model_id uuid, p_user_id uuid, p_confirm boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33706,12 +33851,15 @@ GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_apply(p_mode
 
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_reset(p_model_id uuid, p_user_id uuid, p_confirm boolean, p_clear_manually_added_students boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_reset(p_model_id uuid, p_user_id uuid, p_confirm boolean, p_clear_manually_added_students boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_reset(p_model_id uuid, p_user_id uuid, p_confirm boolean, p_clear_manually_added_students boolean) TO sz WITH GRANT OPTION;
 
 
 --
 -- Name: FUNCTION fn_acorn_enrollment_action_enrollments_rollback(p_model_id uuid, p_user_id uuid, p_confirm boolean, p_clear_manual_proposals boolean); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_rollback(p_model_id uuid, p_user_id uuid, p_confirm boolean, p_clear_manual_proposals boolean) FROM sz;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_rollback(p_model_id uuid, p_user_id uuid, p_confirm boolean, p_clear_manual_proposals boolean) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_rollback(p_model_id uuid, p_user_id uuid, p_confirm boolean, p_clear_manual_proposals boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_rollback(p_model_id uuid, p_user_id uuid, p_confirm boolean, p_clear_manual_proposals boolean) TO token_5;
 
@@ -33722,6 +33870,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_rollback(p_m
 
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_run(p_model_id uuid, p_user_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_run(p_model_id uuid, p_user_id uuid) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_run(p_model_id uuid, p_user_id uuid) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33730,6 +33879,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_enrollment_action_enrollments_run(p_model_
 
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_all(p_enrollment_id uuid, p_user_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_all(p_enrollment_id uuid, p_user_id uuid) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_all(p_enrollment_id uuid, p_user_id uuid) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33738,6 +33888,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_enrollment_all(p_enrollment_id uuid, p_use
 
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desire_first(p_enrollment_id uuid, p_user_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desire_first(p_enrollment_id uuid, p_user_id uuid) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desire_first(p_enrollment_id uuid, p_user_id uuid) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33746,14 +33897,17 @@ GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desire_first(p_enrollment_id uu
 
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_desires_ordinal() TO sz WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION fn_acorn_enrollment_enrollments_state_indicator(p_enrollment record); Type: ACL; Schema: public; Owner: justice
+-- Name: FUNCTION fn_acorn_enrollment_enrollments_state_indicator(p_enrollment record); Type: ACL; Schema: public; Owner: university
 --
 
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_enrollments_state_indicator(p_enrollment record) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_enrollments_state_indicator(p_enrollment record) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_enrollments_state_indicator(p_enrollment record) TO justice;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_enrollments_state_indicator(p_enrollment record) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33762,6 +33916,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_enrollment_enrollments_state_indicator(p_e
 
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_score_first(p_enrollment_id uuid, p_user_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_score_first(p_enrollment_id uuid, p_user_id uuid) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_enrollment_score_first(p_enrollment_id uuid, p_user_id uuid) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33770,6 +33925,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_enrollment_score_first(p_enrollment_id uui
 
 GRANT ALL ON FUNCTION public.fn_acorn_exam_action_certificates_clear_printed(model_id uuid, user_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_action_certificates_clear_printed(model_id uuid, user_id uuid) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_action_certificates_clear_printed(model_id uuid, user_id uuid) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33778,6 +33934,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_action_certificates_clear_printed(mod
 
 GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33786,12 +33943,15 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id u
 
 GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray) TO sz WITH GRANT OPTION;
 
 
 --
 -- Name: FUNCTION fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean) FROM sz;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean) TO token_5;
 
@@ -33802,6 +33962,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_eval(p_expr character varying, p_leve
 
 GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_messages boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33810,6 +33971,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_explain(p_expr character varying, p_m
 
 GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO sz WITH GRANT OPTION;
 
 
 --
@@ -33818,6 +33980,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_scores_log() TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles character varying[]) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33826,6 +33989,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(VARIADIC p_titles characte
 
 GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titles character varying[]) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33834,6 +33998,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name(p_id uuid, VARIADIC p_titl
 
 GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles character varying[]) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33842,6 +34007,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_token_name_internal(p_titles characte
 
 GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_level integer, p_messages boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33850,6 +34016,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_exam_tokenize(p_expr character varying, p_
 
 GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33858,6 +34025,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_first(anyelement, anyelement) TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33866,6 +34034,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_last(anyelement, anyelement) TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_max() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_max() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_max() TO sz WITH GRANT OPTION;
 
 
 --
@@ -33874,6 +34043,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_max() TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_max(VARIADIC ints double precision[]) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_max(VARIADIC ints double precision[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_max(VARIADIC ints double precision[]) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33882,6 +34052,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_max(VARIADIC ints double precision[]) TO t
 
 GRANT ALL ON FUNCTION public.fn_acorn_min() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_min() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_min() TO sz WITH GRANT OPTION;
 
 
 --
@@ -33890,6 +34061,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_min() TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_min(VARIADIC ints double precision[]) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_min(VARIADIC ints double precision[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_min(VARIADIC ints double precision[]) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33898,6 +34070,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_min(VARIADIC ints double precision[]) TO t
 
 GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO sz WITH GRANT OPTION;
 
 
 --
@@ -33906,6 +34079,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_new_replicated_row() TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character varying, table_like character varying) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33914,6 +34088,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_reset_sequences(schema_like character vary
 
 GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO sz WITH GRANT OPTION;
 
 
 --
@@ -33922,6 +34097,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_server_id() TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_sum() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_sum() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_sum() TO sz WITH GRANT OPTION;
 
 
 --
@@ -33930,6 +34106,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_sum() TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_sum(VARIADIC ints double precision[]) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_sum(VARIADIC ints double precision[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(VARIADIC ints double precision[]) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33938,6 +34115,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_sum(VARIADIC ints double precision[]) TO t
 
 GRANT ALL ON FUNCTION public.fn_acorn_sum(ints character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_sum(ints character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_sum(ints character varying) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33946,6 +34124,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_sum(ints character varying) TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_sumproduct() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_sumproduct() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct() TO sz WITH GRANT OPTION;
 
 
 --
@@ -33954,6 +34133,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_sumproduct() TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_sumproduct(VARIADIC ints double precision[]) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_sumproduct(VARIADIC ints double precision[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_sumproduct(VARIADIC ints double precision[]) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33962,12 +34142,15 @@ GRANT ALL ON FUNCTION public.fn_acorn_sumproduct(VARIADIC ints double precision[
 
 GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_table_counts(_schema character varying) TO sz WITH GRANT OPTION;
 
 
 --
 -- Name: FUNCTION fn_acorn_translate(p_fallback_name character varying, p_table character varying, p_id uuid, p_locale character); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.fn_acorn_translate(p_fallback_name character varying, p_table character varying, p_id uuid, p_locale character) FROM sz;
+GRANT ALL ON FUNCTION public.fn_acorn_translate(p_fallback_name character varying, p_table character varying, p_id uuid, p_locale character) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_translate(p_fallback_name character varying, p_table character varying, p_id uuid, p_locale character) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_translate(p_fallback_name character varying, p_table character varying, p_id uuid, p_locale character) TO token_1 WITH GRANT OPTION;
 
@@ -33978,6 +34161,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_translate(p_fallback_name character varyin
 
 GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character varying, table_like character varying) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33986,6 +34170,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_truncate_database(schema_like character va
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO sz WITH GRANT OPTION;
 
 
 --
@@ -33994,6 +34179,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_ac
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34002,6 +34188,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_clear(mod
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34010,6 +34197,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(m
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34018,6 +34206,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import242
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2425e(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_confirm boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34026,6 +34215,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import242
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import2526b(p_delete_previous boolean, p_confirm boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34034,6 +34224,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_import252
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_provision(p_model_id uuid, p_user_id uuid, p_copy_academic_year_id uuid, p_num_years integer, p_enabled boolean) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_provision(p_model_id uuid, p_user_id uuid, p_copy_academic_year_id uuid, p_num_years integer, p_enabled boolean) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_provision(p_model_id uuid, p_user_id uuid, p_copy_academic_year_id uuid, p_num_years integer, p_enabled boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34042,6 +34233,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_provision
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34050,6 +34242,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(m
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_course_materials_cm_copy2(p_course_id uuid, p_academic_year_semester_id uuid, p_course_year_id uuid, p_copy_exams boolean, p_copy_projects boolean, p_copy_interviews boolean, p_copy_calculations boolean, p_copy_students boolean, p_delete_existing boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_course_materials_cm_copy2(p_course_id uuid, p_academic_year_semester_id uuid, p_course_year_id uuid, p_copy_exams boolean, p_copy_projects boolean, p_copy_interviews boolean, p_copy_calculations boolean, p_copy_students boolean, p_delete_existing boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_course_materials_cm_copy2(p_course_id uuid, p_academic_year_semester_id uuid, p_course_year_id uuid, p_copy_exams boolean, p_copy_projects boolean, p_copy_interviews boolean, p_copy_calculations boolean, p_copy_students boolean, p_delete_existing boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34058,6 +34251,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_course_materials_cm_copy
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_course_year_semesters_spec(p_model_id uuid, p_user_id uuid, p_course_specialization_id uuid, p_copy_materials boolean, p_copy_exams boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_course_year_semesters_spec(p_model_id uuid, p_user_id uuid, p_course_specialization_id uuid, p_copy_materials boolean, p_copy_exams boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_course_year_semesters_spec(p_model_id uuid, p_user_id uuid, p_course_specialization_id uuid, p_copy_materials boolean, p_copy_exams boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34066,6 +34260,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_course_year_semesters_sp
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_append_child(p_model_id uuid, p_user_id uuid) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_append_child(p_model_id uuid, p_user_id uuid) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_append_child(p_model_id uuid, p_user_id uuid) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34074,6 +34269,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_append_child
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34082,6 +34278,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34090,6 +34287,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(mode
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34098,6 +34296,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_action_students_refresh(model_i
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_after_courses_add_to_hierarchy(p_model_id uuid, p_user_id uuid, p_add boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_after_courses_add_to_hierarchy(p_model_id uuid, p_user_id uuid, p_add boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_after_courses_add_to_hierarchy(p_model_id uuid, p_user_id uuid, p_add boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34106,6 +34305,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_after_courses_add_to_hierarchy(
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_after_students_add_to_courses(p_model_id uuid, p_user_id uuid, p_course_ids uuid[]) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_after_students_add_to_courses(p_model_id uuid, p_user_id uuid, p_course_ids uuid[]) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_after_students_add_to_courses(p_model_id uuid, p_user_id uuid, p_course_ids uuid[]) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34113,6 +34313,8 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_after_students_add_to_courses(p
 --
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_after_students_set_code(p_model_id uuid, p_user_id uuid, p_code character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_after_students_set_code(p_model_id uuid, p_user_id uuid, p_code character varying) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_after_students_set_code(p_model_id uuid, p_user_id uuid, p_code character varying) TO token_5;
 
 
 --
@@ -34120,6 +34322,8 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_after_students_set_code(p_model
 --
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_after_students_set_language(p_model_id uuid, p_user_id uuid, p_language character varying) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_after_students_set_language(p_model_id uuid, p_user_id uuid, p_language character varying) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_after_students_set_language(p_model_id uuid, p_user_id uuid, p_language character varying) TO token_5;
 
 
 --
@@ -34128,6 +34332,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_after_students_set_language(p_m
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_before_course_plans_prov(p_model_id uuid, p_user_id uuid, p_enrollment_academic_year_id uuid, p_length integer, p_provision_missing_years boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_before_course_plans_prov(p_model_id uuid, p_user_id uuid, p_enrollment_academic_year_id uuid, p_length integer, p_provision_missing_years boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_before_course_plans_prov(p_model_id uuid, p_user_id uuid, p_enrollment_academic_year_id uuid, p_length integer, p_provision_missing_years boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34136,6 +34341,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_before_course_plans_prov(p_mode
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_cascade_delete_event() TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_cascade_delete_event() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_cascade_delete_event() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34144,6 +34350,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_cascade_delete_event() TO token
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_cm_order() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_cm_order() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_cm_order() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34152,6 +34359,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_cm_order() TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34160,6 +34368,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_courses_unique_name_type() TO t
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_cys_manage_hierarchy() TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_cys_manage_hierarchy() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_cys_manage_hierarchy() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34168,6 +34377,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_cys_manage_hierarchy() TO token
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34176,6 +34386,24 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_delete_entity() TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO sz WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_enrollment_year(); Type: ACL; Schema: public; Owner: sz
+--
+
+REVOKE ALL ON FUNCTION public.fn_acorn_university_enrollment_year() FROM sz;
+GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_enrollment_year() TO token_5;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_entities_leaf_table(); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_entities_leaf_table() TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_entities_leaf_table() TO token_5;
 
 
 --
@@ -34184,6 +34412,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_delete_user_group() TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34192,6 +34421,16 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uui
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO sz WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_hierarchies_create_version(); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_create_version() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_create_version() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_create_version() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34200,6 +34439,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34208,14 +34448,24 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO sz WITH GRANT OPTION;
 
 
 --
--- Name: FUNCTION fn_acorn_university_hierarchies_descendants_update(); Type: ACL; Schema: public; Owner: university
+-- Name: FUNCTION fn_acorn_university_hierarchies_descendants_user_cnts(); Type: ACL; Schema: public; Owner: university
 --
 
-GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_update() TO token_1 WITH GRANT OPTION;
-GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_update() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_user_cnts() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_user_cnts() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_user_cnts() TO sz WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid, p_throw_invalid boolean); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid, p_throw_invalid boolean) TO sz WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid, p_throw_invalid boolean) TO token_5;
 
 
 --
@@ -34224,14 +34474,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_update(
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_manage_cys() TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_manage_cys() TO token_1 WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION fn_acorn_university_hierarchies_new_version(); Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO token_1 WITH GRANT OPTION;
-GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_manage_cys() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34240,6 +34483,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_new_version() TO to
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34248,6 +34492,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_update_version() TO
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchy_lock_event() TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchy_lock_event() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchy_lock_event() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34256,6 +34501,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchy_lock_event() TO token
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_import_source_empty() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_import_source_empty() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_import_source_empty() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34264,6 +34510,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_import_source_empty() TO token_
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_lecture_sync_lock_event() TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_lecture_sync_lock_event() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_lecture_sync_lock_event() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34272,6 +34519,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_lecture_sync_lock_event() TO to
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_delete_previous boolean, p_messages boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34280,12 +34528,15 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v1(p_de
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_bakeloria_v2(p_delete_previous boolean, p_messages boolean) TO sz WITH GRANT OPTION;
 
 
 --
 -- Name: FUNCTION fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) FROM sz;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course(p_course_name character varying, p_branche_name character varying) TO token_5;
 
@@ -34296,6 +34547,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_branche_to_course
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(p_county_name character varying, p_certificate_name character varying) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34304,6 +34556,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_certificate_code(
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county character varying) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34312,6 +34565,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_county(p_county c
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_import_mofadala_students boolean, p_enroll_students_into_courses boolean, p_delete_previous boolean, p_messages boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34320,6 +34574,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_legacy_import_enrollment(p_impo
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_provision_year_semesters() TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_provision_year_semesters() TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_provision_year_semesters() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34328,6 +34583,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_provision_year_semesters() TO t
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_entity_id uuid, p_ancestor_entity_id character varying) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34336,6 +34592,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_scope_entities(p_descendant_ent
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_semester_ordinal_delete() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_semester_ordinal_delete() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_semester_ordinal_delete() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34344,6 +34601,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_semester_ordinal_delete() TO to
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_semester_ordinal_insert() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_semester_ordinal_insert() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_semester_ordinal_insert() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34352,6 +34610,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_semester_ordinal_insert() TO to
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34360,6 +34619,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_student_codes_current() TO toke
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_student_documents() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_student_documents() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_documents() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34368,6 +34628,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_student_documents() TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34376,12 +34637,15 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_student_identities_current() TO
 
 GRANT ALL ON FUNCTION public.fn_acorn_university_students_ales_refresh(p_model_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_students_ales_refresh(p_model_id uuid) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_students_ales_refresh(p_model_id uuid) TO sz WITH GRANT OPTION;
 
 
 --
 -- Name: FUNCTION fn_acorn_university_table_counts(_schema character varying); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) FROM sz;
+GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character varying) TO token_5;
 
@@ -34392,6 +34656,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_table_counts(_schema character 
 
 GRANT ALL ON FUNCTION public.fn_acorn_updated_by_user_id() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_updated_by_user_id() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_updated_by_user_id() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34400,6 +34665,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_updated_by_user_id() TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_user_code(name character varying, word integer, length integer) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_user_code(name character varying, word integer, length integer) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code(name character varying, word integer, length integer) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34408,6 +34674,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_user_code(name character varying, word int
 
 GRANT ALL ON FUNCTION public.fn_acorn_user_code_acronym(name character varying, word integer, length integer) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_user_code_acronym(name character varying, word integer, length integer) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_user_code_acronym(name character varying, word integer, length integer) TO sz WITH GRANT OPTION;
 
 
 --
@@ -34416,6 +34683,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_user_code_acronym(name character varying, 
 
 GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34424,6 +34692,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_user_get_seed_user() TO token_5;
 
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34432,6 +34701,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO token_5
 
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO sz WITH GRANT OPTION;
 
 
 --
@@ -34440,12 +34710,15 @@ GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_version_current() TO token
 
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_languages_current() TO sz WITH GRANT OPTION;
 
 
 --
 -- Name: FUNCTION g_cube_consistent(internal, public.cube, smallint, oid, internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) FROM sz;
+GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, oid, internal) TO token_5;
 
@@ -34454,6 +34727,8 @@ GRANT ALL ON FUNCTION public.g_cube_consistent(internal, public.cube, smallint, 
 -- Name: FUNCTION g_cube_distance(internal, public.cube, smallint, oid, internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) FROM sz;
+GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oid, internal) TO token_5;
 
@@ -34462,6 +34737,8 @@ GRANT ALL ON FUNCTION public.g_cube_distance(internal, public.cube, smallint, oi
 -- Name: FUNCTION g_cube_penalty(internal, internal, internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) FROM sz;
+GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO token_5;
 
@@ -34470,6 +34747,8 @@ GRANT ALL ON FUNCTION public.g_cube_penalty(internal, internal, internal) TO tok
 -- Name: FUNCTION g_cube_picksplit(internal, internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.g_cube_picksplit(internal, internal) FROM sz;
+GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO token_5;
 
@@ -34478,6 +34757,8 @@ GRANT ALL ON FUNCTION public.g_cube_picksplit(internal, internal) TO token_5;
 -- Name: FUNCTION g_cube_same(public.cube, public.cube, internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) FROM sz;
+GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO token_5;
 
@@ -34486,6 +34767,8 @@ GRANT ALL ON FUNCTION public.g_cube_same(public.cube, public.cube, internal) TO 
 -- Name: FUNCTION g_cube_union(internal, internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.g_cube_union(internal, internal) FROM sz;
+GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO token_5;
 
@@ -34494,6 +34777,8 @@ GRANT ALL ON FUNCTION public.g_cube_union(internal, internal) TO token_5;
 -- Name: FUNCTION geo_distance(point, point); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.geo_distance(point, point) FROM sz;
+GRANT ALL ON FUNCTION public.geo_distance(point, point) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.geo_distance(point, point) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.geo_distance(point, point) TO token_5;
 
@@ -34502,6 +34787,8 @@ GRANT ALL ON FUNCTION public.geo_distance(point, point) TO token_5;
 -- Name: FUNCTION gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal) FROM sz;
+GRANT ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, internal, internal, internal, internal) TO token_5;
 
@@ -34510,6 +34797,8 @@ GRANT ALL ON FUNCTION public.gin_extract_query_trgm(text, internal, smallint, in
 -- Name: FUNCTION gin_extract_value_trgm(text, internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) FROM sz;
+GRANT ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) TO token_5;
 
@@ -34518,6 +34807,8 @@ GRANT ALL ON FUNCTION public.gin_extract_value_trgm(text, internal) TO token_5;
 -- Name: FUNCTION gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal) FROM sz;
+GRANT ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integer, internal, internal, internal, internal) TO token_5;
 
@@ -34526,6 +34817,8 @@ GRANT ALL ON FUNCTION public.gin_trgm_consistent(internal, smallint, text, integ
 -- Name: FUNCTION gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal) FROM sz;
+GRANT ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, integer, internal, internal, internal) TO token_5;
 
@@ -34534,6 +34827,8 @@ GRANT ALL ON FUNCTION public.gin_trgm_triconsistent(internal, smallint, text, in
 -- Name: FUNCTION gtrgm_compress(internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.gtrgm_compress(internal) FROM sz;
+GRANT ALL ON FUNCTION public.gtrgm_compress(internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_compress(internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_compress(internal) TO token_5;
 
@@ -34542,6 +34837,8 @@ GRANT ALL ON FUNCTION public.gtrgm_compress(internal) TO token_5;
 -- Name: FUNCTION gtrgm_consistent(internal, text, smallint, oid, internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, internal) FROM sz;
+GRANT ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, internal) TO token_5;
 
@@ -34550,6 +34847,8 @@ GRANT ALL ON FUNCTION public.gtrgm_consistent(internal, text, smallint, oid, int
 -- Name: FUNCTION gtrgm_decompress(internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.gtrgm_decompress(internal) FROM sz;
+GRANT ALL ON FUNCTION public.gtrgm_decompress(internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_decompress(internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_decompress(internal) TO token_5;
 
@@ -34558,6 +34857,8 @@ GRANT ALL ON FUNCTION public.gtrgm_decompress(internal) TO token_5;
 -- Name: FUNCTION gtrgm_distance(internal, text, smallint, oid, internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, internal) FROM sz;
+GRANT ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, internal) TO token_5;
 
@@ -34566,6 +34867,8 @@ GRANT ALL ON FUNCTION public.gtrgm_distance(internal, text, smallint, oid, inter
 -- Name: FUNCTION gtrgm_options(internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.gtrgm_options(internal) FROM sz;
+GRANT ALL ON FUNCTION public.gtrgm_options(internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_options(internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_options(internal) TO token_5;
 
@@ -34574,6 +34877,8 @@ GRANT ALL ON FUNCTION public.gtrgm_options(internal) TO token_5;
 -- Name: FUNCTION gtrgm_penalty(internal, internal, internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) FROM sz;
+GRANT ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) TO token_5;
 
@@ -34582,6 +34887,8 @@ GRANT ALL ON FUNCTION public.gtrgm_penalty(internal, internal, internal) TO toke
 -- Name: FUNCTION gtrgm_picksplit(internal, internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) FROM sz;
+GRANT ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) TO token_5;
 
@@ -34590,6 +34897,8 @@ GRANT ALL ON FUNCTION public.gtrgm_picksplit(internal, internal) TO token_5;
 -- Name: FUNCTION gtrgm_same(public.gtrgm, public.gtrgm, internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) FROM sz;
+GRANT ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) TO token_5;
 
@@ -34598,6 +34907,8 @@ GRANT ALL ON FUNCTION public.gtrgm_same(public.gtrgm, public.gtrgm, internal) TO
 -- Name: FUNCTION gtrgm_union(internal, internal); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.gtrgm_union(internal, internal) FROM sz;
+GRANT ALL ON FUNCTION public.gtrgm_union(internal, internal) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_union(internal, internal) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.gtrgm_union(internal, internal) TO token_5;
 
@@ -34606,6 +34917,8 @@ GRANT ALL ON FUNCTION public.gtrgm_union(internal, internal) TO token_5;
 -- Name: FUNCTION hostname(); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.hostname() FROM sz;
+GRANT ALL ON FUNCTION public.hostname() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.hostname() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.hostname() TO token_5;
 
@@ -34614,6 +34927,8 @@ GRANT ALL ON FUNCTION public.hostname() TO token_5;
 -- Name: FUNCTION http(request public.http_request); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.http(request public.http_request) FROM sz;
+GRANT ALL ON FUNCTION public.http(request public.http_request) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http(request public.http_request) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http(request public.http_request) TO token_5;
 
@@ -34622,6 +34937,8 @@ GRANT ALL ON FUNCTION public.http(request public.http_request) TO token_5;
 -- Name: FUNCTION http_delete(uri character varying); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.http_delete(uri character varying) FROM sz;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO token_5;
 
@@ -34630,6 +34947,8 @@ GRANT ALL ON FUNCTION public.http_delete(uri character varying) TO token_5;
 -- Name: FUNCTION http_delete(uri character varying, content character varying, content_type character varying); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) FROM sz;
+GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_delete(uri character varying, content character varying, content_type character varying) TO token_5;
 
@@ -34638,6 +34957,8 @@ GRANT ALL ON FUNCTION public.http_delete(uri character varying, content characte
 -- Name: FUNCTION http_get(uri character varying); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.http_get(uri character varying) FROM sz;
+GRANT ALL ON FUNCTION public.http_get(uri character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_get(uri character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_get(uri character varying) TO token_5;
 
@@ -34646,6 +34967,8 @@ GRANT ALL ON FUNCTION public.http_get(uri character varying) TO token_5;
 -- Name: FUNCTION http_get(uri character varying, data jsonb); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.http_get(uri character varying, data jsonb) FROM sz;
+GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO token_5;
 
@@ -34654,6 +34977,8 @@ GRANT ALL ON FUNCTION public.http_get(uri character varying, data jsonb) TO toke
 -- Name: FUNCTION http_head(uri character varying); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.http_head(uri character varying) FROM sz;
+GRANT ALL ON FUNCTION public.http_head(uri character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_head(uri character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_head(uri character varying) TO token_5;
 
@@ -34662,6 +34987,8 @@ GRANT ALL ON FUNCTION public.http_head(uri character varying) TO token_5;
 -- Name: FUNCTION http_header(field character varying, value character varying); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.http_header(field character varying, value character varying) FROM sz;
+GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_header(field character varying, value character varying) TO token_5;
 
@@ -34670,6 +34997,8 @@ GRANT ALL ON FUNCTION public.http_header(field character varying, value characte
 -- Name: FUNCTION http_list_curlopt(); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.http_list_curlopt() FROM sz;
+GRANT ALL ON FUNCTION public.http_list_curlopt() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_list_curlopt() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_list_curlopt() TO token_5;
 
@@ -34678,6 +35007,8 @@ GRANT ALL ON FUNCTION public.http_list_curlopt() TO token_5;
 -- Name: FUNCTION http_patch(uri character varying, content character varying, content_type character varying); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) FROM sz;
+GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character varying, content_type character varying) TO token_5;
 
@@ -34686,6 +35017,8 @@ GRANT ALL ON FUNCTION public.http_patch(uri character varying, content character
 -- Name: FUNCTION http_post(uri character varying, data jsonb); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.http_post(uri character varying, data jsonb) FROM sz;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO token_5;
 
@@ -34694,6 +35027,8 @@ GRANT ALL ON FUNCTION public.http_post(uri character varying, data jsonb) TO tok
 -- Name: FUNCTION http_post(uri character varying, content character varying, content_type character varying); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) FROM sz;
+GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_post(uri character varying, content character varying, content_type character varying) TO token_5;
 
@@ -34702,6 +35037,8 @@ GRANT ALL ON FUNCTION public.http_post(uri character varying, content character 
 -- Name: FUNCTION http_put(uri character varying, content character varying, content_type character varying); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) FROM sz;
+GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_put(uri character varying, content character varying, content_type character varying) TO token_5;
 
@@ -34710,6 +35047,8 @@ GRANT ALL ON FUNCTION public.http_put(uri character varying, content character v
 -- Name: FUNCTION http_reset_curlopt(); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.http_reset_curlopt() FROM sz;
+GRANT ALL ON FUNCTION public.http_reset_curlopt() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_reset_curlopt() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_reset_curlopt() TO token_5;
 
@@ -34718,6 +35057,8 @@ GRANT ALL ON FUNCTION public.http_reset_curlopt() TO token_5;
 -- Name: FUNCTION http_set_curlopt(curlopt character varying, value character varying); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) FROM sz;
+GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value character varying) TO token_5;
 
@@ -34726,6 +35067,8 @@ GRANT ALL ON FUNCTION public.http_set_curlopt(curlopt character varying, value c
 -- Name: FUNCTION latitude(public.earth); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.latitude(public.earth) FROM sz;
+GRANT ALL ON FUNCTION public.latitude(public.earth) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.latitude(public.earth) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.latitude(public.earth) TO token_5;
 
@@ -34734,6 +35077,8 @@ GRANT ALL ON FUNCTION public.latitude(public.earth) TO token_5;
 -- Name: FUNCTION levenshtein(text, text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.levenshtein(text, text) FROM sz;
+GRANT ALL ON FUNCTION public.levenshtein(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.levenshtein(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.levenshtein(text, text) TO token_5;
 
@@ -34742,6 +35087,8 @@ GRANT ALL ON FUNCTION public.levenshtein(text, text) TO token_5;
 -- Name: FUNCTION levenshtein(text, text, integer, integer, integer); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) FROM sz;
+GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) TO token_5;
 
@@ -34750,6 +35097,8 @@ GRANT ALL ON FUNCTION public.levenshtein(text, text, integer, integer, integer) 
 -- Name: FUNCTION levenshtein_less_equal(text, text, integer); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) FROM sz;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO token_5;
 
@@ -34758,6 +35107,8 @@ GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer) TO toke
 -- Name: FUNCTION levenshtein_less_equal(text, text, integer, integer, integer, integer); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) FROM sz;
+GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer, integer, integer) TO token_5;
 
@@ -34766,6 +35117,8 @@ GRANT ALL ON FUNCTION public.levenshtein_less_equal(text, text, integer, integer
 -- Name: FUNCTION ll_to_earth(double precision, double precision); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.ll_to_earth(double precision, double precision) FROM sz;
+GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO token_5;
 
@@ -34774,6 +35127,8 @@ GRANT ALL ON FUNCTION public.ll_to_earth(double precision, double precision) TO 
 -- Name: FUNCTION longitude(public.earth); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.longitude(public.earth) FROM sz;
+GRANT ALL ON FUNCTION public.longitude(public.earth) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.longitude(public.earth) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.longitude(public.earth) TO token_5;
 
@@ -34782,6 +35137,8 @@ GRANT ALL ON FUNCTION public.longitude(public.earth) TO token_5;
 -- Name: FUNCTION metaphone(text, integer); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.metaphone(text, integer) FROM sz;
+GRANT ALL ON FUNCTION public.metaphone(text, integer) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.metaphone(text, integer) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.metaphone(text, integer) TO token_5;
 
@@ -34790,6 +35147,8 @@ GRANT ALL ON FUNCTION public.metaphone(text, integer) TO token_5;
 -- Name: FUNCTION postgres_fdw_disconnect(text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.postgres_fdw_disconnect(text) FROM sz;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect(text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.postgres_fdw_disconnect(text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.postgres_fdw_disconnect(text) TO token_5;
 
@@ -34798,6 +35157,8 @@ GRANT ALL ON FUNCTION public.postgres_fdw_disconnect(text) TO token_5;
 -- Name: FUNCTION postgres_fdw_disconnect_all(); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.postgres_fdw_disconnect_all() FROM sz;
+GRANT ALL ON FUNCTION public.postgres_fdw_disconnect_all() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.postgres_fdw_disconnect_all() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.postgres_fdw_disconnect_all() TO token_5;
 
@@ -34806,6 +35167,8 @@ GRANT ALL ON FUNCTION public.postgres_fdw_disconnect_all() TO token_5;
 -- Name: FUNCTION postgres_fdw_get_connections(OUT server_name text, OUT valid boolean); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) FROM sz;
+GRANT ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, OUT valid boolean) TO token_5;
 
@@ -34814,6 +35177,8 @@ GRANT ALL ON FUNCTION public.postgres_fdw_get_connections(OUT server_name text, 
 -- Name: FUNCTION postgres_fdw_handler(); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.postgres_fdw_handler() FROM sz;
+GRANT ALL ON FUNCTION public.postgres_fdw_handler() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.postgres_fdw_handler() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.postgres_fdw_handler() TO token_5;
 
@@ -34822,6 +35187,8 @@ GRANT ALL ON FUNCTION public.postgres_fdw_handler() TO token_5;
 -- Name: FUNCTION postgres_fdw_validator(text[], oid); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) FROM sz;
+GRANT ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) TO token_5;
 
@@ -34830,6 +35197,8 @@ GRANT ALL ON FUNCTION public.postgres_fdw_validator(text[], oid) TO token_5;
 -- Name: FUNCTION set_limit(real); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.set_limit(real) FROM sz;
+GRANT ALL ON FUNCTION public.set_limit(real) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.set_limit(real) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.set_limit(real) TO token_5;
 
@@ -34838,6 +35207,8 @@ GRANT ALL ON FUNCTION public.set_limit(real) TO token_5;
 -- Name: FUNCTION show_limit(); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.show_limit() FROM sz;
+GRANT ALL ON FUNCTION public.show_limit() TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.show_limit() TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.show_limit() TO token_5;
 
@@ -34846,6 +35217,8 @@ GRANT ALL ON FUNCTION public.show_limit() TO token_5;
 -- Name: FUNCTION show_trgm(text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.show_trgm(text) FROM sz;
+GRANT ALL ON FUNCTION public.show_trgm(text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.show_trgm(text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.show_trgm(text) TO token_5;
 
@@ -34854,6 +35227,8 @@ GRANT ALL ON FUNCTION public.show_trgm(text) TO token_5;
 -- Name: FUNCTION similarity(text, text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.similarity(text, text) FROM sz;
+GRANT ALL ON FUNCTION public.similarity(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.similarity(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.similarity(text, text) TO token_5;
 
@@ -34862,6 +35237,8 @@ GRANT ALL ON FUNCTION public.similarity(text, text) TO token_5;
 -- Name: FUNCTION similarity_dist(text, text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.similarity_dist(text, text) FROM sz;
+GRANT ALL ON FUNCTION public.similarity_dist(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.similarity_dist(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.similarity_dist(text, text) TO token_5;
 
@@ -34870,6 +35247,8 @@ GRANT ALL ON FUNCTION public.similarity_dist(text, text) TO token_5;
 -- Name: FUNCTION similarity_op(text, text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.similarity_op(text, text) FROM sz;
+GRANT ALL ON FUNCTION public.similarity_op(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.similarity_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.similarity_op(text, text) TO token_5;
 
@@ -34878,6 +35257,8 @@ GRANT ALL ON FUNCTION public.similarity_op(text, text) TO token_5;
 -- Name: FUNCTION soundex(text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.soundex(text) FROM sz;
+GRANT ALL ON FUNCTION public.soundex(text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.soundex(text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.soundex(text) TO token_5;
 
@@ -34886,6 +35267,8 @@ GRANT ALL ON FUNCTION public.soundex(text) TO token_5;
 -- Name: FUNCTION strict_word_similarity(text, text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.strict_word_similarity(text, text) FROM sz;
+GRANT ALL ON FUNCTION public.strict_word_similarity(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.strict_word_similarity(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.strict_word_similarity(text, text) TO token_5;
 
@@ -34894,6 +35277,8 @@ GRANT ALL ON FUNCTION public.strict_word_similarity(text, text) TO token_5;
 -- Name: FUNCTION strict_word_similarity_commutator_op(text, text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) FROM sz;
+GRANT ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) TO token_5;
 
@@ -34902,6 +35287,8 @@ GRANT ALL ON FUNCTION public.strict_word_similarity_commutator_op(text, text) TO
 -- Name: FUNCTION strict_word_similarity_dist_commutator_op(text, text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, text) FROM sz;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, text) TO token_5;
 
@@ -34910,6 +35297,8 @@ GRANT ALL ON FUNCTION public.strict_word_similarity_dist_commutator_op(text, tex
 -- Name: FUNCTION strict_word_similarity_dist_op(text, text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) FROM sz;
+GRANT ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) TO token_5;
 
@@ -34918,6 +35307,8 @@ GRANT ALL ON FUNCTION public.strict_word_similarity_dist_op(text, text) TO token
 -- Name: FUNCTION strict_word_similarity_op(text, text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.strict_word_similarity_op(text, text) FROM sz;
+GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO token_5;
 
@@ -34926,6 +35317,8 @@ GRANT ALL ON FUNCTION public.strict_word_similarity_op(text, text) TO token_5;
 -- Name: FUNCTION text_soundex(text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.text_soundex(text) FROM sz;
+GRANT ALL ON FUNCTION public.text_soundex(text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.text_soundex(text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.text_soundex(text) TO token_5;
 
@@ -34934,6 +35327,8 @@ GRANT ALL ON FUNCTION public.text_soundex(text) TO token_5;
 -- Name: FUNCTION text_to_bytea(data text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.text_to_bytea(data text) FROM sz;
+GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO token_5;
 
@@ -34942,6 +35337,8 @@ GRANT ALL ON FUNCTION public.text_to_bytea(data text) TO token_5;
 -- Name: FUNCTION urlencode(string bytea); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.urlencode(string bytea) FROM sz;
+GRANT ALL ON FUNCTION public.urlencode(string bytea) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.urlencode(string bytea) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.urlencode(string bytea) TO token_5;
 
@@ -34950,6 +35347,8 @@ GRANT ALL ON FUNCTION public.urlencode(string bytea) TO token_5;
 -- Name: FUNCTION urlencode(data jsonb); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.urlencode(data jsonb) FROM sz;
+GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO token_5;
 
@@ -34958,6 +35357,8 @@ GRANT ALL ON FUNCTION public.urlencode(data jsonb) TO token_5;
 -- Name: FUNCTION urlencode(string character varying); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.urlencode(string character varying) FROM sz;
+GRANT ALL ON FUNCTION public.urlencode(string character varying) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.urlencode(string character varying) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.urlencode(string character varying) TO token_5;
 
@@ -34966,6 +35367,8 @@ GRANT ALL ON FUNCTION public.urlencode(string character varying) TO token_5;
 -- Name: FUNCTION word_similarity(text, text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.word_similarity(text, text) FROM sz;
+GRANT ALL ON FUNCTION public.word_similarity(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.word_similarity(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.word_similarity(text, text) TO token_5;
 
@@ -34974,6 +35377,8 @@ GRANT ALL ON FUNCTION public.word_similarity(text, text) TO token_5;
 -- Name: FUNCTION word_similarity_commutator_op(text, text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.word_similarity_commutator_op(text, text) FROM sz;
+GRANT ALL ON FUNCTION public.word_similarity_commutator_op(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.word_similarity_commutator_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.word_similarity_commutator_op(text, text) TO token_5;
 
@@ -34982,6 +35387,8 @@ GRANT ALL ON FUNCTION public.word_similarity_commutator_op(text, text) TO token_
 -- Name: FUNCTION word_similarity_dist_commutator_op(text, text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) FROM sz;
+GRANT ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) TO token_5;
 
@@ -34990,6 +35397,8 @@ GRANT ALL ON FUNCTION public.word_similarity_dist_commutator_op(text, text) TO t
 -- Name: FUNCTION word_similarity_dist_op(text, text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.word_similarity_dist_op(text, text) FROM sz;
+GRANT ALL ON FUNCTION public.word_similarity_dist_op(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.word_similarity_dist_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.word_similarity_dist_op(text, text) TO token_5;
 
@@ -34998,6 +35407,8 @@ GRANT ALL ON FUNCTION public.word_similarity_dist_op(text, text) TO token_5;
 -- Name: FUNCTION word_similarity_op(text, text); Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON FUNCTION public.word_similarity_op(text, text) FROM sz;
+GRANT ALL ON FUNCTION public.word_similarity_op(text, text) TO sz WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.word_similarity_op(text, text) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.word_similarity_op(text, text) TO token_5;
 
@@ -35008,6 +35419,7 @@ GRANT ALL ON FUNCTION public.word_similarity_op(text, text) TO token_5;
 
 GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO token_5;
+GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO sz WITH GRANT OPTION;
 
 
 --
@@ -35016,6 +35428,7 @@ GRANT ALL ON FUNCTION public.agg_acorn_first(anyelement) TO token_5;
 
 GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO token_5;
+GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO sz WITH GRANT OPTION;
 
 
 --
@@ -35025,6 +35438,7 @@ GRANT ALL ON FUNCTION public.agg_acorn_last(anyelement) TO token_5;
 GRANT ALL ON TABLE public.acorn_calendar_calendars TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_calendars TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_calendar_calendars TO token_5;
+GRANT ALL ON TABLE public.acorn_calendar_calendars TO sz WITH GRANT OPTION;
 
 
 --
@@ -35034,6 +35448,7 @@ GRANT ALL ON TABLE public.acorn_calendar_calendars TO token_5;
 GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO token_5;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO sz WITH GRANT OPTION;
 
 
 --
@@ -35043,6 +35458,7 @@ GRANT ALL ON TABLE public.acorn_calendar_event_part_user TO token_5;
 GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO token_5;
+GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO sz WITH GRANT OPTION;
 
 
 --
@@ -35052,6 +35468,7 @@ GRANT ALL ON TABLE public.acorn_calendar_event_part_user_group TO token_5;
 GRANT ALL ON TABLE public.acorn_calendar_event_parts TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_event_parts TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_calendar_event_parts TO token_5;
+GRANT ALL ON TABLE public.acorn_calendar_event_parts TO sz WITH GRANT OPTION;
 
 
 --
@@ -35061,6 +35478,7 @@ GRANT ALL ON TABLE public.acorn_calendar_event_parts TO token_5;
 GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO token_5;
+GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO sz WITH GRANT OPTION;
 
 
 --
@@ -35070,6 +35488,7 @@ GRANT ALL ON TABLE public.acorn_calendar_event_statuses TO token_5;
 GRANT ALL ON TABLE public.acorn_calendar_event_types TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_event_types TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_calendar_event_types TO token_5;
+GRANT ALL ON TABLE public.acorn_calendar_event_types TO sz WITH GRANT OPTION;
 
 
 --
@@ -35079,6 +35498,7 @@ GRANT ALL ON TABLE public.acorn_calendar_event_types TO token_5;
 GRANT ALL ON TABLE public.acorn_calendar_events TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_events TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_calendar_events TO token_5;
+GRANT ALL ON TABLE public.acorn_calendar_events TO sz WITH GRANT OPTION;
 
 
 --
@@ -35088,6 +35508,7 @@ GRANT ALL ON TABLE public.acorn_calendar_events TO token_5;
 GRANT ALL ON TABLE public.acorn_calendar_instances TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_calendar_instances TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_calendar_instances TO token_5;
+GRANT ALL ON TABLE public.acorn_calendar_instances TO sz WITH GRANT OPTION;
 
 
 --
@@ -35097,6 +35518,7 @@ GRANT ALL ON TABLE public.acorn_calendar_instances TO token_5;
 GRANT ALL ON TABLE public.acorn_university_hierarchies TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_hierarchies TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_hierarchies TO token_5;
+GRANT ALL ON TABLE public.acorn_university_hierarchies TO sz WITH GRANT OPTION;
 
 
 --
@@ -35106,6 +35528,7 @@ GRANT ALL ON TABLE public.acorn_university_hierarchies TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_interview_students TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_interview_students TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_interview_students TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_interview_students TO sz WITH GRANT OPTION;
 
 
 --
@@ -35115,6 +35538,7 @@ GRANT ALL ON TABLE public.acorn_exam_interview_students TO token_5;
 GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO token_5;
+GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO sz WITH GRANT OPTION;
 
 
 --
@@ -35124,6 +35548,7 @@ GRANT ALL ON TABLE public.acorn_university_academic_year_semesters TO token_5;
 GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO token_5;
+GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -35133,6 +35558,7 @@ GRANT ALL ON SEQUENCE public.acorn_university_year_seq TO token_5;
 GRANT ALL ON TABLE public.acorn_university_academic_years TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_academic_years TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_academic_years TO token_5;
+GRANT ALL ON TABLE public.acorn_university_academic_years TO sz WITH GRANT OPTION;
 
 
 --
@@ -35142,6 +35568,7 @@ GRANT ALL ON TABLE public.acorn_university_academic_years TO token_5;
 GRANT ALL ON TABLE public.acorn_university_hierarchy_event TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_hierarchy_event TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_hierarchy_event TO token_5;
+GRANT ALL ON TABLE public.acorn_university_hierarchy_event TO sz WITH GRANT OPTION;
 
 
 --
@@ -35151,6 +35578,7 @@ GRANT ALL ON TABLE public.acorn_university_hierarchy_event TO token_5;
 GRANT ALL ON TABLE public.acorn_university_lectures TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_lectures TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_lectures TO token_5;
+GRANT ALL ON TABLE public.acorn_university_lectures TO sz WITH GRANT OPTION;
 
 
 --
@@ -35160,6 +35588,7 @@ GRANT ALL ON TABLE public.acorn_university_lectures TO token_5;
 GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO token_5;
+GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO sz WITH GRANT OPTION;
 
 
 --
@@ -35169,6 +35598,7 @@ GRANT ALL ON TABLE public.acorn_enrollment_course_entry_requirements TO token_5;
 GRANT ALL ON TABLE public.acorn_enrollment_desires TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_enrollment_desires TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_enrollment_desires TO token_5;
+GRANT ALL ON TABLE public.acorn_enrollment_desires TO sz WITH GRANT OPTION;
 
 
 --
@@ -35178,6 +35608,7 @@ GRANT ALL ON TABLE public.acorn_enrollment_desires TO token_5;
 GRANT ALL ON TABLE public.acorn_enrollment_enrollments TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_enrollment_enrollments TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_enrollment_enrollments TO token_5;
+GRANT ALL ON TABLE public.acorn_enrollment_enrollments TO sz WITH GRANT OPTION;
 
 
 --
@@ -35187,6 +35618,7 @@ GRANT ALL ON TABLE public.acorn_enrollment_enrollments TO token_5;
 GRANT ALL ON TABLE public.acorn_enrollment_runs TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_enrollment_runs TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_enrollment_runs TO token_5;
+GRANT ALL ON TABLE public.acorn_enrollment_runs TO sz WITH GRANT OPTION;
 
 
 --
@@ -35196,6 +35628,7 @@ GRANT ALL ON TABLE public.acorn_enrollment_runs TO token_5;
 GRANT ALL ON TABLE public.acorn_enrollment_student_notes TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_enrollment_student_notes TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_enrollment_student_notes TO token_5;
+GRANT ALL ON TABLE public.acorn_enrollment_student_notes TO sz WITH GRANT OPTION;
 
 
 --
@@ -35205,6 +35638,7 @@ GRANT ALL ON TABLE public.acorn_enrollment_student_notes TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_answers TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_answers TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_answers TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_answers TO sz WITH GRANT OPTION;
 
 
 --
@@ -35214,6 +35648,7 @@ GRANT ALL ON TABLE public.acorn_exam_answers TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO sz WITH GRANT OPTION;
 
 
 --
@@ -35223,6 +35658,7 @@ GRANT ALL ON TABLE public.acorn_exam_calculation_course_materials TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO sz WITH GRANT OPTION;
 
 
 --
@@ -35232,6 +35668,7 @@ GRANT ALL ON TABLE public.acorn_exam_calculation_course_types TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO sz WITH GRANT OPTION;
 
 
 --
@@ -35241,6 +35678,7 @@ GRANT ALL ON TABLE public.acorn_exam_calculation_courses TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO sz WITH GRANT OPTION;
 
 
 --
@@ -35250,6 +35688,7 @@ GRANT ALL ON TABLE public.acorn_exam_calculation_material_types TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_calculation_types TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculation_types TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_calculation_types TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_calculation_types TO sz WITH GRANT OPTION;
 
 
 --
@@ -35259,6 +35698,7 @@ GRANT ALL ON TABLE public.acorn_exam_calculation_types TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_calculations TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_calculations TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_calculations TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_calculations TO sz WITH GRANT OPTION;
 
 
 --
@@ -35268,6 +35708,7 @@ GRANT ALL ON TABLE public.acorn_exam_calculations TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_centres TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_centres TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_centres TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_centres TO sz WITH GRANT OPTION;
 
 
 --
@@ -35277,6 +35718,7 @@ GRANT ALL ON TABLE public.acorn_exam_centres TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_exam_materials TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_exam_materials TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_exam_materials TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_exam_materials TO sz WITH GRANT OPTION;
 
 
 --
@@ -35286,6 +35728,7 @@ GRANT ALL ON TABLE public.acorn_exam_exam_materials TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_exams TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_exams TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_exams TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_exams TO sz WITH GRANT OPTION;
 
 
 --
@@ -35295,6 +35738,7 @@ GRANT ALL ON TABLE public.acorn_exam_exams TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_instances TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_instances TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_instances TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_instances TO sz WITH GRANT OPTION;
 
 
 --
@@ -35304,6 +35748,7 @@ GRANT ALL ON TABLE public.acorn_exam_instances TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_interviews TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_interviews TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_interviews TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_interviews TO sz WITH GRANT OPTION;
 
 
 --
@@ -35313,6 +35758,7 @@ GRANT ALL ON TABLE public.acorn_exam_interviews TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_questions TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_questions TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_questions TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_questions TO sz WITH GRANT OPTION;
 
 
 --
@@ -35322,6 +35768,7 @@ GRANT ALL ON TABLE public.acorn_exam_questions TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_score_names TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_score_names TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_score_names TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_score_names TO sz WITH GRANT OPTION;
 
 
 --
@@ -35331,6 +35778,7 @@ GRANT ALL ON TABLE public.acorn_exam_score_names TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_scores TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_scores TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_scores TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_scores TO sz WITH GRANT OPTION;
 
 
 --
@@ -35340,6 +35788,7 @@ GRANT ALL ON TABLE public.acorn_exam_scores TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_sections TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_sections TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_sections TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_sections TO sz WITH GRANT OPTION;
 
 
 --
@@ -35349,6 +35798,7 @@ GRANT ALL ON TABLE public.acorn_exam_sections TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_types TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_types TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_types TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_types TO sz WITH GRANT OPTION;
 
 
 --
@@ -35358,6 +35808,7 @@ GRANT ALL ON TABLE public.acorn_exam_types TO token_5;
 GRANT ALL ON TABLE public.acorn_university_course_materials TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_materials TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_course_materials TO token_5;
+GRANT ALL ON TABLE public.acorn_university_course_materials TO sz WITH GRANT OPTION;
 
 
 --
@@ -35367,6 +35818,7 @@ GRANT ALL ON TABLE public.acorn_university_course_materials TO token_5;
 GRANT ALL ON TABLE public.acorn_university_course_plans TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_plans TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_course_plans TO token_5;
+GRANT ALL ON TABLE public.acorn_university_course_plans TO sz WITH GRANT OPTION;
 
 
 --
@@ -35376,6 +35828,7 @@ GRANT ALL ON TABLE public.acorn_university_course_plans TO token_5;
 GRANT ALL ON TABLE public.acorn_university_course_specializations TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_course_specializations TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_specializations TO token_5;
+GRANT ALL ON TABLE public.acorn_university_course_specializations TO sz WITH GRANT OPTION;
 
 
 --
@@ -35385,6 +35838,7 @@ GRANT ALL ON TABLE public.acorn_university_course_specializations TO token_5;
 GRANT ALL ON TABLE public.acorn_university_course_types TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_types TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_course_types TO token_5;
+GRANT ALL ON TABLE public.acorn_university_course_types TO sz WITH GRANT OPTION;
 
 
 --
@@ -35394,6 +35848,7 @@ GRANT ALL ON TABLE public.acorn_university_course_types TO token_5;
 GRANT ALL ON TABLE public.acorn_university_course_years TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_years TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_course_years TO token_5;
+GRANT ALL ON TABLE public.acorn_university_course_years TO sz WITH GRANT OPTION;
 
 
 --
@@ -35403,6 +35858,7 @@ GRANT ALL ON TABLE public.acorn_university_course_years TO token_5;
 GRANT ALL ON TABLE public.acorn_university_document_types TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_document_types TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_document_types TO token_5;
+GRANT ALL ON TABLE public.acorn_university_document_types TO sz WITH GRANT OPTION;
 
 
 --
@@ -35412,6 +35868,7 @@ GRANT ALL ON TABLE public.acorn_university_document_types TO token_5;
 GRANT ALL ON TABLE public.acorn_university_entities TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_entities TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_entities TO token_5;
+GRANT ALL ON TABLE public.acorn_university_entities TO sz WITH GRANT OPTION;
 
 
 --
@@ -35421,6 +35878,7 @@ GRANT ALL ON TABLE public.acorn_university_entities TO token_5;
 GRANT ALL ON TABLE public.acorn_university_identity_types TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_identity_types TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_identity_types TO token_5;
+GRANT ALL ON TABLE public.acorn_university_identity_types TO sz WITH GRANT OPTION;
 
 
 --
@@ -35430,6 +35888,7 @@ GRANT ALL ON TABLE public.acorn_university_identity_types TO token_5;
 GRANT ALL ON TABLE public.acorn_university_material_topics TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_material_topics TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_material_topics TO token_5;
+GRANT ALL ON TABLE public.acorn_university_material_topics TO sz WITH GRANT OPTION;
 
 
 --
@@ -35439,6 +35898,7 @@ GRANT ALL ON TABLE public.acorn_university_material_topics TO token_5;
 GRANT ALL ON TABLE public.acorn_university_material_types TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_material_types TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_material_types TO token_5;
+GRANT ALL ON TABLE public.acorn_university_material_types TO sz WITH GRANT OPTION;
 
 
 --
@@ -35448,6 +35908,7 @@ GRANT ALL ON TABLE public.acorn_university_material_types TO token_5;
 GRANT ALL ON TABLE public.acorn_university_materials TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_materials TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_materials TO token_5;
+GRANT ALL ON TABLE public.acorn_university_materials TO sz WITH GRANT OPTION;
 
 
 --
@@ -35457,6 +35918,7 @@ GRANT ALL ON TABLE public.acorn_university_materials TO token_5;
 GRANT ALL ON TABLE public.acorn_university_project_students TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_project_students TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_project_students TO token_5;
+GRANT ALL ON TABLE public.acorn_university_project_students TO sz WITH GRANT OPTION;
 
 
 --
@@ -35466,6 +35928,7 @@ GRANT ALL ON TABLE public.acorn_university_project_students TO token_5;
 GRANT ALL ON TABLE public.acorn_university_projects TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_projects TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_projects TO token_5;
+GRANT ALL ON TABLE public.acorn_university_projects TO sz WITH GRANT OPTION;
 
 
 --
@@ -35475,6 +35938,7 @@ GRANT ALL ON TABLE public.acorn_university_projects TO token_5;
 GRANT ALL ON TABLE public.acorn_university_semester_groups TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_semester_groups TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_semester_groups TO token_5;
+GRANT ALL ON TABLE public.acorn_university_semester_groups TO sz WITH GRANT OPTION;
 
 
 --
@@ -35484,6 +35948,7 @@ GRANT ALL ON TABLE public.acorn_university_semester_groups TO token_5;
 GRANT ALL ON TABLE public.acorn_university_semesters TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_semesters TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_semesters TO token_5;
+GRANT ALL ON TABLE public.acorn_university_semesters TO sz WITH GRANT OPTION;
 
 
 --
@@ -35493,6 +35958,7 @@ GRANT ALL ON TABLE public.acorn_university_semesters TO token_5;
 GRANT ALL ON TABLE public.acorn_university_student_codes TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_codes TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_student_codes TO token_5;
+GRANT ALL ON TABLE public.acorn_university_student_codes TO sz WITH GRANT OPTION;
 
 
 --
@@ -35502,6 +35968,7 @@ GRANT ALL ON TABLE public.acorn_university_student_codes TO token_5;
 GRANT ALL ON TABLE public.acorn_university_student_documents TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_student_documents TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_documents TO token_5;
+GRANT ALL ON TABLE public.acorn_university_student_documents TO sz WITH GRANT OPTION;
 
 
 --
@@ -35511,6 +35978,7 @@ GRANT ALL ON TABLE public.acorn_university_student_documents TO token_5;
 GRANT ALL ON TABLE public.acorn_university_student_identities TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_identities TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_student_identities TO token_5;
+GRANT ALL ON TABLE public.acorn_university_student_identities TO sz WITH GRANT OPTION;
 
 
 --
@@ -35520,6 +35988,7 @@ GRANT ALL ON TABLE public.acorn_university_student_identities TO token_5;
 GRANT ALL ON TABLE public.acorn_university_student_notes TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_notes TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_student_notes TO token_5;
+GRANT ALL ON TABLE public.acorn_university_student_notes TO sz WITH GRANT OPTION;
 
 
 --
@@ -35529,6 +35998,7 @@ GRANT ALL ON TABLE public.acorn_university_student_notes TO token_5;
 GRANT ALL ON TABLE public.acorn_university_student_statuses TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_statuses TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_student_statuses TO token_5;
+GRANT ALL ON TABLE public.acorn_university_student_statuses TO sz WITH GRANT OPTION;
 
 
 --
@@ -35538,6 +36008,7 @@ GRANT ALL ON TABLE public.acorn_university_student_statuses TO token_5;
 GRANT ALL ON TABLE public.acorn_university_student_types TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_types TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_student_types TO token_5;
+GRANT ALL ON TABLE public.acorn_university_student_types TO sz WITH GRANT OPTION;
 
 
 --
@@ -35547,6 +36018,7 @@ GRANT ALL ON TABLE public.acorn_university_student_types TO token_5;
 GRANT ALL ON SEQUENCE public.acorn_university_students_number TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.acorn_university_students_number TO PUBLIC;
 GRANT ALL ON SEQUENCE public.acorn_university_students_number TO token_5;
+GRANT ALL ON SEQUENCE public.acorn_university_students_number TO sz WITH GRANT OPTION;
 
 
 --
@@ -35556,6 +36028,7 @@ GRANT ALL ON SEQUENCE public.acorn_university_students_number TO token_5;
 GRANT ALL ON TABLE public.acorn_university_students TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_students TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_students TO token_5;
+GRANT ALL ON TABLE public.acorn_university_students TO sz WITH GRANT OPTION;
 
 
 --
@@ -35565,6 +36038,7 @@ GRANT ALL ON TABLE public.acorn_university_students TO token_5;
 GRANT ALL ON TABLE public.acorn_user_users TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_users TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_users TO token_5;
+GRANT ALL ON TABLE public.acorn_user_users TO sz WITH GRANT OPTION;
 
 
 --
@@ -35574,13 +36048,17 @@ GRANT ALL ON TABLE public.acorn_user_users TO token_5;
 GRANT ALL ON TABLE public.backend_users TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_users TO PUBLIC;
 GRANT ALL ON TABLE public.backend_users TO token_5;
+GRANT ALL ON TABLE public.backend_users TO sz WITH GRANT OPTION;
 
 
 --
 -- Name: TABLE acorn_dbauth_user; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.acorn_dbauth_user FROM sz;
+GRANT ALL ON TABLE public.acorn_dbauth_user TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_dbauth_user TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_dbauth_user TO token_5;
 
 
 --
@@ -35590,6 +36068,7 @@ GRANT ALL ON TABLE public.acorn_dbauth_user TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_enrollment_courses TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_enrollment_courses TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_enrollment_courses TO token_5;
+GRANT ALL ON TABLE public.acorn_enrollment_courses TO sz WITH GRANT OPTION;
 
 
 --
@@ -35599,6 +36078,7 @@ GRANT ALL ON TABLE public.acorn_enrollment_courses TO token_5;
 GRANT ALL ON TABLE public.acorn_enrollment_students TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_enrollment_students TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_enrollment_students TO token_5;
+GRANT ALL ON TABLE public.acorn_enrollment_students TO sz WITH GRANT OPTION;
 
 
 --
@@ -35608,6 +36088,7 @@ GRANT ALL ON TABLE public.acorn_enrollment_students TO token_5;
 GRANT ALL ON TABLE public.acorn_university_course_year_semesters TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_course_year_semesters TO token_5;
 GRANT ALL ON TABLE public.acorn_university_course_year_semesters TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_university_course_year_semesters TO sz WITH GRANT OPTION;
 
 
 --
@@ -35617,6 +36098,7 @@ GRANT ALL ON TABLE public.acorn_university_course_year_semesters TO token_1 WITH
 GRANT ALL ON TABLE public.acorn_university_courses TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_courses TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_courses TO token_5;
+GRANT ALL ON TABLE public.acorn_university_courses TO sz WITH GRANT OPTION;
 
 
 --
@@ -35626,6 +36108,7 @@ GRANT ALL ON TABLE public.acorn_university_courses TO token_5;
 GRANT ALL ON TABLE public.acorn_university_student_status TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_status TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_student_status TO token_5;
+GRANT ALL ON TABLE public.acorn_university_student_status TO sz WITH GRANT OPTION;
 
 
 --
@@ -35635,6 +36118,7 @@ GRANT ALL ON TABLE public.acorn_university_student_status TO token_5;
 GRANT ALL ON TABLE public.acorn_user_user_group_version TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_group_version TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_user_group_version TO token_5;
+GRANT ALL ON TABLE public.acorn_user_user_group_version TO sz WITH GRANT OPTION;
 
 
 --
@@ -35644,6 +36128,7 @@ GRANT ALL ON TABLE public.acorn_user_user_group_version TO token_5;
 GRANT ALL ON TABLE public.acorn_user_user_groups TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_groups TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_user_groups TO token_5;
+GRANT ALL ON TABLE public.acorn_user_user_groups TO sz WITH GRANT OPTION;
 
 
 --
@@ -35652,6 +36137,7 @@ GRANT ALL ON TABLE public.acorn_user_user_groups TO token_5;
 
 GRANT ALL ON TABLE public.acorn_enrollment_olapcube TO token_5;
 GRANT ALL ON TABLE public.acorn_enrollment_olapcube TO token_1 WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_enrollment_olapcube TO sz WITH GRANT OPTION;
 
 
 --
@@ -35661,6 +36147,7 @@ GRANT ALL ON TABLE public.acorn_enrollment_olapcube TO token_1 WITH GRANT OPTION
 GRANT ALL ON TABLE public.acorn_enrollment_statistics TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_enrollment_statistics TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_enrollment_statistics TO token_5;
+GRANT ALL ON TABLE public.acorn_enrollment_statistics TO sz WITH GRANT OPTION;
 
 
 --
@@ -35670,6 +36157,7 @@ GRANT ALL ON TABLE public.acorn_enrollment_statistics TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO sz WITH GRANT OPTION;
 
 
 --
@@ -35679,6 +36167,7 @@ GRANT ALL ON TABLE public.acorn_exam_result_internal2s TO token_5;
 GRANT ALL ON TABLE public.acorn_exam_results TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_results TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_results TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_results TO sz WITH GRANT OPTION;
 
 
 --
@@ -35688,6 +36177,7 @@ GRANT ALL ON TABLE public.acorn_exam_results TO token_5;
 GRANT ALL ON TABLE public.acorn_user_user_group_versions TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_group_versions TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_user_group_versions TO token_5;
+GRANT ALL ON TABLE public.acorn_user_user_group_versions TO sz WITH GRANT OPTION;
 
 
 --
@@ -35695,6 +36185,7 @@ GRANT ALL ON TABLE public.acorn_user_user_group_versions TO token_5;
 --
 
 GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_5;
 
@@ -35706,6 +36197,7 @@ GRANT ALL ON TABLE public.acorn_exam_data_entry_scores TO token_5;
 GRANT ALL ON TABLE public.acorn_user_languages TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_languages TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_languages TO token_5;
+GRANT ALL ON TABLE public.acorn_user_languages TO sz WITH GRANT OPTION;
 
 
 --
@@ -35715,6 +36207,7 @@ GRANT ALL ON TABLE public.acorn_user_languages TO token_5;
 GRANT ALL ON TABLE public.acorn_user_user_languages TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_languages TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_user_languages TO token_5;
+GRANT ALL ON TABLE public.acorn_user_user_languages TO sz WITH GRANT OPTION;
 
 
 --
@@ -35722,6 +36215,7 @@ GRANT ALL ON TABLE public.acorn_user_user_languages TO token_5;
 --
 
 GRANT ALL ON TABLE public.acorn_exam_certificates TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_certificates TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_certificates TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_certificates TO token_5;
 
@@ -35731,6 +36225,8 @@ GRANT ALL ON TABLE public.acorn_exam_certificates TO token_5;
 --
 
 GRANT ALL ON TABLE public.acorn_exam_papers TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_exam_papers TO sz WITH GRANT OPTION;
+GRANT ALL ON TABLE public.acorn_exam_papers TO token_5;
 
 
 --
@@ -35740,6 +36236,7 @@ GRANT ALL ON TABLE public.acorn_exam_papers TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_token2s TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_exam_token2s TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_exam_token2s TO token_5;
+GRANT ALL ON TABLE public.acorn_exam_token2s TO sz WITH GRANT OPTION;
 
 
 --
@@ -35749,6 +36246,7 @@ GRANT ALL ON TABLE public.acorn_exam_token2s TO token_5;
 GRANT ALL ON TABLE public.acorn_location_locations TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_locations TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_location_locations TO token_5;
+GRANT ALL ON TABLE public.acorn_location_locations TO sz WITH GRANT OPTION;
 
 
 --
@@ -35758,6 +36256,7 @@ GRANT ALL ON TABLE public.acorn_location_locations TO token_5;
 GRANT ALL ON TABLE public.acorn_location_user_addresses TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_user_addresses TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_location_user_addresses TO token_5;
+GRANT ALL ON TABLE public.acorn_location_user_addresses TO sz WITH GRANT OPTION;
 
 
 --
@@ -35767,6 +36266,7 @@ GRANT ALL ON TABLE public.acorn_location_user_addresses TO token_5;
 GRANT ALL ON TABLE public.acorn_location_address_types TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_address_types TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_location_address_types TO token_5;
+GRANT ALL ON TABLE public.acorn_location_address_types TO sz WITH GRANT OPTION;
 
 
 --
@@ -35776,6 +36276,7 @@ GRANT ALL ON TABLE public.acorn_location_address_types TO token_5;
 GRANT ALL ON TABLE public.acorn_location_addresses TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_addresses TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_location_addresses TO token_5;
+GRANT ALL ON TABLE public.acorn_location_addresses TO sz WITH GRANT OPTION;
 
 
 --
@@ -35785,6 +36286,7 @@ GRANT ALL ON TABLE public.acorn_location_addresses TO token_5;
 GRANT ALL ON TABLE public.acorn_location_area_types TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_area_types TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_location_area_types TO token_5;
+GRANT ALL ON TABLE public.acorn_location_area_types TO sz WITH GRANT OPTION;
 
 
 --
@@ -35794,6 +36296,7 @@ GRANT ALL ON TABLE public.acorn_location_area_types TO token_5;
 GRANT ALL ON TABLE public.acorn_location_areas TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_areas TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_location_areas TO token_5;
+GRANT ALL ON TABLE public.acorn_location_areas TO sz WITH GRANT OPTION;
 
 
 --
@@ -35803,6 +36306,7 @@ GRANT ALL ON TABLE public.acorn_location_areas TO token_5;
 GRANT ALL ON TABLE public.acorn_location_gps TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_gps TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_location_gps TO token_5;
+GRANT ALL ON TABLE public.acorn_location_gps TO sz WITH GRANT OPTION;
 
 
 --
@@ -35812,6 +36316,7 @@ GRANT ALL ON TABLE public.acorn_location_gps TO token_5;
 GRANT ALL ON TABLE public.acorn_location_user_group_location TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_user_group_location TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_location_user_group_location TO token_5;
+GRANT ALL ON TABLE public.acorn_location_user_group_location TO sz WITH GRANT OPTION;
 
 
 --
@@ -35821,6 +36326,7 @@ GRANT ALL ON TABLE public.acorn_location_user_group_location TO token_5;
 GRANT ALL ON TABLE public.acorn_servers TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_servers TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_servers TO token_5;
+GRANT ALL ON TABLE public.acorn_servers TO sz WITH GRANT OPTION;
 
 
 --
@@ -35830,6 +36336,7 @@ GRANT ALL ON TABLE public.acorn_servers TO token_5;
 GRANT ALL ON TABLE public.acorn_location_lookup TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_lookup TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_location_lookup TO token_5;
+GRANT ALL ON TABLE public.acorn_location_lookup TO sz WITH GRANT OPTION;
 
 
 --
@@ -35839,6 +36346,7 @@ GRANT ALL ON TABLE public.acorn_location_lookup TO token_5;
 GRANT ALL ON TABLE public.acorn_location_types TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_location_types TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_location_types TO token_5;
+GRANT ALL ON TABLE public.acorn_location_types TO sz WITH GRANT OPTION;
 
 
 --
@@ -35848,6 +36356,7 @@ GRANT ALL ON TABLE public.acorn_location_types TO token_5;
 GRANT ALL ON TABLE public.acorn_messaging_action TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_action TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_messaging_action TO token_5;
+GRANT ALL ON TABLE public.acorn_messaging_action TO sz WITH GRANT OPTION;
 
 
 --
@@ -35857,6 +36366,7 @@ GRANT ALL ON TABLE public.acorn_messaging_action TO token_5;
 GRANT ALL ON TABLE public.acorn_messaging_label TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_label TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_messaging_label TO token_5;
+GRANT ALL ON TABLE public.acorn_messaging_label TO sz WITH GRANT OPTION;
 
 
 --
@@ -35866,6 +36376,7 @@ GRANT ALL ON TABLE public.acorn_messaging_label TO token_5;
 GRANT ALL ON TABLE public.acorn_messaging_message TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_message TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_messaging_message TO token_5;
+GRANT ALL ON TABLE public.acorn_messaging_message TO sz WITH GRANT OPTION;
 
 
 --
@@ -35875,6 +36386,7 @@ GRANT ALL ON TABLE public.acorn_messaging_message TO token_5;
 GRANT ALL ON TABLE public.acorn_messaging_message_instance TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_message_instance TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_messaging_message_instance TO token_5;
+GRANT ALL ON TABLE public.acorn_messaging_message_instance TO sz WITH GRANT OPTION;
 
 
 --
@@ -35884,6 +36396,7 @@ GRANT ALL ON TABLE public.acorn_messaging_message_instance TO token_5;
 GRANT ALL ON TABLE public.acorn_messaging_message_message TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_message_message TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_messaging_message_message TO token_5;
+GRANT ALL ON TABLE public.acorn_messaging_message_message TO sz WITH GRANT OPTION;
 
 
 --
@@ -35893,6 +36406,7 @@ GRANT ALL ON TABLE public.acorn_messaging_message_message TO token_5;
 GRANT ALL ON TABLE public.acorn_messaging_message_user TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_message_user TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_messaging_message_user TO token_5;
+GRANT ALL ON TABLE public.acorn_messaging_message_user TO sz WITH GRANT OPTION;
 
 
 --
@@ -35902,6 +36416,7 @@ GRANT ALL ON TABLE public.acorn_messaging_message_user TO token_5;
 GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO token_5;
+GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO sz WITH GRANT OPTION;
 
 
 --
@@ -35911,6 +36426,7 @@ GRANT ALL ON TABLE public.acorn_messaging_message_user_group TO token_5;
 GRANT ALL ON TABLE public.acorn_messaging_status TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_status TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_messaging_status TO token_5;
+GRANT ALL ON TABLE public.acorn_messaging_status TO sz WITH GRANT OPTION;
 
 
 --
@@ -35920,6 +36436,7 @@ GRANT ALL ON TABLE public.acorn_messaging_status TO token_5;
 GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO token_5;
+GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO sz WITH GRANT OPTION;
 
 
 --
@@ -35929,6 +36446,7 @@ GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO token_5;
 GRANT ALL ON TABLE public.acorn_reporting_reports TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_reporting_reports TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_reporting_reports TO token_5;
+GRANT ALL ON TABLE public.acorn_reporting_reports TO sz WITH GRANT OPTION;
 
 
 --
@@ -35938,6 +36456,7 @@ GRANT ALL ON TABLE public.acorn_reporting_reports TO token_5;
 GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -35947,6 +36466,7 @@ GRANT ALL ON SEQUENCE public.acorn_reporting_reports_id_seq TO token_5;
 GRANT ALL ON TABLE public.acorn_university_course_language TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_course_language TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_course_language TO token_5;
+GRANT ALL ON TABLE public.acorn_university_course_language TO sz WITH GRANT OPTION;
 
 
 --
@@ -35956,6 +36476,7 @@ GRANT ALL ON TABLE public.acorn_university_course_language TO token_5;
 GRANT ALL ON TABLE public.acorn_university_departments TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_departments TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_departments TO token_5;
+GRANT ALL ON TABLE public.acorn_university_departments TO sz WITH GRANT OPTION;
 
 
 --
@@ -35965,6 +36486,7 @@ GRANT ALL ON TABLE public.acorn_university_departments TO token_5;
 GRANT ALL ON TABLE public.acorn_university_education_authorities TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_education_authorities TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_education_authorities TO token_5;
+GRANT ALL ON TABLE public.acorn_university_education_authorities TO sz WITH GRANT OPTION;
 
 
 --
@@ -35974,12 +36496,15 @@ GRANT ALL ON TABLE public.acorn_university_education_authorities TO token_5;
 GRANT ALL ON TABLE public.acorn_university_faculties TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_faculties TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_faculties TO token_5;
+GRANT ALL ON TABLE public.acorn_university_faculties TO sz WITH GRANT OPTION;
 
 
 --
 -- Name: TABLE acorn_university_legacy_scores; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.acorn_university_legacy_scores FROM sz;
+GRANT ALL ON TABLE public.acorn_university_legacy_scores TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_legacy_scores TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_legacy_scores TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_legacy_scores TO token_5;
@@ -35992,6 +36517,7 @@ GRANT ALL ON TABLE public.acorn_university_legacy_scores TO token_5;
 GRANT ALL ON TABLE public.acorn_user_ethnicities TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_ethnicities TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_ethnicities TO token_5;
+GRANT ALL ON TABLE public.acorn_user_ethnicities TO sz WITH GRANT OPTION;
 
 
 --
@@ -36001,6 +36527,7 @@ GRANT ALL ON TABLE public.acorn_user_ethnicities TO token_5;
 GRANT ALL ON TABLE public.acorn_user_religions TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_religions TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_religions TO token_5;
+GRANT ALL ON TABLE public.acorn_user_religions TO sz WITH GRANT OPTION;
 
 
 --
@@ -36010,12 +36537,15 @@ GRANT ALL ON TABLE public.acorn_user_religions TO token_5;
 GRANT ALL ON TABLE public.acorn_university_legacy_fulls TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_legacy_fulls TO token_5;
 GRANT ALL ON TABLE public.acorn_university_legacy_fulls TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_legacy_fulls TO sz WITH GRANT OPTION;
 
 
 --
 -- Name: TABLE university_mofadala_baccalaureate_marks; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.university_mofadala_baccalaureate_marks FROM sz;
+GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_5;
@@ -36028,6 +36558,7 @@ GRANT ALL ON TABLE public.university_mofadala_baccalaureate_marks TO token_5;
 GRANT ALL ON TABLE public.acorn_university_legacy_updates TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_legacy_updates TO token_5;
 GRANT ALL ON TABLE public.acorn_university_legacy_updates TO PUBLIC;
+GRANT ALL ON TABLE public.acorn_university_legacy_updates TO sz WITH GRANT OPTION;
 
 
 --
@@ -36037,6 +36568,7 @@ GRANT ALL ON TABLE public.acorn_university_legacy_updates TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_schools TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_schools TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_schools TO token_5;
+GRANT ALL ON TABLE public.acorn_university_schools TO sz WITH GRANT OPTION;
 
 
 --
@@ -36046,6 +36578,7 @@ GRANT ALL ON TABLE public.acorn_university_schools TO token_5;
 GRANT ALL ON TABLE public.acorn_university_student_course_material_addition TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_student_course_material_addition TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_course_material_addition TO token_5;
+GRANT ALL ON TABLE public.acorn_university_student_course_material_addition TO sz WITH GRANT OPTION;
 
 
 --
@@ -36055,6 +36588,7 @@ GRANT ALL ON TABLE public.acorn_university_student_course_material_addition TO t
 GRANT ALL ON TABLE public.acorn_university_student_course_material_removal TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_student_course_material_removal TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_course_material_removal TO token_5;
+GRANT ALL ON TABLE public.acorn_university_student_course_material_removal TO sz WITH GRANT OPTION;
 
 
 --
@@ -36064,6 +36598,7 @@ GRANT ALL ON TABLE public.acorn_university_student_course_material_removal TO to
 GRANT ALL ON TABLE public.acorn_university_student_lookups TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_lookups TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_student_lookups TO token_5;
+GRANT ALL ON TABLE public.acorn_university_student_lookups TO sz WITH GRANT OPTION;
 
 
 --
@@ -36073,6 +36608,7 @@ GRANT ALL ON TABLE public.acorn_university_student_lookups TO token_5;
 GRANT ALL ON TABLE public.acorn_university_student_type TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_student_type TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_student_type TO token_5;
+GRANT ALL ON TABLE public.acorn_university_student_type TO sz WITH GRANT OPTION;
 
 
 --
@@ -36082,6 +36618,7 @@ GRANT ALL ON TABLE public.acorn_university_student_type TO token_5;
 GRANT ALL ON TABLE public.acorn_university_teachers TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_teachers TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_teachers TO token_5;
+GRANT ALL ON TABLE public.acorn_university_teachers TO sz WITH GRANT OPTION;
 
 
 --
@@ -36091,6 +36628,7 @@ GRANT ALL ON TABLE public.acorn_university_teachers TO token_5;
 GRANT ALL ON TABLE public.acorn_university_universities TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_university_universities TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_university_universities TO token_5;
+GRANT ALL ON TABLE public.acorn_university_universities TO sz WITH GRANT OPTION;
 
 
 --
@@ -36100,6 +36638,7 @@ GRANT ALL ON TABLE public.acorn_university_universities TO token_5;
 GRANT ALL ON TABLE public.acorn_user_mail_blockers TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_mail_blockers TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_mail_blockers TO token_5;
+GRANT ALL ON TABLE public.acorn_user_mail_blockers TO sz WITH GRANT OPTION;
 
 
 --
@@ -36109,6 +36648,7 @@ GRANT ALL ON TABLE public.acorn_user_mail_blockers TO token_5;
 GRANT ALL ON TABLE public.acorn_user_role_user TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_role_user TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_role_user TO token_5;
+GRANT ALL ON TABLE public.acorn_user_role_user TO sz WITH GRANT OPTION;
 
 
 --
@@ -36118,6 +36658,7 @@ GRANT ALL ON TABLE public.acorn_user_role_user TO token_5;
 GRANT ALL ON TABLE public.acorn_user_roles TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_roles TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_roles TO token_5;
+GRANT ALL ON TABLE public.acorn_user_roles TO sz WITH GRANT OPTION;
 
 
 --
@@ -36127,6 +36668,7 @@ GRANT ALL ON TABLE public.acorn_user_roles TO token_5;
 GRANT ALL ON TABLE public.acorn_user_throttle TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_throttle TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_throttle TO token_5;
+GRANT ALL ON TABLE public.acorn_user_throttle TO sz WITH GRANT OPTION;
 
 
 --
@@ -36136,6 +36678,7 @@ GRANT ALL ON TABLE public.acorn_user_throttle TO token_5;
 GRANT ALL ON TABLE public.acorn_user_user_group TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_group TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_user_group TO token_5;
+GRANT ALL ON TABLE public.acorn_user_user_group TO sz WITH GRANT OPTION;
 
 
 --
@@ -36145,6 +36688,7 @@ GRANT ALL ON TABLE public.acorn_user_user_group TO token_5;
 GRANT ALL ON TABLE public.acorn_user_user_group_types TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_group_types TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_user_group_types TO token_5;
+GRANT ALL ON TABLE public.acorn_user_user_group_types TO sz WITH GRANT OPTION;
 
 
 --
@@ -36154,6 +36698,7 @@ GRANT ALL ON TABLE public.acorn_user_user_group_types TO token_5;
 GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO PUBLIC;
 GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO token_5;
+GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO sz WITH GRANT OPTION;
 
 
 --
@@ -36163,6 +36708,7 @@ GRANT ALL ON TABLE public.acorn_user_user_group_version_usages TO token_5;
 GRANT ALL ON TABLE public.backend_access_log TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_access_log TO PUBLIC;
 GRANT ALL ON TABLE public.backend_access_log TO token_5;
+GRANT ALL ON TABLE public.backend_access_log TO sz WITH GRANT OPTION;
 
 
 --
@@ -36172,6 +36718,7 @@ GRANT ALL ON TABLE public.backend_access_log TO token_5;
 GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36181,6 +36728,7 @@ GRANT ALL ON SEQUENCE public.backend_access_log_id_seq TO token_5;
 GRANT ALL ON TABLE public.backend_user_groups TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_user_groups TO PUBLIC;
 GRANT ALL ON TABLE public.backend_user_groups TO token_5;
+GRANT ALL ON TABLE public.backend_user_groups TO sz WITH GRANT OPTION;
 
 
 --
@@ -36190,6 +36738,7 @@ GRANT ALL ON TABLE public.backend_user_groups TO token_5;
 GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36199,6 +36748,7 @@ GRANT ALL ON SEQUENCE public.backend_user_groups_id_seq TO token_5;
 GRANT ALL ON TABLE public.backend_user_preferences TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_user_preferences TO PUBLIC;
 GRANT ALL ON TABLE public.backend_user_preferences TO token_5;
+GRANT ALL ON TABLE public.backend_user_preferences TO sz WITH GRANT OPTION;
 
 
 --
@@ -36208,6 +36758,7 @@ GRANT ALL ON TABLE public.backend_user_preferences TO token_5;
 GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36217,6 +36768,7 @@ GRANT ALL ON SEQUENCE public.backend_user_preferences_id_seq TO token_5;
 GRANT ALL ON TABLE public.backend_user_roles TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_user_roles TO PUBLIC;
 GRANT ALL ON TABLE public.backend_user_roles TO token_5;
+GRANT ALL ON TABLE public.backend_user_roles TO sz WITH GRANT OPTION;
 
 
 --
@@ -36226,6 +36778,7 @@ GRANT ALL ON TABLE public.backend_user_roles TO token_5;
 GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36235,6 +36788,7 @@ GRANT ALL ON SEQUENCE public.backend_user_roles_id_seq TO token_5;
 GRANT ALL ON TABLE public.backend_user_throttle TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_user_throttle TO PUBLIC;
 GRANT ALL ON TABLE public.backend_user_throttle TO token_5;
+GRANT ALL ON TABLE public.backend_user_throttle TO sz WITH GRANT OPTION;
 
 
 --
@@ -36244,6 +36798,7 @@ GRANT ALL ON TABLE public.backend_user_throttle TO token_5;
 GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36253,6 +36808,7 @@ GRANT ALL ON SEQUENCE public.backend_user_throttle_id_seq TO token_5;
 GRANT ALL ON TABLE public.backend_users_groups TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.backend_users_groups TO PUBLIC;
 GRANT ALL ON TABLE public.backend_users_groups TO token_5;
+GRANT ALL ON TABLE public.backend_users_groups TO sz WITH GRANT OPTION;
 
 
 --
@@ -36262,6 +36818,7 @@ GRANT ALL ON TABLE public.backend_users_groups TO token_5;
 GRANT ALL ON SEQUENCE public.backend_users_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.backend_users_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.backend_users_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.backend_users_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36271,6 +36828,7 @@ GRANT ALL ON SEQUENCE public.backend_users_id_seq TO token_5;
 GRANT ALL ON TABLE public.cache TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.cache TO PUBLIC;
 GRANT ALL ON TABLE public.cache TO token_5;
+GRANT ALL ON TABLE public.cache TO sz WITH GRANT OPTION;
 
 
 --
@@ -36280,6 +36838,7 @@ GRANT ALL ON TABLE public.cache TO token_5;
 GRANT ALL ON TABLE public.cms_theme_data TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.cms_theme_data TO PUBLIC;
 GRANT ALL ON TABLE public.cms_theme_data TO token_5;
+GRANT ALL ON TABLE public.cms_theme_data TO sz WITH GRANT OPTION;
 
 
 --
@@ -36289,6 +36848,7 @@ GRANT ALL ON TABLE public.cms_theme_data TO token_5;
 GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36298,6 +36858,7 @@ GRANT ALL ON SEQUENCE public.cms_theme_data_id_seq TO token_5;
 GRANT ALL ON TABLE public.cms_theme_logs TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.cms_theme_logs TO PUBLIC;
 GRANT ALL ON TABLE public.cms_theme_logs TO token_5;
+GRANT ALL ON TABLE public.cms_theme_logs TO sz WITH GRANT OPTION;
 
 
 --
@@ -36307,6 +36868,7 @@ GRANT ALL ON TABLE public.cms_theme_logs TO token_5;
 GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36316,6 +36878,7 @@ GRANT ALL ON SEQUENCE public.cms_theme_logs_id_seq TO token_5;
 GRANT ALL ON TABLE public.cms_theme_templates TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.cms_theme_templates TO PUBLIC;
 GRANT ALL ON TABLE public.cms_theme_templates TO token_5;
+GRANT ALL ON TABLE public.cms_theme_templates TO sz WITH GRANT OPTION;
 
 
 --
@@ -36325,6 +36888,7 @@ GRANT ALL ON TABLE public.cms_theme_templates TO token_5;
 GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36334,6 +36898,7 @@ GRANT ALL ON SEQUENCE public.cms_theme_templates_id_seq TO token_5;
 GRANT ALL ON TABLE public.deferred_bindings TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.deferred_bindings TO PUBLIC;
 GRANT ALL ON TABLE public.deferred_bindings TO token_5;
+GRANT ALL ON TABLE public.deferred_bindings TO sz WITH GRANT OPTION;
 
 
 --
@@ -36343,6 +36908,7 @@ GRANT ALL ON TABLE public.deferred_bindings TO token_5;
 GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36352,6 +36918,7 @@ GRANT ALL ON SEQUENCE public.deferred_bindings_id_seq TO token_5;
 GRANT ALL ON TABLE public.failed_jobs TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.failed_jobs TO PUBLIC;
 GRANT ALL ON TABLE public.failed_jobs TO token_5;
+GRANT ALL ON TABLE public.failed_jobs TO sz WITH GRANT OPTION;
 
 
 --
@@ -36361,6 +36928,7 @@ GRANT ALL ON TABLE public.failed_jobs TO token_5;
 GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36370,6 +36938,7 @@ GRANT ALL ON SEQUENCE public.failed_jobs_id_seq TO token_5;
 GRANT ALL ON TABLE public.job_batches TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.job_batches TO PUBLIC;
 GRANT ALL ON TABLE public.job_batches TO token_5;
+GRANT ALL ON TABLE public.job_batches TO sz WITH GRANT OPTION;
 
 
 --
@@ -36379,6 +36948,7 @@ GRANT ALL ON TABLE public.job_batches TO token_5;
 GRANT ALL ON TABLE public.jobs TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.jobs TO PUBLIC;
 GRANT ALL ON TABLE public.jobs TO token_5;
+GRANT ALL ON TABLE public.jobs TO sz WITH GRANT OPTION;
 
 
 --
@@ -36388,6 +36958,7 @@ GRANT ALL ON TABLE public.jobs TO token_5;
 GRANT ALL ON SEQUENCE public.jobs_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.jobs_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.jobs_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.jobs_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36397,6 +36968,7 @@ GRANT ALL ON SEQUENCE public.jobs_id_seq TO token_5;
 GRANT ALL ON TABLE public.migrations TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.migrations TO PUBLIC;
 GRANT ALL ON TABLE public.migrations TO token_5;
+GRANT ALL ON TABLE public.migrations TO sz WITH GRANT OPTION;
 
 
 --
@@ -36406,6 +36978,7 @@ GRANT ALL ON TABLE public.migrations TO token_5;
 GRANT ALL ON SEQUENCE public.migrations_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.migrations_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.migrations_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.migrations_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36415,6 +36988,7 @@ GRANT ALL ON SEQUENCE public.migrations_id_seq TO token_5;
 GRANT ALL ON TABLE public.winter_location_countries TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_location_countries TO PUBLIC;
 GRANT ALL ON TABLE public.winter_location_countries TO token_5;
+GRANT ALL ON TABLE public.winter_location_countries TO sz WITH GRANT OPTION;
 
 
 --
@@ -36424,6 +36998,7 @@ GRANT ALL ON TABLE public.winter_location_countries TO token_5;
 GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36433,6 +37008,7 @@ GRANT ALL ON SEQUENCE public.rainlab_location_countries_id_seq TO token_5;
 GRANT ALL ON TABLE public.winter_location_states TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_location_states TO PUBLIC;
 GRANT ALL ON TABLE public.winter_location_states TO token_5;
+GRANT ALL ON TABLE public.winter_location_states TO sz WITH GRANT OPTION;
 
 
 --
@@ -36442,6 +37018,7 @@ GRANT ALL ON TABLE public.winter_location_states TO token_5;
 GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36451,6 +37028,7 @@ GRANT ALL ON SEQUENCE public.rainlab_location_states_id_seq TO token_5;
 GRANT ALL ON TABLE public.winter_translate_attributes TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_translate_attributes TO PUBLIC;
 GRANT ALL ON TABLE public.winter_translate_attributes TO token_5;
+GRANT ALL ON TABLE public.winter_translate_attributes TO sz WITH GRANT OPTION;
 
 
 --
@@ -36460,6 +37038,7 @@ GRANT ALL ON TABLE public.winter_translate_attributes TO token_5;
 GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36469,6 +37048,7 @@ GRANT ALL ON SEQUENCE public.rainlab_translate_attributes_id_seq TO token_5;
 GRANT ALL ON TABLE public.winter_translate_indexes TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_translate_indexes TO PUBLIC;
 GRANT ALL ON TABLE public.winter_translate_indexes TO token_5;
+GRANT ALL ON TABLE public.winter_translate_indexes TO sz WITH GRANT OPTION;
 
 
 --
@@ -36478,6 +37058,7 @@ GRANT ALL ON TABLE public.winter_translate_indexes TO token_5;
 GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36487,6 +37068,7 @@ GRANT ALL ON SEQUENCE public.rainlab_translate_indexes_id_seq TO token_5;
 GRANT ALL ON TABLE public.winter_translate_locales TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_translate_locales TO PUBLIC;
 GRANT ALL ON TABLE public.winter_translate_locales TO token_5;
+GRANT ALL ON TABLE public.winter_translate_locales TO sz WITH GRANT OPTION;
 
 
 --
@@ -36496,6 +37078,7 @@ GRANT ALL ON TABLE public.winter_translate_locales TO token_5;
 GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36505,6 +37088,7 @@ GRANT ALL ON SEQUENCE public.rainlab_translate_locales_id_seq TO token_5;
 GRANT ALL ON TABLE public.winter_translate_messages TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.winter_translate_messages TO PUBLIC;
 GRANT ALL ON TABLE public.winter_translate_messages TO token_5;
+GRANT ALL ON TABLE public.winter_translate_messages TO sz WITH GRANT OPTION;
 
 
 --
@@ -36514,6 +37098,7 @@ GRANT ALL ON TABLE public.winter_translate_messages TO token_5;
 GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36523,6 +37108,7 @@ GRANT ALL ON SEQUENCE public.rainlab_translate_messages_id_seq TO token_5;
 GRANT ALL ON TABLE public.sessions TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.sessions TO PUBLIC;
 GRANT ALL ON TABLE public.sessions TO token_5;
+GRANT ALL ON TABLE public.sessions TO sz WITH GRANT OPTION;
 
 
 --
@@ -36532,6 +37118,7 @@ GRANT ALL ON TABLE public.sessions TO token_5;
 GRANT ALL ON TABLE public.system_event_logs TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_event_logs TO PUBLIC;
 GRANT ALL ON TABLE public.system_event_logs TO token_5;
+GRANT ALL ON TABLE public.system_event_logs TO sz WITH GRANT OPTION;
 
 
 --
@@ -36541,6 +37128,7 @@ GRANT ALL ON TABLE public.system_event_logs TO token_5;
 GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36550,6 +37138,7 @@ GRANT ALL ON SEQUENCE public.system_event_logs_id_seq TO token_5;
 GRANT ALL ON TABLE public.system_files TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_files TO PUBLIC;
 GRANT ALL ON TABLE public.system_files TO token_5;
+GRANT ALL ON TABLE public.system_files TO sz WITH GRANT OPTION;
 
 
 --
@@ -36559,6 +37148,7 @@ GRANT ALL ON TABLE public.system_files TO token_5;
 GRANT ALL ON SEQUENCE public.system_files_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_files_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.system_files_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.system_files_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36568,6 +37158,7 @@ GRANT ALL ON SEQUENCE public.system_files_id_seq TO token_5;
 GRANT ALL ON TABLE public.system_mail_layouts TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_mail_layouts TO PUBLIC;
 GRANT ALL ON TABLE public.system_mail_layouts TO token_5;
+GRANT ALL ON TABLE public.system_mail_layouts TO sz WITH GRANT OPTION;
 
 
 --
@@ -36577,6 +37168,7 @@ GRANT ALL ON TABLE public.system_mail_layouts TO token_5;
 GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36586,6 +37178,7 @@ GRANT ALL ON SEQUENCE public.system_mail_layouts_id_seq TO token_5;
 GRANT ALL ON TABLE public.system_mail_partials TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_mail_partials TO PUBLIC;
 GRANT ALL ON TABLE public.system_mail_partials TO token_5;
+GRANT ALL ON TABLE public.system_mail_partials TO sz WITH GRANT OPTION;
 
 
 --
@@ -36595,6 +37188,7 @@ GRANT ALL ON TABLE public.system_mail_partials TO token_5;
 GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36604,6 +37198,7 @@ GRANT ALL ON SEQUENCE public.system_mail_partials_id_seq TO token_5;
 GRANT ALL ON TABLE public.system_mail_templates TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_mail_templates TO PUBLIC;
 GRANT ALL ON TABLE public.system_mail_templates TO token_5;
+GRANT ALL ON TABLE public.system_mail_templates TO sz WITH GRANT OPTION;
 
 
 --
@@ -36613,6 +37208,7 @@ GRANT ALL ON TABLE public.system_mail_templates TO token_5;
 GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36622,6 +37218,7 @@ GRANT ALL ON SEQUENCE public.system_mail_templates_id_seq TO token_5;
 GRANT ALL ON TABLE public.system_parameters TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_parameters TO PUBLIC;
 GRANT ALL ON TABLE public.system_parameters TO token_5;
+GRANT ALL ON TABLE public.system_parameters TO sz WITH GRANT OPTION;
 
 
 --
@@ -36631,6 +37228,7 @@ GRANT ALL ON TABLE public.system_parameters TO token_5;
 GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36640,6 +37238,7 @@ GRANT ALL ON SEQUENCE public.system_parameters_id_seq TO token_5;
 GRANT ALL ON TABLE public.system_plugin_history TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_plugin_history TO PUBLIC;
 GRANT ALL ON TABLE public.system_plugin_history TO token_5;
+GRANT ALL ON TABLE public.system_plugin_history TO sz WITH GRANT OPTION;
 
 
 --
@@ -36649,6 +37248,7 @@ GRANT ALL ON TABLE public.system_plugin_history TO token_5;
 GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36658,6 +37258,7 @@ GRANT ALL ON SEQUENCE public.system_plugin_history_id_seq TO token_5;
 GRANT ALL ON TABLE public.system_plugin_versions TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_plugin_versions TO PUBLIC;
 GRANT ALL ON TABLE public.system_plugin_versions TO token_5;
+GRANT ALL ON TABLE public.system_plugin_versions TO sz WITH GRANT OPTION;
 
 
 --
@@ -36667,6 +37268,7 @@ GRANT ALL ON TABLE public.system_plugin_versions TO token_5;
 GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36676,6 +37278,7 @@ GRANT ALL ON SEQUENCE public.system_plugin_versions_id_seq TO token_5;
 GRANT ALL ON TABLE public.system_request_logs TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_request_logs TO PUBLIC;
 GRANT ALL ON TABLE public.system_request_logs TO token_5;
+GRANT ALL ON TABLE public.system_request_logs TO sz WITH GRANT OPTION;
 
 
 --
@@ -36685,6 +37288,7 @@ GRANT ALL ON TABLE public.system_request_logs TO token_5;
 GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36694,6 +37298,7 @@ GRANT ALL ON SEQUENCE public.system_request_logs_id_seq TO token_5;
 GRANT ALL ON TABLE public.system_revisions TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_revisions TO PUBLIC;
 GRANT ALL ON TABLE public.system_revisions TO token_5;
+GRANT ALL ON TABLE public.system_revisions TO sz WITH GRANT OPTION;
 
 
 --
@@ -36703,6 +37308,7 @@ GRANT ALL ON TABLE public.system_revisions TO token_5;
 GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO sz WITH GRANT OPTION;
 
 
 --
@@ -36712,6 +37318,7 @@ GRANT ALL ON SEQUENCE public.system_revisions_id_seq TO token_5;
 GRANT ALL ON TABLE public.system_settings TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.system_settings TO PUBLIC;
 GRANT ALL ON TABLE public.system_settings TO token_5;
+GRANT ALL ON TABLE public.system_settings TO sz WITH GRANT OPTION;
 
 
 --
@@ -36721,12 +37328,15 @@ GRANT ALL ON TABLE public.system_settings TO token_5;
 GRANT ALL ON SEQUENCE public.system_settings_id_seq TO token_1 WITH GRANT OPTION;
 GRANT ALL ON SEQUENCE public.system_settings_id_seq TO PUBLIC;
 GRANT ALL ON SEQUENCE public.system_settings_id_seq TO token_5;
+GRANT ALL ON SEQUENCE public.system_settings_id_seq TO sz WITH GRANT OPTION;
 
 
 --
 -- Name: TABLE university_mofadala_branches; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.university_mofadala_branches FROM sz;
+GRANT ALL ON TABLE public.university_mofadala_branches TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_branches TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_branches TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_branches TO token_5;
@@ -36736,6 +37346,8 @@ GRANT ALL ON TABLE public.university_mofadala_branches TO token_5;
 -- Name: TABLE university_mofadala_candidate_exam_material_marks; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.university_mofadala_candidate_exam_material_marks FROM sz;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO token_5;
@@ -36745,6 +37357,8 @@ GRANT ALL ON TABLE public.university_mofadala_candidate_exam_material_marks TO t
 -- Name: TABLE university_mofadala_candidate_exam_materials; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.university_mofadala_candidate_exam_materials FROM sz;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO token_5;
@@ -36754,6 +37368,8 @@ GRANT ALL ON TABLE public.university_mofadala_candidate_exam_materials TO token_
 -- Name: TABLE university_mofadala_candidate_exams; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.university_mofadala_candidate_exams FROM sz;
+GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO token_5;
@@ -36763,6 +37379,8 @@ GRANT ALL ON TABLE public.university_mofadala_candidate_exams TO token_5;
 -- Name: TABLE university_mofadala_certificate_languages; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.university_mofadala_certificate_languages FROM sz;
+GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO token_5;
@@ -36772,6 +37390,8 @@ GRANT ALL ON TABLE public.university_mofadala_certificate_languages TO token_5;
 -- Name: TABLE university_mofadala_cities; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.university_mofadala_cities FROM sz;
+GRANT ALL ON TABLE public.university_mofadala_cities TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_cities TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_cities TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_cities TO token_5;
@@ -36781,6 +37401,8 @@ GRANT ALL ON TABLE public.university_mofadala_cities TO token_5;
 -- Name: TABLE university_mofadala_department_details; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.university_mofadala_department_details FROM sz;
+GRANT ALL ON TABLE public.university_mofadala_department_details TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_department_details TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_department_details TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_department_details TO token_5;
@@ -36790,6 +37412,8 @@ GRANT ALL ON TABLE public.university_mofadala_department_details TO token_5;
 -- Name: TABLE university_mofadala_departments; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.university_mofadala_departments FROM sz;
+GRANT ALL ON TABLE public.university_mofadala_departments TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_departments TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_departments TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_departments TO token_5;
@@ -36799,6 +37423,8 @@ GRANT ALL ON TABLE public.university_mofadala_departments TO token_5;
 -- Name: TABLE university_mofadala_exam_centers; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.university_mofadala_exam_centers FROM sz;
+GRANT ALL ON TABLE public.university_mofadala_exam_centers TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_exam_centers TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_exam_centers TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_exam_centers TO token_5;
@@ -36808,6 +37434,8 @@ GRANT ALL ON TABLE public.university_mofadala_exam_centers TO token_5;
 -- Name: TABLE university_mofadala_mofadala_years; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.university_mofadala_mofadala_years FROM sz;
+GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO token_5;
@@ -36817,6 +37445,8 @@ GRANT ALL ON TABLE public.university_mofadala_mofadala_years TO token_5;
 -- Name: TABLE university_mofadala_student_desire_details; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.university_mofadala_student_desire_details FROM sz;
+GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO token_5;
@@ -36826,6 +37456,8 @@ GRANT ALL ON TABLE public.university_mofadala_student_desire_details TO token_5;
 -- Name: TABLE university_mofadala_students; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.university_mofadala_students FROM sz;
+GRANT ALL ON TABLE public.university_mofadala_students TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_students TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_students TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_students TO token_5;
@@ -36835,6 +37467,8 @@ GRANT ALL ON TABLE public.university_mofadala_students TO token_5;
 -- Name: TABLE university_mofadala_type_certificates; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.university_mofadala_type_certificates FROM sz;
+GRANT ALL ON TABLE public.university_mofadala_type_certificates TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_type_certificates TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_type_certificates TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_type_certificates TO token_5;
@@ -36844,6 +37478,8 @@ GRANT ALL ON TABLE public.university_mofadala_type_certificates TO token_5;
 -- Name: TABLE university_mofadala_universities; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.university_mofadala_universities FROM sz;
+GRANT ALL ON TABLE public.university_mofadala_universities TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_universities TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_universities TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_universities TO token_5;
@@ -36853,6 +37489,8 @@ GRANT ALL ON TABLE public.university_mofadala_universities TO token_5;
 -- Name: TABLE university_mofadala_university_categories; Type: ACL; Schema: public; Owner: sz
 --
 
+REVOKE ALL ON TABLE public.university_mofadala_university_categories FROM sz;
+GRANT ALL ON TABLE public.university_mofadala_university_categories TO sz WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_1 WITH GRANT OPTION;
 GRANT ALL ON TABLE public.university_mofadala_university_categories TO PUBLIC;
 GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_5;
@@ -36862,5 +37500,5 @@ GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_5;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 4eXkMuUN1gpsfzvtvFwZBGCu1OfJ3y0FAzcCgyjrvTUm8W1TLp0sWunvre2jfRg
+\unrestrict TghnK73JyePOPur5Ggfu8tXWQc8nIJufaGG3jKHBM5cWXB97f7bn9aBEOCRtXGx
 

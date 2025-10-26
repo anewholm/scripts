@@ -589,7 +589,32 @@ class Model {
         $permissions[$this->permissionFQN('change_all_fields')] = array(
             'labels' => array('en' => "$labelAction $menuitemPlural")
         );
-        
+
+        // Befores and Afters function permissions
+        // These are added to all their fields automatically
+        $stageFunctions = array_merge($this->beforeFunctions ?: array(), $this->afterFunctions ?: array());
+        foreach ($stageFunctions as $name => &$functionSpec) {
+            if (isset($functionSpec['parameters'])) {
+                foreach ($functionSpec['parameters'] as $paramName => $paramSpec) {
+                    switch ($paramName) {
+                        case 'model_id':
+                        case 'p_model_id':
+                        case 'user_id':
+                        case 'p_user_id':
+                            break;
+                        default:
+                            // Some parameters must come from the new, as yet not created, model
+                            $fieldName = preg_replace('/^p_/', '', $paramName);
+                            if (!$this->hasAttribute($fieldName)) {
+                                $permissions[$this->permissionFQN("{$name}_{$paramName}_use")] = array(
+                                    'labels' => array('en' => "Use function $name"),
+                                );
+                            }
+                    }
+                }
+            }
+        }
+
         // The field->allPermissionNames() keys are already fully-qualified
         // They will already include the view|change_all_fields above
         // but we add them twice for documentation purposes
@@ -1002,6 +1027,19 @@ class Model {
                     if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
                         $relations[$relationName] = new RelationXto1($relationName, $this, $finalModel, $columnFrom, NULL, FALSE, $conditions);
                 }
+                // TODO: Specifically included because of the UserGroup::morphMany['translations']
+                /*
+                foreach ($winterModel->morphMany as $relationName => $config) {
+                    // If the relation config has a ModelTo setting, usually config[0]
+                    // $finalModel is a create-system Model wrapper
+                    $finalModel = $this->relationConfigModel($config);
+                    $key        = (isset($config['key']) ? $config['key'] : $this->standardBareReferencingField());
+                    $conditions = (isset($config['conditions']) ? $config['conditions'] : NULL);
+                    $columnFrom = Column::dummy($finalModel->table, $key);
+                    if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
+                        $relations[$relationName] = new RelationMorphXto1($relationName, $this, $finalModel, $columnFrom, NULL, FALSE, $conditions);
+                }
+                */
             }
         }
     
@@ -1469,6 +1507,12 @@ class Model {
                                     // If this comes from a field only field
                                     // columnKey & columnType === FALSE
                                     $canDisplayAsColumn = $subFieldObj->canDisplayAsColumn();
+                                    // If the column is not sortable
+                                    // WinterModel loaded probably
+                                    // then it may be included in the nested fields +column below
+                                    // unless it has a select: clause
+                                    $isSortable         = ($subFieldObj->sortable !== FALSE);
+                                    $hasSqlClause       = (bool) $subFieldObj->sqlSelect;
 
                                     if (   !$isSpecialField
                                         && $canDisplayAsColumn
@@ -1476,6 +1520,7 @@ class Model {
                                         && !$isDuplicateField
                                         && !$isPseudoFieldName
                                         && !$hasSubRelation
+                                        && ($isSortable || $hasSqlClause)
                                         // && !$isAlreadyNested
                                     ) {
                                         $subFieldObj->nested        = TRUE;
@@ -1572,6 +1617,13 @@ class Model {
                                     );
                                     $isDuplicateField  = isset($fields[$fieldKey]);
 
+                                    // If the column is not sortable
+                                    // WinterModel loaded probably
+                                    // then it may be included in the nested fields +column
+                                    // unless it has a select: clause
+                                    $isSortable         = ($subFieldObj->sortable !== FALSE);
+                                    $hasSqlClause       = (bool) $subFieldObj->sqlSelect;
+
                                     if (   !$isSpecialField
                                         && $includeContext 
                                         && $canDisplayAsField
@@ -1585,9 +1637,19 @@ class Model {
 
                                         // Prevent this field displaying as a column
                                         // canDisplayAsColumn() checks columnType
-                                        $subFieldObj->columnType = FALSE;
-                                        $subFieldObj->columnKey  = FALSE;
-                                        // Nested sub relations cannot be columns or filters
+                                        // because we prefer the sortable HasManyDeep version above
+                                        // However, WinterModel may have specified no sorting,
+                                        // for example on translations field
+                                        if (!$isSortable && !$hasSqlClause) {
+                                            print("  {$indentString}Field $modelTo->name::$subFieldName column included because sortable:false and no select: clause\n");
+                                            // Nested column version
+                                            $subFieldObj->columnKey  = $fieldKey;
+                                            $subFieldObj->relation   = NULL;
+                                        } else {
+                                            $subFieldObj->columnType = FALSE;
+                                            $subFieldObj->columnKey  = FALSE;
+                                        }
+                                        // Nested sub relations cannot be filters
                                         $subFieldObj->canFilter = FALSE; 
 
                                         if ($subFieldObj->fieldType == 'fileupload') {
@@ -2058,6 +2120,34 @@ class Model {
             $fields[$name] = $fieldObj;
         }
 
+
+        // ---------------------------------------------------------------- Translations
+        // For directly translated name fields, not 1-1
+        // if one is not already there from a 1-1
+        if (   isset($fields['name']) 
+            && $fields['name']->translatable
+            && !isset($fields['translations'])
+        ) {
+            $fields['translations'] = new PseudoField($this, array(
+                'name'             => 'translations',
+                'explicitLabelKey' => 'winter.translate::lang.plugin.tab',
+                // Field
+                'fieldType'   => 'partial',
+                'partial'     => 'translations',
+                'span'        => 'storm',
+                'bootstraps'  => array('xs' => 6),
+                'tabLocation' => 3,
+                'contexts'    => 'update',
+
+                // Column
+                'columnType'    => 'partial',
+                'columnPartial' => 'translations',
+                'invisible'     => TRUE,
+                'sortable'      => FALSE,
+                'searchable'    => FALSE
+            ));
+        }
+
         // ---------------------------------------------------------------- QR code support fields
         // TODO: Move to QRCode FormField when available
         $fields['_qrcode'] = new PseudoField($this, array(
@@ -2172,8 +2262,8 @@ class Model {
             }
 
             if ($field->nested) {
-                if ($field->columnType && !$field->relation)
-                    throw new Exception("[$name] column is nested but without a relation:");
+                if ($field->columnType && !$field->relation && $field->sortable)
+                    throw new Exception("[$name] column is nested, sortable but without a relation: so it will error");
             } 
             // Nested fields will already have been annotated
             else {
@@ -2194,23 +2284,6 @@ class Model {
                         </div>
 HTML;
                 }
-
-                /*
-                if (is_array($field->buttons)) {
-                    foreach ($field->buttons as $buttonName => &$buttonField) {
-                        // $buttonField can be FALSE
-                        if ($buttonField) {
-                            if (!$buttonField->debugComment) $buttonField->debugComment = $buttonField->partial;
-                            $buttonField->fieldComment .= <<<HTML
-                                <div class='debug debug-field'>
-                                    <div class="title">$buttonName</div>
-                                    $buttonField->debugComment
-                                </div>
-HTML;
-                        }
-                    }
-                }
-                */
             }
         }
 

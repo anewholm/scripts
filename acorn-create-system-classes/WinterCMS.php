@@ -1615,7 +1615,7 @@ HTML
             }
         }
 
-        // ---------------------------------------- Field like after functions
+        // ---------------------------------------- Fields for afters|befores functions
         $stageFunctions = array_merge($model->beforeFunctions ?: array(), $model->afterFunctions ?: array());
         foreach ($stageFunctions as $name => &$functionSpec) {
             // A field for each additional parameter required
@@ -1661,12 +1661,17 @@ HTML
 
                                 // Condition(s)
                                 $condition = 
-                                    (isset($paramSpec['condition']) ? $paramSpec['condition'] :
-                                    (isset($paramSpec['conditions']) ? $paramSpec['conditions'] :
-                                    (isset($functionSpec['condition']) ? $functionSpec['condition'] :
+                                    (isset($paramSpec['condition'])     ? $paramSpec['condition']     :
+                                    (isset($paramSpec['conditions'])    ? $paramSpec['conditions']    :
+                                    (isset($functionSpec['condition'])  ? $functionSpec['condition']  :
                                     (isset($functionSpec['conditions']) ? $functionSpec['conditions'] :
                                     ''
                                 ))));
+
+                                // Permissions
+                                $permissions = array(
+                                    $model->permissionFQN("{$name}_{$paramName}_use")
+                                );
                                 
                                 // Contexts
                                 $contexts = (isset($paramSpec['contexts']) 
@@ -1683,6 +1688,7 @@ HTML
                                         'context'   => $contexts,
                                         'span'      => 'storm',
                                         'cssClass'  => 'col-xs-12 col-md-6',
+                                        'permissions' => $permissions,
                                     ), $fieldDefinition))
                                 );
                             }
@@ -2254,7 +2260,7 @@ HTML
                 $labelKey = ($field->explicitLabelKey ?: $field->translationKey());
                 $columnDefinition = array(
                     '#'          => $field->yamlComment,
-                    '# Debug:'   => $field->debugComment,
+                    '# Debug: '  => str_replace("\n", ' ', $field->debugComment),
                     'label'      => $labelKey,
                     'type'       => $field->columnType,
                     'valueFrom'  => $field->valueFrom,
@@ -2296,19 +2302,6 @@ HTML
                 if ($field->columnConfig) $columnDefinition = array_merge($columnDefinition, $field->columnConfig);
                 $columnDefinition = $this->removeEmpty($columnDefinition); // We do not remove falses
                 $this->yamlFileSet($columnsPath, "columns.$field->columnKey", $columnDefinition);
-
-                if ($name == 'name' && $field->translatable) {
-                    // TODO: fields.translations does not support 1-1 yet
-                    $this->yamlFileSet($columnsPath, 'columns.translations', array(
-                        'label'      => 'winter.translate::lang.plugin.tab',
-                        'relation'   => 'translations',
-                        'type'       => 'partial',
-                        'path'       => 'translations',
-                        'invisible'  => TRUE,
-                        'sortable'   => FALSE,
-                        'searchable' => FALSE
-                    ));
-                }
             } else {
                 print("    $indentString{$YELLOW}WARNING{$NC}: Field [$name]($typeString) cannot display as {$YELLOW}column{$NC} because columnType is blank\n");
             }

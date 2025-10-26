@@ -348,6 +348,10 @@ class RelationXto1 extends Relation {
     }
 }
 
+class RelationMorphXto1 extends Relation {
+    // Specifically included because of the UserGroup::morphMany['translations']
+}
+
 class RelationXfromXSemi extends RelationFrom {
     public $pivot;
     public $pivotModel;
