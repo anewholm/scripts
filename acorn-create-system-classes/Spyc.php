@@ -862,7 +862,9 @@ class Spyc {
 
   private function referenceContentsByAlias ($alias) {
     do {
-      if (!isset($this->SavedGroups[$alias])) { echo "Bad group name: $alias."; break; }
+      if (!isset($this->SavedGroups[$alias])) { 
+        echo "Bad group name: $alias."; break; 
+      }
       $groupPath = $this->SavedGroups[$alias];
       $value = $this->result;
       foreach ($groupPath as $k) {

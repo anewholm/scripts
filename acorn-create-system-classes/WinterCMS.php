@@ -199,11 +199,11 @@ class WinterCMS extends Framework
         }
         $this->setPropertyInClassFile($pluginFilePath, 'require', array_keys($requirePlugins), FALSE);
 
-        // --------------------------------------------- Lang.php plugin section
+        // --------------------------------------------- Lang plugin section lang.php
         $langDirPath = "$pluginDirectoryPath/lang";
         $langEnPath  = "$langDirPath/en/lang.php";
 
-        // Standard langs
+        // Standard lang.php
         if (!is_dir("$langDirPath/ku/")) mkdir("$langDirPath/ku/", 0775, TRUE);
         if (!is_dir("$langDirPath/ar/")) mkdir("$langDirPath/ar/", 0775, TRUE);
         foreach (scandir($langDirPath) as $langName) {
@@ -220,17 +220,17 @@ class WinterCMS extends Framework
             }
         }
 
-        // English General
+        // English General lang.php
         $this->arrayFileSet($langEnPath, 'models.general', Framework::$standardTranslations['en'], FALSE);
         if (isset($plugin->pluginNames['en']))        $this->arrayFileSet("$langDirPath/en/lang.php", 'plugin.name',        $plugin->pluginNames['en'],        FALSE);
         if (isset($plugin->pluginDescriptions['en'])) $this->arrayFileSet("$langDirPath/en/lang.php", 'plugin.description', $plugin->pluginDescriptions['en'], FALSE);
 
-        // Arabic general
+        // Arabic general lang.php
         $this->arrayFileSet("$langDirPath/ar/lang.php", 'models.general', Framework::$standardTranslations['ar'], FALSE);
         if (isset($plugin->pluginNames['ar']))        $this->arrayFileSet("$langDirPath/ar/lang.php", 'plugin.name',        $plugin->pluginNames['ar'],        FALSE);
         if (isset($plugin->pluginDescriptions['ar'])) $this->arrayFileSet("$langDirPath/ar/lang.php", 'plugin.description', $plugin->pluginDescriptions['ar'], FALSE);
 
-        // Kurdish general
+        // Kurdish general lang.php
         $this->arrayFileSet("$langDirPath/ku/lang.php", 'models.general', Framework::$standardTranslations['ku'], FALSE);
         if (isset($plugin->pluginNames['ku']))        $this->arrayFileSet("$langDirPath/ku/lang.php", 'plugin.name',        $plugin->pluginNames['ku'],        FALSE);
         if (isset($plugin->pluginDescriptions['ku'])) $this->arrayFileSet("$langDirPath/ku/lang.php", 'plugin.description', $plugin->pluginDescriptions['ku'], FALSE);
@@ -273,7 +273,7 @@ class WinterCMS extends Framework
             // Add these to the plugin.php
             $this->setArrayReturnFunction($pluginFilePath, 'registerPermissions', $pluginPermissionsArray);
 
-            // lang.php
+            // ---------------------------------------------------------------- Permissions lang.php
             foreach ($permissions as $fullyQualifiedName => &$config) {
                 $permissionNameParts     = explode(".", $fullyQualifiedName);
                 $permissionPluginDotPath = implode(".", array_slice($permissionNameParts, 0, 2));
@@ -796,7 +796,7 @@ PHP;
             // ---------------------------------------------------------------- Model based ALES functions
             $this->setPropertyInClassFile($modelFilePath, 'alesFunctions', $model->alesFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
 
-            // ---------------------------------------------------------------- Model based action functions
+            // ---------------------------------------------------------------- Model based action functions lang.php
             // Write the labels to lang, and the translationKeys to the YAML
             if ($model->actionFunctions) {
                 foreach ($model->actionFunctions as $name => &$defintion) {
@@ -807,15 +807,28 @@ PHP;
                                 $label = $defintion['labels'][$langName];
                                 $this->arrayFileSet($langFilePath, "actions.$name", $label, FALSE);
                             }
+                            // Comment
+                            if (isset($defintion['comment'][$langName])) {
+                                $comment = $defintion['comment'][$langName];
+                                $this->arrayFileSet($langFilePath, "actions.{$name}_comment", $comment, FALSE);
+                            }
                         }
                     }
-                    unset($defintion['labels']);
-                    $defintion['label'] = "$translationDomain::lang.actions.$name";
+
+                    // Morph entries to translation keys
+                    if (isset($defintion['labels'])) {
+                        unset($defintion['labels']);
+                        $defintion['label'] = "$translationDomain::lang.actions.$name";
+                    }
+                    if (isset($defintion['comment'])) {
+                        unset($defintion['comment']);
+                        $defintion['comment'] = "$translationDomain::lang.actions.{$name}_comment";
+                    }
                 }
                 $this->setPropertyInClassFile($modelFilePath, 'actionFunctions', $model->actionFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
             }
 
-            // ---------------------------------------------------------------- Model based before functions
+            // ---------------------------------------------------------------- Model based before functions lang.php
             // Write the labels to lang, and the translationKeys to the YAML
             if ($model->beforeFunctions) {
                 foreach ($model->beforeFunctions as $name => &$defintion) {
@@ -828,13 +841,17 @@ PHP;
                             }
                         }
                     }
-                    unset($defintion['labels']);
-                    $defintion['label'] = "$translationDomain::lang.befores.$name";
+
+                    // Morph entries to translation keys
+                    if (isset($defintion['labels'])) {
+                        unset($defintion['labels']);
+                        $defintion['label'] = "$translationDomain::lang.befores.$name";
+                    }
                 }
                 $this->setPropertyInClassFile($modelFilePath, 'beforeFunctions', $model->beforeFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
             }
 
-            // ---------------------------------------------------------------- Model based after functions
+            // ---------------------------------------------------------------- Model based after functions lang.php
             // Write the labels to lang, and the translationKeys to the YAML
             if ($model->afterFunctions) {
                 foreach ($model->afterFunctions as $name => &$defintion) {
@@ -847,13 +864,17 @@ PHP;
                             }
                         }
                     }
-                    unset($defintion['labels']);
-                    $defintion['label'] = "$translationDomain::lang.afters.$name";
+
+                    // Morph entries to translation keys
+                    if (isset($defintion['labels'])) {
+                        unset($defintion['labels']);
+                        $defintion['label'] = "$translationDomain::lang.afters.$name";
+                    }
                 }
                 $this->setPropertyInClassFile($modelFilePath, 'afterFunctions', $model->afterFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
             }
 
-            // ---------------------------------------------------------------- Model based action links
+            // ---------------------------------------------------------------- Model based action links lang.php
             // Write the labels to lang, and the translationKeys to the YAML
             if ($model->actionLinks) {
                 foreach ($model->actionLinks as $name => &$defintion) {
@@ -866,8 +887,12 @@ PHP;
                             }
                         }
                     }
-                    unset($defintion['labels']);
-                    $defintion['label'] = "$translationDomain::lang.actions.$name";
+
+                    // Morph entries to translation keys
+                    if (isset($defintion['labels'])) {
+                        unset($defintion['labels']);
+                        $defintion['label'] = "$translationDomain::lang.actions.$name";
+                    }
                 }
                 $this->setPropertyInClassFile($modelFilePath, 'actionLinks', $model->actionLinks, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
             }
@@ -938,7 +963,7 @@ PHP
                 $this->appendToFile($seederPath, $sql);
             }
 
-            // ----------------------------------------------------------------- Lang.php model labels section
+            // ---------------------------------------------------------------- Model labels section lang.php
             // These non-en files will not have been updated by the create:model command
             $modelSectionName = $model->langSectionName();
             $langEnPath       = "$langDirPath/en/lang.php";
@@ -1425,6 +1450,8 @@ HTML
                 }
                 $fieldKey = "$field->fieldKey$field->fieldKeyQualifier";
                 $dotPath  = "$dotPathStub.$fieldKey";
+
+                // -------------------- Explicit dropdown Options
                 if (is_array($field->fieldOptions)) {
                     // options: can be in the format of translated codes:
                     // options:
@@ -1435,7 +1462,9 @@ HTML
                         if (!is_numeric($code) 
                             && is_array($labels)
                         ) {
-                            // If we are using single letter codes, then try to use the english label instead
+                            // If we are using single letter codes, 
+                            // then try to use the english label instead
+                            // for the translation key: acorn.university::lang.models.that.options.guilty
                             $localTranslationKey = (strlen($code) == 1 && isset($labels['en']) ? strtolower($labels['en']) : $code);
                             // Add these codes to extraTranslations
                             $extraTranslations[$localTranslationKey] = $labels;

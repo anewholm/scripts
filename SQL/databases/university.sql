@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict TghnK73JyePOPur5Ggfu8tXWQc8nIJufaGG3jKHBM5cWXB97f7bn9aBEOCRtXGx
+\restrict SGqaasl4JOli9qsSo3TMJrRdj2Xj3tebbGcvcThvIk8Y32efBOMW1iDonPwJAFc
 
 -- Dumped from database version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
 -- Dumped by pg_dump version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
@@ -165,7 +165,6 @@ ALTER TABLE IF EXISTS ONLY public.acorn_location_addresses DROP CONSTRAINT IF EX
 ALTER TABLE IF EXISTS ONLY public.acorn_location_gps DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_locations DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_year_semesters DROP CONSTRAINT IF EXISTS semester_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS semester_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_semesters DROP CONSTRAINT IF EXISTS semester_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_questions DROP CONSTRAINT IF EXISTS section_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_role_user DROP CONSTRAINT IF EXISTS role_id;
@@ -237,6 +236,8 @@ ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_students DROP CONSTRAINT IF E
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_course_entry_requirements DROP CONSTRAINT IF EXISTS enrollment_course_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_semesters DROP CONSTRAINT IF EXISTS enrollment_academic_year_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_documents DROP CONSTRAINT IF EXISTS document_type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS default_semester_group_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS default_calendar_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_semester_groups DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_material_topics DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchy_event DROP CONSTRAINT IF EXISTS created_by_user_id;
@@ -313,7 +314,6 @@ ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_courses DROP CONSTRAINT
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_language DROP CONSTRAINT IF EXISTS course_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_courses DROP CONSTRAINT IF EXISTS course_hierarchy_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_desires DROP CONSTRAINT IF EXISTS course_entry_requirements_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS calendar_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS calculation_type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculations DROP CONSTRAINT IF EXISTS calculation_type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_material_types DROP CONSTRAINT IF EXISTS calculation_id;
@@ -1056,6 +1056,7 @@ DROP VIEW IF EXISTS public.acorn_university_student_lookups;
 DROP TABLE IF EXISTS public.acorn_university_student_course_material_removal;
 DROP TABLE IF EXISTS public.acorn_university_student_course_material_addition;
 DROP TABLE IF EXISTS public.acorn_university_schools;
+DROP MATERIALIZED VIEW IF EXISTS public.acorn_university_olapcube;
 DROP VIEW IF EXISTS public.acorn_university_legacy_updates;
 DROP FOREIGN TABLE IF EXISTS public.university_mofadala_baccalaureate_marks;
 DROP VIEW IF EXISTS public.acorn_university_legacy_fulls;
@@ -1214,10 +1215,10 @@ DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_update_version();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_manage_cys();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_entity_leaf_type(p_entity_id uuid, p_throw_invalid boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_descendants_user_cnts();
+DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_descendants_user_cnt(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_descendants(p_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_delete_version();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_create_version();
-DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_hierarchies_ascendants(p_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_entities_leaf_table();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_enrollment_year();
@@ -3718,12 +3719,19 @@ ALTER FUNCTION public.fn_acorn_university_action_academic_years_clear(model_id u
 
 COMMENT ON FUNCTION public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) IS 'labels:
   en: Clear year data
+  ku: Daneyên salê paqij bike
+  ar: بيانات السنة واضحة
 result-action: refresh
 condition: exists(select * from acorn_university_hierarchies where academic_year_id = acorn_university_academic_years.id)
 comment:
   en: >
     The data for the next following years can be deleted for courses starting on _this_ enrollment year.
-    *or* for course materials falling in this year from any previous enrollment year course';
+    *or* for course materials falling in this year from any previous enrollment year course
+  ku: >
+    Agahiyên salên pêş de dikarin ji bo dersên ku di _vê_ sala qeydkirinê_ de dest pê dikin werin jêbirin.
+    *an* ji bo materyalên dersê yên ku di vê salê de ji her dersa sala qeydkirinê ya berê ne.
+  ar: >
+    يمكن حذف بيانات السنوات التالية للدورات التي تبدأ في سنة التسجيل هذه. أو للمواد الدراسية التي تقع في هذا العام من أي دورة دراسية سابقة في سنة التسجيل.';
 
 
 --
@@ -3755,6 +3763,8 @@ ALTER FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id
 
 COMMENT ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) IS 'labels:
   en: Copy year data to
+  ku: Daneyên salê kopî bikin bo
+  ar: نسخ بيانات السنة إلى
 result-action: refresh
 condition: exists(select * from acorn_university_hierarchies where academic_year_id = acorn_university_academic_years.id)';
 
@@ -3945,7 +3955,9 @@ ALTER FUNCTION public.fn_acorn_university_action_academic_years_provision(p_mode
 --
 
 COMMENT ON FUNCTION public.fn_acorn_university_action_academic_years_provision(p_model_id uuid, p_user_id uuid, p_copy_academic_year_id uuid, p_num_years integer, p_enabled boolean) IS 'labels:
-  en: Provision years and semesters
+  en: Provision years and their semesters
+  ku: Salên dabînkirinê û semestrên wan
+  ar: سنوات الدراسة وفصولها الدراسية
 result-action: refresh
 type: list
 fields:
@@ -3963,7 +3975,11 @@ fields:
 	default: 5
 comment:
   en: >
-    Provision multiple Academic years and semesters into the future. Semesters will be copied from the most recent Academic Year setup.';
+    Provision multiple Academic years and semesters into the future. Semesters will be copied from the most recent Academic Year setup.
+  ku: >
+    Pêşkêşkirina çend sal û semesterên akademîk bo pêşerojê. Semester dê ji sazkirina Sala Akademîk a herî dawî werin kopî kirin.
+  ar: >
+    توفير سنوات دراسية وفصول دراسية متعددة مستقبلًا. سيتم نسخ الفصول الدراسية من أحدث إعداد للسنة الدراسية.';
 
 
 --
@@ -3987,12 +4003,19 @@ ALTER FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id
 
 COMMENT ON FUNCTION public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid) IS 'labels:
   en: Refresh results
+  ku: Encamên nûve bike
+  ar: تحديث النتائج
 result-action: refresh
 condition: enabled
 comment:
   en: >
     The final results are calculated and cached. 
-	If scores and data has changed, the results can be refreshed here.';
+    If scores and data has changed, the results can be refreshed here.
+  ku: >
+    Encamên dawî tên hesabkirin û di keşê de têne tomarkirin.
+    Ger puan û dane guherîn, encam dikarin li vir werin nûkirin.
+  ar: >
+    يتم حساب النتائج النهائية وتخزينها مؤقتًا. في حال تغيّر النتائج والبيانات، يُمكن تحديث النتائج هنا.';
 
 
 --
@@ -4015,8 +4038,12 @@ ALTER FUNCTION public.fn_acorn_university_action_course_materials_cm_copy2(p_cou
 
 COMMENT ON FUNCTION public.fn_acorn_university_action_course_materials_cm_copy2(p_course_id uuid, p_academic_year_semester_id uuid, p_course_year_id uuid, p_copy_exams boolean, p_copy_projects boolean, p_copy_interviews boolean, p_copy_calculations boolean, p_copy_students boolean, p_delete_existing boolean) IS 'labels:
   en: Copy materials to
+  ku: Materyalan kopî bikin bo
+  ar: نسخ المواد إلى
 comment:
   en: Add selected information available to another course-academic year-course year-semester
+  ku: Agahiyên bijartî yên berdest li qursek din-sala akademîk-qursa sal-semester zêde bikin
+  ar: إضافة المعلومات المحددة المتاحة لدورة أخرى-السنة الدراسية-السنة الدراسية-الفصل الدراسي
 fields:
   p_course_id:
     type: dropdown
@@ -4114,11 +4141,14 @@ ALTER FUNCTION public.fn_acorn_university_action_course_year_semesters_spec(p_mo
 
 COMMENT ON FUNCTION public.fn_acorn_university_action_course_year_semesters_spec(p_model_id uuid, p_user_id uuid, p_course_specialization_id uuid, p_copy_materials boolean, p_copy_exams boolean) IS 'labels:
   en: Specialize
+  ku: Taybetkirin
+  ar: متخصص
 result-action: refresh
 condition: course_specialization_id is null
 comment:
-  en: >
-    Duplicate this semester with its own student group for a specialization.
+  en: Duplicate this semester with its own student group for a specialization.
+  ku: Vê semesterê bi koma xwendekarên xwe re ji bo pisporiyê dubare bike.
+  ar: تكرار هذا الفصل الدراسي مع مجموعته الطلابية الخاصة للتخصص.
 fields:
   p_course_specialization_id:
     type: dropdown
@@ -4146,7 +4176,10 @@ ALTER FUNCTION public.fn_acorn_university_action_hierarchies_append_child(p_mode
 
 COMMENT ON FUNCTION public.fn_acorn_university_action_hierarchies_append_child(p_model_id uuid, p_user_id uuid) IS 'labels:
   en: Append child to
-result-action: model-uuid-redirect';
+  ku: Zarokek zede dike
+  ar: إضافة الطفل إلى
+result-action: model-uuid-redirect
+type: row';
 
 
 --
@@ -4170,12 +4203,19 @@ ALTER FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_id uuid
 
 COMMENT ON FUNCTION public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean) IS 'labels:
   en: Clear year data
+  ku: Bayonetê Salê redike
+  ar: بيانات السنة واضحة
 result-action: refresh
 condition: parent_id is null
 comment:
   en: >
     The data for the next following years can be deleted for courses starting on _this_ enrollment year.
-    *or* for course materials falling in this year from any previous enrollment year course';
+    *or* for course materials falling in this year from any previous enrollment year course
+  ku: >
+    Agahiyên salên pêş de dikarin ji bo dersên ku di _vê_ sala qeydkirinê_ de dest pê dikin werin jêbirin.
+    *an* ji bo materyalên dersê yên ku di vê salê de ji her dersa sala qeydkirinê ya berê ne.
+  ar: >
+    يمكن حذف بيانات السنوات التالية للدورات التي تبدأ في سنة التسجيل هذه. أو للمواد الدراسية التي تقع في هذا العام من أي دورة دراسية سابقة في سنة التسجيل.';
 
 
 --
@@ -4199,6 +4239,8 @@ ALTER FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_id uu
 
 COMMENT ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_promote_successful_students boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean) IS 'labels:
   en: Copy year data to
+  ku: Daneyên salê kopî bike bo
+  ar: نسخ بيانات السنة إلى
 result-action: refresh
 condition: parent_id is null';
 
@@ -4214,7 +4256,7 @@ begin
 	update acorn_university_hierarchies hi
 		set nest_descendants       = fn_acorn_university_hierarchies_descendants(id),
 		    nest_ascendants        = fn_acorn_university_hierarchies_ascendants(id);
-	perform fn_acorn_university_hierarchies_counts();
+	perform fn_acorn_university_hierarchies_descendants_user_cnt();
 
 	return 'SUCCESS';
 end;
@@ -4229,6 +4271,8 @@ ALTER FUNCTION public.fn_acorn_university_action_hierarchies_refresh_counts(p_mo
 
 COMMENT ON FUNCTION public.fn_acorn_university_action_hierarchies_refresh_counts(p_model_id uuid, p_user_id uuid) IS 'labels:
   en: Refresh Counts
+  ku: Jimareyên Nûjenkirinê
+  ar: عدد مرات التحديث
 result-action: refresh
 type: list';
 
@@ -4254,12 +4298,14 @@ ALTER FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid,
 
 COMMENT ON FUNCTION public.fn_acorn_university_action_students_refresh(model_id uuid, user_id uuid) IS 'labels:
   en: Refresh results
+  ku: Encamên nûve bike
+  ar: تحديث النتائج
 result-action: refresh
 advanced: true
 comment:
-  en: >
-    The final results are calculated and cached. 
-	If scores and data has changed, the results can be refreshed here.';
+  en: The final results are calculated and cached. If scores and data has changed, the results can be refreshed here.
+  ku: Encamên dawî tên hesabkirin û di keşê de têne hilanîn. Ger puan û daneyên we guherîn, encam dikarin li vir werin nûkirin.
+  ar: يتم حساب النتائج النهائية وتخزينها مؤقتًا. في حال تغيّر النتائج والبيانات، يُمكن تحديث النتائج هنا.';
 
 
 --
@@ -4283,6 +4329,8 @@ ALTER FUNCTION public.fn_acorn_university_after_courses_add_to_hierarchy(p_model
 
 COMMENT ON FUNCTION public.fn_acorn_university_after_courses_add_to_hierarchy(p_model_id uuid, p_user_id uuid, p_add boolean) IS 'labels:
   en: Add to your organisation
+  ku: Li rêxistina xwe zêde bike
+  ar: أضف إلى مؤسستك
 conditions: |
   select count(*) from acorn_dbauth_user u
   inner join acorn_university_entities en on en.id = u.global_scope_entity_id
@@ -4290,10 +4338,12 @@ conditions: |
 fields:
   p_add:
     contexts: create
-    comment-html: true
     default: true
+    comment-html: true
     comment:
       en: Add this course to your organisation for the <b>current year</b>
+      ku: Vê qursê ji bo rêxistina xwe ji bo <b>sala heyî</b> zêde bikin
+      ar: أضف هذه الدورة إلى مؤسستك للعام الحالي
     tab-location: 3
 ';
 
@@ -4319,6 +4369,8 @@ ALTER FUNCTION public.fn_acorn_university_after_students_add_to_courses(p_model_
 
 COMMENT ON FUNCTION public.fn_acorn_university_after_students_add_to_courses(p_model_id uuid, p_user_id uuid, p_course_ids uuid[]) IS 'labels:
   en: Add to your courses
+  ku: Li qursên xwe zêde bikin
+  ar: أضف إلى دوراتك
 order: 500
 conditions: |
   select count(*) from acorn_dbauth_user u
@@ -4327,12 +4379,14 @@ conditions: |
 fields:
   p_course_ids:
     contexts: create
-    comment-html: true
     type: checkboxlist
     options: Acorn\University\Models\Course::dropdownOptions
     css-classes: nolabel
+    commentHtml: true
     comment:
       en: Add this student to your following courses for the <b>current year</b>. <span class="danger">At least one course is required</span> otherwise the student will not be registered at your school!
+      ku: Vê xwendekarê ji bo <b>sala niha</b> li qursên xwe yên jêrîn zêde bike. <span class="danger">Herî kêm qursek pêwîst e</span> wekî din xwendekar dê li dibistana te neyê qeydkirin!
+      ar: أضف هذا الطالب إلى دوراتك التالية للسنة الحالية. <span class="danger">مطلوب دورة واحدة على الأقل</span> وإلا فلن يتم تسجيل الطالب في مدرستك!
 ';
 
 
@@ -4357,6 +4411,8 @@ ALTER FUNCTION public.fn_acorn_university_after_students_set_code(p_model_id uui
 
 COMMENT ON FUNCTION public.fn_acorn_university_after_students_set_code(p_model_id uuid, p_user_id uuid, p_code character varying) IS 'labels:
   en: Code 
+  ku: Koda
+  ar: شفرة
 order: 200
 conditions: |
   select count(*) from acorn_dbauth_user u
@@ -4369,6 +4425,8 @@ fields:
     contexts: create
     comment:
       en: The computer will assign a code for the student and show you after. This can be useful to find the student later on.
+      ku: Komputer dê kodekê ji bo xwendekar destnîşan bike û piştre nîşanî we bide. Ev dikare ji bo dîtina xwendekar paşê kêrhatî be.
+      ar: سيُخصِّص الحاسوب رمزًا للطالب ويُظهِره لك لاحقًا. قد يكون هذا مفيدًا للعثور على الطالب لاحقًا.
 ';
 
 
@@ -4393,6 +4451,8 @@ ALTER FUNCTION public.fn_acorn_university_after_students_set_language(p_model_id
 
 COMMENT ON FUNCTION public.fn_acorn_university_after_students_set_language(p_model_id uuid, p_user_id uuid, p_language character varying) IS 'labels:
   en: Primary language 
+  ku: Zimanê sereke
+  ar: اللغة الأساسية
 order: 300
 conditions: |
   select count(*) from acorn_dbauth_user u
@@ -4402,12 +4462,12 @@ fields:
   p_language:
     type: dropdown
     placeholder: backend::lang.form.select
-    options:
-      1: Arabic
-      2: Kurdish
+    options: Acorn\User\Models\Language::dropdownOptions
     contexts: create
     comment:
       en: You can add more languages later on
+      ku: Hûn dikarin paşê zimanên din lê zêde bikin
+      ar: يمكنك إضافة المزيد من اللغات لاحقًا
 ';
 
 
@@ -4442,14 +4502,18 @@ ALTER FUNCTION public.fn_acorn_university_before_course_plans_prov(p_model_id uu
 
 COMMENT ON FUNCTION public.fn_acorn_university_before_course_plans_prov(p_model_id uuid, p_user_id uuid, p_enrollment_academic_year_id uuid, p_length integer, p_provision_missing_years boolean) IS 'labels:
   en: Provision missing years
+  ku: Salên winda yên dabînkirinê
+  ar: توفير سنوات مفقودة
 fields:
   p_provision_missing_years:
     contexts: create
-    comment-html: true
     default: true
     css-classes: col-xs-12
+    comment-html: true
     comment:
       en: Auto-Provision any missing academic years based on the <b>enrollment year</b>
+      ku: Pêşkêşkirina otomatîkî ya her salên akademîk ên winda li gorî <b>sala qeydkirinê</b>
+      ar: التزويد التلقائي لأي سنوات دراسية مفقودة استنادًا إلى سنة التسجيل
     tab-location: 3
 ';
 
@@ -4681,72 +4745,6 @@ $$;
 ALTER FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uuid) OWNER TO university;
 
 --
--- Name: fn_acorn_university_hierarchies_counts(uuid, integer, integer, boolean); Type: FUNCTION; Schema: public; Owner: university
---
-
-CREATE FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid DEFAULT NULL::uuid, p_nest_left integer DEFAULT NULL::integer, p_nest_depth integer DEFAULT NULL::integer, p_messages boolean DEFAULT false) RETURNS integer[]
-    LANGUAGE plpgsql
-    AS $$
-declare
-	p_record record;
-	p_counts integer[];
-	p_users_count int;
-	p_name character varying;
-	p_descendant_users_count int := 0;
-begin
-	-- AFTER INSERT, DELETE or UPDATE on acorn_user_user_group_version
-	-- Update the whole hierarchy for this academic year
-	-- recursing down from the ancestors and then updating our way back up
-
-	if p_id is null then
-		-- Special DEFAULT request to start at NULL top node
-		p_nest_left  := -1;
-		p_nest_depth := -1;
-	else
-		update acorn_university_hierarchies
-			set nest_left              = coalesce(p_nest_left, 0),
-				nest_depth             = coalesce(p_nest_depth, 0)
-			where id = p_id;
-	end if;
-
-	-- Get the descendant count for this group version
-	-- TODO: nest_left logic does not work yet. Needs to return the value
-	for p_record in select id, ROW_NUMBER() over()::int as rownumber
-		from acorn_university_hierarchies
-		where parent_id = p_id
-		or p_id is null and parent_id is null
-	loop
-		p_counts    := fn_acorn_university_hierarchies_counts(p_record.id, p_nest_left + 1, p_nest_depth + 1, p_messages);
-		p_descendant_users_count := p_descendant_users_count + coalesce(p_counts[1], 0);
-		p_nest_left := p_counts[2];
-	end loop;
-
-	update acorn_university_hierarchies
-		set descendant_users_count = p_descendant_users_count
-		where id = p_id;
-
-	-- Get the count for just this group version
-	select coalesce(count(*), 0) into p_users_count
-		from acorn_university_hierarchies hi
-		inner join acorn_user_user_group_version uugv on hi.user_group_version_id = uugv.user_group_version_id
-		where hi.id = p_id;
-
-	-- Report name and counts
-	select ugs.name into p_name 
-		from acorn_university_hierarchies hi
-		inner join acorn_user_user_group_versions ugv on hi.user_group_version_id = ugv.id
-		inner join acorn_user_user_groups ugs on ugv.user_group_id = ugs.id
-		where hi.id = p_id;
-	if p_messages then raise notice '% users, % descendants for %', p_users_count, p_descendant_users_count, p_name; end if;
-
-	return ARRAY[p_users_count + p_descendant_users_count, p_nest_left];
-end;
-$$;
-
-
-ALTER FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) OWNER TO university;
-
---
 -- Name: fn_acorn_university_hierarchies_create_version(); Type: FUNCTION; Schema: public; Owner: university
 --
 
@@ -4841,6 +4839,72 @@ $$;
 ALTER FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) OWNER TO university;
 
 --
+-- Name: fn_acorn_university_hierarchies_descendants_user_cnt(uuid, integer, integer, boolean); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_university_hierarchies_descendants_user_cnt(p_id uuid DEFAULT NULL::uuid, p_nest_left integer DEFAULT NULL::integer, p_nest_depth integer DEFAULT NULL::integer, p_messages boolean DEFAULT false) RETURNS integer[]
+    LANGUAGE plpgsql
+    AS $$
+declare
+	p_record record;
+	p_counts integer[];
+	p_users_count int;
+	p_name character varying;
+	p_descendant_users_count int := 0;
+begin
+	-- AFTER INSERT, DELETE or UPDATE on acorn_user_user_group_version
+	-- Update the whole hierarchy for this academic year
+	-- recursing down from the ancestors and then updating our way back up
+
+	if p_id is null then
+		-- Special DEFAULT request to start at NULL top node
+		p_nest_left  := -1;
+		p_nest_depth := -1;
+	else
+		update acorn_university_hierarchies
+			set nest_left              = coalesce(p_nest_left, 0),
+				nest_depth             = coalesce(p_nest_depth, 0)
+			where id = p_id;
+	end if;
+
+	-- Get the descendant count for this group version
+	-- TODO: nest_left logic does not work yet. Needs to return the value
+	for p_record in select id, ROW_NUMBER() over()::int as rownumber
+		from acorn_university_hierarchies
+		where parent_id = p_id
+		or p_id is null and parent_id is null
+	loop
+		p_counts    := fn_acorn_university_hierarchies_descendants_user_cnt(p_record.id, p_nest_left + 1, p_nest_depth + 1, p_messages);
+		p_descendant_users_count := p_descendant_users_count + coalesce(p_counts[1], 0);
+		p_nest_left := p_counts[2];
+	end loop;
+
+	update acorn_university_hierarchies
+		set descendant_users_count = p_descendant_users_count
+		where id = p_id;
+
+	-- Get the count for just this group version
+	select coalesce(count(*), 0) into p_users_count
+		from acorn_university_hierarchies hi
+		inner join acorn_user_user_group_version uugv on hi.user_group_version_id = uugv.user_group_version_id
+		where hi.id = p_id;
+
+	-- Report name and counts
+	select ugs.name into p_name 
+		from acorn_university_hierarchies hi
+		inner join acorn_user_user_group_versions ugv on hi.user_group_version_id = ugv.id
+		inner join acorn_user_user_groups ugs on ugv.user_group_id = ugs.id
+		where hi.id = p_id;
+	if p_messages then raise notice '% users, % descendants for %', p_users_count, p_descendant_users_count, p_name; end if;
+
+	return ARRAY[p_users_count + p_descendant_users_count, p_nest_left];
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_university_hierarchies_descendants_user_cnt(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) OWNER TO university;
+
+--
 -- Name: fn_acorn_university_hierarchies_descendants_user_cnts(); Type: FUNCTION; Schema: public; Owner: university
 --
 
@@ -4865,7 +4929,7 @@ begin
 		where hi.user_group_version_id = new.user_group_version_id
 	loop
 		raise notice '--- Begin Hierarchy updates to %', p_record.year_name;
-		perform fn_acorn_university_hierarchies_counts(p_record.id);
+		perform fn_acorn_university_hierarchies_descendants_user_cnt(p_record.id);
 		raise notice '--- Finished Hierarchy updates';
 	end loop;
 
@@ -4983,14 +5047,16 @@ begin
 		-- Update the nest_descendants of the new ascendants
 		-- to add this node
 		update acorn_university_hierarchies hi
-			set nest_descendants = fn_acorn_university_hierarchies_descendants(id)
-			where not array_position(new.nest_ascendants, id) is null;
+			set nest_descendants = fn_acorn_university_hierarchies_descendants(hi.id)
+			where not array_position(new.nest_ascendants, hi.id) is null
+			and not hi.id = new.id;
 
 		-- Update the nest_descendants of the old ascendants
 		-- to remove this node
 		update acorn_university_hierarchies hi
-			set nest_descendants = fn_acorn_university_hierarchies_descendants(id)
-			where not array_position(old.nest_ascendants, id) is null;
+			set nest_descendants = fn_acorn_university_hierarchies_descendants(hi.id)
+			where not array_position(old.nest_ascendants, hi.id) is null
+			and not hi.id = new.id;
 	end if;
 
 	if old.entity_id != new.entity_id then
@@ -11254,7 +11320,8 @@ labels-plural:
 -- Name: COLUMN acorn_university_hierarchies.entity_id; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_hierarchies.entity_id IS 'can-filter: false
+COMMENT ON COLUMN public.acorn_university_hierarchies.entity_id IS 'order: 20
+can-filter: false
 css-classes: 
   - col-md-3
 name-from: name_plus';
@@ -11264,7 +11331,8 @@ name-from: name_plus';
 -- Name: COLUMN acorn_university_hierarchies.academic_year_id; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_hierarchies.academic_year_id IS 'column-type: partial
+COMMENT ON COLUMN public.acorn_university_hierarchies.academic_year_id IS 'order: 10
+column-type: partial
 column-partial: current
 can-filter: false
 # Supress create-system
@@ -11280,7 +11348,16 @@ css-classes:
 -- Name: COLUMN acorn_university_hierarchies.parent_id; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_hierarchies.parent_id IS 'can-filter: false
+COMMENT ON COLUMN public.acorn_university_hierarchies.parent_id IS 'invisible: true
+labels:
+  en: Parent
+  ku: Dewûbav
+  ar: الوالد
+labels-plural:
+  en: Parents
+  ku: Dewûbavên
+  ar: آباء
+can-filter: false
 css-classes: 
   - new-row
   - col-md-3
@@ -11306,10 +11383,16 @@ COMMENT ON COLUMN public.acorn_university_hierarchies.updated_by_user_id IS 'can
 --
 
 COMMENT ON COLUMN public.acorn_university_hierarchies.description IS 'tab: acorn::lang.models.general.description
+invisible: true
 labels:
   en: Note
+  ku: Têbînî 
+  ar: ملحوظات
 labels-plural:
-  en: Notes';
+  en: Notes
+  ku: Têbînî 
+  ar: ملحوظات
+';
 
 
 --
@@ -11323,14 +11406,19 @@ COMMENT ON COLUMN public.acorn_university_hierarchies.user_group_version_id IS '
 -- Name: COLUMN acorn_university_hierarchies.descendant_users_count; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_hierarchies.descendant_users_count IS 'readOnly: true
+COMMENT ON COLUMN public.acorn_university_hierarchies.descendant_users_count IS 'order: 100
+readOnly: true
 columnPartial: count
 columnType: partial
 hidden: true
 labels:
   en: Descendant members
+  ku: Hejmara endamên nifş
+  ar: عدد الأعضاء المنحدرين
 labels-plural:
   en: Descendant members
+  ku: Hejmara endamên nifş
+  ar: عدد الأعضاء المنحدرين
 suffix: acorn.user::lang.models.user.label_plural
 ';
 
@@ -11340,7 +11428,8 @@ suffix: acorn.user::lang.models.user.label_plural
 --
 
 COMMENT ON COLUMN public.acorn_university_hierarchies.import_source IS 'advanced: true
-read-only: true';
+read-only: true
+invisible: true';
 
 
 --
@@ -11363,7 +11452,8 @@ field-exclude: true';
 -- Name: COLUMN acorn_university_hierarchies.leaf_table; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_hierarchies.leaf_table IS 'labels:
+COMMENT ON COLUMN public.acorn_university_hierarchies.leaf_table IS 'order: 30
+labels:
   en: Type
   ku: Cura
 labels-plural:
@@ -11378,28 +11468,53 @@ hidden: true
 -- Name: COLUMN acorn_university_hierarchies.default_semester_group_id; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_hierarchies.default_semester_group_id IS 'tab-location: 3';
+COMMENT ON COLUMN public.acorn_university_hierarchies.default_semester_group_id IS 'order: 1000
+tab-location: 3
+labels:
+  en: Default Semester Group
+  ku: Koma Qunaxê ya Xwerû
+  ar: المجموعة الفصلية الافتراضية
+labels-plural:
+  en: Default Semester Groups
+  ku: Koman Qunaxê ya Xwerû
+  ar: مجموعات الفصل الدراسي الافتراضية
+';
 
 
 --
 -- Name: COLUMN acorn_university_hierarchies.default_calendar_id; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_hierarchies.default_calendar_id IS 'tab-location: 3';
+COMMENT ON COLUMN public.acorn_university_hierarchies.default_calendar_id IS 'order: 1010
+tab-location: 3
+labels:
+  en: Default Calendar
+  ku: Salnamê Xwerû
+  ar: التقويم الافتراضي
+labels-plural:
+  en: Default Calendars
+  ku: Salnamên Xwerû
+  ar: التقويمات الافتراضية
+';
 
 
 --
 -- Name: COLUMN acorn_university_hierarchies.descendants_count; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_hierarchies.descendants_count IS 'readOnly: true
+COMMENT ON COLUMN public.acorn_university_hierarchies.descendants_count IS 'order: 70
+readOnly: true
 columnPartial: count
 columnType: partial
 hidden: true
 labels:
   en: Descendant Organisations
+  ku: Rêxistinên Neslan
+  ar: المنظمات المنحدرة
 labels-plural:
   en: Descendant Organisations
+  ku: Rêxistinên Neslan
+  ar: المنظمات المنحدرة
 suffix: acorn.user::lang.models.usergroup.label_plural';
 
 
@@ -11726,7 +11841,16 @@ ALTER TABLE public.acorn_university_lectures OWNER TO university;
 -- Name: TABLE acorn_university_lectures; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_university_lectures IS 'menu: false';
+COMMENT ON TABLE public.acorn_university_lectures IS 'menu: false
+labels:
+  en: Lecture
+  ku: Seminar
+  ar: ندوة
+labels-plural:
+  en: Lectures
+  ku: Seminarên
+  ar: الندوات
+';
 
 
 --
@@ -13496,8 +13620,12 @@ body-classes:
   - show-breadcrumb-title
 labels:
   en: Course Planner
+  ku: Plankerê Korsê
+  ar: مخطط الدورة
 labels-plural:
   en: Course Planners
+  ku: Plankerên Korsê
+  ar: مخططي الدورة
 action-links:
   full-screen:
     type: list
@@ -13639,11 +13767,11 @@ COMMENT ON TABLE public.acorn_university_course_specializations IS 'order: 62
 menu: false
 labels:
   en: Course specialization
-  ku: Kors tibetên
+  ku: Pisporiya qursê
   ar: مادة الفرع
 labels-plural:
   en: Course specializations
-  ku: Korsên tibetên
+  ku: Pisporiyan qursê
   ar: مواد الفرع
 no-relation-manager-default: true';
 
@@ -13740,9 +13868,11 @@ seeding:
 labels:
   en: Course Year
   ku: Salê Kors
+  ar: سنة الدورة
 labels-plural:
   en: Course Years
   ku: Salên Kors
+  ar: سنوات الدراسة
 
 ';
 
@@ -13956,9 +14086,11 @@ seeding:
 labels:
   en: Topic
   ku: Mijar
+  ar: عنوان
 labels-plural:
   en: Topics
-  ku: Mijarên';
+  ku: Mijarên
+  ar: المواضيع';
 
 
 --
@@ -13995,9 +14127,11 @@ seeding:
 labels:
   en: Material type
   ku: Cura material
+  ar: نوع المادة
 labels-plural:
   en: Material types
-  ku: Curên material';
+  ku: Curên material
+  ar: أنواع المواد';
 
 
 --
@@ -14090,9 +14224,11 @@ seeding:
 labels:
   en: Material
   ku: Material
+  ar: موضوع
 labels-plural:
   en: Materials
-  ku: Materials';
+  ku: Materials
+  ar: المواضيع';
 
 
 --
@@ -14238,10 +14374,12 @@ ALTER TABLE public.acorn_university_semester_groups OWNER TO university;
 COMMENT ON TABLE public.acorn_university_semester_groups IS 'order: 1010
 labels:
   en: Semester Group
-  ku: Gruba Werzê
+  ku: Gruba Qunax
+  ar: مجموعة الفصل الدراسي
 labels-plural:
   en: Semester Groups
-  ku: Gubên Werzê';
+  ku: Gubên Qunaxên
+  ar: مجموعات الفصل الدراسي';
 
 
 --
@@ -14284,10 +14422,12 @@ seeding:
   - [''6212587e-2b47-11f0-b854-631a30042bb5'', ''Semester 3'', NULL, 1]
 labels:
   en: Semester
-  ku: Werzê
+  ku: Qunax
+  ar: الفصل الدراسي
 labels-plural:
   en: Semesters
-  ku: Werzên';
+  ku: Qunaxên
+  ar: الفصول الدراسية';
 
 
 --
@@ -14506,11 +14646,11 @@ ALTER TABLE public.acorn_university_student_notes OWNER TO university;
 COMMENT ON TABLE public.acorn_university_student_notes IS 'menu: false
 labels:
   en: Notes
-  ku: Notên
+  ku: Têbînî
   ar: ملحوظة
 labels-plural:
   en: Notes
-  ku: Notên
+  ku: Têbînî
   ar: ملحوظة
 ';
 
@@ -15266,6 +15406,22 @@ UNION ALL
     acorn_university_student_types.updated_at AS datetime
    FROM public.acorn_university_student_types
 UNION ALL
+ SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
+    acorn_exam_interview_students.id AS model_id,
+    'acorn_exam_interview_students'::text AS "table",
+    NULL::text AS name,
+    0 AS update,
+    acorn_exam_interview_students.created_at AS datetime
+   FROM public.acorn_exam_interview_students
+UNION ALL
+ SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
+    acorn_exam_interview_students.id AS model_id,
+    'acorn_exam_interview_students'::text AS "table",
+    NULL::text AS name,
+    1 AS update,
+    acorn_exam_interview_students.updated_at AS datetime
+   FROM public.acorn_exam_interview_students
+UNION ALL
  SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
     acorn_university_course_plans.id AS model_id,
     'acorn_university_course_plans'::text AS "table",
@@ -15282,21 +15438,21 @@ UNION ALL
     acorn_university_course_plans.updated_at AS datetime
    FROM public.acorn_university_course_plans
 UNION ALL
- SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
-    acorn_exam_interview_students.id AS model_id,
-    'acorn_exam_interview_students'::text AS "table",
+ SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
+    acorn_exam_exam_materials.id AS model_id,
+    'acorn_exam_exam_materials'::text AS "table",
     NULL::text AS name,
     0 AS update,
-    acorn_exam_interview_students.created_at AS datetime
-   FROM public.acorn_exam_interview_students
+    acorn_exam_exam_materials.created_at AS datetime
+   FROM public.acorn_exam_exam_materials
 UNION ALL
- SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
-    acorn_exam_interview_students.id AS model_id,
-    'acorn_exam_interview_students'::text AS "table",
+ SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
+    acorn_exam_exam_materials.id AS model_id,
+    'acorn_exam_exam_materials'::text AS "table",
     NULL::text AS name,
     1 AS update,
-    acorn_exam_interview_students.updated_at AS datetime
-   FROM public.acorn_exam_interview_students
+    acorn_exam_exam_materials.updated_at AS datetime
+   FROM public.acorn_exam_exam_materials
 UNION ALL
  SELECT 'Acorn\University\Models\Project'::text AS model_type,
     acorn_university_projects.id AS model_id,
@@ -15329,22 +15485,6 @@ UNION ALL
     1 AS update,
     acorn_university_lectures.updated_at AS datetime
    FROM public.acorn_university_lectures
-UNION ALL
- SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
-    acorn_exam_exam_materials.id AS model_id,
-    'acorn_exam_exam_materials'::text AS "table",
-    NULL::text AS name,
-    0 AS update,
-    acorn_exam_exam_materials.created_at AS datetime
-   FROM public.acorn_exam_exam_materials
-UNION ALL
- SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
-    acorn_exam_exam_materials.id AS model_id,
-    'acorn_exam_exam_materials'::text AS "table",
-    NULL::text AS name,
-    1 AS update,
-    acorn_exam_exam_materials.updated_at AS datetime
-   FROM public.acorn_exam_exam_materials
 UNION ALL
  SELECT 'Acorn\Exam\Models\ScoreName'::text AS model_type,
     acorn_exam_score_names.id AS model_id,
@@ -16471,6 +16611,20 @@ UNION ALL
     acorn_university_student_types.updated_by_user_id AS by
    FROM public.acorn_university_student_types
 UNION ALL
+ SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
+    acorn_exam_interview_students.id AS model_id,
+    'acorn_exam_interview_students'::text AS "table",
+    0 AS update,
+    acorn_exam_interview_students.created_by_user_id AS by
+   FROM public.acorn_exam_interview_students
+UNION ALL
+ SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
+    acorn_exam_interview_students.id AS model_id,
+    'acorn_exam_interview_students'::text AS "table",
+    1 AS update,
+    acorn_exam_interview_students.updated_by_user_id AS by
+   FROM public.acorn_exam_interview_students
+UNION ALL
  SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
     acorn_university_course_plans.id AS model_id,
     'acorn_university_course_plans'::text AS "table",
@@ -16485,19 +16639,19 @@ UNION ALL
     acorn_university_course_plans.updated_by_user_id AS by
    FROM public.acorn_university_course_plans
 UNION ALL
- SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
-    acorn_exam_interview_students.id AS model_id,
-    'acorn_exam_interview_students'::text AS "table",
+ SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
+    acorn_exam_exam_materials.id AS model_id,
+    'acorn_exam_exam_materials'::text AS "table",
     0 AS update,
-    acorn_exam_interview_students.created_by_user_id AS by
-   FROM public.acorn_exam_interview_students
+    acorn_exam_exam_materials.created_by_user_id AS by
+   FROM public.acorn_exam_exam_materials
 UNION ALL
- SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
-    acorn_exam_interview_students.id AS model_id,
-    'acorn_exam_interview_students'::text AS "table",
+ SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
+    acorn_exam_exam_materials.id AS model_id,
+    'acorn_exam_exam_materials'::text AS "table",
     1 AS update,
-    acorn_exam_interview_students.updated_by_user_id AS by
-   FROM public.acorn_exam_interview_students
+    acorn_exam_exam_materials.updated_by_user_id AS by
+   FROM public.acorn_exam_exam_materials
 UNION ALL
  SELECT 'Acorn\University\Models\Project'::text AS model_type,
     acorn_university_projects.id AS model_id,
@@ -16526,20 +16680,6 @@ UNION ALL
     1 AS update,
     acorn_university_lectures.updated_by_user_id AS by
    FROM public.acorn_university_lectures
-UNION ALL
- SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
-    acorn_exam_exam_materials.id AS model_id,
-    'acorn_exam_exam_materials'::text AS "table",
-    0 AS update,
-    acorn_exam_exam_materials.created_by_user_id AS by
-   FROM public.acorn_exam_exam_materials
-UNION ALL
- SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
-    acorn_exam_exam_materials.id AS model_id,
-    'acorn_exam_exam_materials'::text AS "table",
-    1 AS update,
-    acorn_exam_exam_materials.updated_by_user_id AS by
-   FROM public.acorn_exam_exam_materials
 UNION ALL
  SELECT 'Acorn\Exam\Models\ScoreName'::text AS model_type,
     acorn_exam_score_names.id AS model_id,
@@ -16949,6 +17089,14 @@ ALTER TABLE public.acorn_university_course_year_semesters OWNER TO university;
 --
 
 COMMENT ON TABLE public.acorn_university_course_year_semesters IS 'no-relation-manager-default: true
+labels:
+  en: Course Year Semester
+  ku: Salê Dersê Semester
+  ar: الدورة السنة الفصل الدراسي
+labels-plural:
+  en: Course Year Semesters
+  ku: Salê Dersê Semesterên
+  ar: السنة الدراسية الفصول الدراسية
 ';
 
 
@@ -20391,9 +20539,11 @@ ALTER TABLE public.acorn_university_course_language OWNER TO university;
 COMMENT ON TABLE public.acorn_university_course_language IS 'labels:
   en: Course language
   ku: Zimane Kors
+  ar: لغة الدورة
 labels-plural:
   en: Course languages
-  ku: Zimanên kors';
+  ku: Zimanên kors
+  ar: لغات الدورة';
 
 
 --
@@ -20418,9 +20568,11 @@ COMMENT ON TABLE public.acorn_university_departments IS 'order: 50
 labels:
   en: Department
   ku: Bêş
+  ar: قسم
 labels-plural:
   en: Departments
-  ku: Bêşên';
+  ku: Bêşên
+  ar: الأقسام';
 
 
 --
@@ -20472,9 +20624,11 @@ COMMENT ON TABLE public.acorn_university_education_authorities IS 'order: 10
 labels:
   en: Education Committee
   ku: Desteya Perwede
+  ar: لجنة التعليم
 labels-plural:
   en: Education Committees
-  ku: Desteyên Perwede';
+  ku: Desteyên Perwede
+  ar: لجان التعليم';
 
 
 --
@@ -20513,9 +20667,11 @@ COMMENT ON TABLE public.acorn_university_faculties IS 'order: 40
 labels:
   en: Faculty
   ku: Fakultî
+  ar: كلية
 labels-plural:
   en: Faculties
-  ku: Fakultîyên';
+  ku: Fakultîyên
+  ar: الكليات';
 
 
 --
@@ -22351,6 +22507,173 @@ COMMENT ON COLUMN public.acorn_university_legacy_updates.national_id IS 'columnC
 
 
 --
+-- Name: acorn_university_olapcube; Type: MATERIALIZED VIEW; Schema: public; Owner: university
+--
+
+CREATE MATERIALIZED VIEW public.acorn_university_olapcube AS
+ SELECT s.id,
+    s.id AS student_id,
+    (((u.name)::text || ' '::text) || (u.surname)::text) AS student_name,
+    cys.course_id,
+    ugs_c.name AS course_name,
+    ays.academic_year_id,
+    ay.name AS academic_year_name,
+    ays.semester_id,
+    sem.name AS semester_name,
+    cys.course_year_id,
+    cy.name AS course_year_name,
+    cm.material_id,
+    m.name AS material_name,
+    c_s.course_type_id,
+    ct.name AS course_type_name,
+    u.ethnicity_id,
+    COALESCE(eth.name, '-'::character varying) AS ethnicity_name,
+    u.religion_id,
+    COALESCE(rel.name, '-'::character varying) AS religion_name,
+    ss.student_status_id,
+    COALESCE(sts.name, '-'::character varying) AS student_status_name
+   FROM ((((((((((((((((((public.acorn_university_students s
+     JOIN public.acorn_user_users u ON ((s.user_id = u.id)))
+     JOIN public.acorn_user_user_group_version ugv ON ((u.id = ugv.user_id)))
+     JOIN public.acorn_university_hierarchies hi_s ON ((hi_s.user_group_version_id = ugv.user_group_version_id)))
+     JOIN public.acorn_university_entities en_c ON ((en_c.id = hi_s.entity_id)))
+     JOIN public.acorn_university_course_year_semesters cys ON ((cys.entity_id = en_c.id)))
+     JOIN public.acorn_university_courses c_s ON ((cys.course_id = c_s.id)))
+     JOIN public.acorn_user_user_groups ugs_c ON ((ugs_c.id = en_c.user_group_id)))
+     JOIN public.acorn_university_academic_year_semesters ays ON ((ays.id = cys.academic_year_semester_id)))
+     JOIN public.acorn_university_academic_years ay ON ((ays.academic_year_id = ay.id)))
+     JOIN public.acorn_university_semesters sem ON ((ays.semester_id = sem.id)))
+     JOIN public.acorn_university_course_years cy ON ((cy.id = cys.course_year_id)))
+     JOIN public.acorn_university_course_materials cm ON ((cm.course_year_semester_id = cys.id)))
+     JOIN public.acorn_university_materials m ON ((cm.material_id = m.id)))
+     LEFT JOIN public.acorn_university_course_types ct ON ((c_s.course_type_id = ct.id)))
+     LEFT JOIN public.acorn_user_ethnicities eth ON ((u.ethnicity_id = eth.id)))
+     LEFT JOIN public.acorn_user_religions rel ON ((u.religion_id = rel.id)))
+     LEFT JOIN public.acorn_university_student_status ss ON ((ss.student_id = s.id)))
+     LEFT JOIN public.acorn_university_student_statuses sts ON ((ss.student_status_id = sts.id)))
+  WITH NO DATA;
+
+
+ALTER MATERIALIZED VIEW public.acorn_university_olapcube OWNER TO university;
+
+--
+-- Name: MATERIALIZED VIEW acorn_university_olapcube; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON MATERIALIZED VIEW public.acorn_university_olapcube IS 'menu: false';
+
+
+--
+-- Name: COLUMN acorn_university_olapcube.student_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_olapcube.student_id IS 'extra-foreign-key: 
+  table: acorn_university_students
+  comment:
+    field-exclude: true
+    column-exclude: true';
+
+
+--
+-- Name: COLUMN acorn_university_olapcube.course_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_olapcube.course_id IS 'extra-foreign-key: 
+  table: acorn_university_courses
+  comment:
+    field-exclude: true
+    column-exclude: true';
+
+
+--
+-- Name: COLUMN acorn_university_olapcube.academic_year_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_olapcube.academic_year_id IS 'extra-foreign-key: 
+  table: acorn_university_academic_years
+  comment:
+    field-exclude: true
+    column-exclude: true';
+
+
+--
+-- Name: COLUMN acorn_university_olapcube.semester_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_olapcube.semester_id IS 'extra-foreign-key: 
+  table: acorn_university_semesters
+  comment:
+    field-exclude: true
+    column-exclude: true';
+
+
+--
+-- Name: COLUMN acorn_university_olapcube.course_year_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_olapcube.course_year_id IS 'extra-foreign-key: 
+  table: acorn_university_course_years
+  comment:
+    field-exclude: true
+    column-exclude: true';
+
+
+--
+-- Name: COLUMN acorn_university_olapcube.material_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_olapcube.material_id IS 'extra-foreign-key: 
+  table: acorn_university_materials
+  comment:
+    field-exclude: true
+    column-exclude: true';
+
+
+--
+-- Name: COLUMN acorn_university_olapcube.course_type_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_olapcube.course_type_id IS 'extra-foreign-key: 
+  table: acorn_university_course_types
+  comment:
+    field-exclude: true
+    column-exclude: true';
+
+
+--
+-- Name: COLUMN acorn_university_olapcube.ethnicity_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_olapcube.ethnicity_id IS 'extra-foreign-key: 
+  table: acorn_user_ethnicities
+  comment:
+    field-exclude: true
+    column-exclude: true';
+
+
+--
+-- Name: COLUMN acorn_university_olapcube.religion_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_olapcube.religion_id IS 'extra-foreign-key: 
+  table: acorn_user_religions
+  comment:
+    field-exclude: true
+    column-exclude: true';
+
+
+--
+-- Name: COLUMN acorn_university_olapcube.student_status_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_olapcube.student_status_id IS 'extra-foreign-key: 
+  table: acorn_university_student_statuses
+  comment:
+    field-exclude: true
+    column-exclude: true';
+
+
+--
 -- Name: acorn_university_schools; Type: TABLE; Schema: public; Owner: university
 --
 
@@ -22598,6 +22921,20 @@ CREATE TABLE public.acorn_university_student_type (
 
 
 ALTER TABLE public.acorn_university_student_type OWNER TO university;
+
+--
+-- Name: TABLE acorn_university_student_type; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON TABLE public.acorn_university_student_type IS 'labels:
+  en: Type
+  ku: Cura
+  ar: يكتب
+labels-plural:
+  en: Types
+  ku: Curên
+  ar: أنواع';
+
 
 --
 -- Name: acorn_university_teachers; Type: TABLE; Schema: public; Owner: university
@@ -29810,14 +30147,6 @@ invisible: true';
 
 
 --
--- Name: acorn_university_hierarchies calendar_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_hierarchies
-    ADD CONSTRAINT calendar_id FOREIGN KEY (default_calendar_id) REFERENCES public.acorn_calendar_calendars(id) ON DELETE SET NULL NOT VALID;
-
-
---
 -- Name: acorn_enrollment_desires course_entry_requirements_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -29844,7 +30173,9 @@ ALTER TABLE ONLY public.acorn_enrollment_courses
 -- Name: CONSTRAINT course_hierarchy_id ON acorn_enrollment_courses; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT course_hierarchy_id ON public.acorn_enrollment_courses IS 'name-object: true';
+COMMENT ON CONSTRAINT course_hierarchy_id ON public.acorn_enrollment_courses IS 'name-object: true
+field-exclude: true
+column-exclude: true';
 
 
 --
@@ -30610,6 +30941,52 @@ ALTER TABLE ONLY public.acorn_university_semester_groups
 
 
 --
+-- Name: acorn_university_hierarchies default_calendar_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_hierarchies
+    ADD CONSTRAINT default_calendar_id FOREIGN KEY (default_calendar_id) REFERENCES public.acorn_calendar_calendars(id) ON DELETE SET NULL NOT VALID;
+
+
+--
+-- Name: CONSTRAINT default_calendar_id ON acorn_university_hierarchies; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT default_calendar_id ON public.acorn_university_hierarchies IS 'labels:
+  en: Default Calendar
+  ku: Salnamê Xwerû
+  ar: التقويم الافتراضي
+labels-plural:
+  en: Default Calendars
+  ku: Salnamên Xwerû
+  ar: التقويمات الافتراضية
+';
+
+
+--
+-- Name: acorn_university_hierarchies default_semester_group_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_hierarchies
+    ADD CONSTRAINT default_semester_group_id FOREIGN KEY (default_semester_group_id) REFERENCES public.acorn_university_semester_groups(id) ON DELETE SET NULL NOT VALID;
+
+
+--
+-- Name: CONSTRAINT default_semester_group_id ON acorn_university_hierarchies; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT default_semester_group_id ON public.acorn_university_hierarchies IS 'labels:
+  en: Default Semester Group
+  ku: Koma Qunaxê ya Xwerû
+  ar: المجموعة الفصلية الافتراضية
+labels-plural:
+  en: Default Semester Groups
+  ku: Koman Qunaxê ya Xwerû
+  ar: مجموعات الفصل الدراسي الافتراضية
+';
+
+
+--
 -- Name: acorn_university_student_documents document_type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -30994,7 +31371,35 @@ labels:
   ku: Teklî
 labels-plural:
   en: Relationships
-  ku: Teklîyên';
+  ku: Teklîyên
+has-many-deep-settings:
+  entity_university_hierarchies__entity:
+    field-exclude: true
+    column-exclude: true
+  entity_university_hierarchies__entity_user_group_version_users:
+    field-exclude: true
+    column-exclude: true
+  entity_university_hierarchies__entity_user_group_version_users_count:
+    field-exclude: true
+    column-exclude: true
+fields-settings:
+  entity_user_users__global_scope_entity:
+    labels: 
+      en: Global Scope Members
+      ku: Endamên Qada Gerdûnî
+      ar: أعضاء النطاق العالمي
+    advanced: true
+  entity_university_hierarchies__entity:
+    hidden: true
+    invisible: true
+  entity_university_hierarchies__entity_user_group_version_users:
+    hidden: true
+  entity_university_hierarchies__entity_user_group_version_users_count:
+    invisible: true
+  name:
+    invisible: true
+  code:
+    invisible: true';
 
 
 --
@@ -31009,7 +31414,8 @@ ALTER TABLE ONLY public.acorn_university_student_codes
 -- Name: CONSTRAINT entity_id ON acorn_university_student_codes; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT entity_id ON public.acorn_university_student_codes IS 'field-exclude: true';
+COMMENT ON CONSTRAINT entity_id ON public.acorn_university_student_codes IS 'field-exclude: true
+column-exclude: true';
 
 
 --
@@ -31354,6 +31760,13 @@ ALTER TABLE ONLY public.acorn_university_hierarchy_event
 
 
 --
+-- Name: CONSTRAINT hierarchy_id ON acorn_university_hierarchy_event; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT hierarchy_id ON public.acorn_university_hierarchy_event IS 'invisible: true';
+
+
+--
 -- Name: acorn_university_student_identities identity_type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -31525,7 +31938,8 @@ ALTER TABLE ONLY public.acorn_exam_calculations
 -- Name: CONSTRAINT owner_entity_id ON acorn_exam_calculations; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT owner_entity_id ON public.acorn_exam_calculations IS 'field-exclude: true';
+COMMENT ON CONSTRAINT owner_entity_id ON public.acorn_exam_calculations IS 'field-exclude: true
+column-exclude: true';
 
 
 --
@@ -31612,12 +32026,19 @@ multi:
 labels:
   en: Child relation
   ku: Zarok Têkliy 
+  ar: أطفال
 labels-plural:
   en: Child relations
   ku: Zarok Têkliyên
+  ar: أطفال
 tab-location: 3
 read-only: true
-show-search: false';
+show-search: false
+fields-settings:
+  university_hierarchies__parent:
+    # Children
+    hidden: true
+';
 
 
 --
@@ -31771,14 +32192,6 @@ ALTER TABLE ONLY public.acorn_exam_questions
 
 ALTER TABLE ONLY public.acorn_university_semesters
     ADD CONSTRAINT semester_group_id FOREIGN KEY (semester_group_id) REFERENCES public.acorn_university_semester_groups(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: acorn_university_hierarchies semester_group_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_hierarchies
-    ADD CONSTRAINT semester_group_id FOREIGN KEY (default_semester_group_id) REFERENCES public.acorn_university_semester_groups(id) ON DELETE SET NULL NOT VALID;
 
 
 --
@@ -33089,19 +33502,24 @@ COMMENT ON CONSTRAINT user_group_version_id ON public.acorn_university_hierarchi
       - link
       - unlink
     labels:
-      en: Student
-      ku: Xwendekar
+      en: Member
+      ku: Endam
+      ar: عضو
     labels-plural:
-      en: Students
-      ku: Xwendekarên
+      en: Members
+      ku: Endamên
+      ar: أعضاء
   user_group_version_users_count:
+    order: 90
     suffix: acorn.user::lang.models.user.label_plural
     labels:
       en: Member Count
-      ku: Çend Xwendekar
+      ku: Çend Endamên
+      ar: عدد الأعضاء
     labels-plural:
       en: Member Counts
-      ku: Çend Xwendekarên
+      ku: Çend Endamên
+      ar: عدد الأعضاء
 fields-settings-to:
   parent_1[entity]:
     label: acorn.university::lang.models.course.parent_1[entity]
@@ -33113,6 +33531,9 @@ fields-settings-to:
     type: partial
     path: parent
     relation: hierarchy
+fields-settings:
+  user_group_version_users:
+    hidden: true
 ';
 
 
@@ -34416,15 +34837,6 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_ascendants(p_id uui
 
 
 --
--- Name: FUNCTION fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean); Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO token_1 WITH GRANT OPTION;
-GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO token_5;
-GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_counts(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO sz WITH GRANT OPTION;
-
-
---
 -- Name: FUNCTION fn_acorn_university_hierarchies_create_version(); Type: ACL; Schema: public; Owner: university
 --
 
@@ -34449,6 +34861,15 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_delete_version() TO
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants(p_id uuid) TO sz WITH GRANT OPTION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_hierarchies_descendants_user_cnt(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_user_cnt(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO token_1 WITH GRANT OPTION;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_user_cnt(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO token_5;
+GRANT ALL ON FUNCTION public.fn_acorn_university_hierarchies_descendants_user_cnt(p_id uuid, p_nest_left integer, p_nest_depth integer, p_messages boolean) TO sz WITH GRANT OPTION;
 
 
 --
@@ -37500,5 +37921,5 @@ GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_5;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict TghnK73JyePOPur5Ggfu8tXWQc8nIJufaGG3jKHBM5cWXB97f7bn9aBEOCRtXGx
+\unrestrict SGqaasl4JOli9qsSo3TMJrRdj2Xj3tebbGcvcThvIk8Y32efBOMW1iDonPwJAFc
 

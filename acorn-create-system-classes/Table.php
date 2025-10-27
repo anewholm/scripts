@@ -94,7 +94,7 @@ class Table {
 
     public $filters = array();
     public $listRecordUrl;
-    public $showColumnActions;
+    public $visibleColumnActions;
     public $noRelationManagerDefault;
     public $canFilterDefault;
 

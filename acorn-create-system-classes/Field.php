@@ -70,6 +70,8 @@ class Field {
     public $recordUrl; // Relevant for relation managers only
     public $span;
     public $cssClasses;
+    // TODO: Move this assumed col-xs-6 to a later on default
+    // because all properties should be initially NULL for overridding
     public $bootstraps   = array('xs' => 6);
     public $popupClasses;
     public $nameFrom;

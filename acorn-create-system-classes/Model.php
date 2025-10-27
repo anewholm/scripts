@@ -82,7 +82,7 @@ class Model {
     public $import;
     public $export;
     public $batchPrint;
-    public $showColumnActions;
+    public $visibleColumnActions;
     public $noRelationManagerDefault;
     public $canFilterDefault;
     public $labelsFrom = array(); // Inherit labels from another table. Useful for views
@@ -2130,7 +2130,7 @@ class Model {
         ) {
             $fields['translations'] = new PseudoField($this, array(
                 'name'             => 'translations',
-                'explicitLabelKey' => 'winter.translate::lang.plugin.tab',
+                'explicitLabelKey' => 'acorn::lang.models.general.translations',
                 // Field
                 'fieldType'   => 'partial',
                 'partial'     => 'translations',
@@ -2152,6 +2152,7 @@ class Model {
         // TODO: Move to QRCode FormField when available
         $fields['_qrcode'] = new PseudoField($this, array(
             'name'        => '_qrcode',
+            'explicitLabelKey' => 'acorn::lang.models.general.qrcode',
             'isStandard'  => TRUE,
             'fieldType'   => 'partial',
             'contexts'    => array('update' => TRUE, 'preview' => TRUE),
@@ -2173,15 +2174,19 @@ class Model {
 
         // ---------------------------------------------------------------- Actions
         // These also appear in columns.yaml
-        $fields['_actions'] = new PseudoField($this, array(
-            'name'          => '_actions',
-            'hidden'        => TRUE,
-            'columnType'    => 'partial',
-            'columnPartial' => 'actions',
-            'sortable'      => FALSE,
-            'searchable'    => FALSE,
-            'invisible'     => ($this->showColumnActions ? FALSE : TRUE),
-        ));
+        if ($this->allActionFunctions()) {
+            $fields['_actions'] = new PseudoField($this, array(
+                'name'          => '_actions',
+                'explicitLabelKey' => 'acorn::lang.models.general.actions',
+                'fieldType'     => FALSE,
+                'columnType'    => 'partial',
+                'columnPartial' => 'actions',
+                'sortable'      => FALSE,
+                'searchable'    => FALSE,
+                // Defaults to visible
+                'invisible'     => ($this->visibleColumnActions === FALSE),
+            ));
+        }
 
         // ------------------------------------------------------------- Debug / Checks
         $relations = $this->relations();
@@ -2298,6 +2303,18 @@ HTML;
         }
 
         return $fields;
+    }
+
+    public function allActionFunctions(): array
+    {
+        $actionFunctions = $this->actionFunctions;
+
+        foreach ($this->relations1to1() as $relation) {
+            if (method_exists($relation->to, 'allActionFunctions'))
+                $actionFunctions = array_merge($actionFunctions, $relation->to->allActionFunctions());
+        }
+
+        return $actionFunctions;
     }
 
     public function nameFromPath(bool $fullyQualifiedName = FALSE): string|NULL
