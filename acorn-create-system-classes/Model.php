@@ -2277,7 +2277,7 @@ class Model {
                 $dbComment  = str_replace(" ", '&nbsp;', $field->comment); // Prevent YAML indentation normalization
 
                 if (!$field->fromYaml) { // Let's not overwrite YAML comments
-                    $field->fieldComment .= <<<HTML
+                    $field->fieldDebug = <<<HTML
                         <div class='debug debug-field'>
                             <div class="title">$name</div>
                             $field->debugComment

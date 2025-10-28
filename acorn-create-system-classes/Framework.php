@@ -71,8 +71,13 @@ class Framework
             'distance' => 'Distance',
             'parent'   => 'Parent',
             'current' => 'Current',
+            'enabled' => 'Enabled',
             'primary' => 'Primary',
             'translation' => 'Translation',
+            'sort_order' => 'Order',
+            'ordinal' => 'Ordinal',
+            'minimum' => 'Minimum',
+            'maximum' => 'Maximum',
 
             // Menus
             'actions' => 'Actions',
@@ -122,8 +127,13 @@ class Framework
             'distance' => 'المسافة',
             'parent' => 'محتوى المنطقة',
             'current' => 'الحالي',
+            'enabled' => 'مُمَكَّن',
             'primary' => 'اساسي',
             'translation' => 'الترجمة',
+            'sort_order' => 'ترتيب الفرز',
+            'ordinal' => 'ترتيبي',
+            'minimum' => 'الحد الأدنى',
+            'maximum' => 'الحد الأقصى',
 
             // Menus
             'actions' => 'النشاط',
@@ -173,8 +183,13 @@ class Framework
             'distance' => 'Dûrî',
             'parent'   => 'Pêşî',
             'current' => 'Vêga',
+            'enabled' => 'Çalakkirî',
             'primary' => 'Bingehîn',
             'translation' => 'Werger',
+            'sort_order' => 'Rêza',
+            'ordinal' => 'Rêz',
+            'minimum' => 'Herî kêm',
+            'maximum' => 'Herî zêde',
 
             // Menus
             'actions' => 'Çalakîyên',

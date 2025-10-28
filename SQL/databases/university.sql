@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict SGqaasl4JOli9qsSo3TMJrRdj2Xj3tebbGcvcThvIk8Y32efBOMW1iDonPwJAFc
+\restrict 6Oa8bFPWlLpYwJM43TSSopPaWu9scslvtHvQDnd1Qqs8bLxBBYUHdjymhZ6Hau1
 
 -- Dumped from database version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
 -- Dumped by pg_dump version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
@@ -1274,7 +1274,6 @@ DROP FUNCTION IF EXISTS public.fn_acorn_exam_explain(p_expr character varying, p
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_eval(p_expr character varying, p_level integer, p_messages boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_concat_strict(VARIADIC p_args anyarray);
 DROP FUNCTION IF EXISTS public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean);
-DROP FUNCTION IF EXISTS public.fn_acorn_exam_action_certificates_clear_printed(model_id uuid, user_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_enrollment_score_first(p_enrollment_id uuid, p_user_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_enrollment_enrollments_state_indicator(p_enrollment record);
 DROP FUNCTION IF EXISTS public.fn_acorn_enrollment_desires_ordinal();
@@ -1902,8 +1901,12 @@ ALTER FUNCTION public.fn_acorn_enrollment_action_enrollments_add_cs_hi(p_model_i
 
 COMMENT ON FUNCTION public.fn_acorn_enrollment_action_enrollments_add_cs_hi(p_model_id uuid, p_user_id uuid, p_ancestor_hierarchy_id uuid, p_define_entry_requirements boolean, p_related_course_id uuid, p_related_exam_id uuid, p_required_interview_id uuid, p_minimum_students integer, p_maximum_students integer, p_minimum_entry_score double precision) IS 'labels:
   en: Add multiple courses
+  ku: Gelek qursan lê zêde bike
+  ar: إضافة دورات متعددة
 comment:
   en: Add all courses available in an organisation. Plus optional entry settings
+  ku: Hemû qursên berdest di rêxistinekê de lê zêde bike. Digel mîhengên têketinê yên bijarte
+  ar: أضف جميع الدورات المتاحة في المؤسسة، بالإضافة إلى إعدادات إدخال اختيارية.
 condition: not exists(select * from acorn_enrollment_students es where not es.proposed_desire_id is null and es.enrollment_id = acorn_enrollment_enrollments.id and not manual_proposed) and acorn_enrollment_enrollments.applied_at is null
 result-action: refresh
 fields:
@@ -1991,8 +1994,12 @@ ALTER FUNCTION public.fn_acorn_enrollment_action_enrollments_add_st_hi(p_model_i
 
 COMMENT ON FUNCTION public.fn_acorn_enrollment_action_enrollments_add_st_hi(p_model_id uuid, p_user_id uuid, p_hierarchy_id uuid) IS 'labels:
   en: Add multiple students
+  ku: Çend xwendekaran lê zêde bike
+  ar: إضافة عدة طلاب
 comment:
   en: Add all students from any organisation or single course
+  ku: Hemû xwendekarên ji her rêxistinekê an jî ji her qursekê lê zêde bike
+  ar: أضف جميع الطلاب من أي منظمة أو دورة واحدة
 condition: not exists(select * from acorn_enrollment_students es where not es.proposed_desire_id is null and es.enrollment_id = acorn_enrollment_enrollments.id and not manual_proposed) and acorn_enrollment_enrollments.applied_at is null
 result-action: refresh
 fields:
@@ -2054,9 +2061,13 @@ ALTER FUNCTION public.fn_acorn_enrollment_action_enrollments_apply(p_model_id uu
 
 COMMENT ON FUNCTION public.fn_acorn_enrollment_action_enrollments_apply(p_model_id uuid, p_user_id uuid, p_confirm boolean) IS 'labels:
   en: Apply
+  ku: Bikaranîn
+  ar: يتقدم
 result-action: refresh
 comment:
   en: This will carry out the proposed allocations, adding students on to courses. This action cannot be reversed.
+  ku: Ev ê dabeşkirinên pêşniyarkirî pêk bîne, xwendekaran li dersan zêde bike. Ev çalakî nayê vegerandin.
+  ar: سيؤدي هذا إلى تنفيذ التخصيصات المقترحة، وإضافة الطلاب إلى المقررات الدراسية. لا يمكن التراجع عن هذا الإجراء.
 condition: ''exists(select * from acorn_enrollment_students es where not es.proposed_desire_id is null and es.enrollment_id = acorn_enrollment_enrollments.id) and acorn_enrollment_enrollments.applied_at is null''';
 
 
@@ -2097,8 +2108,12 @@ ALTER FUNCTION public.fn_acorn_enrollment_action_enrollments_reset(p_model_id uu
 
 COMMENT ON FUNCTION public.fn_acorn_enrollment_action_enrollments_reset(p_model_id uuid, p_user_id uuid, p_confirm boolean, p_clear_manually_added_students boolean) IS 'labels:
   en: Reset
+  ku: Vegerandin
+  ar: إعادة ضبط
 comment:
-  en: This remove ALL students and courses from the enrollment
+  en: This will remove ALL students and courses from the enrollment
+  ku: Ev ê HEMÛ xwendekar û qursan ji qeydkirinê derxîne
+  ar: سيؤدي هذا إلى إزالة جميع الطلاب والدورات من التسجيل
 condition: ''exists(select * from acorn_enrollment_students es where es.enrollment_id = acorn_enrollment_enrollments.id) and acorn_enrollment_enrollments.applied_at is null''';
 
 
@@ -2141,8 +2156,13 @@ ALTER FUNCTION public.fn_acorn_enrollment_action_enrollments_rollback(p_model_id
 
 COMMENT ON FUNCTION public.fn_acorn_enrollment_action_enrollments_rollback(p_model_id uuid, p_user_id uuid, p_confirm boolean, p_clear_manual_proposals boolean) IS 'labels:
   en: Clear Proposals
+  ku: Pêşniyarên Zelal
+  ar: مقترحات واضحة
 labels-plural:
-  en: Clear Proposals';
+  en: Clear Proposals
+  ku: Pêşniyarên Zelal
+  ar: مقترحات واضحة
+';
 
 
 --
@@ -2175,9 +2195,14 @@ ALTER FUNCTION public.fn_acorn_enrollment_action_enrollments_run(p_model_id uuid
 --
 
 COMMENT ON FUNCTION public.fn_acorn_enrollment_action_enrollments_run(p_model_id uuid, p_user_id uuid) IS 'labels:
-  en: Run
+  en: Generate proposals
+  ku: Pêşniyaran çêbikin
+  ar: إنشاء المقترحات
+commentHtml: true
 comment:
-  en: This will apply all rules and create allocation proposals for all added students. No actual changes will happen until the proposals are applied
+  en: This will apply all rules and create allocation proposals for all added students. No actual changes will happen until the proposals are <b>Applied</b>
+  ku: Ev ê hemû rêzikan bicîh bîne û ji bo hemû xwendekarên zêdekirî pêşniyarên dabeşkirinê biafirîne. Heta ku pêşniyar neyên <b>Bikaranîn</b>, ti guhertinên rastîn çênabin.
+  ar: سيؤدي هذا إلى تطبيق جميع القواعد وإنشاء مقترحات توزيع لجميع الطلاب المضافين. لن تُجرى أي تغييرات فعلية حتى يتم تطبيق المقترحات.
 result-action: refresh
 condition: ''not exists(select * from acorn_enrollment_students es where not es.proposed_desire_id is null and not manual_proposed and es.enrollment_id = acorn_enrollment_enrollments.id) and acorn_enrollment_enrollments.applied_at is null''';
 
@@ -2403,31 +2428,6 @@ $$;
 ALTER FUNCTION public.fn_acorn_enrollment_score_first(p_enrollment_id uuid, p_user_id uuid) OWNER TO university;
 
 --
--- Name: fn_acorn_exam_action_certificates_clear_printed(uuid, uuid); Type: FUNCTION; Schema: public; Owner: university
---
-
-CREATE FUNCTION public.fn_acorn_exam_action_certificates_clear_printed(model_id uuid, user_id uuid) RETURNS void
-    LANGUAGE plpgsql
-    AS $$
-begin
-	update acorn_university_students set printed = null;
-end;
-$$;
-
-
-ALTER FUNCTION public.fn_acorn_exam_action_certificates_clear_printed(model_id uuid, user_id uuid) OWNER TO university;
-
---
--- Name: FUNCTION fn_acorn_exam_action_certificates_clear_printed(model_id uuid, user_id uuid); Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON FUNCTION public.fn_acorn_exam_action_certificates_clear_printed(model_id uuid, user_id uuid) IS 'labels:
-  en: Clear all printed flags
-condition: select count(*) from acorn_university_students where not printed is null
-type: list';
-
-
---
 -- Name: fn_acorn_exam_action_results_refresh(uuid, uuid, boolean); Type: FUNCTION; Schema: public; Owner: university
 --
 
@@ -2486,7 +2486,9 @@ ALTER FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_
 --
 
 COMMENT ON FUNCTION public.fn_acorn_exam_action_results_refresh(p_student_id uuid, p_academic_year_id uuid, p_messages boolean) IS 'labels:
-  en: Refresh all
+  en: Refresh all results
+  ku: Hemû encaman nûve bike
+  ar: تحديث جميع النتائج
 type: list';
 
 
@@ -11456,9 +11458,11 @@ COMMENT ON COLUMN public.acorn_university_hierarchies.leaf_table IS 'order: 30
 labels:
   en: Type
   ku: Cura
+  ar: يكتب
 labels-plural:
   en: Types
   ku: Curên
+  ar: أنواع
 hidden: true
 
 ';
@@ -11963,7 +11967,21 @@ labels-plural:
 -- Name: COLUMN acorn_enrollment_course_entry_requirements.minimum_students; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.minimum_students IS 'field-comment: The course will automatically marked as Failed if this minimum quota is not achieved during the enrollment process. ';
+COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.minimum_students IS 'field-comment: 
+  en: The course will automatically marked as Failed if this minimum quota is not achieved during the enrollment process.
+  ku: Ger di dema pêvajoya qeydkirinê de ev kotaya herî kêm neyê bidestxistin, qurs dê bixweber wekî Têkçûyî were nîşankirin.
+  ar: سيتم تلقائيًا تصنيف الدورة على أنها فاشلة إذا لم يتم تحقيق هذا الحد الأدنى من الحصة أثناء عملية التسجيل.
+ ';
+
+
+--
+-- Name: COLUMN acorn_enrollment_course_entry_requirements.maximum_students; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.maximum_students IS 'field-comment:
+  en: When the course is full, no more students can be allocated
+  ku: Dema ku ders tijî bibe, êdî xwendekar nayên veqetandin
+  ar: عندما تكون الدورة ممتلئة، لا يمكن تخصيص المزيد من الطلاب';
 
 
 --
@@ -11978,14 +11996,21 @@ COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.related_cour
 -- Name: COLUMN acorn_enrollment_course_entry_requirements.minimum_score; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.minimum_score IS 'field-comment: score';
+COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.minimum_score IS 'field-comment: 
+  en: Minimum Score
+  ku: Kêmtirîn Pila
+  ar: الحد الأدنى من الدرجات';
 
 
 --
 -- Name: COLUMN acorn_enrollment_course_entry_requirements.failed_course; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.failed_course IS 'field-comment: This course will not be considered in the enrollment recursive student allocation process. This happens automatically when not enough students are allocated on a course and the enrollment process re-runs to re-allocate everyone again _without_ this course.';
+COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.failed_course IS 'commentHtml: true
+field-comment: 
+  en: This course will not be considered in the enrollment recursive student allocation process. This happens automatically when not enough students are allocated on a course and the enrollment process re-runs to re-allocate everyone again <i>without</i> this course.
+  ku: Ev ders dê di pêvajoya dabeşkirina xwendekaran a dubarekirî ya qeydkirinê de neyê hesibandin. Ev bixweber diqewime dema ku têra xwe xwendekar li ser dersek neyên dabeşkirin û pêvajoya qeydkirinê ji nû ve tê meşandin da ku her kes dîsa <i>bêyî</i> vê dersê ji nû ve were dabeşkirin.
+  ar: لن تُؤخذ هذه الدورة في الاعتبار في عملية تخصيص الطلاب المتكررة للتسجيل. يحدث هذا تلقائيًا عند عدم تخصيص عدد كافٍ من الطلاب في دورة، وتُعاد عملية التسجيل لإعادة تخصيص جميع الطلاب الذين لم يُسجلوا في هذه الدورة.';
 
 
 --
@@ -12106,6 +12131,14 @@ plugin-names:
   ku: Mofadala
   ar: التسجيل
 qr-code-scan: true
+labels:
+  en: Enrollment
+  ku: Mofadala
+  ar: التسجيل
+labels-plural:
+  en: Enrollments
+  ku: Mofadalan
+  ar: التسجيل
 ';
 
 
@@ -12137,7 +12170,10 @@ order: 1000';
 COMMENT ON COLUMN public.acorn_enrollment_enrollments.calculation_id IS 'order: 5
 new-row: true
 tab: acorn.exam::lang.models.calculation.label
-field-comment: Entry scores will come from this calculation
+field-comment: 
+  en: Entry scores will come from this calculation
+  ku: Xalên têketinê dê ji vê hesabkirinê derkevin
+  ar: ستأتي درجات الدخول من هذا الحساب
 depends-on:
   applied_at:
     condition: "not :applied_at::timestamp without time zone is null"
@@ -12176,7 +12212,10 @@ extra-translations:
     en: All First desires
   random: 
     en: Random
-field-comment:  A desire weight is required for the weighted option. Option "All First Desires" will move all students to the 1st target semester, year, course or their 1st desire without any calculation.';
+field-comment:  
+  en: A desire weight is required for the weighted option. Option "All First Desires" will move all students to the 1st target semester, year, course or their 1st desire without any calculation.
+  ku: Ji bo vebijarka girankirî giraniya xwestekê pêwîst e. Vebijêrka "Hemû Xwestekên Pêşîn" dê hemû xwendekaran bêyî hesabkirinê biguhezîne semestera hedef a 1-emîn, sal, qurs an jî xwesteka wan a 1-emîn.
+  ar: يُشترط وزن الرغبة للخيار المرجح. خيار "جميع الرغبات الأولى" ينقل جميع الطلاب إلى الفصل الدراسي أو السنة أو المقرر الدراسي الأول المستهدف، أو رغبتهم الأولى دون أي حساب.';
 
 
 --
@@ -12203,8 +12242,12 @@ depends-on:
     condition: "not :applied_at::timestamp without time zone is null"
     field:
       read-only: true
-field-comment: The maximum extra + points from Student <a href="/backend/acorn/university/studentstatuses">Special Statues</a> will be added to the students'' score during calculations.
-comment-html: true';
+comment-html: true
+field-comment: 
+  en: The maximum extra + points from Student <a href="/backend/acorn/university/studentstatuses">Special Statues</a> will be added to the students'' score during calculations.
+  ku: Xalên herî zêde yên + ji Statuyên Taybet ên Xwendekaran <a href="/backend/acorn/university/studentstatuses"> dê di dema hesabkirinê de li puana xwendekaran werin zêdekirin.
+  ar: سيتم إضافة الحد الأقصى من النقاط الإضافية من <a href="/backend/acorn/university/studentstatuses">الحالات الخاصة</a> للطالب إلى درجة الطالب أثناء الحسابات.
+';
 
 
 --
@@ -12316,13 +12359,23 @@ tab: acorn.exam::lang.models.calculation.label
 extra-translations:
   enrollment_type_en:
     en: Enrollment in to other institutions
+    ku: Qeydkirina li saziyên din
+    ar: التسجيل في مؤسسات أخرى
   enrollment_type_sa:
     en: Semester advancement
+    ku: Pêşveçûna semesterê
+    ar: التقدم في الفصل الدراسي
   enrollment_type_ya:
     en: Year advancement
+    ku: Pêşveçûna salê
+    ar: التقدم السنوي
   enrollment_type_rm:
     en: Removal from existing course
-field-comment: >
+    ku: Rakirina ji qursa heyî
+    ar: الإزالة من الدورة الحالية
+comment-html: true
+field-comment:
+  en: >
     <ul class="help-block">
     <li><b>Enrollment in to other institutions</b>: Successful students are moved to other courses, usually in other institutions, based on their registered desires. Useful for <b>enrollment in to Universities</b> from High School.</li>
     <li><b>Semester advancement</b>: Successful students are added to the next consecutive semester on the same course.</li>
@@ -12333,7 +12386,18 @@ field-comment: >
     Various processing algorithms are available depending on the type of movement.<br/>
     The proposed changes for each process always can be analyzed in an <a target="_blank" href="/university/xavier/index.html?password=fryace4">Enrollments OLAP cube</a> before applying the proposals. After Application, changes cannot be reversed.
     </p>
-comment-html: true';
+  ku: >
+    <ul class="help-block">
+    <li><b>Qeydkirina li saziyên din</b>: Xwendekarên serkeftî li gorî daxwazên xwe yên qeydkirî, bi gelemperî li saziyên din, ji bo qursên din têne veguhastin. Ji bo <b>qeydkirina Zanîngehan</b> ji Lîseyê bikêr e.</li>
+    <li><b>Pêşveçûna semesterê</b>: Xwendekarên serkeftî li ser heman qursê li semestera din a li pey hev têne zêdekirin.</li>
+    <li><b>Pêşveçûna salê</b>: Xwendekarên serkeftî li ser heman qursê li sala din a li pey hev têne zêdekirin.</li>
+    <li><b>Rakirina ji qursa heyî</b>: Xwendekarên têkçûyî ji komên xwe yên <i>heyî</i> têne rakirin.</li>
+    </ul>
+    <p class="help-block">Hemû tevgerên Xwendekaran li ser bingeha encamên <a target="_blank" href="/backend/acorn/exam/calculations">Hesabkirin</a>ek qeydkirî û <a target="_blank" href="/backend/acorn/exam/exams">Ezmûnek</a> ne.<br/>
+    Li gorî celebê tevgerê algorîtmayên pêvajoyê yên cûrbecûr hene.<br/>
+    Guhertinên pêşniyarkirî ji bo her pêvajoyê her gav dikarin di <a target="_blank" href="/university/xavier/index.html?password=fryace4">Berî sepandina pêşniyaran, qeydkirina kuba OLAP</a> bikin. Piştî Serlêdanê, guhertin nayên vegerandin.
+    </p>
+';
 
 
 --
@@ -12341,8 +12405,11 @@ comment-html: true';
 --
 
 COMMENT ON COLUMN public.acorn_enrollment_enrollments.desire_weight IS 'order: 3
-field-comment: With weighted processing, this value indicates the importance of desires. Student desires are ordered by <span class="expression">final_score - (desire_priority * desire_weight)</span> where the 1st desire priority is zero.
 comment-html: true
+field-comment: 
+  en: With weighted processing, this value indicates the importance of desires. Student desires are ordered by <span class="expression">final_score - (desire_priority * desire_weight)</span> where the 1st desire priority is zero.
+  ku: Bi pêvajoya girankirî, ev nirx girîngiya daxwazan nîşan dide. Daxwazên xwendekaran li gorî <span class="expression">final_score - (desire_priority * desire_weight)</span> têne rêzkirin ku tê de pêşîniya xwesteka 1-emîn sifir e.
+  ar: في المعالجة الموزونة، تشير هذه القيمة إلى أهمية الرغبات. تُرتَّب رغبات الطلاب حسب <span class="expression">final_score - (desire_priority * desire_weight)</span>، حيث تكون أولوية الرغبة الأولى صفرًا.
 tab: acorn.exam::lang.models.calculation.label';
 
 
@@ -12350,7 +12417,8 @@ tab: acorn.exam::lang.models.calculation.label';
 -- Name: COLUMN acorn_enrollment_enrollments.show_on_front_end; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_enrollment_enrollments.show_on_front_end IS 'tab-location: 3';
+COMMENT ON COLUMN public.acorn_enrollment_enrollments.show_on_front_end IS 'tab-location: 3
+explicit-label-key: acorn.user::lang.settings.show_on_front_end';
 
 
 --
@@ -12677,9 +12745,11 @@ seeding:
 labels:
   en: Calculation Type
   ku: Cura Algoritum
+  ar: نوع الحساب
 labels-plural:
   en: Calculation Types
   ku: Curên Algoritum
+  ar: أنواع الحسابات
 
 ';
 
@@ -12737,10 +12807,11 @@ seeding:
 labels:
   en: Calculation
   ku: Algoritum
+  ar: حساب
 labels-plural:
   en: Calculations
   ku: Algoritumên
-';
+  ar: الحسابات';
 
 
 --
@@ -12818,9 +12889,11 @@ COMMENT ON TABLE public.acorn_exam_centres IS 'order: 60
 labels:
   en: Exam Centre
   ku: Navendê Ezmûnî
+  ar: مركز الامتحانات
 labels-plural:
   en: Exam Centres
-  ku: Navendên Ezmûnî';
+  ku: Navendên Ezmûnî
+  ar: مراكز الامتحانات';
 
 
 --
@@ -12955,16 +13028,19 @@ COMMENT ON TABLE public.acorn_exam_instances IS 'order: 70
 labels:
   en: Exam event
   ku: Bûyerê ezmûnî
+  ar: حدث الامتحان
 labels-plural:
   en: Exam events
-  ku: Bûyerên ezmûnî';
+  ku: Bûyerên ezmûnî
+  ar: أحداث الامتحان';
 
 
 --
 -- Name: COLUMN acorn_exam_instances.show_on_front_end; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_exam_instances.show_on_front_end IS 'tab-location: 3';
+COMMENT ON COLUMN public.acorn_exam_instances.show_on_front_end IS 'tab-location: 3
+explicit-label-key: acorn.user::lang.settings.show_on_front_end';
 
 
 --
@@ -13428,9 +13504,11 @@ seeding:
 labels:
   en: Exam Type
   ku: Cura Ezmûn
+  ar: نوع الامتحان
 labels-plural:
   en: Exam Types
   ku: Curên Ezmûn
+  ar: أنواع الامتحانات
 ';
 
 
@@ -14012,9 +14090,11 @@ invisible: true';
 COMMENT ON COLUMN public.acorn_university_entities.leaf_table IS 'labels:
   en: Type
   ku: Cura
+  ar: يكتب
 labels-plural:
   en: Types
   ku: Curên
+  ar: أنواع
 hidden: true
 ';
 
@@ -16970,7 +17050,14 @@ labels-plural:
 COMMENT ON COLUMN public.acorn_enrollment_courses.failed_below_minimum IS 'filters:
   failed_below_minimum:
     type: checkbox
-    conditions: failed_below_minimum';
+    conditions: failed_below_minimum
+labels:
+  en: Failed below minimum students
+  ku: Xwendekarên di bin kêmtirîn astê de neçûn
+  ar: فشل الطلاب تحت الحد الأدنى
+read-only: true
+field-type: checkbox
+';
 
 
 --
@@ -17231,9 +17318,13 @@ hints:
   no_hierarchy:
     labels:
       en: Not connected
+      ku: Ne girêdayî ye
+      ar: غير متصل
     contentHtml: true
     content:
       en: This course is not connected to any organisation. <a href="/backend/acorn/university/hierarchies">Add to an organisation</a>.
+      ku: Ev qurs bi tu rêxistinekê ve ne girêdayî ye. <a href="/backend/acorn/university/hierarchies">Li rêxistinekê zêde bike</a>.
+      ar: هذه الدورة ليست مرتبطة بأي منظمة. <a href="/backend/acorn/university/hierarchies">إضافة إلى منظمة</a>.
     level: warning
     conditions: not exists(select * from acorn_university_hierarchies where entity_id = acorn_university_courses.entity_id)
     context: update';
@@ -17259,7 +17350,8 @@ tab-location: 3
 -- Name: COLUMN acorn_university_courses.show_on_front_end; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_courses.show_on_front_end IS 'order: 1
+COMMENT ON COLUMN public.acorn_university_courses.show_on_front_end IS 'explicit-label-key: acorn.user::lang.settings.show_on_front_end
+order: 1
 tab-location: 3
 hints:
   public:
@@ -19112,8 +19204,12 @@ show-sorting: false
 default-sort: id
 labels:
   en: Exam paper
+  ku: Kaxezê azmûnê
+  ar: ورقة الامتحان
 labels-plural:
   en: Exam papers
+  ku: Kaxezên azmûnê
+  ar: أوراق الامتحان
 ';
 
 
@@ -32890,31 +32986,11 @@ ALTER TABLE ONLY public.acorn_university_student_course_material_removal
 
 
 --
--- Name: CONSTRAINT student_id ON acorn_university_student_course_material_removal; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_course_material_removal IS 'labels:
-  en: Material removal
-labels-plural:
-  en: Material removals';
-
-
---
 -- Name: acorn_university_student_course_material_addition student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_university_student_course_material_addition
     ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id) ON DELETE CASCADE;
-
-
---
--- Name: CONSTRAINT student_id ON acorn_university_student_course_material_addition; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_course_material_addition IS 'labels:
-  en: Material addition
-labels-plural:
-  en: Material additions';
 
 
 --
@@ -34338,15 +34414,6 @@ GRANT ALL ON FUNCTION public.fn_acorn_enrollment_enrollments_state_indicator(p_e
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_score_first(p_enrollment_id uuid, p_user_id uuid) TO token_1 WITH GRANT OPTION;
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_score_first(p_enrollment_id uuid, p_user_id uuid) TO token_5;
 GRANT ALL ON FUNCTION public.fn_acorn_enrollment_score_first(p_enrollment_id uuid, p_user_id uuid) TO sz WITH GRANT OPTION;
-
-
---
--- Name: FUNCTION fn_acorn_exam_action_certificates_clear_printed(model_id uuid, user_id uuid); Type: ACL; Schema: public; Owner: university
---
-
-GRANT ALL ON FUNCTION public.fn_acorn_exam_action_certificates_clear_printed(model_id uuid, user_id uuid) TO token_1 WITH GRANT OPTION;
-GRANT ALL ON FUNCTION public.fn_acorn_exam_action_certificates_clear_printed(model_id uuid, user_id uuid) TO token_5;
-GRANT ALL ON FUNCTION public.fn_acorn_exam_action_certificates_clear_printed(model_id uuid, user_id uuid) TO sz WITH GRANT OPTION;
 
 
 --
@@ -37921,5 +37988,5 @@ GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_5;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict SGqaasl4JOli9qsSo3TMJrRdj2Xj3tebbGcvcThvIk8Y32efBOMW1iDonPwJAFc
+\unrestrict 6Oa8bFPWlLpYwJM43TSSopPaWu9scslvtHvQDnd1Qqs8bLxBBYUHdjymhZ6Hau1
 

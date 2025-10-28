@@ -79,6 +79,7 @@ class Field {
     public $placeholder;
     public $debugComment;
     public $fieldComment;
+    public $fieldDebug;
     public $permissions = array(); // Resultant Fields.yaml permissions: directive
     // Assemble all field permission-settings directives names
     // for Plugin registerPermissions()
@@ -761,10 +762,10 @@ class Field {
         return (explode('::', $translationKey)[0] == $this->model->plugin->translationDomain());
     }
 
-    public function localTranslationKey(): string
+    public function localTranslationKey(string|NULL $name = NULL): string
     {
         // $group.$subgroup.$name
-        $translationKey      = $this->translationKey();
+        $translationKey      = $this->translationKey($name);
         $translationKeyParts = explode('::', $translationKey);
         if (!isset($translationKeyParts[1]))
             throw new Exception("Malformed translation key [$translationKey]");
@@ -772,7 +773,7 @@ class Field {
         return preg_replace('/^lang\./', '', $localTranslationKey);
     }
 
-    public function translationKey(string $name = NULL, bool $forceGeneral = FALSE): string
+    public function translationKey(string|NULL $name = NULL, bool $forceGeneral = FALSE): string
     {
         /* Translation:
          *  TODO: Maybe this should be in WinterCMS?
@@ -781,13 +782,20 @@ class Field {
          *  For plugin standard fields: acorn.finance::lang.models.general.id | name | created_*
          * Construction: $translation_domain::lang.$translation_group.$translation_subgroup.$translation_name
          */
-        $domain   = $this->model->plugin->translationDomain(); // acorn.finance
-        $group    = 'models';
-        $subgroup = $this->model->dirName(); // squished usergroup | invoice
-        $name     = ($name ?: $this->name);  // amount | id | name
+        $domain    = $this->model->plugin->translationDomain(); // acorn.finance
+        $group     = 'models';
+        $subgroup  = $this->model->dirName(); // squished usergroup | invoice
+        // $name can replace $this->name, or append to it
+        // idincated by a leading _. For example: _comment
+        $finalName = ($name            // .something
+            ? (substr($name, 0, 1) == '_'
+                ? "{$this->name}$name" // .something_comment
+                : $name)               // .comment
+            : $this->name              // .special_user_group
+        );
         if ($forceGeneral || $this->isStandard()) $subgroup = 'general';
 
-        return "$domain::lang.$group.$subgroup.$name";
+        return "$domain::lang.$group.$subgroup.$finalName";
     }
 
     public function relations1to1(): array
@@ -916,14 +924,18 @@ class ForeignIdField extends Field {
                 if ($this->relation1) {
                     // AA/Models/Server has no controller
                     if ($controller = $this->relation1->to->controller(Model::NULL_IF_NOT_ONLY_1)) {
-                        // TODO: Comment and model name translation
+                        // Adding translated links under 1-1 fields
                         $controllerUrl = $controller->absoluteBackendUrl();
                         $title         = $this->relation1->to->name;
-                        if (is_null($this->fieldComment)) $this->fieldComment = '';
-                        $this->fieldComment .= "<span class='view-add-models'>acorn::lang.helpblock.view_add <a tabindex='-1' href='$controllerUrl'>$title</a></span>";
-                        $this->fieldComment .= "<a tabindex='-1' target='_blank' href='$controllerUrl' class='goto-form-group-selection'></a>";
-                        // TODO: This is actually for annotating checkbox lists, not selects, but it does nothing if it is a dropdown
-                        // $goto = $controllerUrl;
+                        // TODO: Re-enable this functionality View|Add links under dropdowns
+                        // if (!is_array($this->fieldComment)) 
+                        //     $this->fieldComment = array('en' => ($this->fieldComment ?: ''));
+                        // foreach ($this->fieldComment as &$comment) {
+                        //     $comment .= "<span class='view-add-models'>acorn::lang.helpblock.view_add <a tabindex='-1' href='$controllerUrl'>$title</a></span>";
+                        //     $comment .= "<a tabindex='-1' target='_blank' href='$controllerUrl' class='goto-form-group-selection'></a>";
+                        //     // TODO: This is actually for annotating checkbox lists, not selects, but it does nothing if it is a dropdown
+                        //     // $goto = $controllerUrl;
+                        // }
                     }
                 }
 
@@ -976,20 +988,21 @@ class ForeignIdField extends Field {
         }
     }
 
-    public function translationKey(string $name = NULL, bool $forceGeneral = FALSE): string
+    public function translationKey(string|NULL $name = NULL, bool $forceGeneral = FALSE): string
     {
         /* Translation:
          *  For foreign keys:           acorn.user::lang.models.usergroup.label (pointing TO the user plugin)
          *  For explicit translations:  acorn.finance::lang.models.invoice.user_group: Payee Group
          *  For qualified foreign keys: acorn.finance::lang.models.invoice.payee_user_group (payee_ makes it qualified)
          * is_qualified: Does the field name, [user_group]_id, have the same name as the table it points to, acorn_user_[user_group]s?
-         * if not, then it is qualified, and we need a local translation
+         * if not, then it is qualified, and we need a local translation, like [owner]_user_group_id
          */
         $qualifier               = $this->relation1->qualifier();
         $hasExplicitTranslations = ($this->labels && count($this->labels));
-        if ($qualifier || $hasExplicitTranslations) {
+        if ($name || $qualifier || $hasExplicitTranslations) {
             // Point to our local plugin translations
-            $key = parent::translationKey(NULL, $forceGeneral);
+            // This will include $this->name with the qualifier
+            $key = parent::translationKey($name, $forceGeneral);
         } else {
             // Point to foreign label
             // acorn.user::lang.models.usergroup.label

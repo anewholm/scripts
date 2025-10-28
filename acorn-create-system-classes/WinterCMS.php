@@ -1523,6 +1523,12 @@ HTML
                     : ($field->tab == 'none' || $field->tabLocation === 0 ? NULL : $field->tab)
                 ); 
 
+                // Lang.php additions also use is_array() & $field->translationKey('_comment')
+                $commentKey = (is_array($field->fieldComment) 
+                    ? $field->translationKey('_comment') 
+                    : $field->fieldComment // Maybe a translation key, from Yaml fields
+                );
+
                 // Field hints come first
                 if ($field->hints) {
                     foreach ($field->hints as $hintName => $hintConfig) {
@@ -1545,8 +1551,8 @@ HTML
                     'readOnly'  => $field->readOnly,
                     'span'      => $field->span,
                     'cssClass'  => $field->cssClass(),
-                    'comment'      => $field->fieldComment,
-                    'commentHtml'  => ($field->commentHtml && $field->fieldComment),
+                    'comment'      => $commentKey,
+                    'commentHtml'  => ($field->commentHtml && $commentKey),
                     'context'      => $contexts,
                     'tab'          => $fieldTab,
                     'tabLocation'  => $field->tabLocation, // Pass through for below @context
@@ -1750,7 +1756,7 @@ HTML
             $this->setPropertyInClassFile($modelFilePath, 'rules', $allRules);
         }
 
-        // ---------------------------------------- Lang.php field labels, hints & extraTranslations
+        // ---------------------------------------- Fields: labels, comments, hints & extraTranslations lang.php
         print("  LANG:\n");
         $langDirPath   = "$pluginDirectoryPath/lang";
         $langEnPath    = "$pluginDirectoryPath/lang/en/lang.php";
@@ -1789,6 +1795,7 @@ HTML
             $localTranslationKey = $field->localTranslationKey();
             if ($field->isLocalTranslationKey() && !$field->isStandard() && !$this->arrayFileValueExists($langEnPath, $localTranslationKey)) {
                 print("    Add {$YELLOW}$localTranslationKey{$NC} to {$YELLOW}lang/*{$NC} for {$YELLOW}$name{$NC}\n");
+                // Field label
                 // At least set the english label programmatically
                 // during development, and translation file generation
                 if (!$field->labels || !isset($field->labels['en']))
@@ -1802,6 +1809,17 @@ HTML
                             throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
                         $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
                     }
+                }
+            }
+
+            // Field comments
+            if (is_array($field->fieldComment)) {
+                $commentTranslationKey = $field->localTranslationKey('_comment'); // As above
+                foreach ($field->fieldComment as $langName => &$translation) {
+                    $langFilePath = "$langDirPath/$langName/lang.php";
+                    if (!file_exists($langFilePath)) 
+                        throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
+                    $this->langFileSet($langFilePath, $commentTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
                 }
             }
 
@@ -1975,7 +1993,10 @@ HTML
                     // The IdField also has all these relations on it, but is usually marked as !canFilter
                     // Time fields also have relations
                     $nameFromEmbedded = (strstr($field->nameFrom, '[') !== FALSE);
-                    $labelKey         = (isset($field->explicitLabelKey) ? $field->explicitLabelKey : $field->translationKey(Model::PLURAL));
+                    $labelKey         = (isset($field->explicitLabelKey) 
+                        ? $field->explicitLabelKey 
+                        : $field->translationKey()
+                    );
                     $filterDefinition = array(
                         '#'          => $fieldName,
                         'label'      => $labelKey,
