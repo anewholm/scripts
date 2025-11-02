@@ -97,6 +97,7 @@ class Table {
     public $visibleColumnActions;
     public $noRelationManagerDefault;
     public $canFilterDefault;
+    public $labelsCheck;
 
     // This is set when models are created
     public $model;

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict wOJNWUAXqskfoxln0q3byAYY5I3flfolJvcU8Qq0iy45N5kGoo1nL8p68m0pLql
+\restrict mA6ChMlecq3n8BXLJpmqF8K9VR9rjU9h2G4KNGYT0mOdb4sDSaxYrVevU8KJKv0
 
 -- Dumped from database version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
 -- Dumped by pg_dump version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
@@ -14070,7 +14070,7 @@ action-links:
     type: list
     labels:
       en: Full-screen planner
-    url: /backend/acorn/university/courseplans/update/:id?back-to-referrer=Course
+    url: /backend/acorn/university/courseplans/update/:id?back-to-referrer=acorn.university::lang.models.course.label
     icon: crosshairs
 commentHtml: true
 form-comment-contexts: create
@@ -16543,7 +16543,10 @@ COMMENT ON COLUMN public.acorn_university_students.legacy_import_birth_place IS 
 tabLocation: 2
 advanced: true
 invisible: true
-field-comment: Birth place because location cleaning is difficult
+field-comment: 
+  en: Birth place because location cleaning is difficult
+  ku: Cihê jidayikbûnê ji ber ku paqijkirina cihê zehmet e
+  ar: مكان الولادة لأن تنظيف المكان صعب
 labels:
   en: Legacy Import Birth place
   ku: Importkirina Mîrasî Cihê jidayikbûnê
@@ -17776,7 +17779,11 @@ context-update:
 -- Name: COLUMN acorn_university_course_year_semesters.enrollment_academic_year_id; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_course_year_semesters.enrollment_academic_year_id IS 'order: 10
+COMMENT ON COLUMN public.acorn_university_course_year_semesters.enrollment_academic_year_id IS 'labels:
+  en: Enrollment Academic Year
+  ku: Sala Akademîk a Tomarkirinê
+  ar: التسجيل السنة الدراسية
+order: 10
 # Necessary to hide field in favour of tab-location 3
 contexts:
   create: true
@@ -17784,7 +17791,10 @@ contexts:
 context-update:
   tab-location: 3
   read-only: true
-  context: update';
+  context: update
+invisible: true
+css-classes-column:
+  - hide-duplicates';
 
 
 --
@@ -18203,8 +18213,13 @@ COMMENT ON COLUMN public.acorn_enrollment_statistics.enrollment_id IS 'extra-for
       - no-header
 labels:
   en: Statistic
+  ku: Statîstîk
+  ar: إحصائية
 labels-plural:
-  en: Statistics';
+  en: Statistics
+  ku: Statîstîk
+  ar: إحصائية
+';
 
 
 --
@@ -19679,9 +19694,11 @@ css-classes-column:
 labels:
   en: Legacy Import Passed
   ku: Barkirine kevin Serket
+  ar: تم اجتياز استيراد الإرث
 labels-plural:
   en: Legacy Import Passes
   ku: Barkirine kevin Serketên
+  ar: تم اجتياز استيراد الإرث
 ';
 
 
@@ -19833,8 +19850,12 @@ COMMENT ON COLUMN public.acorn_exam_papers.answers IS 'list-editable: delete-on-
 type-editable: number
 labels:
   en: Answer
+  ku: Bersiv
+  ar: إجابة
 labels-plural:
   en: Answers
+  ku: Bersiv
+  ar: الإجابات
 ';
 
 
@@ -21693,7 +21714,8 @@ ALTER VIEW public.acorn_university_legacy_scores OWNER TO sz;
 -- Name: VIEW acorn_university_legacy_scores; Type: COMMENT; Schema: public; Owner: sz
 --
 
-COMMENT ON VIEW public.acorn_university_legacy_scores IS 'menu: false
+COMMENT ON VIEW public.acorn_university_legacy_scores IS 'labels-check: false
+menu: false
 labels:
   en: Legacy scores
 labels-plural:
@@ -21906,7 +21928,8 @@ ALTER VIEW public.acorn_university_legacy_fulls OWNER TO university;
 -- Name: VIEW acorn_university_legacy_fulls; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON VIEW public.acorn_university_legacy_fulls IS 'menu: false
+COMMENT ON VIEW public.acorn_university_legacy_fulls IS 'labels-check: false
+menu: false
 labels:
   en: Legacy full
 labels-plural:
@@ -23109,7 +23132,8 @@ ALTER VIEW public.acorn_university_legacy_updates OWNER TO university;
 -- Name: VIEW acorn_university_legacy_updates; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON VIEW public.acorn_university_legacy_updates IS 'menu: false
+COMMENT ON VIEW public.acorn_university_legacy_updates IS 'labels-check: false
+menu: false
 labels:
   en: Legacy update
 labels-plural:
@@ -23139,10 +23163,7 @@ COMMENT ON COLUMN public.acorn_university_legacy_updates.student_id IS 'extra-fo
       en: Legacy diff
     labels-plural:
       en: Legacy diffs
-labels:
-  en: Student
-labels-plural:
-  en: Students';
+';
 
 
 --
@@ -32122,8 +32143,12 @@ has-many-deep-settings:
     entity_university_hierarchies__entity_user_group_version_users_count:
         labels: 
           en: Student count
+          ku: Jimara xwendekaran
+          ar: عدد الطلاب
         labels-plural:
           en: Student Counts
+          ku: Jimaran xwendekaran
+          ar: عدد الطلاب
         # column-type partial and multi is the default
         multi:
             sum: count
@@ -38576,5 +38601,5 @@ GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_5;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict wOJNWUAXqskfoxln0q3byAYY5I3flfolJvcU8Qq0iy45N5kGoo1nL8p68m0pLql
+\unrestrict mA6ChMlecq3n8BXLJpmqF8K9VR9rjU9h2G4KNGYT0mOdb4sDSaxYrVevU8KJKv0
 

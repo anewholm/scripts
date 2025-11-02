@@ -278,18 +278,18 @@ class Column {
         }
 
         // Checks: en|ar|ku specific
-        /*
-        $columnFQN = $this->fullyQualifiedName();
-        if ($this->labels && !is_array($this->labels)) throw new Exception("$columnFQN labels: should be an array");
-        if ($this->labels && !isset($this->labels['ku'])) throw new Exception("$columnFQN labels: does not have a ku translation");
-        if ($this->labels && !isset($this->labels['ar'])) throw new Exception("$columnFQN labels: does not have an ar translation");
-        if ($this->labelsPlural && !is_array($this->labelsPlural)) throw new Exception("$columnFQN labels-plural: should be an array");
-        if ($this->labelsPlural && !isset($this->labelsPlural['ku'])) throw new Exception("$columnFQN labels-plural: does not have a ku translation");
-        if ($this->labelsPlural && !isset($this->labelsPlural['ar'])) throw new Exception("$columnFQN labels-plural: does not have an ar translation");
-        if ($this->fieldComment && !is_array($this->fieldComment)) throw new Exception("$columnFQN field-comment: should be an array");
-        if ($this->fieldComment && !isset($this->fieldComment['ku'])) throw new Exception("$columnFQN field-comment: does not have a ku translation");
-        if ($this->fieldComment && !isset($this->fieldComment['ar'])) throw new Exception("$columnFQN field-comment: does not have an ar translation");
-        */
+        if ($this->table->labelsCheck !== FALSE) {
+            $columnFQN = $this->fullyQualifiedName();
+            if ($this->labels && !is_array($this->labels)) throw new Exception("$columnFQN labels: should be an array");
+            if ($this->labels && !isset($this->labels['ku'])) throw new Exception("$columnFQN labels: does not have a ku translation");
+            if ($this->labels && !isset($this->labels['ar'])) throw new Exception("$columnFQN labels: does not have an ar translation");
+            if ($this->labelsPlural && !is_array($this->labelsPlural)) throw new Exception("$columnFQN labels-plural: should be an array");
+            if ($this->labelsPlural && !isset($this->labelsPlural['ku'])) throw new Exception("$columnFQN labels-plural: does not have a ku translation");
+            if ($this->labelsPlural && !isset($this->labelsPlural['ar'])) throw new Exception("$columnFQN labels-plural: does not have an ar translation");
+            if ($this->fieldComment && !is_array($this->fieldComment)) throw new Exception("$columnFQN field-comment: should be an array");
+            if ($this->fieldComment && !isset($this->fieldComment['ku'])) throw new Exception("$columnFQN field-comment: does not have a ku translation");
+            if ($this->fieldComment && !isset($this->fieldComment['ar'])) throw new Exception("$columnFQN field-comment: does not have an ar translation");
+        }
     }
 
     public function standardFieldDefinitions(string $name): array

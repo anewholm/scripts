@@ -1,5 +1,9 @@
 <?php namespace Acorn\CreateSystem;
 
+use Exception;
+use Spyc;
+use PDO;
+
 require_once('Schema.php');
 require_once('Table.php');
 require_once('View.php');
@@ -21,10 +25,10 @@ class DB {
         $this->nc         = &$nc;
         $this->framework  = &$framework;
         $this->database   = &$framework->database;
-        $this->connection = new \PDO($framework->connection, $framework->username, $framework->password, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
+        $this->connection = new PDO($framework->connection, $framework->username, $framework->password, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
 
         $this->comment    = $this->databaseComment();
-        foreach (\Spyc::YAMLLoadString($this->comment) as $name => $value) {
+        foreach (Spyc::YAMLLoadString($this->comment) as $name => $value) {
             $nameCamel = Str::camel($name);
             if (!property_exists($this, $nameCamel)) throw new \Exception("Property [$nameCamel] does not exist on [$this->database]");
             if (!isset($this->$nameCamel)) $this->$nameCamel = $value;
@@ -91,10 +95,10 @@ class DB {
         foreach ($namedParameters as $name => $value) $statement->bindParam(":$name", $value);
         try {
             $statement->execute();
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             throw $ex;
         }
-        return $statement->fetchAll(\PDO::FETCH_OBJ);
+        return $statement->fetchAll(PDO::FETCH_OBJ);
     }
 
     public function insert($sql, $namedParameters = array()): array
@@ -131,7 +135,7 @@ class DB {
         ");
         $statement->bindParam(':name', $name);
         $statement->execute();
-        $results = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        $results = $statement->fetchAll(PDO::FETCH_ASSOC);
         if (count($results))
             $schema = Schema::fromRow($this, $results[0]);
 
@@ -237,7 +241,7 @@ class DB {
         return (isset($tableParts[1]) ? $this->functions($tableParts[0], $tableParts[1], $tableQualifier, 'ales') : array());
     }
 
-    public function functions(string $author = NULL, string $plugin = NULL, string $qualifier1 = NULL, string $qualifier2 = NULL): array
+    public function functions(string|NULL $author = NULL, string|NULL $plugin = NULL, string|NULL $qualifier1 = NULL, string|NULL $qualifier2 = NULL): array
     {
         $like  = 'fn';
         $like .= ($author     ? "_$author"     : '_%');
@@ -290,10 +294,15 @@ class DB {
                             $typeName = 'integer'; break;
                         case 25:   $typeName = 'text'; break;
                         case 602:  $typeName = 'path'; break;
+                        case 701:  $typeName = 'double precision'; break;
+                        case 1043: $typeName = 'character varying'; break;
                         case 1082: $typeName = 'date'; break;
                         case 1114: $typeName = 'timestamp'; break;
                         case 1186: $typeName = 'interval'; break;
                         case 2950: $typeName = 'uuid'; break;
+                        case 2951: $typeName = 'uuid[]'; break;
+                        default:
+                            throw new Exception("Function $result->name parameter $name type $typeOID not known");
                     }
                     $parameters[$name] = $typeName;
                 }
