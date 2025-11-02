@@ -203,7 +203,7 @@ class WinterCMS extends Framework
         $langDirPath = "$pluginDirectoryPath/lang";
         $langEnPath  = "$langDirPath/en/lang.php";
 
-        // Standard lang.php
+        // Copy standard lang.php files in to position
         if (!is_dir("$langDirPath/ku/")) mkdir("$langDirPath/ku/", 0775, TRUE);
         if (!is_dir("$langDirPath/ar/")) mkdir("$langDirPath/ar/", 0775, TRUE);
         foreach (scandir($langDirPath) as $langName) {
@@ -216,24 +216,19 @@ class WinterCMS extends Framework
                     print("    {$GREEN}LANG{$NC}: Created {$YELLOW}$langName{$NC} language file\n");
                     copy($langEnPath, $langFilePath);
                 }
-                $this->arrayFileSet($langFilePath, 'plugin.description', $createdBy, FALSE);
             }
         }
-
-        // English General lang.php
-        $this->arrayFileSet($langEnPath, 'models.general', Framework::$standardTranslations['en'], FALSE);
-        if (isset($plugin->pluginNames['en']))        $this->arrayFileSet("$langDirPath/en/lang.php", 'plugin.name',        $plugin->pluginNames['en'],        FALSE);
-        if (isset($plugin->pluginDescriptions['en'])) $this->arrayFileSet("$langDirPath/en/lang.php", 'plugin.description', $plugin->pluginDescriptions['en'], FALSE);
-
-        // Arabic general lang.php
-        $this->arrayFileSet("$langDirPath/ar/lang.php", 'models.general', Framework::$standardTranslations['ar'], FALSE);
-        if (isset($plugin->pluginNames['ar']))        $this->arrayFileSet("$langDirPath/ar/lang.php", 'plugin.name',        $plugin->pluginNames['ar'],        FALSE);
-        if (isset($plugin->pluginDescriptions['ar'])) $this->arrayFileSet("$langDirPath/ar/lang.php", 'plugin.description', $plugin->pluginDescriptions['ar'], FALSE);
-
-        // Kurdish general lang.php
-        $this->arrayFileSet("$langDirPath/ku/lang.php", 'models.general', Framework::$standardTranslations['ku'], FALSE);
-        if (isset($plugin->pluginNames['ku']))        $this->arrayFileSet("$langDirPath/ku/lang.php", 'plugin.name',        $plugin->pluginNames['ku'],        FALSE);
-        if (isset($plugin->pluginDescriptions['ku'])) $this->arrayFileSet("$langDirPath/ku/lang.php", 'plugin.description', $plugin->pluginDescriptions['ku'], FALSE);
+        // plugin.name
+        if (isset($plugin->pluginNames))
+            $this->writeLangValues($langDirPath, 'plugin.name', $plugin->pluginNames);
+        // plugin.description
+        // Created by message is the same across all language files
+        if (isset($plugin->pluginDescriptions))
+            $this->writeLangValues($langDirPath, 'plugin.description', $plugin->pluginDescriptions);
+        else
+            $this->writeLangValues($langDirPath, 'plugin.description', $createdBy);
+        // models.general.*
+        $this->writeLangValues($langDirPath, 'models.general', Framework::$standardTranslations);
 
         // --------------------------------------------- Permissions
         // 'acorn.criminal.some_permission' => [
@@ -688,6 +683,7 @@ PHP;
         $modelFilePath       = "$pluginDirectoryPath/models/$model->name.php";
         $modelDirPath        = "$pluginDirectoryPath/models/$modelDirName";
         $translationDomain   = $model->plugin->translationDomain();
+        $modelTranslationKey = $model->translationDomain();
         $langDirPath         = "$pluginDirectoryPath/lang";
         $table               = $model->getTable();
 
@@ -793,110 +789,36 @@ PHP;
             // ---------------------------------------------------------------- Conditional hints
             if ($model->hints) $this->setPropertyInClassFile($modelFilePath, 'hints', $model->hints, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
 
-            // ---------------------------------------------------------------- Model based ALES functions
-            $this->setPropertyInClassFile($modelFilePath, 'alesFunctions', $model->alesFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
-
-            // ---------------------------------------------------------------- Model based action functions lang.php
+            // ---------------------------------------------------------------- Model based functions and links
+            // before, after, ales and action functions and links => lang.php
             // Write the labels to lang, and the translationKeys to the YAML
-            if ($model->actionFunctions) {
-                foreach ($model->actionFunctions as $name => &$defintion) {
-                    foreach (scandir($langDirPath) as $langName) {
-                        $langFilePath = "$langDirPath/$langName/lang.php";
-                        if (!in_array($langName, array('.','..')) && file_exists($langFilePath)) {
-                            if (isset($defintion['labels'][$langName])) {
-                                $label = $defintion['labels'][$langName];
-                                $this->arrayFileSet($langFilePath, "actions.$name", $label, FALSE);
-                            }
-                            // Comment
-                            if (isset($defintion['comment'][$langName])) {
-                                $comment = $defintion['comment'][$langName];
-                                $this->arrayFileSet($langFilePath, "actions.{$name}_comment", $comment, FALSE);
-                            }
-                        }
-                    }
-
-                    // Morph entries to translation keys
-                    if (isset($defintion['labels'])) {
-                        unset($defintion['labels']);
-                        $defintion['label'] = "$translationDomain::lang.actions.$name";
-                    }
-                    if (isset($defintion['comment'])) {
-                        unset($defintion['comment']);
-                        $defintion['comment'] = "$translationDomain::lang.actions.{$name}_comment";
-                    }
-                }
-                $this->setPropertyInClassFile($modelFilePath, 'actionFunctions', $model->actionFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
-            }
-
-            // ---------------------------------------------------------------- Model based before functions lang.php
-            // Write the labels to lang, and the translationKeys to the YAML
+            // All function definitions have a stage before|after|action|link|ales
+            // => acorn.<plugin>::lang.models.<model>.functions.<stage>.<fn-name>:
+            //   .label|comment
+            //   .parameters.<pr-name>.label|comment
+            // Some of these model properties are not actually referenced
+            // but here for completeness
             if ($model->beforeFunctions) {
-                foreach ($model->beforeFunctions as $name => &$defintion) {
-                    foreach (scandir($langDirPath) as $langName) {
-                        $langFilePath = "$langDirPath/$langName/lang.php";
-                        if (!in_array($langName, array('.','..')) && file_exists($langFilePath)) {
-                            if (isset($defintion['labels'][$langName])) {
-                                $label = $defintion['labels'][$langName];
-                                $this->arrayFileSet($langFilePath, "befores.$name", $label, FALSE);
-                            }
-                        }
-                    }
-
-                    // Morph entries to translation keys
-                    if (isset($defintion['labels'])) {
-                        unset($defintion['labels']);
-                        $defintion['label'] = "$translationDomain::lang.befores.$name";
-                    }
-                }
+                $this->processStageFunctionLang($model, $model->beforeFunctions, $langDirPath);
                 $this->setPropertyInClassFile($modelFilePath, 'beforeFunctions', $model->beforeFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
             }
-
-            // ---------------------------------------------------------------- Model based after functions lang.php
-            // Write the labels to lang, and the translationKeys to the YAML
             if ($model->afterFunctions) {
-                foreach ($model->afterFunctions as $name => &$defintion) {
-                    foreach (scandir($langDirPath) as $langName) {
-                        $langFilePath = "$langDirPath/$langName/lang.php";
-                        if (!in_array($langName, array('.','..')) && file_exists($langFilePath)) {
-                            if (isset($defintion['labels'][$langName])) {
-                                $label = $defintion['labels'][$langName];
-                                $this->arrayFileSet($langFilePath, "afters.$name", $label, FALSE);
-                            }
-                        }
-                    }
-
-                    // Morph entries to translation keys
-                    if (isset($defintion['labels'])) {
-                        unset($defintion['labels']);
-                        $defintion['label'] = "$translationDomain::lang.afters.$name";
-                    }
-                }
+                $this->processStageFunctionLang($model, $model->afterFunctions, $langDirPath);
                 $this->setPropertyInClassFile($modelFilePath, 'afterFunctions', $model->afterFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
             }
-
-            // ---------------------------------------------------------------- Model based action links lang.php
-            // Write the labels to lang, and the translationKeys to the YAML
+            if ($model->actionFunctions) {
+                $this->processStageFunctionLang($model, $model->actionFunctions, $langDirPath);
+                $this->setPropertyInClassFile($modelFilePath, 'actionFunctions', $model->actionFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
+            }
             if ($model->actionLinks) {
-                foreach ($model->actionLinks as $name => &$defintion) {
-                    foreach (scandir($langDirPath) as $langName) {
-                        $langFilePath = "$langDirPath/$langName/lang.php";
-                        if (!in_array($langName, array('.','..')) && file_exists($langFilePath)) {
-                            if (isset($defintion['labels'][$langName])) {
-                                $label = $defintion['labels'][$langName];
-                                $this->arrayFileSet($langFilePath, "actions.$name", $label, FALSE);
-                            }
-                        }
-                    }
-
-                    // Morph entries to translation keys
-                    if (isset($defintion['labels'])) {
-                        unset($defintion['labels']);
-                        $defintion['label'] = "$translationDomain::lang.actions.$name";
-                    }
-                }
+                $this->processStageFunctionLang($model, $model->actionLinks, $langDirPath);
                 $this->setPropertyInClassFile($modelFilePath, 'actionLinks', $model->actionLinks, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
             }
-
+            if ($model->alesFunctions) {
+                $this->processStageFunctionLang($model, $model->alesFunctions, $langDirPath);
+                $this->setPropertyInClassFile($modelFilePath, 'alesFunctions', $model->alesFunctions, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
+            }
+    
             // ---------------------------------------------------------------- Global Scope
             // This table restricts ALL related Models to the current selection
             // Relations (Foreign Keys) should be marked as global_scope=<from|to> 
@@ -977,23 +899,10 @@ PHP
             ), FALSE);
 
             // Set any explicit ones we have
-            foreach (scandir($langDirPath) as $langName) {
-                $langFilePath = "$langDirPath/$langName/lang.php";
-                if (!in_array($langName, array('.','..')) && file_exists($langFilePath)) {
-                    if (isset($model->labels[$langName])) {
-                        print("  Added {$YELLOW}$modelSectionName{$NC} into {$YELLOW}$langName{$NC} lang file\n");
-                        $label       = &$model->labels[$langName];
-                        $labelPlural = (isset($model->labelsPlural[$langName]) ? $model->labelsPlural[$langName] : $label);
-                        $throwIfAlreadySet = ($langName != 'en');
-                        $this->langFileSet($langFilePath, "models.$modelSectionName", array(
-                            'label'        => $label,
-                            'label_plural' => $labelPlural
-                        ), $langName, $model->dbObject(), $throwIfAlreadySet);
-                    } else {
-                        if (!env('APP_DEBUG')) print("  {$RED}ERROR{$NC}: No {$YELLOW}$langName{$NC} translation label for {$YELLOW}$modelSectionName{$NC}\n");
-                    }
-                }
-            }
+            if (isset($model->labels))
+                $this->writeLangValues($langDirPath, "models.$modelSectionName.label", $model->labels, $model->dbObject());
+            if (isset($model->labelsPlural))
+                $this->writeLangValues($langDirPath, "models.$modelSectionName.label_plural", $model->labelsPlural, $model->dbObject());
 
             // ----------------------------------------------------------------- Relations
             // TODO: Omit 'key' attribute if column name is <model>_id
@@ -1335,6 +1244,93 @@ PHP
         return $sqls;
     }
 
+    public function processStageFunctionLang(Model $model, array &$stageFunctions, string $langDirPath) {
+        foreach ($stageFunctions as $name => &$defintion) {
+            $stage            = (isset($defintion['stage']) ? $defintion['stage'] : 'function');
+            $fnTranslationKey = $model->functionsTranslationKey($stage, $name);
+
+            if (isset($defintion['labels'])) {
+                $this->writeLangValues($langDirPath, "$fnTranslationKey.label", $defintion['labels']);
+                unset($defintion['labels']);
+                $defintion['label'] = "$fnTranslationKey.label";
+            }
+            if (isset($defintion['comment'])) {
+                $this->writeLangValues($langDirPath, "$fnTranslationKey.comment", $defintion['comment']);
+                $defintion['comment'] = "$fnTranslationKey.comment";
+            }
+
+            // Fields
+            if (isset($defintion['fields'])) {
+                foreach ($defintion['fields'] as $fieldName => &$fieldDefinition) {
+                    $prTranslationKey = "$fnTranslationKey.fields.$fieldName";
+                    if (isset($fieldDefinition['labels'])) {
+                        $this->writeLangValues($langDirPath, "$prTranslationKey.label", $fieldDefinition['labels']);
+                        unset($fieldDefinition['labels']);
+                        $fieldDefinition['label'] = "$prTranslationKey.label";
+                    }
+
+                    if (isset($fieldDefinition['comment'])) {
+                        $this->writeLangValues($langDirPath, "$prTranslationKey.comment", $fieldDefinition['comment']);
+                        $fieldDefinition['comment'] = "$prTranslationKey.comment";
+                    }
+                }
+            }
+
+            // Parameters
+            if (isset($defintion['parameters'])) {
+                foreach ($defintion['parameters'] as $paramName => $paramDefinition) {
+                    $prTranslationKey = "$fnTranslationKey.parameters.$paramName";
+                    if (isset($paramDefinition['labels'])) {
+                        $this->writeLangValues($langDirPath, "$prTranslationKey.label", $paramDefinition['labels']);
+                        unset($paramDefinition['labels']);
+                        $paramDefinition['label'] = "$prTranslationKey.label";
+                    }
+
+                    if (isset($paramDefinition['comment'])) {
+                        $this->writeLangValues($langDirPath, "$prTranslationKey.comment", $paramDefinition['comment']);
+                        $paramDefinition['comment'] = "$prTranslationKey.comment";
+                    }
+                }
+            }
+        }
+    }
+
+    public function writeLangValues(string $langDirPath, string $translationKey, array|string $texts, object|NULL $dbObject = NULL, bool $throughIfAlreadySet = FALSE, string|NULL $comment = NULL) {
+        // $localTranslationKey = 'befores.my_func' but absolute key also accepted
+        // $texts = array(
+        //   'en' => '...',
+        //   'ku' => '...',
+        //   'ar' => '...',
+        // )
+        $localTranslationKey = $translationKey;
+        if (strstr($translationKey, '::lang.') !== FALSE) {
+            // We have an absolute key like acorn.plugin::lang.models...
+            $translationKeyParts = explode('::lang.', $translationKey);
+            $localTranslationKey = $translationKeyParts[1];
+        }
+
+        foreach (scandir($langDirPath) as $langName) {
+            $langFilePath = "$langDirPath/$langName/lang.php";
+            if (!in_array($langName, array('.','..')) && file_exists($langFilePath)) {
+                $text = NULL; 
+                if (is_array($texts) && isset($texts[$langName])) $text = $texts[$langName];
+                else if (is_string($texts)) $text = $texts;
+
+                if ($text) {
+                    $this->langFileSet(
+                        $langFilePath, 
+                        $localTranslationKey, 
+                        $text, 
+                        $langName,
+                        $dbObject,
+                        $throughIfAlreadySet,
+                        $comment
+                    );
+                }
+            }
+        }
+    }
+
     protected function buildHint(Model $model, string $hintName, array $hintConfig, string|NULL $fieldsPath = NULL) 
     {
         $path = NULL;
@@ -1401,6 +1397,7 @@ HTML
         $modelDirPath        = "$pluginDirectoryPath/models/$modelDirName";
         $fieldsPath          = "$modelDirPath/fields.yaml";
         $createdBy           = $this->createdByString();
+        $modelTranslationKey = $model->translationDomain();
         $extraTranslations   = array();
 
         print("  Fields.yaml: Check/create [$fieldsPath]:\n");
@@ -1556,6 +1553,7 @@ HTML
                     'context'      => $contexts,
                     'tab'          => $fieldTab,
                     'tabLocation'  => $field->tabLocation, // Pass through for below @context
+                    'actions'   => $field->actions,
 
                     // Pass through
                     'mode'   => $field->mode,
@@ -1651,9 +1649,18 @@ HTML
         }
 
         // ---------------------------------------- Fields for afters|befores functions
-        $stageFunctions = array_merge($model->beforeFunctions ?: array(), $model->afterFunctions ?: array());
+        $stageFunctions = array_merge(
+            $model->beforeFunctions ?: array(), 
+            $model->afterFunctions ?: array()
+        );
         foreach ($stageFunctions as $name => &$functionSpec) {
             // A field for each additional parameter required
+            // .parameters.<pr-name>.fields.*
+            // Fields can _additionally_ be specified in the fields: array
+            // with the same name as the parameter
+            // but appear in the main form, not in a action form popup like action functions
+            $stage            = (isset($functionSpec['stage']) ? $functionSpec['stage'] : 'function');
+            $fnTranslationKey = $model->functionsTranslationKey($stage, $name);
             if (isset($functionSpec['parameters'])) {
                 foreach ($functionSpec['parameters'] as $paramName => $paramSpec) {
                     switch ($paramName) {
@@ -1663,21 +1670,25 @@ HTML
                         case 'p_user_id':
                             break;
                         default:
-                            // Some parameters must come from the new, as yet not created, model
+                            // Some parameters can come from the new, as yet not created, model
                             $fieldName = preg_replace('/^p_/', '', $paramName);
                             if ($model->hasAttribute($fieldName)) {
                                 print("    {$GREEN}INFO{$NC}: Parameter [$paramName] will come from the model $model->name\n");
                             } else {
-                                // Add pseudo field
-                                $paramNameCamel  = Str::camel($paramName);
+                                // Add pseudo field, with optional fields settings override in fields.<param-name>
                                 $fieldDefinition = array();
-                                if (isset($functionSpec['fields'][$paramNameCamel])) {
-                                    $fieldDefinition = $functionSpec['fields'][$paramNameCamel];
+                                if (isset($functionSpec['fields'][$paramName])) {
+                                    $fieldDefinition = $functionSpec['fields'][$paramName];
                                 }
 
-                                // TODO: Process comment lang
-                                if (isset($fieldDefinition['comment']) && is_array($fieldDefinition['comment'])) {
-                                    $fieldDefinition['comment'] = $fieldDefinition['comment']['en'];
+                                // Inherit the label from the function level
+                                if (!isset($fieldDefinition['label']) && isset($functionSpec['label'])) {
+                                    $fieldDefinition['label'] = $functionSpec['label'];
+                                }
+                                
+                                // Inherit the comment from the function level
+                                if (!isset($fieldDefinition['comment']) && isset($functionSpec['comment'])) {
+                                    $fieldDefinition['comment'] = $functionSpec['comment'];
                                 }
 
                                 // Field key and location
@@ -1686,13 +1697,6 @@ HTML
                                 if      (isset($fieldDefinition['tabLocation']) && $fieldDefinition['tabLocation'] == 2) $dotPath = "secondaryTabs.fields.$fieldKey";
                                 else if (isset($fieldDefinition['tabLocation']) && $fieldDefinition['tabLocation'] == 3) $dotPath = "tertiaryTabs.fields.$fieldKey";
                                 else if (isset($fieldDefinition['tab'])) $dotPath = "tabs.fields.$fieldKey";
-
-                                // TODO: Merge these param / function levels instead
-                                // Label
-                                $label = (isset($paramSpec['label']) 
-                                    ? $paramSpec['label']
-                                    : (isset($functionSpec['label']) ? $functionSpec['label'] : $name)
-                                );
 
                                 // Condition(s)
                                 $condition = 
@@ -1717,7 +1721,6 @@ HTML
                                 print("    {$GREEN}INFO{$NC}: Adding pseudo-field Parameter [$paramName] to the fields.yaml for $model->name\n");
                                 $this->yamlFileSet($fieldsPath, $dotPath, 
                                     $this->removeEmpty(array_merge(array(
-                                        'label'     => $label,
                                         'type'      => 'switch',
                                         'condition' => $condition,
                                         'context'   => $contexts,

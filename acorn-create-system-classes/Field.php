@@ -62,6 +62,7 @@ class Field {
     public $required; // !$column->is_nullable == NO && !$column->column_default
     public $trigger;
     public $showSearch;
+    public $actions; // field-actions
 
     public $readOnly;
     public $newRow;  // From column comment
@@ -79,7 +80,6 @@ class Field {
     public $placeholder;
     public $debugComment;
     public $fieldComment;
-    public $fieldDebug;
     public $permissions = array(); // Resultant Fields.yaml permissions: directive
     // Assemble all field permission-settings directives names
     // for Plugin registerPermissions()
@@ -926,16 +926,10 @@ class ForeignIdField extends Field {
                     if ($controller = $this->relation1->to->controller(Model::NULL_IF_NOT_ONLY_1)) {
                         // Adding translated links under 1-1 fields
                         $controllerUrl = $controller->absoluteBackendUrl();
-                        $title         = $this->relation1->to->name;
-                        // TODO: Re-enable this functionality View|Add links under dropdowns
-                        // if (!is_array($this->fieldComment)) 
-                        //     $this->fieldComment = array('en' => ($this->fieldComment ?: ''));
-                        // foreach ($this->fieldComment as &$comment) {
-                        //     $comment .= "<span class='view-add-models'>acorn::lang.helpblock.view_add <a tabindex='-1' href='$controllerUrl'>$title</a></span>";
-                        //     $comment .= "<a tabindex='-1' target='_blank' href='$controllerUrl' class='goto-form-group-selection'></a>";
-                        //     // TODO: This is actually for annotating checkbox lists, not selects, but it does nothing if it is a dropdown
-                        //     // $goto = $controllerUrl;
-                        // }
+                        // View|Add links under dropdowns
+                        if (is_null($this->actions)) $this->actions = array();
+                        if (!isset($this->actions['view-add-models']))           $this->actions['view-add-models'] = $controllerUrl;
+                        if (!isset($this->actions['goto-form-group-selection'])) $this->actions['goto-form-group-selection'] = $controllerUrl;
                     }
                 }
 

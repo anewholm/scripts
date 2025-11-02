@@ -3,6 +3,7 @@
 use Acorn\CreateSystem\Relation1to1;
 use Acorn\CreateSystem\RelationHasManyDeep;
 use Exception;
+use Spyc;
 
 require_once('Relation.php');
 require_once('Field.php');
@@ -99,17 +100,20 @@ class Model {
         $this->table   = &$table;
         $this->name    = $table->modelName();
 
-        $this->alesFunctions   = $table->alesFunctions;
-        $this->actionFunctions = $this->reorganiseDBFuncSpecs($table->actionFunctions);
-        $this->beforeFunctions = $this->reorganiseDBFuncSpecs($table->beforeFunctions);
-        $this->afterFunctions  = $this->reorganiseDBFuncSpecs($table->afterFunctions);
-
         // Adopt some of the tables comment statements
         $this->comment = $table->comment;
         foreach (\Spyc::YAMLLoadString($this->comment) as $name => $value) {
             $nameCamel = Str::camel($name);
             if (property_exists($this, $nameCamel)) $this->$nameCamel = $value;
         }
+
+        // Functions and links, adorned with stage
+        $this->alesFunctions   = $table->alesFunctions;
+        $this->actionFunctions = $this->reorganiseDBFuncSpecs($table->actionFunctions, 'action');
+        $this->beforeFunctions = $this->reorganiseDBFuncSpecs($table->beforeFunctions, 'before');
+        $this->afterFunctions  = $this->reorganiseDBFuncSpecs($table->afterFunctions,  'after');
+        if ($this->actionLinks)   foreach ($this->actionLinks   as $name => &$definition) $definition['stage'] = 'link';
+        if ($this->alesFunctions) foreach ($this->alesFunctions as $name => &$definition) $definition['stage'] = 'ales';
 
         if (!isset($this->readOnly) && $table instanceof View) $this->readOnly = TRUE;
 
@@ -126,8 +130,34 @@ class Model {
         self::$models[$this->fullyQualifiedName()] = &$this;
     }
 
-    public function reorganiseDBFuncSpecs(array|NULL $dbFunctionSpecs): array
+    public function reorganiseDBFuncSpecs(array|NULL $dbFunctionSpecs, string|NULL $stage = NULL): array
     {
+        // ------------------ Result: 
+        // 'add_to_hierarchy' => [
+        //     'fnDatabaseName' => 'fn_acorn_university_after_courses_add_to_hierarchy',
+        //     'parameters' => [
+        //         'p_model_id' => 'uuid',
+        //         'p_user_id' => 'uuid',
+        //         'p_add' => 'bool',
+        //         ...
+        //     ],
+        //     'returnType' => 'unknown',
+        //     'labels' => [
+        //         'en' => 'Add to your organisation',
+        //     ],
+        //     'conditions' => 'select count(*) ...',
+        //     'fields' => [
+        //         'p_add' => [
+        //             'commentHtml' => TRUE,
+        //             'comment' => [
+        //                 'en' => 'Add this course to your organisation for the <b>current year</b>',
+        //             ],
+        //             'tabLocation' => 3,
+        //             ...
+        //         ]
+        //     ],
+        //     'stage' => 'after'
+        // ], ...
         $modelFunctionSpecs = array();
         if ($dbFunctionSpecs) {
             foreach ($dbFunctionSpecs as $fnName => $definition) {
@@ -136,18 +166,27 @@ class Model {
                 $fnNameParts = explode('_', $fnNameBare);
                 $nameParts   = array_slice($fnNameParts, 5);
                 $name        = implode('_', $nameParts);
+                // Camel top-level keys only
+                $definition  = Framework::camelKeys($definition, FALSE);
 
-                // Process comment
-                $commentDef  = \Spyc::YAMLLoadString($definition['comment']);
+                // Process comment yaml
+                $commentDef  = Spyc::YAMLLoadString($definition['comment']);
                 $enDevLabel  = Str::title(implode(' ', $nameParts));
                 if (!isset($commentDef['labels']['en'])) $commentDef['labels']['en'] = $enDevLabel;
-                $commentDef = Framework::camelKeys($commentDef);
+
+                // Camel field properties
+                if (isset($commentDef['fields'])) {
+                    foreach ($commentDef['fields'] as $fieldName => &$fieldDefinition) {
+                        $fieldDefinition = Framework::camelKeys($fieldDefinition);
+                    }
+                }
 
                 $modelFunctionSpecs[$name] = array_merge(array(
                     'fnDatabaseName' => $fnName,
                     'parameters'     => $definition['parameters'],
                     'returnType'     => $definition['returnType'],
                 ), $commentDef);
+                if ($stage) $modelFunctionSpecs[$name]['stage'] = $stage;
             }
         }
         return $modelFunctionSpecs;
@@ -592,7 +631,10 @@ class Model {
 
         // Befores and Afters function permissions
         // These are added to all their fields automatically
-        $stageFunctions = array_merge($this->beforeFunctions ?: array(), $this->afterFunctions ?: array());
+        $stageFunctions = array_merge(
+            $this->beforeFunctions ?: array(), 
+            $this->afterFunctions ?: array()
+        );
         foreach ($stageFunctions as $name => &$functionSpec) {
             if (isset($functionSpec['parameters'])) {
                 foreach ($functionSpec['parameters'] as $paramName => $paramSpec) {
@@ -604,10 +646,15 @@ class Model {
                             break;
                         default:
                             // Some parameters must come from the new, as yet not created, model
+                            // TODO: Translate the function name
                             $fieldName = preg_replace('/^p_/', '', $paramName);
                             if (!$this->hasAttribute($fieldName)) {
                                 $permissions[$this->permissionFQN("{$name}_{$paramName}_use")] = array(
-                                    'labels' => array('en' => "Use function $name"),
+                                    'labels' => array(
+                                        'en' => "Use function $name",
+                                        'ku' => "Fonksiyonê $name bikar bîne",
+                                        'ar' => "$name استخدم الوظيفة",
+                                    ),
                                 );
                             }
                     }
@@ -2174,7 +2221,7 @@ class Model {
 
         // ---------------------------------------------------------------- Actions
         // These also appear in columns.yaml
-        if ($this->allActionFunctions()) {
+        if ($this->allActionThings()) {
             $fields['_actions'] = new PseudoField($this, array(
                 'name'          => '_actions',
                 'explicitLabelKey' => 'acorn::lang.models.general.actions',
@@ -2274,11 +2321,15 @@ class Model {
             else {
                 $dbLangPath = $field->dbObject()?->dbLangPath();
                 $disabled   = ($dbLangPath ? '' : 'disabled="disabled"');
-                $dbComment  = str_replace(" ", '&nbsp;', $field->comment); // Prevent YAML indentation normalization
+                // Prevent YAML indentation normalization
+                $dbComment  = str_replace(" ", '&nbsp;', $field->comment); 
 
                 if (!$field->fromYaml) { // Let's not overwrite YAML comments
-                    $field->fieldDebug = <<<HTML
-                        <div class='debug debug-field'>
+                    if (is_array($dbComment))
+                        throw new Exception("DB comment is array for $field->name");
+                    if (is_null($field->actions)) $field->actions = array();
+                    $field->actions['debug'] = <<<HTML
+                        <div>
                             <div class="title">$name</div>
                             $field->debugComment
                             <div class="create-system">
@@ -2305,13 +2356,13 @@ HTML;
         return $fields;
     }
 
-    public function allActionFunctions(): array
+    public function allActionThings(): array
     {
-        $actionFunctions = $this->actionFunctions;
+        $actionFunctions = array_merge($this->actionFunctions ?: array(), $this->actionLinks ?: array());
 
         foreach ($this->relations1to1() as $relation) {
-            if (method_exists($relation->to, 'allActionFunctions'))
-                $actionFunctions = array_merge($actionFunctions, $relation->to->allActionFunctions());
+            if (method_exists($relation->to, 'allActionThings'))
+                $actionFunctions = array_merge($actionFunctions, $relation->to->allActionThings());
         }
 
         return $actionFunctions;
@@ -2362,14 +2413,27 @@ HTML;
         return $nameObjectPath;
     }
 
-    public function localTranslationKey(): string
+    public function localTranslationKey(string|NULL $group = NULL): string
     {
-        $group    = 'models';
-        $subgroup = $this->dirName(); // squished usergroup | invoice
-        return "$group.$subgroup";
+        // models.<model>
+        $area  = 'models';
+        $model = $this->dirName(); // squished usergroup | invoice
+        $key   = "$area.$model";
+        if ($group) $key .= ".$group";
+        return $key;
     }
 
-    public function translationDomain(): string
+    public function functionsTranslationKey(string|NULL $stage = NULL, string|NULL $name = NULL): string
+    {
+        // acorn.<plugin>::lang.models.<model>._functions
+        // we use an underscore to avoid clashes with a real "functions" label
+        $key = $this->translationDomain('_functions');
+        if ($stage) $key .= ".$stage";
+        if ($name)  $key .= ".$name";
+        return $key;
+    }
+
+    public function translationDomain(string|NULL $group = NULL): string
     {
         /* Translation:
          *  For foreign keys:           acorn.user::lang.models.usergroup.label (pointing TO the user plugin)
@@ -2379,7 +2443,7 @@ HTML;
          * if not, then it is qualified, and we need a local translation
          */
         $domain = $this->plugin->translationDomain(); // acorn.user
-        $localTranslationKey = $this->localTranslationKey();
+        $localTranslationKey = $this->localTranslationKey($group);
         return "$domain::lang.$localTranslationKey";
     }
 

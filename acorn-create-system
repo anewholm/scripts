@@ -28,29 +28,34 @@ $gitPolicy      = (isset($argv[2]) ? $argv[2] : NULL);
 $writeREADME    = ((isset($argv[3]) ? $argv[3] : 'n') == 'y');
 
 // ------------------------------------------- lang.yaml
+// TODO: lang.yaml import not finished
 if ($installPlugins == 'lang.yaml') {
     print("Importing language translation file [$installPlugins]\n");
-    $langTranslationFile = \Spyc::YAMLLoad($installPlugins);
-    $tables = $langTranslationFile['tables'];
-    foreach ($tables as $schemas) {
-        foreach ($schemas as $authors) {
-            foreach ($authors as $pluginName => $plugins) {
-                foreach ($plugins as $tableName => $table) {
-                    if (isset($table['columns'])) foreach ($table['columns'] as $columnName => $column) {
-                        $textEn = $column['en'];
-                        print("  $tableName:$columnName => $textEn\n");
-                    }
-                    if (isset($table['foreignkeys'])) foreach ($table['foreignkeys'] as $foreignkeyName => $foreignkey) {
-                        $textEn = $foreignkey['en'];
-                        print("  $tableName:$foreignkeyName => $textEn\n");
-                    }
-                    if (isset($table['label'])) {
-                        $textEn = $table['label']['en'];
-                        print("  $tableName:label => $textEn\n");
-                    }
-                    if (isset($table['label_plural'])) {
-                        $textEn = $table['label_plural']['en'];
-                        print("  $tableName:label_plural => $textEn\n");
+    print("This will overwrite translation values throughout the database\n");
+    $yn = readline("Are you sure (y|n)? [n] ");
+    if ($yn == 'y') {
+        $langTranslationFile = \Spyc::YAMLLoad($installPlugins);
+        $tables = $langTranslationFile['tables'];
+        foreach ($tables as $schemas) {
+            foreach ($schemas as $authors) {
+                foreach ($authors as $pluginName => $plugins) {
+                    foreach ($plugins as $tableName => $table) {
+                        if (isset($table['columns'])) foreach ($table['columns'] as $columnName => $column) {
+                            $textEn = $column['en'];
+                            print("  $tableName:$columnName => $textEn\n");
+                        }
+                        if (isset($table['foreignkeys'])) foreach ($table['foreignkeys'] as $foreignkeyName => $foreignkey) {
+                            $textEn = $foreignkey['en'];
+                            print("  $tableName:$foreignkeyName => $textEn\n");
+                        }
+                        if (isset($table['label'])) {
+                            $textEn = $table['label']['en'];
+                            print("  $tableName:label => $textEn\n");
+                        }
+                        if (isset($table['label_plural'])) {
+                            $textEn = $table['label_plural']['en'];
+                            print("  $tableName:label_plural => $textEn\n");
+                        }
                     }
                 }
             }
@@ -179,7 +184,7 @@ if ($installPlugins != 'olap') {
     }
 }
 
-// TomCat9 OLAP Cube reporting integration (if root found)
+// --------------------------------- TomCat9 OLAP Cube reporting integration (if root found)
 // NOTE: This will re-create ALL cubes from ALL plugins everytime
 // This is better because we have 1 cubes.xml schema 
 // and one cube collection for the entire application

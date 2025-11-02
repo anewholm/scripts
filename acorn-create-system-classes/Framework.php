@@ -78,6 +78,7 @@ class Framework
             'ordinal' => 'Ordinal',
             'minimum' => 'Minimum',
             'maximum' => 'Maximum',
+            'code'    => 'Code',
 
             // Menus
             'actions' => 'Actions',
@@ -134,6 +135,7 @@ class Framework
             'ordinal' => 'ترتيبي',
             'minimum' => 'الحد الأدنى',
             'maximum' => 'الحد الأقصى',
+            'code'    => 'شفرة',
 
             // Menus
             'actions' => 'النشاط',
@@ -190,6 +192,7 @@ class Framework
             'ordinal' => 'Rêz',
             'minimum' => 'Herî kêm',
             'maximum' => 'Herî zêde',
+            'code'    => 'Kod',
 
             // Menus
             'actions' => 'Çalakîyên',

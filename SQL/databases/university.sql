@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 6Oa8bFPWlLpYwJM43TSSopPaWu9scslvtHvQDnd1Qqs8bLxBBYUHdjymhZ6Hau1
+\restrict wOJNWUAXqskfoxln0q3byAYY5I3flfolJvcU8Qq0iy45N5kGoo1nL8p68m0pLql
 
 -- Dumped from database version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
 -- Dumped by pg_dump version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
@@ -2004,6 +2004,7 @@ condition: not exists(select * from acorn_enrollment_students es where not es.pr
 result-action: refresh
 fields:
   p_hierarchy_id:
+    label: acorn.university::lang.models.hierarchy.label
     type: dropdown
     options: Acorn\University\Models\Hierarchy::dropdownOptions';
 
@@ -3733,7 +3734,29 @@ comment:
     Agahiyên salên pêş de dikarin ji bo dersên ku di _vê_ sala qeydkirinê_ de dest pê dikin werin jêbirin.
     *an* ji bo materyalên dersê yên ku di vê salê de ji her dersa sala qeydkirinê ya berê ne.
   ar: >
-    يمكن حذف بيانات السنوات التالية للدورات التي تبدأ في سنة التسجيل هذه. أو للمواد الدراسية التي تقع في هذا العام من أي دورة دراسية سابقة في سنة التسجيل.';
+    يمكن حذف بيانات السنوات التالية للدورات التي تبدأ في سنة التسجيل هذه. أو للمواد الدراسية التي تقع في هذا العام من أي دورة دراسية سابقة في سنة التسجيل.
+fields:
+  p_clear_course_materials:
+    labels:
+      en: Clear course materials
+      ku: Materyalên qursê yên zelal
+      ar: مواد الدورة واضحة
+  p_for_enrollment_year:
+    labels:
+      en: For enrollment year
+      ku: Ji bo sala qeydkirinê
+      ar: لسنة التسجيل
+  p_clear_exams_and_scores:
+    labels:
+      en: Clear exams and scores
+      ku: Ezmûn û puanên zelal
+      ar: اجتياز الامتحانات والنتائج
+  p_confirm:
+    labels:
+      en: Confirm
+      ku: Tesdîqkirin
+      ar: يتأكد
+';
 
 
 --
@@ -3768,7 +3791,39 @@ COMMENT ON FUNCTION public.fn_acorn_university_action_academic_years_copy_to(mod
   ku: Daneyên salê kopî bikin bo
   ar: نسخ بيانات السنة إلى
 result-action: refresh
-condition: exists(select * from acorn_university_hierarchies where academic_year_id = acorn_university_academic_years.id)';
+condition: exists(select * from acorn_university_hierarchies where academic_year_id = acorn_university_academic_years.id)
+fields:
+  p_academic_year_id:
+    labels: 
+      en: Academic Year
+      ku: Sala Akademîk
+      ar: العام الدراسي
+  p_copy_hierarchy:
+    labels:
+      en: Copy Hierarchy
+      ku: Hiyerarşiya Kopîkirinê
+      ar: نسخ التسلسل الهرمي
+  p_copy_semesters:
+    labels:
+      en: Copy Semesters
+      ku: Semesterên Kopîkirinê
+      ar: نسخ الفصول الدراسية
+  p_copy_materials:
+    labels:
+      en: Copy Materials
+      ku: Materyalên Kopîkirinê
+      ar: مواد النسخ
+  p_copy_seminars:
+    labels:
+      en: Copy Seminars
+      ku: Semînerên Kopîkirinê
+      ar: نسخ الندوات
+  p_copy_calculations:
+    labels:
+      en: Copy Calculations
+      ku: Hesabkirinên Kopîkirinê
+      ar: نسخ الحسابات
+';
 
 
 --
@@ -3964,17 +4019,27 @@ result-action: refresh
 type: list
 fields:
   p_copy_academic_year_id:
+    labels: 
+      en: Academic Year to copy
+      ku: Sala Akademîk ji bo kopîkirinê
+      ar: السنة الدراسية للنسخ
     options: Acorn\University\Models\AcademicYear::dropdownOptions
     type: dropdown
     required: true
   p_enabled:
-    label: Enable new years
+    labels: 
+      en: Enable new years
+      ku: Salên nû çalak bike
+      ar: تمكين السنوات الجديدة
     cssClass: col-xs-6
     default: true
   p_num_years:
-    label: Number of new years
+    labels: 
+      en: Number of new years
+      ku: Hejmara salên nû
+      ar: عدد السنوات الجديدة
     cssClass: col-xs-6
-	default: 5
+    default: 5
 comment:
   en: >
     Provision multiple Academic years and semesters into the future. Semesters will be copied from the most recent Academic Year setup.
@@ -4048,11 +4113,13 @@ comment:
   ar: إضافة المعلومات المحددة المتاحة لدورة أخرى-السنة الدراسية-السنة الدراسية-الفصل الدراسي
 fields:
   p_course_id:
+    label: acorn.university::lang.models.course.label
     type: dropdown
     placeholder: backend::lang.form.select
     required: true
     options: Acorn\University\Models\Course::dropdownOptions
   p_academic_year_semester_id:
+    label: acorn.university::lang.models.academicyearsemester.label
     type: dropdown
     placeholder: backend::lang.form.select
     required: true
@@ -4060,6 +4127,7 @@ fields:
     span: storm
     css-class: col-xs-6 new-row
   p_course_year_id:
+    label: acorn.university::lang.models.courseyear.label
     type: dropdown
     placeholder: backend::lang.form.select
     options: Acorn\University\Models\CourseYear::dropdownOptions
@@ -4067,21 +4135,45 @@ fields:
     css-class: col-xs-6
 	
   p_copy_exams:
+    labels:
+      en: Copy Exams
+      ku: Ezmûnên Kopî
+      ar: نسخ الامتحانات
     span: storm
     css-class: col-xs-4 new-row
   p_copy_projects:
+    labels:
+      en: Copy Projects
+      ku: Projeyên Kopîkirinê
+      ar: نسخ المشاريع
     span: storm
     css-class: col-xs-4
   p_copy_interviews:
+    labels:
+      en: Copy Interviews
+      ku: Hevpeyvînên Kopîkirî
+      ar: نسخ المقابلات
     span: storm
     css-class: col-xs-4
   p_copy_calculations:
+    labels:
+      en: Copy Calculations
+      ku: Hesabkirinên Kopîkirinê
+      ar: نسخ الحسابات
     span: storm
     css-class: col-xs-4
   p_delete_existing:
+    labels:
+      en: Delete existing
+      ku: Jêbirina heyî
+      ar: حذف الموجود
     span: storm
     css-class: col-xs-4
   p_copy_students:
+    labels:
+      en: Copy Students
+      ku: Xwendekarên Kopîkirî
+      ar: نسخ الطلاب
     span: storm
     css-class: col-xs-4
 comment-icon: info';
@@ -4153,8 +4245,20 @@ comment:
   ar: تكرار هذا الفصل الدراسي مع مجموعته الطلابية الخاصة للتخصص.
 fields:
   p_course_specialization_id:
+    label: acorn.university::lang.models.coursespecialization.label
     type: dropdown
-    options: Acorn\University\Models\CourseSpecialization::dropdownOptions';
+    options: Acorn\University\Models\CourseSpecialization::dropdownOptions
+  p_copy_materials:
+    labels:
+      en: Copy Materials
+      ku: Materyalên Kopîkirinê
+      ar: مواد النسخ
+  p_copy_exams:
+    labels:
+      en: Copy Exams
+      ku: Ezmûnên Kopî
+      ar: نسخ الامتحانات
+';
 
 
 --
@@ -4217,7 +4321,28 @@ comment:
     Agahiyên salên pêş de dikarin ji bo dersên ku di _vê_ sala qeydkirinê_ de dest pê dikin werin jêbirin.
     *an* ji bo materyalên dersê yên ku di vê salê de ji her dersa sala qeydkirinê ya berê ne.
   ar: >
-    يمكن حذف بيانات السنوات التالية للدورات التي تبدأ في سنة التسجيل هذه. أو للمواد الدراسية التي تقع في هذا العام من أي دورة دراسية سابقة في سنة التسجيل.';
+    يمكن حذف بيانات السنوات التالية للدورات التي تبدأ في سنة التسجيل هذه. أو للمواد الدراسية التي تقع في هذا العام من أي دورة دراسية سابقة في سنة التسجيل.
+fields:
+  p_clear_course_materials:
+    labels:
+      en: Clear course materials
+      ku: Materyalên qursê yên zelal
+      ar: مواد الدورة واضحة
+  p_for_enrollment_year:
+    labels:
+      en: For enrollment year
+      ku: Ji bo sala qeydkirinê
+      ar: لسنة التسجيل
+  p_clear_exams_and_scores:
+    labels:
+      en: Clear exams and scores
+      ku: Ezmûn û puanên zelal
+      ar: اجتياز الامتحانات والنتائج
+  p_confirm:
+    labels:
+      en: Confirm
+      ku: Tesdîqkirin
+      ar: يتأكد';
 
 
 --
@@ -4244,7 +4369,34 @@ COMMENT ON FUNCTION public.fn_acorn_university_action_hierarchies_copy_to(model_
   ku: Daneyên salê kopî bike bo
   ar: نسخ بيانات السنة إلى
 result-action: refresh
-condition: parent_id is null';
+condition: parent_id is null
+fields:
+  p_academic_year_id:
+    labels:
+      en: Academic Year to copy
+      ku: Sala Akademîk ji bo kopîkirinê
+      ar: السنة الدراسية للنسخ
+  p_promote_successful_students:
+    labels:
+      en: Promote successfull students
+      ku: Pêşvebirina xwendekarên serkeftî
+      ar: تعزيز الطلاب الناجحين
+  p_copy_materials:
+    labels:
+      en: Copy Materials
+      ku: Materyalên Kopîkirinê
+      ar: مواد النسخ
+  p_copy_seminars:
+    labels:
+      en: Copy Seminars
+      ku: Semînerên Kopîkirinê
+      ar: نسخ الندوات
+  p_copy_calculations:
+    labels:
+      en: Copy Calculations
+      ku: Hesabkirinên Kopîkirinê
+      ar: نسخ الحسابات
+';
 
 
 --
@@ -11964,6 +12116,13 @@ labels-plural:
 
 
 --
+-- Name: COLUMN acorn_enrollment_course_entry_requirements.enrollment_course_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.enrollment_course_id IS 'explicit-label-key: acorn.university::lang.models.course.label';
+
+
+--
 -- Name: COLUMN acorn_enrollment_course_entry_requirements.minimum_students; Type: COMMENT; Schema: public; Owner: university
 --
 
@@ -11988,7 +12147,25 @@ COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.maximum_stud
 -- Name: COLUMN acorn_enrollment_course_entry_requirements.related_course_id; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.related_course_id IS 'field-comment: These entry requirement criteria are only applicable to students with this specific High-School certificate. Create new Entry requirements for other Certificates.
+COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.related_course_id IS 'labels:
+  en: Related Course
+  ku: Kursa Pêwendîdar
+  ar: دورة ذات صلة
+field-comment: 
+  en: These entry requirement criteria are only applicable to students with this specific High-School certificate. Create new Entry requirements for other Certificates.
+  ku: Ev pîvanên pêwîstiya têketinê tenê ji bo xwendekarên xwedî vê sertîfîkaya Lîseyê ya taybetî derbas dibin. Ji bo Sertîfîkayên din şertên têketinê yên nû biafirînin.
+  ar: تنطبق معايير القبول هذه فقط على الطلاب الحاصلين على هذه الشهادة الثانوية. يُرجى إنشاء متطلبات قبول جديدة للشهادات الأخرى.
+';
+
+
+--
+-- Name: COLUMN acorn_enrollment_course_entry_requirements.required_exam_id; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.required_exam_id IS 'labels:
+  en: Required Exam
+  ku: Ezmûna Pêwîst
+  ar: الامتحان المطلوب
 ';
 
 
@@ -12006,7 +12183,11 @@ COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.minimum_scor
 -- Name: COLUMN acorn_enrollment_course_entry_requirements.failed_course; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.failed_course IS 'commentHtml: true
+COMMENT ON COLUMN public.acorn_enrollment_course_entry_requirements.failed_course IS 'labels:
+  en: Failed Course
+  ku: Kursa Têkçûyî
+  ar: دورة فاشلة
+commentHtml: true
 field-comment: 
   en: This course will not be considered in the enrollment recursive student allocation process. This happens automatically when not enough students are allocated on a course and the enrollment process re-runs to re-allocate everyone again <i>without</i> this course.
   ku: Ev ders dê di pêvajoya dabeşkirina xwendekaran a dubarekirî ya qeydkirinê de neyê hesibandin. Ev bixweber diqewime dema ku têra xwe xwendekar li ser dersek neyên dabeşkirin û pêvajoya qeydkirinê ji nû ve tê meşandin da ku her kes dîsa <i>bêyî</i> vê dersê ji nû ve were dabeşkirin.
@@ -12078,7 +12259,10 @@ labels-plural:
   en: Priorities
   ku: Pêşeyîyên
   ar: الأولوية
-field-comment: Students will be allocated during the enrollment process according to these priorities.';
+field-comment: 
+  en: Students will be allocated during the enrollment process according to these priorities.
+  ku: Xwendekar dê di pêvajoya qeydkirinê de li gorî van pêşîniyan werin dabeşkirin.
+  ar: سيتم توزيع الطلاب أثناء عملية التسجيل وفقًا لهذه الأولويات.';
 
 
 --
@@ -12397,7 +12581,17 @@ field-comment:
     Li gorî celebê tevgerê algorîtmayên pêvajoyê yên cûrbecûr hene.<br/>
     Guhertinên pêşniyarkirî ji bo her pêvajoyê her gav dikarin di <a target="_blank" href="/university/xavier/index.html?password=fryace4">Berî sepandina pêşniyaran, qeydkirina kuba OLAP</a> bikin. Piştî Serlêdanê, guhertin nayên vegerandin.
     </p>
-';
+  ar: >
+    <ul class="help-block">
+    <li> <b>التسجيل في مؤسسات أخرى</b>: يُنقل الطلاب الناجحون إلى برامج دراسية أخرى، عادةً في مؤسسات أخرى، بناءً على رغباتهم المسجلة. هذا مفيد للتسجيل في الجامعات من المرحلة الثانوية. </li>
+    <li> <b>الترقيات الفصلية</b>: يُضاف الطلاب الناجحون إلى الفصل الدراسي التالي في نفس البرنامج. </li>
+    <li> <b>الترقيات السنوية</b>: يُضاف الطلاب الناجحون إلى السنة الدراسية التالية في نفس البرنامج. </li>
+    <li><b>الحذف من مقرر دراسي موجود</b>: يُحذف الطلاب الراسبون من مجموعاتهم الموجودة.</li>
+    </ul>
+    <p class="help-block">تعتمد جميع عمليات نقل الطلاب على نتائج عملية حسابية مسجلة مخصصة وامتحان.<a target="_blank" href="/backend/acorn/exam/exams">امتحان</a>.<br/>
+    تتوفر خوارزميات معالجة مختلفة حسب نوع النقل.<br/>
+    يمكن دائمًا تحليل التغييرات المقترحة لكل عملية في مكعب OLAP للتسجيلات قبل تطبيق المقترحات. بعد التطبيق، لا يمكن التراجع عن التغييرات.
+    </p>';
 
 
 --
@@ -12450,6 +12644,20 @@ labels:
   en: Runs
 labels-plural:
   en: Runs';
+
+
+--
+-- Name: COLUMN acorn_enrollment_runs.completed_at; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_enrollment_runs.completed_at IS 'labels:
+  en: Completed at
+  ku: Dema temambûnê
+  ar: الوقت المكتمل
+labels:
+  en: Completed ats
+  ku: Dema temambûnên
+  ar: الوقت المكتمل';
 
 
 --
@@ -12537,8 +12745,13 @@ COMMENT ON COLUMN public.acorn_exam_answers.sort_order IS 'list-editable: true';
 COMMENT ON COLUMN public.acorn_exam_answers.current IS 'list-editable: true
 labels:
   en: Correct
+  ku: Rast
+  ar: صحيح
 labels-plural:
-  en: Correct';
+  en: Correct
+  ku: Rast
+  ar: صحيح
+';
 
 
 --
@@ -12548,8 +12761,13 @@ labels-plural:
 COMMENT ON COLUMN public.acorn_exam_answers.name IS 'order: 1
 labels:
   en: Answer
+  ku: Bersiv
+  ar: إجابة
 labels-plural:
-  en: Answers';
+  en: Answers
+  ku: Bersiv
+  ar: الإجابات
+';
 
 
 --
@@ -12821,27 +13039,68 @@ labels-plural:
 COMMENT ON COLUMN public.acorn_exam_calculations.expression IS 'field-type: textarea
 column-type: partial
 column-partial: expression
-field-comment: >
-  Use Microsoft Excel spreadsheet functions, like avg() and sum() and token names for data.
-  Tokens include: <ul class="help-block">
-  <li>:score/student-code/year/course/material/material-type/exam/exam-type:</li>
-  <li>:project/student-code/year/project[/required]/result:</li>
-  <li>:interview/student-code/year/interview[/required]/result:</li>
-  <li>:material/student-code/year/course/material/material-type[/required]/result:</li>
-  <li>:course/student-code/year/course/course-type[/required]/result:</li>
-  <li>:calculation/student-code/year/calculation/calculation-type[/required]:</li>
-  <li>:student/student-code/year/age:</li>
-  <li>:student/student-code/year/locale:</li>
-  <li>:student/student-code/year/language:</li>
-  </ul>
-  <p class="help-block">All names are same, e.g. My Project, case-insensitive searching. Always the English name.
-  UUIDs can also be used.
-  .* means all values.
-  Some examples:</p> 
-  <ul class="help-block">
-  <li>avg(:score/ROJ99/2023-2024/Literature/English/material/.*/.*:)</li>
-  </ul>
-comment-html: true';
+comment-html: true
+field-comment: 
+  en: >
+    Use Microsoft Excel spreadsheet functions, like avg() and sum() and token names for data.
+    Tokens include: <ul class="help-block">
+    <li>:score/student-code/year/course/material/material-type/exam/exam-type:</li>
+    <li>:project/student-code/year/project[/required]/result:</li>
+    <li>:interview/student-code/year/interview[/required]/result:</li>
+    <li>:material/student-code/year/course/material/material-type[/required]/result:</li>
+    <li>:course/student-code/year/course/course-type[/required]/result:</li>
+    <li>:calculation/student-code/year/calculation/calculation-type[/required]:</li>
+    <li>:student/student-code/year/age:</li>
+    <li>:student/student-code/year/locale:</li>
+    <li>:student/student-code/year/language:</li>
+    </ul>
+    <p class="help-block">All names are same, e.g. My Project, case-insensitive searching. Always the English name.
+    UUIDs can also be used.
+    .* means all values.
+    Some examples:</p> 
+    <ul class="help-block">
+    <li>avg(:score/ROJ99/2023-2024/Literature/English/material/.*/.*:)</li>
+    </ul>
+  ku: >
+    Fonksiyonên tabloya hesabê ya Microsoft Excel-ê, wek avg() û sum() û navên nîşanekan ji bo daneyan bikar bînin. 
+    Token ev in: <ul class="help-block">
+    <li>:score/xwendekarê-kodê/sal/kurs/materyal/cureyê-materyal/îmtîhan/cureyê-îmtîhanê:</li>
+    <li>:project/xwendekarê-kodê/sal/projeyê[/pêdivî]/encam:</li>
+    <li>:interview/xwendekarê-kodê/sal/înterview[/pêdivî]/encam:</li>
+    <li>:materyal/xwendekarê-kodê/sal/kurs/materyal/cureyê-materyal[/pêdivî]/encam:</li>
+    <li>:kurs/xwendekarê-kodê/sal/kurs/cureyê-ya-materyal[/pêdivî]/encam:</li>
+    <li>:hesabkirin/xwendekarê-kodê/sal/hesabkirin/cureyê-hesabkirinê[/pêdivî]/encam:</li>
+    <li>:hesabkirin/xwendekarê-kodê/sal/hesabkirin/cureyê-hesabkirinê[/pêdivî]:</li>
+    <li>:xwendekarê-kodê-xwendekarê/sal/temen:</li>
+    <li>:xwendekarê-kodê-xwendekarê/sal/cîh:</li>
+    <li>:xwendekar/koda-xwendekar/sal/ziman:</li>
+    </ul>
+    <p class="help-block">Hemû nav wek hev in, mînak Projeya Min, lêgerîna bêhesasiyeta mezin û biçûkan. Her tim navê Îngilîzî.
+    UUID jî dikarin werin bikar anîn.
+    .* tê wateya hemû nirxan.
+    Çend mînak:</p>
+    <ul class="help-block">
+    <li>avg(:score/ROJ99/2023-2024/Wêje/Îngilîzî/materyal/.*/.*:)</li>
+    </ul>
+  ar: >
+      استخدم وظائف جدول بيانات Microsoft Excel، مثل avg() وsum() وأسماء الرموز للبيانات. تشمل الرموز: <ul class="help-block">
+    <li>:score/student-code/year/course/material/material-type/exam/exam-type:</li>
+    <li>:project/student-code/year/project[/required]/result:</li>
+    <li>:interview/student-code/year/interview[/required]/result:</li>
+    <li>:material/student-code/year/course/material/material-type[/required]/result:</li>
+    <li>:course/student-code/year/course/course-type[/required]/result:</li>
+    <li>:calculation/student-code/year/calculation/calculation-type[/required]:</li>
+    <li>:student/student-code/year/age:</li>
+    <li>:student/student-code/year/locale:</li>
+    <li>:student/student-code/year/language:</li>
+    </ul>
+    <p class="help-block">جميع الأسماء متشابهة، على سبيل المثال: "مشروعي"، بحث غير حساس لحالة الأحرف. الاسم باللغة الإنجليزية دائمًا.
+    يمكن أيضًا استخدام مُعرِّفات UUID.
+    .* تعني جميع القيم.
+    بعض الأمثلة:</p>
+    <ul class="help-block">
+    <li>avg(:score/ROJ99/2023-2024/Literature/English/material/.*/.*:)</li>
+    </ul>';
 
 
 --
@@ -12897,6 +13156,36 @@ labels-plural:
 
 
 --
+-- Name: COLUMN acorn_exam_centres.capacity; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_centres.capacity IS 'labels:
+  en: Capacity
+  ku: Kanîn
+  ar: سعة';
+
+
+--
+-- Name: COLUMN acorn_exam_centres.email; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_centres.email IS 'labels:
+  en: E-Mail
+  ku: E-Mail
+  ar: بريد إلكتروني';
+
+
+--
+-- Name: COLUMN acorn_exam_centres.phone; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_centres.phone IS 'labels:
+  en: Phone
+  ku: Telefon
+  ar: هاتف';
+
+
+--
 -- Name: acorn_exam_exam_materials; Type: TABLE; Schema: public; Owner: university
 --
 
@@ -12946,6 +13235,26 @@ COMMENT ON COLUMN public.acorn_exam_exam_materials.minimum IS 'list-editable: tr
 --
 
 COMMENT ON COLUMN public.acorn_exam_exam_materials.maximum IS 'list-editable: true';
+
+
+--
+-- Name: COLUMN acorn_exam_exam_materials.weight; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_exam_materials.weight IS 'list-editable: true
+tab-location: 3
+labels:
+  en: Weight
+  ku: Pîvan
+  ar: وزن
+field-comment: 
+  en: (Optional) Can be used in calculations if desired
+  ku: (Vebijarkî) Ger bixwaze dikare di hesaban de were bikar anîn
+  ar: (اختياري) يمكن استخدامه في الحسابات إذا رغبت في ذلك
+css-classes:
+  - col-xs-6
+  - col-md-3
+  - new-row';
 
 
 --
@@ -13036,11 +13345,35 @@ labels-plural:
 
 
 --
+-- Name: COLUMN acorn_exam_instances.datetime; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_exam_instances.datetime IS 'labels:
+  en: Date-Time
+  ku: Dîrok-Dem
+  ar: التاريخ والوقت';
+
+
+--
 -- Name: COLUMN acorn_exam_instances.show_on_front_end; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_exam_instances.show_on_front_end IS 'tab-location: 3
-explicit-label-key: acorn.user::lang.settings.show_on_front_end';
+COMMENT ON COLUMN public.acorn_exam_instances.show_on_front_end IS 'explicit-label-key: acorn.user::lang.settings.show_on_front_end
+order: 1
+tab-location: 3
+hints:
+  public:
+    labels: 
+      en: Public
+      ku: Alenî
+      ar: عام
+    content:
+      en: The course is visible on the front end in calendars and results
+      ku: Qurs li ser rûpela pêşîn di salname û encaman de xuya ye.
+      ar: تظهر الدورة في الواجهة الأمامية في التقويمات والنتائج
+    conditions: acorn_university_courses.show_on_front_end
+    level: warning
+    context: update';
 
 
 --
@@ -13128,8 +13461,12 @@ COMMENT ON COLUMN public.acorn_exam_questions.sort_order IS 'list-editable: true
 COMMENT ON COLUMN public.acorn_exam_questions.name IS 'order: 1
 labels:
   en: Question
+  ku: Pirs
+  ar: سؤال
 labels-plural:
-  en: Questions';
+  en: Questions
+  ku: Pirsên
+  ar: أسئلة';
 
 
 --
@@ -13468,9 +13805,14 @@ COMMENT ON COLUMN public.acorn_exam_sections.sort_order IS 'list-editable: true'
 
 COMMENT ON COLUMN public.acorn_exam_sections.name IS 'order: 1
 labels:
-  en: Question
+  en: Section
+  ku: Liq
+  ar: قسم
 labels-plural:
-  en: Questions';
+  en: Sections
+  ku: Liqên
+  ar: الأقسام
+';
 
 
 --
@@ -13592,7 +13934,10 @@ list-editable: true
 on: acorn.university::lang.models.coursematerial.required
 off: acorn.university::lang.models.coursematerial.optional
 tab-location: 3
-field-comment: Failing a required material usually means failing the whole course
+field-comment: 
+  en: Failing a required material usually means failing the whole course
+  ku: Neketina di materyalek pêwîst de bi gelemperî tê wateya têkçûna tevahiya qursê
+  ar: إن الرسوب في مادة مطلوبة يعني عادة الرسوب في الدورة بأكملها
 extra-translations:
   optional:
     en: Optional';
@@ -13604,7 +13949,10 @@ extra-translations:
 
 COMMENT ON COLUMN public.acorn_university_course_materials.minimum IS 'list-editable: true
 tab-location: 3
-field-comment: score
+field-comment: 
+  en: Score
+  ku: Pila
+  ar: نتيجة
 css-classes:
   - col-xs-6
   - col-md-3';
@@ -13616,7 +13964,10 @@ css-classes:
 
 COMMENT ON COLUMN public.acorn_university_course_materials.maximum IS 'list-editable: true
 tab-location: 3
-field-comment: score
+field-comment: 
+  en: Score
+  ku: Pila
+  ar: نتيجة
 css-classes:
   - col-xs-6
   - col-md-3';
@@ -13628,7 +13979,14 @@ css-classes:
 
 COMMENT ON COLUMN public.acorn_university_course_materials.weight IS 'list-editable: true
 tab-location: 3
-field-comment: (Optional) Can be used in calculations if desired
+labels:
+  en: Weight
+  ku: Pîvan
+  ar: وزن
+field-comment: 
+  en: (Optional) Can be used in calculations if desired
+  ku: (Vebijarkî) Ger bixwaze dikare di hesaban de were bikar anîn
+  ar: (اختياري) يمكن استخدامه في الحسابات إذا رغبت في ذلك
 css-classes:
   - col-xs-6
   - col-md-3
@@ -13642,7 +14000,10 @@ css-classes:
 COMMENT ON COLUMN public.acorn_university_course_materials.sort_order IS 'list-editable: true
 tab-location: 3
 default: 100
-field-comment: Order of appearance in materials lists for scores data-entry
+field-comment: 
+  en: Order of appearance in materials lists for scores data-entry
+  ku: Rêza xuya kirinê di navnîşên materyalan de ji bo têketina daneyên puanan
+  ar: ترتيب الظهور في قوائم المواد لإدخال بيانات الدرجات
 css-classes:
   - col-xs-6
   - col-md-3';
@@ -13781,7 +14142,11 @@ tab-location: 3';
 -- Name: COLUMN acorn_university_course_plans.women_only; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_course_plans.women_only IS 'css-classes:
+COMMENT ON COLUMN public.acorn_university_course_plans.women_only IS 'labels:
+  en: Women only
+  ku: Tenê jin
+  ar: للنساء فقط
+css-classes:
   - col-xs-3
 tab-location: 3';
 
@@ -13809,13 +14174,22 @@ context-update:
   tab-location: 3
   read-only: true
   context: update
-field-comment: Course length in years
+labels:
+  en: Length
+  ku: Dirêjî
+  ar: طول
+field-comment: 
+  en: Course length in years
+  ku: Dirêjahiya kursê bi salan
+  ar: مدة الدورة بالسنوات
 column-type: partial
 column-partial: number
 suffix: acorn.university::lang.models.courseplan.years
 extra-translations:
   years:
-    en: Years';
+    en: Years
+    ku: Salên
+    ar: سنين';
 
 
 --
@@ -13902,6 +14276,16 @@ labels-plural:
   ku: Curên kors
   ar: نوع الفرع
 ';
+
+
+--
+-- Name: COLUMN acorn_university_course_types.is_general; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_types.is_general IS 'labels:
+  en: Is general
+  ku: Giştî ye
+  ar: هل هو عام';
 
 
 --
@@ -14012,6 +14396,16 @@ labels-plural:
 seeding:
   - [''e4c82b40-a40f-11f0-ac3f-13160da9c5f5'', ''High-School Certificate'']
 ';
+
+
+--
+-- Name: COLUMN acorn_university_document_types.template_match; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_document_types.template_match IS 'labels:
+  en: Template match
+  ku: Lihevhatina şablonê
+  ar: مطابقة القالب';
 
 
 --
@@ -14525,7 +14919,7 @@ CREATE TABLE public.acorn_university_student_codes (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     student_id uuid NOT NULL,
     code character varying(1024) NOT NULL,
-    entity_id uuid,
+    owner_entity_id uuid,
     name character varying(1024) GENERATED ALWAYS AS (code) STORED NOT NULL,
     description text,
     created_by_user_id uuid NOT NULL,
@@ -14555,16 +14949,18 @@ labels-plural:
 
 
 --
--- Name: COLUMN acorn_university_student_codes.entity_id; Type: COMMENT; Schema: public; Owner: university
+-- Name: COLUMN acorn_university_student_codes.owner_entity_id; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_student_codes.entity_id IS 'can-filter: false
+COMMENT ON COLUMN public.acorn_university_student_codes.owner_entity_id IS 'can-filter: false
 labels:
   en: Owner organisation
   ku: Xwede kod
+  ar: المنظمة المالكة
 labels-plural:
   en: Owning organisations
   ku: Xwede kodên
+  ar: المنظمة المالكة
 ';
 
 
@@ -14624,6 +15020,26 @@ COMMENT ON COLUMN public.acorn_university_student_documents.student_id IS 'can-f
 --
 
 COMMENT ON COLUMN public.acorn_university_student_documents.document_type_id IS 'no-relation-manager: true';
+
+
+--
+-- Name: COLUMN acorn_university_student_documents.pdf; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_student_documents.pdf IS 'labels:
+  en: PDF
+  ku: PDF
+  ar: PDF';
+
+
+--
+-- Name: COLUMN acorn_university_student_documents.template; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_student_documents.template IS 'labels:
+  en: Template
+  ku: Şablon
+  ar: نموذج';
 
 
 --
@@ -14739,7 +15155,17 @@ labels-plural:
 -- Name: COLUMN acorn_university_student_notes.owner_entity_id; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_student_notes.owner_entity_id IS 'no-relation-manager: true';
+COMMENT ON COLUMN public.acorn_university_student_notes.owner_entity_id IS 'no-relation-manager: true
+can-filter: false
+labels:
+  en: Owner organisation
+  ku: Xwede kod
+  ar: المنظمة المالكة
+labels-plural:
+  en: Owning organisations
+  ku: Xwede kodên
+  ar: المنظمة المالكة
+';
 
 
 --
@@ -14867,9 +15293,11 @@ COMMENT ON COLUMN public.acorn_university_student_types.owner_entity_id IS 'can-
 labels:
   en: Owner organisation
   ku: Xwede kod
+  ar: المنظمة المالكة 
 labels-plural:
   en: Owning organisations
   ku: Xwede kodên
+  ar: المنظمة المالكة 
 ';
 
 
@@ -15438,6 +15866,22 @@ UNION ALL
     acorn_university_student_notes.updated_at AS datetime
    FROM public.acorn_university_student_notes
 UNION ALL
+ SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
+    acorn_university_student_types.id AS model_id,
+    'acorn_university_student_types'::text AS "table",
+    acorn_university_student_types.name,
+    0 AS update,
+    acorn_university_student_types.created_at AS datetime
+   FROM public.acorn_university_student_types
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
+    acorn_university_student_types.id AS model_id,
+    'acorn_university_student_types'::text AS "table",
+    acorn_university_student_types.name,
+    1 AS update,
+    acorn_university_student_types.updated_at AS datetime
+   FROM public.acorn_university_student_types
+UNION ALL
  SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
     acorn_university_student_codes.id AS model_id,
     'acorn_university_student_codes'::text AS "table",
@@ -15470,21 +15914,21 @@ UNION ALL
     acorn_enrollment_student_notes.updated_at AS datetime
    FROM public.acorn_enrollment_student_notes
 UNION ALL
- SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
-    acorn_university_student_types.id AS model_id,
-    'acorn_university_student_types'::text AS "table",
-    acorn_university_student_types.name,
+ SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
+    acorn_university_course_plans.id AS model_id,
+    'acorn_university_course_plans'::text AS "table",
+    NULL::text AS name,
     0 AS update,
-    acorn_university_student_types.created_at AS datetime
-   FROM public.acorn_university_student_types
+    acorn_university_course_plans.created_at AS datetime
+   FROM public.acorn_university_course_plans
 UNION ALL
- SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
-    acorn_university_student_types.id AS model_id,
-    'acorn_university_student_types'::text AS "table",
-    acorn_university_student_types.name,
+ SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
+    acorn_university_course_plans.id AS model_id,
+    'acorn_university_course_plans'::text AS "table",
+    NULL::text AS name,
     1 AS update,
-    acorn_university_student_types.updated_at AS datetime
-   FROM public.acorn_university_student_types
+    acorn_university_course_plans.updated_at AS datetime
+   FROM public.acorn_university_course_plans
 UNION ALL
  SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
     acorn_exam_interview_students.id AS model_id,
@@ -15502,21 +15946,21 @@ UNION ALL
     acorn_exam_interview_students.updated_at AS datetime
    FROM public.acorn_exam_interview_students
 UNION ALL
- SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
-    acorn_university_course_plans.id AS model_id,
-    'acorn_university_course_plans'::text AS "table",
-    NULL::text AS name,
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
+    (acorn_university_projects.name)::character varying(1024) AS name,
     0 AS update,
-    acorn_university_course_plans.created_at AS datetime
-   FROM public.acorn_university_course_plans
+    acorn_university_projects.created_at AS datetime
+   FROM public.acorn_university_projects
 UNION ALL
- SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
-    acorn_university_course_plans.id AS model_id,
-    'acorn_university_course_plans'::text AS "table",
-    NULL::text AS name,
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
+    (acorn_university_projects.name)::character varying(1024) AS name,
     1 AS update,
-    acorn_university_course_plans.updated_at AS datetime
-   FROM public.acorn_university_course_plans
+    acorn_university_projects.updated_at AS datetime
+   FROM public.acorn_university_projects
 UNION ALL
  SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
     acorn_exam_exam_materials.id AS model_id,
@@ -15533,22 +15977,6 @@ UNION ALL
     1 AS update,
     acorn_exam_exam_materials.updated_at AS datetime
    FROM public.acorn_exam_exam_materials
-UNION ALL
- SELECT 'Acorn\University\Models\Project'::text AS model_type,
-    acorn_university_projects.id AS model_id,
-    'acorn_university_projects'::text AS "table",
-    (acorn_university_projects.name)::character varying(1024) AS name,
-    0 AS update,
-    acorn_university_projects.created_at AS datetime
-   FROM public.acorn_university_projects
-UNION ALL
- SELECT 'Acorn\University\Models\Project'::text AS model_type,
-    acorn_university_projects.id AS model_id,
-    'acorn_university_projects'::text AS "table",
-    (acorn_university_projects.name)::character varying(1024) AS name,
-    1 AS update,
-    acorn_university_projects.updated_at AS datetime
-   FROM public.acorn_university_projects
 UNION ALL
  SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
     acorn_university_lectures.id AS model_id,
@@ -15704,20 +16132,28 @@ hints:
   introduction:
     labels:
       en: Introduction
+      ku: Pêşkêş
+      ar: مقدمة
     contentHtml: true
     content:
       en: Welcome to Student registration! You can update students after you create them. Fields marked with a <span class="required"></span> are required. All other fields are optional.
+      ku: Bi xêr hatin bo qeydkirina xwendekaran! Hûn dikarin xwendekaran piştî afirandina wan nûve bikin. Qadên ku bi <span class="required"></span> hatine nîşankirin mecbûrî ne. Hemû qadên din
+      ar: مرحبًا بك في تسجيل الطلاب! يمكنك تحديث بيانات الطلاب بعد إنشائهم. الحقول المُعلَّمة بعلامة <span class="required"></span> مطلوبة. جميع الحقول الأخرى
     level: info
   school:
     labels:
       en: School mode
+      ku: Moda dibistanê
+      ar: وضع المدرسة
     content:
       en: You are registered as working at a school, so your interface is designed for this.
+      ku: Tu wekî karkerê dibistanekê qeydkirî yî, ji ber vê yekê navrûya te ji bo vê yekê hatiye sêwirandin.
+      ar: لقد تم تسجيلك كعامل في مدرسة، لذا تم تصميم واجهتك لهذا الغرض.
     level: info
     conditions: |
       select count(*) from acorn_dbauth_user u
-        inner join acorn_university_entities en on en.id = u.global_scope_entity_id
-        where en.leaf_table = ''acorn_university_schools''
+      inner join acorn_university_entities en on en.id = u.global_scope_entity_id
+      where en.leaf_table = ''acorn_university_schools''
   not-activated:
     path: plugins/acorn/user/controllers/users/hint_activate
     conditions: not (select is_activated from acorn_user_users where id = acorn_university_students.user_id)
@@ -15738,12 +16174,16 @@ action-links:
   front-end:
     labels:
       en: Front-End
+      ku: Front-End
+      ar: الواجهة الأمامية
     url: /student/login/id/:id?no-redirect
     icon: crosshairs
     target: _blank
   certificates:
     labels:
       en: Certificates
+      ku: Sertîfîkayên
+      ar: الشهادات
     url: /backend/acorn/exam/certificates?search=:id
     icon: clipboard
     target: _blank
@@ -15796,7 +16236,10 @@ readOnly: true
 tabLocation: 2
 advanced: true
 invisible: true
-comment: Binket, serket, Serket, Serkeftî
+field-comment: 
+  en: Binket, serket, Serket, Serkeftî
+  ku: Binket, serket, Serket, Serkeftî
+  ar: Binket, serket, Serket, Serkeftî
 labels:
   en: Legacy Import Result
   ku: Importkirina Mîrasî encam
@@ -15816,7 +16259,10 @@ tabLocation: 2
 advanced: true
 readOnly: true
 invisible: true
-comment: Final University enrollment score
+field-comment: 
+  en: Final University enrollment score
+  ku: Pûana Dawî ya Qeydkirina Zanîngehê
+  ar: النتيجة النهائية للتسجيل الجامعي
 labels:
   en: Legacy Import Average
   ku: Importkirina Mîrasî ort
@@ -15836,7 +16282,10 @@ tabLocation: 2
 advanced: true
 invisible: true
 readOnly: true
-comment: Final University enrollment score
+field-comment: 
+  en: Final University enrollment score
+  ku: Pûana Dawî ya Qeydkirina Zanîngehê
+  ar: النتيجة النهائية للتسجيل الجامعي
 labels:
   en: Legacy Import Total mark
   ku: Importkirina Mîrasî Nîşeya giştî
@@ -15856,7 +16305,19 @@ tabLocation: 2
 advanced: true
 invisible: true
 readOnly: true
-comment: Final University enrollment score';
+field-comment:
+  en: Final University enrollment score
+  ku: Pûana Dawî ya Qeydkirina Zanîngehê
+  ar: النتيجة النهائية للتسجيل الجامعي
+labels:
+  en: Legacy Import The Total
+  ku: Importkirina Mîrasî Tevahî
+  ar: الاستيراد القديم الإجمالي
+labels-plural:
+  en: Legacy Import The Totals
+  ku: Importkirina Mîrasî Tevahîyên
+  ar: استيراد الإجماليات القديمة
+';
 
 
 --
@@ -15868,7 +16329,10 @@ tabLocation: 2
 advanced: true
 invisible: true
 readOnly: true
-comment: Final University enrollment score with Year 10 & 11
+field-comment: 
+  en: Final University enrollment score with Years 10 and 11
+  ku: Pûana Dawî ya Qeydkirina Zanîngehê bi salên 10 û 11
+  ar: النتيجة النهائية للتسجيل الجامعي للصفين العاشر والحادي عشر
 labels:
   en: Legacy Import Final average
   ku: Importkirina Mîrasî ortê dawî
@@ -15888,7 +16352,10 @@ tabLocation: 2
 advanced: true
 readOnly: true
 invisible: true
-comment: Primary subjects passed
+field-comment: 
+  en: Primary subjects passed
+  ku: Mijarên seretayî yên ku hatine derbaskirin
+  ar: المواد الدراسية الابتدائية التي تم اجتيازها
 labels:
   en: Legacy Import Passed primaries
   ku: Importkirina Mîrasî Seretayî derbas bû
@@ -15908,7 +16375,10 @@ tabLocation: 2
 advanced: true
 readOnly: true
 invisible: true
-comment: Secondary subjects passed minimum
+field-comment: 
+  en: Secondary subjects passed minimum
+  ku: Di dersên navîn de herî kêm derbas bûn
+  ar: الحد الأدنى للنجاح في المواد الثانوية
 labels:
   en: Legacy Import Passed secondaries
   ku: Importkirina Mîrasî Derbasbûyî ya duyemîn
@@ -15928,7 +16398,10 @@ tabLocation: 2
 advanced: true
 readOnly: true
 invisible: true
-comment: Number of materials required (non-blank score)
+field-comment: 
+  en: Number of materials required (non-blank score)
+  ku: Hejmara materyalên pêwîst (puana ne-vala)
+  ar: عدد المواد المطلوبة (درجة غير فارغة)
 labels:
   en: Legacy Import Attendance
   ku: Importkirina Mîrasî Amadetî
@@ -15944,7 +16417,6 @@ labels-plural:
 --
 
 COMMENT ON COLUMN public.acorn_university_students.number IS 'read-only: true
-comment: Unique student system number
 span: right
 disabled: true
 invisible: true
@@ -15957,7 +16429,10 @@ labels-plural:
   en: Unique System numbers
   ku: Hejmaran pergalî
   ar: الرقم الفريد للنظام
-field-comment: This is a unique NABU system number for this student. It is used internally for calculations and identity
+field-comment: 
+  en: This is a unique NABU system number for this student. It is used internally for calculations and identity
+  ku: Ev hejmareke sîstema NABU ya bêhempa ye ji bo vê xwendekar. Ew ji bo hesabkirin û nasnameyê di hundir de tê bikar anîn.
+  ar: هذا رقم نظام NABU فريد لهذا الطالب. يُستخدم داخليًا للحسابات والهوية.
 advanced: true';
 
 
@@ -15969,7 +16444,10 @@ COMMENT ON COLUMN public.acorn_university_students.legacy_import_school IS 'tab:
 tabLocation: 2
 advanced: true
 readOnly: true
-comment: Actual school, to be processed later
+field-comment: 
+  en: Actual school, to be processed later
+  ku: Dibistana rastîn, ku paşê were pêvajoy kirin
+  ar: المدرسة الفعلية، سيتم معالجتها لاحقًا
 labels:
   en: Legacy Import School
   ku: Importkirina Mîrasî dibistan
@@ -15988,7 +16466,10 @@ COMMENT ON COLUMN public.acorn_university_students.legacy_import_qeyd IS 'tab: L
 tabLocation: 2
 advanced: true
 readOnly: true
-comment: School enrollment place. To be processed later on
+field-comment: 
+  en: School enrollment place. To be processed later on
+  ku: Cihê qeydkirina dibistanê. Dê paşê were pêvajokirin
+  ar: مكان التسجيل في المدرسة. سيتم معالجته لاحقًا.
 labels:
   en: Legacy Import Family place
   ku: Cihê Malbatê yê Importkirina Mîrasî
@@ -16007,7 +16488,10 @@ COMMENT ON COLUMN public.acorn_university_students.legacy_import_student_type IS
 tabLocation: 2
 advanced: true
 readOnly: true
-comment: Regular or Irregular, concerning Year 10 and 11
+field-comment: 
+  en: Regular or Irregular, concerning Year 10 and 11
+  ku: Cihê qeydkirina dibistanê. Dê paşê were pêvajokirin
+  ar: منتظم أو غير منتظم، فيما يتعلق بالصفين العاشر والحادي عشر
 filters:
   student_type:
     label: acorn.university::lang.models.student.legacy_import_student_type
@@ -16036,7 +16520,10 @@ tabLocation: 2
 invisible: true
 advanced: true
 readOnly: true
-comment: Legacy import ID
+field-comment: 
+  en: Legacy import ID
+  ku: Nasnameya importkirina kevn
+  ar: معرف الاستيراد القديم
 labels:
   en: Legacy Import ID
   ku: ID Importê ya Mîrasî
@@ -16056,7 +16543,7 @@ COMMENT ON COLUMN public.acorn_university_students.legacy_import_birth_place IS 
 tabLocation: 2
 advanced: true
 invisible: true
-comment: Birth place because location cleaning is difficult
+field-comment: Birth place because location cleaning is difficult
 labels:
   en: Legacy Import Birth place
   ku: Importkirina Mîrasî Cihê jidayikbûnê
@@ -16649,6 +17136,20 @@ UNION ALL
     acorn_university_student_notes.updated_by_user_id AS by
    FROM public.acorn_university_student_notes
 UNION ALL
+ SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
+    acorn_university_student_types.id AS model_id,
+    'acorn_university_student_types'::text AS "table",
+    0 AS update,
+    acorn_university_student_types.created_by_user_id AS by
+   FROM public.acorn_university_student_types
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
+    acorn_university_student_types.id AS model_id,
+    'acorn_university_student_types'::text AS "table",
+    1 AS update,
+    acorn_university_student_types.updated_by_user_id AS by
+   FROM public.acorn_university_student_types
+UNION ALL
  SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
     acorn_university_student_codes.id AS model_id,
     'acorn_university_student_codes'::text AS "table",
@@ -16677,19 +17178,19 @@ UNION ALL
     acorn_enrollment_student_notes.updated_by_user_id AS by
    FROM public.acorn_enrollment_student_notes
 UNION ALL
- SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
-    acorn_university_student_types.id AS model_id,
-    'acorn_university_student_types'::text AS "table",
+ SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
+    acorn_university_course_plans.id AS model_id,
+    'acorn_university_course_plans'::text AS "table",
     0 AS update,
-    acorn_university_student_types.created_by_user_id AS by
-   FROM public.acorn_university_student_types
+    acorn_university_course_plans.created_by_user_id AS by
+   FROM public.acorn_university_course_plans
 UNION ALL
- SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
-    acorn_university_student_types.id AS model_id,
-    'acorn_university_student_types'::text AS "table",
+ SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
+    acorn_university_course_plans.id AS model_id,
+    'acorn_university_course_plans'::text AS "table",
     1 AS update,
-    acorn_university_student_types.updated_by_user_id AS by
-   FROM public.acorn_university_student_types
+    acorn_university_course_plans.updated_by_user_id AS by
+   FROM public.acorn_university_course_plans
 UNION ALL
  SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
     acorn_exam_interview_students.id AS model_id,
@@ -16705,19 +17206,19 @@ UNION ALL
     acorn_exam_interview_students.updated_by_user_id AS by
    FROM public.acorn_exam_interview_students
 UNION ALL
- SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
-    acorn_university_course_plans.id AS model_id,
-    'acorn_university_course_plans'::text AS "table",
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
     0 AS update,
-    acorn_university_course_plans.created_by_user_id AS by
-   FROM public.acorn_university_course_plans
+    acorn_university_projects.created_by_user_id AS by
+   FROM public.acorn_university_projects
 UNION ALL
- SELECT 'Acorn\University\Models\CoursePlan'::text AS model_type,
-    acorn_university_course_plans.id AS model_id,
-    'acorn_university_course_plans'::text AS "table",
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
     1 AS update,
-    acorn_university_course_plans.updated_by_user_id AS by
-   FROM public.acorn_university_course_plans
+    acorn_university_projects.updated_by_user_id AS by
+   FROM public.acorn_university_projects
 UNION ALL
  SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
     acorn_exam_exam_materials.id AS model_id,
@@ -16732,20 +17233,6 @@ UNION ALL
     1 AS update,
     acorn_exam_exam_materials.updated_by_user_id AS by
    FROM public.acorn_exam_exam_materials
-UNION ALL
- SELECT 'Acorn\University\Models\Project'::text AS model_type,
-    acorn_university_projects.id AS model_id,
-    'acorn_university_projects'::text AS "table",
-    0 AS update,
-    acorn_university_projects.created_by_user_id AS by
-   FROM public.acorn_university_projects
-UNION ALL
- SELECT 'Acorn\University\Models\Project'::text AS model_type,
-    acorn_university_projects.id AS model_id,
-    'acorn_university_projects'::text AS "table",
-    1 AS update,
-    acorn_university_projects.updated_by_user_id AS by
-   FROM public.acorn_university_projects
 UNION ALL
  SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
     acorn_university_lectures.id AS model_id,
@@ -17095,7 +17582,11 @@ add-missing-columns: false';
 -- Name: COLUMN acorn_enrollment_students.proposed_desire_id; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_enrollment_students.proposed_desire_id IS 'options-where: 
+COMMENT ON COLUMN public.acorn_enrollment_students.proposed_desire_id IS 'labels:
+  en: Proposed enrollment
+  ku: Qeydkirina pêşniyarkirî
+  ar: التسجيل المقترح
+options-where: 
   enrollment_student_id: id@
 filters:
   enrolled:
@@ -17105,6 +17596,8 @@ filters:
 extra-translations:
   enrolled:
     en: Enrolled
+    ku: Qeydkirî
+    ar: مسجل
 can-filter: true';
 
 
@@ -17112,7 +17605,11 @@ can-filter: true';
 -- Name: COLUMN acorn_enrollment_students.conflict; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_enrollment_students.conflict IS 'filters: 
+COMMENT ON COLUMN public.acorn_enrollment_students.conflict IS 'labels:
+  en: Conflict
+  ku: Şer
+  ar: صراع
+filters: 
   conflict:
     label: acorn.enrollment::lang.models.student.conflict
     type: checkbox
@@ -17123,7 +17620,11 @@ COMMENT ON COLUMN public.acorn_enrollment_students.conflict IS 'filters:
 -- Name: COLUMN acorn_enrollment_students.manual_add; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_enrollment_students.manual_add IS 'default: true
+COMMENT ON COLUMN public.acorn_enrollment_students.manual_add IS 'labels:
+  en: Manually added
+  ku: Bi destan hat zêdekirin
+  ar: تمت الإضافة يدويًا
+default: true
 read-only: true
 filters: 
   manual_add:
@@ -17136,7 +17637,11 @@ filters:
 -- Name: COLUMN acorn_enrollment_students.manual_proposed; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_enrollment_students.manual_proposed IS 'default: true
+COMMENT ON COLUMN public.acorn_enrollment_students.manual_proposed IS 'labels:
+  en: Manually proposed
+  ku: Bi destan pêşniyar kirin
+  ar: مقترح يدويًا
+default: true
 filters: 
   manual_proposed:
     label: acorn.enrollment::lang.models.student.manual_proposed
@@ -17148,7 +17653,11 @@ filters:
 -- Name: COLUMN acorn_enrollment_students.proposal_run_id; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_enrollment_students.proposal_run_id IS 'advanced: true
+COMMENT ON COLUMN public.acorn_enrollment_students.proposal_run_id IS 'labels:
+  en: Proposal Run
+  ku: Pêşniyara Pêşniyazê
+  ar: تشغيل الاقتراح
+advanced: true
 read-only: true';
 
 
@@ -17237,7 +17746,11 @@ tab-location: 3
 suffix: acorn.university::lang.models.semester.label
 read-only: true
 css-classes-column:
-  - hide-duplicates';
+  - hide-duplicates
+labels:
+  en: Ordinal
+  ku: Rêz
+  ar: ترتيبي';
 
 
 --
@@ -17254,10 +17767,7 @@ css-classes-column:
 -- Name: COLUMN acorn_university_course_year_semesters.course_specialization_id; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_course_year_semesters.course_specialization_id IS 'labels:
-  en: Specialization
-  ku: Tibet
-tab-location: 3
+COMMENT ON COLUMN public.acorn_university_course_year_semesters.course_specialization_id IS 'tab-location: 3
 context-update:
   read-only: true';
 
@@ -17334,7 +17844,20 @@ hints:
 -- Name: COLUMN acorn_university_courses.weight; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_courses.weight IS 'tab-location: 3';
+COMMENT ON COLUMN public.acorn_university_courses.weight IS 'list-editable: true
+tab-location: 3
+labels:
+  en: Weight
+  ku: Pîvan
+  ar: وزن
+field-comment: 
+  en: (Optional) Can be used in calculations if desired
+  ku: (Vebijarkî) Ger bixwaze dikare di hesaban de were bikar anîn
+  ar: (اختياري) يمكن استخدامه في الحسابات إذا رغبت في ذلك
+css-classes:
+  - col-xs-6
+  - col-md-3
+  - new-row';
 
 
 --
@@ -17357,8 +17880,12 @@ hints:
   public:
     labels: 
       en: Public
+      ku: Alenî
+      ar: عام
     content:
       en: The course is visible on the front end in calendars and results
+      ku: Qurs li ser rûpela pêşîn di salname û encaman de xuya ye.
+      ar: تظهر الدورة في الواجهة الأمامية في التقويمات والنتائج
     conditions: acorn_university_courses.show_on_front_end
     level: warning
     context: update';
@@ -17369,9 +17896,13 @@ hints:
 --
 
 COMMENT ON COLUMN public.acorn_university_courses."parent_1[entity]" IS 'labels: 
-  en: School/Department
+  en: Owner Organisation
+  ku: Rêxistina Xwediyê
+  ar: المنظمة المالكة
 labels-plural:
-  en: Schools/Departments
+  en: Owner Organisations
+  ku: Rêxistinan Xwediyê
+  ar: المنظمات المالكة
 column-type: partial
 field-exclude: true
 partial: parent
@@ -17383,9 +17914,13 @@ relation: entity_university_hierarchies__entity';
 --
 
 COMMENT ON COLUMN public.acorn_university_courses."parent_2[entity]" IS 'labels: 
-  en: Region/Faculty
+  en: Owner Organisation 2
+  ku: Rêxistina Xwediyê 2
+  ar: المنظمة المالكة 2
 labels-plural:
-  en: Regions/Faculties
+  en: Owner Organisations 2
+  ku: Rêxistinan Xwediyê 2
+  ar: المنظمات المالكة 2
 column-type: partial
 field-exclude: true
 partial: parent
@@ -18185,8 +18720,12 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.student_user_id IS 'extra-
 	can-filter: true
 labels:
   en: Student User
+  ku: Bikarhêner xwendekar
+  ar: مستخدم الطالب
 labels-plural:
   en: Student Users
+  ku: Bikarhênerên xwendekar
+  ar: مستخدمو الطلاب
 sql-select: acorn_user_users.name
 sortable: true
 searchable: true
@@ -18205,18 +18744,6 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.student_id IS 'extra-forei
     name-object: true
     depends-on:
       user_user_group_versions: true
-    labels:
-      en: Data Entry Scores
-      ku: Pûanên Têketina Daneyan
-      ar: نتائج إدخال البيانات
-    labels-plural:
-      en: Data Entry Scores
-      ku: Pûanên Têketina Daneyan
-      ar: نتائج إدخال البيانات
-labels:
-  en: Student
-labels-plural:
-  en: Students
 qrcode-object: true';
 
 
@@ -18230,10 +18757,7 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.academic_year_semester_id 
     tab-location: 2
     name-object: true
 filter-search-name-select: select ay.name from acorn_university_academic_years ay where ay.id = acorn_university_academic_year_semesters.academic_year_id
-labels:
-  en: Academic Year Semester
-labels-plural:
-  en: Academic Year Semesters';
+';
 
 
 --
@@ -18249,10 +18773,6 @@ COMMENT ON COLUMN public.acorn_exam_data_entry_scores.academic_year_id IS 'extra
     name-object: true
 	can-filter: true
 	global-scope: to
-labels:
-  en: Academic Year
-labels-plural:
-  en: Academic Years
 css-classes-column:
   - tablet
 invisible: true
@@ -18398,8 +18918,12 @@ column-partial: record_list_editable
 invisible: true
 labels:
   en: Material Score name
+  ku: Navê Pûana Materyalê
+  ar: اسم درجة المادة
 labels-plural:
-  en: Materials Score names';
+  en: Materials Score names
+  ku: Navên Pûana Materyalê
+  ar: أسماء درجات المواد';
 
 
 --
@@ -18670,8 +19194,12 @@ extra-foreign-key:
     tab-location: 2
 labels:
   en: Student User
+  ku: Bikarhêner xwendekar
+  ar: مستخدم الطالب
 labels-plural:
   en: Student Users
+  ku: Bikarhênerên xwendekar
+  ar: مستخدمو الطلاب
 sql-select: acorn_user_users.name
 searchable: true';
 
@@ -18695,14 +19223,6 @@ COMMENT ON COLUMN public.acorn_exam_certificates.student_id IS 'extra-foreign-ke
       en: Certificate Informations
       ku: Bawername agahîyên
       ar: معلومات الشهادة
-labels:
-  en: Student
-  ku: Xwendekar
-  ar: طالب
-labels-plural:
-  en: Students
-  ku: Xwendekarên
-  ar: طالب
 invisible: true
 qrcode-object: true';
 
@@ -18724,10 +19244,6 @@ COMMENT ON COLUMN public.acorn_exam_certificates.academic_year_semester_id IS 'e
   comment:
     tab-location: 2
     name-object: true
-labels:
-  en: Academic Year Semester
-labels-plural:
-  en: Academic Year Semesters
 sortable: false';
 
 
@@ -18744,10 +19260,6 @@ COMMENT ON COLUMN public.acorn_exam_certificates.academic_year_id IS 'extra-fore
     name-object: true
 	can-filter: true
 	global-scope: to
-labels:
-  en: Academic Year
-labels-plural:
-  en: Academic Years
 css-classes-column:
   - tablet
 sortable: false';
@@ -18772,8 +19284,12 @@ filter-conditions: >
             )
 labels:
   en: Course
+  ku: Kors
+  ar: المنهج
 labels-plural:
   en: Courses
+  ku: Kors
+  ar: المنهج
 sortable: false';
 
 
@@ -18788,9 +19304,13 @@ COMMENT ON COLUMN public.acorn_exam_certificates.organisation_user_group_id IS '
 	can-filter: true
     name-object: true
 labels:
-  en: Organisation
+  en: School
+  ku: Dibistan
+  ar: مدرسة
 labels-plural:
-  en: Organisations
+  en: Schools
+  ku: Dibistanên
+  ar: مدرسة
 sortable: false';
 
 
@@ -18805,8 +19325,12 @@ COMMENT ON COLUMN public.acorn_exam_certificates.course_id IS 'extra-foreign-key
     hidden: true
 labels:
   en: Course
+  ku: Kors
+  ar: المنهج
 labels-plural:
   en: Courses
+  ku: Kors
+  ar: المنهج
 sortable: false';
 
 
@@ -18819,9 +19343,11 @@ sql-select: acorn_exam_certificates.course_code
 labels:
   en: Course Code
   ku: Kode kors
+  ar: رمز الفرع
 labels-plural:
   en: Courses
   ku: Kode korsên
+  ar: رمز الفرع
 sortable: false';
 
 
@@ -18859,8 +19385,12 @@ COMMENT ON COLUMN public.acorn_exam_certificates.scores IS 'list-editable: delet
 type-editable: number
 labels:
   en: Material Score
+  ku: Pila
+  ar: علامة المادة
 labels-plural:
   en: Materials Scores
+  ku: Pilayên
+  ar: علامة المادة
 sortable: false';
 
 
@@ -18875,8 +19405,12 @@ type-editable: string
 invisible: true
 labels:
   en: Material Score name
+  ku: Navê Pûana Materyalê
+  ar: اسم درجة المادة
 labels-plural:
   en: Materials Score names
+  ku: Navên Pûana Materyalê
+  ar: أسماء درجات المواد
 sortable: false';
 
 
@@ -18922,9 +19456,11 @@ filters:
 labels:
   en: Course Passed
   ku: Kors Serket
+  ar: تم اجتياز الدورة
 labels-plural:
   en: Course Passes
   ku: Kors Serketên
+  ar: الدورات التي تم اجتيازها
 sortable: false';
 
 
@@ -18939,9 +19475,11 @@ bar: true
 labels:
   en: Result
   ku: Encam
+  ar: نتيجة
 labels-plural:
   en: Results
   ku: Encamên
+  ar: نتائج
 sortable: false';
 
 
@@ -18956,9 +19494,11 @@ bar: true
 labels:
   en: High School Final Mark
   ku: Bakeloria Ortê dawî
+  ar: العلامة النهائية في المدرسة الثانوية
 labels-plural:
   en: High School Final Mark
   ku: Bakeloria Ortên dawî
+  ar: العلامات النهائية للمدرسة الثانوية
 sortable: false';
 
 
@@ -18986,9 +19526,11 @@ extra-translations:
 labels:
   en: High-School Passed
   ku: Bakeloria Serket
+  ar: اجتياز المدرسة الثانوية
 labels-plural:
   en: High-School Passes
   ku: Bakeloria Serketên
+  ar: تصاريح المدرسة الثانوية
 sortable: false';
 
 
@@ -19003,8 +19545,12 @@ COMMENT ON COLUMN public.acorn_exam_certificates.primary_language_id IS 'extra-f
 	can-filter: true
 labels:
   en: Primary Language
+  ku: Zimanê Sereke
+  ar: اللغة الأساسية
 labels-plural:
   en: Primary Languages
+  ku: Zimanên Sereke
+  ar: اللغات الأساسية
 sortable: false';
 
 
@@ -19064,9 +19610,11 @@ bar: true
 labels:
   en: Legacy Import Final Average
   ku: Barkirine kevin Ortê dawî
+  ar: متوسط ​​​​الاستيراد النهائي القديم
 labels-plural:
   en: Legacy Import Final Averages
   ku: Barkirine kevin Ortên dawî
+  ar: متوسطات الاستيراد النهائية القديمة
 ';
 
 
@@ -19081,9 +19629,11 @@ bar: true
 labels:
   en: Legacy Import Average
   ku: Barkirine kevin Ort
+  ar: متوسط ​​الاستيراد القديم
 labels-plural:
   en: Legacy Import Averages
   ku: Barkirine kevin Ortên
+  ar: متوسطات الاستيراد القديمة
 ';
 
 
@@ -19110,9 +19660,11 @@ extra-translations:
 labels:
   en: Legacy Import Correct
   ku: Barkirine kevin Rast
+  ar: استيراد الإرث الصحيح
 labels-plural:
   en: Legacy Import Correct
   ku: Barkirine kevin Rastên
+  ar: استيراد الإرث الصحيح
 ';
 
 
@@ -20451,6 +21003,20 @@ UNION ALL
     acorn_university_student_notes.description AS content
    FROM public.acorn_university_student_notes
 UNION ALL
+ SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
+    acorn_university_student_types.id AS model_id,
+    'acorn_university_student_types'::text AS "table",
+    'name'::text AS field,
+    (acorn_university_student_types.name)::text AS content
+   FROM public.acorn_university_student_types
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
+    acorn_university_student_types.id AS model_id,
+    'acorn_university_student_types'::text AS "table",
+    'description'::text AS field,
+    acorn_university_student_types.description AS content
+   FROM public.acorn_university_student_types
+UNION ALL
  SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
     acorn_university_student_codes.id AS model_id,
     'acorn_university_student_codes'::text AS "table",
@@ -20478,20 +21044,6 @@ UNION ALL
     'description'::text AS field,
     acorn_enrollment_student_notes.description AS content
    FROM public.acorn_enrollment_student_notes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
-    acorn_university_student_types.id AS model_id,
-    'acorn_university_student_types'::text AS "table",
-    'name'::text AS field,
-    (acorn_university_student_types.name)::text AS content
-   FROM public.acorn_university_student_types
-UNION ALL
- SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
-    acorn_university_student_types.id AS model_id,
-    'acorn_university_student_types'::text AS "table",
-    'description'::text AS field,
-    acorn_university_student_types.description AS content
-   FROM public.acorn_university_student_types
 UNION ALL
  SELECT 'Acorn\University\Models\Project'::text AS model_type,
     acorn_university_projects.id AS model_id,
@@ -20676,9 +21228,13 @@ labels-plural:
 --
 
 COMMENT ON COLUMN public.acorn_university_departments."parent_1[entity]" IS 'labels: 
-  en: Faculty
+  en: Owner Organisation
+  ku: Rêxistina Xwediyê
+  ar: المنظمة المالكة
 labels-plural:
-  en: Faculties
+  en: Owner Organisations
+  ku: Rêxistinan Xwediyê
+  ar: المنظمات المالكة
 column-type: partial
 field-exclude: true
 partial: parent
@@ -20690,9 +21246,13 @@ relation: entity_university_hierarchies__entity';
 --
 
 COMMENT ON COLUMN public.acorn_university_departments."parent_2[entity]" IS 'labels: 
-  en: University
+  en: Owner Organisation 2
+  ku: Rêxistina Xwediyê 2
+  ar: المنظمة المالكة 2
 labels-plural:
-  en: Universities
+  en: Owner Organisations 2
+  ku: Rêxistinan Xwediyê 2
+  ar: المنظمات المالكة 2
 column-type: partial
 field-exclude: true
 partial: parent
@@ -20733,8 +21293,12 @@ labels-plural:
 
 COMMENT ON COLUMN public.acorn_university_education_authorities."parent_1[entity]" IS 'labels: 
   en: Owner Organisation
+  ku: Rêxistina Xwediyê
+  ar: المنظمة المالكة
 labels-plural:
   en: Owner Organisations
+  ku: Rêxistinan Xwediyê
+  ar: المنظمات المالكة
 column-type: partial
 field-exclude: true
 partial: parent
@@ -20775,9 +21339,13 @@ labels-plural:
 --
 
 COMMENT ON COLUMN public.acorn_university_faculties."parent_1[entity]" IS 'labels: 
-  en: University
+  en: Owner Organisation
+  ku: Rêxistina Xwediyê
+  ar: المنظمة المالكة
 labels-plural:
-  en: Universities
+  en: Owner Organisations
+  ku: Rêxistinan Xwediyê
+  ar: المنظمات المالكة
 column-type: partial
 field-exclude: true
 partial: parent
@@ -20789,9 +21357,13 @@ relation: entity_university_hierarchies__entity';
 --
 
 COMMENT ON COLUMN public.acorn_university_faculties."parent_2[entity]" IS 'labels: 
-  en: Region/Education Authority
+  en: Owner Organisation 2
+  ku: Rêxistina Xwediyê 2
+  ar: المنظمة المالكة 2
 labels-plural:
-  en: Regions/Education Authorities
+  en: Owner Organisations 2
+  ku: Rêxistinan Xwediyê 2
+  ar: المنظمات المالكة 2
 column-type: partial
 field-exclude: true
 partial: parent
@@ -22803,9 +23375,13 @@ labels-plural:
 --
 
 COMMENT ON COLUMN public.acorn_university_schools."parent_1[entity]" IS 'labels: 
-  en: Region/Education Authority
+  en: Owner Organisation
+  ku: Rêxistina Xwediyê
+  ar: المنظمة المالكة
 labels-plural:
-  en: Regions/Education Authorities
+  en: Owner Organisations
+  ku: Rêxistinan Xwediyê
+  ar: المنظمات المالكة
 column-type: partial
 field-exclude: true
 partial: parent
@@ -22817,9 +23393,13 @@ relation: entity_university_hierarchies__entity';
 --
 
 COMMENT ON COLUMN public.acorn_university_schools."parent_2[entity]" IS 'labels: 
-  en: Ancestor 2
+  en: Owner Organisation 2
+  ku: Rêxistina Xwediyê 2
+  ar: المنظمة المالكة 2
 labels-plural:
-  en: Ancestors 2
+  en: Owner Organisations 2
+  ku: Rêxistinan Xwediyê 2
+  ar: المنظمات المالكة 2
 column-type: partial
 field-exclude: true
 partial: parent
@@ -23101,9 +23681,13 @@ labels-plural:
 --
 
 COMMENT ON COLUMN public.acorn_university_universities."parent_1[entity]" IS 'labels: 
-  en: Education Authority/Region
+  en: Owner Organisation
+  ku: Rêxistina Xwediyê
+  ar: المنظمة المالكة
 labels-plural:
-  en: Education Authorities/Regions
+  en: Owner Organisations
+  ku: Rêxistinan Xwediyê
+  ar: المنظمات المالكة
 column-type: partial
 field-exclude: true
 partial: parent
@@ -23115,9 +23699,13 @@ relation: entity_university_hierarchies__entity';
 --
 
 COMMENT ON COLUMN public.acorn_university_universities."parent_2[entity]" IS 'labels: 
-  en: Ancestor 2
+  en: Owner Organisation 2
+  ku: Rêxistina Xwediyê 2
+  ar: المنظمة المالكة 2
 labels-plural:
-  en: Ancestors 2
+  en: Owner Organisations 2
+  ku: Rêxistinan Xwediyê 2
+  ar: المنظمات المالكة 2
 column-type: partial
 field-exclude: true
 partial: parent
@@ -26459,7 +27047,7 @@ ALTER TABLE ONLY public.acorn_user_user_groups
 --
 
 ALTER TABLE ONLY public.acorn_university_student_codes
-    ADD CONSTRAINT code_owner_entity UNIQUE (code, entity_id, student_id);
+    ADD CONSTRAINT code_owner_entity UNIQUE (code, owner_entity_id, student_id);
 
 
 --
@@ -31503,7 +32091,7 @@ fields-settings:
 --
 
 ALTER TABLE ONLY public.acorn_university_student_codes
-    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE;
+    ADD CONSTRAINT entity_id FOREIGN KEY (owner_entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE;
 
 
 --
@@ -37988,5 +38576,5 @@ GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_5;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 6Oa8bFPWlLpYwJM43TSSopPaWu9scslvtHvQDnd1Qqs8bLxBBYUHdjymhZ6Hau1
+\unrestrict wOJNWUAXqskfoxln0q3byAYY5I3flfolJvcU8Qq0iy45N5kGoo1nL8p68m0pLql
 

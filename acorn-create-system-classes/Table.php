@@ -148,10 +148,15 @@ class Table {
             if (property_exists($this, $name)) $this->$name = $value;
         }
         $this->parsedComment = \Spyc::YAMLLoadString($this->comment);
+        $previousName = NULL;
         foreach ($this->parsedComment as $name => $value) {
             $nameCamel = Str::camel($name);
-            if (!property_exists($this, $nameCamel)) self::blockingAlert("Property [$nameCamel] does not exist on [$this->name]");
+            if (!property_exists($this, $nameCamel)) {
+                $valueExport = var_export($value, TRUE);
+                self::blockingAlert("Property [$nameCamel] does not exist on [$this->name] after [$previousName] with value [$valueExport]");
+            }
             if (!isset($this->$nameCamel)) $this->$nameCamel = $value;
+            $previousName = $name;
         }
 
         if (!isset($this->columns)) 

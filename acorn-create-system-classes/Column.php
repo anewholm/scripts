@@ -1,5 +1,7 @@
 <?php namespace Acorn\CreateSystem;
 
+use Exception;
+
 require_once('ForeignKey.php');
 
 class Column {
@@ -137,6 +139,7 @@ class Column {
     public $fieldOptions;  // array
     public $optionsWhere; // Custom AA extension
     public $searchable;
+    public $actions; // field-actions
     public $cssClassesColumn;
     public $sortable;
     public $relation; // Explicit relation: setting
@@ -274,9 +277,19 @@ class Column {
             if (!isset($this->$nameCamel)) $this->$nameCamel = $value;
         }
 
-        // Checks
-        if ($this->labels       && !is_array($this->labels))       throw new \Exception("labels: should be an array");
-        if ($this->labelsPlural && !is_array($this->labelsPlural)) throw new \Exception("labels-plural: should be an array");
+        // Checks: en|ar|ku specific
+        /*
+        $columnFQN = $this->fullyQualifiedName();
+        if ($this->labels && !is_array($this->labels)) throw new Exception("$columnFQN labels: should be an array");
+        if ($this->labels && !isset($this->labels['ku'])) throw new Exception("$columnFQN labels: does not have a ku translation");
+        if ($this->labels && !isset($this->labels['ar'])) throw new Exception("$columnFQN labels: does not have an ar translation");
+        if ($this->labelsPlural && !is_array($this->labelsPlural)) throw new Exception("$columnFQN labels-plural: should be an array");
+        if ($this->labelsPlural && !isset($this->labelsPlural['ku'])) throw new Exception("$columnFQN labels-plural: does not have a ku translation");
+        if ($this->labelsPlural && !isset($this->labelsPlural['ar'])) throw new Exception("$columnFQN labels-plural: does not have an ar translation");
+        if ($this->fieldComment && !is_array($this->fieldComment)) throw new Exception("$columnFQN field-comment: should be an array");
+        if ($this->fieldComment && !isset($this->fieldComment['ku'])) throw new Exception("$columnFQN field-comment: does not have a ku translation");
+        if ($this->fieldComment && !isset($this->fieldComment['ar'])) throw new Exception("$columnFQN field-comment: does not have an ar translation");
+        */
     }
 
     public function standardFieldDefinitions(string $name): array
