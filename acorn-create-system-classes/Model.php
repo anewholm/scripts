@@ -141,6 +141,7 @@ class Model {
         //         'p_add' => 'bool',
         //         ...
         //     ],
+        //     'resultAction' => ...
         //     'returnType' => 'unknown',
         //     'labels' => [
         //         'en' => 'Add to your organisation',
@@ -171,6 +172,7 @@ class Model {
 
                 // Process comment yaml
                 $commentDef  = Spyc::YAMLLoadString($definition['comment']);
+                $commentDef  = Framework::camelKeys($commentDef, FALSE);
                 $enDevLabel  = Str::title(implode(' ', $nameParts));
                 if (!isset($commentDef['labels']['en'])) $commentDef['labels']['en'] = $enDevLabel;
 

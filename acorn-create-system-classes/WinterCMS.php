@@ -1659,8 +1659,7 @@ HTML
             // Fields can _additionally_ be specified in the fields: array
             // with the same name as the parameter
             // but appear in the main form, not in a action form popup like action functions
-            $stage            = (isset($functionSpec['stage']) ? $functionSpec['stage'] : 'function');
-            $fnTranslationKey = $model->functionsTranslationKey($stage, $name);
+            $stage = (isset($functionSpec['stage']) ? $functionSpec['stage'] : 'function');
             if (isset($functionSpec['parameters'])) {
                 foreach ($functionSpec['parameters'] as $paramName => $paramSpec) {
                     switch ($paramName) {
@@ -1700,10 +1699,10 @@ HTML
 
                                 // Condition(s)
                                 $condition = 
-                                    (isset($paramSpec['condition'])     ? $paramSpec['condition']     :
-                                    (isset($paramSpec['conditions'])    ? $paramSpec['conditions']    :
-                                    (isset($functionSpec['condition'])  ? $functionSpec['condition']  :
-                                    (isset($functionSpec['conditions']) ? $functionSpec['conditions'] :
+                                    (isset($fieldDefinition['condition'])  ? $fieldDefinition['condition']  :
+                                    (isset($fieldDefinition['conditions']) ? $fieldDefinition['conditions'] :
+                                    (isset($functionSpec['condition'])     ? $functionSpec['condition']     :
+                                    (isset($functionSpec['conditions'])    ? $functionSpec['conditions']    :
                                     ''
                                 ))));
 
@@ -1713,10 +1712,11 @@ HTML
                                 );
                                 
                                 // Contexts
-                                $contexts = (isset($paramSpec['contexts']) 
-                                    ? $paramSpec['contexts']
+                                $contexts = (isset($fieldDefinition['contexts']) 
+                                    ? $fieldDefinition['contexts']
                                     : (isset($functionSpec['contexts']) ? $functionSpec['contexts'] : '')
                                 );
+                                if (isset($fieldDefinition['contexts'])) unset($fieldDefinition['contexts']);
 
                                 print("    {$GREEN}INFO{$NC}: Adding pseudo-field Parameter [$paramName] to the fields.yaml for $model->name\n");
                                 $this->yamlFileSet($fieldsPath, $dotPath, 
@@ -1727,6 +1727,7 @@ HTML
                                         'span'      => 'storm',
                                         'cssClass'  => 'col-xs-12 col-md-6',
                                         'permissions' => $permissions,
+                                        'stage'     => $stage,
                                     ), $fieldDefinition))
                                 );
                             }
