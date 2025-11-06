@@ -553,6 +553,7 @@ PHP;
         $translationDomain   = $plugin->translationDomain();
         $pluginYamlPath      = "$pluginDirectoryPath/plugin.yaml";
         $pluginMenuName      = strtolower($plugin->name);
+        $langDirPath         = "$pluginDirectoryPath/lang";
 
         if ($plugin->pluginMenu !== FALSE) {
             if ($this->yamlFileValueExists($pluginYamlPath, 'navigation')) {
@@ -614,18 +615,103 @@ PHP;
                                 print(", menu-splitter");
                             }
                             
-                            // CRUD Navigation item
-                            $sideMenu[$sideMenuName] = array(
-                                'label'   => "$translationDomain::lang.models.$langSectionName.label_plural",
-                                'url'     => $url,
-                                'icon'    => $icon,
-                                
-                                'permissions' => array($permissionFQN),
-                            );
-                            if (!$firstModelUrl) $firstModelUrl = $url;
-                            // menuitemCount() adversely affects performance. Can it be cached?
-                            // use ?count on URL to show
-                            $sideMenu[$sideMenuName]['counter'] = "$modelFQN::menuitemCount";
+                            if ($controller->menuTaskItems) { 
+                                // ---------------------------- Task based menus
+                                // For example:
+                                //   Register new Student
+                                //   Add a student to a course
+                                //   Find a student
+                                // Allowed formats:
+                                //   - create
+                                //   create: true
+                                //   my_item:
+                                //     ...
+                                foreach ($controller->menuTaskItems as $tk_menuKey => $tk_menuConfig) {
+                                    print("    +Task based menu-item {$YELLOW}$tk_menuKey{$NC}");
+
+                                    if (is_numeric($tk_menuKey)) {
+                                        $tk_menuKey    = $tk_menuConfig;
+                                        $tk_menuConfig = array();
+                                    }
+                                    if (is_bool($tk_menuConfig)) $tk_menuConfig = array();
+
+                                    // TODO: Add permissions
+                                    $tk_sideMenuName     = "{$sideMenuName}_$tk_menuKey";
+                                    $tk_permissionFQN    = $model->permissionFQN("use_task_$tk_menuKey");
+                                    $tk_explicitLabelKey = (isset($tk_menuConfig['label']) ? $tk_menuConfig['label'] : NULL);;
+                                    $tk_labels  = (isset($tk_menuConfig['labels']) ? $tk_menuConfig['labels'] : NULL);
+                                    $tk_url     = (isset($tk_menuConfig['url'])    ? $tk_menuConfig['url']    : NULL);
+                                    $tk_icon    = (isset($tk_menuConfig['icon'])   ? $tk_menuConfig['icon']   : NULL);
+                                    $tk_counter = NULL;
+
+                                    switch ($tk_menuKey) {
+                                        case 'create':
+                                            if (is_null($tk_url))    $tk_url    = $controller->relativeUrl('create');
+                                            if (is_null($tk_icon))   $tk_icon   = 'plus';
+                                            if (is_null($tk_labels)) {
+                                                $tk_labels = array();
+                                                // TODO: Translate stub Create a new
+                                                foreach ($model->labels as $langName => $langModelLabel) {
+                                                    $tk_labels[$langName] = "Create a new $langModelLabel";
+                                                }
+                                            }
+                                            break;
+                                        case 'find':
+                                            if (is_null($tk_url))    $tk_url    = $controller->relativeUrl();
+                                            if (is_null($tk_icon))   $tk_icon   = 'search';
+                                            if (is_null($tk_labels)) {
+                                                $tk_labels = array();
+                                                foreach ($model->labels as $langName => $langModelLabel) {
+                                                    $tk_labels[$langName] = "Find a $langModelLabel";
+                                                }
+                                            }
+                                            $tk_counter = "$modelFQN::menuitemCount";
+                                            break;
+                                        case 'list':
+                                            // Adopt main list item
+                                            if (is_null($tk_url))    $tk_url    = $url;
+                                            if (is_null($tk_icon))   $tk_icon   = $icon;
+                                            if (is_null($tk_labels)) $tk_explicitLabelKey = "$translationDomain::lang.models.$langSectionName.label_plural";
+                                            if (!$firstModelUrl) $firstModelUrl = $tk_url;
+                                            $tk_counter = "$modelFQN::menuitemCount";
+                                            break;
+                                    }
+
+                                    // Auto-provision missing icon
+                                    if ($tk_icon) {
+                                        if (substr($tk_icon, 0, 5) != 'icon-') $tk_icon = "icon-$tk_icon";
+                                    } else {
+                                        $tk_icon = $this->getNextIcon();
+                                        print(" with auto-selected icon {$YELLOW}$tk_icon{$NC}");
+                                    }
+
+                                    // Process labels => explicitLabelKey
+                                    if (!$tk_explicitLabelKey) {
+                                        $tk_explicitLabelKey = "$translationDomain::lang.models.$langSectionName.menutasks.$tk_menuKey";
+                                        $this->writeLangValues($langDirPath, $tk_explicitLabelKey, $tk_labels);
+                                    }
+
+                                    $sideMenu[$tk_sideMenuName] = $this->removeEmpty(array(
+                                        'label'   => $tk_explicitLabelKey,
+                                        'url'     => $tk_url,
+                                        'icon'    => $tk_icon,
+                                        'permissions' => array($tk_permissionFQN),
+                                        'counter' => $tk_counter
+                                    ));
+                                    print("\n");
+                                }
+                            }
+                            // ---------------------------- Standard List => CRUD Navigation item
+                            else { 
+                                $sideMenu[$sideMenuName] = array(
+                                    'label'   => "$translationDomain::lang.models.$langSectionName.label_plural",
+                                    'url'     => $url,
+                                    'icon'    => $icon,
+                                    'permissions' => array($permissionFQN),
+                                );
+                                if (!$firstModelUrl) $firstModelUrl = $url;
+                                $sideMenu[$sideMenuName]['counter'] = "$modelFQN::menuitemCount";
+                            }
 
                             if ($controller->menuSplitter === 'after') {
                                 $sideMenu["_splitter_$sideMenuName"] = array(
@@ -785,9 +871,6 @@ PHP;
                     print("    {$GREEN}$class{$NC}({$YELLOW}$name{$NC}): $relation\n");
                 }
             }
-
-            // ---------------------------------------------------------------- Conditional hints
-            if ($model->hints) $this->setPropertyInClassFile($modelFilePath, 'hints', $model->hints, FALSE, 'public', self::STD_INDENT, Framework::ALL_MULTILINE);
 
             // ---------------------------------------------------------------- Model based functions and links
             // before, after, ales and action functions and links => lang.php
@@ -1331,63 +1414,6 @@ PHP
         }
     }
 
-    protected function buildHint(Model $model, string $hintName, array $hintConfig, string|NULL $fieldsPath = NULL) 
-    {
-        $path = NULL;
-
-        if (isset($hintConfig['path'])) {
-            // Managed existing partial from other plugin
-            // path will flow through
-            $path = $hintConfig['path'];
-        } else if (isset($hintConfig['content'])) {
-            // Custom content => file
-            $level      = (isset($hintConfig['level']) ? $hintConfig['level'] : 'info');
-            if (!isset($hintConfig['labels']))
-                throw new Exception("labels: are required for content hint $hintName");
-            if (!isset($hintConfig['content']))
-                throw new Exception("Content: is required for content hint $hintName");
-
-            // Labels => Translation keys
-            // values are placed in to the lang.php files later
-            $modelKey   = $model->translationDomain(); // acorn.university::lang.models.thing
-            $labelKey   = "$modelKey.hints.$hintName.label";
-            $contentKey = "$modelKey.hints.$hintName.content";
-            $hintConfig['label']   = $labelKey;
-            $hintConfig['content'] = $contentKey;
-
-            if ($fieldsPath) {
-                // Make the actual referenced hint file
-                // Content to create in a file and reference
-                // Relative plugins hint path
-                $hintsDir       = dirname($fieldsPath);
-                $hintsDir       = preg_replace('/^.*\/plugins\//', 'plugins/', $hintsDir);
-                $hintFileName   = preg_replace('/-+/', '_', $hintName);
-                $path           = "{$hintsDir}/_$hintFileName.php";
-                $levelEscaped   = e($level);
-                $contentHtml    = (isset($hintConfig['contentHtml']) && $hintConfig['contentHtml']);
-                $e              = ($contentHtml ? '' : 'e');
-                file_put_contents($path, <<<HTML
-                    <i class="icon-$levelEscaped"></i>
-                    <h3><?= e(trans('$labelKey')) ?></h3>
-                    <p class="content"><?= $e(trans('$contentKey')) ?></p>
-HTML                        
-                );
-            }
-        } else {
-            throw new Exception("Hint $hintName has neither path nor content");
-        }
-
-        // Some useful translations
-        if (isset($hintConfig['contexts'])) $hintConfig['context'] = $hintConfig['contexts'];
-
-        return array_merge(array(
-            'type' => 'hint',  // hints can be hidden
-            'path' => $path,   // Path to created file above
-            'span' => 'storm', // Usually, many are shown side-by-side
-            'cssClass' => 'col-xs-6 col-md-4', // Also will CSS float: right
-        ), $hintConfig);
-    }
-
     protected function createFormInterface(Model &$model, bool $overwrite = FALSE) {
         global $GREEN, $YELLOW, $RED, $NC;
 
@@ -1405,6 +1431,7 @@ HTML
         $this->setFileContents($fieldsPath, "# $createdBy");
 
         // ---------------------------------------- Main fields.yaml
+        // TODO: Push this field creation up in to the Model::fields()
         // fields(TRUE) call output
         $this->yamlFileUnSet($fieldsPath, 'fields.id');
         // Model level hints come first
@@ -1515,10 +1542,7 @@ HTML
                 }
 
                 $labelKey = (isset($field->explicitLabelKey) ? $field->explicitLabelKey : $field->translationKey());
-                $fieldTab = ($field->tab === 'INHERIT' 
-                    ? $labelKey 
-                    : ($field->tab == 'none' || $field->tabLocation === 0 ? NULL : $field->tab)
-                ); 
+                $fieldTab = $field->tab();
 
                 // Lang.php additions also use is_array() & $field->translationKey('_comment')
                 $commentKey = (is_array($field->fieldComment) 
@@ -1529,7 +1553,11 @@ HTML
                 // Field hints come first
                 if ($field->hints) {
                     foreach ($field->hints as $hintName => $hintConfig) {
+                        // Adopt associated field settings
                         if (!isset($hintConfig['tab']) && $fieldTab) $hintConfig['tab'] = $fieldTab;
+                        if (!isset($hintConfig['tabLocation']) && $field->tabLocation) $hintConfig['tabLocation'] = $field->tabLocation;
+                        if (!isset($hintConfig['advanced']))    $hintConfig['advanced']    = $field->advanced;
+                        if (!isset($hintConfig['permissions'])) $hintConfig['permissions'] = $field->permissions;
                         $this->yamlFileSet($fieldsPath, "$dotPathStub._{$fieldKey}_hint", 
                             $this->buildHint($model, $hintName, $hintConfig, $fieldsPath)
                         );
@@ -1581,6 +1609,7 @@ HTML
                     'attributes'   => $field->attributes,
                     'dependsOn'    => $dependsOn,
                     'dependsOnSettings' => $dependsOnSettings,
+                    'deferrable'   => $field->deferrable,
                     
                     // Extended info
                     'nested'       => ($field->nested    ?: NULL),
@@ -1649,6 +1678,7 @@ HTML
         }
 
         // ---------------------------------------- Fields for afters|befores functions
+        // TODO: Push this field creation up in to the Model::fields()
         $stageFunctions = array_merge(
             $model->beforeFunctions ?: array(), 
             $model->afterFunctions ?: array()
@@ -2202,9 +2232,10 @@ HTML
                     if ($relationModel->hasField('ordinal'))      $relationDefinition['view']['defaultSort'] = array('column' => 'ordinal',    'direction' => 'asc');
                 }
                 
-                // Should be on the field, not the config-relation: 
-                //   if ($relation1->recordUrl) $relationDefinition['view']['recordUrl']  = $relation1->recordUrl;
-                if ($relation1->conditions)    $relationDefinition['view']['conditions'] = $relation1->conditions;
+                // WinterCMS lies: The record-url: needs to be on the field.yaml, not the config-relation.yaml");
+                // if ($relation1->recordUrl) $relationDefinition['view']['recordUrl']  = $relation1->recordUrl;
+                if ($relation1->conditions)   $relationDefinition['view']['conditions'] = $relation1->conditions;
+                if ($relation1->deferrable()) $relationDefinition['deferrable']         = $relation1->deferrable();
                 if ($relation1->showSearch !== FALSE) {
                     $relationDefinition['view']['showSearch']   = true;
                     $relationDefinition['manage']['showSearch'] = true;

@@ -55,6 +55,7 @@ class Model {
     public $menu = TRUE;
     public $menuSplitter = FALSE;
     public $menuIndent   = 0;
+    public $menuTaskItems; // array
     public $icon;
     // Assemble all field permission-settings directives names
     // for Plugin registerPermissions()
@@ -664,6 +665,18 @@ class Model {
             }
         }
 
+        if ($this->menuTaskItems) { 
+            foreach ($this->menuTaskItems as $tk_menuKey => $tk_menuConfig) {
+                if (is_numeric($tk_menuKey)) $tk_menuKey = $tk_menuConfig;
+                $tk_permissionFQN = $this->permissionFQN("use_task_$tk_menuKey");
+                $permissions[$tk_permissionFQN] = array(
+                    'labels' => array(
+                        'en' => "Use task $tk_menuKey $menuitemPlural",
+                    ),
+               );
+            }
+        }
+
         // The field->allPermissionNames() keys are already fully-qualified
         // They will already include the view|change_all_fields above
         // but we add them twice for documentation purposes
@@ -821,7 +834,7 @@ class Model {
         return $found;
     }
 
-    public function relations1to1(Column &$forColumn = NULL, bool $hasManyDeepInclude = FALSE, bool $winterModels = FALSE): array
+    public function relations1to1(Column|NULL &$forColumn = NULL, bool $hasManyDeepInclude = FALSE, bool $winterModels = FALSE): array
     {
         // 1-1 & leaf relations
         // $foreignKeysFrom this column: All $this->table's ($tableFrom) ForeignIdField(*_id) $columns 
@@ -907,13 +920,13 @@ class Model {
         return $relations;
     }
 
-    public function relationsHasManyDeep(Column &$forColumn = NULL): array
+    public function relationsHasManyDeep(Column|NULL &$forColumn = NULL): array
     {
         // Builds off relations1to1() below
         return $this->recursive1to1Relations($this, $forColumn);
     }
 
-    protected function recursive1to1Relations(Model $forModel, Column $forColumn = NULL, Model $stepModel = NULL, array $throughRelations = array()): array
+    protected function recursive1to1Relations(Model $forModel, Column|NULL $forColumn = NULL, Model $stepModel = NULL, array $throughRelations = array()): array
     {
         global $YELLOW, $GREEN, $RED, $NC;
 
@@ -1025,7 +1038,7 @@ class Model {
         return $relations;
     }
 
-    public function relations1fromX(Column &$forColumn = NULL): array
+    public function relations1fromX(Column|NULL &$forColumn = NULL): array
     {
         // $foreignKeysTo this column
         // All foreign $tableFrom ForeignIdField(*_id) $columns 
@@ -1095,7 +1108,7 @@ class Model {
         return $relations;
     }
 
-    public function relationsXto1(Column &$forColumn = NULL): array
+    public function relationsXto1(Column|NULL &$forColumn = NULL): array
     {
         // $foreignKeysFrom this column: All $this->table's ($tableFrom) ForeignIdField(*_id) $columns 
         // pointing to (X-1) foreign $tableTo $columnTos(id)
@@ -1962,6 +1975,7 @@ class Model {
                 'comment'        => $relation->comment,
                 'commentHtml'    => TRUE,
                 'relatedModel'   => $relation->to->fullyQualifiedName(),
+                'deferrable'     => $relation->deferrable(),
                 'canFilter'      => $canFilter, 
                 'readOnly'       => $relation->readOnly,
                 'hints'          => $relation->hints,
@@ -1982,6 +1996,37 @@ class Model {
                 'searchable'     => (bool) $valueFrom,
                 'valueFrom'      => $valueFrom, // Necessary for search to work, is removed in nested scenario
             ), $thisIdRelation);
+
+            // --------------------------- Deferrable FKs
+            // This means that the relation can be used during create
+            // with deferred binding
+            // This is because the foreign id column is nullable
+            // the record can be created without an X-1 binding
+            // and then updated after the X-1 record has been created
+            if (   !$relation->deferrable() 
+                && !$fieldObj->fieldExclude
+                && !$fieldObj->hidden
+            ) {
+                // Create first Hints for !deferrable
+                // The relation CANNOT use deferred binding
+                // if (!$contexts) $contexts = array('update', 'preview'); 
+                // TODO: Move all hints from WinterCMS.php to Model.php, and use buildHintYaml() & writeHint()
+                // TODO: read-only only when create
+                // $readOnly   = TRUE; 
+                $dfHintName = "_{$name}_deferred_binding_hint";
+                $hintObj    = new Hint($this, array(
+                    'name'        => $dfHintName,
+                    'tab'         => $fieldObj->tab(),
+                    'tabLocation' => $fieldObj->tabLocation,
+                    'partial'     => 'hint_deferred_binding',
+                    'contexts'    => 'create',
+                    'advanced'    => $fieldObj->advanced,
+                    'bootstraps'  => array('xs' => 12),
+                    'permissions' => $fieldObj->permissions,
+                ));
+                $fields[$dfHintName] = $hintObj;
+            }
+
             $fields[$name] = $fieldObj;
         }
 
@@ -2052,6 +2097,7 @@ class Model {
                 'comment'        => $relation->comment,
                 'commentHtml'    => TRUE,
                 'relatedModel'   => $relation->to->fullyQualifiedName(),
+                'deferrable'     => $relation->deferrable(),
                 // These are linked only to the content table
                 'canFilter'      => $canFilter, 
                 'readOnly'       => $relation->readOnly,
@@ -2144,6 +2190,7 @@ class Model {
                 'debugComment'   => "Tab multi-select for $relation on $plugin->name.$this->name",
                 'commentHtml'    => TRUE,
                 'relatedModel'   => $relation->to->fullyQualifiedName(),
+                'deferrable'     => $relation->deferrable(),
                 // These are linked only to the content table
                 'canFilter'      => $canFilter, 
                 'readOnly'       => $relation->readOnly,

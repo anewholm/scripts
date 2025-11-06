@@ -58,6 +58,7 @@ class Table {
     public $menu;
     public $menuSplitter;
     public $menuIndent;
+    public $menuTaskItems; // array
     public $seedingOther;
     public $seeding;
     public $labelsFrom = array(); // Inherit labels from another table. Useful for views

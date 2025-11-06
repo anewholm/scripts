@@ -575,7 +575,15 @@ class Spyc {
     if ($input) {
       $lines = explode("\n",$input);
       foreach ($lines as $k => $_) {
-        $lines[$k] = rtrim ($_, "\r");
+        // Acorn Custom enhancement: replace leading tabs with 4 spaces
+        if ($len = strlen($_)) {
+          $tabs = 0; 
+          while ($tabs < $len && $_[$tabs] == "\t") $tabs++;
+          if ($tabs) {
+            $_ = str_repeat('    ', $tabs) . substr($_, $tabs);
+          }
+        }
+        $lines[$k] = rtrim($_, "\r");
       }
     }
     return $lines;

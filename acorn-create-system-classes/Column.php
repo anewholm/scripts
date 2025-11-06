@@ -1,6 +1,7 @@
 <?php namespace Acorn\CreateSystem;
 
 use Exception;
+use Spyc;
 
 require_once('ForeignKey.php');
 
@@ -83,7 +84,7 @@ class Column {
     public $table_name;
     public $ordinal_position;
     public $column_default;
-    public $is_nullable;
+    protected $is_nullable;
     public $data_type;
     public $character_maximum_length;
     public $character_octet_length;
@@ -143,6 +144,7 @@ class Column {
     public $cssClassesColumn;
     public $sortable;
     public $relation; // Explicit relation: setting
+    public $deferrable;
     public $order;
     public $invisible;
     public $system;  // Internal column, do not process
@@ -270,7 +272,7 @@ class Column {
             }
         }
 
-        $this->parsedComment = \Spyc::YAMLLoadString(preg_replace('/^\t/m', '    ', $this->comment));
+        $this->parsedComment = Spyc::YAMLLoadString($this->comment);
         foreach ($this->parsedComment as $name => $value) {
             $nameCamel = Str::camel($name);
             if (!property_exists($this, $nameCamel)) self::blockingAlert("Property [$nameCamel] does not exist on [$this->table.$this->name]");
@@ -388,7 +390,7 @@ class Column {
                 $fk   = ForeignKey::fromRow($toColumnObject, $to, $row);
                 $name = $fk->fullyQualifiedName();
                 if (isset($toColumnObject->foreignKeysTo[$name]))
-                    throw new \Exception("Foreign Key (from) $name already exists on $toTable.$toColumn");
+                    throw new Exception("Foreign Key (from) $name already exists on $toTable.$toColumn");
                 $toColumnObject->foreignKeysTo[$name] = $fk;
                 print("  Added extra {$YELLOW}reverse{$NC} foreign key $YELLOW$name$NC to column $YELLOW$toTable.$toColumn$NC\n");
             }
@@ -405,9 +407,21 @@ class Column {
         return ($this->singularUniqueConstraint ? TRUE : FALSE);
     }
 
+    public function isNullable(): bool
+    {
+        if ($this->is_nullable != 'YES' && $this->is_nullable != 'NO')
+            throw new Exception("is_nullable [$this->is_nullable] not understood");
+        return ($this->is_nullable == 'YES');
+    }
+
+    public function notNullable(): bool
+    {
+        return !$this->isNullable();
+    }
+
     public function isRequired(): bool
     {
-        return ($this->is_nullable == 'NO' && !$this->column_default);
+        return ($this->notNullable() && !$this->column_default);
     }
 
     public function db(): DB

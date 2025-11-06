@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict KoIyViZI9h66sFncBoC2wK7lczgdcQ4ESmkuvxNtZ5C5Mh2lNSy0N3KbeI87ifo
+\restrict TikjGvIIrWV5oRkv34EEU4h1QCWsjeEsJOEIlaPmlZiufGoGjCPJ3t3vi5NnEQO
 
 -- Dumped from database version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
 -- Dumped by pg_dump version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
@@ -473,6 +473,9 @@ DROP TRIGGER IF EXISTS tr_acorn_university_courses_unique_name_type ON public.ac
 DROP TRIGGER IF EXISTS tr_acorn_university_cm_order ON public.acorn_university_course_materials;
 DROP TRIGGER IF EXISTS tr_acorn_university_cascade_delete_event ON public.acorn_university_lectures;
 DROP TRIGGER IF EXISTS tr_acorn_university_cascade_delete_event ON public.acorn_university_hierarchy_event;
+DROP TRIGGER IF EXISTS tr_acorn_university_cascade_delete_event ON public.acorn_university_academic_years;
+DROP TRIGGER IF EXISTS tr_acorn_university_cascade_delete_event ON public.acorn_university_academic_year_semesters;
+DROP TRIGGER IF EXISTS tr_acorn_university_cascade_delete_event ON public.acorn_exam_interview_students;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_student_types;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_student_statuses;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_student_notes;
@@ -3989,7 +3992,7 @@ begin
 				p_enabled, 
 				fn_acorn_calendar_create_event(
 					p_calendar_id, p_user_id, p_event_type_id, p_event_status_id, 
-					'Academic Year ' || (extract(year from ep_max.start) + cy.ordinal)::text || '-' || (extract(year from ep_max.end) + cy.ordinal)::text,
+					(extract(year from ep_max.start) + cy.ordinal)::text || '-' || (extract(year from ep_max.end) + cy.ordinal)::text,
 					ep_max.start + ('P' || cy.ordinal || 'Y')::interval, 
 					ep_max.end   + ('P' || cy.ordinal || 'Y')::interval
 				)
@@ -4011,20 +4014,26 @@ begin
 			-- Create the event
 			fn_acorn_calendar_create_event(
 				p_calendar_id, p_user_id, p_event_type_id, p_event_status_id, 
-				'Semester ' || ay_new.name || '::' || sem_copy.name,
+				sem_copy.name,
 				ep_copy.start + ('P' || (ay_new.ordinal - ay_copy.ordinal) || 'Y')::interval, 
 				ep_copy.end   + ('P' || (ay_new.ordinal - ay_copy.ordinal) || 'Y')::interval,
-				ay_new.event_id -- Container Year event
+				ep_new.id -- Container Year event part
 			)
-		from acorn_university_academic_years ay_new
-		-- Get the current years semester from/to to copy from
+		from 
+		-- Newly created years
+		acorn_university_academic_years ay_new
+		-- New Year container event
+		-- First, and only allowed, event part
+		inner join acorn_calendar_event_parts ep_new on ep_new.event_id = ay_new.event_id
+		-- Get the copy years' semesters from/to to copy from
 		-- TODO: It is an error for a semester to have multiple event_parts
 		cross join acorn_university_academic_years ay_copy
-		inner join acorn_calendar_events ev_copy on ev_copy.id = ay_copy.event_id
-		inner join acorn_calendar_event_parts ep_copy on ep_copy.event_id = ev_copy.id
 		-- Copy Semesters
 		inner join acorn_university_academic_year_semesters ays_copy on ay_copy.id = ays_copy.academic_year_id
 		inner join acorn_university_semesters sem_copy on ays_copy.semester_id = sem_copy.id
+		-- Semester events
+		inner join acorn_calendar_events ev_copy on ev_copy.id = ays_copy.event_id
+		inner join acorn_calendar_event_parts ep_copy on ep_copy.event_id = ev_copy.id
 		where ay_copy.id = p_copy_academic_year_id
 		-- Newly created years
 		and not array_position(p_new_academic_year_ids, ay_new.id) is null;
@@ -4583,9 +4592,9 @@ ALTER FUNCTION public.fn_acorn_university_after_courses_length(p_model_id uuid, 
 --
 
 COMMENT ON FUNCTION public.fn_acorn_university_after_courses_length(p_model_id uuid, p_user_id uuid, p_length integer) IS 'labels:
-  en: Length of course
-  ku: Dirêjahiya qursê
-  ar: مدة الدورة
+  en: Length of course (years)
+  ku: Dirêjahiya qursê (salên)
+  ar: مدة الدورة (بالسنوات)
 conditions: |
   select count(*) from acorn_dbauth_user u 
   where not u.global_scope_entity_id is null
@@ -5443,12 +5452,14 @@ CREATE FUNCTION public.fn_acorn_university_lecture_sync_lock_event() RETURNS tri
     LANGUAGE plpgsql
     AS $$
 declare
+    p_deferred_binding bool;
 	p_hi_count int;
 	p_hi_1 uuid;
 	p_hi_self_and_nest_ascendants uuid[];
 	p_user_group_version_id uuid;
 	p_default_calendar_id uuid;
 	p_default_calendar uuid = 'ceea8856-e4c8-11ef-8719-5f58c97885a2'::uuid;
+	p_ays_event_part_id uuid;
 begin
 	-- AFTER INSERT into public.acorn_university_lectures
 	-- On Create lecture, sync user_group_id and lock it
@@ -5457,71 +5468,79 @@ begin
 	-- TODO: What if the course year semester appears in more than 0|>1 place in the hierarchy
 	-- with different user groups!!!
 	-- Probably should be foreign attached to the hierarchies table in future
-	select count(*) into p_hi_count
-		from acorn_university_course_materials cm
-		inner join acorn_university_course_year_semesters cys on cm.course_year_semester_id = cys.id
-		inner join acorn_university_entities en on cys.entity_id = en.id
-		inner join acorn_university_hierarchies hi on hi.entity_id = en.id
-		where cm.id = new.course_material_id;
-
-	-- If there are no associated user_group_version yet
-	-- then leave it because
-	-- a sister trigger on hierarchies will update the events when it is added
-	if p_hi_count > 1 then
-		raise exception 'Multiple User Groups not supported yet for the event';
-	elsif p_hi_count = 1 then
-		-- Provision first only
-		select hi.user_group_version_id, hi.id, array_prepend(hi.id, hi.nest_ascendants)
-			into p_user_group_version_id, p_hi_1, p_hi_self_and_nest_ascendants
-			from acorn_university_course_materials cm
-			inner join acorn_university_course_year_semesters cys on cm.course_year_semester_id = cys.id
-			inner join acorn_university_entities en on cys.entity_id = en.id
-			inner join acorn_university_hierarchies hi on hi.entity_id = en.id
-			where cm.id = new.course_material_id;
-
-		-- Set AYS container event
-		update acorn_calendar_event_parts 
-			set parent_event_part_id = (
-				select ays.event_id 
-				from acorn_university_course_materials cm
-				inner join acorn_university_course_year_semesters cys on cm.course_year_semester_id = cys.id
-				inner join acorn_university_academic_year_semesters ays on cys.academic_year_semester_id = ays.id
-				where cm.id = new.course_material_id
-			)
-			where event_id = new.event_id
-			and parent_event_part_id is null;
-
-		-- Sync event user_group_version
-		update acorn_calendar_event_parts 
-			set user_group_version_id = p_user_group_version_id
-			where event_id = new.event_id;
-
-		-- TODO: Sync user additions and removals
-
-		-- Sync calendar
-		select hi.default_calendar_id into p_default_calendar_id
-			-- Start with the array for correct ordering
-			-- closest ascendant first
-			from unnest(p_hi_self_and_nest_ascendants)
-			inner join acorn_university_hierarchies hi on hi.id = unnest
-			where not default_calendar_id is null
-			limit 1;
-		-- It is possible that there is none
-		-- in which case we leave it in default calendar
-		if not p_default_calendar_id is null then
-			update acorn_calendar_events 
-				set calendar_id = p_default_calendar_id
-				where id = new.event_id
-				-- Let's not change it if they set a specific one
-				and calendar_id = p_default_calendar;
-		end if;
-	end if;
-		
-	-- Always lock the event user_group_version, even if NULL
-	update acorn_calendar_event_parts 
-		set user_group_version_locked_external = true
-		where event_id = new.event_id;
-
+	p_deferred_binding := new.course_material_id is null;
+	if not p_deferred_binding then
+    	select count(*) into p_hi_count
+    		from acorn_university_course_materials cm
+    		inner join acorn_university_course_year_semesters cys on cm.course_year_semester_id = cys.id
+    		inner join acorn_university_entities en on cys.entity_id = en.id
+    		inner join acorn_university_hierarchies hi on hi.entity_id = en.id
+    		where cm.id = new.course_material_id;
+    
+    	-- If there are no associated user_group_version yet
+    	-- then leave it because
+    	-- a sister trigger on hierarchies will update the events when it is added
+    	if p_hi_count > 1 then
+    		raise exception 'Multiple User Groups not supported yet for the event';
+    	elsif p_hi_count = 1 then
+    		-- Get hierarchy entry details
+    		select hi.user_group_version_id, hi.id, array_prepend(hi.id, hi.nest_ascendants)
+    			into p_user_group_version_id, p_hi_1, p_hi_self_and_nest_ascendants
+    			from acorn_university_course_materials cm
+    			inner join acorn_university_course_year_semesters cys on cm.course_year_semester_id = cys.id
+    			inner join acorn_university_entities en on cys.entity_id = en.id
+    			inner join acorn_university_hierarchies hi on hi.entity_id = en.id
+    			where cm.id = new.course_material_id;
+    
+    		-- Sync event user_group_version
+    		update acorn_calendar_event_parts 
+    			set user_group_version_id = p_user_group_version_id
+    			where event_id = new.event_id;
+    
+    		-- TODO: Sync user additions and removals
+    
+    		-- Sync calendar
+    		select hi.default_calendar_id into p_default_calendar_id
+    			-- Start with the array for correct ordering
+    			-- closest ascendant first
+    			from unnest(p_hi_self_and_nest_ascendants)
+    			inner join acorn_university_hierarchies hi on hi.id = unnest
+    			where not default_calendar_id is null
+    			limit 1;
+    		-- It is possible that there is none
+    		-- in which case we leave it in default calendar
+    		if not p_default_calendar_id is null then
+    			update acorn_calendar_events 
+    				set calendar_id = p_default_calendar_id
+    				where id = new.event_id
+    				-- Let's not change it if they set a specific one
+    				and calendar_id = p_default_calendar;
+    		end if;
+    	end if;
+    		
+    	-- Set Seminar container events to Year-Semester
+    	-- Hierarchy entry not needed
+    	-- It is an error for a semester to have more than one part
+    	select ep.id into p_ays_event_part_id
+    		from acorn_university_course_materials cm
+    		inner join acorn_university_course_year_semesters cys on cm.course_year_semester_id = cys.id
+    		inner join acorn_university_academic_year_semesters ays on cys.academic_year_semester_id = ays.id
+    		inner join acorn_calendar_event_parts ep on ep.event_id = ays.event_id
+    		where cm.id = new.course_material_id;
+    	if p_ays_event_part_id is null then
+    		raise exception 'No AYS event part found for lecture container events';
+    	end if;
+    	update acorn_calendar_event_parts 
+    		set parent_event_part_id = p_ays_event_part_id
+    		where event_id = new.event_id
+    		and parent_event_part_id is null;
+    
+    	-- Always lock the event user_group_version, even if NULL
+    	update acorn_calendar_event_parts 
+    		set user_group_version_locked_external = true
+    		where event_id = new.event_id;
+    end if;
+    
 	return new;
 end;
             
@@ -12153,7 +12172,7 @@ COMMENT ON TABLE public.acorn_university_hierarchy_event IS 'menu: false';
 
 CREATE TABLE public.acorn_university_lectures (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    course_material_id uuid NOT NULL,
+    course_material_id uuid,
     event_id uuid NOT NULL,
     created_by_user_id uuid NOT NULL,
     updated_by_user_id uuid,
@@ -12178,6 +12197,18 @@ labels-plural:
   en: Lectures
   ku: Seminarên
   ar: الندوات
+hints:
+  introduction:
+    context: create
+    labels:
+      en: New event help
+      ku: Alîkariya bûyera nû
+      ar: مساعدة الحدث الجديد
+    contentHtml: true
+    content:
+      en: All the lecture events you create will be assigned to your default calendar for this year. The students on the associated semester for this course will be added to the event and see the lecture event in their on-line calendar.
+      ku: Hemû çalakiyên dersê yên ku hûn diafirînin dê li salnameya we ya xwerû ya vê salê werin destnîşankirin. Xwendekarên di semestra têkildar a ji bo vê qursê de dê li bûyerê werin zêdekirin û çalakiya dersê di salnameya xwe ya serhêl de bibînin.
+      ar: سيتم إضافة جميع فعاليات المحاضرات التي تُنشئها إلى تقويمك الافتراضي لهذا العام. سيُضاف طلاب الفصل الدراسي المرتبط بهذه الدورة إلى الفعالية، وسيشاهدونها في تقويمهم الإلكتروني.
 ';
 
 
@@ -14248,6 +14279,16 @@ form-comment: |
       The semesters are based on the <i>default semester group</i> for the course or its owning organisation.
       The calendar for the lectures is based on the <i>default calendar</i> for the course or its owning organisation.
       See the <a target="_blank" href="/backend/acorn/university/hierarchies">relationships</a> structure for the enrollment year to find the default settings.
+hints:
+  introduction:
+    labels:
+      en: Course years and semesters summary
+      ku: Kurteya sal û semesterên dersê
+      ar: ملخص سنوات الدراسة والفصول الدراسية
+    content:
+      en: Click on a Semester to add materials, lectures and more
+      ku: Ji bo lêzêdekirina materyal, ders û hêj bêtir li ser Semesterekê bikirtînin
+      ar: انقر على الفصل الدراسي لإضافة المواد والمحاضرات والمزيد
 ';
 
 
@@ -14263,7 +14304,8 @@ contexts:
 context-update:
   tab-location: 3
   read-only: true
-  context: update';
+  context: update
+';
 
 
 --
@@ -14271,6 +14313,10 @@ context-update:
 --
 
 COMMENT ON COLUMN public.acorn_university_course_plans.enrollment_academic_year_id IS 'order: 10
+labels:
+  en: Enrollment Academic Year
+  ku: Sala Akademîk a Tomarkirinê
+  ar: التسجيل السنة الدراسية
 # Necessary to hide field in favour of tab-location 3
 contexts:
   create: true
@@ -15051,9 +15097,7 @@ ALTER TABLE public.acorn_university_semesters OWNER TO university;
 -- Name: TABLE acorn_university_semesters; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON TABLE public.acorn_university_semesters IS 'attribute-functions:
-  name: "return $this->attributes[''name''] . '' ('' . $this->ordinalText() . '')'';"
-order: 1012
+COMMENT ON TABLE public.acorn_university_semesters IS 'order: 1012
 seeding:
   - [''61c051fa-2b47-11f0-bc0f-ab4c8b696730'', ''Semester 1'', NULL, 1]
   - [''61eb583c-2b47-11f0-adc3-ef976031065b'', ''Semester 2'', NULL, 1]
@@ -15081,7 +15125,7 @@ COMMENT ON COLUMN public.acorn_university_semesters.description IS 'tab: acorn::
 
 CREATE TABLE public.acorn_university_student_codes (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    student_id uuid NOT NULL,
+    student_id uuid,
     code character varying(1024) NOT NULL,
     owner_entity_id uuid,
     name character varying(1024) GENERATED ALWAYS AS (code) STORED NOT NULL,
@@ -15215,7 +15259,7 @@ CREATE TABLE public.acorn_university_student_identities (
     number character varying(1024) NOT NULL,
     description text,
     identity_type_id uuid NOT NULL,
-    student_id uuid NOT NULL,
+    student_id uuid,
     name character varying(1024) GENERATED ALWAYS AS (number) STORED NOT NULL,
     current boolean DEFAULT true NOT NULL,
     created_by_user_id uuid NOT NULL,
@@ -15286,7 +15330,7 @@ COMMENT ON COLUMN public.acorn_university_student_identities.current IS 'list-ed
 CREATE TABLE public.acorn_university_student_notes (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(1024) NOT NULL,
-    student_id uuid NOT NULL,
+    student_id uuid,
     owner_entity_id uuid,
     description text,
     created_by_user_id uuid NOT NULL,
@@ -16292,6 +16336,10 @@ ALTER TABLE public.acorn_university_students OWNER TO university;
 COMMENT ON TABLE public.acorn_university_students IS 'batch-print: true
 order: 500
 menu-splitter: true
+menu-task-items:
+  - create
+  - find
+  - list
 hints:
   introduction:
     labels:
@@ -16373,7 +16421,7 @@ filters:
     conditions: exists(select * from acorn_user_users u where u.ethnicity_id in(:filtered) and u.id = acorn_university_students.user_id)
   courses:
     label: acorn.university::lang.models.course.label_plural
-    conditions: ''exists(select * from acorn_user_user_group_version ugv inner join acorn_university_hierarchies hi on hi.user_group_version_id = ugv.user_group_version_id where hi.entity_id in(:filtered) and ugv.user_id = acorn_university_students.user_id)''
+    conditions: exists(select * from acorn_user_user_group_version ugv inner join acorn_university_hierarchies hi on hi.user_group_version_id = ugv.user_group_version_id where hi.entity_id in(:filtered) and ugv.user_id = acorn_university_students.user_id)
     modelClass: Acorn\University\Models\Entity
     searchNameSelect: select ugs.name from acorn_user_user_groups ugs where ugs.id = acorn_university_entities.user_group_id
 ';
@@ -18006,9 +18054,9 @@ hints:
       ar: غير متصل
     contentHtml: true
     content:
-      en: This course is not connected to any organisation. <a href="/backend/acorn/university/hierarchies">Add to an organisation</a>.
-      ku: Ev qurs bi tu rêxistinekê ve ne girêdayî ye. <a href="/backend/acorn/university/hierarchies">Li rêxistinekê zêde bike</a>.
-      ar: هذه الدورة ليست مرتبطة بأي منظمة. <a href="/backend/acorn/university/hierarchies">إضافة إلى منظمة</a>.
+      en: This course is not connected to any organisation. <br/><a href="/backend/acorn/university/hierarchies/create">Add this course to an organisation</a>.
+      ku: Ev qurs bi tu rêxistinekê ve ne girêdayî ye. <br/><a href="/backend/acorn/university/hierarchies/create">Ve kors li rêxistinekê zêde bike</a>.
+      ar: هذه الدورة ليست مرتبطة بأي منظمة. <br/><a href="/backend/acorn/university/hierarchies/create">إضافة إلى منظمة</a>.
     level: warning
     conditions: not exists(select * from acorn_university_hierarchies where entity_id = acorn_university_courses.entity_id)
     context: update';
@@ -29677,6 +29725,27 @@ CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_stude
 
 
 --
+-- Name: acorn_exam_interview_students tr_acorn_university_cascade_delete_event; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_university_cascade_delete_event AFTER DELETE ON public.acorn_exam_interview_students FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_university_cascade_delete_event();
+
+
+--
+-- Name: acorn_university_academic_year_semesters tr_acorn_university_cascade_delete_event; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_university_cascade_delete_event AFTER DELETE ON public.acorn_university_academic_year_semesters FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_university_cascade_delete_event();
+
+
+--
+-- Name: acorn_university_academic_years tr_acorn_university_cascade_delete_event; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_university_cascade_delete_event AFTER DELETE ON public.acorn_university_academic_years FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_university_cascade_delete_event();
+
+
+--
 -- Name: acorn_university_hierarchy_event tr_acorn_university_cascade_delete_event; Type: TRIGGER; Schema: public; Owner: university
 --
 
@@ -31078,9 +31147,14 @@ COMMENT ON CONSTRAINT course_id ON public.acorn_university_course_language IS 'h
     contentHtml: true
     labels:
       en: Language restrictions
+      ku: Sînorkirinên zimanî
+      ar: القيود اللغوية
     content:
       en: No languages means that <i>all</i> languages are accepted. Adding a language will restrict it to that language only.
-    level: info';
+      ku: Bê ziman tê wê wateyê ku <i>hemû</i> ziman tên qebûlkirin. Zêdekirina zimanekî wê tenê bi wî zimanî ve sînordar bike.
+      ar: عدم وجود لغات يعني قبول جميع اللغات. إضافة لغة ستقتصر على تلك اللغة فقط.
+    level: info
+';
 
 
 --
@@ -31132,13 +31206,11 @@ ALTER TABLE ONLY public.acorn_university_course_plans
 -- Name: CONSTRAINT course_id ON acorn_university_course_plans; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT course_id ON public.acorn_university_course_plans IS 'name-object: true
+COMMENT ON CONSTRAINT course_id ON public.acorn_university_course_plans IS 'order: 1
+name-object: true
 show-search: false
 tab-location: 1
-labels:
-  en: Course Plan
-labels-plural:
-  en: Course Plans';
+record-url: acorn/university/courseplans/update/:id ';
 
 
 --
@@ -31292,7 +31364,19 @@ ALTER TABLE ONLY public.acorn_university_lectures
 -- Name: CONSTRAINT course_material_id ON acorn_university_lectures; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT course_material_id ON public.acorn_university_lectures IS 'nameObject: true';
+COMMENT ON CONSTRAINT course_material_id ON public.acorn_university_lectures IS 'nameObject: true
+hints:
+  introduction:
+    labels:
+      en: Introduction
+      ku: Pêşkêş
+      ar: مقدمة
+    contentHtml: true
+    content:
+      en: Welcome to seminar management! You can see and also manage all your events in the <a href="/backend/acorn/calendar/months">Calendar</a>
+      ku: Bi xêr hatin bo rêveberiya semîneran! Hûn dikarin hemû bûyerên xwe di <a href="/backend/acorn/calendar/months">Salnameyê</a> de bibînin û birêve bibin.
+      ar: أهلاً بك في إدارة الندوات! يمكنك الاطلاع على جميع فعالياتك وإدارتها عبر <a href="/backend/acorn/calendar/months">التقويم</a>
+';
 
 
 --
@@ -31307,11 +31391,7 @@ ALTER TABLE ONLY public.acorn_university_course_year_semesters
 -- Name: CONSTRAINT course_plan_id ON acorn_university_course_year_semesters; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT course_plan_id ON public.acorn_university_course_year_semesters IS 'labels:
-  en: Course Year Semester
-labels-plural:
-  en: Course Year Semesters
-tab: none
+COMMENT ON CONSTRAINT course_plan_id ON public.acorn_university_course_year_semesters IS 'tab: none
 css-classes:
   - planner
 default-sort: 
@@ -39704,5 +39784,5 @@ GRANT ALL ON TABLE public.university_mofadala_university_categories TO agri WITH
 -- PostgreSQL database dump complete
 --
 
-\unrestrict KoIyViZI9h66sFncBoC2wK7lczgdcQ4ESmkuvxNtZ5C5Mh2lNSy0N3KbeI87ifo
+\unrestrict TikjGvIIrWV5oRkv34EEU4h1QCWsjeEsJOEIlaPmlZiufGoGjCPJ3t3vi5NnEQO
 

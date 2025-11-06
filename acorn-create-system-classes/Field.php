@@ -17,6 +17,7 @@ class Field {
     public $noRelationManager;
     public $fromYaml;
     public $revisionable;
+    public $deferrable;
 
     public $comment;     // From column->comment
     public $name;        // => fieldName & columnName
@@ -286,12 +287,15 @@ class Field {
         // All fields can be controlled by a permission
         // permissions are expandable/collapsable in the list screen
         if (!$this->column || $this->column->isCustom()) {
-            $permissionNameStub = $this->permissionStub();
-            array_push($this->permissions, "{$permissionNameStub}_view");
-            array_push($this->permissions, "{$permissionNameStub}_change");
+            // Model level Hints can define their permissions to link them to fields and things
+            if (!$this->permissions) {
+                $permissionNameStub = $this->permissionStub();
+                array_push($this->permissions, "{$permissionNameStub}_view");
+                array_push($this->permissions, "{$permissionNameStub}_change");
 
-            array_push($this->permissions, $this->model->permissionFQN('view_all_fields'));
-            array_push($this->permissions, $this->model->permissionFQN('change_all_fields'));
+                array_push($this->permissions, $this->model->permissionFQN('view_all_fields'));
+                array_push($this->permissions, $this->model->permissionFQN('change_all_fields'));
+            }
         }
 
         // Checks
@@ -421,7 +425,7 @@ class Field {
             'valueFrom'  => $column->valueFrom,
         );
 
-        $fieldDefinition['required'] = ($column->is_nullable == 'NO' && !$column->column_default);
+        $fieldDefinition['required'] = $column->isRequired();
         if (!$fieldDefinition['required']) {
             $fieldDefinition['placeholder'] = 'backend::lang.form.select';
         }
@@ -489,7 +493,8 @@ class Field {
                 break;
             case 'path':
                 // File uploads are NOT stored in the actual column
-                if (!$column->is_nullable) throw new Exception("File upload column $column->column_name(path) must be nullable, because it does not store the path");
+                if ($column->notNullable()) 
+                    throw new Exception("File upload column $column->column_name(path) must be nullable, because it does not store the path");
                 $uploadDefinition = array(
                     'fieldType'    => 'fileupload',
                     'mode'         => 'image',
@@ -588,6 +593,15 @@ class Field {
     {
         return ($this->includeContext != 'no-include');
     }
+
+    public function tab(): string|NULL
+    {
+        return ($this->tab === 'INHERIT' 
+            ? (isset($this->explicitLabelKey) ? $this->explicitLabelKey : $this->translationKey())
+            : ($this->tab == 'none' || $this->tabLocation === 0 ? NULL : $this->tab)
+        ); 
+    }
+
 
     public function devEnTitle(bool $plural = Model::SINGULAR): string
     {
@@ -1040,6 +1054,34 @@ class PseudoField extends Field {
         // which will use explicit labels if there are any
         $realname = preg_replace('/^_/', '', $this->name);
         return ($this->translationKey && !$this->labels ? $this->translationKey : parent::translationKey($realname, $forceGeneral));
+    }
+}
+
+
+// --------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------
+class Hint extends PseudoField {
+    public $content;
+    public $contentHtml;
+    public $level;
+
+    public function __construct(Model &$model, array $definition, array $relations = array())
+    {
+        global $YELLOW, $GREEN, $RED, $NC;
+
+        $definition = Framework::camelKeys($definition, FALSE);
+        $name       = $definition['name'];
+        if (!isset($definition['#']))           $definition['#']           = "Create first Hint for !deferrable [$name]";
+        if (!isset($definition['fieldType']))   $definition['fieldType']   = 'hint';
+        if (!isset($definition['span']))        $definition['span']        = 'storm';
+        if (!isset($definition['bootstraps']))  $definition['bootstraps']  = array('xs' => 6, 'md' => '4');
+        if (!isset($definition['level']))       $definition['level']       = 'restricted';
+
+        $definition['columnExclude'] = TRUE;
+        $definition['columnType']    = FALSE;
+
+        parent::__construct($model, $definition, $relations);
     }
 }
 

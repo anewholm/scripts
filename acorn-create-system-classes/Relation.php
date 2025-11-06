@@ -74,9 +74,9 @@ class Relation {
         Model $from, 
         Model $to, 
         Column $column, 
-        ForeignKey $foreignKey = NULL,
+        ForeignKey|NULL $foreignKey = NULL,
         bool $isCount = FALSE,
-        string $conditions = NULL
+        string|NULL $conditions = NULL
     ) {
         // Relations are DIRECTIONAL, unlike FKs
         // That is, from Relations, like Relation1from1, is attached to its FK to ID column,
@@ -194,6 +194,25 @@ class Relation {
     public function isSelfReferencing(): bool
     {
         return ($this->foreignKey ? $this->foreignKey->isSelfReferencing() : FALSE);
+    }
+
+    public function nullable(): bool
+    {
+        // Is the from column nullable?
+        return ($this->foreignKey ? $this->foreignKey->nullable() : FALSE);
+    }
+
+    public function deferrable(): bool
+    {
+        // For Laravel Deferred Bindings
+        // https://wintercms.com/docs/v1.2/docs/database/relations#deferred-binding
+        // The from column must be NULLable in order to make the record without the FK relation
+        // and then update it later after the FK relation has been created
+        return ($this->from 
+            && $this->foreignKey 
+            && $this->nullable() 
+            && $this->foreignKey->tableFrom::class == Table::class // No Views please
+        );
     }
 
     public function canDisplayAsFilter(): bool

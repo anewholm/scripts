@@ -1,5 +1,7 @@
 <?php namespace Acorn\CreateSystem;
 
+use Spyc;
+
 class Controller {
     protected static $controllers = array();
 
@@ -11,6 +13,7 @@ class Controller {
     public $comment;
     public $menu = TRUE;
     public $menuSplitter = FALSE;
+    public $menuTaskItems; // array
     public $icon;
     public $url;
     public $qrCodeScan;
@@ -28,7 +31,7 @@ class Controller {
 
         // Adopt some of the models comment statements
         $this->comment = $model->comment;
-        foreach (\Spyc::YAMLLoadString($this->comment) as $name => $value) {
+        foreach (Spyc::YAMLLoadString($this->comment) as $name => $value) {
             $nameCamel = Str::camel($name);
             if (property_exists($this, $nameCamel)) $this->$nameCamel = $value;
         }

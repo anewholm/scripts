@@ -78,6 +78,7 @@ class Framework
             'ordinal' => 'Ordinal',
             'minimum' => 'Minimum',
             'maximum' => 'Maximum',
+            'required' => 'Required',
             'code'    => 'Code',
 
             // Menus
@@ -135,6 +136,7 @@ class Framework
             'ordinal' => 'ترتيبي',
             'minimum' => 'الحد الأدنى',
             'maximum' => 'الحد الأقصى',
+            'required' => 'مطلوب',
             'code'    => 'شفرة',
 
             // Menus
@@ -192,6 +194,7 @@ class Framework
             'ordinal' => 'Rêz',
             'minimum' => 'Herî kêm',
             'maximum' => 'Herî zêde',
+            'required' => 'Pêwîst',
             'code'    => 'Kod',
 
             // Menus
@@ -559,6 +562,71 @@ class Framework
         $fqn      = $array[0]['icons'][$this->iconCurrent++];
         $fqnParts = explode(' ', $fqn);
         return end($fqnParts);
+    }
+
+    protected function buildHint(Model $model, string $hintName, array $hintConfig, string|NULL $fieldsPath = NULL) 
+    {
+        $path = NULL;
+
+        if (isset($hintConfig['path'])) {
+            // Managed existing partial from other plugin
+            // path will flow through
+            $path = $hintConfig['path'];
+        } else if (isset($hintConfig['content'])) {
+            // Custom content => file
+            $level      = (isset($hintConfig['level']) ? $hintConfig['level'] : 'info');
+            if (!isset($hintConfig['labels']))
+                throw new Exception("labels: are required for content hint $hintName");
+            if (!isset($hintConfig['content']))
+                throw new Exception("Content: is required for content hint $hintName");
+
+            // Labels => Translation keys
+            // values are placed in to the lang.php files later
+            $modelKey   = $model->translationDomain(); // acorn.university::lang.models.thing
+            $labelKey   = "$modelKey.hints.$hintName.label";
+            $contentKey = "$modelKey.hints.$hintName.content";
+            $hintConfig['label']   = $labelKey;
+            $hintConfig['content'] = $contentKey;
+            if (isset($hintConfig['labels'])) unset($hintConfig['labels']);
+            $callToAction = '';
+
+            if ($fieldsPath) {
+                // Make the actual referenced hint file
+                // Content to create in a file and reference
+                // Relative plugins hint path
+                $hintsDir       = dirname($fieldsPath);
+                $hintsDir       = preg_replace('/^.*\/plugins\//', 'plugins/', $hintsDir);
+                $hintFileName   = preg_replace('/-+/', '_', $hintName);
+                $path           = "{$hintsDir}/_$hintFileName.php";
+                $levelEscaped   = e($level);
+                $contentHtml    = (isset($hintConfig['contentHtml']) && $hintConfig['contentHtml']);
+                $e              = ($contentHtml  ? '' : 'e');
+                // TODO: Call to action translation and label
+                $callToActionA  = ($callToAction ? "<a href='$callToAction'>Resolve</a>" : '');
+
+                file_put_contents($path, <<<HTML
+                    <i class="icon-$levelEscaped"></i>
+                    <h3><?= e(trans('$labelKey')) ?></h3>
+                    <p class="content">
+                        <?= $e(trans('$contentKey')) ?>
+                        $callToActionA
+                    </p>
+HTML                        
+                );
+            }
+        } else {
+            throw new Exception("Hint $hintName has neither path nor content");
+        }
+
+        // Some useful translations
+        if (isset($hintConfig['contexts'])) $hintConfig['context'] = $hintConfig['contexts'];
+
+        return array_merge(array(
+            'type' => 'hint',  // hints can be hidden
+            'path' => $path,   // Path to created file above
+            'span' => 'storm', // Usually, many are shown side-by-side
+            'cssClass' => 'col-xs-6 col-md-4', // Also will CSS float: right
+        ), $hintConfig);
     }
 
     // ----------------------------------------- YAML

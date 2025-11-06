@@ -1,6 +1,7 @@
 <?php namespace Acorn\CreateSystem;
 
 use Exception;
+use Spyc;
 
 class ForeignKey {
     protected $column;
@@ -98,7 +99,7 @@ class ForeignKey {
             // This will write also $this->comment
             if (property_exists($this, $name)) $this->$name = $value;
         }
-        foreach (\Spyc::YAMLLoadString(preg_replace('/^\t/m', '    ', $this->comment)) as $name => $value) {
+        foreach (Spyc::YAMLLoadString($this->comment) as $name => $value) {
             $nameCamel = Str::camel($name);
             if (!property_exists($this, $nameCamel)) {
                 $valueString = var_export($value, TRUE);
@@ -181,6 +182,11 @@ class ForeignKey {
     public function directionName(): string
     {
         return ($this->to ? 'to' : 'from');
+    }
+
+    public function nullable(): bool
+    {
+        return $this->columnFrom->isNullable();
     }
 
     public function show(int $indent = 0, bool $full = FALSE, string $colour = NULL)
