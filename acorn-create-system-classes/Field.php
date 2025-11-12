@@ -81,7 +81,7 @@ class Field {
     public $placeholder;
     public $debugComment;
     public $fieldComment;
-    public $permissions = array(); // Resultant Fields.yaml permissions: directive
+    public $permissions; // Resultant Fields.yaml permissions: directive
     // Assemble all field permission-settings directives names
     // for Plugin registerPermissions()
     // Permission names (keys) are fully-qualified
@@ -287,14 +287,19 @@ class Field {
         // All fields can be controlled by a permission
         // permissions are expandable/collapsable in the list screen
         if (!$this->column || $this->column->isCustom()) {
-            // Model level Hints can define their permissions to link them to fields and things
-            if (!$this->permissions) {
-                $permissionNameStub = $this->permissionStub();
-                array_push($this->permissions, "{$permissionNameStub}_view");
-                array_push($this->permissions, "{$permissionNameStub}_change");
+            // Nested field permissions exist on the nested model, not this one
+            if (!$this->nested) {
+                // Model level Hints can define their permissions to link them to fields and things
+                // External plugins can set their permissions to array() if there are none
+                if (!isset($this->permissions)) {
+                    $permissionNameStub = $this->permissionStub();
+                    $this->permissions  = array();
+                    array_push($this->permissions, "{$permissionNameStub}_view");
+                    array_push($this->permissions, "{$permissionNameStub}_change");
 
-                array_push($this->permissions, $this->model->permissionFQN('view_all_fields'));
-                array_push($this->permissions, $this->model->permissionFQN('change_all_fields'));
+                    array_push($this->permissions, $this->model->permissionFQN('view_all_fields'));
+                    array_push($this->permissions, $this->model->permissionFQN('change_all_fields'));
+                }
             }
         }
 
@@ -398,8 +403,11 @@ class Field {
 
         // column|field-type are used for fieldExclude, so we always provide a default
         // This is YAML source so it will not be defaulted/altered later
-        if (!isset($fieldDefinition['fieldType']))  $fieldDefinition['fieldType']  = 'text';
-        if (!isset($fieldDefinition['columnType'])) $fieldDefinition['columnType'] = 'text';
+        if (!isset($fieldDefinition['fieldType']))   $fieldDefinition['fieldType']  = 'text';
+        if (!isset($fieldDefinition['columnType']))  $fieldDefinition['columnType'] = 'text';
+
+        // Prevent permissions auto-assign if there are none
+        if (!isset($fieldDefinition['permissions'])) $fieldDefinition['permissions'] = array();
 
         return self::create($model, $fieldDefinition, $column, $relations);
     }

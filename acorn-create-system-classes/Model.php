@@ -639,30 +639,17 @@ class Model {
             $this->afterFunctions ?: array()
         );
         foreach ($stageFunctions as $name => &$functionSpec) {
-            if (isset($functionSpec['parameters'])) {
-                foreach ($functionSpec['parameters'] as $paramName => $paramSpec) {
-                    switch ($paramName) {
-                        case 'model_id':
-                        case 'p_model_id':
-                        case 'user_id':
-                        case 'p_user_id':
-                            break;
-                        default:
-                            // Some parameters must come from the new, as yet not created, model
-                            // TODO: Translate the function name
-                            $fieldName = preg_replace('/^p_/', '', $paramName);
-                            if (!$this->hasAttribute($fieldName)) {
-                                $permissions[$this->permissionFQN("{$name}_{$paramName}_use")] = array(
-                                    'labels' => array(
-                                        'en' => "Use function $name",
-                                        'ku' => "Fonksiyonê $name bikar bîne",
-                                        'ar' => "$name استخدم الوظيفة",
-                                    ),
-                                );
-                            }
-                    }
-                }
-            }
+            // Some parameters must come from the new, as yet not created, model
+            $labelsEN = (isset($functionSpec['labels']['en']) ? $functionSpec['labels']['en'] : $name);
+            $labelsKU = (isset($functionSpec['labels']['ku']) ? $functionSpec['labels']['ku'] : $name);
+            $labelsAR = (isset($functionSpec['labels']['ar']) ? $functionSpec['labels']['ar'] : $name);
+            $permissions[$this->permissionFQN("use_function_{$name}")] = array(
+                'labels' => array(
+                    'en' => "Use function $labelsEN",
+                    'ku' => "Fonksiyonê $labelsKU bikar bîne",
+                    'ar' => "$labelsAR استخدم الوظيفة",
+                ),
+            );
         }
 
         if ($this->menuTaskItems) { 

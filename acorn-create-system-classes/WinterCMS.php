@@ -1409,6 +1409,8 @@ PHP
                         $throughIfAlreadySet,
                         $comment
                     );
+                } else {
+                    // throw new Exception("No [$langName] lang key for [$translationKey]");
                 }
             }
         }
@@ -1738,7 +1740,7 @@ PHP
 
                                 // Permissions
                                 $permissions = array(
-                                    $model->permissionFQN("{$name}_{$paramName}_use")
+                                    $model->permissionFQN("use_function_{$name}")
                                 );
                                 
                                 // Contexts
