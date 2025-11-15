@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict JSinTM0oS23E2c886OJjvFki1uhRNqRewylZfeIuDZBA1BGZFtKMutHQjQYHkw8
+\restrict ogEaBiwjQm7A5k23LYkt78Vj7GHSIvwPAHRVE2pPVZcJgPrGxqxPCXg8c3YC96i
 
--- Dumped from database version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
--- Dumped by pg_dump version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
+-- Dumped from database version 16.11 (Ubuntu 16.11-1.pgdg24.04+1)
+-- Dumped by pg_dump version 16.11 (Ubuntu 16.11-1.pgdg24.04+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -18,152 +18,152 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
-ALTER TABLE IF EXISTS ONLY public.acorn_location_user_addresses DROP CONSTRAINT IF EXISTS user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_students DROP CONSTRAINT IF EXISTS user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group DROP CONSTRAINT IF EXISTS user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_version DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group DROP CONSTRAINT IF EXISTS user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_role_user DROP CONSTRAINT IF EXISTS user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_teachers DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_students DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_user_addresses DROP CONSTRAINT IF EXISTS user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_version DROP CONSTRAINT IF EXISTS user_group_version_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS user_group_version_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_location_user_group_location DROP CONSTRAINT IF EXISTS user_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_versions DROP CONSTRAINT IF EXISTS user_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group DROP CONSTRAINT IF EXISTS user_group_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_entities DROP CONSTRAINT IF EXISTS user_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_project_students DROP CONSTRAINT IF EXISTS user_group_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_semester_groups DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_material_topics DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchy_event DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_documents DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_document_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_addition DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_removal DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_specializations DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_sections DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_answers DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_questions DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_runs DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_student_notes DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_students DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_courses DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_enrollments DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_entities DROP CONSTRAINT IF EXISTS user_group_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_user_group_location DROP CONSTRAINT IF EXISTS user_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_students DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_plans DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_centres DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_instances DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_desires DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_course_entry_requirements DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_identity_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_identities DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_notes DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_score_names DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_codes DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_statuses DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_courses DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_material_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_materials DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_lectures DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_projects DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_notes DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_identities DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_documents DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_removal DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_addition DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_codes DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_semesters DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_years DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_year_semesters DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_entities DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_interviews DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_semester_groups DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_projects DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_project_students DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_materials DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_scores DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculations DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_exam_materials DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_exams DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_materials DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_material_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_material_topics DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_lectures DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_identity_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchy_event DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_entities DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_document_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_years DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_specializations DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_plans DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_materials DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_years DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_year_semesters DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_sections DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_scores DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_score_names DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_questions DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_interviews DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_instances DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_exams DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_exam_materials DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_centres DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculations DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_material_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_courses DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_materials DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_answers DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_students DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_student_notes DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_runs DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_enrollments DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_desires DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_courses DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_course_entry_requirements DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_types DROP CONSTRAINT IF EXISTS types_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_materials DROP CONSTRAINT IF EXISTS type_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_exams DROP CONSTRAINT IF EXISTS type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_locations DROP CONSTRAINT IF EXISTS type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_exams DROP CONSTRAINT IF EXISTS type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS teacher_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_type DROP CONSTRAINT IF EXISTS student_type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_status DROP CONSTRAINT IF EXISTS student_status_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_documents DROP CONSTRAINT IF EXISTS student_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_addition DROP CONSTRAINT IF EXISTS student_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_removal DROP CONSTRAINT IF EXISTS student_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_type DROP CONSTRAINT IF EXISTS student_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_students DROP CONSTRAINT IF EXISTS student_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_identities DROP CONSTRAINT IF EXISTS student_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_status DROP CONSTRAINT IF EXISTS student_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_notes DROP CONSTRAINT IF EXISTS student_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS student_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_identities DROP CONSTRAINT IF EXISTS student_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_documents DROP CONSTRAINT IF EXISTS student_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_removal DROP CONSTRAINT IF EXISTS student_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_addition DROP CONSTRAINT IF EXISTS student_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_codes DROP CONSTRAINT IF EXISTS student_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_scores DROP CONSTRAINT IF EXISTS student_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_status DROP CONSTRAINT IF EXISTS student_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS student_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS student_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_semester_groups DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_material_topics DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchy_event DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_documents DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_document_types DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_addition DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_removal DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_specializations DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_sections DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_answers DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_questions DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_students DROP CONSTRAINT IF EXISTS student_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_types DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_runs DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_student_notes DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_students DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_courses DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_enrollments DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_location_address_types DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_plans DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_centres DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_instances DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_desires DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_course_entry_requirements DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_identity_types DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_identities DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_notes DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_score_names DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_types DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_types DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_codes DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_statuses DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_courses DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_material_types DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_materials DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_lectures DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_types DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_projects DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_notes DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_identities DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_documents DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_removal DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_addition DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_codes DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_semesters DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_years DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_year_semesters DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_entities DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_interviews DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_semester_groups DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_projects DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_project_students DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_materials DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_scores DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculations DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_exam_materials DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_exams DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_types DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_materials DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_material_types DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_years DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_material_topics DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_lectures DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_identity_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchy_event DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_entities DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_document_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_years DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_specializations DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_plans DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_materials DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_years DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_year_semesters DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_locations DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_gps DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_areas DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_area_types DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_addresses DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_location_gps DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_location_locations DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_address_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_sections DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_scores DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_score_names DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_questions DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_interviews DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_instances DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_exams DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_exam_materials DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_centres DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculations DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_material_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_courses DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_materials DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_answers DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_students DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_student_notes DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_runs DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_enrollments DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_desires DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_courses DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_course_entry_requirements DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_year_semesters DROP CONSTRAINT IF EXISTS semester_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_semesters DROP CONSTRAINT IF EXISTS semester_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_questions DROP CONSTRAINT IF EXISTS section_id;
@@ -175,153 +175,153 @@ ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_course_entry_requirements DRO
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_answers DROP CONSTRAINT IF EXISTS question_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_students DROP CONSTRAINT IF EXISTS proposed_desire_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_students DROP CONSTRAINT IF EXISTS proposal_run_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_project_students DROP CONSTRAINT IF EXISTS project_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS project_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_exam_materials DROP CONSTRAINT IF EXISTS project_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_project_students DROP CONSTRAINT IF EXISTS project_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_types DROP CONSTRAINT IF EXISTS parent_type_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculations DROP CONSTRAINT IF EXISTS parent_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS parent_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculations DROP CONSTRAINT IF EXISTS parent_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_areas DROP CONSTRAINT IF EXISTS parent_area_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_project_students DROP CONSTRAINT IF EXISTS owner_student_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_types DROP CONSTRAINT IF EXISTS owner_entity_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_enrollments DROP CONSTRAINT IF EXISTS owner_entity_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculations DROP CONSTRAINT IF EXISTS owner_entity_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_notes DROP CONSTRAINT IF EXISTS owner_entity_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculations DROP CONSTRAINT IF EXISTS owner_entity_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_enrollments DROP CONSTRAINT IF EXISTS owner_entity_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_material_types DROP CONSTRAINT IF EXISTS material_type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_materials DROP CONSTRAINT IF EXISTS material_topic_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS material_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_materials DROP CONSTRAINT IF EXISTS material_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS material_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_locations DROP CONSTRAINT IF EXISTS locations_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_entities DROP CONSTRAINT IF EXISTS location_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_centres DROP CONSTRAINT IF EXISTS location_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_location_user_group_location DROP CONSTRAINT IF EXISTS location_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_servers DROP CONSTRAINT IF EXISTS location_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_user_group_location DROP CONSTRAINT IF EXISTS location_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_centres DROP CONSTRAINT IF EXISTS location_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_language DROP CONSTRAINT IF EXISTS language_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS interview_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_exam_materials DROP CONSTRAINT IF EXISTS interview_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS interview_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_exam_materials DROP CONSTRAINT IF EXISTS interview_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_identities DROP CONSTRAINT IF EXISTS identity_type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchy_event DROP CONSTRAINT IF EXISTS hierarchy_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_location_addresses DROP CONSTRAINT IF EXISTS gps_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_areas DROP CONSTRAINT IF EXISTS gps_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_addresses DROP CONSTRAINT IF EXISTS gps_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_gps DROP CONSTRAINT IF EXISTS gps_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_users DROP CONSTRAINT IF EXISTS global_scope_entity_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_users DROP CONSTRAINT IF EXISTS global_scope_academic_year_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_scores DROP CONSTRAINT IF EXISTS exam_material_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_sections DROP CONSTRAINT IF EXISTS exam_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_instances DROP CONSTRAINT IF EXISTS exam_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS exam_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_instances DROP CONSTRAINT IF EXISTS exam_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_exam_materials DROP CONSTRAINT IF EXISTS exam_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_instances DROP CONSTRAINT IF EXISTS exam_centre_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_year_semesters DROP CONSTRAINT IF EXISTS event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_lectures DROP CONSTRAINT IF EXISTS event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchy_event DROP CONSTRAINT IF EXISTS event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_years DROP CONSTRAINT IF EXISTS event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_lectures DROP CONSTRAINT IF EXISTS event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_year_semesters DROP CONSTRAINT IF EXISTS event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_users DROP CONSTRAINT IF EXISTS ethnicity_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_universities DROP CONSTRAINT IF EXISTS entity_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_codes DROP CONSTRAINT IF EXISTS entity_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_schools DROP CONSTRAINT IF EXISTS entity_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS entity_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_faculties DROP CONSTRAINT IF EXISTS entity_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_education_authorities DROP CONSTRAINT IF EXISTS entity_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_departments DROP CONSTRAINT IF EXISTS entity_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_courses DROP CONSTRAINT IF EXISTS entity_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_semesters DROP CONSTRAINT IF EXISTS entity_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_codes DROP CONSTRAINT IF EXISTS entity_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS entity_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_universities DROP CONSTRAINT IF EXISTS entity_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_schools DROP CONSTRAINT IF EXISTS entity_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_faculties DROP CONSTRAINT IF EXISTS entity_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_departments DROP CONSTRAINT IF EXISTS entity_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_education_authorities DROP CONSTRAINT IF EXISTS entity_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_student_notes DROP CONSTRAINT IF EXISTS enrollment_student_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_desires DROP CONSTRAINT IF EXISTS enrollment_student_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_students DROP CONSTRAINT IF EXISTS enrollment_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_runs DROP CONSTRAINT IF EXISTS enrollment_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_courses DROP CONSTRAINT IF EXISTS enrollment_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_students DROP CONSTRAINT IF EXISTS enrollment_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_course_entry_requirements DROP CONSTRAINT IF EXISTS enrollment_course_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_semesters DROP CONSTRAINT IF EXISTS enrollment_academic_year_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_documents DROP CONSTRAINT IF EXISTS document_type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS default_semester_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS default_calendar_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_semester_groups DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_material_topics DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchy_event DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_documents DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_document_types DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_addition DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_removal DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_specializations DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_sections DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_answers DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_questions DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_types DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_runs DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_student_notes DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_students DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_courses DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_enrollments DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_students DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_plans DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_centres DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_instances DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_desires DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_course_entry_requirements DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_identity_types DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_identities DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_notes DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_score_names DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_codes DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_types DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_types DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_types DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_statuses DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_courses DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_material_types DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_materials DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_lectures DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_types DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_projects DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_notes DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_identities DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_documents DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_removal DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_addition DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_codes DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_semesters DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_years DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_year_semesters DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_entities DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_interviews DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_semester_groups DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_projects DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_project_students DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_materials DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_scores DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculations DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_exam_materials DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_exams DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_types DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_materials DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_material_types DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_material_topics DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_lectures DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_identity_types DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchy_event DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_entities DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_document_types DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_years DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_types DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_specializations DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_plans DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_materials DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_years DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_year_semesters DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_types DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_sections DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_scores DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_score_names DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_questions DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_interviews DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_instances DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_exams DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_exam_materials DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_centres DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculations DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_types DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_material_types DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_courses DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_types DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_materials DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_answers DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_students DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_student_notes DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_runs DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_enrollments DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_desires DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_courses DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_course_entry_requirements DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_materials DROP CONSTRAINT IF EXISTS course_year_semester_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_semesters DROP CONSTRAINT IF EXISTS course_year_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_types DROP CONSTRAINT IF EXISTS course_type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_courses DROP CONSTRAINT IF EXISTS course_type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_types DROP CONSTRAINT IF EXISTS course_type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_semesters DROP CONSTRAINT IF EXISTS course_specialization_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_semesters DROP CONSTRAINT IF EXISTS course_plan_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_lectures DROP CONSTRAINT IF EXISTS course_material_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_addition DROP CONSTRAINT IF EXISTS course_material_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_removal DROP CONSTRAINT IF EXISTS course_material_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_student_course_material_addition DROP CONSTRAINT IF EXISTS course_material_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_project_students DROP CONSTRAINT IF EXISTS course_material_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_lectures DROP CONSTRAINT IF EXISTS course_material_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS course_material_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS course_material_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_exam_materials DROP CONSTRAINT IF EXISTS course_material_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_materials DROP CONSTRAINT IF EXISTS course_material_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_project_students DROP CONSTRAINT IF EXISTS course_material_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_interview_students DROP CONSTRAINT IF EXISTS course_material_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_specializations DROP CONSTRAINT IF EXISTS course_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_semesters DROP CONSTRAINT IF EXISTS course_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_specializations DROP CONSTRAINT IF EXISTS course_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_plans DROP CONSTRAINT IF EXISTS course_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_language DROP CONSTRAINT IF EXISTS course_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS course_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_courses DROP CONSTRAINT IF EXISTS course_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_language DROP CONSTRAINT IF EXISTS course_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_courses DROP CONSTRAINT IF EXISTS course_hierarchy_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_desires DROP CONSTRAINT IF EXISTS course_entry_requirements_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS calculation_type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculations DROP CONSTRAINT IF EXISTS calculation_type_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_material_types DROP CONSTRAINT IF EXISTS calculation_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_types DROP CONSTRAINT IF EXISTS calculation_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_enrollments DROP CONSTRAINT IF EXISTS calculation_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS calculation_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_materials DROP CONSTRAINT IF EXISTS calculation_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_material_types DROP CONSTRAINT IF EXISTS calculation_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_courses DROP CONSTRAINT IF EXISTS calculation_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_types DROP CONSTRAINT IF EXISTS calculation_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_materials DROP CONSTRAINT IF EXISTS calculation_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_enrollments DROP CONSTRAINT IF EXISTS calculation_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_enrollments DROP CONSTRAINT IF EXISTS calculation_exam_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_enrollments DROP CONSTRAINT IF EXISTS calculation_course_type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_enrollment_enrollments DROP CONSTRAINT IF EXISTS calculation_course_id;
@@ -331,8 +331,8 @@ ALTER TABLE IF EXISTS ONLY public.acorn_location_areas DROP CONSTRAINT IF EXISTS
 ALTER TABLE IF EXISTS ONLY public.acorn_location_area_types DROP CONSTRAINT IF EXISTS area_types_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_areas DROP CONSTRAINT IF EXISTS area_type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_addresses DROP CONSTRAINT IF EXISTS area_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_location_address_types DROP CONSTRAINT IF EXISTS addresses_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_addresses DROP CONSTRAINT IF EXISTS addresses_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_address_types DROP CONSTRAINT IF EXISTS addresses_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_user_addresses DROP CONSTRAINT IF EXISTS address_type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_user_addresses DROP CONSTRAINT IF EXISTS address_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_locations DROP CONSTRAINT IF EXISTS address_id;
@@ -369,16 +369,16 @@ ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_part_user DROP CONSTRAINT
 ALTER TABLE IF EXISTS ONLY public.acorn_calendar_calendars DROP CONSTRAINT IF EXISTS acorn_calendar_calendars_owner_user_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.acorn_calendar_calendars DROP CONSTRAINT IF EXISTS acorn_calendar_calendars_owner_user_group_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_course_year_semesters DROP CONSTRAINT IF EXISTS academic_year_semester_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_types DROP CONSTRAINT IF EXISTS academic_year_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_material_types DROP CONSTRAINT IF EXISTS academic_year_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_year_semesters DROP CONSTRAINT IF EXISTS academic_year_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_university_course_plans DROP CONSTRAINT IF EXISTS academic_year_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculations DROP CONSTRAINT IF EXISTS academic_year_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_centres DROP CONSTRAINT IF EXISTS academic_year_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS academic_year_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_materials DROP CONSTRAINT IF EXISTS academic_year_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_courses DROP CONSTRAINT IF EXISTS academic_year_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_university_hierarchies DROP CONSTRAINT IF EXISTS academic_year_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_course_plans DROP CONSTRAINT IF EXISTS academic_year_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_university_academic_year_semesters DROP CONSTRAINT IF EXISTS academic_year_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_result_internal2s DROP CONSTRAINT IF EXISTS academic_year_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_centres DROP CONSTRAINT IF EXISTS academic_year_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculations DROP CONSTRAINT IF EXISTS academic_year_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_material_types DROP CONSTRAINT IF EXISTS academic_year_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_courses DROP CONSTRAINT IF EXISTS academic_year_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_types DROP CONSTRAINT IF EXISTS academic_year_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_exam_calculation_course_materials DROP CONSTRAINT IF EXISTS academic_year_id;
 DROP TRIGGER IF EXISTS tr_acorn_user_user_languages_current ON public.acorn_user_user_languages;
 DROP TRIGGER IF EXISTS tr_acorn_user_user_group_version_current ON public.acorn_user_user_group_versions;
 DROP TRIGGER IF EXISTS tr_acorn_user_user_group_first_version ON public.acorn_user_user_groups;
@@ -476,6 +476,7 @@ DROP TRIGGER IF EXISTS tr_acorn_university_cascade_delete_event ON public.acorn_
 DROP TRIGGER IF EXISTS tr_acorn_university_cascade_delete_event ON public.acorn_university_academic_years;
 DROP TRIGGER IF EXISTS tr_acorn_university_cascade_delete_event ON public.acorn_university_academic_year_semesters;
 DROP TRIGGER IF EXISTS tr_acorn_university_cascade_delete_event ON public.acorn_exam_interview_students;
+DROP TRIGGER IF EXISTS tr_acorn_university_academic_years_current ON public.acorn_university_academic_years;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_student_types;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_student_statuses;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_university_student_notes;
@@ -1255,6 +1256,7 @@ DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_import2
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_import2425b(p_delete_previous boolean, p_confirm boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_copy_to(model_id uuid, user_id uuid, p_academic_year_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean);
+DROP FUNCTION IF EXISTS public.fn_acorn_university_academic_years_current();
 DROP FUNCTION IF EXISTS public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_truncate_database(schema_like character varying, table_like character varying);
 DROP FUNCTION IF EXISTS public.fn_acorn_translate(p_fallback_name character varying, p_table character varying, p_id uuid, p_locale character);
@@ -3684,6 +3686,28 @@ $$;
 
 
 ALTER FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) OWNER TO university;
+
+--
+-- Name: fn_acorn_university_academic_years_current(); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_university_academic_years_current() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+begin
+	-- Enforce only one current
+	if new.current then
+		-- Unset the old current(s)
+		update acorn_university_academic_years
+			set "current" = false
+			where "current" and id != new.id; 
+	end if;
+	return new;
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_university_academic_years_current() OWNER TO university;
 
 --
 -- Name: fn_acorn_university_action_academic_years_clear(uuid, uuid, boolean, boolean, boolean, boolean); Type: FUNCTION; Schema: public; Owner: university
@@ -16208,22 +16232,6 @@ UNION ALL
     acorn_university_course_plans.updated_at AS datetime
    FROM public.acorn_university_course_plans
 UNION ALL
- SELECT 'Acorn\University\Models\Project'::text AS model_type,
-    acorn_university_projects.id AS model_id,
-    'acorn_university_projects'::text AS "table",
-    (acorn_university_projects.name)::character varying(1024) AS name,
-    0 AS update,
-    acorn_university_projects.created_at AS datetime
-   FROM public.acorn_university_projects
-UNION ALL
- SELECT 'Acorn\University\Models\Project'::text AS model_type,
-    acorn_university_projects.id AS model_id,
-    'acorn_university_projects'::text AS "table",
-    (acorn_university_projects.name)::character varying(1024) AS name,
-    1 AS update,
-    acorn_university_projects.updated_at AS datetime
-   FROM public.acorn_university_projects
-UNION ALL
  SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
     acorn_university_lectures.id AS model_id,
     'acorn_university_lectures'::text AS "table",
@@ -16239,6 +16247,22 @@ UNION ALL
     1 AS update,
     acorn_university_lectures.updated_at AS datetime
    FROM public.acorn_university_lectures
+UNION ALL
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
+    (acorn_university_projects.name)::character varying(1024) AS name,
+    0 AS update,
+    acorn_university_projects.created_at AS datetime
+   FROM public.acorn_university_projects
+UNION ALL
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
+    (acorn_university_projects.name)::character varying(1024) AS name,
+    1 AS update,
+    acorn_university_projects.updated_at AS datetime
+   FROM public.acorn_university_projects
 UNION ALL
  SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
     acorn_exam_exam_materials.id AS model_id,
@@ -17475,20 +17499,6 @@ UNION ALL
     acorn_university_course_plans.updated_by_user_id AS by
    FROM public.acorn_university_course_plans
 UNION ALL
- SELECT 'Acorn\University\Models\Project'::text AS model_type,
-    acorn_university_projects.id AS model_id,
-    'acorn_university_projects'::text AS "table",
-    0 AS update,
-    acorn_university_projects.created_by_user_id AS by
-   FROM public.acorn_university_projects
-UNION ALL
- SELECT 'Acorn\University\Models\Project'::text AS model_type,
-    acorn_university_projects.id AS model_id,
-    'acorn_university_projects'::text AS "table",
-    1 AS update,
-    acorn_university_projects.updated_by_user_id AS by
-   FROM public.acorn_university_projects
-UNION ALL
  SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
     acorn_university_lectures.id AS model_id,
     'acorn_university_lectures'::text AS "table",
@@ -17502,6 +17512,20 @@ UNION ALL
     1 AS update,
     acorn_university_lectures.updated_by_user_id AS by
    FROM public.acorn_university_lectures
+UNION ALL
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
+    0 AS update,
+    acorn_university_projects.created_by_user_id AS by
+   FROM public.acorn_university_projects
+UNION ALL
+ SELECT 'Acorn\University\Models\Project'::text AS model_type,
+    acorn_university_projects.id AS model_id,
+    'acorn_university_projects'::text AS "table",
+    1 AS update,
+    acorn_university_projects.updated_by_user_id AS by
+   FROM public.acorn_university_projects
 UNION ALL
  SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
     acorn_exam_exam_materials.id AS model_id,
@@ -17941,7 +17965,7 @@ CREATE TABLE public.acorn_university_course_year_semesters (
     academic_year_semester_id uuid NOT NULL,
     entity_id uuid NOT NULL,
     academic_year_semester_ordinal integer NOT NULL,
-    course_plan_id uuid NOT NULL,
+    course_plan_id uuid,
     course_specialization_id uuid,
     enrollment_academic_year_id uuid NOT NULL
 );
@@ -29779,6 +29803,13 @@ CREATE TRIGGER tr_acorn_server_id BEFORE INSERT ON public.acorn_university_stude
 
 
 --
+-- Name: acorn_university_academic_years tr_acorn_university_academic_years_current; Type: TRIGGER; Schema: public; Owner: university
+--
+
+CREATE TRIGGER tr_acorn_university_academic_years_current BEFORE INSERT OR UPDATE ON public.acorn_university_academic_years FOR EACH ROW EXECUTE FUNCTION public.fn_acorn_university_academic_years_current();
+
+
+--
 -- Name: acorn_exam_interview_students tr_acorn_university_cascade_delete_event; Type: TRIGGER; Schema: public; Owner: university
 --
 
@@ -30458,19 +30489,35 @@ CREATE TRIGGER tr_acorn_user_user_languages_current AFTER INSERT OR UPDATE ON pu
 
 
 --
--- Name: acorn_university_hierarchies academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_calculation_course_materials academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_hierarchies
-    ADD CONSTRAINT academic_year_id FOREIGN KEY (academic_year_id) REFERENCES public.acorn_university_academic_years(id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_calculation_course_materials
+    ADD CONSTRAINT academic_year_id FOREIGN KEY (academic_year_id) REFERENCES public.acorn_university_academic_years(id);
 
 
 --
--- Name: CONSTRAINT academic_year_id ON acorn_university_hierarchies; Type: COMMENT; Schema: public; Owner: university
+-- Name: CONSTRAINT academic_year_id ON acorn_exam_calculation_course_materials; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT academic_year_id ON public.acorn_university_hierarchies IS 'global-scope: to
-name-object: true
+COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculation_course_materials IS 'name-object: true
+field-exclude: true
+column-exclude: true';
+
+
+--
+-- Name: acorn_exam_calculation_course_types academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculation_course_types
+    ADD CONSTRAINT academic_year_id FOREIGN KEY (academic_year_id) REFERENCES public.acorn_university_academic_years(id) ON DELETE CASCADE;
+
+
+--
+-- Name: CONSTRAINT academic_year_id ON acorn_exam_calculation_course_types; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculation_course_types IS 'name-object: true
 field-exclude: true
 column-exclude: true';
 
@@ -30493,52 +30540,19 @@ column-exclude: true';
 
 
 --
--- Name: acorn_exam_calculation_course_materials academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_calculation_material_types academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_calculation_course_materials
-    ADD CONSTRAINT academic_year_id FOREIGN KEY (academic_year_id) REFERENCES public.acorn_university_academic_years(id);
-
-
---
--- Name: CONSTRAINT academic_year_id ON acorn_exam_calculation_course_materials; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculation_course_materials IS 'name-object: true
-field-exclude: true
-column-exclude: true';
-
-
---
--- Name: acorn_exam_result_internal2s academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_result_internal2s
-    ADD CONSTRAINT academic_year_id FOREIGN KEY (academic_year_id) REFERENCES public.acorn_university_academic_years(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: CONSTRAINT academic_year_id ON acorn_exam_result_internal2s; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_result_internal2s IS 'tab-location: 2
-field-exclude: true
-invisible: true';
-
-
---
--- Name: acorn_exam_centres academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_centres
+ALTER TABLE ONLY public.acorn_exam_calculation_material_types
     ADD CONSTRAINT academic_year_id FOREIGN KEY (academic_year_id) REFERENCES public.acorn_university_academic_years(id) ON DELETE CASCADE;
 
 
 --
--- Name: CONSTRAINT academic_year_id ON acorn_exam_centres; Type: COMMENT; Schema: public; Owner: university
+-- Name: CONSTRAINT academic_year_id ON acorn_exam_calculation_material_types; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_centres IS 'field-exclude: true
+COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculation_material_types IS 'name-object: true
+field-exclude: true
 column-exclude: true';
 
 
@@ -30560,20 +30574,36 @@ column-exclude: true';
 
 
 --
--- Name: acorn_university_course_plans academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_centres academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_course_plans
-    ADD CONSTRAINT academic_year_id FOREIGN KEY (enrollment_academic_year_id) REFERENCES public.acorn_university_academic_years(id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE ONLY public.acorn_exam_centres
+    ADD CONSTRAINT academic_year_id FOREIGN KEY (academic_year_id) REFERENCES public.acorn_university_academic_years(id) ON DELETE CASCADE;
 
 
 --
--- Name: CONSTRAINT academic_year_id ON acorn_university_course_plans; Type: COMMENT; Schema: public; Owner: university
+-- Name: CONSTRAINT academic_year_id ON acorn_exam_centres; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT academic_year_id ON public.acorn_university_course_plans IS 'name-object: true
-field-exclude: true
+COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_centres IS 'field-exclude: true
 column-exclude: true';
+
+
+--
+-- Name: acorn_exam_result_internal2s academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_result_internal2s
+    ADD CONSTRAINT academic_year_id FOREIGN KEY (academic_year_id) REFERENCES public.acorn_university_academic_years(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT academic_year_id ON acorn_exam_result_internal2s; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_result_internal2s IS 'tab-location: 2
+field-exclude: true
+invisible: true';
 
 
 --
@@ -30594,35 +30624,36 @@ name-object: true
 
 
 --
--- Name: acorn_exam_calculation_material_types academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_course_plans academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_calculation_material_types
-    ADD CONSTRAINT academic_year_id FOREIGN KEY (academic_year_id) REFERENCES public.acorn_university_academic_years(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_university_course_plans
+    ADD CONSTRAINT academic_year_id FOREIGN KEY (enrollment_academic_year_id) REFERENCES public.acorn_university_academic_years(id) ON DELETE CASCADE NOT VALID;
 
 
 --
--- Name: CONSTRAINT academic_year_id ON acorn_exam_calculation_material_types; Type: COMMENT; Schema: public; Owner: university
+-- Name: CONSTRAINT academic_year_id ON acorn_university_course_plans; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculation_material_types IS 'name-object: true
+COMMENT ON CONSTRAINT academic_year_id ON public.acorn_university_course_plans IS 'name-object: true
 field-exclude: true
 column-exclude: true';
 
 
 --
--- Name: acorn_exam_calculation_course_types academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_hierarchies academic_year_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_calculation_course_types
-    ADD CONSTRAINT academic_year_id FOREIGN KEY (academic_year_id) REFERENCES public.acorn_university_academic_years(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_university_hierarchies
+    ADD CONSTRAINT academic_year_id FOREIGN KEY (academic_year_id) REFERENCES public.acorn_university_academic_years(id) ON DELETE CASCADE NOT VALID;
 
 
 --
--- Name: CONSTRAINT academic_year_id ON acorn_exam_calculation_course_types; Type: COMMENT; Schema: public; Owner: university
+-- Name: CONSTRAINT academic_year_id ON acorn_university_hierarchies; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT academic_year_id ON public.acorn_exam_calculation_course_types IS 'name-object: true
+COMMENT ON CONSTRAINT academic_year_id ON public.acorn_university_hierarchies IS 'global-scope: to
+name-object: true
 field-exclude: true
 column-exclude: true';
 
@@ -30924,18 +30955,18 @@ ALTER TABLE ONLY public.acorn_location_user_addresses
 
 
 --
--- Name: acorn_location_addresses addresses_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_location_addresses
-    ADD CONSTRAINT addresses_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
 -- Name: acorn_location_address_types addresses_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_location_address_types
+    ADD CONSTRAINT addresses_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_location_addresses addresses_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_location_addresses
     ADD CONSTRAINT addresses_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
@@ -31043,18 +31074,11 @@ COMMENT ON CONSTRAINT calculation_exam_id ON public.acorn_enrollment_enrollments
 
 
 --
--- Name: acorn_exam_calculation_courses calculation_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_enrollment_enrollments calculation_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_calculation_courses
+ALTER TABLE ONLY public.acorn_enrollment_enrollments
     ADD CONSTRAINT calculation_id FOREIGN KEY (calculation_id) REFERENCES public.acorn_exam_calculations(id) NOT VALID;
-
-
---
--- Name: CONSTRAINT calculation_id ON acorn_exam_calculation_courses; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT calculation_id ON public.acorn_exam_calculation_courses IS 'name-object: true';
 
 
 --
@@ -31073,31 +31097,6 @@ COMMENT ON CONSTRAINT calculation_id ON public.acorn_exam_calculation_course_mat
 
 
 --
--- Name: acorn_exam_result_internal2s calculation_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_result_internal2s
-    ADD CONSTRAINT calculation_id FOREIGN KEY (calculation_id) REFERENCES public.acorn_exam_calculations(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: CONSTRAINT calculation_id ON acorn_exam_result_internal2s; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT calculation_id ON public.acorn_exam_result_internal2s IS 'tab-location: 2
-field-exclude: true
-invisible: true';
-
-
---
--- Name: acorn_enrollment_enrollments calculation_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_enrollments
-    ADD CONSTRAINT calculation_id FOREIGN KEY (calculation_id) REFERENCES public.acorn_exam_calculations(id) NOT VALID;
-
-
---
 -- Name: acorn_exam_calculation_course_types calculation_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -31113,6 +31112,21 @@ COMMENT ON CONSTRAINT calculation_id ON public.acorn_exam_calculation_course_typ
 
 
 --
+-- Name: acorn_exam_calculation_courses calculation_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculation_courses
+    ADD CONSTRAINT calculation_id FOREIGN KEY (calculation_id) REFERENCES public.acorn_exam_calculations(id) NOT VALID;
+
+
+--
+-- Name: CONSTRAINT calculation_id ON acorn_exam_calculation_courses; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT calculation_id ON public.acorn_exam_calculation_courses IS 'name-object: true';
+
+
+--
 -- Name: acorn_exam_calculation_material_types calculation_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -31125,6 +31139,23 @@ ALTER TABLE ONLY public.acorn_exam_calculation_material_types
 --
 
 COMMENT ON CONSTRAINT calculation_id ON public.acorn_exam_calculation_material_types IS 'name-object: true';
+
+
+--
+-- Name: acorn_exam_result_internal2s calculation_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_result_internal2s
+    ADD CONSTRAINT calculation_id FOREIGN KEY (calculation_id) REFERENCES public.acorn_exam_calculations(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT calculation_id ON acorn_exam_result_internal2s; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT calculation_id ON public.acorn_exam_result_internal2s IS 'tab-location: 2
+field-exclude: true
+invisible: true';
 
 
 --
@@ -31185,33 +31216,6 @@ column-exclude: true';
 
 
 --
--- Name: acorn_university_course_language course_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_course_language
-    ADD CONSTRAINT course_id FOREIGN KEY (course_id) REFERENCES public.acorn_university_courses(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: CONSTRAINT course_id ON acorn_university_course_language; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT course_id ON public.acorn_university_course_language IS 'hints:
-  no_languages:
-    contentHtml: true
-    labels:
-      en: Language restrictions
-      ku: Sînorkirinên zimanî
-      ar: القيود اللغوية
-    content:
-      en: No languages means that <i>all</i> languages are accepted. Adding a language will restrict it to that language only.
-      ku: Bê ziman tê wê wateyê ku <i>hemû</i> ziman tên qebûlkirin. Zêdekirina zimanekî wê tenê bi wî zimanî ve sînordar bike.
-      ar: عدم وجود لغات يعني قبول جميع اللغات. إضافة لغة ستقتصر على تلك اللغة فقط.
-    level: info
-';
-
-
---
 -- Name: acorn_exam_calculation_courses course_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -31249,6 +31253,33 @@ invisible: true';
 
 
 --
+-- Name: acorn_university_course_language course_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_language
+    ADD CONSTRAINT course_id FOREIGN KEY (course_id) REFERENCES public.acorn_university_courses(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT course_id ON acorn_university_course_language; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT course_id ON public.acorn_university_course_language IS 'hints:
+  no_languages:
+    contentHtml: true
+    labels:
+      en: Language restrictions
+      ku: Sînorkirinên zimanî
+      ar: القيود اللغوية
+    content:
+      en: No languages means that <i>all</i> languages are accepted. Adding a language will restrict it to that language only.
+      ku: Bê ziman tê wê wateyê ku <i>hemû</i> ziman tên qebûlkirin. Zêdekirina zimanekî wê tenê bi wî zimanî ve sînordar bike.
+      ar: عدم وجود لغات يعني قبول جميع اللغات. إضافة لغة ستقتصر على تلك اللغة فقط.
+    level: info
+';
+
+
+--
 -- Name: acorn_university_course_plans course_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -31268,6 +31299,14 @@ record-url: acorn/university/courseplans/update/:id ';
 
 
 --
+-- Name: acorn_university_course_specializations course_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_specializations
+    ADD CONSTRAINT course_id FOREIGN KEY (course_id) REFERENCES public.acorn_university_courses(id) ON DELETE CASCADE;
+
+
+--
 -- Name: acorn_university_course_year_semesters course_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -31283,44 +31322,6 @@ COMMENT ON CONSTRAINT course_id ON public.acorn_university_course_year_semesters
 field-exclude: true
 column-exclude: true
 can-filter: true';
-
-
---
--- Name: acorn_university_course_specializations course_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_course_specializations
-    ADD CONSTRAINT course_id FOREIGN KEY (course_id) REFERENCES public.acorn_university_courses(id) ON DELETE CASCADE;
-
-
---
--- Name: acorn_exam_interview_students course_material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_interview_students
-    ADD CONSTRAINT course_material_id FOREIGN KEY (course_material_id) REFERENCES public.acorn_university_course_materials(id) NOT VALID;
-
-
---
--- Name: CONSTRAINT course_material_id ON acorn_exam_interview_students; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT course_material_id ON public.acorn_exam_interview_students IS 'show-search: false';
-
-
---
--- Name: acorn_university_project_students course_material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_project_students
-    ADD CONSTRAINT course_material_id FOREIGN KEY (course_material_id) REFERENCES public.acorn_university_course_materials(id) NOT VALID;
-
-
---
--- Name: CONSTRAINT course_material_id ON acorn_university_project_students; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT course_material_id ON public.acorn_university_project_students IS 'show-search: false';
 
 
 --
@@ -31354,6 +31355,21 @@ ALTER TABLE ONLY public.acorn_exam_exam_materials
 
 
 --
+-- Name: acorn_exam_interview_students course_material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interview_students
+    ADD CONSTRAINT course_material_id FOREIGN KEY (course_material_id) REFERENCES public.acorn_university_course_materials(id) NOT VALID;
+
+
+--
+-- Name: CONSTRAINT course_material_id ON acorn_exam_interview_students; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT course_material_id ON public.acorn_exam_interview_students IS 'show-search: false';
+
+
+--
 -- Name: acorn_exam_result_internal2s course_material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -31368,42 +31384,6 @@ ALTER TABLE ONLY public.acorn_exam_result_internal2s
 COMMENT ON CONSTRAINT course_material_id ON public.acorn_exam_result_internal2s IS 'tab-location: 2
 field-exclude: true
 invisible: true';
-
-
---
--- Name: acorn_university_student_course_material_removal course_material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_course_material_removal
-    ADD CONSTRAINT course_material_id FOREIGN KEY (course_material_id) REFERENCES public.acorn_university_course_materials(id) ON DELETE CASCADE;
-
-
---
--- Name: CONSTRAINT course_material_id ON acorn_university_student_course_material_removal; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT course_material_id ON public.acorn_university_student_course_material_removal IS 'labels:
-  en: Removal
-labels-plural:
-  en: Removals';
-
-
---
--- Name: acorn_university_student_course_material_addition course_material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_course_material_addition
-    ADD CONSTRAINT course_material_id FOREIGN KEY (course_material_id) REFERENCES public.acorn_university_course_materials(id) ON DELETE CASCADE;
-
-
---
--- Name: CONSTRAINT course_material_id ON acorn_university_student_course_material_addition; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT course_material_id ON public.acorn_university_student_course_material_addition IS 'labels:
-  en: Addition
-labels-plural:
-  en: Additions';
 
 
 --
@@ -31431,6 +31411,57 @@ hints:
       ku: Bi xêr hatin bo rêveberiya semîneran! Hûn dikarin hemû bûyerên xwe di <a href="/backend/acorn/calendar/months">Salnameyê</a> de bibînin û birêve bibin.
       ar: أهلاً بك في إدارة الندوات! يمكنك الاطلاع على جميع فعالياتك وإدارتها عبر <a href="/backend/acorn/calendar/months">التقويم</a>
 ';
+
+
+--
+-- Name: acorn_university_project_students course_material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_project_students
+    ADD CONSTRAINT course_material_id FOREIGN KEY (course_material_id) REFERENCES public.acorn_university_course_materials(id) NOT VALID;
+
+
+--
+-- Name: CONSTRAINT course_material_id ON acorn_university_project_students; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT course_material_id ON public.acorn_university_project_students IS 'show-search: false';
+
+
+--
+-- Name: acorn_university_student_course_material_addition course_material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_course_material_addition
+    ADD CONSTRAINT course_material_id FOREIGN KEY (course_material_id) REFERENCES public.acorn_university_course_materials(id) ON DELETE CASCADE;
+
+
+--
+-- Name: CONSTRAINT course_material_id ON acorn_university_student_course_material_addition; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT course_material_id ON public.acorn_university_student_course_material_addition IS 'labels:
+  en: Addition
+labels-plural:
+  en: Additions';
+
+
+--
+-- Name: acorn_university_student_course_material_removal course_material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_course_material_removal
+    ADD CONSTRAINT course_material_id FOREIGN KEY (course_material_id) REFERENCES public.acorn_university_course_materials(id) ON DELETE CASCADE;
+
+
+--
+-- Name: CONSTRAINT course_material_id ON acorn_university_student_course_material_removal; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT course_material_id ON public.acorn_university_student_course_material_removal IS 'labels:
+  en: Removal
+labels-plural:
+  en: Removals';
 
 
 --
@@ -31465,14 +31496,6 @@ ALTER TABLE ONLY public.acorn_university_course_year_semesters
 
 
 --
--- Name: acorn_university_courses course_type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_courses
-    ADD CONSTRAINT course_type_id FOREIGN KEY (course_type_id) REFERENCES public.acorn_university_course_types(id) ON DELETE SET NULL NOT VALID;
-
-
---
 -- Name: acorn_exam_calculation_course_types course_type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -31485,6 +31508,14 @@ ALTER TABLE ONLY public.acorn_exam_calculation_course_types
 --
 
 COMMENT ON CONSTRAINT course_type_id ON public.acorn_exam_calculation_course_types IS 'name-object: true';
+
+
+--
+-- Name: acorn_university_courses course_type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_courses
+    ADD CONSTRAINT course_type_id FOREIGN KEY (course_type_id) REFERENCES public.acorn_university_course_types(id) ON DELETE SET NULL NOT VALID;
 
 
 --
@@ -31526,10 +31557,274 @@ tab: none
 
 
 --
+-- Name: acorn_enrollment_course_entry_requirements created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_course_entry_requirements
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_enrollment_courses created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_courses
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: acorn_enrollment_desires created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_desires
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_enrollment_enrollments created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_enrollments
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: acorn_enrollment_runs created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_runs
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: acorn_enrollment_student_notes created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_student_notes
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: acorn_enrollment_students created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_students
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: acorn_exam_answers created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_answers
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_exam_calculation_course_materials created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculation_course_materials
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_calculation_course_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculation_course_types
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_exam_calculation_courses created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculation_courses
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_calculation_material_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculation_material_types
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_calculation_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculation_types
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_calculations created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculations
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_centres created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_centres
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_exam_materials created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_exam_materials
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_exams created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_exams
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_instances created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_instances
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interview_students created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interview_students
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interviews created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interviews
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_questions created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_questions
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_exam_score_names created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_score_names
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_scores created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_scores
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_exam_sections created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_sections
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_exam_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_types
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_academic_year_semesters created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_academic_year_semesters
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
 -- Name: acorn_university_academic_years created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_university_academic_years
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_course_materials created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_materials
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_university_course_plans created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_plans
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_course_specializations created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_specializations
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_university_course_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_types
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_university_course_years created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_years
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_document_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_document_types
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_university_entities created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_entities
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -31539,6 +31834,38 @@ ALTER TABLE ONLY public.acorn_university_academic_years
 
 ALTER TABLE ONLY public.acorn_university_hierarchies
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_hierarchy_event created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_hierarchy_event
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_university_identity_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_identity_types
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_lectures created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_lectures
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_material_topics created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_material_topics
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
@@ -31558,106 +31885,10 @@ ALTER TABLE ONLY public.acorn_university_materials
 
 
 --
--- Name: acorn_exam_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_types
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_exams created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_exams
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_exam_materials created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_exam_materials
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_calculations created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_calculations
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_scores created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_scores
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_university_course_materials created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_course_materials
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
 -- Name: acorn_university_project_students created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_university_project_students
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_interviews created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_interviews
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_interview_students created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_interview_students
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_entities created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_entities
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_academic_year_semesters created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_academic_year_semesters
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_course_years created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_course_years
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_semesters created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_semesters
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -31670,67 +31901,19 @@ ALTER TABLE ONLY public.acorn_university_projects
 
 
 --
--- Name: acorn_exam_calculation_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_semester_groups created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_calculation_types
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_lectures created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_lectures
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_calculation_course_materials created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_calculation_course_materials
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_calculation_material_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_calculation_material_types
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_calculation_courses created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_calculation_courses
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_student_statuses created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_statuses
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_course_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_course_types
+ALTER TABLE ONLY public.acorn_university_semester_groups
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
--- Name: acorn_exam_calculation_course_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_semesters created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_calculation_course_types
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+ALTER TABLE ONLY public.acorn_university_semesters
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
@@ -31742,162 +31925,10 @@ ALTER TABLE ONLY public.acorn_university_student_codes
 
 
 --
--- Name: acorn_exam_score_names created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_student_course_material_addition created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_score_names
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_student_notes created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_notes
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_student_identities created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_identities
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_identity_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_identity_types
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_enrollment_course_entry_requirements created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_course_entry_requirements
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_enrollment_desires created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_desires
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_instances created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_instances
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_centres created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_centres
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_course_plans created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_course_plans
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_students created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_students
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_enrollment_enrollments created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_enrollments
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: acorn_enrollment_courses created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_courses
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: acorn_enrollment_students created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_students
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: acorn_enrollment_student_notes created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_student_notes
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
-
-
---
--- Name: acorn_enrollment_runs created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_runs
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
-
-
---
--- Name: acorn_university_student_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_types
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
-
-
---
--- Name: acorn_exam_questions created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_questions
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_exam_answers created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_answers
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_exam_sections created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_sections
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_university_course_specializations created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_course_specializations
+ALTER TABLE ONLY public.acorn_university_student_course_material_addition
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
@@ -31910,22 +31941,6 @@ ALTER TABLE ONLY public.acorn_university_student_course_material_removal
 
 
 --
--- Name: acorn_university_student_course_material_addition created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_course_material_addition
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_university_document_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_document_types
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
 -- Name: acorn_university_student_documents created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -31934,27 +31949,43 @@ ALTER TABLE ONLY public.acorn_university_student_documents
 
 
 --
--- Name: acorn_university_hierarchy_event created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_student_identities created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_hierarchy_event
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_university_material_topics created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_material_topics
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+ALTER TABLE ONLY public.acorn_university_student_identities
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: acorn_university_semester_groups created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_student_notes created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_semester_groups
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+ALTER TABLE ONLY public.acorn_university_student_notes
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_student_statuses created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_statuses
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_student_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_types
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: acorn_university_students created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_students
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
@@ -32035,24 +32066,6 @@ COMMENT ON CONSTRAINT enrollment_course_id ON public.acorn_enrollment_course_ent
 
 
 --
--- Name: acorn_enrollment_students enrollment_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_students
-    ADD CONSTRAINT enrollment_id FOREIGN KEY (enrollment_id) REFERENCES public.acorn_enrollment_enrollments(id);
-
-
---
--- Name: CONSTRAINT enrollment_id ON acorn_enrollment_students; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT enrollment_id ON public.acorn_enrollment_students IS 'labels:
-  en: Student & Desires
-labels-plural:
-  en: Students & Desires';
-
-
---
 -- Name: acorn_enrollment_courses enrollment_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -32076,6 +32089,24 @@ labels-plural:
 
 ALTER TABLE ONLY public.acorn_enrollment_runs
     ADD CONSTRAINT enrollment_id FOREIGN KEY (enrollment_id) REFERENCES public.acorn_enrollment_enrollments(id);
+
+
+--
+-- Name: acorn_enrollment_students enrollment_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_students
+    ADD CONSTRAINT enrollment_id FOREIGN KEY (enrollment_id) REFERENCES public.acorn_enrollment_enrollments(id);
+
+
+--
+-- Name: CONSTRAINT enrollment_id ON acorn_enrollment_students; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT enrollment_id ON public.acorn_enrollment_students IS 'labels:
+  en: Student & Desires
+labels-plural:
+  en: Students & Desires';
 
 
 --
@@ -32104,335 +32135,6 @@ labels:
 labels-plural:
   en: Notes
 tab-location: 2';
-
-
---
--- Name: acorn_university_education_authorities entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_education_authorities
-    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: CONSTRAINT entity_id ON acorn_university_education_authorities; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT entity_id ON public.acorn_university_education_authorities IS 'type: leaf
-global-scope: to
-has-many-deep-settings:
-    # entity_university_hierarchies__entity:
-    entity_university_student_notes__entity:
-        field-exclude: true
-        column-exclude: true
-    entity_university_student_codes__entity:
-        field-exclude: true
-        column-exclude: true
-    entity_user_users__global_scope_entity:
-        field-exclude: true
-        column-exclude: true
-    entity_exam_calculations__owner_entity:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_children:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_versions:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_users:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_users_count:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_locations:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_eventParts:
-        field-exclude: true
-        column-exclude: true';
-
-
---
--- Name: acorn_university_departments entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_departments
-    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: CONSTRAINT entity_id ON acorn_university_departments; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT entity_id ON public.acorn_university_departments IS 'type: leaf
-global-scope: to
-has-many-deep-settings:
-    # entity_university_hierarchies__entity:
-    entity_university_student_notes__entity:
-        field-exclude: true
-        column-exclude: true
-    entity_university_student_codes__entity:
-        field-exclude: true
-        column-exclude: true
-    entity_user_users__global_scope_entity:
-        field-exclude: true
-        column-exclude: true
-    entity_exam_calculations__owner_entity:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_children:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_versions:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_users:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_users_count:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_locations:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_eventParts:
-        field-exclude: true
-        column-exclude: true';
-
-
---
--- Name: acorn_university_faculties entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_faculties
-    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: CONSTRAINT entity_id ON acorn_university_faculties; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT entity_id ON public.acorn_university_faculties IS 'type: leaf
-global-scope: to
-has-many-deep-settings:
-    # entity_university_hierarchies__entity:
-    entity_university_student_notes__entity:
-        field-exclude: true
-        column-exclude: true
-    entity_university_student_codes__entity:
-        field-exclude: true
-        column-exclude: true
-    entity_user_users__global_scope_entity:
-        field-exclude: true
-        column-exclude: true
-    entity_exam_calculations__owner_entity:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_children:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_versions:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_users:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_users_count:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_locations:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_eventParts:
-        field-exclude: true
-        column-exclude: true';
-
-
---
--- Name: acorn_university_schools entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_schools
-    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: CONSTRAINT entity_id ON acorn_university_schools; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT entity_id ON public.acorn_university_schools IS 'type: leaf
-global-scope: to
-has-many-deep-settings:
-    # entity_university_hierarchies__entity:
-    entity_university_student_notes__entity:
-        field-exclude: true
-        column-exclude: true
-    entity_university_student_codes__entity:
-        field-exclude: true
-        column-exclude: true
-    entity_user_users__global_scope_entity:
-        field-exclude: true
-        column-exclude: true
-    entity_exam_calculations__owner_entity:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_children:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_versions:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_users:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_users_count:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_locations:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_eventParts:
-        field-exclude: true
-        column-exclude: true';
-
-
---
--- Name: acorn_university_universities entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_universities
-    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: CONSTRAINT entity_id ON acorn_university_universities; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT entity_id ON public.acorn_university_universities IS 'type: leaf
-global-scope: to
-has-many-deep-settings:
-    # entity_university_hierarchies__entity:
-    entity_university_student_notes__entity:
-        field-exclude: true
-        column-exclude: true
-    entity_university_student_codes__entity:
-        field-exclude: true
-        column-exclude: true
-    entity_user_users__global_scope_entity:
-        field-exclude: true
-        column-exclude: true
-    entity_exam_calculations__owner_entity:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_children:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_versions:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_users:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_users_count:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_locations:
-        field-exclude: true
-        column-exclude: true
-    entity_user_group_eventParts:
-        field-exclude: true
-        column-exclude: true';
-
-
---
--- Name: acorn_university_hierarchies entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_hierarchies
-    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: CONSTRAINT entity_id ON acorn_university_hierarchies; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT entity_id ON public.acorn_university_hierarchies IS 'has-many-deep-include: true
-global-scope: to
-tab-location: 1
-show-search: false
-name-object: true
-flags:
-  - hierarchy
-multi:
-  valueFrom: htmlName
-  html: true
-labels:
-  en: Relationship
-  ku: Teklî
-labels-plural:
-  en: Relationships
-  ku: Teklîyên
-has-many-deep-settings:
-  entity_university_hierarchies__entity:
-    field-exclude: true
-    column-exclude: true
-  entity_university_hierarchies__entity_user_group_version_users:
-    field-exclude: true
-    column-exclude: true
-  entity_university_hierarchies__entity_user_group_version_users_count:
-    field-exclude: true
-    column-exclude: true
-fields-settings:
-  entity_user_users__global_scope_entity:
-    labels: 
-      en: Global Scope Members
-      ku: Endamên Qada Gerdûnî
-      ar: أعضاء النطاق العالمي
-    advanced: true
-  entity_university_hierarchies__entity:
-    hidden: true
-    invisible: true
-  entity_university_hierarchies__entity_user_group_version_users:
-    hidden: true
-  entity_university_hierarchies__entity_user_group_version_users_count:
-    invisible: true
-  name:
-    invisible: true
-  code:
-    invisible: true';
-
-
---
--- Name: acorn_university_student_codes entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_codes
-    ADD CONSTRAINT entity_id FOREIGN KEY (owner_entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE;
-
-
---
--- Name: CONSTRAINT entity_id ON acorn_university_student_codes; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT entity_id ON public.acorn_university_student_codes IS 'field-exclude: true
-column-exclude: true';
 
 
 --
@@ -32591,6 +32293,335 @@ has-many-deep-settings:
 
 
 --
+-- Name: acorn_university_departments entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_departments
+    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT entity_id ON acorn_university_departments; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT entity_id ON public.acorn_university_departments IS 'type: leaf
+global-scope: to
+has-many-deep-settings:
+    # entity_university_hierarchies__entity:
+    entity_university_student_notes__entity:
+        field-exclude: true
+        column-exclude: true
+    entity_university_student_codes__entity:
+        field-exclude: true
+        column-exclude: true
+    entity_user_users__global_scope_entity:
+        field-exclude: true
+        column-exclude: true
+    entity_exam_calculations__owner_entity:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_children:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_versions:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_users:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_users_count:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_locations:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_eventParts:
+        field-exclude: true
+        column-exclude: true';
+
+
+--
+-- Name: acorn_university_education_authorities entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_education_authorities
+    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT entity_id ON acorn_university_education_authorities; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT entity_id ON public.acorn_university_education_authorities IS 'type: leaf
+global-scope: to
+has-many-deep-settings:
+    # entity_university_hierarchies__entity:
+    entity_university_student_notes__entity:
+        field-exclude: true
+        column-exclude: true
+    entity_university_student_codes__entity:
+        field-exclude: true
+        column-exclude: true
+    entity_user_users__global_scope_entity:
+        field-exclude: true
+        column-exclude: true
+    entity_exam_calculations__owner_entity:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_children:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_versions:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_users:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_users_count:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_locations:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_eventParts:
+        field-exclude: true
+        column-exclude: true';
+
+
+--
+-- Name: acorn_university_faculties entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_faculties
+    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT entity_id ON acorn_university_faculties; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT entity_id ON public.acorn_university_faculties IS 'type: leaf
+global-scope: to
+has-many-deep-settings:
+    # entity_university_hierarchies__entity:
+    entity_university_student_notes__entity:
+        field-exclude: true
+        column-exclude: true
+    entity_university_student_codes__entity:
+        field-exclude: true
+        column-exclude: true
+    entity_user_users__global_scope_entity:
+        field-exclude: true
+        column-exclude: true
+    entity_exam_calculations__owner_entity:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_children:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_versions:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_users:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_users_count:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_locations:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_eventParts:
+        field-exclude: true
+        column-exclude: true';
+
+
+--
+-- Name: acorn_university_hierarchies entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_hierarchies
+    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT entity_id ON acorn_university_hierarchies; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT entity_id ON public.acorn_university_hierarchies IS 'has-many-deep-include: true
+global-scope: to
+tab-location: 1
+show-search: false
+name-object: true
+flags:
+  - hierarchy
+multi:
+  valueFrom: htmlName
+  html: true
+labels:
+  en: Relationship
+  ku: Teklî
+labels-plural:
+  en: Relationships
+  ku: Teklîyên
+has-many-deep-settings:
+  entity_university_hierarchies__entity:
+    field-exclude: true
+    column-exclude: true
+  entity_university_hierarchies__entity_user_group_version_users:
+    field-exclude: true
+    column-exclude: true
+  entity_university_hierarchies__entity_user_group_version_users_count:
+    field-exclude: true
+    column-exclude: true
+fields-settings:
+  entity_user_users__global_scope_entity:
+    labels: 
+      en: Global Scope Members
+      ku: Endamên Qada Gerdûnî
+      ar: أعضاء النطاق العالمي
+    advanced: true
+  entity_university_hierarchies__entity:
+    hidden: true
+    invisible: true
+  entity_university_hierarchies__entity_user_group_version_users:
+    hidden: true
+  entity_university_hierarchies__entity_user_group_version_users_count:
+    invisible: true
+  name:
+    invisible: true
+  code:
+    invisible: true';
+
+
+--
+-- Name: acorn_university_schools entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_schools
+    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT entity_id ON acorn_university_schools; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT entity_id ON public.acorn_university_schools IS 'type: leaf
+global-scope: to
+has-many-deep-settings:
+    # entity_university_hierarchies__entity:
+    entity_university_student_notes__entity:
+        field-exclude: true
+        column-exclude: true
+    entity_university_student_codes__entity:
+        field-exclude: true
+        column-exclude: true
+    entity_user_users__global_scope_entity:
+        field-exclude: true
+        column-exclude: true
+    entity_exam_calculations__owner_entity:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_children:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_versions:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_users:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_users_count:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_locations:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_eventParts:
+        field-exclude: true
+        column-exclude: true';
+
+
+--
+-- Name: acorn_university_student_codes entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_codes
+    ADD CONSTRAINT entity_id FOREIGN KEY (owner_entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE;
+
+
+--
+-- Name: CONSTRAINT entity_id ON acorn_university_student_codes; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT entity_id ON public.acorn_university_student_codes IS 'field-exclude: true
+column-exclude: true';
+
+
+--
+-- Name: acorn_university_universities entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_universities
+    ADD CONSTRAINT entity_id FOREIGN KEY (entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT entity_id ON acorn_university_universities; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT entity_id ON public.acorn_university_universities IS 'type: leaf
+global-scope: to
+has-many-deep-settings:
+    # entity_university_hierarchies__entity:
+    entity_university_student_notes__entity:
+        field-exclude: true
+        column-exclude: true
+    entity_university_student_codes__entity:
+        field-exclude: true
+        column-exclude: true
+    entity_user_users__global_scope_entity:
+        field-exclude: true
+        column-exclude: true
+    entity_exam_calculations__owner_entity:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_children:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_versions:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_users:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_users_count:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_locations:
+        field-exclude: true
+        column-exclude: true
+    entity_user_group_eventParts:
+        field-exclude: true
+        column-exclude: true';
+
+
+--
 -- Name: acorn_user_users ethnicity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -32604,6 +32635,30 @@ ALTER TABLE ONLY public.acorn_user_users
 
 ALTER TABLE ONLY public.acorn_exam_interview_students
     ADD CONSTRAINT event_id FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_academic_year_semesters event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_academic_year_semesters
+    ADD CONSTRAINT event_id FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_events(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: acorn_university_academic_years event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_academic_years
+    ADD CONSTRAINT event_id FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_hierarchy_event event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_hierarchy_event
+    ADD CONSTRAINT event_id FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_events(id);
 
 
 --
@@ -32634,30 +32689,6 @@ fields-settings:
 
 
 --
--- Name: acorn_university_academic_years event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_academic_years
-    ADD CONSTRAINT event_id FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_university_hierarchy_event event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_hierarchy_event
-    ADD CONSTRAINT event_id FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_events(id);
-
-
---
--- Name: acorn_university_academic_year_semesters event_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_academic_year_semesters
-    ADD CONSTRAINT event_id FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_events(id) ON DELETE CASCADE NOT VALID;
-
-
---
 -- Name: acorn_exam_instances exam_centre_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -32671,6 +32702,14 @@ ALTER TABLE ONLY public.acorn_exam_instances
 
 ALTER TABLE ONLY public.acorn_exam_exam_materials
     ADD CONSTRAINT exam_id FOREIGN KEY (exam_id) REFERENCES public.acorn_exam_exams(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_instances exam_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_instances
+    ADD CONSTRAINT exam_id FOREIGN KEY (exam_id) REFERENCES public.acorn_exam_exams(id) ON DELETE CASCADE NOT VALID;
 
 
 --
@@ -32688,14 +32727,6 @@ ALTER TABLE ONLY public.acorn_exam_result_internal2s
 COMMENT ON CONSTRAINT exam_id ON public.acorn_exam_result_internal2s IS 'tab-location: 2
 field-exclude: true
 invisible: true';
-
-
---
--- Name: acorn_exam_instances exam_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_instances
-    ADD CONSTRAINT exam_id FOREIGN KEY (exam_id) REFERENCES public.acorn_exam_exams(id) ON DELETE CASCADE NOT VALID;
 
 
 --
@@ -32757,19 +32788,19 @@ ALTER TABLE ONLY public.acorn_location_gps
 
 
 --
--- Name: acorn_location_areas gps_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_location_areas
-    ADD CONSTRAINT gps_id FOREIGN KEY (gps_id) REFERENCES public.acorn_location_gps(id);
-
-
---
 -- Name: acorn_location_addresses gps_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_location_addresses
     ADD CONSTRAINT gps_id FOREIGN KEY (gps_id) REFERENCES public.acorn_location_gps(id) NOT VALID;
+
+
+--
+-- Name: acorn_location_areas gps_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_location_areas
+    ADD CONSTRAINT gps_id FOREIGN KEY (gps_id) REFERENCES public.acorn_location_gps(id);
 
 
 --
@@ -32796,18 +32827,18 @@ ALTER TABLE ONLY public.acorn_university_student_identities
 
 
 --
--- Name: acorn_exam_interview_students interview_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_interview_students
-    ADD CONSTRAINT interview_id FOREIGN KEY (interview_id) REFERENCES public.acorn_exam_interviews(id) NOT VALID;
-
-
---
 -- Name: acorn_exam_exam_materials interview_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_exam_exam_materials
+    ADD CONSTRAINT interview_id FOREIGN KEY (interview_id) REFERENCES public.acorn_exam_interviews(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interview_students interview_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interview_students
     ADD CONSTRAINT interview_id FOREIGN KEY (interview_id) REFERENCES public.acorn_exam_interviews(id) NOT VALID;
 
 
@@ -32837,11 +32868,11 @@ ALTER TABLE ONLY public.acorn_university_course_language
 
 
 --
--- Name: acorn_servers location_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_centres location_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_servers
-    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acorn_location_locations(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.acorn_exam_centres
+    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acorn_location_locations(id) ON DELETE CASCADE;
 
 
 --
@@ -32853,11 +32884,11 @@ ALTER TABLE ONLY public.acorn_location_user_group_location
 
 
 --
--- Name: acorn_exam_centres location_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_servers location_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_centres
-    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acorn_location_locations(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_servers
+    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acorn_location_locations(id) ON DELETE SET NULL;
 
 
 --
@@ -32877,21 +32908,6 @@ ALTER TABLE ONLY public.acorn_location_locations
 
 
 --
--- Name: acorn_university_course_materials material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_course_materials
-    ADD CONSTRAINT material_id FOREIGN KEY (material_id) REFERENCES public.acorn_university_materials(id);
-
-
---
--- Name: CONSTRAINT material_id ON acorn_university_course_materials; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT material_id ON public.acorn_university_course_materials IS 'name-object: true';
-
-
---
 -- Name: acorn_exam_result_internal2s material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -32906,6 +32922,21 @@ ALTER TABLE ONLY public.acorn_exam_result_internal2s
 COMMENT ON CONSTRAINT material_id ON public.acorn_exam_result_internal2s IS 'tab-location: 2
 field-exclude: true
 invisible: true';
+
+
+--
+-- Name: acorn_university_course_materials material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_materials
+    ADD CONSTRAINT material_id FOREIGN KEY (material_id) REFERENCES public.acorn_university_materials(id);
+
+
+--
+-- Name: CONSTRAINT material_id ON acorn_university_course_materials; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT material_id ON public.acorn_university_course_materials IS 'name-object: true';
 
 
 --
@@ -32932,18 +32963,18 @@ COMMENT ON CONSTRAINT material_type_id ON public.acorn_exam_calculation_material
 
 
 --
--- Name: acorn_university_student_notes owner_entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_enrollment_enrollments owner_entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_student_notes
-    ADD CONSTRAINT owner_entity_id FOREIGN KEY (owner_entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
+ALTER TABLE ONLY public.acorn_enrollment_enrollments
+    ADD CONSTRAINT owner_entity_id FOREIGN KEY (owner_entity_id) REFERENCES public.acorn_university_entities(id) NOT VALID;
 
 
 --
--- Name: CONSTRAINT owner_entity_id ON acorn_university_student_notes; Type: COMMENT; Schema: public; Owner: university
+-- Name: CONSTRAINT owner_entity_id ON acorn_enrollment_enrollments; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT owner_entity_id ON public.acorn_university_student_notes IS 'field-exclude: true
+COMMENT ON CONSTRAINT owner_entity_id ON public.acorn_enrollment_enrollments IS 'field-exclude: true
 column-exclude: true';
 
 
@@ -32964,18 +32995,18 @@ column-exclude: true';
 
 
 --
--- Name: acorn_enrollment_enrollments owner_entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_student_notes owner_entity_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_enrollment_enrollments
-    ADD CONSTRAINT owner_entity_id FOREIGN KEY (owner_entity_id) REFERENCES public.acorn_university_entities(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_student_notes
+    ADD CONSTRAINT owner_entity_id FOREIGN KEY (owner_entity_id) REFERENCES public.acorn_university_entities(id) ON DELETE CASCADE NOT VALID;
 
 
 --
--- Name: CONSTRAINT owner_entity_id ON acorn_enrollment_enrollments; Type: COMMENT; Schema: public; Owner: university
+-- Name: CONSTRAINT owner_entity_id ON acorn_university_student_notes; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT owner_entity_id ON public.acorn_enrollment_enrollments IS 'field-exclude: true
+COMMENT ON CONSTRAINT owner_entity_id ON public.acorn_university_student_notes IS 'field-exclude: true
 column-exclude: true';
 
 
@@ -33028,6 +33059,14 @@ ALTER TABLE ONLY public.acorn_location_areas
 
 
 --
+-- Name: acorn_exam_calculations parent_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculations
+    ADD CONSTRAINT parent_id FOREIGN KEY (parent_id) REFERENCES public.acorn_exam_calculations(id) NOT VALID;
+
+
+--
 -- Name: acorn_university_hierarchies parent_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -33063,27 +33102,11 @@ fields-settings:
 
 
 --
--- Name: acorn_exam_calculations parent_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_calculations
-    ADD CONSTRAINT parent_id FOREIGN KEY (parent_id) REFERENCES public.acorn_exam_calculations(id) NOT VALID;
-
-
---
 -- Name: acorn_location_types parent_type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_location_types
     ADD CONSTRAINT parent_type_id FOREIGN KEY (parent_type_id) REFERENCES public.acorn_location_types(id);
-
-
---
--- Name: acorn_university_project_students project_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_project_students
-    ADD CONSTRAINT project_id FOREIGN KEY (project_id) REFERENCES public.acorn_university_projects(id) NOT VALID;
 
 
 --
@@ -33109,6 +33132,14 @@ ALTER TABLE ONLY public.acorn_exam_result_internal2s
 COMMENT ON CONSTRAINT project_id ON public.acorn_exam_result_internal2s IS 'tab-location: 2
 field-exclude: true
 invisible: true';
+
+
+--
+-- Name: acorn_university_project_students project_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_project_students
+    ADD CONSTRAINT project_id FOREIGN KEY (project_id) REFERENCES public.acorn_university_projects(id) NOT VALID;
 
 
 --
@@ -33231,18 +33262,210 @@ COMMENT ON CONSTRAINT semester_id ON public.acorn_university_academic_year_semes
 
 
 --
--- Name: acorn_location_locations server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_enrollment_course_entry_requirements server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_location_locations
+ALTER TABLE ONLY public.acorn_enrollment_course_entry_requirements
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_enrollment_courses server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_courses
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: acorn_enrollment_desires server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_desires
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_enrollment_enrollments server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_enrollments
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: acorn_enrollment_runs server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_runs
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) ON DELETE CASCADE;
+
+
+--
+-- Name: acorn_enrollment_student_notes server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_student_notes
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) ON DELETE CASCADE;
+
+
+--
+-- Name: acorn_enrollment_students server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_students
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: acorn_exam_answers server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_answers
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
--- Name: acorn_location_gps server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_calculation_course_materials server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_location_gps
+ALTER TABLE ONLY public.acorn_exam_calculation_course_materials
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_calculation_course_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculation_course_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_exam_calculation_courses server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculation_courses
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_calculation_material_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculation_material_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_calculation_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculation_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_calculations server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculations
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_centres server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_centres
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_exam_materials server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_exam_materials
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_exams server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_exams
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_instances server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_instances
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interview_students server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interview_students
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interviews server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interviews
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_questions server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_questions
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_exam_score_names server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_score_names
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_scores server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_scores
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_exam_sections server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_sections
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_exam_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_location_address_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_location_address_types
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
@@ -33271,11 +33494,99 @@ ALTER TABLE ONLY public.acorn_location_areas
 
 
 --
+-- Name: acorn_location_gps server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_location_gps
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_location_locations server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_location_locations
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
 -- Name: acorn_location_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_location_types
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_university_academic_year_semesters server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_academic_year_semesters
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_academic_years server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_academic_years
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_course_materials server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_materials
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_university_course_plans server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_plans
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_course_specializations server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_specializations
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_university_course_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_university_course_years server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_years
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_document_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_document_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_university_entities server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_entities
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
@@ -33287,11 +33598,35 @@ ALTER TABLE ONLY public.acorn_university_hierarchies
 
 
 --
--- Name: acorn_university_academic_years server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_hierarchy_event server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_academic_years
+ALTER TABLE ONLY public.acorn_university_hierarchy_event
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_university_identity_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_identity_types
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_lectures server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_lectures
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_material_topics server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_material_topics
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
@@ -33311,106 +33646,10 @@ ALTER TABLE ONLY public.acorn_university_materials
 
 
 --
--- Name: acorn_exam_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_exam_exams server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_exams
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_exam_exam_materials server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_exam_materials
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_exam_calculations server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_calculations
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_exam_scores server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_scores
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_university_course_materials server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_course_materials
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
 -- Name: acorn_university_project_students server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_university_project_students
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_exam_interviews server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_interviews
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_exam_interview_students server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_interview_students
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_university_entities server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_entities
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_university_academic_year_semesters server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_academic_year_semesters
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_university_course_years server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_course_years
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_university_semesters server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_semesters
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
@@ -33423,50 +33662,18 @@ ALTER TABLE ONLY public.acorn_university_projects
 
 
 --
--- Name: acorn_exam_calculation_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_semester_groups server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_calculation_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_university_lectures server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_lectures
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_semester_groups
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
--- Name: acorn_exam_calculation_course_materials server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_semesters server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_calculation_course_materials
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_exam_calculation_material_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_calculation_material_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_exam_calculation_courses server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_calculation_courses
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_university_student_statuses server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_statuses
+ALTER TABLE ONLY public.acorn_university_semesters
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
@@ -33479,178 +33686,10 @@ ALTER TABLE ONLY public.acorn_university_student_codes
 
 
 --
--- Name: acorn_university_course_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_student_course_material_addition server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_course_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_exam_calculation_course_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_calculation_course_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_exam_score_names server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_score_names
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_university_student_notes server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_notes
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_university_student_identities server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_identities
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_university_identity_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_identity_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_enrollment_course_entry_requirements server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_course_entry_requirements
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_enrollment_desires server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_desires
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_exam_instances server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_instances
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_exam_centres server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_centres
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_university_course_plans server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_course_plans
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_location_address_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_location_address_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_enrollment_enrollments server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_enrollments
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: acorn_enrollment_courses server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_courses
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: acorn_enrollment_students server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_students
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: acorn_enrollment_student_notes server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_student_notes
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) ON DELETE CASCADE;
-
-
---
--- Name: acorn_enrollment_runs server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_runs
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) ON DELETE CASCADE;
-
-
---
--- Name: acorn_university_student_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_exam_questions server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_questions
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_exam_answers server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_answers
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_exam_sections server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_sections
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_university_course_specializations server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_course_specializations
+ALTER TABLE ONLY public.acorn_university_student_course_material_addition
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
@@ -33663,22 +33702,6 @@ ALTER TABLE ONLY public.acorn_university_student_course_material_removal
 
 
 --
--- Name: acorn_university_student_course_material_addition server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_course_material_addition
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_university_document_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_document_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
 -- Name: acorn_university_student_documents server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -33687,27 +33710,55 @@ ALTER TABLE ONLY public.acorn_university_student_documents
 
 
 --
--- Name: acorn_university_hierarchy_event server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_student_identities server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_hierarchy_event
+ALTER TABLE ONLY public.acorn_university_student_identities
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_student_notes server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_notes
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_student_statuses server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_statuses
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_student_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_types
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
--- Name: acorn_university_material_topics server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_enrollment_students student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_material_topics
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+ALTER TABLE ONLY public.acorn_enrollment_students
+    ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id);
 
 
 --
--- Name: acorn_university_semester_groups server_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: CONSTRAINT student_id ON acorn_enrollment_students; Type: COMMENT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_semester_groups
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+COMMENT ON CONSTRAINT student_id ON public.acorn_enrollment_students IS 'name-object: true
+labels:
+  en: Enrollment desires & notes
+labels-plural:
+  en: Enrollments desires & notes
+tab-location: 2';
 
 
 --
@@ -33735,32 +33786,20 @@ labels-plural:
 
 
 --
--- Name: acorn_university_student_status student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_exam_result_internal2s student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_student_status
-    ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.acorn_exam_result_internal2s
+    ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id) ON DELETE CASCADE NOT VALID;
 
 
 --
--- Name: CONSTRAINT student_id ON acorn_university_student_status; Type: COMMENT; Schema: public; Owner: university
+-- Name: CONSTRAINT student_id ON acorn_exam_result_internal2s; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_status IS 'labels:
-  en: Status
-  ku: Rewş
-  ar: الحالات الخاصة
-labels-plural:
-  en: Statuses
-  ku: Rewşên
-  ar: الحالات الخاصة
-tab: acorn.user::lang.models.user.statuses
-rl-buttons:
-  link: true
-  unlink: true
-order: 20
-tab-location: 3
-show-search: false';
+COMMENT ON CONSTRAINT student_id ON public.acorn_exam_result_internal2s IS 'tab-location: 2
+field-exclude: true
+invisible: true';
 
 
 --
@@ -33805,20 +33844,82 @@ show-search: false';
 
 
 --
--- Name: acorn_exam_result_internal2s student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_student_course_material_addition student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_result_internal2s
+ALTER TABLE ONLY public.acorn_university_student_course_material_addition
+    ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id) ON DELETE CASCADE;
+
+
+--
+-- Name: CONSTRAINT student_id ON acorn_university_student_course_material_addition; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_course_material_addition IS 'labels:
+  en: Extra Materials
+  ku: Materyalên Zêde
+  ar: مواد إضافية
+labels-plural:
+  en: Extra Materials
+  ku: Materyalên Zêde
+  ar: مواد إضافية
+';
+
+
+--
+-- Name: acorn_university_student_course_material_removal student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_course_material_removal
+    ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id) ON DELETE CASCADE;
+
+
+--
+-- Name: CONSTRAINT student_id ON acorn_university_student_course_material_removal; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_course_material_removal IS 'labels:
+  en: Excluded Materials
+  ku: Materyalên Derxistî
+  ar: المواد المستبعدة
+labels-plural:
+  en: Excluded Materials
+  ku: Materyalên Derxistî
+  ar: المواد المستبعدة
+';
+
+
+--
+-- Name: acorn_university_student_documents student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_documents
+    ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id) ON DELETE CASCADE;
+
+
+--
+-- Name: CONSTRAINT student_id ON acorn_university_student_documents; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_documents IS 'tab-location: 2';
+
+
+--
+-- Name: acorn_university_student_identities student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_identities
     ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id) ON DELETE CASCADE NOT VALID;
 
 
 --
--- Name: CONSTRAINT student_id ON acorn_exam_result_internal2s; Type: COMMENT; Schema: public; Owner: university
+-- Name: CONSTRAINT student_id ON acorn_university_student_identities; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT student_id ON public.acorn_exam_result_internal2s IS 'tab-location: 2
-field-exclude: true
-invisible: true';
+COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_identities IS 'tab: acorn.user::lang.models.user.identity
+span: right
+order: 10
+';
 
 
 --
@@ -33848,41 +33949,32 @@ show-search: false';
 
 
 --
--- Name: acorn_university_student_identities student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_student_status student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_student_identities
-    ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: CONSTRAINT student_id ON acorn_university_student_identities; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_identities IS 'tab: acorn.user::lang.models.user.identity
-span: right
-order: 10
-';
+ALTER TABLE ONLY public.acorn_university_student_status
+    ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id) ON DELETE CASCADE;
 
 
 --
--- Name: acorn_enrollment_students student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: CONSTRAINT student_id ON acorn_university_student_status; Type: COMMENT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_enrollment_students
-    ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id);
-
-
---
--- Name: CONSTRAINT student_id ON acorn_enrollment_students; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT student_id ON public.acorn_enrollment_students IS 'name-object: true
-labels:
-  en: Enrollment desires & notes
+COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_status IS 'labels:
+  en: Status
+  ku: Rewş
+  ar: الحالات الخاصة
 labels-plural:
-  en: Enrollments desires & notes
-tab-location: 2';
+  en: Statuses
+  ku: Rewşên
+  ar: الحالات الخاصة
+tab: acorn.user::lang.models.user.statuses
+rl-buttons:
+  link: true
+  unlink: true
+order: 20
+tab-location: 3
+show-search: false';
 
 
 --
@@ -33900,67 +33992,6 @@ ALTER TABLE ONLY public.acorn_university_student_type
 COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_type IS 'tab-location: 3
 show-search: false
 can-filter: true';
-
-
---
--- Name: acorn_university_student_course_material_removal student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_course_material_removal
-    ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id) ON DELETE CASCADE;
-
-
---
--- Name: CONSTRAINT student_id ON acorn_university_student_course_material_removal; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_course_material_removal IS 'labels:
-  en: Excluded Materials
-  ku: Materyalên Derxistî
-  ar: المواد المستبعدة
-labels-plural:
-  en: Excluded Materials
-  ku: Materyalên Derxistî
-  ar: المواد المستبعدة
-';
-
-
---
--- Name: acorn_university_student_course_material_addition student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_course_material_addition
-    ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id) ON DELETE CASCADE;
-
-
---
--- Name: CONSTRAINT student_id ON acorn_university_student_course_material_addition; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_course_material_addition IS 'labels:
-  en: Extra Materials
-  ku: Materyalên Zêde
-  ar: مواد إضافية
-labels-plural:
-  en: Extra Materials
-  ku: Materyalên Zêde
-  ar: مواد إضافية
-';
-
-
---
--- Name: acorn_university_student_documents student_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_documents
-    ADD CONSTRAINT student_id FOREIGN KEY (student_id) REFERENCES public.acorn_university_students(id) ON DELETE CASCADE;
-
-
---
--- Name: CONSTRAINT student_id ON acorn_university_student_documents; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_documents IS 'tab-location: 2';
 
 
 --
@@ -33988,19 +34019,19 @@ ALTER TABLE ONLY public.acorn_exam_interview_students
 
 
 --
--- Name: acorn_location_locations type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_location_locations
-    ADD CONSTRAINT type_id FOREIGN KEY (type_id) REFERENCES public.acorn_location_types(id) NOT VALID;
-
-
---
 -- Name: acorn_exam_exams type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_exam_exams
     ADD CONSTRAINT type_id FOREIGN KEY (type_id) REFERENCES public.acorn_exam_types(id) NOT VALID;
+
+
+--
+-- Name: acorn_location_locations type_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_location_locations
+    ADD CONSTRAINT type_id FOREIGN KEY (type_id) REFERENCES public.acorn_location_types(id) NOT VALID;
 
 
 --
@@ -34020,10 +34051,274 @@ ALTER TABLE ONLY public.acorn_location_types
 
 
 --
+-- Name: acorn_enrollment_course_entry_requirements updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_course_entry_requirements
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_enrollment_courses updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_courses
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: acorn_enrollment_desires updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_desires
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_enrollment_enrollments updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_enrollments
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: acorn_enrollment_runs updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_runs
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: acorn_enrollment_student_notes updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_student_notes
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: acorn_enrollment_students updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_enrollment_students
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: acorn_exam_answers updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_answers
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_exam_calculation_course_materials updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculation_course_materials
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_calculation_course_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculation_course_types
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_exam_calculation_courses updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculation_courses
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_calculation_material_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculation_material_types
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_calculation_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculation_types
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_calculations updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_calculations
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_centres updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_centres
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_exam_materials updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_exam_materials
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_exams updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_exams
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_instances updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_instances
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interview_students updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interview_students
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_interviews updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_interviews
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_questions updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_questions
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_exam_score_names updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_score_names
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_exam_scores updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_scores
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_exam_sections updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_sections
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_exam_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_exam_types
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_academic_year_semesters updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_academic_year_semesters
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
 -- Name: acorn_university_academic_years updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_university_academic_years
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_course_materials updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_materials
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_university_course_plans updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_plans
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_course_specializations updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_specializations
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_university_course_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_types
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_university_course_years updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_course_years
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_document_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_document_types
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_university_entities updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_entities
     ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -34033,6 +34328,38 @@ ALTER TABLE ONLY public.acorn_university_academic_years
 
 ALTER TABLE ONLY public.acorn_university_hierarchies
     ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_hierarchy_event updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_hierarchy_event
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_university_identity_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_identity_types
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_lectures updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_lectures
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_material_topics updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_material_topics
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
@@ -34052,106 +34379,10 @@ ALTER TABLE ONLY public.acorn_university_materials
 
 
 --
--- Name: acorn_exam_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_types
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_exams updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_exams
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_exam_materials updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_exam_materials
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_calculations updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_calculations
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_scores updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_scores
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_university_course_materials updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_course_materials
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
 -- Name: acorn_university_project_students updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_university_project_students
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_interviews updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_interviews
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_interview_students updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_interview_students
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_entities updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_entities
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_academic_year_semesters updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_academic_year_semesters
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_course_years updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_course_years
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_semesters updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_semesters
     ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -34164,50 +34395,18 @@ ALTER TABLE ONLY public.acorn_university_projects
 
 
 --
--- Name: acorn_exam_calculation_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_semester_groups updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_calculation_types
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_lectures updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_lectures
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_university_semester_groups
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
--- Name: acorn_exam_calculation_course_materials updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_semesters updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_exam_calculation_course_materials
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_calculation_material_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_calculation_material_types
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_calculation_courses updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_calculation_courses
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_student_statuses updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_statuses
+ALTER TABLE ONLY public.acorn_university_semesters
     ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -34220,178 +34419,10 @@ ALTER TABLE ONLY public.acorn_university_student_codes
 
 
 --
--- Name: acorn_university_course_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_student_course_material_addition updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_course_types
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_exam_calculation_course_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_calculation_course_types
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_exam_score_names updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_score_names
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_student_notes updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_notes
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_student_identities updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_identities
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_identity_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_identity_types
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_enrollment_course_entry_requirements updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_course_entry_requirements
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_enrollment_desires updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_desires
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_instances updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_instances
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_exam_centres updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_centres
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_course_plans updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_course_plans
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_university_students updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_students
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_enrollment_enrollments updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_enrollments
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: acorn_enrollment_courses updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_courses
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: acorn_enrollment_students updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_students
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: acorn_enrollment_student_notes updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_student_notes
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
-
-
---
--- Name: acorn_enrollment_runs updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_enrollment_runs
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE;
-
-
---
--- Name: acorn_university_student_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_types
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_exam_questions updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_questions
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_exam_answers updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_answers
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_exam_sections updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_exam_sections
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_university_course_specializations updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_course_specializations
+ALTER TABLE ONLY public.acorn_university_student_course_material_addition
     ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
@@ -34404,22 +34435,6 @@ ALTER TABLE ONLY public.acorn_university_student_course_material_removal
 
 
 --
--- Name: acorn_university_student_course_material_addition updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_student_course_material_addition
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_university_document_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_document_types
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
 -- Name: acorn_university_student_documents updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -34428,35 +34443,51 @@ ALTER TABLE ONLY public.acorn_university_student_documents
 
 
 --
--- Name: acorn_university_hierarchy_event updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_student_identities updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_hierarchy_event
+ALTER TABLE ONLY public.acorn_university_student_identities
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_student_notes updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_notes
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_student_statuses updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_statuses
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_university_student_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_student_types
     ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
--- Name: acorn_university_material_topics updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_students updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_material_topics
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_university_semester_groups updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_university_semester_groups
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+ALTER TABLE ONLY public.acorn_university_students
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: acorn_university_project_students user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_user_group_location user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_project_students
-    ADD CONSTRAINT user_group_id FOREIGN KEY (user_group_id) REFERENCES public.acorn_user_user_groups(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_location_user_group_location
+    ADD CONSTRAINT user_group_id FOREIGN KEY (user_group_id) REFERENCES public.acorn_user_user_groups(id) ON DELETE CASCADE NOT VALID;
 
 
 --
@@ -34492,6 +34523,14 @@ fields-settings:
 
 
 --
+-- Name: acorn_university_project_students user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_university_project_students
+    ADD CONSTRAINT user_group_id FOREIGN KEY (user_group_id) REFERENCES public.acorn_user_user_groups(id) NOT VALID;
+
+
+--
 -- Name: acorn_user_user_group user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -34505,14 +34544,6 @@ ALTER TABLE ONLY public.acorn_user_user_group
 
 ALTER TABLE ONLY public.acorn_user_user_group_versions
     ADD CONSTRAINT user_group_id FOREIGN KEY (user_group_id) REFERENCES public.acorn_user_user_groups(id) ON DELETE CASCADE;
-
-
---
--- Name: acorn_location_user_group_location user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_location_user_group_location
-    ADD CONSTRAINT user_group_id FOREIGN KEY (user_group_id) REFERENCES public.acorn_user_user_groups(id) ON DELETE CASCADE NOT VALID;
 
 
 --
@@ -34577,41 +34608,10 @@ ALTER TABLE ONLY public.acorn_user_user_group_version
 
 
 --
--- Name: acorn_university_teachers user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_location_user_addresses user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_university_teachers
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: CONSTRAINT user_id ON acorn_university_teachers; Type: COMMENT; Schema: public; Owner: university
---
-
-COMMENT ON CONSTRAINT user_id ON public.acorn_university_teachers IS 'type: leaf';
-
-
---
--- Name: acorn_user_role_user user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_user_role_user
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_user_user_group_version user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_user_user_group_version
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: acorn_user_user_group user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
---
-
-ALTER TABLE ONLY public.acorn_user_user_group
+ALTER TABLE ONLY public.acorn_location_user_addresses
     ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE NOT VALID;
 
 
@@ -34674,10 +34674,41 @@ has-many-deep-settings:
 
 
 --
--- Name: acorn_location_user_addresses user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+-- Name: acorn_university_teachers user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
-ALTER TABLE ONLY public.acorn_location_user_addresses
+ALTER TABLE ONLY public.acorn_university_teachers
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: CONSTRAINT user_id ON acorn_university_teachers; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT user_id ON public.acorn_university_teachers IS 'type: leaf';
+
+
+--
+-- Name: acorn_user_role_user user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_user_role_user
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_user_user_group user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_user_user_group
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: acorn_user_user_group_version user_id; Type: FK CONSTRAINT; Schema: public; Owner: university
+--
+
+ALTER TABLE ONLY public.acorn_user_user_group_version
     ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) ON DELETE CASCADE NOT VALID;
 
 
@@ -36202,6 +36233,13 @@ GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_ac
 SET SESSION AUTHORIZATION test_db;
 GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_copy_to(p_old_academic_year_id uuid, p_new_academic_year_id uuid, p_user_id uuid, p_copy_hierarchy boolean, p_copy_semesters boolean, p_copy_materials boolean, p_copy_seminars boolean, p_copy_calculations boolean, p_old_parent_id uuid, p_new_parent_id uuid) TO token_23;
 RESET SESSION AUTHORIZATION;
+
+
+--
+-- Name: FUNCTION fn_acorn_university_academic_years_current(); Type: ACL; Schema: public; Owner: university
+--
+
+GRANT ALL ON FUNCTION public.fn_acorn_university_academic_years_current() TO "Agri" WITH GRANT OPTION;
 
 
 --
@@ -41625,5 +41663,5 @@ RESET SESSION AUTHORIZATION;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict JSinTM0oS23E2c886OJjvFki1uhRNqRewylZfeIuDZBA1BGZFtKMutHQjQYHkw8
+\unrestrict ogEaBiwjQm7A5k23LYkt78Vj7GHSIvwPAHRVE2pPVZcJgPrGxqxPCXg8c3YC96i
 

@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict ZIJJkCMT14Vq4ybaM3QxfsmKKKCac2buPYSRhQtTtMWuAQLQHE8ohfgOgdU25Db
+\restrict uOcET5C8XGNzx8LVrcDhD2dCtW54PUeEfQvT7i986QCcL29klk9xSjQTqoYuDIo
 
--- Dumped from database version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
--- Dumped by pg_dump version 16.10 (Ubuntu 16.10-1.pgdg24.04+1)
+-- Dumped from database version 16.11 (Ubuntu 16.11-1.pgdg24.04+1)
+-- Dumped by pg_dump version 16.11 (Ubuntu 16.11-1.pgdg24.04+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -24,238 +24,238 @@ ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_warehouses DROP CONSTRAINT IF 
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicles DROP CONSTRAINT IF EXISTS vehicles_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicle_types DROP CONSTRAINT IF EXISTS vehicle_types_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicles DROP CONSTRAINT IF EXISTS vehicle_type_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS vehicle_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS vehicle_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS vehicle_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_notary_requests DROP CONSTRAINT IF EXISTS validated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_notary_requests DROP CONSTRAINT IF EXISTS validated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_employees DROP CONSTRAINT IF EXISTS user_role_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_version_user DROP CONSTRAINT IF EXISTS user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_people DROP CONSTRAINT IF EXISTS user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_language_user DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_people DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_prosecutor DROP CONSTRAINT IF EXISTS user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_version_user DROP CONSTRAINT IF EXISTS user_group_version_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_versions DROP CONSTRAINT IF EXISTS user_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS user_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_prosecutor DROP CONSTRAINT IF EXISTS user_group_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_periods DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_witness_statement DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_summon_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_notary_requests DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_containers DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrant_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_categories DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_currencies DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_reasons DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_methods DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_attributes DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_brands DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_warehouses DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicles DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicle_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_scanned_documents DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_suppliers DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instances DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_category_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_categories DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_measurement_units DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_attributes DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_offices DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_measurement_units DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_employees DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_sentence_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_sentences DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_containers DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_brands DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrant_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summon_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_scanned_documents DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_periods DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS updated_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_periods DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_witness_statement DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_summon_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_categories DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_currencies DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_witness_statement DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_sentence_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_reasons DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_methods DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF EXISTS updated_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_sentences DROP CONSTRAINT IF EXISTS updated_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_notary_requests DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_containers DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrant_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_categories DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_currencies DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_reasons DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_methods DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_brands DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_warehouses DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicles DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicle_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_suppliers DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_scanned_documents DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instances DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_category_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_categories DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_attributes DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_measurement_units DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_offices DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_measurement_units DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_employees DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_sentence_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_sentences DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_legalcase_category DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_prosecutor DROP CONSTRAINT IF EXISTS updated_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_containers DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_brands DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrant_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summon_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_scanned_documents DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_periods DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_legalcase_category DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_categories DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_currencies DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_witness_statement DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_sentence_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_prosecutor DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_reasons DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_methods DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF EXISTS updated_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_sentences DROP CONSTRAINT IF EXISTS updated_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_types DROP CONSTRAINT IF EXISTS types_created_by_user;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS type_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_user_groups DROP CONSTRAINT IF EXISTS type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_locations DROP CONSTRAINT IF EXISTS type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS type_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS trial_session_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_sessions DROP CONSTRAINT IF EXISTS trial_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS trial_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS transfers_created_by_user;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_detentions DROP CONSTRAINT IF EXISTS transfer_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_purchase DROP CONSTRAINT IF EXISTS transfer_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_invoice DROP CONSTRAINT IF EXISTS transfer_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_containers DROP CONSTRAINT IF EXISTS transfer_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instance_transfer DROP CONSTRAINT IF EXISTS transfer_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_detentions DROP CONSTRAINT IF EXISTS transfer_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_container_product_instance DROP CONSTRAINT IF EXISTS transfer_container_product_instances_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_container_product_instance DROP CONSTRAINT IF EXISTS transfer_container_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_containers DROP CONSTRAINT IF EXISTS transfer_container_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_suppliers DROP CONSTRAINT IF EXISTS suppliers_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS sub_product_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_witness_statement DROP CONSTRAINT IF EXISTS statement_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_periods DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_summon_types DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_notary_requests DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_product_category DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrant_types DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_categories DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_types DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_currencies DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_reasons DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_methods DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_scanned_documents DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_sentence_types DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_sentences DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_suppliers DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_warehouses DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instances DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_attributes DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_offices DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_employees DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_brands DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products_product_category DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_categories DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_category_types DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_container_product_instance DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_containers DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicles DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_containers DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicle_types DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_people DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instance_transfer DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_containers DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_container_product_instance DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_suppliers DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products_product_category DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_product_category DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instances DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instance_transfer DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_category_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_categories DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_attributes DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_people DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_offices DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_measurement_units DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcases DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_employees DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_containers DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_brands DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_locations DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_gps DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_areas DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_area_types DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_addresses DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_location_gps DROP CONSTRAINT IF EXISTS server_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_location_locations DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrant_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summon_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_scanned_documents DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_periods DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_categories DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_currencies DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_sentence_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcases DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_reasons DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_methods DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF EXISTS server_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_sentences DROP CONSTRAINT IF EXISTS server_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_sentences DROP CONSTRAINT IF EXISTS sentence_type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS sent_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_version_user DROP CONSTRAINT IF EXISTS role_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS revoked_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS revoked_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS revoked_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_detentions DROP CONSTRAINT IF EXISTS reason_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_purchase DROP CONSTRAINT IF EXISTS purchase_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS purchase_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_product_category DROP CONSTRAINT IF EXISTS products_product_categories_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products_product_category DROP CONSTRAINT IF EXISTS products_product_categories_created_by_user;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_product_category DROP CONSTRAINT IF EXISTS products_product_categories_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products DROP CONSTRAINT IF EXISTS products_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS product_products_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instances DROP CONSTRAINT IF EXISTS product_instances_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_container_product_instance DROP CONSTRAINT IF EXISTS product_instance_transfer_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instance_transfer DROP CONSTRAINT IF EXISTS product_instance_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_product_category DROP CONSTRAINT IF EXISTS product_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_attributes DROP CONSTRAINT IF EXISTS product_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS product_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instances DROP CONSTRAINT IF EXISTS product_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products_product_category DROP CONSTRAINT IF EXISTS product_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS product_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_product_category DROP CONSTRAINT IF EXISTS product_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instances DROP CONSTRAINT IF EXISTS product_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_attributes DROP CONSTRAINT IF EXISTS product_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_category_types DROP CONSTRAINT IF EXISTS product_category_types_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_categories DROP CONSTRAINT IF EXISTS product_category_type_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_product_category DROP CONSTRAINT IF EXISTS product_category_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products_product_category DROP CONSTRAINT IF EXISTS product_category_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_product_category DROP CONSTRAINT IF EXISTS product_category_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_categories DROP CONSTRAINT IF EXISTS product_categories_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_attributes DROP CONSTRAINT IF EXISTS product_attributes_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_employees DROP CONSTRAINT IF EXISTS person_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS person_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS period_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_people DROP CONSTRAINT IF EXISTS people_created_by_user;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS payer_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS payer_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS payer_user_group_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS payer_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS payer_user_group_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS payer_user_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS payee_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS payee_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS payee_user_group_id;
@@ -267,34 +267,34 @@ ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF 
 ALTER TABLE IF EXISTS ONLY public.acorn_location_areas DROP CONSTRAINT IF EXISTS parent_area_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS owner_user_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_offices DROP CONSTRAINT IF EXISTS offices_created_by_user;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS notary_request_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS notary_request_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS notary_request_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_detentions DROP CONSTRAINT IF EXISTS method_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_measurement_units DROP CONSTRAINT IF EXISTS measurement_units_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products DROP CONSTRAINT IF EXISTS measurement_unit_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_locations DROP CONSTRAINT IF EXISTS locations_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_user_groups DROP CONSTRAINT IF EXISTS location_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_servers DROP CONSTRAINT IF EXISTS location_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_warehouses DROP CONSTRAINT IF EXISTS location_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS location_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_suppliers DROP CONSTRAINT IF EXISTS location_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_offices DROP CONSTRAINT IF EXISTS location_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_servers DROP CONSTRAINT IF EXISTS location_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_witness_statement DROP CONSTRAINT IF EXISTS legalcase_witness_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcases DROP CONSTRAINT IF EXISTS legalcase_type_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS legalcase_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS legalcase_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_related_events DROP CONSTRAINT IF EXISTS legalcase_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS legalcase_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_justice_scanned_documents DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_legalcase_category DROP CONSTRAINT IF EXISTS legalcase_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trials DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcases DROP CONSTRAINT IF EXISTS legalcase_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS legalcase_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_related_events DROP CONSTRAINT IF EXISTS legalcase_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_prosecutor DROP CONSTRAINT IF EXISTS legalcase_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS legalcase_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS legalcase_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS legalcase_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_appeals DROP CONSTRAINT IF EXISTS legalcase_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcases DROP CONSTRAINT IF EXISTS legalcase_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_legalcase_category DROP CONSTRAINT IF EXISTS legalcase_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_evidence DROP CONSTRAINT IF EXISTS legalcase_evidence_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_detentions DROP CONSTRAINT IF EXISTS legalcase_defendant_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS legalcase_defendant_id;
@@ -307,15 +307,15 @@ ALTER TABLE IF EXISTS ONLY public.acorn_user_language_user DROP CONSTRAINT IF EX
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcases DROP CONSTRAINT IF EXISTS judge_committee_user_group_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_invoice DROP CONSTRAINT IF EXISTS invoice_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS invoice_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_location_addresses DROP CONSTRAINT IF EXISTS gps_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_areas DROP CONSTRAINT IF EXISTS gps_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_location_addresses DROP CONSTRAINT IF EXISTS gps_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_location_gps DROP CONSTRAINT IF EXISTS gps_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_user_group_versions DROP CONSTRAINT IF EXISTS from_user_group_version_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_user_user_groups DROP CONSTRAINT IF EXISTS from_user_group_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_sessions DROP CONSTRAINT IF EXISTS event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_appeals DROP CONSTRAINT IF EXISTS event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trials DROP CONSTRAINT IF EXISTS event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_sessions DROP CONSTRAINT IF EXISTS event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_related_events DROP CONSTRAINT IF EXISTS event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_appeals DROP CONSTRAINT IF EXISTS event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_employees DROP CONSTRAINT IF EXISTS employees_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS drivers_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS driver_id;
@@ -329,109 +329,109 @@ ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXIS
 ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS currency_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS crime_type_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS crime_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_periods DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_witness_statement DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_notary_requests DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrant_types DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_justice_summon_types DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_notary_requests DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrant_types DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_scanned_documents DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_periods DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_legalcase_category DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_categories DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_types DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_currencies DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_reasons DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_methods DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_related_events DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_scanned_documents DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_currencies DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_witness_statement DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trials DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_sessions DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_prosecutor DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_appeals DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_sentence_types DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_sentence_types DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_types DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_related_events DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_prosecutor DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_reasons DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_methods DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_sentences DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_legalcase_category DROP CONSTRAINT IF EXISTS created_by_user_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS created_by_user_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_appeals DROP CONSTRAINT IF EXISTS created_by_user_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instance_transfer DROP CONSTRAINT IF EXISTS created_by_user;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_periods DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_witness_statement DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_summon_types DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_notary_requests DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_product_category DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrant_types DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_categories DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_types DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_currencies DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_reasons DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_methods DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_suppliers DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_warehouses DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicles DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_vehicle_types DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_containers DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_container_product_instance DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_suppliers DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products_product_category DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_products DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_product_category DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instances DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_instance_transfer DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_category_types DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_categories DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_product_attributes DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_containers DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_people DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_offices DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_measurement_units DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_employees DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_drivers DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_containers DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_brands DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_containers DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_container_product_instance DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrants DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_warrant_types DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summons DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_summon_types DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_statements DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_justice_scanned_documents DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_periods DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_legalcase_category DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_categories DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_receipts DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_purchases DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_payments DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_finance_currencies DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_witness_statement DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trials DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_sessions DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_prosecutor DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_appeals DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_criminal_sentence_types DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_trial_judges DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_session_recordings DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_sentence_types DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_witnesses DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_types DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_prosecutor DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_plaintiffs DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_evidence DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_legalcase_defendants DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_reasons DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_periods DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_detention_methods DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_defendant_crimes DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crimes DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_types DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_criminal_crime_sentences DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcase_legalcase_category DROP CONSTRAINT IF EXISTS created_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_criminal_appeals DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_finance_invoices DROP CONSTRAINT IF EXISTS created_at;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_containers DROP CONSTRAINT IF EXISTS containers_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfer_containers DROP CONSTRAINT IF EXISTS container_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_justice_legalcases DROP CONSTRAINT IF EXISTS closed_at_event_id;
-ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_statuses DROP CONSTRAINT IF EXISTS calendar_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_types DROP CONSTRAINT IF EXISTS calendar_id;
+ALTER TABLE IF EXISTS ONLY public.acorn_calendar_event_statuses DROP CONSTRAINT IF EXISTS calendar_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_brands DROP CONSTRAINT IF EXISTS brands_created_by_user;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_products DROP CONSTRAINT IF EXISTS brand_id;
 ALTER TABLE IF EXISTS ONLY public.acorn_lojistiks_transfers DROP CONSTRAINT IF EXISTS arrived_at_event_id;
@@ -472,8 +472,8 @@ ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_computer_products DROP CONSTR
 ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_electronic_products DROP CONSTRAINT IF EXISTS product_id;
 ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_electronic_products DROP CONSTRAINT IF EXISTS electronic_products_created_by_user;
 ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_computer_products DROP CONSTRAINT IF EXISTS electronic_product_id;
-ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_computer_products DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_electronic_products DROP CONSTRAINT IF EXISTS created_at_event_id;
+ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_computer_products DROP CONSTRAINT IF EXISTS created_at_event_id;
 ALTER TABLE IF EXISTS ONLY product.acorn_lojistiks_computer_products DROP CONSTRAINT IF EXISTS computer_products_created_by_user;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_notary_requests;
 DROP TRIGGER IF EXISTS tr_acorn_server_id ON public.acorn_justice_warrants;
@@ -11345,18 +11345,18 @@ ALTER TABLE ONLY product.acorn_lojistiks_computer_products
 
 
 --
--- Name: acorn_lojistiks_electronic_products created_at_event_id; Type: FK CONSTRAINT; Schema: product; Owner: justice
---
-
-ALTER TABLE ONLY product.acorn_lojistiks_electronic_products
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
 -- Name: acorn_lojistiks_computer_products created_at_event_id; Type: FK CONSTRAINT; Schema: product; Owner: justice
 --
 
 ALTER TABLE ONLY product.acorn_lojistiks_computer_products
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_electronic_products created_at_event_id; Type: FK CONSTRAINT; Schema: product; Owner: justice
+--
+
+ALTER TABLE ONLY product.acorn_lojistiks_electronic_products
     ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
@@ -11704,18 +11704,18 @@ ALTER TABLE ONLY public.acorn_lojistiks_brands
 
 
 --
--- Name: acorn_calendar_event_types calendar_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_calendar_event_types
-    ADD CONSTRAINT calendar_id FOREIGN KEY (calendar_id) REFERENCES public.acorn_calendar_calendars(id) NOT VALID;
-
-
---
 -- Name: acorn_calendar_event_statuses calendar_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_calendar_event_statuses
+    ADD CONSTRAINT calendar_id FOREIGN KEY (calendar_id) REFERENCES public.acorn_calendar_calendars(id) NOT VALID;
+
+
+--
+-- Name: acorn_calendar_event_types calendar_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_calendar_event_types
     ADD CONSTRAINT calendar_id FOREIGN KEY (calendar_id) REFERENCES public.acorn_calendar_calendars(id) NOT VALID;
 
 
@@ -11752,25 +11752,10 @@ ALTER TABLE ONLY public.acorn_finance_invoices
 
 
 --
--- Name: acorn_justice_legalcases created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_appeals created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_justice_legalcases
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
-
-
---
--- Name: CONSTRAINT created_at_event_id ON acorn_justice_legalcases; Type: COMMENT; Schema: public; Owner: justice
---
-
-COMMENT ON CONSTRAINT created_at_event_id ON public.acorn_justice_legalcases IS 'delete: true';
-
-
---
--- Name: acorn_justice_legalcase_legalcase_category created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_legalcase_legalcase_category
+ALTER TABLE ONLY public.acorn_criminal_appeals
     ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
 
 
@@ -11783,34 +11768,10 @@ ALTER TABLE ONLY public.acorn_criminal_crime_sentences
 
 
 --
--- Name: acorn_criminal_trial_judges created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_criminal_trial_judges
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
-
-
---
--- Name: acorn_criminal_sentence_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_sentence_types
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
-
-
---
--- Name: acorn_criminal_legalcase_plaintiffs created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
-
-
---
--- Name: acorn_criminal_legalcase_evidence created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_evidence
+ALTER TABLE ONLY public.acorn_criminal_crime_types
     ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
 
 
@@ -11823,14 +11784,6 @@ ALTER TABLE ONLY public.acorn_criminal_crimes
 
 
 --
--- Name: acorn_criminal_crime_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_crime_types
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
-
-
---
 -- Name: acorn_criminal_defendant_crimes created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -11839,11 +11792,27 @@ ALTER TABLE ONLY public.acorn_criminal_defendant_crimes
 
 
 --
--- Name: acorn_criminal_appeals created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_detention_methods created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_criminal_appeals
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
+ALTER TABLE ONLY public.acorn_criminal_detention_methods
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_detention_periods created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_periods
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_detention_reasons created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_reasons
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
@@ -11851,6 +11820,22 @@ ALTER TABLE ONLY public.acorn_criminal_appeals
 --
 
 ALTER TABLE ONLY public.acorn_criminal_legalcase_defendants
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_criminal_legalcase_evidence created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_evidence
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_criminal_legalcase_plaintiffs created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
     ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
 
 
@@ -11863,10 +11848,42 @@ ALTER TABLE ONLY public.acorn_criminal_legalcase_prosecutor
 
 
 --
+-- Name: acorn_criminal_legalcase_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_types
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
 -- Name: acorn_criminal_legalcase_witnesses created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_criminal_legalcase_witnesses
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_criminal_sentence_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_sentence_types
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_criminal_session_recordings created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_session_recordings
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_criminal_trial_judges created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_trial_judges
     ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
 
 
@@ -11887,11 +11904,90 @@ ALTER TABLE ONLY public.acorn_criminal_trials
 
 
 --
--- Name: acorn_criminal_session_recordings created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_witness_statement created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_criminal_session_recordings
+ALTER TABLE ONLY public.acorn_criminal_witness_statement
     ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_finance_currencies created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_currencies
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_invoices created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_invoices
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_payments created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_payments
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_purchases created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_purchases
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_receipts created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_receipts
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_legalcase_categories created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_legalcase_categories
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_legalcase_legalcase_category created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_legalcase_legalcase_category
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_justice_legalcases created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_legalcases
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: CONSTRAINT created_at_event_id ON acorn_justice_legalcases; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON CONSTRAINT created_at_event_id ON public.acorn_justice_legalcases IS 'delete: true';
+
+
+--
+-- Name: acorn_justice_periods created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_periods
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
@@ -11903,18 +11999,42 @@ ALTER TABLE ONLY public.acorn_justice_scanned_documents
 
 
 --
--- Name: acorn_lojistiks_transfer_container_product_instance created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_statements created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_lojistiks_transfer_container_product_instance
+ALTER TABLE ONLY public.acorn_justice_statements
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_justice_summon_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summon_types
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_justice_summons created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summons
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_justice_warrant_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_warrant_types
     ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acorn_lojistiks_transfer_containers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_warrants created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_lojistiks_transfer_containers
+ALTER TABLE ONLY public.acorn_justice_warrants
     ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
@@ -11927,18 +12047,26 @@ ALTER TABLE ONLY public.acorn_lojistiks_brands
 
 
 --
--- Name: acorn_lojistiks_employees created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_lojistiks_containers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_lojistiks_employees
+ALTER TABLE ONLY public.acorn_lojistiks_containers
     ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acorn_lojistiks_transfers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_lojistiks_drivers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_lojistiks_transfers
+ALTER TABLE ONLY public.acorn_lojistiks_drivers
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_employees created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_employees
     ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
@@ -11963,14 +12091,6 @@ ALTER TABLE ONLY public.acorn_lojistiks_offices
 --
 
 ALTER TABLE ONLY public.acorn_lojistiks_people
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_lojistiks_containers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_containers
     ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
@@ -12015,10 +12135,26 @@ ALTER TABLE ONLY public.acorn_lojistiks_product_instances
 
 
 --
--- Name: acorn_lojistiks_drivers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_lojistiks_product_product_category created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_lojistiks_drivers
+ALTER TABLE ONLY public.acorn_lojistiks_product_product_category
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_product_products created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_product_products
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_products created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_products
     ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
@@ -12027,6 +12163,38 @@ ALTER TABLE ONLY public.acorn_lojistiks_drivers
 --
 
 ALTER TABLE ONLY public.acorn_lojistiks_products_product_category
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_suppliers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_suppliers
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_transfer_container_product_instance created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_container_product_instance
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_transfer_containers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_containers
+    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_transfers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_transfers
     ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
@@ -12055,178 +12223,10 @@ ALTER TABLE ONLY public.acorn_lojistiks_warehouses
 
 
 --
--- Name: acorn_lojistiks_products created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_products
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_lojistiks_suppliers created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_suppliers
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_lojistiks_product_products created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_product_products
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_justice_warrants created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_warrants
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_finance_purchases created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_purchases
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_finance_invoices created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_invoices
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_finance_payments created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_payments
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_detention_methods created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_detention_methods
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_detention_reasons created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_detention_reasons
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_finance_currencies created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_currencies
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_legalcase_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_types
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_justice_legalcase_categories created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_legalcase_categories
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_justice_warrant_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_warrant_types
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_finance_receipts created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_receipts
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_lojistiks_product_product_category created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_product_product_category
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
 -- Name: acorn_notary_requests created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_notary_requests
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_justice_summon_types created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_summon_types
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
-
-
---
--- Name: acorn_justice_summons created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_summons
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
-
-
---
--- Name: acorn_justice_statements created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_statements
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
-
-
---
--- Name: acorn_criminal_witness_statement created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_witness_statement
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id);
-
-
---
--- Name: acorn_criminal_detention_periods created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_detention_periods
-    ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_justice_periods created_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_periods
     ADD CONSTRAINT created_at_event_id FOREIGN KEY (created_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
@@ -12239,19 +12239,11 @@ ALTER TABLE ONLY public.acorn_lojistiks_product_instance_transfer
 
 
 --
--- Name: acorn_justice_legalcases created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_appeals created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_justice_legalcases
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_justice_legalcase_legalcase_category created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_legalcase_legalcase_category
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_criminal_appeals
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
@@ -12259,46 +12251,6 @@ ALTER TABLE ONLY public.acorn_justice_legalcase_legalcase_category
 --
 
 ALTER TABLE ONLY public.acorn_criminal_crime_sentences
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_criminal_trial_judges created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_trial_judges
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_criminal_sentence_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_sentence_types
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_criminal_legalcase_plaintiffs created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_criminal_legalcase_evidence created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_evidence
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_criminal_crimes created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_crimes
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
@@ -12311,6 +12263,14 @@ ALTER TABLE ONLY public.acorn_criminal_crime_types
 
 
 --
+-- Name: acorn_criminal_crimes created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_crimes
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
 -- Name: acorn_criminal_defendant_crimes created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -12319,11 +12279,27 @@ ALTER TABLE ONLY public.acorn_criminal_defendant_crimes
 
 
 --
--- Name: acorn_criminal_appeals created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_detention_methods created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_criminal_appeals
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+ALTER TABLE ONLY public.acorn_criminal_detention_methods
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_detention_periods created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_periods
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_detention_reasons created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_reasons
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
@@ -12331,6 +12307,22 @@ ALTER TABLE ONLY public.acorn_criminal_appeals
 --
 
 ALTER TABLE ONLY public.acorn_criminal_legalcase_defendants
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_criminal_legalcase_evidence created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_evidence
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_criminal_legalcase_plaintiffs created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
@@ -12343,10 +12335,50 @@ ALTER TABLE ONLY public.acorn_criminal_legalcase_prosecutor
 
 
 --
+-- Name: acorn_criminal_legalcase_related_events created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_related_events
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_types
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
 -- Name: acorn_criminal_legalcase_witnesses created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_criminal_legalcase_witnesses
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_criminal_sentence_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_sentence_types
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_criminal_session_recordings created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_session_recordings
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_criminal_trial_judges created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_trial_judges
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
@@ -12367,42 +12399,18 @@ ALTER TABLE ONLY public.acorn_criminal_trials
 
 
 --
--- Name: acorn_criminal_session_recordings created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_witness_statement created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_criminal_session_recordings
+ALTER TABLE ONLY public.acorn_criminal_witness_statement
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
--- Name: acorn_justice_scanned_documents created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_finance_currencies created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_justice_scanned_documents
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_justice_warrants created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_warrants
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_legalcase_related_events created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_related_events
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_finance_purchases created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_purchases
+ALTER TABLE ONLY public.acorn_finance_currencies
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -12423,50 +12431,10 @@ ALTER TABLE ONLY public.acorn_finance_payments
 
 
 --
--- Name: acorn_criminal_detention_methods created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_finance_purchases created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_criminal_detention_methods
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_detention_reasons created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_detention_reasons
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_finance_currencies created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_currencies
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_legalcase_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_types
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_justice_legalcase_categories created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_legalcase_categories
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_justice_warrant_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_warrant_types
+ALTER TABLE ONLY public.acorn_finance_purchases
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -12479,11 +12447,51 @@ ALTER TABLE ONLY public.acorn_finance_receipts
 
 
 --
--- Name: acorn_notary_requests created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_legalcase_categories created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_notary_requests
+ALTER TABLE ONLY public.acorn_justice_legalcase_categories
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_legalcase_legalcase_category created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_legalcase_legalcase_category
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_legalcases created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_legalcases
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_periods created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_periods
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_scanned_documents created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_scanned_documents
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_justice_statements created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_statements
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
@@ -12503,34 +12511,26 @@ ALTER TABLE ONLY public.acorn_justice_summons
 
 
 --
--- Name: acorn_justice_statements created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_warrant_types created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_justice_statements
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_criminal_witness_statement created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_witness_statement
-    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_criminal_detention_periods created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_detention_periods
+ALTER TABLE ONLY public.acorn_justice_warrant_types
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: acorn_justice_periods created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_warrants created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_justice_periods
+ALTER TABLE ONLY public.acorn_justice_warrants
+    ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_notary_requests created_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_notary_requests
     ADD CONSTRAINT created_by_user_id FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -12664,6 +12664,22 @@ ALTER TABLE ONLY public.acorn_lojistiks_employees
 
 
 --
+-- Name: acorn_criminal_appeals event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_appeals
+    ADD CONSTRAINT event_id FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_events(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT event_id ON acorn_criminal_appeals; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON CONSTRAINT event_id ON public.acorn_criminal_appeals IS 'type: 1to1
+delete: true';
+
+
+--
 -- Name: acorn_criminal_legalcase_related_events event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -12681,38 +12697,6 @@ delete: true
 
 
 --
--- Name: acorn_criminal_trials event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_trials
-    ADD CONSTRAINT event_id FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_events(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: CONSTRAINT event_id ON acorn_criminal_trials; Type: COMMENT; Schema: public; Owner: justice
---
-
-COMMENT ON CONSTRAINT event_id ON public.acorn_criminal_trials IS 'type: 1to1
-delete: true';
-
-
---
--- Name: acorn_criminal_appeals event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_appeals
-    ADD CONSTRAINT event_id FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_events(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: CONSTRAINT event_id ON acorn_criminal_appeals; Type: COMMENT; Schema: public; Owner: justice
---
-
-COMMENT ON CONSTRAINT event_id ON public.acorn_criminal_appeals IS 'type: 1to1
-delete: true';
-
-
---
 -- Name: acorn_criminal_trial_sessions event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -12726,6 +12710,22 @@ ALTER TABLE ONLY public.acorn_criminal_trial_sessions
 
 COMMENT ON CONSTRAINT event_id ON public.acorn_criminal_trial_sessions IS 'type: 1to1
 name-object: true';
+
+
+--
+-- Name: acorn_criminal_trials event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_trials
+    ADD CONSTRAINT event_id FOREIGN KEY (event_id) REFERENCES public.acorn_calendar_events(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT event_id ON acorn_criminal_trials; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON CONSTRAINT event_id ON public.acorn_criminal_trials IS 'type: 1to1
+delete: true';
 
 
 --
@@ -12753,19 +12753,19 @@ ALTER TABLE ONLY public.acorn_location_gps
 
 
 --
--- Name: acorn_location_areas gps_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_location_areas
-    ADD CONSTRAINT gps_id FOREIGN KEY (gps_id) REFERENCES public.acorn_location_gps(id);
-
-
---
 -- Name: acorn_location_addresses gps_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_location_addresses
     ADD CONSTRAINT gps_id FOREIGN KEY (gps_id) REFERENCES public.acorn_location_gps(id) NOT VALID;
+
+
+--
+-- Name: acorn_location_areas gps_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_location_areas
+    ADD CONSTRAINT gps_id FOREIGN KEY (gps_id) REFERENCES public.acorn_location_gps(id);
 
 
 --
@@ -12898,41 +12898,6 @@ labels-plural:
 
 
 --
--- Name: acorn_justice_legalcase_legalcase_category legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_legalcase_legalcase_category
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_justice_legalcases(id) NOT VALID;
-
-
---
--- Name: CONSTRAINT legalcase_id ON acorn_justice_legalcase_legalcase_category; Type: COMMENT; Schema: public; Owner: justice
---
-
-COMMENT ON CONSTRAINT legalcase_id ON public.acorn_justice_legalcase_legalcase_category IS 'tab-location: 3
-bootstraps:
-  xs: 12
-type: XtoX
-';
-
-
---
--- Name: acorn_criminal_legalcases legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcases
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_justice_legalcases(id) NOT VALID;
-
-
---
--- Name: CONSTRAINT legalcase_id ON acorn_criminal_legalcases; Type: COMMENT; Schema: public; Owner: justice
---
-
-COMMENT ON CONSTRAINT legalcase_id ON public.acorn_criminal_legalcases IS 'type: 1to1
-nameObject: true';
-
-
---
 -- Name: acorn_criminal_appeals legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -12965,14 +12930,6 @@ ALTER TABLE ONLY public.acorn_criminal_legalcase_evidence
 
 
 --
--- Name: acorn_criminal_legalcase_prosecutor legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_prosecutor
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_criminal_legalcases(id) NOT VALID;
-
-
---
 -- Name: acorn_criminal_legalcase_plaintiffs legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -12981,11 +12938,51 @@ ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
 
 
 --
+-- Name: acorn_criminal_legalcase_prosecutor legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_prosecutor
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_criminal_legalcases(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_related_events legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_related_events
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_criminal_legalcases(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT legalcase_id ON acorn_criminal_legalcase_related_events; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_criminal_legalcase_related_events IS 'tab-location: 2
+';
+
+
+--
 -- Name: acorn_criminal_legalcase_witnesses legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_criminal_legalcase_witnesses
     ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_criminal_legalcases(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcases legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcases
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_justice_legalcases(id) NOT VALID;
+
+
+--
+-- Name: CONSTRAINT legalcase_id ON acorn_criminal_legalcases; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_criminal_legalcases IS 'type: 1to1
+nameObject: true';
 
 
 --
@@ -13002,6 +12999,25 @@ ALTER TABLE ONLY public.acorn_criminal_trials
 
 COMMENT ON CONSTRAINT legalcase_id ON public.acorn_criminal_trials IS 'tab-location: 2
 order: 10';
+
+
+--
+-- Name: acorn_justice_legalcase_legalcase_category legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_legalcase_legalcase_category
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_justice_legalcases(id) NOT VALID;
+
+
+--
+-- Name: CONSTRAINT legalcase_id ON acorn_justice_legalcase_legalcase_category; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_justice_legalcase_legalcase_category IS 'tab-location: 3
+bootstraps:
+  xs: 12
+type: XtoX
+';
 
 
 --
@@ -13023,35 +13039,19 @@ bootstraps:
 
 
 --
--- Name: acorn_justice_warrants legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_statements legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_justice_warrants
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_justice_legalcases(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_justice_statements
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_justice_legalcases(id);
 
 
 --
--- Name: CONSTRAINT legalcase_id ON acorn_justice_warrants; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_id ON acorn_justice_statements; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_id ON public.acorn_justice_warrants IS 'tab-location: 2
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_justice_statements IS 'tab-location: 2
 type: Xto1';
-
-
---
--- Name: acorn_criminal_legalcase_related_events legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_related_events
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_criminal_legalcases(id) ON DELETE CASCADE NOT VALID;
-
-
---
--- Name: CONSTRAINT legalcase_id ON acorn_criminal_legalcase_related_events; Type: COMMENT; Schema: public; Owner: justice
---
-
-COMMENT ON CONSTRAINT legalcase_id ON public.acorn_criminal_legalcase_related_events IS 'tab-location: 2
-';
 
 
 --
@@ -13071,18 +13071,18 @@ type: Xto1';
 
 
 --
--- Name: acorn_justice_statements legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_warrants legalcase_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_justice_statements
-    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_justice_legalcases(id);
+ALTER TABLE ONLY public.acorn_justice_warrants
+    ADD CONSTRAINT legalcase_id FOREIGN KEY (legalcase_id) REFERENCES public.acorn_justice_legalcases(id) NOT VALID;
 
 
 --
--- Name: CONSTRAINT legalcase_id ON acorn_justice_statements; Type: COMMENT; Schema: public; Owner: justice
+-- Name: CONSTRAINT legalcase_id ON acorn_justice_warrants; Type: COMMENT; Schema: public; Owner: justice
 --
 
-COMMENT ON CONSTRAINT legalcase_id ON public.acorn_justice_statements IS 'tab-location: 2
+COMMENT ON CONSTRAINT legalcase_id ON public.acorn_justice_warrants IS 'tab-location: 2
 type: Xto1';
 
 
@@ -13100,14 +13100,6 @@ ALTER TABLE ONLY public.acorn_criminal_legalcases
 
 ALTER TABLE ONLY public.acorn_criminal_witness_statement
     ADD CONSTRAINT legalcase_witness_id FOREIGN KEY (legalcase_witness_id) REFERENCES public.acorn_criminal_legalcase_witnesses(id) NOT VALID;
-
-
---
--- Name: acorn_servers location_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_servers
-    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acorn_location_locations(id) ON DELETE SET NULL;
 
 
 --
@@ -13164,6 +13156,14 @@ COMMENT ON CONSTRAINT location_id ON public.acorn_lojistiks_warehouses IS 'name-
 
 
 --
+-- Name: acorn_servers location_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_servers
+    ADD CONSTRAINT location_id FOREIGN KEY (location_id) REFERENCES public.acorn_location_locations(id) ON DELETE SET NULL;
+
+
+--
 -- Name: acorn_user_user_groups location_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -13204,28 +13204,6 @@ ALTER TABLE ONLY public.acorn_criminal_defendant_detentions
 
 
 --
--- Name: acorn_justice_warrants notary_request_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_warrants
-    ADD CONSTRAINT notary_request_id FOREIGN KEY (notary_request_id) REFERENCES public.acorn_notary_requests(id) NOT VALID;
-
-
---
--- Name: CONSTRAINT notary_request_id ON acorn_justice_warrants; Type: COMMENT; Schema: public; Owner: justice
---
-
-COMMENT ON CONSTRAINT notary_request_id ON public.acorn_justice_warrants IS 'read-only: true
-cssClasses: 
-  - hide-empty 
-  - single-tab
-labels:
-  en: Document
-labels-plural:
-  en: Documents';
-
-
---
 -- Name: acorn_justice_summons notary_request_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -13238,6 +13216,28 @@ ALTER TABLE ONLY public.acorn_justice_summons
 --
 
 COMMENT ON CONSTRAINT notary_request_id ON public.acorn_justice_summons IS 'read-only: true
+cssClasses: 
+  - hide-empty 
+  - single-tab
+labels:
+  en: Document
+labels-plural:
+  en: Documents';
+
+
+--
+-- Name: acorn_justice_warrants notary_request_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_warrants
+    ADD CONSTRAINT notary_request_id FOREIGN KEY (notary_request_id) REFERENCES public.acorn_notary_requests(id) NOT VALID;
+
+
+--
+-- Name: CONSTRAINT notary_request_id ON acorn_justice_warrants; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON CONSTRAINT notary_request_id ON public.acorn_justice_warrants IS 'read-only: true
 cssClasses: 
   - hide-empty 
   - single-tab
@@ -13344,14 +13344,6 @@ ALTER TABLE ONLY public.acorn_finance_purchases
 
 
 --
--- Name: acorn_finance_purchases payer_user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_purchases
-    ADD CONSTRAINT payer_user_group_id FOREIGN KEY (payer_user_group_id) REFERENCES public.acorn_user_user_groups(id) NOT VALID;
-
-
---
 -- Name: acorn_finance_invoices payer_user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -13360,11 +13352,11 @@ ALTER TABLE ONLY public.acorn_finance_invoices
 
 
 --
--- Name: acorn_finance_purchases payer_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_finance_purchases payer_user_group_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_finance_purchases
-    ADD CONSTRAINT payer_user_id FOREIGN KEY (payer_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+    ADD CONSTRAINT payer_user_group_id FOREIGN KEY (payer_user_group_id) REFERENCES public.acorn_user_user_groups(id) NOT VALID;
 
 
 --
@@ -13372,6 +13364,14 @@ ALTER TABLE ONLY public.acorn_finance_purchases
 --
 
 ALTER TABLE ONLY public.acorn_finance_invoices
+    ADD CONSTRAINT payer_user_id FOREIGN KEY (payer_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_purchases payer_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_purchases
     ADD CONSTRAINT payer_user_id FOREIGN KEY (payer_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -13438,18 +13438,18 @@ ALTER TABLE ONLY public.acorn_lojistiks_product_categories
 
 
 --
--- Name: acorn_lojistiks_products_product_category product_category_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_products_product_category
-    ADD CONSTRAINT product_category_id FOREIGN KEY (product_category_id) REFERENCES public.acorn_lojistiks_product_categories(id);
-
-
---
 -- Name: acorn_lojistiks_product_product_category product_category_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_lojistiks_product_product_category
+    ADD CONSTRAINT product_category_id FOREIGN KEY (product_category_id) REFERENCES public.acorn_lojistiks_product_categories(id);
+
+
+--
+-- Name: acorn_lojistiks_products_product_category product_category_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_products_product_category
     ADD CONSTRAINT product_category_id FOREIGN KEY (product_category_id) REFERENCES public.acorn_lojistiks_product_categories(id);
 
 
@@ -13470,10 +13470,10 @@ ALTER TABLE ONLY public.acorn_lojistiks_product_category_types
 
 
 --
--- Name: acorn_lojistiks_products_product_category product_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_lojistiks_product_attributes product_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_lojistiks_products_product_category
+ALTER TABLE ONLY public.acorn_lojistiks_product_attributes
     ADD CONSTRAINT product_id FOREIGN KEY (product_id) REFERENCES public.acorn_lojistiks_products(id);
 
 
@@ -13486,6 +13486,14 @@ ALTER TABLE ONLY public.acorn_lojistiks_product_instances
 
 
 --
+-- Name: acorn_lojistiks_product_product_category product_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_product_product_category
+    ADD CONSTRAINT product_id FOREIGN KEY (product_id) REFERENCES public.acorn_lojistiks_products(id);
+
+
+--
 -- Name: acorn_lojistiks_product_products product_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -13494,18 +13502,10 @@ ALTER TABLE ONLY public.acorn_lojistiks_product_products
 
 
 --
--- Name: acorn_lojistiks_product_attributes product_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_lojistiks_products_product_category product_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_lojistiks_product_attributes
-    ADD CONSTRAINT product_id FOREIGN KEY (product_id) REFERENCES public.acorn_lojistiks_products(id);
-
-
---
--- Name: acorn_lojistiks_product_product_category product_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_product_product_category
+ALTER TABLE ONLY public.acorn_lojistiks_products_product_category
     ADD CONSTRAINT product_id FOREIGN KEY (product_id) REFERENCES public.acorn_lojistiks_products(id);
 
 
@@ -13550,18 +13550,18 @@ ALTER TABLE ONLY public.acorn_lojistiks_products
 
 
 --
--- Name: acorn_lojistiks_products_product_category products_product_categories_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_products_product_category
-    ADD CONSTRAINT products_product_categories_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
 -- Name: acorn_lojistiks_product_product_category products_product_categories_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_lojistiks_product_product_category
+    ADD CONSTRAINT products_product_categories_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_products_product_category products_product_categories_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_products_product_category
     ADD CONSTRAINT products_product_categories_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -13590,19 +13590,19 @@ ALTER TABLE ONLY public.acorn_criminal_defendant_detentions
 
 
 --
--- Name: acorn_justice_warrants revoked_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_warrants
-    ADD CONSTRAINT revoked_at_event_id FOREIGN KEY (revoked_at_event_id) REFERENCES public.acorn_calendar_events(id) ON DELETE SET NULL NOT VALID;
-
-
---
 -- Name: acorn_justice_summons revoked_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_justice_summons
     ADD CONSTRAINT revoked_at_event_id FOREIGN KEY (revoked_at_event_id) REFERENCES public.acorn_calendar_events(id) ON DELETE SET NULL;
+
+
+--
+-- Name: acorn_justice_warrants revoked_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_warrants
+    ADD CONSTRAINT revoked_at_event_id FOREIGN KEY (revoked_at_event_id) REFERENCES public.acorn_calendar_events(id) ON DELETE SET NULL NOT VALID;
 
 
 --
@@ -13630,19 +13630,243 @@ ALTER TABLE ONLY public.acorn_criminal_crime_sentences
 
 
 --
--- Name: acorn_location_locations server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_sentences server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_location_locations
+ALTER TABLE ONLY public.acorn_criminal_crime_sentences
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_crime_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_crime_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_crimes server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_crimes
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_defendant_crimes server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_defendant_crimes
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_detention_methods server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_methods
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_detention_periods server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_periods
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_detention_reasons server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_reasons
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_defendants server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_defendants
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_evidence server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_evidence
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_plaintiffs server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_witnesses server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_witnesses
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcases server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcases
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_sentence_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_sentence_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_session_recordings server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_session_recordings
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_trial_judges server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_trial_judges
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_currencies server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_currencies
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_invoices server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_invoices
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_payments server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_payments
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_purchases server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_purchases
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_receipts server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_receipts
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_legalcase_categories server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_legalcase_categories
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_legalcases server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_legalcases
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_periods server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_periods
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_scanned_documents server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_scanned_documents
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_statements server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_statements
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
--- Name: acorn_location_gps server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_summon_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_location_gps
+ALTER TABLE ONLY public.acorn_justice_summon_types
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_justice_summons server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summons
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_justice_warrant_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_warrant_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_warrants server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_warrants
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
 --
@@ -13670,130 +13894,26 @@ ALTER TABLE ONLY public.acorn_location_areas
 
 
 --
+-- Name: acorn_location_gps server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_location_gps
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_location_locations server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_location_locations
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
 -- Name: acorn_location_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_location_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_criminal_legalcases server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcases
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_lojistiks_measurement_units server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_measurement_units
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_lojistiks_products server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_products
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_lojistiks_product_instance_transfer server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_product_instance_transfer
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_lojistiks_people server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_people
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_lojistiks_vehicle_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_vehicle_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_lojistiks_containers server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_containers
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_lojistiks_vehicles server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_vehicles
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_lojistiks_drivers server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_drivers
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_lojistiks_transfer_containers server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_transfer_containers
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_lojistiks_transfer_container_product_instance server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_transfer_container_product_instance
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_lojistiks_product_category_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_product_category_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_lojistiks_product_categories server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_product_categories
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_lojistiks_products_product_category server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_products_product_category
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_lojistiks_transfers server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_transfers
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
@@ -13806,11 +13926,35 @@ ALTER TABLE ONLY public.acorn_lojistiks_brands
 
 
 --
+-- Name: acorn_lojistiks_containers server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_containers
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_lojistiks_drivers server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_drivers
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
 -- Name: acorn_lojistiks_employees server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_lojistiks_employees
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_measurement_units server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_measurement_units
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
 
 
 --
@@ -13822,6 +13966,14 @@ ALTER TABLE ONLY public.acorn_lojistiks_offices
 
 
 --
+-- Name: acorn_lojistiks_people server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_people
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
 -- Name: acorn_lojistiks_product_attributes server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -13830,226 +13982,34 @@ ALTER TABLE ONLY public.acorn_lojistiks_product_attributes
 
 
 --
+-- Name: acorn_lojistiks_product_categories server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_product_categories
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_lojistiks_product_category_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_product_category_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_lojistiks_product_instance_transfer server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_product_instance_transfer
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
 -- Name: acorn_lojistiks_product_instances server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_lojistiks_product_instances
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_lojistiks_warehouses server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_warehouses
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_lojistiks_suppliers server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_suppliers
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_lojistiks_product_products server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_product_products
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_justice_legalcases server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_legalcases
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_legalcase_plaintiffs server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_legalcase_evidence server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_evidence
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_legalcase_witnesses server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_witnesses
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_legalcase_defendants server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_defendants
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_trial_judges server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_trial_judges
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_session_recordings server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_session_recordings
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_crimes server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_crimes
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_crime_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_crime_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_crime_sentences server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_crime_sentences
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_sentence_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_sentence_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_finance_purchases server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_purchases
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_finance_invoices server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_invoices
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_justice_scanned_documents server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_scanned_documents
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_justice_warrants server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_warrants
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_finance_payments server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_payments
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_detention_methods server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_detention_methods
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_detention_reasons server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_detention_reasons
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_defendant_crimes server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_defendant_crimes
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_finance_currencies server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_currencies
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_legalcase_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_justice_legalcase_categories server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_legalcase_categories
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_justice_warrant_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_warrant_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_finance_receipts server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_receipts
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
@@ -14062,50 +14022,90 @@ ALTER TABLE ONLY public.acorn_lojistiks_product_product_category
 
 
 --
+-- Name: acorn_lojistiks_product_products server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_product_products
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_products server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_products
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_lojistiks_products_product_category server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_products_product_category
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_lojistiks_suppliers server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_suppliers
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_transfer_container_product_instance server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_container_product_instance
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_lojistiks_transfer_containers server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_transfer_containers
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_lojistiks_transfers server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_transfers
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_lojistiks_vehicle_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_vehicle_types
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_lojistiks_vehicles server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_vehicles
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
+
+
+--
+-- Name: acorn_lojistiks_warehouses server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_warehouses
+    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
+
+
+--
 -- Name: acorn_notary_requests server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_notary_requests
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_justice_summon_types server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_summon_types
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_justice_summons server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_summons
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_justice_statements server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_statements
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id);
-
-
---
--- Name: acorn_criminal_detention_periods server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_detention_periods
-    ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
-
-
---
--- Name: acorn_justice_periods server_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_periods
     ADD CONSTRAINT server_id FOREIGN KEY (server_id) REFERENCES public.acorn_servers(id) NOT VALID;
 
 
@@ -14165,6 +14165,21 @@ ALTER TABLE ONLY public.acorn_lojistiks_transfer_container_product_instance
 
 
 --
+-- Name: acorn_criminal_defendant_detentions transfer_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_defendant_detentions
+    ADD CONSTRAINT transfer_id FOREIGN KEY (transfer_id) REFERENCES public.acorn_lojistiks_transfers(id) NOT VALID;
+
+
+--
+-- Name: CONSTRAINT transfer_id ON acorn_criminal_defendant_detentions; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON CONSTRAINT transfer_id ON public.acorn_criminal_defendant_detentions IS 'type: 1to1';
+
+
+--
 -- Name: acorn_lojistiks_product_instance_transfer transfer_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -14194,21 +14209,6 @@ ALTER TABLE ONLY public.acorn_lojistiks_transfer_invoice
 
 ALTER TABLE ONLY public.acorn_lojistiks_transfer_purchase
     ADD CONSTRAINT transfer_id FOREIGN KEY (transfer_id) REFERENCES public.acorn_lojistiks_transfers(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_defendant_detentions transfer_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_defendant_detentions
-    ADD CONSTRAINT transfer_id FOREIGN KEY (transfer_id) REFERENCES public.acorn_lojistiks_transfers(id) NOT VALID;
-
-
---
--- Name: CONSTRAINT transfer_id ON acorn_criminal_defendant_detentions; Type: COMMENT; Schema: public; Owner: justice
---
-
-COMMENT ON CONSTRAINT transfer_id ON public.acorn_criminal_defendant_detentions IS 'type: 1to1';
 
 
 --
@@ -14244,6 +14244,22 @@ ALTER TABLE ONLY public.acorn_criminal_session_recordings
 
 
 --
+-- Name: acorn_justice_summons type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summons
+    ADD CONSTRAINT type_id FOREIGN KEY (summon_type_id) REFERENCES public.acorn_justice_summon_types(id);
+
+
+--
+-- Name: acorn_justice_warrants type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_warrants
+    ADD CONSTRAINT type_id FOREIGN KEY (warrant_type_id) REFERENCES public.acorn_justice_warrant_types(id) NOT VALID;
+
+
+--
 -- Name: acorn_location_locations type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -14260,27 +14276,203 @@ ALTER TABLE ONLY public.acorn_user_user_groups
 
 
 --
--- Name: acorn_justice_warrants type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_warrants
-    ADD CONSTRAINT type_id FOREIGN KEY (warrant_type_id) REFERENCES public.acorn_justice_warrant_types(id) NOT VALID;
-
-
---
--- Name: acorn_justice_summons type_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_summons
-    ADD CONSTRAINT type_id FOREIGN KEY (summon_type_id) REFERENCES public.acorn_justice_summon_types(id);
-
-
---
 -- Name: acorn_location_types types_created_by_user; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_location_types
     ADD CONSTRAINT types_created_by_user FOREIGN KEY (created_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_criminal_crime_sentences updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_crime_sentences
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_crime_types updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_crime_types
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_crimes updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_crimes
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_defendant_crimes updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_defendant_crimes
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_detention_methods updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_methods
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_detention_periods updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_periods
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_detention_reasons updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_reasons
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_defendants updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_defendants
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_evidence updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_evidence
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_plaintiffs updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_prosecutor updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_prosecutor
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_types updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_types
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_witnesses updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_witnesses
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_sentence_types updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_sentence_types
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_session_recordings updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_session_recordings
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_trial_judges updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_trial_judges
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_witness_statement updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_witness_statement
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_finance_currencies updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_currencies
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_invoices updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_invoices
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_payments updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_payments
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_purchases updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_purchases
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_receipts updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_receipts
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_legalcase_categories updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_legalcase_categories
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_legalcase_legalcase_category updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_legalcase_legalcase_category
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
@@ -14299,98 +14491,74 @@ COMMENT ON CONSTRAINT updated_at_event_id ON public.acorn_justice_legalcases IS 
 
 
 --
--- Name: acorn_criminal_crime_types updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_periods updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_criminal_crime_types
+ALTER TABLE ONLY public.acorn_justice_periods
     ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acorn_criminal_legalcase_prosecutor updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_scanned_documents updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_criminal_legalcase_prosecutor
+ALTER TABLE ONLY public.acorn_justice_scanned_documents
     ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acorn_justice_legalcase_legalcase_category updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_statements updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_justice_legalcase_legalcase_category
+ALTER TABLE ONLY public.acorn_justice_statements
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_justice_summon_types updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summon_types
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_justice_summons updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summons
+    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id);
+
+
+--
+-- Name: acorn_justice_warrant_types updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_warrant_types
     ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acorn_criminal_legalcase_plaintiffs updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_warrants updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
+ALTER TABLE ONLY public.acorn_justice_warrants
     ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acorn_criminal_legalcase_evidence updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_lojistiks_brands updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_criminal_legalcase_evidence
+ALTER TABLE ONLY public.acorn_lojistiks_brands
     ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
 --
--- Name: acorn_criminal_legalcase_witnesses updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_lojistiks_containers updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_criminal_legalcase_witnesses
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_legalcase_defendants updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_defendants
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_trial_judges updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_trial_judges
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_session_recordings updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_session_recordings
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_crimes updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_crimes
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_crime_sentences updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_crime_sentences
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_sentence_types updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_sentence_types
+ALTER TABLE ONLY public.acorn_lojistiks_containers
     ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
@@ -14411,14 +14579,6 @@ ALTER TABLE ONLY public.acorn_lojistiks_employees
 
 
 --
--- Name: acorn_lojistiks_offices updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_offices
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
 -- Name: acorn_lojistiks_measurement_units updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -14427,10 +14587,10 @@ ALTER TABLE ONLY public.acorn_lojistiks_measurement_units
 
 
 --
--- Name: acorn_finance_purchases updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_lojistiks_offices updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_finance_purchases
+ALTER TABLE ONLY public.acorn_lojistiks_offices
     ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
@@ -14459,14 +14619,6 @@ ALTER TABLE ONLY public.acorn_lojistiks_product_category_types
 
 
 --
--- Name: acorn_finance_invoices updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_invoices
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
 -- Name: acorn_lojistiks_product_instances updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -14491,26 +14643,10 @@ ALTER TABLE ONLY public.acorn_lojistiks_products
 
 
 --
--- Name: acorn_justice_scanned_documents updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_scanned_documents
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
 -- Name: acorn_lojistiks_suppliers updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_lojistiks_suppliers
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_justice_warrants updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_warrants
     ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
 
 
@@ -14547,94 +14683,6 @@ ALTER TABLE ONLY public.acorn_lojistiks_warehouses
 
 
 --
--- Name: acorn_lojistiks_brands updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_brands
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_finance_payments updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_payments
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_defendant_crimes updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_defendant_crimes
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_detention_methods updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_detention_methods
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_detention_reasons updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_detention_reasons
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_finance_currencies updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_currencies
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_legalcase_types updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_types
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_justice_legalcase_categories updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_legalcase_categories
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_justice_warrant_types updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_warrant_types
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_finance_receipts updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_receipts
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_lojistiks_containers updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_containers
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
 -- Name: acorn_notary_requests updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -14643,114 +14691,10 @@ ALTER TABLE ONLY public.acorn_notary_requests
 
 
 --
--- Name: acorn_justice_summon_types updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crime_sentences updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_justice_summon_types
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id);
-
-
---
--- Name: acorn_justice_summons updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_summons
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id);
-
-
---
--- Name: acorn_justice_statements updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_statements
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id);
-
-
---
--- Name: acorn_criminal_witness_statement updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_witness_statement
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id);
-
-
---
--- Name: acorn_criminal_detention_periods updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_detention_periods
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_justice_periods updated_at_event_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_periods
-    ADD CONSTRAINT updated_at_event_id FOREIGN KEY (updated_at_event_id) REFERENCES public.acorn_calendar_events(id) NOT VALID;
-
-
---
--- Name: acorn_justice_legalcases updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_legalcases
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_legalcase_plaintiffs updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_legalcase_evidence updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_evidence
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_legalcase_witnesses updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_witnesses
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_legalcase_defendants updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_defendants
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_trial_judges updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_trial_judges
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_session_recordings updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_session_recordings
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_crimes updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_crimes
+ALTER TABLE ONLY public.acorn_criminal_crime_sentences
     ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -14763,10 +14707,82 @@ ALTER TABLE ONLY public.acorn_criminal_crime_types
 
 
 --
--- Name: acorn_criminal_crime_sentences updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_crimes updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_criminal_crime_sentences
+ALTER TABLE ONLY public.acorn_criminal_crimes
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_defendant_crimes updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_defendant_crimes
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_detention_methods updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_methods
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_detention_periods updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_periods
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_detention_reasons updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_detention_reasons
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_defendants updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_defendants
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_evidence updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_evidence
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_plaintiffs updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_types
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_legalcase_witnesses updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_witnesses
     ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -14779,18 +14795,170 @@ ALTER TABLE ONLY public.acorn_criminal_sentence_types
 
 
 --
--- Name: acorn_lojistiks_employees updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_session_recordings updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_lojistiks_employees
+ALTER TABLE ONLY public.acorn_criminal_session_recordings
     ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
--- Name: acorn_lojistiks_offices updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_criminal_trial_judges updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_lojistiks_offices
+ALTER TABLE ONLY public.acorn_criminal_trial_judges
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_criminal_witness_statement updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_witness_statement
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_finance_currencies updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_currencies
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_invoices updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_invoices
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_payments updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_payments
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_purchases updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_purchases
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_finance_receipts updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_finance_receipts
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_legalcase_categories updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_legalcase_categories
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_legalcases updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_legalcases
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_periods updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_periods
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_scanned_documents updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_scanned_documents
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_statements updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_statements
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_justice_summon_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summon_types
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_justice_summons updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summons
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_justice_warrant_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_warrant_types
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_justice_warrants updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_warrants
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_brands updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_brands
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_containers updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_containers
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_drivers updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_drivers
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_employees updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_employees
     ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -14803,10 +14971,18 @@ ALTER TABLE ONLY public.acorn_lojistiks_measurement_units
 
 
 --
--- Name: acorn_finance_purchases updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_lojistiks_offices updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_finance_purchases
+ALTER TABLE ONLY public.acorn_lojistiks_offices
+    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_product_attributes updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_product_attributes
     ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -14823,14 +14999,6 @@ ALTER TABLE ONLY public.acorn_lojistiks_product_categories
 --
 
 ALTER TABLE ONLY public.acorn_lojistiks_product_category_types
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_finance_invoices updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_invoices
     ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -14867,22 +15035,6 @@ ALTER TABLE ONLY public.acorn_lojistiks_suppliers
 
 
 --
--- Name: acorn_justice_scanned_documents updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_scanned_documents
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_justice_warrants updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_warrants
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
 -- Name: acorn_lojistiks_transfers updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -14915,162 +15067,10 @@ ALTER TABLE ONLY public.acorn_lojistiks_warehouses
 
 
 --
--- Name: acorn_lojistiks_brands updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_brands
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_lojistiks_product_attributes updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_product_attributes
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_finance_payments updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_payments
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_detention_methods updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_detention_methods
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_detention_reasons updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_detention_reasons
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_defendant_crimes updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_defendant_crimes
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_finance_currencies updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_currencies
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_criminal_legalcase_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_types
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_justice_legalcase_categories updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_legalcase_categories
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_justice_warrant_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_warrant_types
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_finance_receipts updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_finance_receipts
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_lojistiks_containers updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_containers
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_lojistiks_drivers updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_drivers
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
 -- Name: acorn_notary_requests updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_notary_requests
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_justice_summon_types updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_summon_types
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_justice_summons updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_summons
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_justice_statements updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_statements
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_criminal_witness_statement updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_witness_statement
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_criminal_detention_periods updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_detention_periods
-    ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_justice_periods updated_by_user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_periods
     ADD CONSTRAINT updated_by_user_id FOREIGN KEY (updated_by_user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
@@ -15129,21 +15129,6 @@ COMMENT ON CONSTRAINT user_id ON public.acorn_criminal_legalcase_defendants IS '
 
 
 --
--- Name: acorn_criminal_legalcase_prosecutor user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_criminal_legalcase_prosecutor
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: CONSTRAINT user_id ON acorn_criminal_legalcase_prosecutor; Type: COMMENT; Schema: public; Owner: justice
---
-
-COMMENT ON CONSTRAINT user_id ON public.acorn_criminal_legalcase_prosecutor IS 'nameObject: true';
-
-
---
 -- Name: acorn_criminal_legalcase_plaintiffs user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
@@ -15156,6 +15141,21 @@ ALTER TABLE ONLY public.acorn_criminal_legalcase_plaintiffs
 --
 
 COMMENT ON CONSTRAINT user_id ON public.acorn_criminal_legalcase_plaintiffs IS 'name-object: true';
+
+
+--
+-- Name: acorn_criminal_legalcase_prosecutor user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_criminal_legalcase_prosecutor
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+
+
+--
+-- Name: CONSTRAINT user_id ON acorn_criminal_legalcase_prosecutor; Type: COMMENT; Schema: public; Owner: justice
+--
+
+COMMENT ON CONSTRAINT user_id ON public.acorn_criminal_legalcase_prosecutor IS 'nameObject: true';
 
 
 --
@@ -15189,11 +15189,27 @@ COMMENT ON CONSTRAINT user_id ON public.acorn_criminal_trial_judges IS 'name-obj
 
 
 --
--- Name: acorn_user_language_user user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_justice_statements user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_user_language_user
+ALTER TABLE ONLY public.acorn_justice_statements
     ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_justice_summons user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_summons
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id);
+
+
+--
+-- Name: acorn_justice_warrants user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_justice_warrants
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
 
 
 --
@@ -15213,11 +15229,11 @@ name-object: true';
 
 
 --
--- Name: acorn_justice_warrants user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+-- Name: acorn_user_language_user user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
-ALTER TABLE ONLY public.acorn_justice_warrants
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
+ALTER TABLE ONLY public.acorn_user_language_user
+    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
@@ -15226,22 +15242,6 @@ ALTER TABLE ONLY public.acorn_justice_warrants
 
 ALTER TABLE ONLY public.acorn_user_user_group_version_user
     ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id) NOT VALID;
-
-
---
--- Name: acorn_justice_summons user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_summons
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id);
-
-
---
--- Name: acorn_justice_statements user_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_justice_statements
-    ADD CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.acorn_user_users(id);
 
 
 --
@@ -15269,18 +15269,18 @@ ALTER TABLE ONLY public.acorn_notary_requests
 
 
 --
--- Name: acorn_lojistiks_transfers vehicle_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
---
-
-ALTER TABLE ONLY public.acorn_lojistiks_transfers
-    ADD CONSTRAINT vehicle_id FOREIGN KEY (vehicle_id) REFERENCES public.acorn_lojistiks_vehicles(id) NOT VALID;
-
-
---
 -- Name: acorn_lojistiks_drivers vehicle_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
 --
 
 ALTER TABLE ONLY public.acorn_lojistiks_drivers
+    ADD CONSTRAINT vehicle_id FOREIGN KEY (vehicle_id) REFERENCES public.acorn_lojistiks_vehicles(id) NOT VALID;
+
+
+--
+-- Name: acorn_lojistiks_transfers vehicle_id; Type: FK CONSTRAINT; Schema: public; Owner: justice
+--
+
+ALTER TABLE ONLY public.acorn_lojistiks_transfers
     ADD CONSTRAINT vehicle_id FOREIGN KEY (vehicle_id) REFERENCES public.acorn_lojistiks_vehicles(id) NOT VALID;
 
 
@@ -19308,5 +19308,5 @@ GRANT ALL ON SEQUENCE public.system_settings_id_seq TO token_8_no WITH GRANT OPT
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ZIJJkCMT14Vq4ybaM3QxfsmKKKCac2buPYSRhQtTtMWuAQLQHE8ohfgOgdU25Db
+\unrestrict uOcET5C8XGNzx8LVrcDhD2dCtW54PUeEfQvT7i986QCcL29klk9xSjQTqoYuDIo
 
