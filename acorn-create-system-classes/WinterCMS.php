@@ -500,6 +500,22 @@ PHP;
         ]]);
     }
 });
+\Event::listen('backend.form.extendFields', function (\$widget) {
+    \$form    = \$widget;
+    \$model   = \$widget->model;
+
+    if (\$model instanceof \Backend\Models\User) {
+        \$form->addTabFields(['user[$usersColumnStub]' => [
+            'label'   => '$thisLabel',
+            'type'    => 'dropdown',
+            'span'    => 'storm',
+            'cssClass' => 'col-xs-6 col-md-3',
+            'options' => '$thisOptions',
+            'emptyOption' => 'acorn::lang.models.general.no_restriction',
+            'tab'     => 'acorn.user::lang.plugin.name'
+        ]]);
+    }
+});
 \Acorn\User\Controllers\Users::extendListColumnsGeneral(function (\$list, \$model) {
     if (\$model instanceof \Acorn\User\Models\User) {
         \$list->addColumns(['$usersColumnStub' => [
