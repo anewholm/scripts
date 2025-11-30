@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 3kdMsyrimcX4TCqrkCGWLXDXUqyS867HmFF52aeCDKPdGyNuaNzheoge0p5dJe2
+\restrict lpJQwwnU8K4BDh5r9s6si6D4vscQnQz9gohVb4aJPNqcGuCSz2xzIXd9ftPgn6y
 
 -- Dumped from database version 16.11 (Ubuntu 16.11-1.pgdg24.04+1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-1.pgdg24.04+1)
@@ -19308,5 +19308,5 @@ GRANT ALL ON SEQUENCE public.system_settings_id_seq TO token_8_no WITH GRANT OPT
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 3kdMsyrimcX4TCqrkCGWLXDXUqyS867HmFF52aeCDKPdGyNuaNzheoge0p5dJe2
+\unrestrict lpJQwwnU8K4BDh5r9s6si6D4vscQnQz9gohVb4aJPNqcGuCSz2xzIXd9ftPgn6y
 
