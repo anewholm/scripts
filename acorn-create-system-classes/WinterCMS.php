@@ -412,6 +412,7 @@ class WinterCMS extends Framework
                             'label'     => $thisLabel,
                             'relation'  => $thisRelationName,
                             'valueFrom' => 'name',
+                            'sortable'  => FALSE,
                         ]
                     );
                     if ($relation->fieldsSettingsTo) 

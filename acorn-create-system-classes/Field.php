@@ -1097,7 +1097,7 @@ class Hint extends PseudoField {
         if (!isset($definition['fieldType']))   $definition['fieldType']   = 'hint';
         if (!isset($definition['span']))        $definition['span']        = 'storm';
         if (!isset($definition['bootstraps']))  $definition['bootstraps']  = array('xs' => 6, 'md' => '4');
-        if (!isset($definition['level']))       $definition['level']       = 'restricted';
+        if (!isset($definition['level']))       $definition['level']       = 'info';
 
         $definition['columnExclude'] = TRUE;
         $definition['columnType']    = FALSE;

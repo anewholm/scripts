@@ -2047,8 +2047,10 @@ class Model {
                     'tabLocation' => $fieldObj->tabLocation,
                     'partial'     => 'hint_deferred_binding',
                     'contexts'    => 'create',
+                    'level'       => 'stop-circle',
+                    'cssClasses'  => 'callout-stop-circle',
                     'advanced'    => $fieldObj->advanced,
-                    'bootstraps'  => array('xs' => 12),
+                    'bootstraps'  => array('xs' => 6),
                     'permissions' => $fieldObj->permissions,
                 ));
                 $fields[$dfHintName] = $hintObj;

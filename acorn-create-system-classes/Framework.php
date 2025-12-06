@@ -568,13 +568,15 @@ class Framework
     {
         $path = NULL;
 
+        $level = (isset($hintConfig['level']) ? $hintConfig['level'] : 'info');
+        $levelEscaped   = e($level);
+
         if (isset($hintConfig['path'])) {
             // Managed existing partial from other plugin
             // path will flow through
             $path = $hintConfig['path'];
         } else if (isset($hintConfig['content'])) {
             // Custom content => file
-            $level      = (isset($hintConfig['level']) ? $hintConfig['level'] : 'info');
             if (!isset($hintConfig['labels']))
                 throw new Exception("labels: are required for content hint $hintName");
             if (!isset($hintConfig['content']))
@@ -598,19 +600,15 @@ class Framework
                 $hintsDir       = preg_replace('/^.*\/plugins\//', 'plugins/', $hintsDir);
                 $hintFileName   = preg_replace('/-+/', '_', $hintName);
                 $path           = "{$hintsDir}/_$hintFileName.php";
-                $levelEscaped   = e($level);
                 $contentHtml    = (isset($hintConfig['contentHtml']) && $hintConfig['contentHtml']);
                 $e              = ($contentHtml  ? '' : 'e');
                 // TODO: Call to action translation and label
                 $callToActionA  = ($callToAction ? "<a href='$callToAction'>Resolve</a>" : '');
 
                 file_put_contents($path, <<<HTML
-                    <i class="icon-$levelEscaped"></i>
-                    <h3><?= e(trans('$labelKey')) ?></h3>
-                    <p class="content">
-                        <?= $e(trans('$contentKey')) ?>
-                        $callToActionA
-                    </p>
+<i class="icon-$levelEscaped"></i>
+<h3><?= e(trans('$labelKey')) ?></h3>
+<p><?= $e(trans('$contentKey')) ?>$callToActionA</p>
 HTML                        
                 );
             }
@@ -625,7 +623,7 @@ HTML
             'type' => 'hint',  // hints can be hidden
             'path' => $path,   // Path to created file above
             'span' => 'storm', // Usually, many are shown side-by-side
-            'cssClass' => 'col-xs-6 col-md-4', // Also will CSS float: right
+            'cssClass' => "col-xs-6 col-md-4 callout-$levelEscaped", // Also will CSS float: right
         ), $hintConfig);
     }
 
