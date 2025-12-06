@@ -1788,19 +1788,21 @@ PHP
         // https://wintercms.com/docs/v1.2/docs/services/validation
         $allRules = array();
         foreach ($model->fields() as $name => &$field) {
-            $fieldRules = $field->rules;
-            if (!$field->isStandard()) {
-                if (   $field->required 
-                    && !$field->nested 
-                    && $field->canDisplayAsField() 
-                    && !$field->hidden
-                    && !$field->fieldExclude
-                ) 
-                    array_push($fieldRules, 'required');
-                // TODO: max length (Currency needs this)
-                if ($field->length) array_push($fieldRules, "max:$field->length");
+            if ($field->rules !== FALSE) {
+                $fieldRules = ($field->rules ?: array());
+                if (!$field->isStandard()) {
+                    if (   $field->required 
+                        && !$field->nested 
+                        && $field->canDisplayAsField() 
+                        && !$field->hidden
+                        && !$field->fieldExclude
+                    ) 
+                        array_push($fieldRules, 'required');
+                    // TODO: max length (Currency needs this)
+                    if ($field->length) array_push($fieldRules, "max:$field->length");
+                }
+                if ($fieldRules) $allRules[$name] = implode('|', $fieldRules);
             }
-            if ($fieldRules) $allRules[$name] = implode('|', $fieldRules);
         }
         if ($allRules) {
             print("  Rules:\n");
@@ -2360,7 +2362,9 @@ PHP
             $typeString   = ($field->fieldType ?: '<no field type>') . ' / ' . ($field->columnType ?: '<no column type>');
             if ($field->canDisplayAsColumn()) {
                 print("    $indentString+{$YELLOW}$name{$NC}($typeString): to {$YELLOW}columns.yaml{$NC}\n");
-                $labelKey = ($field->explicitLabelKey ?: $field->translationKey());
+                $labelKey  = ($field->explicitLabelKey ?: $field->translationKey());
+                $columnKey =  "$field->columnKey$field->fieldKeyQualifier";
+                $dotPath   = "columns.$columnKey";
                 $columnDefinition = array(
                     '#'          => $field->yamlComment,
                     '# Debug: '  => str_replace("\n", ' ', $field->debugComment),
@@ -2404,7 +2408,7 @@ PHP
                 );
                 if ($field->columnConfig) $columnDefinition = array_merge($columnDefinition, $field->columnConfig);
                 $columnDefinition = $this->removeEmpty($columnDefinition); // We do not remove falses
-                $this->yamlFileSet($columnsPath, "columns.$field->columnKey", $columnDefinition);
+                $this->yamlFileSet($columnsPath, $dotPath, $columnDefinition);
             } else {
                 print("    $indentString{$YELLOW}WARNING{$NC}: Field [$name]($typeString) cannot display as {$YELLOW}column{$NC} because columnType is blank\n");
             }

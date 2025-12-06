@@ -124,6 +124,14 @@ foreach ($modules as $module) $module->show();
 print("$heading: Plugins\n");
 foreach ($plugins as $plugin) $plugin->show();
 
+// Grants
+file_put_contents('acorn_created_bys_view.sql',               ";\n\nGRANT ALL ON TABLE acorn_created_bys TO PUBLIC;", FILE_APPEND);
+file_put_contents('acorn_calendar_linked_events_view.sql',    ";\n\nGRANT ALL ON TABLE acorn_calendar_linked_events TO PUBLIC;", FILE_APPEND);
+file_put_contents('acorn_calendar_linked_calendars_view.sql', ";\n\nGRANT ALL ON TABLE acorn_calendar_linked_calendars TO PUBLIC;", FILE_APPEND);
+file_put_contents('acorn_location_linked_view.sql',           ";\n\nGRANT ALL ON TABLE acorn_location_location_links TO PUBLIC;", FILE_APPEND);
+file_put_contents('acorn_location_linked_address_view.sql',   ";\n\nGRANT ALL ON TABLE acorn_location_address_links TO PUBLIC;", FILE_APPEND);
+
+// Create
 echo "Running {$YELLOW}date_tables_view{$NC}.sql\n";
 $db->runSQLFile('date_tables_view.sql');
 echo "Running {$YELLOW}name_tables_view{$NC}.sql\n";

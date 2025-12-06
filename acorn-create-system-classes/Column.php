@@ -172,7 +172,8 @@ class Column {
     public $hints;
     public $fieldComment; // HTML field comment
     public $typeEditable; // For list-editable row partial
-    public $rules = array();
+    public $rules;
+    public $withEnd; // Include the [end] field for events, default: FALSE
     public $partial;
     public $contexts;
     public $default;

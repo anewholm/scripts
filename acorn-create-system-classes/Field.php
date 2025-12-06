@@ -114,6 +114,7 @@ class Field {
     public $imageWidth;
     public $thumbOptions;
     public $fieldConfig;
+    public $withEnd; // Include the [end] field for events, default: FALSE
     public $setting; // Only show the column if a Setting is TRUE
     public $settingNot; // Only show the column if a Setting is FALSE
     public $env;     // Only show the column if an env VAR is TRUE
@@ -133,10 +134,9 @@ class Field {
     public $includeModel;
     public $includePath;
     public $includeContext;
-    public $buttons      = array(); // Of new ButtonField()s
     public $rlButtons; // On the relationmanager
     public $goto;
-    public $rules = array();
+    public $rules;
     public $controller; // For popups
     public $advanced; // Toggle advanced to show
 
@@ -421,8 +421,11 @@ class Field {
         return $field;
     }
 
-    public static function createFromColumn(Model &$model, Column &$column, array &$relations): Field
+    public static function createFromColumn(Model &$model, Column &$column, array &$relations): array // of Fields
     {
+        // This can return *multiple* Fields!
+        // An event_id field could ask for multiple Fields, e.g. [start] and [end]
+        // but starts off with a normal singular Field definition
         $fieldDefinition = array(
             '#'          => "From $column",
             'name'       => $column->name, // Will override with nameWithoutId() if ForeignIdField()
@@ -523,11 +526,6 @@ class Field {
                 break;
         }
 
-        // Chance for the relation destination Model to dictate field types
-        // For example: FK to Acorn\Calendar\Models\Event
-        // could suggest a datepicker type
-        if (count($relations) == 1) end($relations)->to->standardTargetModelFieldDefinitions($column, $relations, $fieldDefinition);
-
         // Inherit Column comment values
         // Include label translations
         $fieldDefinition['comment'] = $column->comment;
@@ -536,7 +534,22 @@ class Field {
             $fieldDefinition[$nameCamel] = $value;
         }
 
-        return self::create($model, $fieldDefinition, $column, $relations);
+        // Chance for the relation destination Model to dictate field types
+        // For example: FK to Acorn\Calendar\Models\Event
+        // could suggest a datepicker type
+        $fieldDefinitions = array($fieldDefinition);
+        if (count($relations) == 1) {
+            $relation1 = end($relations);
+            if ($relationFieldDefinitions = $relation1->to->standardTargetModelFieldDefinitions($column, $relations, $fieldDefinition))
+                $fieldDefinitions = $relationFieldDefinitions;
+        }
+        
+        // Field objects
+        $fieldObjs = array();
+        foreach ($fieldDefinitions as $fieldDefinition) {
+            array_push($fieldObjs, self::create($model, $fieldDefinition, $column, $relations));
+        }
+        return $fieldObjs;
     }
 
     public function dbObject()

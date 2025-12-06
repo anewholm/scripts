@@ -345,12 +345,6 @@ class RelationXto1 extends Relation {
     ) {
         parent::__construct($name, $from, $to, $column, $foreignKey, $isCount, $conditions);
 
-        // Do either of our Models indicate that the field canFilter?
-        $relations = array($this);
-        $fieldDefinitions = array();
-        $from->standardTargetModelFieldDefinitions($column, $relations, $fieldDefinitions); // &$fieldDefinitions pass-by-reference
-        $to->standardTargetModelFieldDefinitions(  $column, $relations, $fieldDefinitions); // &$fieldDefinitions pass-by-reference
-
         // Only RelationXto1|1fromX can be required or not
         // For example: event.id <= lecture.event_id can be nullable or not
         if (!isset($this->required) && $this->foreignKey) {

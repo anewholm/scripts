@@ -482,10 +482,11 @@ class Model {
         return '\\' . $this->fullyQualifiedName($withClassString);
     }
 
-    public function standardTargetModelFieldDefinitions(Column &$column, array &$relations, array &$fieldDefinition)
+    public function standardTargetModelFieldDefinitions(Column &$column, array &$relations, array $fieldDefinition): array
     {
         // TODO: This needs to be rationalised with Column->standardFieldDefinitions()
-        $modifiers = array();
+        // TODO: Also needs to be polymorphic rather than a switch somehow
+        $fieldDefinitions = array();
 
         $columnNameFQN = $column->fullyQualifiedName(); // To reference the outer table
         if ($this->isAcornEvent()) {
@@ -495,8 +496,14 @@ class Model {
             if ($is1to1Include) {
                 // 1to1 nested include fields.yaml will happen
             } else {
+                // [start]
                 $modifiers = array(
+                    'explicitLabelKey'  => 'acorn.calendar::lang.models.eventpart.start',
                     'fieldKeyQualifier' => '[start]',
+                    // Inherit the event_id required
+                    // without a rule because we will $rules event[start] not event[first_event_part][start]
+                    // 'required'      => TRUE 
+                    'rules'         => FALSE, 
                     'fieldType'     => 'datepicker',
                     'columnType'    => 'partial',
                     'columnPartial' => 'datetime',
@@ -508,7 +515,36 @@ class Model {
                     'filterType' => 'daterange',
                     'yearRange'  => 10,
                     'filterConditions' => "((select aacep.start from acorn_calendar_event_parts aacep where aacep.event_id = $columnNameFQN order by start limit 1) between ':after' and ':before')",
+                    'actions'    => array('goto-event' => TRUE)
                 );
+                $fieldDefinitionStart  = array_merge($fieldDefinition, $modifiers);
+                array_push($fieldDefinitions, $fieldDefinitionStart);
+
+                // [end]
+                if (isset($fieldDefinition['withEnd']) && $fieldDefinition['withEnd']) {
+                    $modifiers = array(
+                        'explicitLabelKey'  => 'acorn.calendar::lang.models.eventpart.end',
+                        'fieldKeyQualifier' => '[end]',
+                        // Inherit the event_id required
+                        // without a rule because we will $rules event[start] not event[first_event_part][start]
+                        // 'required'      => TRUE 
+                        'rules'         => FALSE, 
+                        'fieldType'     => 'datepicker',
+                        'columnType'    => 'partial',
+                        'columnPartial' => 'datetime',
+                        'sqlSelect'     => "(select aacep.end from acorn_calendar_event_parts aacep where aacep.event_id = $columnNameFQN order by aacep.start limit 1)",
+                        'autoFKType'    => 'Xto1', // Because these fields also appear on pivot tables, causing them to be XtoXSemi
+
+                        // Filter settings
+                        'canFilter'  => TRUE, // $this->isAcornEvent()
+                        'filterType' => 'daterange',
+                        'yearRange'  => 10,
+                        'filterConditions' => "((select aacep.end from acorn_calendar_event_parts aacep where aacep.event_id = $columnNameFQN order by start limit 1) between ':after' and ':before')",
+                        'actions'    => array('goto-event' => TRUE)
+                    );
+                    $fieldDefinitionEnd  = array_merge($fieldDefinition, $modifiers);
+                    array_push($fieldDefinitions, $fieldDefinitionEnd);
+                }
             }
         } else if ($this->isAcornUser()) {
             $modifiers = array(
@@ -520,9 +556,12 @@ class Model {
                 // Filter settings
                 'canFilter'  => TRUE, // $this->isAcornUser()
             );
+
+            $fieldDefinition  = array_merge($fieldDefinition, $modifiers);
+            array_push($fieldDefinitions, $fieldDefinition);
         }
 
-        $fieldDefinition = array_merge($fieldDefinition, $modifiers);
+        return $fieldDefinitions;
     }
 
     // ----------------------------------------- Permissions
@@ -1494,265 +1533,266 @@ class Model {
             // ---------------------------------------------------------------- Database Columns => Fields
             foreach ($this->table->columns as &$column) {
                 if ($column->shouldProcess()) { // !system && !todo
-                    $relations       = $this->relations($column); // Includes HasManyDeep
-                    $fieldObj        = Field::createFromColumn($this, $column, $relations);
+                    $relations       = $this->relations(forColumn: $column); // Includes HasManyDeep
+                    $fieldObjs       = Field::createFromColumn($this, $column, $relations);
+                    foreach ($fieldObjs as $fieldObj) {
+                        // Debug
+                        $fieldClassParts = explode('\\', get_class($fieldObj));
+                        $fieldClass      = end($fieldClassParts);
+                        $fieldObj->debugComment = "$fieldClass for column $column->column_name on $plugin->name.$this->name";
 
-                    // Debug
-                    $fieldClassParts = explode('\\', get_class($fieldObj));
-                    $fieldClass      = end($fieldClassParts);
-                    $fieldObj->debugComment = "$fieldClass for column $column->column_name on $plugin->name.$this->name";
+                        // 1to1 embedding 
+                        // Includes HasManyDeep(1to1) 
+                        // and HasManyDeep(containsNon1to1s)
+                        if (   $fieldObj instanceof ForeignIdField
+                            && ($relations1to1 = $fieldObj->relations1to1()) 
+                        ) {
+                            // 1to1, leaf & hasManyDeep(1to1) relations.
+                            // Known AA plugins are Final
+                            // they do not continue 1to1 hasManyDeep recursion
+                            foreach ($relations1to1 as $relation1to1) {
+                                // Static 1to1 whole form/list include
+                                //   fields.yaml:  entity[user_group][name]
+                                //   columns.yaml: name: name, relation: entity_user_group
+                                $modelTo            = $relation1to1->to;
+                                $modelToClass       = $modelTo->name;
+                                $classParts         = explode('\\', get_class($relation1to1));
+                                $relationClass      = end($classParts);
 
-                    // 1to1 embedding 
-                    // Includes HasManyDeep(1to1) 
-                    // and HasManyDeep(containsNon1to1s)
-                    if (   $fieldObj instanceof ForeignIdField
-                        && ($relations1to1 = $fieldObj->relations1to1()) 
-                    ) {
-                        // 1to1, leaf & hasManyDeep(1to1) relations.
-                        // Known AA plugins are Final
-                        // they do not continue 1to1 hasManyDeep recursion
-                        foreach ($relations1to1 as $relation1to1) {
-                            // Static 1to1 whole form/list include
-                            //   fields.yaml:  entity[user_group][name]
-                            //   columns.yaml: name: name, relation: entity_user_group
-                            $modelTo            = $relation1to1->to;
-                            $modelToClass       = $modelTo->name;
-                            $classParts         = explode('\\', get_class($relation1to1));
-                            $relationClass      = end($classParts);
-
-                            // If it is an fake hasManyDeepInclude then we should include
-                            // the actual field still
-                            // It is likely to have come here because of further fake 1to1s
-                            // for example: hierarchy [Xto1]=> entity (fake HMD) [1to1]=> user_group
-                            if ($relation1to1->hasManyDeepInclude) {
-                                $fields[$fieldObj->name] = $fieldObj;
-                            }
-
-                            if (!$recursing) {
-                                // -------------------------------------------------- HasManyDeep(*to*) & immediate 1to1 relation: columns
-                                // HasManyDeep(*to*) has chained 1-1 levels
-                                // which allows sorting and searching of 1-1 relation columns
-                                // that is not possible with nested 1-1 columns
-                                // RELATION_MODE: relation: <has_many_deep_name>
-                                // 
-                                // This call also returns Fields from non-create-system Yaml. See below
-                                // NOT RECURSIVE: !$recursing only
-                                $relation1to1Fields = $modelTo->fields($recursing+1);
-                                foreach ($relation1to1Fields as $subFieldName => $subFieldObj) {
-                                    // Exclude fields that have the same local name as fields in the parent form
-                                    // this naturally exlcudes id and created_*
-                                    // TODO: created_* is not being excluded
-                                    $isDuplicateField   = isset($fields[$subFieldName]);
-                                    $includeContext     = $subFieldObj->shouldInclude();
-                                    // Pseudo fields relate to dependsOn as well
-                                    // but are for form functionality and should not interfere
-                                    $isPseudoFieldName  = self::isPseudo($subFieldName);
-                                    // We could change the id name to also allow them...
-                                    $isSpecialField     = ($subFieldName == 'id');
-                                    // TODO: Remove: We cannot do anything with nested fields
-                                    // $isAlreadyNested    = self::isNestedFieldKey($subFieldName);
-                                    // Sub relation fields should generate another HasManyDeep and include them
-                                    $hasSubRelation     = isset($subFieldObj->relation);
-                                    // If this comes from a field only field
-                                    // columnKey & columnType === FALSE
-                                    $canDisplayAsColumn = $subFieldObj->canDisplayAsColumn();
-                                    // If the column is not sortable
-                                    // WinterModel loaded probably
-                                    // then it may be included in the nested fields +column below
-                                    // unless it has a select: clause
-                                    $isSortable         = ($subFieldObj->sortable !== FALSE);
-                                    $hasSqlClause       = (bool) $subFieldObj->sqlSelect;
-
-                                    if (   !$isSpecialField
-                                        && $canDisplayAsColumn
-                                        && $includeContext 
-                                        && !$isDuplicateField
-                                        && !$isPseudoFieldName
-                                        && !$hasSubRelation
-                                        && ($isSortable || $hasSqlClause)
-                                        // && !$isAlreadyNested
-                                    ) {
-                                        $subFieldObj->nested        = TRUE;
-                                        $subFieldObj->nestLevel     = 1;
-                                        $subFieldObj->debugComment .= " Single level embedded [$relationClass => $modelToClass::$subFieldName with relation: $relation1to1->name] for column";
-
-                                        // Prevent this field displaying as a field
-                                        // canDisplayAsField() checks fieldType
-                                        $subFieldObj->fieldType = FALSE;
-                                        $subFieldObj->fieldKey  = FALSE;
-
-                                        // We use relation: and the single <name>:
-                                        // For 1-1 Models, also a name|valueFrom: nested[field][name]
-                                        // using nameFromPath()
-                                        $subFieldObj->columnKey = $subFieldName;
-                                        $subFieldObj->relation  = $relation1to1->name;
-                                        // Custom relation scopes based on relations, not SQL
-                                        // Will set filter[relationCondition] = <the name of the relevant relation>, e.g. belongsTo['language']
-                                        // Filters the listed models based on a filtered: of selected related models
-                                        // Probably because it is nested
-                                        // TODO: This is actually the _un-nested_ relation
-                                        // TODO: Write these in to the Model Relations, not here
-                                        $subFieldObj->useRelationCondition = TRUE;
-
-                                        // valueFrom cannot be sorted
-                                        // UnQualified 'name' will cause ambiguity
-                                        // Also, these relation embeds need a select: for the value apparently
-                                        // unless of course it is a Yaml field without a column
-                                        if (!isset($subFieldObj->sqlSelect)) {
-                                            $subFieldObj->sqlSelect = $subFieldObj->column?->fullyQualifiedName(); 
-                                        }    
-
-                                        // Fields Settings from relation
-                                        if (   is_array($relation1to1->fieldsSettings)
-                                            && isset($relation1to1->fieldsSettings[$subFieldObj->columnKey])
-                                        ) {
-                                            $fieldSettings = $relation1to1->fieldsSettings[$subFieldObj->columnKey];
-                                            foreach ($fieldSettings as $name => $value) {
-                                                $nameCamel = Str::camel($name);
-                                                $subFieldObj->$nameCamel = $value;
-                                            }
-                                        }
-
-                                        $fields[$subFieldObj->columnKey] = $subFieldObj;
-                                    } else {
-                                        $explanation = '';
-                                        if ($isSpecialField)      $explanation .= "special($subFieldName) ";
-                                        if (!$canDisplayAsColumn) $explanation .= "cannot display as column($subFieldName) ";
-                                        if (!$includeContext)     $explanation .= '!include ';
-                                        if ($isDuplicateField)    $explanation .= "duplicate($subFieldObj->fieldKey) ";
-                                        if ($isPseudoFieldName)   $explanation .= "pseudo($subFieldName) ";
-                                        if ($hasSubRelation)      $explanation .= "hasSubRelation($subFieldObj->relation) ";
-                                        // if ($isAlreadyNested)     $explanation .= "alreadyNested($subFieldName) ";
-                                        print("  {$indentString}Field $modelTo->name::$subFieldName ignored because $explanation\n");
-                                    }
+                                // If it is an fake hasManyDeepInclude then we should include
+                                // the actual field still
+                                // It is likely to have come here because of further fake 1to1s
+                                // for example: hierarchy [Xto1]=> entity (fake HMD) [1to1]=> user_group
+                                if ($relation1to1->hasManyDeepInclude) {
+                                    $fields[$fieldObj->name] = $fieldObj;
                                 }
-                            }
 
-                            if (!$relation1to1 instanceof RelationHasManyDeep) {
-                                // -------------------------------------------------- Nested fields
-                                // Requires full recursive embedding
-                                // stepping along the chain 1-1 belongsTo relations
-                                // A $relation1to1Path indicates that the caller routine, also this method, wants these fields nested
-                                // TODO: dependsOn morphing
-                                $relation1to1Fields = $modelTo->fields($recursing+1);
-                                foreach ($relation1to1Fields as $subFieldName => $subFieldObj) {
-                                    // Exclude fields that have the same local name as fields in the parent form
-                                    // this naturally exlcudes id and created_*
-                                    // TODO: created_* is not being excluded
-                                    $includeContext    = $subFieldObj->shouldInclude();
-                                    // Pseudo fields relate to dependsOn as well
-                                    // but are for form functionality and should not interfere
-                                    $isPseudoFieldName = self::isPseudo($subFieldName);
-                                    // We could change the id name to also allow them...
-                                    $isSpecialField    = ($subFieldName == 'id');
-                                    // If this comes from a column only field
-                                    // fieldKey & fieldType === FALSE
-                                    // we do not want to recurse on the column onlys and make them fields
-                                    $canDisplayAsField = $subFieldObj->canDisplayAsField();
+                                if (!$recursing) {
+                                    // -------------------------------------------------- HasManyDeep(*to*) & immediate 1to1 relation: columns
+                                    // HasManyDeep(*to*) has chained 1-1 levels
+                                    // which allows sorting and searching of 1-1 relation columns
+                                    // that is not possible with nested 1-1 columns
+                                    // RELATION_MODE: relation: <has_many_deep_name>
+                                    // 
+                                    // This call also returns Fields from non-create-system Yaml. See below
+                                    // NOT RECURSIVE: !$recursing only
+                                    $relation1to1Fields = $modelTo->fields($recursing+1);
+                                    foreach ($relation1to1Fields as $subFieldName => $subFieldObj) {
+                                        // Exclude fields that have the same local name as fields in the parent form
+                                        // this naturally exlcudes id and created_*
+                                        // TODO: created_* is not being excluded
+                                        $isDuplicateField   = isset($fields[$subFieldName]);
+                                        $includeContext     = $subFieldObj->shouldInclude();
+                                        // Pseudo fields relate to dependsOn as well
+                                        // but are for form functionality and should not interfere
+                                        $isPseudoFieldName  = self::isPseudo($subFieldName);
+                                        // We could change the id name to also allow them...
+                                        $isSpecialField     = ($subFieldName == 'id');
+                                        // TODO: Remove: We cannot do anything with nested fields
+                                        // $isAlreadyNested    = self::isNestedFieldKey($subFieldName);
+                                        // Sub relation fields should generate another HasManyDeep and include them
+                                        $hasSubRelation     = isset($subFieldObj->relation);
+                                        // If this comes from a field only field
+                                        // columnKey & columnType === FALSE
+                                        $canDisplayAsColumn = $subFieldObj->canDisplayAsColumn();
+                                        // If the column is not sortable
+                                        // WinterModel loaded probably
+                                        // then it may be included in the nested fields +column below
+                                        // unless it has a select: clause
+                                        $isSortable         = ($subFieldObj->sortable !== FALSE);
+                                        $hasSqlClause       = (bool) $subFieldObj->sqlSelect;
 
-                                    // type: relationmanager does not use nested names
-                                    // because they relate to config_relation.yaml entries only
-                                    // nameFrom should not be included in the fields.yaml name:
-                                    // as it will be applied to the output in the nested scenario
-                                    $isRelationManager = ($subFieldObj->fieldType == 'relationmanager');
-                                    $nestingMode       = ($isRelationManager ? self::RELATION_MODE : self::NESTED_MODE);
-                                    
-                                    // Final field key
-                                    $fieldKey          = $this->nestedFieldName(
-                                        $relation1to1,
-                                        $subFieldName,
-                                        self::NO_VALUE_FROM,
-                                        $nestingMode,
-                                    );
-                                    $isDuplicateField  = isset($fields[$fieldKey]);
+                                        if (   !$isSpecialField
+                                            && $canDisplayAsColumn
+                                            && $includeContext 
+                                            && !$isDuplicateField
+                                            && !$isPseudoFieldName
+                                            && !$hasSubRelation
+                                            && ($isSortable || $hasSqlClause)
+                                            // && !$isAlreadyNested
+                                        ) {
+                                            $subFieldObj->nested        = TRUE;
+                                            $subFieldObj->nestLevel     = 1;
+                                            $subFieldObj->debugComment .= " Single level embedded [$relationClass => $modelToClass::$subFieldName with relation: $relation1to1->name] for column";
 
-                                    // If the column is not sortable
-                                    // WinterModel loaded probably
-                                    // then it may be included in the nested fields +column
-                                    // unless it has a select: clause
-                                    $isSortable         = ($subFieldObj->sortable !== FALSE);
-                                    $hasSqlClause       = (bool) $subFieldObj->sqlSelect;
+                                            // Prevent this field displaying as a field
+                                            // canDisplayAsField() checks fieldType
+                                            $subFieldObj->fieldType = FALSE;
+                                            $subFieldObj->fieldKey  = FALSE;
 
-                                    if (   !$isSpecialField
-                                        && $includeContext 
-                                        && $canDisplayAsField
-                                        && !$isDuplicateField
-                                        && !$isPseudoFieldName
-                                    ) {
-                                        $subNestLevel            = ($subFieldObj->nestLevel ?: 0);
-                                        $subFieldObj->nestLevel  = $subNestLevel + 1;
-                                        $subFieldObj->nested     = TRUE;
-                                        $subFieldObj->debugComment .= " Recursing(level $recursing) [$relationClass => $modelToClass::$subFieldName with relation: $relation1to1->name] for field\n";
+                                            // We use relation: and the single <name>:
+                                            // For 1-1 Models, also a name|valueFrom: nested[field][name]
+                                            // using nameFromPath()
+                                            $subFieldObj->columnKey = $subFieldName;
+                                            $subFieldObj->relation  = $relation1to1->name;
+                                            // Custom relation scopes based on relations, not SQL
+                                            // Will set filter[relationCondition] = <the name of the relevant relation>, e.g. belongsTo['language']
+                                            // Filters the listed models based on a filtered: of selected related models
+                                            // Probably because it is nested
+                                            // TODO: This is actually the _un-nested_ relation
+                                            // TODO: Write these in to the Model Relations, not here
+                                            $subFieldObj->useRelationCondition = TRUE;
 
-                                        // Prevent this field displaying as a column
-                                        // canDisplayAsColumn() checks columnType
-                                        // because we prefer the sortable HasManyDeep version above
-                                        // However, WinterModel may have specified no sorting,
-                                        // for example on translations field
-                                        if (!$isSortable && !$hasSqlClause) {
-                                            print("  {$indentString}Field $modelTo->name::$subFieldName column included because sortable:false and no select: clause\n");
-                                            // Nested column version
-                                            $subFieldObj->columnKey  = $fieldKey;
-                                            $subFieldObj->relation   = NULL;
-                                        } else {
-                                            $subFieldObj->columnType = FALSE;
-                                            $subFieldObj->columnKey  = FALSE;
-                                        }
-                                        // Nested sub relations cannot be filters
-                                        $subFieldObj->canFilter = FALSE; 
+                                            // valueFrom cannot be sorted
+                                            // UnQualified 'name' will cause ambiguity
+                                            // Also, these relation embeds need a select: for the value apparently
+                                            // unless of course it is a Yaml field without a column
+                                            if (!isset($subFieldObj->sqlSelect)) {
+                                                $subFieldObj->sqlSelect = $subFieldObj->column?->fullyQualifiedName(); 
+                                            }    
 
-                                        if ($subFieldObj->fieldType == 'fileupload') {
-                                            // TODO: Fix embedded 1to1 file uploads
-                                            $subFieldObj->contexts = array('update' => TRUE);
-                                        }
-
-                                        if ($subFieldObj->fieldType == 'relation') {
-                                            // TODO: Handle type: relation deep embed these situations
-                                            // TODO: Has this not already happened in Field? relation => dropdown
-                                            // type: relation fields
-                                            // Never nested
-                                            // For example: UserGroup(Yaml) columns: type: type: relation
-                                            //   => columns: user_group[type]: type: dropdown 
-                                            $subFieldObj->debugComment .= 'relationToEmbedMorph';
-                                            $subFieldObj->fieldKey  = $fieldKey;
-                                            $subFieldObj->fieldType = 'dropdown';
-
-                                            $message = "$modelTo->name::$fieldKey($subFieldObj->fieldType) on $relationClass($relation1to1->name) field already has a relation [$subFieldObj->relation] during deep field embed";
-                                            print("  $indentString$message\n");
-                                        } else {
-                                            // Force field display
-                                            if (!$subFieldObj->fieldType) $subFieldObj->fieldType = 'text';
-                                            $subFieldObj->fieldKey = $fieldKey;
-                                        }
-
-                                        // Fields Settings from relation
-                                        if (is_array($relation1to1->fieldsSettings)) {
-                                            $fieldsSettings = $relation1to1->fieldsSettings;
-                                            if (isset($fieldsSettings[$subFieldObj->fieldKey])) {
-                                                $fieldSettings = $fieldsSettings[$subFieldObj->fieldKey];
+                                            // Fields Settings from relation
+                                            if (   is_array($relation1to1->fieldsSettings)
+                                                && isset($relation1to1->fieldsSettings[$subFieldObj->columnKey])
+                                            ) {
+                                                $fieldSettings = $relation1to1->fieldsSettings[$subFieldObj->columnKey];
                                                 foreach ($fieldSettings as $name => $value) {
                                                     $nameCamel = Str::camel($name);
                                                     $subFieldObj->$nameCamel = $value;
                                                 }
                                             }
-                                        }
 
-                                        $fields[$subFieldObj->fieldKey] = $subFieldObj;
-                                    } else {
-                                        $explanation = '';
-                                        if ($isSpecialField)     $explanation .= "special($subFieldName) ";
-                                        if (!$includeContext)    $explanation .= '!include ';
-                                        if (!$canDisplayAsField) $explanation .= "cannot display as field($subFieldName) ";
-                                        if ($isDuplicateField)   $explanation .= "duplicate($subFieldObj->fieldKey) ";
-                                        if ($isPseudoFieldName)  $explanation .= "pseudo($subFieldName) ";
-                                        print("  {$indentString}Field $modelTo->name::$subFieldName ignored because $explanation\n");
+                                            $fields[$subFieldObj->columnKey] = $subFieldObj;
+                                        } else {
+                                            $explanation = '';
+                                            if ($isSpecialField)      $explanation .= "special($subFieldName) ";
+                                            if (!$canDisplayAsColumn) $explanation .= "cannot display as column($subFieldName) ";
+                                            if (!$includeContext)     $explanation .= '!include ';
+                                            if ($isDuplicateField)    $explanation .= "duplicate($subFieldObj->fieldKey) ";
+                                            if ($isPseudoFieldName)   $explanation .= "pseudo($subFieldName) ";
+                                            if ($hasSubRelation)      $explanation .= "hasSubRelation($subFieldObj->relation) ";
+                                            // if ($isAlreadyNested)     $explanation .= "alreadyNested($subFieldName) ";
+                                            print("  {$indentString}Field $modelTo->name::$subFieldName ignored because $explanation\n");
+                                        }
+                                    }
+                                }
+
+                                if (!$relation1to1 instanceof RelationHasManyDeep) {
+                                    // -------------------------------------------------- Nested fields
+                                    // Requires full recursive embedding
+                                    // stepping along the chain 1-1 belongsTo relations
+                                    // A $relation1to1Path indicates that the caller routine, also this method, wants these fields nested
+                                    // TODO: dependsOn morphing
+                                    $relation1to1Fields = $modelTo->fields($recursing+1);
+                                    foreach ($relation1to1Fields as $subFieldName => $subFieldObj) {
+                                        // Exclude fields that have the same local name as fields in the parent form
+                                        // this naturally exlcudes id and created_*
+                                        // TODO: created_* is not being excluded
+                                        $includeContext    = $subFieldObj->shouldInclude();
+                                        // Pseudo fields relate to dependsOn as well
+                                        // but are for form functionality and should not interfere
+                                        $isPseudoFieldName = self::isPseudo($subFieldName);
+                                        // We could change the id name to also allow them...
+                                        $isSpecialField    = ($subFieldName == 'id');
+                                        // If this comes from a column only field
+                                        // fieldKey & fieldType === FALSE
+                                        // we do not want to recurse on the column onlys and make them fields
+                                        $canDisplayAsField = $subFieldObj->canDisplayAsField();
+
+                                        // type: relationmanager does not use nested names
+                                        // because they relate to config_relation.yaml entries only
+                                        // nameFrom should not be included in the fields.yaml name:
+                                        // as it will be applied to the output in the nested scenario
+                                        $isRelationManager = ($subFieldObj->fieldType == 'relationmanager');
+                                        $nestingMode       = ($isRelationManager ? self::RELATION_MODE : self::NESTED_MODE);
+                                        
+                                        // Final field key
+                                        $fieldKey          = $this->nestedFieldName(
+                                            $relation1to1,
+                                            $subFieldName,
+                                            self::NO_VALUE_FROM,
+                                            $nestingMode,
+                                        );
+                                        $isDuplicateField  = isset($fields[$fieldKey]);
+
+                                        // If the column is not sortable
+                                        // WinterModel loaded probably
+                                        // then it may be included in the nested fields +column
+                                        // unless it has a select: clause
+                                        $isSortable         = ($subFieldObj->sortable !== FALSE);
+                                        $hasSqlClause       = (bool) $subFieldObj->sqlSelect;
+
+                                        if (   !$isSpecialField
+                                            && $includeContext 
+                                            && $canDisplayAsField
+                                            && !$isDuplicateField
+                                            && !$isPseudoFieldName
+                                        ) {
+                                            $subNestLevel            = ($subFieldObj->nestLevel ?: 0);
+                                            $subFieldObj->nestLevel  = $subNestLevel + 1;
+                                            $subFieldObj->nested     = TRUE;
+                                            $subFieldObj->debugComment .= " Recursing(level $recursing) [$relationClass => $modelToClass::$subFieldName with relation: $relation1to1->name] for field\n";
+
+                                            // Prevent this field displaying as a column
+                                            // canDisplayAsColumn() checks columnType
+                                            // because we prefer the sortable HasManyDeep version above
+                                            // However, WinterModel may have specified no sorting,
+                                            // for example on translations field
+                                            if (!$isSortable && !$hasSqlClause) {
+                                                print("  {$indentString}Field $modelTo->name::$subFieldName column included because sortable:false and no select: clause\n");
+                                                // Nested column version
+                                                $subFieldObj->columnKey  = $fieldKey;
+                                                $subFieldObj->relation   = NULL;
+                                            } else {
+                                                $subFieldObj->columnType = FALSE;
+                                                $subFieldObj->columnKey  = FALSE;
+                                            }
+                                            // Nested sub relations cannot be filters
+                                            $subFieldObj->canFilter = FALSE; 
+
+                                            if ($subFieldObj->fieldType == 'fileupload') {
+                                                // TODO: Fix embedded 1to1 file uploads
+                                                $subFieldObj->contexts = array('update' => TRUE);
+                                            }
+
+                                            if ($subFieldObj->fieldType == 'relation') {
+                                                // TODO: Handle type: relation deep embed these situations
+                                                // TODO: Has this not already happened in Field? relation => dropdown
+                                                // type: relation fields
+                                                // Never nested
+                                                // For example: UserGroup(Yaml) columns: type: type: relation
+                                                //   => columns: user_group[type]: type: dropdown 
+                                                $subFieldObj->debugComment .= 'relationToEmbedMorph';
+                                                $subFieldObj->fieldKey  = $fieldKey;
+                                                $subFieldObj->fieldType = 'dropdown';
+
+                                                $message = "$modelTo->name::$fieldKey($subFieldObj->fieldType) on $relationClass($relation1to1->name) field already has a relation [$subFieldObj->relation] during deep field embed";
+                                                print("  $indentString$message\n");
+                                            } else {
+                                                // Force field display
+                                                if (!$subFieldObj->fieldType) $subFieldObj->fieldType = 'text';
+                                                $subFieldObj->fieldKey = $fieldKey;
+                                            }
+
+                                            // Fields Settings from relation
+                                            if (is_array($relation1to1->fieldsSettings)) {
+                                                $fieldsSettings = $relation1to1->fieldsSettings;
+                                                if (isset($fieldsSettings[$subFieldObj->fieldKey])) {
+                                                    $fieldSettings = $fieldsSettings[$subFieldObj->fieldKey];
+                                                    foreach ($fieldSettings as $name => $value) {
+                                                        $nameCamel = Str::camel($name);
+                                                        $subFieldObj->$nameCamel = $value;
+                                                    }
+                                                }
+                                            }
+
+                                            $fields[$subFieldObj->fieldKey] = $subFieldObj;
+                                        } else {
+                                            $explanation = '';
+                                            if ($isSpecialField)     $explanation .= "special($subFieldName) ";
+                                            if (!$includeContext)    $explanation .= '!include ';
+                                            if (!$canDisplayAsField) $explanation .= "cannot display as field($subFieldName) ";
+                                            if ($isDuplicateField)   $explanation .= "duplicate($subFieldObj->fieldKey) ";
+                                            if ($isPseudoFieldName)  $explanation .= "pseudo($subFieldName) ";
+                                            print("  {$indentString}Field $modelTo->name::$subFieldName ignored because $explanation\n");
+                                        }
                                     }
                                 }
                             }
+                        } else {
+                            // Direct entry in fields array
+                            $fields["$fieldObj->name$fieldObj->fieldKeyQualifier"] = $fieldObj;
                         }
-                    } else {
-                        // Direct entry in fields array
-                        $fields[$fieldObj->name] = $fieldObj;
                     }
                 }
             }
