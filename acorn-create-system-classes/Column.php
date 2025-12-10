@@ -190,6 +190,8 @@ class Column {
     public $noLabel;      // css-classes: nolabel
     public $bootstraps;   // bootstrap: xs: 12 sm: 4
     public $popupClasses; // popup-classes: h
+    public $recordOnClick;
+    public $recordUrl;
     public $attributes;
     public $dependsOn;
     public $containerAttributes;

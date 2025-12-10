@@ -70,6 +70,7 @@ class Field {
     public $noLabel; // From column comment
     public $contexts;
     public $recordUrl; // Relevant for relation managers only
+    public $recordOnClick;
     public $span;
     public $cssClasses;
     // TODO: Move this assumed col-xs-6 to a later on default

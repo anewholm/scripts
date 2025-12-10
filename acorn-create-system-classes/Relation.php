@@ -29,6 +29,7 @@ class Relation {
     public $suffix;
     public $contexts;
     public $recordUrl;
+    public $recordOnClick;
     public $recordsPerPage;
     public $valueFrom;
     public $type;   // explicit typing

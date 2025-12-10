@@ -235,10 +235,12 @@ class Plugin {
         return "$authorLower/$nameLower";
     }
 
-    public function permissionFQN(): string
+    public function permissionFQN(string|NULL $permission = NULL): string
     {
-        $dotName = $this->dotName();
-        return "$dotName.plugin";
+        // For plugin name and description
+        $dotPath = $this->dotName();
+        if ($permission) $dotPath .= ".$permission";
+        return $dotPath;
     }
 
     public function absoluteFullyQualifiedName(): string
@@ -255,7 +257,7 @@ class Plugin {
         // acorn.university.entity
         $view           = 'View';
         $menuitemPlural = Str::title($this->name);
-        $permissions[$this->permissionFQN()] = array(
+        $permissions[$this->permissionFQN('plugin')] = array(
             'labels' => array('en' => "$view $menuitemPlural plugin")
         );
 

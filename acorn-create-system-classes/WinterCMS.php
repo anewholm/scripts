@@ -481,6 +481,10 @@ PHP;
                         DB::SET_NULL
                     );
                 }
+                // Permissions
+                $permTableName = str_replace('_', '', $thisTableSubName);
+                $permView      = $thisPlugin->permissionFQN("{$permTableName}_globalscope_view");
+                $permChange    = $thisPlugin->permissionFQN("{$permTableName}_globalscope_change");
 
                 // Add field to user field tab and columns
                 $bootMethodPhp    .= <<<PHP
@@ -497,7 +501,8 @@ PHP;
             'cssClass' => 'col-xs-6 col-md-3',
             'options' => '$thisOptions',
             'emptyOption' => 'acorn::lang.models.general.no_restriction',
-            'tab'     => 'acorn::lang.models.general.global_scopes'
+            'tab'     => 'acorn::lang.models.general.global_scopes',
+            'permissions' => ['$permView', '$permChange']
         ]]);
     }
 });
@@ -513,7 +518,8 @@ PHP;
             'cssClass' => 'col-xs-6 col-md-3',
             'options' => '$thisOptions',
             'emptyOption' => 'acorn::lang.models.general.no_restriction',
-            'tab'     => 'acorn.user::lang.plugin.name'
+            'tab'     => 'acorn.user::lang.plugin.name',
+            'permissions' => ['$permView', '$permChange']
         ]]);
     }
 });
@@ -523,6 +529,7 @@ PHP;
             'label'     => '$thisLabel',
             'relation'  => '$usersColumnStub',
             'valueFrom' => 'name',
+            'permissions' => ['$permView']
         ]]);
     }
 });
@@ -762,7 +769,7 @@ PHP;
                     $icon = $this->getNextIcon();
                     print("  Auto-selected plugin icon {$YELLOW}$icon{$NC}\n");
                 }
-                $permissionFQN = $plugin->permissionFQN();
+                $permissionFQN = $plugin->permissionFQN('plugin');
                 $navigationDefinition = array(
                     $pluginMenuName => array(
                         'label'       => "$translationDomain::lang.plugin.name",
@@ -2231,6 +2238,7 @@ PHP
                             'recordsPerPage' => $field->recordsPerPage, // Can be false
                             'showCheckboxes' => FALSE,
                             'recordOnClick'  => 'return false',
+                            // NOTE: The recordUrl goes on the field
                         ),
                     );
                 } else {
@@ -2240,6 +2248,7 @@ PHP
                             'list' => "\$/$relationModelDirPath/columns.yaml",
                             // TODO: Causes fail at the moment
                             'recordsPerPage' => FALSE, //$field->recordsPerPage, 
+                            // NOTE: The recordUrl goes on the field
                         ),
                         'manage' => array(
                             'form' => "\$/$relationModelDirPath/fields.yaml",
@@ -2268,6 +2277,7 @@ PHP
                         $relationDefinition['manage']['filter'] = "\$/$path";
                     }
                 }
+                if (!is_null($field->recordOnClick)) $relationDefinition['view']['recordOnClick'] = $field->recordOnClick;
 
                 $this->yamlFileSet($configRelationPath, $field->fieldKey, $relationDefinition);
             }
