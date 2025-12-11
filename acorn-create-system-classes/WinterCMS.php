@@ -1636,6 +1636,7 @@ PHP
                     'dependsOn'    => $dependsOn,
                     'dependsOnSettings' => $dependsOnSettings,
                     'deferrable'   => $field->deferrable,
+                    'trigger'      => $field->trigger,
                     
                     // Extended info
                     'nested'       => ($field->nested    ?: NULL),
