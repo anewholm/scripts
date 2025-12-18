@@ -14,3 +14,5 @@ IMPORT FOREIGN SCHEMA public LIMIT TO (university_mofadala_candidate_exams) FROM
 IMPORT FOREIGN SCHEMA public LIMIT TO (university_mofadala_candidate_exam_materials) FROM SERVER localserver_universityacceptance INTO public;
 IMPORT FOREIGN SCHEMA public LIMIT TO (university_mofadala_candidate_exam_material_marks) FROM SERVER localserver_universityacceptance INTO public;
 IMPORT FOREIGN SCHEMA public LIMIT TO (university_mofadala_type_certificates) FROM SERVER localserver_universityacceptance INTO public;
+
+IMPORT FOREIGN SCHEMA public LIMIT TO (system_files) FROM SERVER localserver_universityacceptance INTO product;

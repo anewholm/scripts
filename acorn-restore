@@ -7,6 +7,13 @@ NC="$(tput sgr0)"
 TICK="${GREEN}✓${NC}"
 CROSS="${RED}✘${NC}"
 
+if [ "$1" == "--help" ]; then
+	echo "Usage: ./acorn-restore [postgresql-server-port]"
+	echo "acorn-restore will check all *.backup, *.sql, *.tar.gz files and restore them to the appropriate place"
+	echo "All filenames should match the target directories|databases"
+	exit
+fi
+
 port=5432
 if [ -n "$1" ]; then
 	port=$1; 
@@ -19,39 +26,47 @@ fi
 version=`sudo -u postgres psql -p $port -d postgres -c "select version()" | head -n 3 | tail -n -1 | cut -d ' ' -f 3 | cut -d ' ' -f 3`
 
 # ------------------------------------------------- DB .sql backups
-latest=`ls -t1 *.sql 2> /dev/null | head -n 1`
-db=`echo "$latest" | cut -d '-' -f 1 | cut -d '.' -f 1`
-if [ -n "$latest" ]; then
-	read -p "Restore ${GREEN}$latest${NC} into ${GREEN}$db${NC} server version [${GREEN}$version${NC}] (yn)? [y]" yn
-	if [ "$yn" != 'n' ]; then
-		sudo -u postgres psql -p $port -d "$db" -c "drop schema if exists public cascade; drop schema if exists product cascade; create schema public;"
-		sudo -u postgres psql -p $port "$db" < "$latest"
-	fi
-fi
+# for backup_file in *.sql; do
+# 	db=`echo "$backup_file" | cut -d '-' -f 1 | cut -d '.' -f 1`
+# 	if [ -n "$backup_file" ]; then
+# 		read -p "Restore ${GREEN}$backup_file${NC} into ${GREEN}$db${NC} server version [${GREEN}$version${NC}] (yn)? [y]" yn
+# 		if [ "$yn" != 'n' ]; then
+# 			sudo -u postgres psql -p $port -d "$db" -c "drop schema if exists public cascade; drop schema if exists product cascade; create schema public;"
+# 			sudo -u postgres psql -p $port "$db" < "$backup_file"
+# 		fi
+# 	fi
+# done
 
 # ------------------------------------------------- DB .backup backups
-latest=`ls -t1 *.backup 2> /dev/null | head -n 1`
-db=`echo "$latest" | cut -d '-' -f 1 | cut -d '.' -f 1`
-if [ -n "$latest" ]; then
-	read -p "Restore ${GREEN}$latest${NC} into ${GREEN}$db${NC} server version [${GREEN}$version${NC}] (yn)? [y]" yn
-	if [ "$yn" != 'n' ]; then
-		sudo -u postgres psql -p $port -d "$db" -c "drop schema if exists public cascade; drop schema if exists product cascade; create schema public;"
-		sudo -u postgres pg_restore -p $port -d $db $latest
+for backup_file in *.backup; do
+	db=`echo "$backup_file" | cut -d '-' -f 1 | cut -d '.' -f 1`
+	if [ -n "$backup_file" ]; then
+		read -p "Restore ${GREEN}$backup_file${NC} into ${GREEN}$db${NC} server version [${GREEN}$version${NC}] (yn)? [y]" yn
+		if [ "$yn" != 'n' ]; then
+			# TODO: Create missing logins: How can we know the password?
+			# Schema and grants
+			sudo -u postgres psql -p $port -d "$db" -c "drop schema if exists public cascade; drop schema if exists product cascade;"
+			sudo -u postgres psql -p $port -d "$db" -c "create schema public;"
+			sudo -u postgres psql -p $port -d "$db" -c "GRANT ALL ON SCHEMA public to PUBLIC;"
+			# Main run
+			sudo -u postgres pg_restore -p $port -d $db $backup_file
+		fi
 	fi
-fi
+done
 
 # ------------------------------------------------- Filesytem
-latest=`ls -t1 *.tar.gz 2> /dev/null | head -n 1`
-dir=`echo "$latest" | cut -d '-' -f 1 | cut -d '.' -f 1`
-if [ -n "$latest" ]; then
-	read -p "Restore ${GREEN}$latest${NC} into /var/www/${GREEN}$dir${NC}/ (yn)? [y]" yn
-	if [ "$yn" != 'n' ]; then
-		sudo rm -rf /var/www/$dir
-		sudo tar -xzf $latest -C /var/www/
-		sudo chown -R www-data:www-data /var/www/$dir
-		sudo chmod -R g+rw /var/www/$dir
+for backup_file in *.tar.gz; do
+	dir=`echo "$backup_file" | cut -d '-' -f 1 | cut -d '.' -f 1`
+	if [ -n "$backup_file" ]; then
+		read -p "Restore ${GREEN}$backup_file${NC} into /var/www/${GREEN}$dir${NC}/ (yn)? [y]" yn
+		if [ "$yn" != 'n' ]; then
+			sudo rm -rf /var/www/$dir
+			sudo tar -xzf $backup_file -C /var/www/
+			sudo chown -R www-data:www-data /var/www/$dir
+			sudo chmod -R g+rw /var/www/$dir
+		fi
 	fi
-fi
+done
 
 # ------------------------------------------------- Config checks
 env="/var/www/$dir/.env"
