@@ -31,6 +31,8 @@ class Relation {
     public $recordUrl;
     public $recordOnClick;
     public $recordsPerPage;
+    public $extraTranslations; // array
+    public $trigger;  // field trigger field/action/conditions
     public $valueFrom;
     public $type;   // explicit typing
     public $delete; // Relation delete: true will cause reverse cascade deletion of associated object
@@ -49,6 +51,7 @@ class Relation {
     public $tabLocation; // primary|secondary|tertiary
     public $span;
     public $rlButtons;
+    public $rlTitle;
 
     // Filter config_filter.yaml
     public $canFilter;
@@ -340,9 +343,9 @@ class RelationXto1 extends Relation {
         Model  $from, 
         Model  $to, 
         Column $column, 
-        ForeignKey $foreignKey = NULL,
+        ForeignKey|NULL $foreignKey = NULL,
         bool $isCount = FALSE,
-        string $conditions = NULL
+        string|NULL $conditions = NULL
     ) {
         parent::__construct($name, $from, $to, $column, $foreignKey, $isCount, $conditions);
 

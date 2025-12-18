@@ -239,7 +239,10 @@ class Plugin {
     {
         // For plugin name and description
         $dotPath = $this->dotName();
-        if ($permission) $dotPath .= ".$permission";
+        if ($permission) {
+            $permission = str_replace(['[', ']'], '_', $permission);
+            $dotPath .= ".$permission";
+        }
         return $dotPath;
     }
 

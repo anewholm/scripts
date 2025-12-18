@@ -397,7 +397,7 @@ class WinterCMS extends Framework
             $pluginLabel      = $thisPlugin->translationKey();
             $thisOptions      = $thisModel->dropdownOptionsCall();
             $thisRelationName = $thisModel->dirName(); // hierarchies
-            $thisClassFQN     = $thisModel->absoluteFullyQualifiedName(Model::WITH_CLASS_STRING);
+            $thisClassFQN     = $thisModel->absoluteFullyQualifiedName();
             $thisTableFQN     = $thisTable->fullyQualifiedName();
 
             // ------------------------------- belongsTo(1-1) => hasOne
@@ -419,13 +419,23 @@ class WinterCMS extends Framework
                         $listFields = array_merge($listFields, $relation->fieldsSettingsTo);
                     $listFieldsString = var_export($listFields, TRUE);
 
+                    // Add the relation
+                    // TODO: Get Relation to serialize itself
+                    $relationDefintion = array(
+                        0 => $thisClassFQN, 
+                        'table' => $thisTableFQN
+                    );
+                    if ($relation instanceof RelationLeaf) $relationDefintion['leaf'] = TRUE;
+                    $relationDefintionString = var_export($relationDefintion, TRUE);
                     $bootMethodPhp    .= <<<PHP
 // ------------------ $customModelFQN
 $customModelFQN::extend(function (\$model){
-    \$model->{$relationType}['$thisRelationName'] = [$thisClassFQN, 'table' => '$thisTableFQN'];
+    \$model->{$relationType}['$thisRelationName'] = $relationDefintionString;
 });
 
 PHP;
+
+                    // Add the column
                     if ($customController->exists()) {
                         // We DO NOT add the field for performance reasons
                         // \Acorn\Controller::extendFormFieldsGeneral(function (\$form, \$model, \$context) {
@@ -486,24 +496,50 @@ PHP;
                 $permView      = $thisPlugin->permissionFQN("{$permTableName}_globalscope_view");
                 $permChange    = $thisPlugin->permissionFQN("{$permTableName}_globalscope_change");
 
-                // Add field to user field tab and columns
+                // Add fields|column to user field tab and columns
+                $relationDefintion = array(
+                    0 => $thisClassFQN, 
+                    'table' => $thisTableFQN
+                );
+                $relationDefintionString = var_export($relationDefintion, TRUE);
+                $fieldDefintion = array(
+                    'label'    => $thisLabel,
+                    'type'     => 'dropdown',
+                    'span'     => 'storm',
+                    'cssClass' => 'col-xs-6 col-md-3',
+                    'options'  => $thisOptions,
+                    'tab'      => 'acorn::lang.models.general.global_scopes',
+                    'emptyOption' => 'acorn::lang.models.general.no_restriction',
+                    'permissions' => [$permView, $permChange]
+                );
+                $fieldDefintionString = var_export($fieldDefintion, TRUE);
+                $backFieldDefintion = array(
+                    'label'    => $thisLabel,
+                    'type'     => 'dropdown',
+                    'span'     => 'storm',
+                    'cssClass' => 'col-xs-6 col-md-3',
+                    'options'  => $thisOptions,
+                    'context'  => 'update',
+                    'tab'      => 'acorn.user::lang.plugin.name',
+                    'emptyOption' => 'acorn::lang.models.general.no_restriction',
+                    'permissions' => [$permView, $permChange]
+                );
+                $backFieldDefintionString = var_export($backFieldDefintion, TRUE);
+                $columnDefintion = array(
+                    'label'     => $thisLabel,
+                    'relation'  => $usersColumnStub,
+                    'valueFrom' => 'name',
+                    'permissions' => [$permView]
+                );
+                $columnDefintionString = var_export($columnDefintion, TRUE);
                 $bootMethodPhp    .= <<<PHP
 // ------------------ Global Scope setting for $thisModel
 \Acorn\User\Models\User::extend(function (\$model){
-    \$model->belongsTo['$usersColumnStub'] = [$thisClassFQN, 'table' => '$thisTableFQN'];
+    \$model->belongsTo['$usersColumnStub'] = $relationDefintionString;
 });
 \Acorn\User\Controllers\Users::extendFormFieldsGeneral(function (\$form, \$model, \$context) {
     if (\$model instanceof \Acorn\User\Models\User) {
-        \$form->addTabFields(['$usersColumnName' => [
-            'label'   => '$thisLabel',
-            'type'    => 'dropdown',
-            'span'    => 'storm',
-            'cssClass' => 'col-xs-6 col-md-3',
-            'options' => '$thisOptions',
-            'emptyOption' => 'acorn::lang.models.general.no_restriction',
-            'tab'     => 'acorn::lang.models.general.global_scopes',
-            'permissions' => ['$permView', '$permChange']
-        ]]);
+        \$form->addTabFields(['$usersColumnName' => $fieldDefintionString]);
     }
 });
 \Event::listen('backend.form.extendFields', function (\$widget) {
@@ -511,26 +547,12 @@ PHP;
     \$model   = \$widget->model;
 
     if (\$model instanceof \Backend\Models\User) {
-        \$form->addTabFields(['user[$usersColumnStub]' => [
-            'label'   => '$thisLabel',
-            'type'    => 'dropdown',
-            'span'    => 'storm',
-            'cssClass' => 'col-xs-6 col-md-3',
-            'options' => '$thisOptions',
-            'emptyOption' => 'acorn::lang.models.general.no_restriction',
-            'tab'     => 'acorn.user::lang.plugin.name',
-            'permissions' => ['$permView', '$permChange']
-        ]]);
+        \$form->addTabFields(['user[$usersColumnStub]' => $backFieldDefintionString]);
     }
 });
 \Acorn\User\Controllers\Users::extendListColumnsGeneral(function (\$list, \$model) {
     if (\$model instanceof \Acorn\User\Models\User) {
-        \$list->addColumns(['$usersColumnStub' => [
-            'label'     => '$thisLabel',
-            'relation'  => '$usersColumnStub',
-            'valueFrom' => 'name',
-            'permissions' => ['$permView']
-        ]]);
+        \$list->addColumns(['$usersColumnStub' => $columnDefintionString]);
     }
 });
 
@@ -796,6 +818,7 @@ PHP;
         $modelTranslationKey = $model->translationDomain();
         $langDirPath         = "$pluginDirectoryPath/lang";
         $table               = $model->getTable();
+        $modelKey            = $model->localTranslationKey();
 
         if (file_exists($modelFilePath) && $overwrite) unlink($modelFilePath);
         if (file_exists($modelFilePath)) {
@@ -1156,6 +1179,38 @@ PHP
                 ), Framework::AND_FALSES);
             }
             $this->setPropertyInClassFile($modelFilePath, 'hasOne', $relations);
+
+            // ----------------------------------------------------------------- Extra translations
+            if ($model->extraTranslations) {
+                foreach ($model->extraTranslations as $code => $labels) {
+                    print("    Add {$YELLOW}$code{$NC} to {$YELLOW}lang/*{$NC} for {$YELLOW}$name{$NC}\n");
+                    $localTranslationKey = "$modelKey.$code";
+                    if (!is_array($labels)) 
+                        throw new Exception("Field $relation on $model->name has non-array labels");
+                    foreach ($labels as $langName => &$translation) {
+                        $langFilePath = "$langDirPath/$langName/lang.php";
+                        if (!file_exists($langFilePath)) 
+                            throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
+                        $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
+                    }
+                }
+            }
+            foreach ($model->relationsDirect() as $relation) {
+                if ($relation->extraTranslations) {
+                    foreach ($relation->extraTranslations as $code => $labels) {
+                        print("    Add {$YELLOW}$code{$NC} to {$YELLOW}lang/*{$NC} for {$YELLOW}$name{$NC}\n");
+                        $localTranslationKey = "$modelKey.$code";
+                        if (!is_array($labels)) 
+                            throw new Exception("Field $relation on $model->name has non-array labels");
+                        foreach ($labels as $langName => &$translation) {
+                            $langFilePath = "$langDirPath/$langName/lang.php";
+                            if (!file_exists($langFilePath)) 
+                                throw new Exception("No translation file found for label.[$langName] in field [$name] on [$model->name]");
+                            $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, $field->dbObject(), TRUE, $field->yamlComment);
+                        }
+                    }
+                }
+            }
 
             // ----------------------------------------------------------------- File Uploads $attachOne
             // Model needs to state them in public $attachOne
@@ -1584,7 +1639,7 @@ PHP
                         if (!isset($hintConfig['tabLocation']) && $field->tabLocation) $hintConfig['tabLocation'] = $field->tabLocation;
                         if (!isset($hintConfig['advanced']))    $hintConfig['advanced']    = $field->advanced;
                         if (!isset($hintConfig['permissions'])) $hintConfig['permissions'] = $field->permissions;
-                        $this->yamlFileSet($fieldsPath, "$dotPathStub._{$fieldKey}_hint", 
+                        $this->yamlFileSet($fieldsPath, "$dotPathStub._{$fieldKey}_{$hintName}_hint", 
                             $this->buildHint($model, $hintName, $hintConfig, $fieldsPath)
                         );
                     }
@@ -1930,6 +1985,7 @@ PHP
                 }
             }
         }
+
         foreach ($extraTranslations as $code => $labels) {
             print("    Add {$YELLOW}$code{$NC} to {$YELLOW}lang/*{$NC}\n");
             $localTranslationKey = "$modelKey.$code";
@@ -2236,7 +2292,8 @@ PHP
                         'view'     => array(
                             'list' => "\$/$relationModelDirPath/columns.yaml",
                             'toolbarButtons' => false,
-                            'recordsPerPage' => $field->recordsPerPage, // Can be false
+                            // Can be false
+                            'recordsPerPage' => (is_null($field->recordsPerPage) ? 10 : $field->recordsPerPage), 
                             'showCheckboxes' => FALSE,
                             'recordOnClick'  => 'return false',
                             // NOTE: The recordUrl goes on the field
@@ -2247,20 +2304,21 @@ PHP
                         'label' => $field->translationKey(),
                         'view' => array(
                             'list' => "\$/$relationModelDirPath/columns.yaml",
-                            // TODO: Causes fail at the moment
-                            'recordsPerPage' => FALSE, //$field->recordsPerPage, 
+                            // recordsPerPage Causes fail if Backend\widgets\Lists.php is not patched
+                            'recordsPerPage' => (is_null($field->recordsPerPage) ? FALSE : $field->recordsPerPage), 
                             // NOTE: The recordUrl goes on the field
                         ),
                         'manage' => array(
                             'form' => "\$/$relationModelDirPath/fields.yaml",
-                            // TODO: Causes fail at the moment
-                            'recordsPerPage' => FALSE, // $field->recordsPerPage,
+                            // recordsPerPage Causes fail if Backend\widgets\Lists.php is not patched
+                            'recordsPerPage' => (is_null($field->recordsPerPage) ? FALSE : $field->recordsPerPage), 
                         ),
                     );
                     if (!is_null($relation1->defaultSort)) $relationDefinition['view']['defaultSort'] = $relation1->defaultSort;
                     if (!is_null($rlButtonsValue))         $relationDefinition['view']['toolbarButtons'] = $rlButtonsValue;
                     if ($relationModel->hasField('sort_order'))   $relationDefinition['view']['defaultSort'] = array('column' => 'sort_order', 'direction' => 'asc');
                     if ($relationModel->hasField('ordinal'))      $relationDefinition['view']['defaultSort'] = array('column' => 'ordinal',    'direction' => 'asc');
+                    if (!is_null($relation1->rlTitle))     $relationDefinition['manage']['title'] = $relation1->rlTitle;
                 }
                 
                 // WinterCMS lies: The record-url: needs to be on the field.yaml, not the config-relation.yaml");

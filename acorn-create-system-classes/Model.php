@@ -54,6 +54,7 @@ class Model {
     public $commentHtml;   // For form-comment
     public $menu = TRUE;
     public $menuSplitter = FALSE;
+    public $extraTranslations; // array
     public $menuIndent   = 0;
     public $menuTaskItems; // array
     public $icon;
@@ -197,6 +198,10 @@ class Model {
 
     public static function get(string $modelFQN): self|NULL
     {
+        // Winter statements may be absolute, e.g. \Acorn...
+        $modelFQN = trim($modelFQN, '\\');
+        // Winter statements may have ::class written on them
+        $modelFQN = explode('::', $modelFQN)[0];
         return (isset(self::$models[$modelFQN]) ? self::$models[$modelFQN] : NULL);
     }
 
@@ -460,13 +465,16 @@ class Model {
         return "$pluginDirName.$dirName";
     }
 
-    public function permissionFQN(string|array $qualifier = NULL): string
+    public function permissionFQN(string|array|NULL $qualifier = NULL): string
     {
         // acorn.university.student [_<qualifier>]
         if (is_array($qualifier)) $qualifier = implode('_', $qualifier);
 
         $permissionFQN = $this->fullyQualifiedDotName();
-        if ($qualifier) $permissionFQN .= "_$qualifier";
+        if ($qualifier) {
+            $qualifier = str_replace(['[', ']'], '_', $qualifier);
+            $permissionFQN .= "_$qualifier";
+        }
         return $permissionFQN;
     }
 
@@ -761,8 +769,13 @@ class Model {
         return ($relationModelToFQN == $checkModelToFQN);
     }
 
+    public function relationsDirect(Column|NULL $forColumn = NULL): array
+    {
+        return $this->relations($forColumn, Model::NO_HAS_MANY_DEEP, Model::NO_FROMS);
+    }
+
     public function relations(
-        Column &$forColumn   = NULL, 
+        Column &$forColumn = NULL, 
         bool $andHasManyDeep = self::WITH_HAS_MANY_DEEP, 
         bool $andFroms       = self::WITH_FROMS
     ): array {
@@ -1172,6 +1185,9 @@ class Model {
             // Non-create system plugins do not represent all their FKs necessarily, 
             // nor with our or standard naming conventions
             // so we need to read the actual class definition relations, not the database FKs
+            // NOTE: WinterCMS will run Plugin::boot()s and add extra relations to the Winter Model as normal
+            // For example:
+            //   AA\User + $belongsTo [global_scopes...]
             if ($winterModel = $this->winterModel(FALSE)) {
                 foreach ($winterModel->belongsTo as $relationName => $config) {
                     // If the relation config has a ModelTo setting, usually config[0]
@@ -1890,8 +1906,9 @@ class Model {
                     'contexts'       => $relation->contexts,
                     'recordUrl'      => $relation->recordUrl,
                     'recordOnClick'  => $relation->recordOnClick,
-                    'recordsPerPage' => ($relation->recordsPerPage ?: 10),
+                    'recordsPerPage' => (is_null($relation->recordsPerPage) ? 10 : $relation->recordsPerPage),
                     'relation'       => $name,
+                    'trigger'        => $relation->trigger,
                     'searchable'     => (bool) $valueFrom,
                     'valueFrom'      => $valueFrom, // Necessary for search to work, is removed in nested scenario
                     'readOnly'       => $relation->readOnly,
@@ -1991,7 +2008,7 @@ class Model {
                 'contexts'       => $relation->contexts,
                 'recordUrl'      => $relation->recordUrl,
                 'recordOnClick'  => $relation->recordOnClick,
-                'recordsPerPage' => ($relation->recordsPerPage ?: 10),
+                'recordsPerPage' => (is_null($relation->recordsPerPage) ? 10 : $relation->recordsPerPage),
                 'cssClasses'     => $cssClasses,
                 'bootstraps'     => $relation->bootstraps,
                 'rlButtons'      => $relation->rlButtons,
@@ -2012,6 +2029,7 @@ class Model {
                 'multi'          => $relation->multi,
                 'nameObject'     => $relation->nameObject,
                 'span'           => $relation->span,
+                'trigger'        => $relation->trigger,
                 'tab'            => ($relation->tab ?: 'INHERIT'),
                 'noRelationManager' => (isset($relation->noRelationManager) ? $relation->noRelationManager : $this->noRelationManagerDefault),
                 'filterSearchNameSelect' => $relation->filterSearchNameSelect,
@@ -2113,7 +2131,7 @@ class Model {
                 'invisible'      => $relation->invisible,
                 'fieldExclude'   => $relation->fieldExclude,
                 'columnExclude'  => $relation->columnExclude,
-                'recordsPerPage' => ($relation->recordsPerPage ?: 10),
+                'recordsPerPage' => (is_null($relation->recordsPerPage) ? 10 : $relation->recordsPerPage),
                 'nameFrom'       => $nameFrom,
                 'contexts'       => $relation->contexts,
                 'recordUrl'      => $relation->recordUrl,
@@ -2136,6 +2154,7 @@ class Model {
                 'required'       => $relation->required,
                 'hints'          => $relation->hints,
                 'span'           => $relation->span,
+                'trigger'        => $relation->trigger,
                 'tab'            => ($relation->tab ?: 'INHERIT'),
                 'multi'          => $relation->multi,
                 'nameObject'     => $relation->nameObject,
@@ -2207,7 +2226,7 @@ class Model {
                 'invisible'      => $relation->invisible,
                 'fieldExclude'   => $relation->fieldExclude,
                 'columnExclude'  => $relation->columnExclude,
-                'recordsPerPage' => ($relation->recordsPerPage ?: 10),
+                'recordsPerPage' => (is_null($relation->recordsPerPage) ? 10 : $relation->recordsPerPage),
                 'nameFrom'       => $nameFrom,
                 'contexts'       => $relation->contexts,
                 'recordUrl'      => $relation->recordUrl,
@@ -2230,6 +2249,7 @@ class Model {
                 'hints'          => $relation->hints,
                 'required'       => $relation->required,
                 'span'           => $relation->span,
+                'trigger'        => $relation->trigger,
                 'tab'            => ($relation->tab ?: 'INHERIT'),
                 'multi'          => $relation->multi,
                 'nameObject'     => $relation->nameObject,
@@ -2255,6 +2275,7 @@ class Model {
         // if one is not already there from a 1-1
         if (   isset($fields['name']) 
             && $fields['name']->translatable
+            && !$fields['name']->nested
             && !isset($fields['translations'])
         ) {
             $fields['translations'] = new PseudoField($this, array(

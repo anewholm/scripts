@@ -178,7 +178,7 @@ class Column {
     public $contexts;
     public $default;
     public $required; // $is_nullable == NO && !$column_default
-    public $trigger;
+    public $trigger;  // field trigger field/action/conditions
     public $showSearch;
     public $span;
     public $hidden;

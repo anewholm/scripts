@@ -52,6 +52,8 @@ class ForeignKey {
     public $recordUrl;
     public $recordOnClick;
     public $recordsPerPage;
+    public $extraTranslations; // array
+    public $trigger;  // field trigger field/action/conditions
     public $status; // ok|exclude|broken
     public $include;
     public $advanced;
@@ -84,6 +86,7 @@ class ForeignKey {
     public $flags; // e.g. hierarchy flag for global scope
     public $filterSearchNameSelect; // Special select useful for 1to1 filter term search
     public $rlButtons; // On the relationmanager
+    public $rlTitle;
 
     public static function fromRow(Column &$column, bool $to, array $row)
     {

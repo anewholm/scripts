@@ -646,14 +646,13 @@ class Field {
 
     public function permissionStub(): string
     {
-        $plugin = $this->model->plugin->dotName();
         $model  = $this->model->dirName();
         $field  = $this->name;
 
         // We only register permissions for this plugin
-        // acorn.university...
+        // acorn.university.course_name
         // end, local name, must be unique in the plugin
-        return "$plugin.{$model}_$field";
+        return $this->model->plugin->permissionFQN("{$model}_$field");
     }
 
     public function cssClassesColumn(): array
@@ -1053,7 +1052,7 @@ class PseudoField extends Field {
     // and QR code field
     public $isStandard = FALSE;
     public $translationKey;
-    public $recordsPerPage = 10;
+    public $recordsPerPage;
 
     public function __construct(Model &$model, array $definition, array $relations = array())
     {
