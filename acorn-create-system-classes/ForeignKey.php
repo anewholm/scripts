@@ -14,6 +14,7 @@ class ForeignKey {
     // allowing the FK to display itself appropriately
     public $to   = FALSE;
     public $from = TRUE;
+    public $eagerLoad;
 
     // From our DB custom FK query
     public $table_from_schema;

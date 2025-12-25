@@ -55,6 +55,7 @@ class Model {
     public $menu = TRUE;
     public $menuSplitter = FALSE;
     public $extraTranslations; // array
+    public $flowChart;
     public $menuIndent   = 0;
     public $menuTaskItems; // array
     public $icon;
@@ -159,7 +160,8 @@ class Model {
         //             ...
         //         ]
         //     ],
-        //     'stage' => 'after'
+        //     'stage' => 'after',
+        //     'permissions' => [...] // Optional. Will be auto-generated
         // ], ...
         $modelFunctionSpecs = array();
         if ($dbFunctionSpecs) {
@@ -185,9 +187,14 @@ class Model {
                     }
                 }
 
+                // Default Permissions
+                if (!isset($definition['permissions']))
+                    $definition['permissions'] = array($this->permissionFQN("use_function_{$name}"));
+
                 $modelFunctionSpecs[$name] = array_merge(array(
                     'fnDatabaseName' => $fnName,
                     'parameters'     => $definition['parameters'],
+                    'permissions'    => $definition['permissions'],
                     'returnType'     => $definition['returnType'],
                 ), $commentDef);
                 if ($stage) $modelFunctionSpecs[$name]['stage'] = $stage;
@@ -380,7 +387,8 @@ class Model {
     {
         // For a UserGroup model, we mean a from FK reference of user_group_id
         $subNameSingular = $this->table->subNameSingular();
-        if (is_null($subNameSingular)) throw new Exception("$this has no sub-name singular");
+        if (is_null($subNameSingular)) 
+            throw new Exception("$this has no sub-name singular");
         return "{$subNameSingular}_id";
     }
 
@@ -679,11 +687,13 @@ class Model {
             'labels' => array('en' => "$labelAction $menuitemPlural")
         );
 
-        // Befores and Afters function permissions
+        // Action, Befores and Afters function permissions
         // These are added to all their fields automatically
+        // TODO: Maybe these after|before functions should be transaction level triggers?
         $stageFunctions = array_merge(
             $this->beforeFunctions ?: array(), 
-            $this->afterFunctions ?: array()
+            $this->afterFunctions  ?: array(),
+            $this->actionFunctions ?: array()
         );
         foreach ($stageFunctions as $name => &$functionSpec) {
             // Some parameters must come from the new, as yet not created, model
@@ -976,6 +986,8 @@ class Model {
         // because their foreign keys & relations are not adorned
         // It will return ANY from|to relation that is marked as HAS_MANY_DEEP_INCLUDE
         $relations1to1 = $stepModel->relations1to1($forColumn, self::HAS_MANY_DEEP_INCLUDE);
+        // TODO: Including relationsXto1() causes infinite recursion at the moment
+        // $relations1to1 = array_merge($relations1to1, $stepModel->relationsXto1($forColumn));
         if (FALSE) {
             // In-depth recursive output
             $depth    = count($throughRelations);
@@ -1193,21 +1205,24 @@ class Model {
                     // If the relation config has a ModelTo setting, usually config[0]
                     // $finalModel is a create-system Model wrapper
                     $finalModel = $this->relationConfigModel($config);
-                    $isCount    = (isset($config['count']) && $config['count']);
-                    $table      = NULL;
-                    if ($finalModel) {
-                        $table = $finalModel->getTable();
-                    } else {
-                        $modelFQN   = $this->relationConfigModelFQN($config);
-                        $finalModel = $this->winterModel(TRUE, $modelFQN);
-                        // Winter Model $table is protected
-                        $table      = Table::get($finalModel->getTable());
+                    // TODO: RelationXto1() does not support to: WinterModel at the moment
+                    if ($finalModel instanceof Model) {
+                        $isCount    = (isset($config['count']) && $config['count']);
+                        $table      = NULL;
+                        if ($finalModel) {
+                            $table = $finalModel->getTable();
+                        } else {
+                            $modelFQN   = $this->relationConfigModelFQN($config);
+                            $finalModel = $this->winterModel(TRUE, $modelFQN);
+                            // Winter Model $table is protected
+                            $table      = Table::get($finalModel->getTable());
+                        }
+                        $key        = (isset($config['key']) ? $config['key'] : $this->standardBareReferencingField());
+                        $conditions = (isset($config['conditions']) ? $config['conditions'] : NULL);
+                        $columnFrom = Column::dummy($table, $key);
+                        if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
+                            $relations[$relationName] = new RelationXto1($relationName, $this, $finalModel, $columnFrom, NULL, $isCount, $conditions);
                     }
-                    $key        = (isset($config['key']) ? $config['key'] : $this->standardBareReferencingField());
-                    $conditions = (isset($config['conditions']) ? $config['conditions'] : NULL);
-                    $columnFrom = Column::dummy($table, $key);
-                    if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
-                        $relations[$relationName] = new RelationXto1($relationName, $this, $finalModel, $columnFrom, NULL, $isCount, $conditions);
                 }
             }
         }
@@ -1345,30 +1360,33 @@ class Model {
                     // If the relation config has a ModelTo setting, usually config[0]
                     // $finalModel is a create-system Model wrapper
                     $finalModel    = $this->relationConfigModel($config);
-                    $db            = $this->table->db();
-                    $isCount       = (isset($config['count']) && $config['count']);
-                    $key           = (isset($config['key'])      ? $config['key']      : $this->standardBareReferencingField());
-                    $conditions    = (isset($config['conditions']) ? $config['conditions'] : NULL);
-                    $otherKey      = (isset($config['otherKey']) ? $config['otherKey'] : $finalModel->standardBareReferencingField());
-                    if (!isset($config['table'])) 
-                        throw new Exception("[$relationName] on [$this->name] has no table config");
-                    $table         = $config['table'];
-                    $pivotTable    = Table::get($table);
-                    if (!$pivotTable) $pivotTable = Table::dummy($db, $table);
-                    $columnFrom    = Column::dummy($finalModel->table, $key);
-                    $throughColumn = Column::dummy($finalModel->table, $otherKey);
-                    if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
-                        $relations[$relationName] = new RelationXfromX(
-                            $relationName, 
-                            $this, 
-                            $finalModel, 
-                            $pivotTable,
-                            $columnFrom,
-                            $throughColumn,
-                            NULL,
-                            $isCount,
-                            $conditions
-                        );
+                    // TODO: RelationXto1() does not support to: WinterModel at the moment
+                    if ($finalModel instanceof Model) {
+                        $db            = $this->table->db();
+                        $isCount       = (isset($config['count']) && $config['count']);
+                        $key           = (isset($config['key'])        ? $config['key']        : $this->standardBareReferencingField());
+                        $conditions    = (isset($config['conditions']) ? $config['conditions'] : NULL);
+                        $otherKey      = (isset($config['otherKey'])   ? $config['otherKey']   : $finalModel->standardBareReferencingField());
+                        if (!isset($config['table'])) 
+                            throw new Exception("[$relationName] on [$this->name] has no table config");
+                        $table         = $config['table'];
+                        $pivotTable    = Table::get($table);
+                        if (!$pivotTable) $pivotTable = Table::dummy($db, $table);
+                        $columnFrom    = Column::dummy($finalModel->table, $key);
+                        $throughColumn = Column::dummy($finalModel->table, $otherKey);
+                        if (is_null($forColumn) || $forColumn->name == $columnFrom->name)
+                            $relations[$relationName] = new RelationXfromX(
+                                $relationName, 
+                                $this, 
+                                $finalModel, 
+                                $pivotTable,
+                                $columnFrom,
+                                $throughColumn,
+                                NULL,
+                                $isCount,
+                                $conditions
+                            );
+                    }
                 }
             }
         }
@@ -2053,10 +2071,10 @@ class Model {
             if (   !$relation->deferrable() 
                 && !$fieldObj->fieldExclude
                 && !$fieldObj->hidden
+                && (!$fieldObj->contexts || $fieldObj->contexts == 'create')
             ) {
                 // Create first Hints for !deferrable
                 // The relation CANNOT use deferred binding
-                // if (!$contexts) $contexts = array('update', 'preview'); 
                 // TODO: Move all hints from WinterCMS.php to Model.php, and use buildHintYaml() & writeHint()
                 // TODO: read-only only when create
                 // $readOnly   = TRUE; 
@@ -2071,6 +2089,7 @@ class Model {
                     'cssClasses'  => 'callout-stop-circle',
                     'advanced'    => $fieldObj->advanced,
                     'bootstraps'  => array('xs' => 6),
+                    'trigger'     => $fieldObj->trigger,
                     'permissions' => $fieldObj->permissions,
                 ));
                 $fields[$dfHintName] = $hintObj;

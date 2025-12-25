@@ -9,6 +9,7 @@ class Relation {
     public $to;   // Model
     public $column;
     public $foreignKey;
+    public $eagerLoad;
 
     public $comment;
     public $fieldComment;
@@ -119,6 +120,9 @@ class Relation {
         // RelationXto1|1fromX::__construct() will set required based on Column::isRequired()
         if (!isset($this->required))  $this->required  = FALSE;
         if (!isset($this->fieldExclude) && $this->isCount) $this->fieldExclude = TRUE;
+
+        if ($this->eagerLoad && $this->globalScope) 
+            throw new Exception("Eager loading on [$this] is not compatible with Global Scope");
     }
 
     public function canFilterDefault(): bool
@@ -470,7 +474,7 @@ class RelationHasManyDeep extends Relation {
         bool  $containsLeaf,
         bool  $nameObject,
         string $type, // Last relation type
-        string $conditions = NULL,
+        string|NULL $conditions = NULL,
         // Fake means that chain contains non-1to1 steps
         // thus the last relation type does not really indicate the true type
         // For example, a last relation of 1to1 in a chain that has Xto1 is not really a 1to1
@@ -529,6 +533,8 @@ class RelationHasManyDeep extends Relation {
             if (!is_array($this->flags)) $this->flags = array();
             $this->flags['containsNon1to1s'] = TRUE;
         }
+
+        $this->eagerLoad = FALSE;
 
         // Adopt stuff
         $this->fieldsSettings = $firstRelation->fieldsSettings;

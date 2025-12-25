@@ -205,7 +205,8 @@ class Field {
         if (!isset($this->columnType))    {
             switch ($this->fieldType) {
                 case 'richeditor':
-                    $this->columnType = 'text';
+                    $this->columnType = 'partial';
+                    $this->columnPartial = ($this->name == 'description' ? 'description' : 'html');
                     break;
                 default:
                     $this->columnType = $this->fieldType;

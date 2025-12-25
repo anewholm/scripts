@@ -474,6 +474,7 @@ PHP;
                 $thisTableSubName = $thisTable->subNameSingular();
                 $usersColumnStub  = "global_scope_$thisTableSubName"; 
                 $usersColumnName  = "{$usersColumnStub}_id"; 
+                $hasName          = $thisModel->hasField('name');
                 if (!$usersTable->hasColumn($usersColumnName)) {
                     // We assume a Lookup table with id (uuid)
                     $this->db->addColumn(
@@ -513,6 +514,7 @@ PHP;
                     'permissions' => [$permView, $permChange]
                 );
                 $fieldDefintionString = var_export($fieldDefintion, TRUE);
+                
                 $backFieldDefintion = array(
                     'label'    => $thisLabel,
                     'type'     => 'dropdown',
@@ -524,7 +526,16 @@ PHP;
                     'emptyOption' => 'acorn::lang.models.general.no_restriction',
                     'permissions' => [$permView, $permChange]
                 );
+                if ($hasName) {
+                    // Relation with name only works if the name is not 1-1
+                    // otherwise the 1-1 name will all be the same 
+                    // because not be eargerLoaded
+                    $backFieldDefintion['type']  = 'relation';
+                    // order only works if not 1-1
+                    $backFieldDefintion['order'] = 'name';
+                }
                 $backFieldDefintionString = var_export($backFieldDefintion, TRUE);
+
                 $columnDefintion = array(
                     'label'     => $thisLabel,
                     'relation'  => $usersColumnStub,
@@ -532,6 +543,13 @@ PHP;
                     'permissions' => [$permView]
                 );
                 $columnDefintionString = var_export($columnDefintion, TRUE);
+
+                $backColumnDefintion = array(
+                    'label'     => $thisLabel,
+                    'permissions' => [$permView]
+                );
+                $backColumnDefintionString = var_export($backColumnDefintion, TRUE);
+
                 $bootMethodPhp    .= <<<PHP
 // ------------------ Global Scope setting for $thisModel
 \Acorn\User\Models\User::extend(function (\$model){
@@ -542,17 +560,20 @@ PHP;
         \$form->addTabFields(['$usersColumnName' => $fieldDefintionString]);
     }
 });
-\Event::listen('backend.form.extendFields', function (\$widget) {
-    \$form    = \$widget;
-    \$model   = \$widget->model;
-
-    if (\$model instanceof \Backend\Models\User) {
-        \$form->addTabFields(['user[$usersColumnStub]' => $backFieldDefintionString]);
-    }
-});
 \Acorn\User\Controllers\Users::extendListColumnsGeneral(function (\$list, \$model) {
     if (\$model instanceof \Acorn\User\Models\User) {
         \$list->addColumns(['$usersColumnStub' => $columnDefintionString]);
+    }
+});
+
+\Event::listen('backend.form.extendFields', function (\$form) {
+    if (\$form->model instanceof \Backend\Models\User) {
+        \$form->addTabFields(['user[$usersColumnStub]' => $backFieldDefintionString]);
+    }
+});
+\Event::listen('backend.list.extendColumns', function (\$list) {
+    if (\$list->model instanceof \Backend\Models\User) {
+        \$list->addColumns(['user[$usersColumnStub][name]' => $backColumnDefintionString]);
     }
 });
 
@@ -959,10 +980,11 @@ PHP;
                 $modelFQN   = $model->fullyQualifiedName();
                 $scopeFQN   = "$modelFQN\\$scopeName";
                 $path       = "$modelDirPath/$scopeName.php";
-                $scopingFunction = (is_string($model->globalScope) 
-                    ? "public static \$scopingFunction = '$model->globalScope';"
-                    : NULL
-                );
+                $scopingClause = NULL;
+                if (is_string($model->globalScope)) { // Not bool
+                    $type = (substr($model->globalScope, -2) == '()' ? 'Function' : 'View');
+                    $scopingClause = "public static \$scoping$type = '$model->globalScope';";
+                }
 
                 $this->appendToFile($path, <<<PHP
 <?php
@@ -975,7 +997,7 @@ use Acorn\Scopes\GlobalChainScope;
 
 class $scopeName extends GlobalChainScope
 {
-    $scopingFunction
+    $scopingClause
 
     public function shouldApply(Model \$model, bool \$isThis = FALSE): bool
     {
@@ -1047,6 +1069,7 @@ PHP
                     'type'   => $relation->type(),
                     'leaf'   => $isLeaf,
                     'global_scope' => ($relation->globalScope === 'to'),
+                    'eager_load' => $relation->eagerLoad,
                     'delete' => $relation->delete,
                     'count'  => $relation->isCount,
                     'flags'  => $relation->flags,
@@ -1061,6 +1084,7 @@ PHP
                     'name'   => $relation->nameObject,
                     'type'   => $relation->type(),
                     'global_scope' => ($relation->globalScope === 'to'),
+                    'eager_load' => $relation->eagerLoad,
                     'delete' => $relation->delete,
                     'count'  => $relation->isCount,
                     'flags'  => $relation->flags,
@@ -1082,6 +1106,7 @@ PHP
                     'name'             => $relation->nameObject,
                     'key'              => $relation->column->name,
                     'global_scope'     => ($relation->globalScope === 'from'),
+                    'eager_load'       => $relation->eagerLoad,
                     // Type is important because we can immediately identify 
                     // fully 1to1 deep relations for embedding
                     // 1to1 means all steps are 1to1
@@ -1102,6 +1127,7 @@ PHP
                 $relations[$name] = $this->removeEmpty(array($relation->to,
                     'key'    => $relation->column->name,
                     'global_scope' => ($relation->globalScope === 'from'),
+                    'eager_load' => $relation->eagerLoad,
                     'type'   => $relation->type(),
                     'count'  => $relation->isCount,
                     'flags'  => $relation->flags,
@@ -1117,6 +1143,7 @@ PHP
                     'key'      => $relation->keyColumn->name,  // pivot.user_group_id
                     'otherKey' => $relation->column->name,     // pivot.user_id
                     'global_scope' => ($relation->globalScope === 'from'),
+                    'eager_load' => $relation->eagerLoad,
                     'type'     => $relation->type(),
                     'count'    => $relation->isCount,
                     'flags'  => $relation->flags,
@@ -1136,6 +1163,7 @@ PHP
                     'otherKey' => $relation->column->name,     // pivot.user_id
                     'type'     => $relation->type(),
                     'global_scope' => ($relation->globalScope === 'from'),
+                    'eager_load' => $relation->eagerLoad,
                     'delete'   => $relation->delete,
                     'count'    => $relation->isCount,
                     'flags'  => $relation->flags,
@@ -1154,6 +1182,7 @@ PHP
                     'otherKey' => $relation->column->name,     // pivot.user_id
                     'type'     => $relation->type(),
                     'global_scope' => ($relation->globalScope === 'from'),
+                    'eager_load' => $relation->eagerLoad,
                     'delete'   => $relation->delete,
                     'count'    => $relation->isCount,
                     'flags'  => $relation->flags,
@@ -1171,6 +1200,7 @@ PHP
                     'key'    => $relation->column->name,
                     'type'   => $relation->type(),
                     'global_scope' => ($relation->globalScope === 'from'),
+                    'eager_load' => $relation->eagerLoad,
                     'delete' => $relation->delete, // This can be done by a DELETE CASCADE FK
                     'count'  => $relation->isCount,
                     'flags'  => $relation->flags,
@@ -1536,6 +1566,50 @@ PHP
                 'context'  => $contexts,
                 'cssClass' => 'form-comment',
             )));
+        }
+
+        if ($model->flowChart) {
+            // TODO: Translation flowChart
+            $count = count($model->flowChart);
+            $html  = "<ul>";
+            $i     = 1;
+            foreach ($model->flowChart as $item) {
+                $itemParts = explode(',', $item);
+                $title     = $itemParts[0];
+                $subText   = (isset($itemParts[1]) ? "<span>$itemParts[1]</span>" : '');
+                $arrow     = ($i == $count ? '' : '<i></i>');
+                $itemI     = "<b>$i</b>";
+                $html .= "<li class='item-$i'>$itemI $title $subText$arrow</li>";
+                $i++;
+            }
+            $html      .= '</ul>';
+            $hintName   = 'flow_chart';
+            $hintConfig = $this->removeEmpty(array(
+                'type'     => 'hint',
+                'span'     => 'storm',
+                'content'  => array(
+                    'en' => $html,
+                ),
+                'contentHtml' => TRUE,
+                'context'  => 'create',
+                'cssClass' => "flow-chart count-$count col-xs-12 new-row",
+            ));
+            $hintFieldConfig = $this->buildHint($model, $hintName, $hintConfig, $fieldsPath);
+            $this->yamlFileSet($fieldsPath, "fields._$hintName", $hintFieldConfig);
+            
+            // Translations added here
+            // TODO: Move this down to the translations area?
+            if (isset($hintConfig['content']) && is_array($hintConfig['content'])) {
+                $langDirPath         = "$pluginDirectoryPath/lang";
+                $absoluteDomainKey   = $hintFieldConfig['content'];
+                $localTranslationKey = preg_replace('/^.*::lang./', '', $absoluteDomainKey);
+                foreach ($hintConfig['content'] as $langName => &$translation) {
+                    $langFilePath = "$langDirPath/$langName/lang.php";
+                    if (!file_exists($langFilePath)) 
+                        throw new Exception("No translation file found for label.[$langName] in field [$hintName] on [$model->name]");
+                    $this->langFileSet($langFilePath, $localTranslationKey, $translation, $langName, NULL);
+                }
+            }
         }
 
         // Main fields
@@ -2323,7 +2397,10 @@ PHP
                 
                 // WinterCMS lies: The record-url: needs to be on the field.yaml, not the config-relation.yaml");
                 // if ($relation1->recordUrl) $relationDefinition['view']['recordUrl']  = $relation1->recordUrl;
-                if ($relation1->conditions)   $relationDefinition['view']['conditions'] = $relation1->conditions;
+                if ($relation1->conditions)   {
+                    $relationDefinition['view']['conditions']   = $relation1->conditions;
+                    $relationDefinition['manage']['conditions'] = $relation1->conditions;
+                }
                 if ($relation1->deferrable()) $relationDefinition['deferrable']         = $relation1->deferrable();
                 if ($relation1->showSearch !== FALSE) {
                     $relationDefinition['view']['showSearch']   = true;

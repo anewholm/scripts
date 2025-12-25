@@ -65,6 +65,7 @@ class Table {
     public $hints;
     public $actionAliases; // courseplanner => index
     public $extraTranslations; // array
+    public $flowChart;
 
     // Translation arrays
     public $pluginNames;
@@ -1015,9 +1016,15 @@ SQL
     public function subNameSingular(): string|NULL
     {
         // Singular: user_group | invoice
-        $subName = NULL;
-        $tableNameParts  = explode('_', $this->nameSingular());
-        if (count($tableNameParts) >= 3) {
+        $subName        = NULL;
+        $tableNameParts = explode('_', $this->nameSingular());
+        $part1          = $tableNameParts[0];
+        $partCount      = count($tableNameParts);
+        if ($partCount == 2 || $part1 == 'backend' || $part1 == 'system') {
+            // backend_users => backend_user => user
+            $subName = implode('_', array_slice($tableNameParts, 1));
+        } else if ($partCount >= 3) {
+            // acorn_user_user_groups => acorn_user_user_group => user_group
             $subName = implode('_', array_slice($tableNameParts, 2));
         }
         return $subName;
@@ -1026,9 +1033,9 @@ SQL
     public function associatedFunctionNameBase(): string
     {
         // fn_acorn_calendar
-        $subName = NULL;
-        $tableNameParts  = explode('_', $this->name);
-        $subName = implode('_', array_slice($tableNameParts, 0, 2));
+        $subName        = NULL;
+        $tableNameParts = explode('_', $this->name);
+        $subName        = implode('_', array_slice($tableNameParts, 0, 2));
         return "fn_$subName";
     }
 

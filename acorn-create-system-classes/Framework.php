@@ -577,19 +577,22 @@ class Framework
             $path = $hintConfig['path'];
         } else if (isset($hintConfig['content'])) {
             // Custom content => file
-            if (!isset($hintConfig['labels']))
-                throw new Exception("labels: are required for content hint $hintName");
+            // if (!isset($hintConfig['labels']))
+            //     throw new Exception("labels: are required for content hint $hintName");
             if (!isset($hintConfig['content']))
                 throw new Exception("Content: is required for content hint $hintName");
 
             // Labels => Translation keys
             // values are placed in to the lang.php files later
             $modelKey   = $model->translationDomain(); // acorn.university::lang.models.thing
-            $labelKey   = "$modelKey.hints.$hintName.label";
+            $labelKey   = NULL;
+            if (isset($hintConfig['labels'])) {
+                $labelKey   = "$modelKey.hints.$hintName.label";
+                $hintConfig['label']   = $labelKey;
+                unset($hintConfig['labels']);
+            }
             $contentKey = "$modelKey.hints.$hintName.content";
-            $hintConfig['label']   = $labelKey;
             $hintConfig['content'] = $contentKey;
-            if (isset($hintConfig['labels'])) unset($hintConfig['labels']);
             $callToAction = '';
 
             if ($fieldsPath) {
@@ -604,10 +607,11 @@ class Framework
                 $e              = ($contentHtml  ? '' : 'e');
                 // TODO: Call to action translation and label
                 $callToActionA  = ($callToAction ? "<a href='$callToAction'>Resolve</a>" : '');
+                $labelHTML      = ($labelKey ? "<h3><?= e(trans('$labelKey')) ?></h3>" : NULL);
 
                 file_put_contents($path, <<<HTML
 <i class="icon-$levelEscaped"></i>
-<h3><?= e(trans('$labelKey')) ?></h3>
+$labelHTML
 <p><?= $e(trans('$contentKey')) ?>$callToActionA</p>
 HTML                        
                 );
