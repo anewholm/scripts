@@ -138,6 +138,15 @@ class Relation {
         return "$this->foreignKey$qualifierString";
     }
 
+    public function defaultSortString(): string|NULL
+    {
+        $defaultSort = $this->defaultSort;
+        return (is_array($defaultSort)
+            ? trim("$defaultSort[column] $defaultSort[direction]")
+            : $defaultSort
+        );
+    }
+
     public function cssClass(bool $useRelationManager = TRUE, bool $singleTab = TRUE, array $extraClasses = array()): string
     {
         return implode(' ', $this->cssClasses($useRelationManager, $singleTab, $extraClasses));

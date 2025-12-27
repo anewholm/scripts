@@ -1114,6 +1114,7 @@ PHP
                     // other (XfromX, etc.) indicates the LAST step only
                     'type'   => $relation->type(), 
                     'count'  => $relation->isCount,
+                    'order'  => $relation->defaultSortString(),
                     'flags'  => $relation->flags,
                     'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
@@ -1130,6 +1131,7 @@ PHP
                     'eager_load' => $relation->eagerLoad,
                     'type'   => $relation->type(),
                     'count'  => $relation->isCount,
+                    'order'  => $relation->defaultSortString(),
                     'flags'  => $relation->flags,
                     'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
@@ -1146,6 +1148,7 @@ PHP
                     'eager_load' => $relation->eagerLoad,
                     'type'     => $relation->type(),
                     'count'    => $relation->isCount,
+                    'order'  => $relation->defaultSortString(),
                     'flags'  => $relation->flags,
                     'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
@@ -1166,6 +1169,7 @@ PHP
                     'eager_load' => $relation->eagerLoad,
                     'delete'   => $relation->delete,
                     'count'    => $relation->isCount,
+                    'order'  => $relation->defaultSortString(),
                     'flags'  => $relation->flags,
                     'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
@@ -1185,6 +1189,7 @@ PHP
                     'eager_load' => $relation->eagerLoad,
                     'delete'   => $relation->delete,
                     'count'    => $relation->isCount,
+                    'order'  => $relation->defaultSortString(),
                     'flags'  => $relation->flags,
                     'conditions' => $relation->conditions
                 ), Framework::AND_FALSES);
@@ -1203,6 +1208,7 @@ PHP
                     'eager_load' => $relation->eagerLoad,
                     'delete' => $relation->delete, // This can be done by a DELETE CASCADE FK
                     'count'  => $relation->isCount,
+                    'order'  => $relation->defaultSortString(),
                     'flags'  => $relation->flags,
                     'conditions' => $relation->conditions,
                     // 'leaf'   => $isLeaf,

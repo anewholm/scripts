@@ -187,6 +187,11 @@ class Model {
                     }
                 }
 
+                if (isset($commentDef['conditions'])) {
+                    $commentDef['condition'] = $commentDef['conditions'];
+                    unset($commentDef['conditions']);                    
+                }
+
                 // Default Permissions
                 if (!isset($definition['permissions']))
                     $definition['permissions'] = array($this->permissionFQN("use_function_{$name}"));

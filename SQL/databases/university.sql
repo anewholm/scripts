@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict jTEfl0i50id5V5y2Yt2j0M3WyWWYMPfZCCOFJS6AH6dIsqgl6AujQpWe5Otewj4
+\restrict SvESoFQRcOzT4LcbyIl1O9r5yxQYjGis22eOCK5tHW9jAFgwdD9jwMsDHFYlfVG
 
 -- Dumped from database version 16.11 (Ubuntu 16.11-1.pgdg24.04+1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-1.pgdg24.04+1)
@@ -1260,6 +1260,7 @@ DROP FUNCTION IF EXISTS public.fn_acorn_university_action_hierarchies_copy_to(mo
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_hierarchies_clear(model_id uuid, user_id uuid, p_clear_course_materials boolean, p_for_enrollment_year boolean, p_clear_exams_and_scores boolean, p_confirm boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_hierarchies_append_child(p_model_id uuid, p_user_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_course_year_semesters_spec(p_model_id uuid, p_user_id uuid, p_course_specialization_id uuid, p_copy_materials boolean, p_copy_exams boolean);
+DROP FUNCTION IF EXISTS public.fn_acorn_university_action_course_year_semesters_prom(p_model_id uuid, p_user_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_course_materials_cm_copy2(p_course_id uuid, p_academic_year_semester_id uuid, p_course_year_id uuid, p_copy_exams boolean, p_copy_projects boolean, p_copy_interviews boolean, p_copy_calculations boolean, p_copy_students boolean, p_delete_existing boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_provision(p_user_id uuid, p_copy_academic_year_id uuid, p_num_years integer, p_enabled boolean);
@@ -4592,6 +4593,68 @@ fields:
     span: storm
     css-class: col-xs-4
 comment-icon: info';
+
+
+--
+-- Name: fn_acorn_university_action_course_year_semesters_prom(uuid, uuid); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_university_action_course_year_semesters_prom(p_model_id uuid, p_user_id uuid) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+begin
+	ALTER TABLE public.acorn_user_user_group_version
+		DISABLE TRIGGER tr_acorn_university_hierarchies_descendants_user_cnts;
+	-- It is an error for a CYS to appear in more than 1 place in the hierarchy
+	insert into acorn_user_user_group_version(user_group_version_id, user_id)
+		select hi_to.user_group_version_id, ugv_from.user_id
+		from acorn_university_course_year_semesters cys_from
+		inner join acorn_university_hierarchies hi_from on hi_from.entity_id = cys_from.entity_id
+		inner join acorn_user_user_group_version ugv_from on ugv_from.user_group_version_id = hi_from.user_group_version_id
+		inner join acorn_university_course_year_semesters cys_to
+			on  cys_to.course_plan_id = cys_from.course_plan_id
+			and (cys_from.course_specialization_id is null or cys_to.course_specialization_id = cys_from.course_specialization_id)
+			and cys_to.academic_year_semester_ordinal = cys_from.academic_year_semester_ordinal + 1
+		inner join acorn_university_hierarchies hi_to on hi_to.entity_id = cys_to.entity_id
+		where cys_from.id = p_model_id
+		on conflict do nothing;
+	ALTER TABLE public.acorn_user_user_group_version
+		ENABLE TRIGGER tr_acorn_university_hierarchies_descendants_user_cnts;
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_university_action_course_year_semesters_prom(p_model_id uuid, p_user_id uuid) OWNER TO university;
+
+--
+-- Name: FUNCTION fn_acorn_university_action_course_year_semesters_prom(p_model_id uuid, p_user_id uuid); Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON FUNCTION public.fn_acorn_university_action_course_year_semesters_prom(p_model_id uuid, p_user_id uuid) IS 'labels:
+  en: Promote Students
+  ku: Pêşvebirina Xwendekaran
+  ar: ترقية الطلاب
+result-action: refresh
+type: row-only
+confirm: true
+comment:
+  en: Enroll all the students into the next semester
+  ku: Hemû xwendekaran ji bo semestera pêş qeyd bike
+  ar: قم بتسجيل جميع الطلاب في الفصل الدراسي القادم
+conditions: >
+  exists(
+  select * from acorn_university_course_year_semesters cys
+  inner join acorn_university_hierarchies hi on hi.entity_id = cys.entity_id
+  inner join acorn_user_user_group_version ugv on ugv.user_group_version_id = hi.user_group_version_id
+  where cys.id = acorn_university_course_year_semesters.id
+  ) and exists(
+  select * from acorn_university_course_year_semesters cys_from
+  inner join acorn_university_course_year_semesters cys_to 
+  on  cys_to.course_plan_id = cys_from.course_plan_id
+  and cys_to.academic_year_semester_ordinal = cys_from.academic_year_semester_ordinal + 1
+  where cys_from.id = acorn_university_course_year_semesters.id
+  )
+';
 
 
 --
@@ -11583,7 +11646,7 @@ begin
 			select array_agg(inserted.user_id) into p_uuids_message from inserted;
 		if p_messages then raise notice '% Students enrolled on to courses', array_upper(p_uuids_message, 1); end if;
 		if p_messages then raise notice 'Enabling triggers'; end if;
-		ALTER TABLE public.acorn_user_user_group_version
+		ALTER TABLE acorn_user_user_group_version
     		ENABLE TRIGGER tr_acorn_university_hierarchies_descendants_user_cnts;
 		if p_messages then raise notice 'Updating hierarchy counts'; end if;
 		perform fn_acorn_university_hierarchies_descendants_user_cnt(p_mofadala_hi_top_level_node);
@@ -13541,6 +13604,7 @@ ALTER TABLE public.acorn_enrollment_desires OWNER TO university;
 --
 
 COMMENT ON TABLE public.acorn_enrollment_desires IS 'order: 700
+menu: false
 labels:
   en: Enrollment desire
   ku: Xwastîn mofadala
@@ -16153,7 +16217,26 @@ labels:
 labels-plural:
   en: Projects
   ku: Projên
-  ar: المشاريع الخاصة';
+  ar: المشاريع الخاصة
+hints:
+  introduction:
+    labels:
+      en: Functionality Incomplete
+      ku: Fonksiyon Nexelas
+      ar: الوظائف غير مكتملة
+    content:
+      en: This functionality is not complete
+      ku: Ev fonksiyon ne xelas e
+      ar: هذه الوظيفة غير مكتملة
+    level: puzzle-piece
+';
+
+
+--
+-- Name: COLUMN acorn_university_projects.name; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_projects.name IS 'new-row: true';
 
 
 --
@@ -19038,7 +19121,8 @@ labels:
 COMMENT ON COLUMN public.acorn_university_course_year_semesters.course_plan_id IS 'hidden: true
 invisible: true
 css-classes-column:
-  - hide-duplicates';
+  - hide-duplicates
+';
 
 
 --
@@ -21227,6 +21311,17 @@ labels-plural:
   en: Exam papers
   ku: Kaxezên azmûnê
   ar: أوراق الامتحان
+hints:
+  introduction:
+    labels:
+      en: Functionality Incomplete
+      ku: Fonksiyon Nexelas
+      ar: الوظائف غير مكتملة
+    content:
+      en: This functionality is not complete
+      ku: Ev fonksiyon ne xelas e
+      ar: هذه الوظيفة غير مكتملة
+    level: puzzle-piece
 ';
 
 
@@ -34167,8 +34262,7 @@ global-scope: to
 has-many-deep-settings:
     entity_university_hierarchies__entity_user_group_version_users:
       rl-buttons:
-        link: acorn.university::lang.models.student.add_student
-        unlink: acorn.university::lang.models.student.remove_student
+        unlink: acorn.university::lang.models.courseyearsemester.remove_student_from_cys
       record-url: acorn/user/users/update/:id
       labels:
         en: Student
@@ -34284,7 +34378,11 @@ fields-settings:
   entity_university_student_types__owner_entity:
     hidden: true
     invisible: true
-';
+extra-translations:
+  remove_student_from_cys:
+    en: Remove selected students from this Course|Semester
+    ku: Xwendekarên bijartî ji vê Kursê rakin|Semestrê
+    ar: إزالة الطلاب المحددين من هذه الدورة/الفصل الدراسي';
 
 
 --
@@ -34775,11 +34873,25 @@ ALTER TABLE ONLY public.acorn_exam_exam_materials
 
 
 --
+-- Name: CONSTRAINT exam_id ON acorn_exam_exam_materials; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT exam_id ON public.acorn_exam_exam_materials IS 'column-exclude: true';
+
+
+--
 -- Name: acorn_exam_instances exam_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
 ALTER TABLE ONLY public.acorn_exam_instances
     ADD CONSTRAINT exam_id FOREIGN KEY (exam_id) REFERENCES public.acorn_exam_exams(id) ON DELETE CASCADE NOT VALID;
+
+
+--
+-- Name: CONSTRAINT exam_id ON acorn_exam_instances; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT exam_id ON public.acorn_exam_instances IS 'column-exclude: true';
 
 
 --
@@ -36756,9 +36868,8 @@ has-many-deep-settings:
     rl-title: acorn.university::lang.models.student.add_student
     conditions: >
       acorn_user_user_group_versions.id in(
-      select ugv.user_group_version_id 
-      from acorn_user_user_group_version ugv
-      inner join acorn_university_hierarchies hi on hi.user_group_version_id = ugv.user_group_version_id
+      select hi.user_group_version_id
+      from acorn_university_hierarchies hi
       inner join acorn_university_entity_relationships er on hi.entity_id = er.from_entity_id
       inner join acorn_dbauth_user dba on er.to_entity_id = dba.global_scope_entity_id or dba.global_scope_entity_id is null
       and hi.academic_year_id = dba.global_scope_academic_year_id or dba.global_scope_academic_year_id is null
@@ -44959,5 +45070,5 @@ GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_uni
 -- PostgreSQL database dump complete
 --
 
-\unrestrict jTEfl0i50id5V5y2Yt2j0M3WyWWYMPfZCCOFJS6AH6dIsqgl6AujQpWe5Otewj4
+\unrestrict SvESoFQRcOzT4LcbyIl1O9r5yxQYjGis22eOCK5tHW9jAFgwdD9jwMsDHFYlfVG
 

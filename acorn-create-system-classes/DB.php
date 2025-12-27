@@ -313,6 +313,7 @@ class DB {
                 case 2278: $returnType = 'void'; break;
             }
             
+            // TODO: Function.php class
             $functions[$result->name] = array(
                 'oid'        => $result->oid,
                 'parameters' => $parameters,
