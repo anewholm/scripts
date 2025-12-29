@@ -1780,8 +1780,9 @@ class Model {
                                             $subFieldObj->canFilter = FALSE; 
 
                                             if ($subFieldObj->fieldType == 'fileupload') {
-                                                // TODO: Fix embedded 1to1 file uploads
-                                                $subFieldObj->contexts = array('update' => TRUE);
+                                                // Fixed embedded 1to1 file uploads (patch)
+                                                // avatar, fileupload
+                                                // $subFieldObj->contexts = array('update' => TRUE);
                                             }
 
                                             if ($subFieldObj->fieldType == 'relation') {

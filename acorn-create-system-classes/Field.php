@@ -99,6 +99,7 @@ class Field {
     public $hierarchical;
     public $useRelationCount;
     public $optionsStaticMethod = 'dropdownOptions';
+    public $optionsWith; // Custom AA extension
     public $optionsWhere; // Custom AA extension
     public $fieldOptions;
     public $fieldOptionsModel;
@@ -890,7 +891,10 @@ class ForeignIdField extends Field {
         parent::__construct($model, $definition, $column, $relations);
 
         // Always allow QR code scanning
-        $this->dependsOn['_qrscan'] = TRUE;
+        // This would cause filterFields() to always be called
+        // and dropdowns with optionsW* clauses to be double requested
+        // if ($this->dependsOn !== FALSE) 
+        //     $this->dependsOn['_qrscan'] = TRUE;
 
         // We omit some of our own known plugins
         // because they do not conform yet to our naming requirements

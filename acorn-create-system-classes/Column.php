@@ -138,6 +138,7 @@ class Column {
     public $bar;
     public $parsedComment; // array
     public $fieldOptions;  // array
+    public $optionsWith; // Custom AA extension
     public $optionsWhere; // Custom AA extension
     public $searchable;
     public $actions; // field-actions

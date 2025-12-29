@@ -1,0 +1,14 @@
+--- modules/backend/classes/FormField.php    2025-12-28 14:37:00.587926417 +0300
++++ modules/backend/classes/FormField.php     2025-12-28 14:37:03.540933876 +0300
+@@ -679,7 +679,10 @@
+         $last = array_pop($parts);
+ 
+         foreach ($parts as $part) {
+-            $model = $model->{$part};
++            $nextModel = $model->{$part};
++            // AA patch so that create user[avatar] nested fileupload fields work
++            if (is_null($nextModel)) $nextModel = $model->{$part}()->getRelated();
++            $model = $nextModel;
+         }
+ 
+         return [$model, $last];

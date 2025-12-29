@@ -995,11 +995,13 @@ FUNCTION
         $this->createPlugin($plugin);
         $this->createMenus($plugin);
         foreach ($plugin->models as $model) {
-            $this->createModel($model);
-            $this->createFormInterface($model);
-            $this->createListInterface($model);
-            foreach ($model->controllers as $controller) {
-                $this->createController($controller);
+            if (!$model->getTable() instanceof MaterializedView) {
+                $this->createModel($model);
+                $this->createFormInterface($model);
+                $this->createListInterface($model);
+                foreach ($model->controllers as $controller) {
+                    $this->createController($controller);
+                }
             }
         }
         $this->adornOtherCustomPlugins($plugin);

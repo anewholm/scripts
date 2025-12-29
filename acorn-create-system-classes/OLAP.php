@@ -112,68 +112,77 @@ INFO
         global $GREEN, $YELLOW, $RED, $NC;
 
         foreach ($this->olapViews as $olapView) {
-            $viewName = $olapView->name;
-            print("  OLAP Cube {$GREEN}$viewName{$NC}\n");
+            if ($olapView->menu !== FALSE) {
+                $viewName = $olapView->name;
+                print("  OLAP Cube {$GREEN}$viewName{$NC}\n");
 
-            // Map the FK dimensions
-            $dimensions = array();
-            $measures   = array();
-            $fks        = $olapView->allForeignKeys();
-            foreach ($fks as $fk) {
-                $fkType        = $fk->type();
-                $fkDir         = $fk->directionName();
-                $columnStub    = $fk->columnFrom->nameWithoutId();
-                $columnName    = "{$columnStub}_name";
-                $dimensionName = Str::title(str_replace('_', ' ', $columnStub));
-                print("    +OLAP Dimension {$YELLOW}$dimensionName{$NC} ($fkDir $fkType)\n");
-                if ($olapView->hasColumn($columnName)) {
-                    $dimension = new OLAPSimpleIncludedDimension($dimensionName, $fk->columnFrom);
-                } else {
-                    if (!$fk->tableTo->hasColumn('name'))
-                        throw new Exception('OLAPForeignKeyDimension to table does not have a name column');
-                    $dimension = new OLAPForeignKeyDimension($dimensionName, $fk);
+                // Map the FK dimensions
+                $dimensions = array();
+                $measures   = array();
+                $fks        = $olapView->allForeignKeys();
+                foreach ($fks as $fk) {
+                    $fkType        = $fk->type();
+                    $fkDir         = $fk->directionName();
+                    $columnStub    = $fk->columnFrom->nameWithoutId();
+                    $columnName    = "{$columnStub}_name";
+                    $dimensionName = Str::title(str_replace('_', ' ', $columnStub));
+                    print("    +OLAP Dimension {$YELLOW}$dimensionName{$NC} ($fkDir $fkType)\n");
+                    if ($olapView->hasColumn($columnName)) {
+                        // This does not support translation
+                        $dimension = new OLAPSimpleIncludedDimension($dimensionName, $fk->columnFrom);
+                    } 
+                    else if ($fk->tableTo->hasColumn('name')) {
+                        // This _does_ support translation
+                        // via the fn_acorn_translate() function => winter_translate_attributes for that table => model name
+                        $dimension = new OLAPForeignKeyDimension($dimensionName, $fk);
+                    }
+                    else {
+                        // TODO: Multi-join 1-1 dimensions
+                        // e.g. course => entities => user_groups
+                        throw new Exception('No OLAPSimpleIncludedDimension name and OLAPForeignKeyDimension to table does not have a name column');
+                    }
+                    $dimensions[$dimensionName] = $dimension;
                 }
-                $dimensions[$dimensionName] = $dimension;
-            }
 
-            // Map the Time dimensions
-            foreach ($olapView->columns as $columnName => $column) {
-                switch ($column->data_type) {
-                    case 'timestamp(0) with time zone':
-                    case 'timestamp(0) without time zone':
-                    case 'timestamp with time zone':
-                    case 'timestamp without time zone':
-                    case 'date':
-                    case 'datetime':
-                        $dimensionName = Str::title(str_replace('_', ' ', $columnName));
-                        print("    +OLAP Time Dimension {$YELLOW}$dimensionName{$NC}\n");
-                        $dimensions[$dimensionName] = new OLAPTimeDimension($dimensionName, $column);
-                        break;
-                }
-            }
-
-            // Map the Measures
-            foreach ($olapView->columns as $columnName => $column) {
-                if ($column->isTheIdColumn()) {
-                    $measureName = 'Count';
-                    print("    +OLAP Measure {$YELLOW}$measureName{$NC}\n");
-                    $measures[$measureName] = new OLAPMeasure($measureName, $column);
-                } else {
+                // Map the Time dimensions
+                foreach ($olapView->columns as $columnName => $column) {
                     switch ($column->data_type) {
-                        case 'double precision':
-                        case 'double':
-                        case 'int':
-                        case 'bigint':
-                        case 'integer':
-                            $measureName = Str::title(str_replace('_', ' ', $columnName));
-                            print("    +OLAP Measure {$YELLOW}$measureName{$NC}\n");
-                            $measures[$measureName] = new OLAPMeasure($measureName, $column);
+                        case 'timestamp(0) with time zone':
+                        case 'timestamp(0) without time zone':
+                        case 'timestamp with time zone':
+                        case 'timestamp without time zone':
+                        case 'date':
+                        case 'datetime':
+                            $dimensionName = Str::title(str_replace('_', ' ', $columnName));
+                            print("    +OLAP Time Dimension {$YELLOW}$dimensionName{$NC}\n");
+                            $dimensions[$dimensionName] = new OLAPTimeDimension($dimensionName, $column);
                             break;
                     }
                 }
+
+                // Map the Measures
+                foreach ($olapView->columns as $columnName => $column) {
+                    if ($column->isTheIdColumn()) {
+                        $measureName = 'Count';
+                        print("    +OLAP Measure {$YELLOW}$measureName{$NC}\n");
+                        $measures[$measureName] = new OLAPMeasure($measureName, $column);
+                    } else {
+                        switch ($column->data_type) {
+                            case 'double precision':
+                            case 'double':
+                            case 'int':
+                            case 'bigint':
+                            case 'integer':
+                                $measureName = Str::title(str_replace('_', ' ', $columnName));
+                                print("    +OLAP Measure {$YELLOW}$measureName{$NC}\n");
+                                $measures[$measureName] = new OLAPMeasure($measureName, $column);
+                                break;
+                        }
+                    }
+                }
+                $cube = new OLAPCube($olapView, $dimensions, $measures);
+                $this->cubes[$cube->title()] = $cube;
             }
-            $cube = new OLAPCube($olapView, $dimensions, $measures);
-            $this->cubes[$cube->title()] = $cube;
         }
     }
 
@@ -202,6 +211,14 @@ INFO
             } else {
                 throw new Exception("No DataSources document");
             }
+
+            // TODO: Set the XMLA servlet to UTF-8 
+            // in WEB_INF/web.xml
+            // <init-param>
+            //     <param-name>CharacterEncoding</param-name>
+            //     <param-value>UTF-8</param-value>
+            // </init-param>
+
 
             // Write $cubes => cubes.xml
             $cubesSchemaPath = "$deploymentRoot/WEB-INF/schema/cubes.xml";
@@ -402,8 +419,14 @@ class OLAPDimension extends OLAPEntity {
 
     public function node(DOMDocument $xDoc, string $locale = 'en'): DOMNode
     {
+        if (isset($this->column->labels[$locale])) {
+            $title = $this->column->labels[$locale];
+        } else {
+            $title = $this->name;
+        }
+
         $xDimension = $xDoc->createElement('Dimension');
-        $xDimension->setAttribute('name', $this->name);
+        $xDimension->setAttribute('name', $title);
         return $xDimension;
     }
 }
@@ -424,12 +447,17 @@ class OLAPSimpleIncludedDimension extends OLAPDimension {
         $columnStub = $this->column->nameWithoutId();
         $columnName = "{$columnStub}_name";
 
+        if (isset($this->column->labels[$locale])) {
+            $title = $this->column->labels[$locale];
+        } else {
+            $title = $this->name;
+        }
         $xDimension = parent::node($xDoc, $locale);
         $xHierarchy = $xDimension->appendChild($xDoc->createElement('Hierarchy'));
         $xHierarchy->setAttribute('hasAll', 'true');
         $xHierarchy->setAttribute('primaryKey', 'id');
         $xLevel = $xHierarchy->appendChild($xDoc->createElement('Level'));
-        $xLevel->setAttribute('name', $this->name);
+        $xLevel->setAttribute('name', $title);
         $xLevel->setAttribute('column', $this->column->column_name);
         $xLevel->setAttribute('nameColumn', $columnName);
         $xLevel->setAttribute('uniqueMembers', 'true');
@@ -453,25 +481,22 @@ class OLAPForeignKeyDimension extends OLAPDimension {
         switch ($this->fk->type()) {
             case 'Xto1':
                 // Fact table: something_id => public.something_table.id
-                //
-                // <Dimension name="Exam Center" foreignKey="exam_center_id">
-                //   <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="university_mofadala_students">
-                //     <Join leftKey="exam_center_id" rightKey="id">
-                //       <Table name="university_mofadala_students"/>
-                //       <Table name="university_mofadala_exam_centers"/>
-                //     </Join>
-                //     <Level name="Exam Center" table="university_mofadala_exam_centers" column="id" uniqueMembers="true">
-                //       <NameExpression>
-                //          <SQL dialect="postgres">
-                //              fn_acorn_translate(
-                //                  acorn_exam_calculations.name, 
-                //                  'acorn_exam_calculations', 
-                //                  acorn_exam_calculations.id, 
-                //                  'ar'
-                //              )
-                //          </SQL>
-                //       </NameExpression>
-                //   </Hierarchy>
+                // <Dimension name="Religion" foreignKey="religion_id">
+                //     <Hierarchy hasAll="true" primaryKey="id" primaryKeyTable="acorn_user_religions">
+                //         <Table name="acorn_user_religions"/>
+                //         <Level name="Religion" column="id" uniqueMembers="true">
+                //             <NameExpression>
+                //                 <SQL dialect="postgres">
+                //                     fn_acorn_translate(
+                //                         acorn_exam_calculations.name, 
+                //                         'acorn_exam_calculations', 
+                //                         acorn_exam_calculations.id, 
+                //                         'ar'
+                //                     )
+                //                 </SQL>
+                //             </NameExpression>
+                //         </Level>
+                //     </Hierarchy>
                 // </Dimension>
                 $xDimension = parent::node($xDoc, $locale);
                 $xDimension->setAttribute('foreignKey', $this->fk->columnFrom->column_name);
@@ -480,8 +505,9 @@ class OLAPForeignKeyDimension extends OLAPDimension {
                 $xHierarchy->setAttribute('hasAll', 'true');
                 $xHierarchy->setAttribute('primaryKey', 'id');
                 // Schema not necessary apparently...
-                $xHierarchy->setAttribute('primaryKeyTable', $this->fk->tableFrom->name);
+                $xHierarchy->setAttribute('primaryKeyTable', $this->fk->tableTo->name);
 
+                /* TODO: Remove this old complex join
                 $xJoin = $xHierarchy->appendChild($xDoc->createElement('Join'));
                 $xJoin->setAttribute('leftKey',  $this->fk->columnFrom->column_name);
                 $xJoin->setAttribute('rightKey', 'id');
@@ -493,15 +519,24 @@ class OLAPForeignKeyDimension extends OLAPDimension {
                 $xTable->setAttribute('name',  $this->fk->tableTo->name);
                 if ($this->fk->tableTo->schema && $this->fk->tableTo->schema != 'public') 
                     $xTable->setAttribute('schema',  $this->fk->tableTo->schema);
+                */
+                // New single direct foreign table statement
+                $xTable = $xHierarchy->appendChild($xDoc->createElement('Table'));
+                $xTable->setAttribute('name',  $this->fk->tableTo->name);
+                if ($this->fk->tableTo->schema && $this->fk->tableTo->schema != 'public') 
+                    $xTable->setAttribute('schema',  $this->fk->tableTo->schema);
                 
+                if (isset($this->column->labels[$locale])) {
+                    $title = $this->column->labels[$locale];
+                } else {
+                    $title = $this->name;
+                }
                 $xLevel = $xHierarchy->appendChild($xDoc->createElement('Level'));
-                $xLevel->setAttribute('name', $this->name);
-                $xLevel->setAttribute('table', $this->fk->tableTo->fullyQualifiedName());
+                $xLevel->setAttribute('name', $title);
                 $xLevel->setAttribute('column', 'id');
                 $xLevel->setAttribute('uniqueMembers', 'true');
 
-                $tableTo = $this->fk->tableTo;
-                $this->addTranslateableName($xLevel, $tableTo, $locale);
+                $this->addTranslateableName($xLevel, $this->fk->tableTo, $locale);
                 
                 break;
         }
@@ -591,8 +626,13 @@ class OLAPMeasure {
     public function node(DOMDocument $xDoc, string $locale = 'en'): DOMNode
     {
         // <Measure name="Num Students" column="student_id" aggregator="distinct-count" formatString="Standard"/>
+        if (isset($this->column->labels[$locale])) {
+            $title = $this->column->labels[$locale];
+        } else {
+            $title = $this->name;
+        }
         $xMeasure = $xDoc->createElement('Measure');
-        $xMeasure->setAttribute('name', $this->name);
+        $xMeasure->setAttribute('name', $title);
         $xMeasure->setAttribute('column', $this->column->column_name);
         $xMeasure->setAttribute('aggregator', 'distinct-count');
         $xMeasure->setAttribute('formatString', 'Standard');
@@ -619,11 +659,15 @@ class OLAPCube {
     {
         // [olap.]acorn_enrollment_olapcube => Enrollment
         // [olap.]acorn_enrollment_olapcube_things => Enrollment Things
-        $viewNameParts  = explode('_', $this->olapView->name);
-        $viewNameParts  = array_filter($viewNameParts, function($value){return $value != 'olapcube';});
-        $viewTitleParts = array_slice($viewNameParts, 1);
-        $title          = Str::title(implode(' ', $viewTitleParts));
-        if ($locale != 'en') $title .= " ($locale)";
+        if (isset($this->olapView->labels[$locale])) {
+            $title = $this->olapView->labels[$locale];
+        } else {
+            $viewNameParts  = explode('_', $this->olapView->name);
+            $viewNameParts  = array_filter($viewNameParts, function($value){return $value != 'olapcube';});
+            $viewTitleParts = array_slice($viewNameParts, 1);
+            $title          = Str::title(implode(' ', $viewTitleParts));
+            if ($locale != 'en') $title .= " ($locale)";
+        }
         return $title;
     }
 
@@ -634,6 +678,7 @@ class OLAPCube {
         // Cube
         $cubeNode = $xDoc->appendChild($xDoc->createElement('Cube'));
         $cubeNode->setAttribute('name', $this->title($locale));
+        $cubeNode->setAttribute('locale', $locale);
         $cubeNode->setAttribute('for-view', $this->olapView->name);
         if ($this->defaultMeasure) $cubeNode->setAttribute('defaultMeasure', $this->defaultMeasure);
 

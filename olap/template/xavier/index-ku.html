@@ -569,6 +569,26 @@ limitations under the License.
         /* autoRunEnabled: true */
       };
 
+      /* Auto select a cube from the query-string */
+      var queries = {};
+      var queryParts = document.location.search.replace(/^\?/, '').split('&');
+      for (i in queryParts) {
+        queryPart = queryParts[i].split('=');
+        queries[queryPart[0]] = decodeURI(queryPart[1]);
+      }
+      if (queries.cube) {
+        xavierOptions.metadataRestrictions = {
+          datasources: [{
+            catalogs: [{
+              cubes: [{
+                restriction: {CUBE_NAME: queries.cube},
+                autoSelect: true, //whether this cube should be automatically selectd.
+              }]
+            }]
+          }]
+        };
+      }
+
       var xmlaFactory = new XmlaFactory({
         xmlaUrl: xavierOptions.xmlaUrl,
         listeners: {

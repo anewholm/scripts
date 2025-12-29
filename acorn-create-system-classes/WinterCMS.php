@@ -1762,6 +1762,7 @@ PHP
                 
                     'options'      => $field->fieldOptions,      // Function call
                     'optionsModel' => $field->fieldOptionsModel, // Model name
+                    'optionsWith'  => $field->optionsWith,
                     'optionsWhere' => $field->optionsWhere,
                     'placeholder'  => $field->placeholder,
                     'hierarchical' => $field->hierarchical,

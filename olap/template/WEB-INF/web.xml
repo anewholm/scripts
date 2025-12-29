@@ -30,14 +30,10 @@
     -->
     <servlet-class>mondrian.xmla.impl.MondrianXmlaServlet</servlet-class>
 
-    <!--
-
     <init-param>
       <param-name>CharacterEncoding</param-name>
       <param-value>UTF-8</param-value>
     </init-param>
-
-    -->
     
     <!--
     
