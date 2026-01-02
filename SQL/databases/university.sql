@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict AguLxZEbf1XqAhSlceQvxNEvnkdvjkAuI1JvU68H0qEuRv1gkFOV2ZGzgyZ2VRc
+\restrict vuISayI8PmGkE9yeNXVyqvEHDUy46vFsje6vBUKYrVklu0zux08aECA9KrqblUt
 
 -- Dumped from database version 16.11 (Ubuntu 16.11-1.pgdg24.04+1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-1.pgdg24.04+1)
@@ -13521,7 +13521,8 @@ tab: acorn::lang.models.general.description';
 -- Name: COLUMN acorn_university_academic_years.name; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON COLUMN public.acorn_university_academic_years.name IS 'order: 1
+COMMENT ON COLUMN public.acorn_university_academic_years.name IS 'new-row: true
+order: 1
 column-type: partial
 column-partial: current
 css-classes-column:
@@ -26056,7 +26057,11 @@ COMMENT ON MATERIALIZED VIEW public.acorn_university_olapcube IS 'menu: true
 labels:
   en: University
   ku: Zaningeh
-  ar: جامعة';
+  ar: جامعة
+form-comment:
+  en: Courses, students, time
+  ku: Kûrsên, Xwendekarên, Dem
+';
 
 
 --
@@ -30327,7 +30332,7 @@ ALTER TABLE ONLY public.acorn_user_user_languages
 -- Name: acorn_calendar_instances_date_event_part_id_instance_; Type: INDEX; Schema: public; Owner: university
 --
 
-CREATE INDEX acorn_calendar_instances_date_event_part_id_instance_ ON public.acorn_calendar_instances USING btree (date, event_part_id, instance_num);
+CREATE INDEX acorn_calendar_instances_date_event_part_id_instance_ ON public.acorn_calendar_instances USING btree (date, event_part_id, instance_num) WITH (fillfactor='100', deduplicate_items='true');
 
 
 --
@@ -45330,5 +45335,5 @@ GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_uni
 -- PostgreSQL database dump complete
 --
 
-\unrestrict AguLxZEbf1XqAhSlceQvxNEvnkdvjkAuI1JvU68H0qEuRv1gkFOV2ZGzgyZ2VRc
+\unrestrict vuISayI8PmGkE9yeNXVyqvEHDUy46vFsje6vBUKYrVklu0zux08aECA9KrqblUt
 

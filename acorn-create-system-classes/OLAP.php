@@ -270,8 +270,9 @@ INFO
             $linksHtml = '<ul class="webapps">';
             foreach ($webapps as $webapp) {
                 $imageHtml = NULL;
-                $imagePath = "$this->tomcatRoot/ROOT/images/$webapp.png";
-                if (file_exists($imagePath)) $imageHtml = "<img src='/ROOT/images/$webapp.png'/>";
+                $imageFile = strtolower($webapp);
+                $imagePath = "$this->tomcatRoot/ROOT/images/$imageFile.png";
+                if (file_exists($imagePath)) $imageHtml = "<img src='/images/$imageFile.png'/>";
                 $title = Str::title($webapp);
 
                 $alternateLanguagesHtml = '';
@@ -350,9 +351,7 @@ HTML
                     </head>
                     <body>
                         <h1>OLAP Cubes</h1>
-
                         $linksHtml
-
                         <a id="tech" href="https://mondrian.pentaho.com/documentation/olap.php">Technical implementation documentation</a>
                     </body>
                 </html>
@@ -655,7 +654,7 @@ class OLAPCube {
         $this->defaultMeasure = 'Count';
     }
 
-    public function title(string $locale = 'en'): string
+    public function title(string $locale = 'en'): string|NULL
     {
         // [olap.]acorn_enrollment_olapcube => Enrollment
         // [olap.]acorn_enrollment_olapcube_things => Enrollment Things
@@ -671,6 +670,13 @@ class OLAPCube {
         return $title;
     }
 
+    public function description(string $locale = 'en'): string|NULL
+    {
+        // form-comment:
+        //   en: ... 
+        return (isset($this->olapView->formComment[$locale]) ? $this->olapView->formComment[$locale] : NULL);
+    }
+
     public function document(string $locale = 'en'): DOMDocument
     {
         $xDoc = new DOMDocument();
@@ -678,6 +684,7 @@ class OLAPCube {
         // Cube
         $cubeNode = $xDoc->appendChild($xDoc->createElement('Cube'));
         $cubeNode->setAttribute('name', $this->title($locale));
+        $cubeNode->setAttribute('description', $this->description($locale));
         $cubeNode->setAttribute('locale', $locale);
         $cubeNode->setAttribute('for-view', $this->olapView->name);
         if ($this->defaultMeasure) $cubeNode->setAttribute('defaultMeasure', $this->defaultMeasure);
