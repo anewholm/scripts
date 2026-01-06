@@ -632,7 +632,7 @@ PHP;
                 $firstModelUrl = NULL;
                 foreach ($plugin->models as $modelName => &$model) {
                     if ($controller = $model->controller(FALSE)) {
-                        if ($controller->menu) {
+                        if ($controller->menu && !$model->getTable()->isOlap) {
                             $sideMenuName    = strtolower($controller->name); // educationauthorities
                             $icon            = $controller->icon;
                             $url             = $controller->relativeUrl();

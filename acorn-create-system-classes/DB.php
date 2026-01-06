@@ -436,7 +436,10 @@ class DB {
         $statement->execute();
         foreach ($statement->fetchAll(\PDO::FETCH_ASSOC) as $row) {
             $view = MaterializedView::fromRow($this, $row);
-            if ($view->shouldProcess()) $results[$view->fullyQualifiedName()] = $view;
+            if ($view->shouldProcess()) {
+                if (preg_match('/_olapcube/', $view->name)) $view->isOlap = true;
+                $results[$view->fullyQualifiedName()] = $view;
+            }
         }
 
         return $results;

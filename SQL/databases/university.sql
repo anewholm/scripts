@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict vuISayI8PmGkE9yeNXVyqvEHDUy46vFsje6vBUKYrVklu0zux08aECA9KrqblUt
+\restrict xJDJe3IroHQJGatY5mIv6mRbz1lioqWhBuWPfKSoSUWz2inxOduvp5DFypvHkn4
 
 -- Dumped from database version 16.11 (Ubuntu 16.11-1.pgdg24.04+1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-1.pgdg24.04+1)
@@ -1197,6 +1197,7 @@ DROP FOREIGN TABLE IF EXISTS product.winter_translate_attributes;
 DROP FOREIGN TABLE IF EXISTS product.system_files;
 DROP FOREIGN TABLE IF EXISTS live_public.acorn_exam_scores;
 DROP FOREIGN TABLE IF EXISTS live_public.acorn_exam_calculations;
+DROP SERVER IF EXISTS university_eval;
 DROP USER MAPPING IF EXISTS FOR university SERVER localserver_universityacceptance;
 DROP USER MAPPING IF EXISTS FOR token_university_1 SERVER localserver_universityacceptance;
 DROP USER MAPPING IF EXISTS FOR sz SERVER localserver_universityacceptance;
@@ -1265,6 +1266,7 @@ DROP FUNCTION IF EXISTS public.fn_acorn_university_action_hierarchies_clear(mode
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_hierarchies_append_child(p_model_id uuid, p_user_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_course_year_semesters_spec(p_model_id uuid, p_user_id uuid, p_course_specialization_id uuid, p_copy_materials boolean, p_copy_exams boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_course_year_semesters_prom(p_model_id uuid, p_user_id uuid);
+DROP FUNCTION IF EXISTS public.fn_acorn_university_action_course_year_semesters_expo(p_model_id uuid, p_user_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_course_materials_cm_copy2(p_course_id uuid, p_academic_year_semester_id uuid, p_course_year_id uuid, p_copy_exams boolean, p_copy_projects boolean, p_copy_interviews boolean, p_copy_calculations boolean, p_copy_students boolean, p_delete_existing boolean);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_res_ref(model_id uuid, user_id uuid);
 DROP FUNCTION IF EXISTS public.fn_acorn_university_action_academic_years_provision(p_user_id uuid, p_copy_academic_year_id uuid, p_num_years integer, p_enabled boolean);
@@ -1619,10 +1621,10 @@ date_start date;
                 then
                     -- Settings
                     select coalesce((select substring("value" from '"days_before":"([^"]+)"')
-                        from system_settings where item = 'acorn_calendar_settings'), '1 year')
+                        from public.system_settings where item = 'acorn_calendar_settings'), '1 year')
                         into days_before;
                     select coalesce((select substring("value" from '"days_after":"([^"]+)"')
-                        from system_settings where item = 'acorn_calendar_settings'), '2 years')
+                        from public.system_settings where item = 'acorn_calendar_settings'), '2 years')
                         into days_after;
                     select extract('epoch' from days_before + days_after)/3600/24.0
                         into days_count;
@@ -1630,10 +1632,10 @@ date_start date;
                         into date_start;
 
                     -- For updates (id cannot change)
-                    delete from acorn_calendar_instances where event_part_id = new_event_part.id;
+                    delete from public.acorn_calendar_instances where event_part_id = new_event_part.id;
 
                     -- For inserts
-                    insert into acorn_calendar_instances("date", event_part_id, instance_start, instance_end, instance_num)
+                    insert into public.acorn_calendar_instances("date", event_part_id, instance_start, instance_end, instance_num)
                     select date_start + interval '1' day * gs as "date", ev.*
                     from generate_series(0, days_count) as gs
                     inner join (
@@ -1661,7 +1663,7 @@ date_start date;
                             new_event_part."end" + new_event_part.repeat_frequency * new_event_part."repeat" * gs.gs   as "instance_end",
                             gs.gs as instance_num
                         from generate_series(0, days_count) as gs
-                        inner join acorn_calendar_instances pcc on new_event_part.parent_event_part_id = pcc.event_part_id
+                        inner join public.acorn_calendar_instances pcc on new_event_part.parent_event_part_id = pcc.event_part_id
                             and (pcc.date, pcc.date + 1)
                             overlaps (new_event_part."start" + new_event_part.repeat_frequency * new_event_part."repeat" * gs.gs, new_event_part."end" + new_event_part.repeat_frequency * new_event_part."repeat" * gs.gs)
                         where not new_event_part.repeat is null
@@ -1674,14 +1676,15 @@ date_start date;
 
                     -- Recursively update child event parts
                     -- TODO: This could infinetly cycle
-                    update acorn_calendar_event_parts set id = id
+                    update public.acorn_calendar_event_parts set id = id
                         where parent_event_part_id = new_event_part.id
                         and not id = new_event_part.id;
                 end if;
 
                 return new_event_part;
 end;
-            $$;
+            
+$$;
 
 
 ALTER FUNCTION public.fn_acorn_calendar_generate_event_instances(new_event_part record, old_event_part record) OWNER TO university;
@@ -4600,6 +4603,374 @@ comment-icon: info';
 
 
 --
+-- Name: fn_acorn_university_action_course_year_semesters_expo(uuid, uuid); Type: FUNCTION; Schema: public; Owner: university
+--
+
+CREATE FUNCTION public.fn_acorn_university_action_course_year_semesters_expo(p_model_id uuid, p_user_id uuid) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+declare
+	p_created_by_live_user_id uuid;
+	p_model_uuids uuid[];
+begin
+	-- Copy / update a C if necessary, CYS and its CMs, exams and seminars
+	-- from EVAL to LIVE
+	-- Needs declared Foreign data wrapper: live_university
+	-- and live_public schema with the necessary tables below
+
+	-- We copy the data directly, so no triggers welcome
+	-- In the end we set the import_source to indicate no triggers
+	-- because we cannot remotely disable them
+	-- This also does not work
+	-- SET session_replication_role = replica;
+	-- This does not work because these are triggers on the Foriegn Table, not the Table in the Foreign DB
+	-- ALTER FOREIGN TABLE live_public.acorn_user_user_groups DISABLE TRIGGER ALL;
+	-- ALTER FOREIGN TABLE live_public.acorn_university_entities DISABLE TRIGGER ALL;
+	-- ALTER FOREIGN TABLE live_public.acorn_university_hierarchies DISABLE TRIGGER ALL;
+	-- ALTER FOREIGN TABLE live_public.acorn_university_course_plans DISABLE TRIGGER ALL;
+	-- ALTER FOREIGN TABLE live_public.acorn_university_course_year_semesters DISABLE TRIGGER ALL;
+
+	-- We cannot select this because it is on the live server
+	-- so lets copy the created_by_user_id of Owner Organisation 1 (Faculty usually)
+	-- from the target LIVE server
+	select en.created_by_user_id into p_created_by_live_user_id
+		-- Live DB entity created by
+		from live_public.acorn_university_entities en
+		where en.id = (
+			select hi_oo1.entity_id
+			-- EVAL DB entity entry
+			from public.acorn_university_course_year_semesters cys 
+			inner join public.acorn_university_hierarchies hi_cys on hi_cys.entity_id = cys.entity_id
+			inner join public.acorn_university_hierarchies hi_c on hi_c.id = hi_cys.parent_id
+			inner join public.acorn_university_hierarchies hi_oo1 on hi_oo1.id = hi_c.parent_id
+			where cys.id = p_model_id
+			order by hi_oo1.created_at desc
+			limit 1
+		);
+	if p_created_by_live_user_id is null then
+		raise exception 'Created by user not found for Owner Organisation 1 in LIVE DB';
+	end if;
+
+	-- Copy course if not exists
+	-- Course type is assumed
+	with inserted as (
+		insert into live_public.acorn_user_user_groups(id, name, code, description, parent_user_group_id, nest_left, nest_right, nest_depth, image, colour, type_id, import_source)
+		select id, name, code, description, parent_user_group_id, nest_left, nest_right, nest_depth, image, colour, type_id, 'Export, no_trigger, ' || id
+		from public.acorn_user_user_groups
+		where id in(
+			select user_group_id from public.acorn_university_entities
+			where id in(select entity_id from acorn_university_course_year_semesters where id = p_model_id)
+		)
+		on conflict do nothing
+		returning id
+	) select array_agg(id) into p_model_uuids from inserted;
+	-- Translations
+	-- SEQ int id, UUID model_id
+	insert into live_public.winter_translate_attributes(id, locale, model_id, model_type, attribute_data)
+		select id+100000, locale, model_id, model_type, attribute_data
+		from public.winter_translate_attributes
+		where not array_position(p_model_uuids, model_id::uuid) is null
+		on conflict do nothing;
+	-- Versions
+	insert into live_public.acorn_user_user_group_versions(id, user_group_id, version, current)
+		select id, user_group_id, version, current
+		from public.acorn_user_user_group_versions
+		where user_group_id in(
+			select user_group_id from public.acorn_university_entities
+			where id in(select entity_id from acorn_university_course_year_semesters where id = p_model_id)
+		)
+		on conflict do nothing;
+	insert into live_public.acorn_university_entities(id, user_group_id, location_id, leaf_table, created_at, created_by_user_id, server_id, import_source)
+		select id, user_group_id, location_id, leaf_table, created_at, p_created_by_live_user_id, server_id, 'Export, no_trigger, ' || id
+		from public.acorn_university_entities
+		where id in(select entity_id from acorn_university_courses where id = 
+			(select cys.course_id from public.acorn_university_course_year_semesters cys where cys.id = p_model_id)
+		)
+		on conflict do nothing;
+	insert into live_public.acorn_university_courses(id, entity_id, weight, course_type_id, show_on_front_end)
+		select id, entity_id, weight, course_type_id, show_on_front_end
+		from public.acorn_university_courses
+		where id = (select cys.course_id from public.acorn_university_course_year_semesters cys where cys.id = p_model_id)
+		on conflict do nothing;
+	-- Hierarchy (Assumes parent exists)
+	with inserted as (
+		insert into live_public.acorn_university_hierarchies(id, entity_id, created_at, academic_year_id, parent_id, nest_left, nest_right, nest_depth, description, user_group_version_id, descendant_users_count, nest_ascendants, nest_descendants, leaf_table, default_semester_group_id, default_calendar_id, sync_default_calendar_changes, created_by_user_id, server_id, import_source)
+		select id, entity_id, created_at, academic_year_id, parent_id, nest_left, nest_right, nest_depth, description, user_group_version_id, descendant_users_count, nest_ascendants, nest_descendants, leaf_table, default_semester_group_id, default_calendar_id, sync_default_calendar_changes, p_created_by_live_user_id, server_id, 'Export, no_trigger, ' || id
+		from public.acorn_university_hierarchies
+		where entity_id in(
+			select entity_id from acorn_university_courses
+			where id = (select cys.course_id from public.acorn_university_course_year_semesters cys where cys.id = p_model_id)
+		)
+		on conflict do nothing
+		returning id
+	) select array_agg(id) into p_model_uuids from inserted;
+	-- Translations
+	-- SEQ int id, UUID model_id
+	insert into live_public.winter_translate_attributes(id, locale, model_id, model_type, attribute_data)
+		select id+100000, locale, model_id, model_type, attribute_data
+		from public.winter_translate_attributes
+		where not array_position(p_model_uuids, model_id::uuid) is null
+		on conflict do nothing;
+
+	-- Copy course plan if not exists
+	insert into live_public.acorn_university_course_plans(id, server_id, created_at, course_id, enrollment_academic_year_id, minimum, maximum, women_only, required, "length", created_by_user_id, import_source)
+		select id, server_id, created_at, course_id, enrollment_academic_year_id, minimum, maximum, women_only, required, "length", p_created_by_live_user_id, 'Export, no_trigger, ' || id
+		from public.acorn_university_course_plans
+		where id = (select cys.course_plan_id from public.acorn_university_course_year_semesters cys where cys.id = p_model_id)
+		on conflict do nothing;
+
+	-- Update specializations
+	with inserted as (
+		insert into live_public.acorn_university_course_specializations(id, course_id, name, description, created_at, created_by_user_id, server_id)
+		select id, course_id, name, description, created_at, p_created_by_live_user_id, server_id
+		from public.acorn_university_course_specializations
+		where course_id = (select cys.course_id from public.acorn_university_course_year_semesters cys where cys.id = p_model_id)
+		on conflict do nothing
+		returning id
+	) select array_agg(id) into p_model_uuids from inserted;
+	-- Translations
+	-- SEQ int id, UUID model_id
+	insert into live_public.winter_translate_attributes(id, locale, model_id, model_type, attribute_data)
+		select id+100000, locale, model_id, model_type, attribute_data
+		from public.winter_translate_attributes
+		where not array_position(p_model_uuids, model_id::uuid) is null
+		on conflict do nothing;
+
+	-- Update Material topics
+	with inserted as (
+		insert into live_public.acorn_university_material_topics(id, name, description, created_at, created_by_user_id, server_id)
+		select id, name, description, created_at, p_created_by_live_user_id, server_id
+		from public.acorn_university_material_topics
+		on conflict do nothing
+		returning id
+	) select array_agg(id) into p_model_uuids from inserted;
+	-- Translations
+	-- SEQ int id, UUID model_id
+	insert into live_public.winter_translate_attributes(id, locale, model_id, model_type, attribute_data)
+		select id+100000, locale, model_id, model_type, attribute_data
+		from public.winter_translate_attributes
+		where not array_position(p_model_uuids, model_id::uuid) is null
+		on conflict do nothing;
+
+	-- Update Materials
+	with inserted as (
+		insert into live_public.acorn_university_materials(id, name, description, material_type_id, created_by_user_id, updated_by_user_id, server_id, created_at, updated_at)
+		select id, name, description, material_type_id, p_created_by_live_user_id, updated_by_user_id, server_id, created_at, updated_at
+		from public.acorn_university_materials
+		on conflict do nothing
+		returning id
+	) select array_agg(id) into p_model_uuids from inserted;
+	-- Translations
+	-- SEQ int id, UUID model_id
+	insert into live_public.winter_translate_attributes(id, locale, model_id, model_type, attribute_data)
+		select id+100000, locale, model_id, model_type, attribute_data
+		from public.winter_translate_attributes
+		where not array_position(p_model_uuids, model_id::uuid) is null
+		on conflict do nothing;
+
+	-- All CYS for this course plan, where not exists
+	-- academic_year_semester_id, entity_id, ... are assumed
+	-- User Group & version
+	with inserted as (
+		insert into live_public.acorn_user_user_groups(id, name, code, description, parent_user_group_id, nest_left, nest_right, nest_depth, image, colour, type_id)
+		select id, name, code, description, parent_user_group_id, nest_left, nest_right, nest_depth, image, colour, type_id
+		from public.acorn_user_user_groups
+		where id in(
+			select en.user_group_id 
+			from acorn_university_course_year_semesters cys_selected
+			inner join acorn_university_course_plans cp on cp.id = cys_selected.course_plan_id
+			inner join acorn_university_course_year_semesters cys on cys.course_plan_id = cp.id
+			inner join public.acorn_university_entities en on cys.entity_id = en.id
+			where cys_selected.id = p_model_id
+		)
+		on conflict do nothing
+		returning id
+	) select array_agg(id) into p_model_uuids from inserted;
+	-- Translations
+	-- SEQ int id, UUID model_id
+	insert into live_public.winter_translate_attributes(id, locale, model_id, model_type, attribute_data)
+		select id+100000, locale, model_id, model_type, attribute_data
+		from public.winter_translate_attributes
+		where not array_position(p_model_uuids, model_id::uuid) is null
+		on conflict do nothing;
+
+	insert into live_public.acorn_user_user_group_versions(id, user_group_id, version, current)
+		select id, user_group_id, version, current
+		from public.acorn_user_user_group_versions
+		where user_group_id in(
+			select en.user_group_id 
+			from acorn_university_course_year_semesters cys_selected
+			inner join acorn_university_course_plans cp on cp.id = cys_selected.course_plan_id
+			inner join acorn_university_course_year_semesters cys on cys.course_plan_id = cp.id
+			inner join public.acorn_university_entities en on cys.entity_id = en.id
+			where cys_selected.id = p_model_id
+		)
+		on conflict do nothing;
+	insert into live_public.acorn_university_entities(id, user_group_id, location_id, leaf_table, created_at, created_by_user_id, server_id)
+		select id, user_group_id, location_id, leaf_table, created_at, p_created_by_live_user_id, server_id
+		from public.acorn_university_entities
+		where id in(
+			select en.id 
+			from acorn_university_course_year_semesters cys_selected
+			inner join acorn_university_course_plans cp on cp.id = cys_selected.course_plan_id
+			inner join acorn_university_course_year_semesters cys on cys.course_plan_id = cp.id
+			inner join public.acorn_university_entities en on cys.entity_id = en.id
+			where cys_selected.id = p_model_id
+		)
+		on conflict do nothing;
+	insert into live_public.acorn_university_course_year_semesters(id, course_id, course_year_id, academic_year_semester_id, entity_id, enrollment_academic_year_id, academic_year_semester_ordinal, course_plan_id, course_specialization_id, import_source)
+		select id, course_id, course_year_id, academic_year_semester_id, entity_id, enrollment_academic_year_id, academic_year_semester_ordinal, course_plan_id, course_specialization_id, 'Export, no_trigger, ' || id
+		from public.acorn_university_course_year_semesters
+		where id in(
+			select cys.id
+			from acorn_university_course_year_semesters cys_selected
+			inner join acorn_university_course_plans cp on cp.id = cys_selected.course_plan_id
+			inner join acorn_university_course_year_semesters cys on cys.course_plan_id = cp.id
+			where cys_selected.id = p_model_id
+		)
+		on conflict do nothing;
+
+	-- Hierarchy (Assumes parent [Course] exists)
+	with inserted as (
+		insert into live_public.acorn_university_hierarchies(id, entity_id, created_at, academic_year_id, parent_id, nest_left, nest_right, nest_depth, description, user_group_version_id, descendant_users_count, nest_ascendants, nest_descendants, leaf_table, default_semester_group_id, default_calendar_id, sync_default_calendar_changes, created_by_user_id, server_id, import_source)
+		select id, entity_id, created_at, academic_year_id, parent_id, nest_left, nest_right, nest_depth, description, user_group_version_id, descendant_users_count, nest_ascendants, nest_descendants, leaf_table, default_semester_group_id, default_calendar_id, sync_default_calendar_changes, p_created_by_live_user_id, server_id, 'Export, no_trigger, ' || id
+		from public.acorn_university_hierarchies
+		where entity_id in(
+			select en.id
+			from acorn_university_course_year_semesters cys_selected
+			inner join acorn_university_course_plans cp on cp.id = cys_selected.course_plan_id
+			inner join acorn_university_course_year_semesters cys on cys.course_plan_id = cp.id
+			inner join public.acorn_university_entities en on cys.entity_id = en.id
+			where cys_selected.id = p_model_id
+		)
+		on conflict do nothing
+		returning id
+	) select array_agg(id) into p_model_uuids from inserted;
+	-- Translations
+	-- SEQ int id, UUID model_id
+	insert into live_public.winter_translate_attributes(id, locale, model_id, model_type, attribute_data)
+		select id+100000, locale, model_id, model_type, attribute_data
+		from public.winter_translate_attributes
+		where not array_position(p_model_uuids, model_id::uuid) is null
+		on conflict do nothing;
+
+	-- Course Materials for only selected CYS
+	-- material_topic_id is assumed
+	insert into live_public.acorn_university_course_materials(id, material_id, required, minimum, maximum, weight, course_year_semester_id, sort_order, material_topic_id, created_at, created_by_user_id, server_id)
+		select id, material_id, required, minimum, maximum, weight, course_year_semester_id, sort_order, material_topic_id, created_at, p_created_by_live_user_id, server_id
+		from public.acorn_university_course_materials
+		where course_year_semester_id = p_model_id
+		on conflict do nothing;
+
+	-- Calendars, Statuses and Event types
+	with inserted as (
+		insert into live_public.acorn_calendar_calendars(id, name, description, system, sync_file, sync_format, created_at, updated_at, owner_user_id, owner_user_group_id, permissions, show_on_front_end)
+		select id, name, description, system, sync_file, sync_format, created_at, updated_at, p_created_by_live_user_id, owner_user_group_id, permissions, show_on_front_end
+		from public.acorn_calendar_calendars
+		on conflict do nothing
+		returning id
+	) select array_agg(id) into p_model_uuids from inserted;
+	insert into live_public.winter_translate_attributes(id, locale, model_id, model_type, attribute_data)
+		select id+100000, locale, model_id, model_type, attribute_data
+		from public.winter_translate_attributes
+		where not array_position(p_model_uuids, model_id::uuid) is null
+		on conflict do nothing;
+	-- Statuses
+	with inserted as (
+		insert into live_public.acorn_calendar_event_statuses(id, name, description, style, system, calendar_id, created_at, updated_at)
+		select id, name, description, style, system, calendar_id, created_at, updated_at
+		from public.acorn_calendar_event_statuses
+		on conflict do nothing
+		returning id
+	) select array_agg(id) into p_model_uuids from inserted;
+	insert into live_public.winter_translate_attributes(id, locale, model_id, model_type, attribute_data)
+		select id+100000, locale, model_id, model_type, attribute_data
+		from public.winter_translate_attributes
+		where not array_position(p_model_uuids, model_id::uuid) is null
+		on conflict do nothing;
+	-- Types
+	with inserted as (
+		insert into live_public.acorn_calendar_event_types(id, name, description, whole_day, colour, style, system, activity_log_related_oid, calendar_id, created_at, updated_at)
+		select id, name, description, whole_day, colour, style, system, activity_log_related_oid, calendar_id, created_at, updated_at
+		from public.acorn_calendar_event_types
+		on conflict do nothing
+		returning id
+	) select array_agg(id) into p_model_uuids from inserted;
+	insert into live_public.winter_translate_attributes(id, locale, model_id, model_type, attribute_data)
+		select id+100000, locale, model_id, model_type, attribute_data
+		from public.winter_translate_attributes
+		where not array_position(p_model_uuids, model_id::uuid) is null
+		on conflict do nothing;
+
+	-- Lectures (events & event_parts) for only selected CYS
+	-- owner_user_group_id is copied and assumed
+	insert into live_public.acorn_calendar_events(id, calendar_id, external_url, owner_user_id, owner_user_group_id, permissions, created_at)
+		select id, calendar_id, external_url, p_created_by_live_user_id, owner_user_group_id, permissions, created_at
+		from public.acorn_calendar_events
+		where id in(
+			select event_id from acorn_university_lectures
+			where course_material_id in(
+				select cm.id from acorn_university_course_materials cm
+				where cm.course_year_semester_id = p_model_id	
+			)
+		)
+		on conflict do nothing;
+	-- user_group_version_id is copied above and assumed
+	with inserted as (
+		insert into live_public.acorn_calendar_event_parts(id, event_id, name, description, start, "end", until, mask, mask_type, type_id, status_id, repeat_frequency, parent_event_part_id, location_id, repeat, alarm, instances_deleted, user_group_version_id, user_group_version_locked_external, created_at)
+		select id, event_id, name, description, start, "end", until, mask, mask_type, type_id, status_id, repeat_frequency, parent_event_part_id, location_id, repeat, alarm, instances_deleted, user_group_version_id, user_group_version_locked_external, created_at
+		from public.acorn_calendar_event_parts
+		where event_id in(
+			select event_id from acorn_university_lectures
+			where course_material_id in(
+				select cm.id from acorn_university_course_materials cm
+				where cm.course_year_semester_id = p_model_id	
+			)
+		)
+		on conflict do nothing
+		returning id
+	) select array_agg(id) into p_model_uuids from inserted;
+	-- Translations
+	-- SEQ int id, UUID model_id
+	insert into live_public.winter_translate_attributes(id, locale, model_id, model_type, attribute_data)
+		select id+100000, locale, model_id, model_type, attribute_data
+		from public.winter_translate_attributes
+		where not array_position(p_model_uuids, model_id::uuid) is null
+		on conflict do nothing;
+		
+	insert into live_public.acorn_university_lectures(id, course_material_id, event_id, server_id, created_at, created_by_user_id)
+		select id, course_material_id, event_id, server_id, created_at, p_created_by_live_user_id
+		from public.acorn_university_lectures
+		where course_material_id in(
+			select cm.id from acorn_university_course_materials cm
+			where cm.course_year_semester_id = p_model_id
+		)
+		on conflict do nothing;
+end;
+$$;
+
+
+ALTER FUNCTION public.fn_acorn_university_action_course_year_semesters_expo(p_model_id uuid, p_user_id uuid) OWNER TO university;
+
+--
+-- Name: FUNCTION fn_acorn_university_action_course_year_semesters_expo(p_model_id uuid, p_user_id uuid); Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON FUNCTION public.fn_acorn_university_action_course_year_semesters_expo(p_model_id uuid, p_user_id uuid) IS 'labels:
+  en: Export to LIVE
+  ku: Hinarde bo Zindî
+  ar: تصدير إلى البث المباشر
+result-action: refresh
+confirm: true
+conditions: >
+  exists(
+  select * from acorn_university_course_materials cm
+  where cm.course_year_semester_id = acorn_university_course_year_semesters.id
+  ) and current_database() = ''university_eval''
+';
+
+
+--
 -- Name: fn_acorn_university_action_course_year_semesters_prom(uuid, uuid); Type: FUNCTION; Schema: public; Owner: university
 --
 
@@ -4886,15 +5257,19 @@ fields:
 --
 
 CREATE FUNCTION public.fn_acorn_university_action_hierarchies_cp_prnt_usrs(model_id uuid, user_id uuid) RETURNS void
-    LANGUAGE sql
+    LANGUAGE plpgsql
     AS $$
+begin
+	alter table acorn_user_user_group_version disable trigger tr_acorn_university_hierarchies_descendants_user_cnts;
 	insert into acorn_user_user_group_version(user_id, user_group_version_id)
 		select ugv_from.user_id, hi_to.user_group_version_id 
 		from acorn_university_hierarchies hi_from
 		inner join acorn_user_user_group_version ugv_from on ugv_from.user_group_version_id = hi_from.user_group_version_id
 		inner join acorn_university_hierarchies hi_to on hi_from.id = hi_to.parent_id
 		where hi_to.id = model_id
-		on conflict do nothing
+		on conflict do nothing;
+	alter table acorn_user_user_group_version enable trigger tr_acorn_university_hierarchies_descendants_user_cnts;
+end;
 $$;
 
 
@@ -5497,14 +5872,16 @@ begin
 	-- Maintain CYS list under all course hierarchy nodes
 	-- CASCADE on hierarchies.entity_id will handle deletion
 	-- A sister trigger on hierarchies handles post-insert of course there
-	insert into acorn_university_hierarchies(entity_id, academic_year_id, parent_id)
-		select new.entity_id, hi.academic_year_id, hi.id
-		from acorn_university_courses c
-		inner join acorn_university_hierarchies hi on hi.entity_id = c.entity_id,
-		acorn_university_academic_year_semesters ays
-		where c.id = new.course_id
-		and ays.id = new.academic_year_semester_id
-		and hi.academic_year_id = ays.academic_year_id;
+	if strpos(new.import_source, 'no_trigger') = 0 then
+		insert into acorn_university_hierarchies(entity_id, academic_year_id, parent_id)
+			select new.entity_id, hi.academic_year_id, hi.id
+			from acorn_university_courses c
+			inner join acorn_university_hierarchies hi on hi.entity_id = c.entity_id,
+			acorn_university_academic_year_semesters ays
+			where c.id = new.course_id
+			and ays.id = new.academic_year_semester_id
+			and hi.academic_year_id = ays.academic_year_id;
+	end if;
 	return new;
 end;
             
@@ -5579,25 +5956,27 @@ declare
 	p_academic_year_ordinal int;
 begin
 	-- BEFORE INSERT on acorn_university_course_year_semesters
-
- 	select ay.ordinal into p_academic_year_ordinal
-	 	from acorn_university_academic_year_semesters ays
-		inner join acorn_university_academic_years ay on ays.academic_year_id = ay.id
-		where ays.id = new.academic_year_semester_id;
-	-- acorn_university_course_years.name is an int
-	select name into p_course_year_ordinal 
-		from acorn_university_course_years 
-		where id = new.course_year_id;
+	if new.enrollment_academic_year_id is null then -- Avoid imports
+	 	select ay.ordinal into p_academic_year_ordinal
+		 	from acorn_university_academic_year_semesters ays
+			inner join acorn_university_academic_years ay on ays.academic_year_id = ay.id
+			where ays.id = new.academic_year_semester_id;
+		-- acorn_university_course_years.name is an int
+		select name into p_course_year_ordinal 
+			from acorn_university_course_years 
+			where id = new.course_year_id;
+		
+		-- If p_course_year_ordinal is 1 (1st year)
+		-- then p_enrollment_academic_year_id should == p_academic_year_id
+		-- If course Year >= 2nd, year of enrollment is before academic_year_id
+		-- but we need to navigate by ordinals
+		select id into new.enrollment_academic_year_id 
+			from acorn_university_academic_years
+			where ordinal <= (p_academic_year_ordinal - p_course_year_ordinal + 1)
+			order by ordinal desc
+			limit 1;
+	end if;
 	
-	-- If p_course_year_ordinal is 1 (1st year)
-	-- then p_enrollment_academic_year_id should == p_academic_year_id
-	-- If course Year >= 2nd, year of enrollment is before academic_year_id
-	-- but we need to navigate by ordinals
-	select id into new.enrollment_academic_year_id 
-		from acorn_university_academic_years
-		where ordinal <= (p_academic_year_ordinal - p_course_year_ordinal + 1)
-		order by ordinal desc
-		limit 1;
 	return new;
 end;
             
@@ -5615,7 +5994,7 @@ CREATE FUNCTION public.fn_acorn_university_entities_leaf_table() RETURNS trigger
     AS $$
 begin
 	-- AFTER INSERT on any leaf tables
-	update acorn_university_entities
+	update public.acorn_university_entities
 		set leaf_table = TG_TABLE_NAME
 		where id = new.entity_id;
 	return new;
@@ -5722,26 +6101,28 @@ CREATE FUNCTION public.fn_acorn_university_hierarchies_create_version() RETURNS 
 begin
 	-- BEFORE INSERT
 	-- Add a new version for this entity/user_group
-	insert into acorn_user_user_group_versions(user_group_id)
-		select user_group_id 
-			from acorn_university_entities en
-			where en.id = new.entity_id
-		returning id into new.user_group_version_id;
-
-	-- new.id not present in table yet
-	-- Cache values, very useful for seeding, scopes and names
-	new.nest_ascendants  = fn_acorn_university_hierarchies_ascendants(new.parent_id) || new.parent_id;
-	new.nest_descendants = ARRAY[]::uuid[];
-	new.leaf_table       = fn_acorn_university_hierarchies_entity_leaf_type(new.entity_id);
-
-	-- Update the nest_descendants of the ascendants
-	-- to add this node
-	update acorn_university_hierarchies hi
-		set nest_descendants = fn_acorn_university_hierarchies_descendants(id) || new.id
-		where not array_position(new.nest_ascendants, id) is null;
-
-	-- UNIQUE
-	if new.import_source = '' then new.import_source = NULL; end if;
+	if strpos(new.import_source, 'no_trigger') = 0 then
+		insert into public.acorn_user_user_group_versions(user_group_id)
+			select user_group_id 
+				from public.acorn_university_entities en
+				where en.id = new.entity_id
+			returning id into new.user_group_version_id;
+	
+		-- new.id not present in table yet
+		-- Cache values, very useful for seeding, scopes and names
+		new.nest_ascendants  = fn_acorn_university_hierarchies_ascendants(new.parent_id) || new.parent_id;
+		new.nest_descendants = ARRAY[]::uuid[];
+		new.leaf_table       = fn_acorn_university_hierarchies_entity_leaf_type(new.entity_id);
+	
+		-- Update the nest_descendants of the ascendants
+		-- to add this node
+		update public.acorn_university_hierarchies hi
+			set nest_descendants = fn_acorn_university_hierarchies_descendants(id) || new.id
+			where not array_position(new.nest_ascendants, id) is null;
+	
+		-- UNIQUE
+		if new.import_source = '' then new.import_source = NULL; end if;
+	end if;
 
 	return new;
 end;
@@ -5908,42 +6289,45 @@ CREATE FUNCTION public.fn_acorn_university_hierarchies_manage_cys() RETURNS trig
 declare
 	p_type_id uuid;
 begin
-	-- AFTER INSERT trigger on hierarchies
+	-- AFTER INSERT trigger on acorn_university_hierarchies
 	-- Maintain CYS list under all course hierarchy nodes
 	-- CASCADE on hierarchies.entity_id will handle deletion
 	-- A sister trigger on cys handles post-insert of cys there
-	select id into p_type_id from acorn_university_courses 
-		where entity_id = new.entity_id;
-	if not p_type_id is null then
-		-- It is a course node
-		-- Add all its CYS nodes underneath with new (triggered) user group versions
-		-- for the Academic Year
-		-- tr/fn_acorn_university_hierarchies_new_version() will complete the new user_group_version_id
-		-- BEFORE this INSERT
-		insert into acorn_university_hierarchies(entity_id, academic_year_id, parent_id)
-			select cys.entity_id, new.academic_year_id, new.id
-			from acorn_university_course_year_semesters cys
-			inner join acorn_university_academic_year_semesters ays on cys.academic_year_semester_id = ays.id
-			where cys.course_id = p_type_id
-			and not cys.entity_id = new.entity_id -- This should not happen, but just in case
-			and ays.academic_year_id = new.academic_year_id;
-	end if;
-	
-	select id into p_type_id from acorn_university_course_year_semesters 
-		where entity_id = new.entity_id;
-	if not p_type_id is null then
-		-- It is a CYS
-		-- If it has existing seminars (events) with no user groups
-		-- then set the user groups to the newly created one from the hierarchy
-		update acorn_calendar_event_parts
-			set user_group_version_id = new.user_group_version_id
-			where id in(
-				select ep.id from acorn_calendar_event_parts ep
-				inner join acorn_university_lectures l on l.event_id = ep.event_id
-				inner join acorn_university_course_materials cm on l.course_material_id = cm.id
-				where cm.course_year_semester_id = p_type_id
-				and ep.user_group_version_id is null
-			);
+
+	if strpos(new.import_source, 'no_trigger') = 0 then
+		select id into p_type_id from public.acorn_university_courses 
+			where entity_id = new.entity_id;
+		if not p_type_id is null then
+			-- It is a course node
+			-- Add all its CYS nodes underneath with new (triggered) user group versions
+			-- for the Academic Year
+			-- tr/fn_acorn_university_hierarchies_new_version() will complete the new user_group_version_id
+			-- BEFORE this INSERT
+			insert into public.acorn_university_hierarchies(entity_id, academic_year_id, parent_id)
+				select cys.entity_id, new.academic_year_id, new.id
+				from public.acorn_university_course_year_semesters cys
+				inner join public.acorn_university_academic_year_semesters ays on cys.academic_year_semester_id = ays.id
+				where cys.course_id = p_type_id
+				and not cys.entity_id = new.entity_id -- This should not happen, but just in case
+				and ays.academic_year_id = new.academic_year_id;
+		end if;
+		
+		select id into p_type_id from public.acorn_university_course_year_semesters 
+			where entity_id = new.entity_id;
+		if not p_type_id is null then
+			-- It is a CYS
+			-- If it has existing seminars (events) with no user groups
+			-- then set the user groups to the newly created one from the hierarchy
+			update public.acorn_calendar_event_parts
+				set user_group_version_id = new.user_group_version_id
+				where id in(
+					select ep.id from public.acorn_calendar_event_parts ep
+					inner join public.acorn_university_lectures l on l.event_id = ep.event_id
+					inner join public.acorn_university_course_materials cm on l.course_material_id = cm.id
+					where cm.course_year_semester_id = p_type_id
+					and ep.user_group_version_id is null
+				);
+		end if;
 	end if;
 
 	return new;
@@ -6132,10 +6516,10 @@ begin
 	p_deferred_binding := new.course_material_id is null;
 	if not p_deferred_binding then
     	select count(*) into p_hi_count
-    		from acorn_university_course_materials cm
-    		inner join acorn_university_course_year_semesters cys on cm.course_year_semester_id = cys.id
-    		inner join acorn_university_entities en on cys.entity_id = en.id
-    		inner join acorn_university_hierarchies hi on hi.entity_id = en.id
+    		from public.acorn_university_course_materials cm
+    		inner join public.acorn_university_course_year_semesters cys on cm.course_year_semester_id = cys.id
+    		inner join public.acorn_university_entities en on cys.entity_id = en.id
+    		inner join public.acorn_university_hierarchies hi on hi.entity_id = en.id
     		where cm.id = new.course_material_id;
     
     	-- If there are no associated user_group_version yet
@@ -6147,14 +6531,14 @@ begin
     		-- Get hierarchy entry details
     		select hi.user_group_version_id, hi.id, array_prepend(hi.id, hi.nest_ascendants)
     			into p_user_group_version_id, p_hi_1, p_hi_self_and_nest_ascendants
-    			from acorn_university_course_materials cm
-    			inner join acorn_university_course_year_semesters cys on cm.course_year_semester_id = cys.id
-    			inner join acorn_university_entities en on cys.entity_id = en.id
-    			inner join acorn_university_hierarchies hi on hi.entity_id = en.id
+    			from public.acorn_university_course_materials cm
+    			inner join public.acorn_university_course_year_semesters cys on cm.course_year_semester_id = cys.id
+    			inner join public.acorn_university_entities en on cys.entity_id = en.id
+    			inner join public.acorn_university_hierarchies hi on hi.entity_id = en.id
     			where cm.id = new.course_material_id;
     
     		-- Sync event user_group_version
-    		update acorn_calendar_event_parts 
+    		update public.acorn_calendar_event_parts 
     			set user_group_version_id = p_user_group_version_id
     			where event_id = new.event_id;
     
@@ -6165,14 +6549,14 @@ begin
     			-- Start with the array for correct ordering
     			-- closest ascendant first
     			from unnest(p_hi_self_and_nest_ascendants)
-    			inner join acorn_university_hierarchies hi on hi.id = unnest
+    			inner join public.acorn_university_hierarchies hi on hi.id = unnest
     			where not default_calendar_id is null
 				order by coalesce(array_upper(hi.nest_ascendants, 1), 0) desc
     			limit 1;
     		-- It is possible that there is none
     		-- in which case we leave it in default calendar
     		if not p_default_calendar_id is null then
-    			update acorn_calendar_events 
+    			update public.acorn_calendar_events 
     				set calendar_id = p_default_calendar_id
     				where id = new.event_id
     				-- Let's not change it if they set a specific one
@@ -6184,21 +6568,21 @@ begin
     	-- Hierarchy entry not needed
     	-- It is an error for a semester to have more than one part
     	select ep.id into p_ays_event_part_id
-    		from acorn_university_course_materials cm
-    		inner join acorn_university_course_year_semesters cys on cm.course_year_semester_id = cys.id
-    		inner join acorn_university_academic_year_semesters ays on cys.academic_year_semester_id = ays.id
-    		inner join acorn_calendar_event_parts ep on ep.event_id = ays.event_id
+    		from public.acorn_university_course_materials cm
+    		inner join public.acorn_university_course_year_semesters cys on cm.course_year_semester_id = cys.id
+    		inner join public.acorn_university_academic_year_semesters ays on cys.academic_year_semester_id = ays.id
+    		inner join public.acorn_calendar_event_parts ep on ep.event_id = ays.event_id
     		where cm.id = new.course_material_id;
     	if p_ays_event_part_id is null then
     		raise exception 'No AYS event part found for lecture container events';
     	end if;
-    	update acorn_calendar_event_parts 
+    	update public.acorn_calendar_event_parts 
     		set parent_event_part_id = p_ays_event_part_id
     		where event_id = new.event_id
     		and parent_event_part_id is null;
     
     	-- Always lock the event user_group_version, even if NULL
-    	update acorn_calendar_event_parts 
+    	update public.acorn_calendar_event_parts 
     		set user_group_version_locked_external = true
     		where event_id = new.event_id;
     end if;
@@ -11799,7 +12183,7 @@ declare
 	p_yearsemesters_record record;
 	p_academic_year_name character varying(1024);
 begin
-	-- Runs AFTER INSERT|UPDATE on acorn_university_course_year_settings
+	-- Runs AFTER INSERT|UPDATE on acorn_university_course_plans
 	-- Provision every course year from this enrollment academic year until new.length
 	-- every semester for each academic year
 	-- For a 4 year course, 3 semesters, this will be 12 rows
@@ -11811,104 +12195,107 @@ begin
 	-- 2025-2026 - Semester 3
 	-- ...
 
-	-- Enrollment year
-	select ordinal into p_enrollment_academic_year_ordinal
-		from acorn_university_academic_years
-		where id = new.enrollment_academic_year_id;
-
-	-- Hierarchy entry(s)
-	-- TODO: Support multiple hierarchy entries
-	select array_prepend(hi.id, hi.nest_ascendants) into p_hi_self_and_nest_ascendants
-		from acorn_university_courses c
-		inner join acorn_university_entities en on c.entity_id = en.id
-		inner join acorn_university_hierarchies hi on hi.entity_id = en.id
-		where c.id = new.course_id
-		and hi.academic_year_id = new.enrollment_academic_year_id
-		limit 1;
-			
-	-- Semester group
-	if not p_hi_self_and_nest_ascendants is null then
-		select hi.default_semester_group_id into p_default_semester_group_id
-			-- Start with the array for correct ordering
-			-- closest ascendant first
-			from unnest(p_hi_self_and_nest_ascendants)
-			inner join acorn_university_hierarchies hi on hi.id = unnest
-			where not default_semester_group_id is null
+	if strpos(new.import_source, 'no_trigger') = 0 then
+		-- Enrollment year
+		select ordinal into p_enrollment_academic_year_ordinal
+			from acorn_university_academic_years
+			where id = new.enrollment_academic_year_id;
+	
+		-- Hierarchy entry(s)
+		-- TODO: Support multiple hierarchy entries
+		select array_prepend(hi.id, hi.nest_ascendants) into p_hi_self_and_nest_ascendants
+			from acorn_university_courses c
+			inner join acorn_university_entities en on c.entity_id = en.id
+			inner join acorn_university_hierarchies hi on hi.entity_id = en.id
+			where c.id = new.course_id
+			and hi.academic_year_id = new.enrollment_academic_year_id
 			limit 1;
+				
+		-- Semester group
+		if not p_hi_self_and_nest_ascendants is null then
+			select hi.default_semester_group_id into p_default_semester_group_id
+				-- Start with the array for correct ordering
+				-- closest ascendant first
+				from unnest(p_hi_self_and_nest_ascendants)
+				inner join acorn_university_hierarchies hi on hi.id = unnest
+				where not default_semester_group_id is null
+				limit 1;
+		end if;
+	
+		-- TODO: What if semesters have not been provisioned for this academic year?
+		-- if not exists(select * 
+		-- 	from acorn_university_academic_year_semesters
+		-- 	where academic_year_id = p_years_record.academic_year_id
+		-- ) then
+		-- 	select name into p_academic_year_name from public.acorn_university_academic_years
+		-- 		where id = p_years_record.academic_year_id;
+		-- 	raise exception 'It looks like semesters have not been provisioned for this year %', p_academic_year_name;
+		-- end if;
+			
+		-- Provision any missing items
+		for p_yearsemesters_record in select 
+				c.id || '::' || cy.id || '::' || ays.id || '::' || new.id as id,
+				ugs.name || '::Year-' || cy.name || '::' || ay.name || '::' || sem.name as name,
+				c.id as course_id, cy.id as course_year_id, ays.id as academic_year_semester_id
+			-- Year Semesters
+			from acorn_university_academic_years ay
+			inner join acorn_university_course_years cy on ay.ordinal - p_enrollment_academic_year_ordinal + 1 = cy.ordinal
+			inner join acorn_university_academic_year_semesters ays on ays.academic_year_id = ay.id
+			inner join acorn_university_semesters sem on ays.semester_id = sem.id,
+	
+			-- Course details
+			acorn_university_courses c
+			inner join acorn_university_entities en on c.entity_id = en.id
+			inner join acorn_user_user_groups ugs on ugs.id = en.user_group_id
+			
+			where ((p_default_semester_group_id is null and sem.semester_group_id is null) or sem.semester_group_id = p_default_semester_group_id)
+			and c.id = new.course_id
+			-- Add un-provisioned items only
+			and not exists(
+				select * from acorn_university_course_year_semesters cys
+				where course_id = new.course_id
+				and course_year_id = cy.id
+				and academic_year_semester_id = ays.id
+			)
+			-- Restrict academic years to beginning => length of course
+			-- The inner join on ordinal above does the work here
+			and cy.ordinal <= new.length
+			order by ay.ordinal ASC, cy.ordinal ASC
+		loop
+			-- User group, Entity, CYS
+			-- CYS name is constructed, not 1-1 user_group
+			insert into acorn_user_user_groups(name, code)
+				select p_yearsemesters_record.name, 'CYS-' || p_yearsemesters_record.id
+				returning id into p_id;
+			insert into acorn_university_entities(user_group_id)
+				values(p_id)
+				returning id into p_id;
+			-- This will cascade another trigger
+			-- to sync all CYS under all Course nodes in the hierachies table
+			-- for the stated year
+			insert into acorn_university_course_year_semesters(course_plan_id, course_id, course_year_id, academic_year_semester_id, entity_id)
+				values(new.id, p_yearsemesters_record.course_id, p_yearsemesters_record.course_year_id, p_yearsemesters_record.academic_year_semester_id, p_id);
+		end loop;
+			
+		-- TODO: Remove excess course years in case of reductory length updates
+		-- This will also cause a sync trigger to delete the entities 
+		-- & cascade to hierarchies
+		-- delete from acorn_university_course_year_semesters where id in(
+		-- 	select ays.id 
+		-- 	-- Year Semesters
+		-- 	from acorn_university_academic_years ay
+		-- 	inner join acorn_university_course_years cy on ay.ordinal - p_enrollment_academic_year_ordinal + 1 = cy.ordinal
+		-- 	inner join acorn_university_academic_year_semesters ays on ays.academic_year_id = ay.id
+		-- 	inner join acorn_university_course_year_semesters cys 
+		-- 		on cys.academic_year_semester_id = ays.id
+		-- 		and cys.course_year_id = cy.id
+		-- 	where cys.course_id = new.course_id
+		-- 	-- Restrict academic years to after length of course
+		-- 	-- The inner join on ordinal above does the work here
+		-- 	and cy.ordinal > new.length
+		-- );
 	end if;
-
-	-- TODO: What if semesters have not been provisioned for this academic year?
-	-- if not exists(select * 
-	-- 	from acorn_university_academic_year_semesters
-	-- 	where academic_year_id = p_years_record.academic_year_id
-	-- ) then
-	-- 	select name into p_academic_year_name from public.acorn_university_academic_years
-	-- 		where id = p_years_record.academic_year_id;
-	-- 	raise exception 'It looks like semesters have not been provisioned for this year %', p_academic_year_name;
-	-- end if;
-		
-	-- Provision any missing items
-	for p_yearsemesters_record in select 
-			c.id || '::' || cy.id || '::' || ays.id || '::' || new.id as id,
-			ugs.name || '::Year-' || cy.name || '::' || ay.name || '::' || sem.name as name,
-			c.id as course_id, cy.id as course_year_id, ays.id as academic_year_semester_id
-		-- Year Semesters
-		from acorn_university_academic_years ay
-		inner join acorn_university_course_years cy on ay.ordinal - p_enrollment_academic_year_ordinal + 1 = cy.ordinal
-		inner join acorn_university_academic_year_semesters ays on ays.academic_year_id = ay.id
-		inner join acorn_university_semesters sem on ays.semester_id = sem.id,
-
-		-- Course details
-		acorn_university_courses c
-		inner join acorn_university_entities en on c.entity_id = en.id
-		inner join acorn_user_user_groups ugs on ugs.id = en.user_group_id
-		
-		where ((p_default_semester_group_id is null and sem.semester_group_id is null) or sem.semester_group_id = p_default_semester_group_id)
-		and c.id = new.course_id
-		-- Add un-provisioned items only
-		and not exists(
-			select * from acorn_university_course_year_semesters cys
-			where course_id = new.course_id
-			and course_year_id = cy.id
-			and academic_year_semester_id = ays.id
-		)
-		-- Restrict academic years to beginning => length of course
-		-- The inner join on ordinal above does the work here
-		and cy.ordinal <= new.length
-		order by ay.ordinal ASC, cy.ordinal ASC
-	loop
-		-- User group, Entity, CYS
-		-- CYS name is constructed, not 1-1 user_group
-		insert into acorn_user_user_groups(name, code)
-			select p_yearsemesters_record.name, 'CYS-' || p_yearsemesters_record.id
-			returning id into p_id;
-		insert into acorn_university_entities(user_group_id)
-			values(p_id)
-			returning id into p_id;
-		-- This will cascade another trigger
-		-- to sync all CYS under all Course nodes in the hierachies table
-		-- for the stated year
-		insert into acorn_university_course_year_semesters(course_plan_id, course_id, course_year_id, academic_year_semester_id, entity_id)
-			values(new.id, p_yearsemesters_record.course_id, p_yearsemesters_record.course_year_id, p_yearsemesters_record.academic_year_semester_id, p_id);
-	end loop;
-		
-	-- TODO: Remove excess course years in case of reductory length updates
-	-- This will also cause a sync trigger to delete the entities 
-	-- & cascade to hierarchies
-	-- delete from acorn_university_course_year_semesters where id in(
-	-- 	select ays.id 
-	-- 	-- Year Semesters
-	-- 	from acorn_university_academic_years ay
-	-- 	inner join acorn_university_course_years cy on ay.ordinal - p_enrollment_academic_year_ordinal + 1 = cy.ordinal
-	-- 	inner join acorn_university_academic_year_semesters ays on ays.academic_year_id = ay.id
-	-- 	inner join acorn_university_course_year_semesters cys 
-	-- 		on cys.academic_year_semester_id = ays.id
-	-- 		and cys.course_year_id = cy.id
-	-- 	where cys.course_id = new.course_id
-	-- 	-- Restrict academic years to after length of course
-	-- 	-- The inner join on ordinal above does the work here
-	-- 	and cy.ordinal > new.length
-	-- );
+	
     return new;
 end;
             
@@ -11988,67 +12375,24 @@ begin
 	-- UPDATEs to course_plan_id, course_id, course_year_id are not allowed
 	-- by enrollment_year trigger
 
-	-- How many semesters appear before this new insert for this course plan?
-	-- ignoring specializations
-	p_ordinal := coalesce((select count(distinct ays_before.id) from 
-		-- Updating (new) details
-		acorn_university_academic_year_semesters ays_update
-		inner join acorn_university_academic_years ay_update on ays_update.academic_year_id = ay_update.id
-		inner join acorn_university_semesters sem_update on ays_update.semester_id = sem_update.id,
-
-		-- CYS before list
-		acorn_university_course_year_semesters cys_before
-		inner join acorn_university_academic_year_semesters ays_before on cys_before.academic_year_semester_id = ays_before.id
-		inner join acorn_university_academic_years ay_before on ays_before.academic_year_id = ay_before.id
-		inner join acorn_university_semesters sem_before on ays_before.semester_id = sem_before.id
-		-- Same course plan
-		where cys_before.course_plan_id = new.course_plan_id
-		-- Updating details 
-		and ays_update.id = new.academic_year_semester_id
-		-- Rows Before
-		and (
-			-- All full years before
-			ay_before.ordinal < ay_update.ordinal 
-			-- Only the semesters before for the same year
-			or  (ay_before.id = ay_update.id and sem_before.ordinal < sem_update.ordinal)
-		)
-	), 0) + 1;
-	new.academic_year_semester_ordinal := p_ordinal;
-
-	-- See if this _is going to be_ a new ordinal row, or an existing ordinal (+specialization)
-	-- 1 if true, so can be added
-	p_is_new_ays := coalesce((
-		select 0
-		from acorn_university_course_year_semesters cys
-		where cys.course_plan_id = new.course_plan_id
-		and   cys.academic_year_semester_id = new.academic_year_semester_id
-		limit 1
-	), 1);
-		
-	-- Update all ordinals _after_ this one
-	-- +1+1 because BEFORE INSERT
-	-- Work off the existing CYSs, not the count(sem) theoretical allocation
-	-- In the case of Course Planner INSERTs, this will have nothing to update
-	-- because the are insterted in order anyway, with nothing after each one
-	update acorn_university_course_year_semesters cys_update
-		set academic_year_semester_ordinal = coalesce((
-			-- Suppress Specialization duplicates
-			select count(distinct ays_before.id) from 
-			-- Updating details
+	if new.academic_year_semester_ordinal is null then
+		-- How many semesters appear before this new insert for this course plan?
+		-- ignoring specializations
+		p_ordinal := coalesce((select count(distinct ays_before.id) from 
+			-- Updating (new) details
 			acorn_university_academic_year_semesters ays_update
 			inner join acorn_university_academic_years ay_update on ays_update.academic_year_id = ay_update.id
 			inner join acorn_university_semesters sem_update on ays_update.semester_id = sem_update.id,
-
+	
 			-- CYS before list
 			acorn_university_course_year_semesters cys_before
 			inner join acorn_university_academic_year_semesters ays_before on cys_before.academic_year_semester_id = ays_before.id
 			inner join acorn_university_academic_years ay_before on ays_before.academic_year_id = ay_before.id
 			inner join acorn_university_semesters sem_before on ays_before.semester_id = sem_before.id
-
 			-- Same course plan
-			where cys_before.course_plan_id = cys_update.course_plan_id
+			where cys_before.course_plan_id = new.course_plan_id
 			-- Updating details 
-			and ays_update.id = cys_update.academic_year_semester_id
+			and ays_update.id = new.academic_year_semester_id
 			-- Rows Before
 			and (
 				-- All full years before
@@ -12056,13 +12400,58 @@ begin
 				-- Only the semesters before for the same year
 				or  (ay_before.id = ay_update.id and sem_before.ordinal < sem_update.ordinal)
 			)
-		), 0) + 1 -- 1 indexed
-				  -- Take in to account the not-yet-inserted row
-		          -- Do not need to +1 if a row with this ordinal _already_ exists
-				  -- for example, in the case of specialization
-		      + p_is_new_ays 
-	where cys_update.course_plan_id = new.course_plan_id
-	and cys_update.academic_year_semester_ordinal >= p_ordinal;
+		), 0) + 1;
+		new.academic_year_semester_ordinal := p_ordinal;
+	
+		-- See if this _is going to be_ a new ordinal row, or an existing ordinal (+specialization)
+		-- 1 if true, so can be added
+		p_is_new_ays := coalesce((
+			select 0
+			from acorn_university_course_year_semesters cys
+			where cys.course_plan_id = new.course_plan_id
+			and   cys.academic_year_semester_id = new.academic_year_semester_id
+			limit 1
+		), 1);
+			
+		-- Update all ordinals _after_ this one
+		-- +1+1 because BEFORE INSERT
+		-- Work off the existing CYSs, not the count(sem) theoretical allocation
+		-- In the case of Course Planner INSERTs, this will have nothing to update
+		-- because the are insterted in order anyway, with nothing after each one
+		update acorn_university_course_year_semesters cys_update
+			set academic_year_semester_ordinal = coalesce((
+				-- Suppress Specialization duplicates
+				select count(distinct ays_before.id) from 
+				-- Updating details
+				acorn_university_academic_year_semesters ays_update
+				inner join acorn_university_academic_years ay_update on ays_update.academic_year_id = ay_update.id
+				inner join acorn_university_semesters sem_update on ays_update.semester_id = sem_update.id,
+	
+				-- CYS before list
+				acorn_university_course_year_semesters cys_before
+				inner join acorn_university_academic_year_semesters ays_before on cys_before.academic_year_semester_id = ays_before.id
+				inner join acorn_university_academic_years ay_before on ays_before.academic_year_id = ay_before.id
+				inner join acorn_university_semesters sem_before on ays_before.semester_id = sem_before.id
+	
+				-- Same course plan
+				where cys_before.course_plan_id = cys_update.course_plan_id
+				-- Updating details 
+				and ays_update.id = cys_update.academic_year_semester_id
+				-- Rows Before
+				and (
+					-- All full years before
+					ay_before.ordinal < ay_update.ordinal 
+					-- Only the semesters before for the same year
+					or  (ay_before.id = ay_update.id and sem_before.ordinal < sem_update.ordinal)
+				)
+			), 0) + 1 -- 1 indexed
+					  -- Take in to account the not-yet-inserted row
+			          -- Do not need to +1 if a row with this ordinal _already_ exists
+					  -- for example, in the case of specialization
+			      + p_is_new_ays 
+		where cys_update.course_plan_id = new.course_plan_id
+		and cys_update.academic_year_semester_ordinal >= p_ordinal;
+	end if;
 
 	return new;
 end;
@@ -12223,7 +12612,7 @@ begin
 	-- DBAuth required
 	-- Will return NULL if not regexp_like(CURRENT_USER, '^token_[0-9]+$')
 	if new.updated_by_user_id is null then
-		select u.id into new.updated_by_user_id from acorn_dbauth_user u;
+		select u.id into new.updated_by_user_id from public.acorn_dbauth_user u;
 	end if;
     return new;
 end;
@@ -12311,8 +12700,10 @@ CREATE FUNCTION public.fn_acorn_user_user_group_first_version() RETURNS trigger
 begin
 	-- On INSERT on acorn_user_user_groups
 	-- The CASCADE FK delete should remove them
-	insert into acorn_user_user_group_versions(user_group_id)
-		values(new.id);
+	if strpos(new.import_source, 'no_trigger') = 0 then
+		insert into public.acorn_user_user_group_versions(user_group_id)
+			values(new.id);
+	end if;
 	return new;
 end;
 $$;
@@ -12330,31 +12721,33 @@ CREATE FUNCTION public.fn_acorn_user_user_group_version_current() RETURNS trigge
 begin
 	-- BEFORE INSERT OR UPDATE on acorn_user_user_group_versions
 	-- version column is NOT NULL, DEFAULT 1
-	if TG_OP = 'INSERT' then
-		-- Enforce the version number
-		select coalesce(max(ugv.version), 0) + 1 into new.version
-			from acorn_user_user_group_versions ugv
-			where ugv.user_group_id = new.user_group_id;
-	end if;
-	
-	if exists(select * from acorn_user_user_group_versions ugv
-		where ugv.user_group_id = new.user_group_id
-		and ugv.version = new.version
-		and not ugv.id = new.id
-	) then
-		raise exception 'Duplicate version number % not allowed in acorn_user_user_group_versions id %', new.version, new.id;
-	end if;
+	if strpos(new.import_source, 'no_trigger') = 0 then
+		if TG_OP = 'INSERT' then
+			-- Enforce the version number
+			select coalesce(max(ugv.version), 0) + 1 into new.version
+				from public.acorn_user_user_group_versions ugv
+				where ugv.user_group_id = new.user_group_id;
+		end if;
 		
-	-- Enforce only one current
-	-- False may be explicitly specified, for example, importing old codes
-	-- Column default should be true on inserts
-	if new.current then
-		-- Unset the old current(s)
-		update acorn_user_user_group_versions 
-			set "current" = false
-			where user_group_id = new.user_group_id 
-			and not id = new.id
-			and "current";
+		if exists(select * from public.acorn_user_user_group_versions ugv
+			where ugv.user_group_id = new.user_group_id
+			and ugv.version = new.version
+			and not ugv.id = new.id
+		) then
+			raise exception 'Duplicate version number % not allowed in acorn_user_user_group_versions id %', new.version, new.id;
+		end if;
+			
+		-- Enforce only one current
+		-- False may be explicitly specified, for example, importing old codes
+		-- Column default should be true on inserts
+		if new.current then
+			-- Unset the old current(s)
+			update public.acorn_user_user_group_versions 
+				set "current" = false
+				where user_group_id = new.user_group_id 
+				and not id = new.id
+				and "current";
+		end if;
 	end if;
 	
 	return new;
@@ -12481,6 +12874,19 @@ CREATE USER MAPPING FOR university SERVER localserver_universityacceptance OPTIO
     "user" 'sz'
 );
 
+
+--
+-- Name: university_eval; Type: SERVER; Schema: -; Owner: sz
+--
+
+CREATE SERVER university_eval FOREIGN DATA WRAPPER postgres_fdw OPTIONS (
+    dbname 'university_eval',
+    host 'localhost',
+    port '5433'
+);
+
+
+ALTER SERVER university_eval OWNER TO sz;
 
 --
 -- Name: acorn_exam_calculations; Type: FOREIGN TABLE; Schema: live_public; Owner: sz
@@ -15609,7 +16015,8 @@ CREATE TABLE public.acorn_university_course_plans (
     required boolean DEFAULT false,
     created_at timestamp(0) without time zone DEFAULT now() NOT NULL,
     updated_at timestamp(0) without time zone,
-    length integer DEFAULT 4 NOT NULL
+    length integer DEFAULT 4 NOT NULL,
+    import_source character varying(1024)
 );
 
 
@@ -15795,6 +16202,14 @@ extra-translations:
     en: Years
     ku: Salên
     ar: سنين';
+
+
+--
+-- Name: COLUMN acorn_university_course_plans.import_source; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_plans.import_source IS 'advanced: true
+invisible: true';
 
 
 --
@@ -19234,7 +19649,8 @@ CREATE TABLE public.acorn_university_course_year_semesters (
     enrollment_academic_year_id uuid NOT NULL,
     academic_year_semester_ordinal integer NOT NULL,
     course_plan_id uuid,
-    course_specialization_id uuid
+    course_specialization_id uuid,
+    import_source character varying(1024)
 );
 
 
@@ -19365,6 +19781,14 @@ css-classes-column:
 COMMENT ON COLUMN public.acorn_university_course_year_semesters.course_specialization_id IS 'tab-location: 3
 context-update:
   read-only: true';
+
+
+--
+-- Name: COLUMN acorn_university_course_year_semesters.import_source; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON COLUMN public.acorn_university_course_year_semesters.import_source IS 'advanced: true
+invisible: true';
 
 
 --
@@ -36464,7 +36888,8 @@ ALTER TABLE ONLY public.acorn_university_student_status
 -- Name: CONSTRAINT student_id ON acorn_university_student_status; Type: COMMENT; Schema: public; Owner: university
 --
 
-COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_status IS 'labels:
+COMMENT ON CONSTRAINT student_id ON public.acorn_university_student_status IS 'column-exclude: true
+labels:
   en: Status
   ku: Rewş
   ar: الحالات الخاصة
@@ -40101,6 +40526,7 @@ GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO szena W
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO token_38;
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO agri;
 GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO token_university_27;
+GRANT ALL ON FUNCTION public.fn_acorn_user_user_group_first_version() TO token_14;
 
 
 --
@@ -45335,5 +45761,5 @@ GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_uni
 -- PostgreSQL database dump complete
 --
 
-\unrestrict vuISayI8PmGkE9yeNXVyqvEHDUy46vFsje6vBUKYrVklu0zux08aECA9KrqblUt
+\unrestrict xJDJe3IroHQJGatY5mIv6mRbz1lioqWhBuWPfKSoSUWz2inxOduvp5DFypvHkn4
 

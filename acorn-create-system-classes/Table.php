@@ -32,6 +32,7 @@ class Table {
 
     public $comment;
     public $parsedComment; // array
+    public $isOlap = FALSE;
     public $formComment;   // Appears as a section on the top of forms
     public $formCommentContexts;
     public $commentHtml;   // For form-comment
