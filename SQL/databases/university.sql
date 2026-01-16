@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict hXtCd31gzh5j3aOVDjMe3XJHMPKLCBWZueUzhpcpw5wgNjPuK50KTVxaOMEyTQe
+\restrict qq3vdjTnnskQ6oC7YibTeq2Gw8CwDnKMZCC7Z2HJfXDkvpVU6XpBvMbOLNO2vID
 
 -- Dumped from database version 16.11 (Ubuntu 16.11-1.pgdg24.04+1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-1.pgdg24.04+1)
@@ -35608,7 +35608,7 @@ ALTER TABLE ONLY public.acorn_exam_instances
 --
 
 ALTER TABLE ONLY public.acorn_exam_exam_materials
-    ADD CONSTRAINT exam_id FOREIGN KEY (exam_id) REFERENCES public.acorn_exam_exams(id) NOT VALID;
+    ADD CONSTRAINT exam_id FOREIGN KEY (exam_id) REFERENCES public.acorn_exam_exams(id) ON DELETE CASCADE NOT VALID;
 
 
 --
@@ -46307,5 +46307,5 @@ GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_uni
 -- PostgreSQL database dump complete
 --
 
-\unrestrict hXtCd31gzh5j3aOVDjMe3XJHMPKLCBWZueUzhpcpw5wgNjPuK50KTVxaOMEyTQe
+\unrestrict qq3vdjTnnskQ6oC7YibTeq2Gw8CwDnKMZCC7Z2HJfXDkvpVU6XpBvMbOLNO2vID
 
