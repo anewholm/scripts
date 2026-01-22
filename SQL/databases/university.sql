@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict qq3vdjTnnskQ6oC7YibTeq2Gw8CwDnKMZCC7Z2HJfXDkvpVU6XpBvMbOLNO2vID
+\restrict ush6TAdQKoDMUtO0vayLJlNe2lcpY27boZrff27hTSTbZSnHn8fs5RQpuoya2g9
 
 -- Dumped from database version 16.11 (Ubuntu 16.11-1.pgdg24.04+1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-1.pgdg24.04+1)
@@ -3110,7 +3110,7 @@ begin
 										'<material>',      fn_acorn_exam_token_name(m.name)), 
 										'<topic>',         fn_acorn_exam_token_name(mp.name)), 
 										'<material-type>', fn_acorn_exam_token_name(mt.name)), 
-										'<year>',          ay.name), 
+										'<year>',          fn_acorn_exam_token_name(ay.name)), 
 										'<student>',       s.number::text),
 								p_level+1, p_messages)::text, ' between '::text, cm.minimum::text, ' and '::text, cm.maximum::text, ')::int'::text)
 							when p_weighted then '(' || fn_acorn_exam_tokenize(
@@ -3121,7 +3121,7 @@ begin
 									'<material>',      fn_acorn_exam_token_name(m.name)), 
 									'<topic>',         fn_acorn_exam_token_name(mp.name)), 
 									'<material-type>', fn_acorn_exam_token_name(mt.name)), 
-									'<year>',          ay.name), 
+									'<year>',          fn_acorn_exam_token_name(ay.name)), 
 									'<student>',       s.number::text),
 								p_level+1, p_messages)
 								|| coalesce('*' || cm.weight::text, '') 
@@ -3135,7 +3135,7 @@ begin
 									'<material>',      fn_acorn_exam_token_name(m.name)), 
 									'<topic>',         fn_acorn_exam_token_name(mp.name)), 
 									'<material-type>', fn_acorn_exam_token_name(mt.name)), 
-									'<year>',          ay.name), 
+									'<year>',          fn_acorn_exam_token_name(ay.name)), 
 									'<student>',       s.number::text),
 								p_level+1, p_messages)
 						end,
@@ -17894,38 +17894,6 @@ UNION ALL
     acorn_university_identity_types.updated_at AS datetime
    FROM public.acorn_university_identity_types
 UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
-    acorn_university_student_codes.name,
-    0 AS update,
-    acorn_university_student_codes.created_at AS datetime
-   FROM public.acorn_university_student_codes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
-    acorn_university_student_codes.name,
-    1 AS update,
-    acorn_university_student_codes.updated_at AS datetime
-   FROM public.acorn_university_student_codes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
-    acorn_university_student_notes.id AS model_id,
-    'acorn_university_student_notes'::text AS "table",
-    acorn_university_student_notes.name,
-    0 AS update,
-    acorn_university_student_notes.created_at AS datetime
-   FROM public.acorn_university_student_notes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
-    acorn_university_student_notes.id AS model_id,
-    'acorn_university_student_notes'::text AS "table",
-    acorn_university_student_notes.name,
-    1 AS update,
-    acorn_university_student_notes.updated_at AS datetime
-   FROM public.acorn_university_student_notes
-UNION ALL
  SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
     acorn_enrollment_student_notes.id AS model_id,
     'acorn_enrollment_student_notes'::text AS "table",
@@ -17942,6 +17910,22 @@ UNION ALL
     acorn_enrollment_student_notes.updated_at AS datetime
    FROM public.acorn_enrollment_student_notes
 UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    acorn_university_student_codes.name,
+    0 AS update,
+    acorn_university_student_codes.created_at AS datetime
+   FROM public.acorn_university_student_codes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    acorn_university_student_codes.name,
+    1 AS update,
+    acorn_university_student_codes.updated_at AS datetime
+   FROM public.acorn_university_student_codes
+UNION ALL
  SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
     acorn_university_student_types.id AS model_id,
     'acorn_university_student_types'::text AS "table",
@@ -17957,6 +17941,22 @@ UNION ALL
     1 AS update,
     acorn_university_student_types.updated_at AS datetime
    FROM public.acorn_university_student_types
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    acorn_university_student_notes.name,
+    0 AS update,
+    acorn_university_student_notes.created_at AS datetime
+   FROM public.acorn_university_student_notes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    acorn_university_student_notes.name,
+    1 AS update,
+    acorn_university_student_notes.updated_at AS datetime
+   FROM public.acorn_university_student_notes
 UNION ALL
  SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
     acorn_exam_interview_students.id AS model_id,
@@ -18006,22 +18006,6 @@ UNION ALL
     acorn_university_projects.updated_at AS datetime
    FROM public.acorn_university_projects
 UNION ALL
- SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
-    acorn_university_lectures.id AS model_id,
-    'acorn_university_lectures'::text AS "table",
-    NULL::text AS name,
-    0 AS update,
-    acorn_university_lectures.created_at AS datetime
-   FROM public.acorn_university_lectures
-UNION ALL
- SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
-    acorn_university_lectures.id AS model_id,
-    'acorn_university_lectures'::text AS "table",
-    NULL::text AS name,
-    1 AS update,
-    acorn_university_lectures.updated_at AS datetime
-   FROM public.acorn_university_lectures
-UNION ALL
  SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
     acorn_exam_exam_materials.id AS model_id,
     'acorn_exam_exam_materials'::text AS "table",
@@ -18037,6 +18021,22 @@ UNION ALL
     1 AS update,
     acorn_exam_exam_materials.updated_at AS datetime
    FROM public.acorn_exam_exam_materials
+UNION ALL
+ SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
+    acorn_university_lectures.id AS model_id,
+    'acorn_university_lectures'::text AS "table",
+    NULL::text AS name,
+    0 AS update,
+    acorn_university_lectures.created_at AS datetime
+   FROM public.acorn_university_lectures
+UNION ALL
+ SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
+    acorn_university_lectures.id AS model_id,
+    'acorn_university_lectures'::text AS "table",
+    NULL::text AS name,
+    1 AS update,
+    acorn_university_lectures.updated_at AS datetime
+   FROM public.acorn_university_lectures
 UNION ALL
  SELECT 'Acorn\Exam\Models\ScoreName'::text AS model_type,
     acorn_exam_score_names.id AS model_id,
@@ -19143,34 +19143,6 @@ UNION ALL
     acorn_university_identity_types.updated_by_user_id AS by
    FROM public.acorn_university_identity_types
 UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
-    0 AS update,
-    acorn_university_student_codes.created_by_user_id AS by
-   FROM public.acorn_university_student_codes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
-    1 AS update,
-    acorn_university_student_codes.updated_by_user_id AS by
-   FROM public.acorn_university_student_codes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
-    acorn_university_student_notes.id AS model_id,
-    'acorn_university_student_notes'::text AS "table",
-    0 AS update,
-    acorn_university_student_notes.created_by_user_id AS by
-   FROM public.acorn_university_student_notes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
-    acorn_university_student_notes.id AS model_id,
-    'acorn_university_student_notes'::text AS "table",
-    1 AS update,
-    acorn_university_student_notes.updated_by_user_id AS by
-   FROM public.acorn_university_student_notes
-UNION ALL
  SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
     acorn_enrollment_student_notes.id AS model_id,
     'acorn_enrollment_student_notes'::text AS "table",
@@ -19185,6 +19157,20 @@ UNION ALL
     acorn_enrollment_student_notes.updated_by_user_id AS by
    FROM public.acorn_enrollment_student_notes
 UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    0 AS update,
+    acorn_university_student_codes.created_by_user_id AS by
+   FROM public.acorn_university_student_codes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    1 AS update,
+    acorn_university_student_codes.updated_by_user_id AS by
+   FROM public.acorn_university_student_codes
+UNION ALL
  SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
     acorn_university_student_types.id AS model_id,
     'acorn_university_student_types'::text AS "table",
@@ -19198,6 +19184,20 @@ UNION ALL
     1 AS update,
     acorn_university_student_types.updated_by_user_id AS by
    FROM public.acorn_university_student_types
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    0 AS update,
+    acorn_university_student_notes.created_by_user_id AS by
+   FROM public.acorn_university_student_notes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    1 AS update,
+    acorn_university_student_notes.updated_by_user_id AS by
+   FROM public.acorn_university_student_notes
 UNION ALL
  SELECT 'Acorn\Exam\Models\InterviewStudent'::text AS model_type,
     acorn_exam_interview_students.id AS model_id,
@@ -19241,20 +19241,6 @@ UNION ALL
     acorn_university_projects.updated_by_user_id AS by
    FROM public.acorn_university_projects
 UNION ALL
- SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
-    acorn_university_lectures.id AS model_id,
-    'acorn_university_lectures'::text AS "table",
-    0 AS update,
-    acorn_university_lectures.created_by_user_id AS by
-   FROM public.acorn_university_lectures
-UNION ALL
- SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
-    acorn_university_lectures.id AS model_id,
-    'acorn_university_lectures'::text AS "table",
-    1 AS update,
-    acorn_university_lectures.updated_by_user_id AS by
-   FROM public.acorn_university_lectures
-UNION ALL
  SELECT 'Acorn\Exam\Models\ExamMaterial'::text AS model_type,
     acorn_exam_exam_materials.id AS model_id,
     'acorn_exam_exam_materials'::text AS "table",
@@ -19268,6 +19254,20 @@ UNION ALL
     1 AS update,
     acorn_exam_exam_materials.updated_by_user_id AS by
    FROM public.acorn_exam_exam_materials
+UNION ALL
+ SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
+    acorn_university_lectures.id AS model_id,
+    'acorn_university_lectures'::text AS "table",
+    0 AS update,
+    acorn_university_lectures.created_by_user_id AS by
+   FROM public.acorn_university_lectures
+UNION ALL
+ SELECT 'Acorn\University\Models\Lecture'::text AS model_type,
+    acorn_university_lectures.id AS model_id,
+    'acorn_university_lectures'::text AS "table",
+    1 AS update,
+    acorn_university_lectures.updated_by_user_id AS by
+   FROM public.acorn_university_lectures
 UNION ALL
  SELECT 'Acorn\Exam\Models\ScoreName'::text AS model_type,
     acorn_exam_score_names.id AS model_id,
@@ -19834,7 +19834,8 @@ context-update:
 --
 
 COMMENT ON COLUMN public.acorn_university_course_year_semesters.import_source IS 'advanced: true
-invisible: true';
+invisible: true
+tab-location: 3';
 
 
 --
@@ -23258,34 +23259,6 @@ UNION ALL
     acorn_university_identity_types.description AS content
    FROM public.acorn_university_identity_types
 UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
-    'name'::text AS field,
-    (acorn_university_student_codes.name)::text AS content
-   FROM public.acorn_university_student_codes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
-    acorn_university_student_codes.id AS model_id,
-    'acorn_university_student_codes'::text AS "table",
-    'description'::text AS field,
-    acorn_university_student_codes.description AS content
-   FROM public.acorn_university_student_codes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
-    acorn_university_student_notes.id AS model_id,
-    'acorn_university_student_notes'::text AS "table",
-    'name'::text AS field,
-    (acorn_university_student_notes.name)::text AS content
-   FROM public.acorn_university_student_notes
-UNION ALL
- SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
-    acorn_university_student_notes.id AS model_id,
-    'acorn_university_student_notes'::text AS "table",
-    'description'::text AS field,
-    acorn_university_student_notes.description AS content
-   FROM public.acorn_university_student_notes
-UNION ALL
  SELECT 'Acorn\Enrollment\Models\StudentNote'::text AS model_type,
     acorn_enrollment_student_notes.id AS model_id,
     'acorn_enrollment_student_notes'::text AS "table",
@@ -23300,6 +23273,20 @@ UNION ALL
     acorn_enrollment_student_notes.description AS content
    FROM public.acorn_enrollment_student_notes
 UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    'name'::text AS field,
+    (acorn_university_student_codes.name)::text AS content
+   FROM public.acorn_university_student_codes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentCode'::text AS model_type,
+    acorn_university_student_codes.id AS model_id,
+    'acorn_university_student_codes'::text AS "table",
+    'description'::text AS field,
+    acorn_university_student_codes.description AS content
+   FROM public.acorn_university_student_codes
+UNION ALL
  SELECT 'Acorn\University\Models\StudentType'::text AS model_type,
     acorn_university_student_types.id AS model_id,
     'acorn_university_student_types'::text AS "table",
@@ -23313,6 +23300,20 @@ UNION ALL
     'description'::text AS field,
     acorn_university_student_types.description AS content
    FROM public.acorn_university_student_types
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    'name'::text AS field,
+    (acorn_university_student_notes.name)::text AS content
+   FROM public.acorn_university_student_notes
+UNION ALL
+ SELECT 'Acorn\University\Models\StudentNote'::text AS model_type,
+    acorn_university_student_notes.id AS model_id,
+    'acorn_university_student_notes'::text AS "table",
+    'description'::text AS field,
+    acorn_university_student_notes.description AS content
+   FROM public.acorn_university_student_notes
 UNION ALL
  SELECT 'Acorn\University\Models\Project'::text AS model_type,
     acorn_university_projects.id AS model_id,
@@ -34169,6 +34170,14 @@ ALTER TABLE ONLY public.acorn_exam_exam_materials
 
 
 --
+-- Name: CONSTRAINT course_material_id ON acorn_exam_exam_materials; Type: COMMENT; Schema: public; Owner: university
+--
+
+COMMENT ON CONSTRAINT course_material_id ON public.acorn_exam_exam_materials IS 'multi:
+  html: true';
+
+
+--
 -- Name: acorn_exam_interview_students course_material_id; Type: FK CONSTRAINT; Schema: public; Owner: university
 --
 
@@ -42365,7 +42374,6 @@ GRANT ALL ON TABLE public.acorn_university_hierarchies TO token_university_39;
 --
 
 GRANT ALL ON TABLE public.acorn_calendar_linked_calendars TO PUBLIC;
-GRANT ALL ON TABLE public.acorn_calendar_linked_calendars TO token_university_39;
 
 
 --
@@ -42492,7 +42500,6 @@ GRANT ALL ON TABLE public.acorn_university_lectures TO token_university_39;
 --
 
 GRANT ALL ON TABLE public.acorn_calendar_linked_events TO PUBLIC;
-GRANT ALL ON TABLE public.acorn_calendar_linked_events TO token_university_39;
 
 
 --
@@ -43259,13 +43266,6 @@ GRANT ALL ON TABLE public.acorn_university_student_types TO token_university_39;
 
 
 --
--- Name: TABLE acorn_calendar_upcreated_ats; Type: ACL; Schema: public; Owner: createsystem
---
-
-GRANT ALL ON TABLE public.acorn_calendar_upcreated_ats TO token_university_39;
-
-
---
 -- Name: SEQUENCE acorn_university_students_number; Type: ACL; Schema: public; Owner: university
 --
 
@@ -43310,7 +43310,6 @@ GRANT ALL ON TABLE public.acorn_university_students TO token_university_39;
 --
 
 GRANT ALL ON TABLE public.acorn_created_bys TO PUBLIC;
-GRANT ALL ON TABLE public.acorn_created_bys TO token_university_39;
 
 
 --
@@ -43843,7 +43842,6 @@ GRANT ALL ON TABLE public.acorn_location_user_addresses TO token_university_39;
 --
 
 GRANT ALL ON TABLE public.acorn_location_address_links TO PUBLIC;
-GRANT ALL ON TABLE public.acorn_location_address_links TO token_university_39;
 
 
 --
@@ -43990,7 +43988,6 @@ GRANT ALL ON TABLE public.acorn_servers TO token_university_39;
 --
 
 GRANT ALL ON TABLE public.acorn_location_location_links TO PUBLIC;
-GRANT ALL ON TABLE public.acorn_location_location_links TO token_university_39;
 
 
 --
@@ -44211,13 +44208,6 @@ GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO token_38;
 GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO agri;
 GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO token_university_27;
 GRANT ALL ON TABLE public.acorn_messaging_user_message_status TO token_university_39;
-
-
---
--- Name: TABLE acorn_names; Type: ACL; Schema: public; Owner: createsystem
---
-
-GRANT ALL ON TABLE public.acorn_names TO token_university_39;
 
 
 --
@@ -46307,5 +46297,5 @@ GRANT ALL ON TABLE public.university_mofadala_university_categories TO token_uni
 -- PostgreSQL database dump complete
 --
 
-\unrestrict qq3vdjTnnskQ6oC7YibTeq2Gw8CwDnKMZCC7Z2HJfXDkvpVU6XpBvMbOLNO2vID
+\unrestrict ush6TAdQKoDMUtO0vayLJlNe2lcpY27boZrff27hTSTbZSnHn8fs5RQpuoya2g9
 
