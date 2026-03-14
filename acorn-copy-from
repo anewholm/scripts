@@ -1,46 +1,87 @@
 #!/bin/bash
+latest=hotel
+account=anewholm # TODO: initial checkouts
+www=/var/www
 
-rm -rf scripts/*
-cp -rL /var/www/scripts/* scripts/
+rep=scripts
+if [ ! -d $rep ]; then git clone git@github.com:$account/$rep.git; fi
+rm -rf $rep/*
+cp -rL $www/$rep/* $rep/
 
-# ------------------------------ From general
-plugins=/var/www/university/plugins/acorn
-modules=/var/www/university/modules
+# ------------------------------ From latest modules
+modules=$www/$latest/modules
 
-rm -rf dbauth/*
-cp -rL $modules/dbauth/* dbauth/
+rep=dbauth
+if [ ! -d $rep ]; then git clone git@github.com:$account/$rep.git; fi
+rm -rf $rep/*
+cp -rL $modules/$rep/* $rep/
 
-rm -rf infrastructure/*
-cp -rL $modules/acorn/* infrastructure/
+rep=infrastructure
+if [ ! -d $rep ]; then git clone git@github.com:$account/$rep.git; fi
+rm -rf $rep/*
+cp -rL $modules/acorn/* $rep/
 
-rm -rf location/*
-cp -rL $plugins/location/* location/
+# ------------------------------ From latest plugins
+plugins=$www/$latest/plugins/acorn
 
-rm -rf reporting/*
-cp -rL $plugins/reporting/* reporting/
+rep=backendlocalization
+if [ ! -d $rep ]; then git clone git@github.com:$account/$rep.git; fi
+rm -rf $rep/*
+cp -rL $plugins/$rep/* $rep/
 
-rm -rf messaging/*
-cp -rL $plugins/messaging/* messaging/
+rep=calendar
+if [ ! -d $rep ]; then git clone git@github.com:$account/$rep.git; fi
+rm -rf $rep/*
+cp -rL $plugins/$rep/* $rep/
 
-rm -rf user/*
-cp -rL $plugins/user/* user/
+rep=location
+if [ ! -d $rep ]; then git clone git@github.com:$account/$rep.git; fi
+rm -rf $rep/*
+cp -rL $plugins/$rep/* $rep/
 
-rm -rf calendar/*
-cp -rL $plugins/calendar/* calendar/
+rep=messaging
+if [ ! -d $rep ]; then git clone git@github.com:$account/$rep.git; fi
+rm -rf $rep/*
+cp -rL $plugins/$rep/* $rep/
 
-rm -rf rtler/*
-cp -rL $plugins/rtler/* rtler/
+rep=reporting
+if [ ! -d $rep ]; then git clone git@github.com:$account/$rep.git; fi
+rm -rf $rep/*
+cp -rL $plugins/$rep/* $rep/
 
-rm -rf backendlocalization/*
-cp -rL $plugins/backendlocalization/* backendlocalization/
+rep=rtler
+if [ ! -d $rep ]; then git clone git@github.com:$account/$rep.git; fi
+rm -rf $rep/*
+cp -rL $plugins/$rep/* $rep/
+
+rep=user
+if [ ! -d $rep ]; then git clone git@github.com:$account/$rep.git; fi
+rm -rf $rep/*
+cp -rL $plugins/$rep/* $rep/
 
 # ------------------------------- Databases
-database=justice
-#psql $database -c "delete from system_event_logs;" 2> /dev/null
-#psql $database -c "truncate acorn_calendar_events cascade;" 2> /dev/null
-pg_dump --schema-only --clean --if-exists $database > scripts/SQL/databases/example.sql
+mkdir -p scripts/SQL/databases
 
-database=university
-#psql $database -c "delete from system_event_logs;" 2> /dev/null
+database=hotel
+psql $database -c "delete from system_event_logs;" 2> /dev/null
 #psql $database -c "delete from acorn_messaging_message_instance;delete from acorn_calendar_instances;truncate acorn_calendar_event_part_user;truncate acorn_calendar_event_part_user_group;ALTER TABLE public.acorn_calendar_event_parts    DISABLE TRIGGER tr_acorn_calendar_events_generate_event_instances;delete from acorn_calendar_event_parts;ALTER TABLE public.acorn_calendar_event_parts ENABLE TRIGGER tr_acorn_calendar_events_generate_event_instances;" 2> /dev/null
 pg_dump --schema-only --clean --if-exists $database > scripts/SQL/databases/$database.sql
+
+database=university
+psql $database -c "delete from system_event_logs;" 2> /dev/null
+#psql $database -c "delete from acorn_messaging_message_instance;delete from acorn_calendar_instances;truncate acorn_calendar_event_part_user;truncate acorn_calendar_event_part_user_group;ALTER TABLE public.acorn_calendar_event_parts    DISABLE TRIGGER tr_acorn_calendar_events_generate_event_instances;delete from acorn_calendar_event_parts;ALTER TABLE public.acorn_calendar_event_parts ENABLE TRIGGER tr_acorn_calendar_events_generate_event_instances;" 2> /dev/null
+pg_dump --schema-only --clean --if-exists $database > scripts/SQL/databases/$database.sql
+
+# Auto-clear if available
+if [ -f /var/www/scripts/acorn-remove-acorn ]; then
+    /var/www/scripts/acorn-remove-acorn
+else
+    echo "/var/www/scripts/acorn-remove-acorn not found"
+fi
+
+# Auto-push if available
+if [ -f /var/www/scripts/acorn-git-push-all ]; then
+    /var/www/scripts/acorn-git-push-all
+else
+    echo "/var/www/scripts/acorn-git-push-all not found"
+fi

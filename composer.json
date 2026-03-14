@@ -1,0 +1,23 @@
+{
+    "name": "acorn/scripts",
+    "description": "Acorn WinterCMS setup and generation scripts",
+    "autoload": {
+        "psr-4": {
+            "Acorn\\CreateSystem\\Database\\": "acorn-create-system-classes/database/",
+            "Acorn\\CreateSystem\\Semantic\\": "acorn-create-system-classes/semantic/",
+            "Acorn\\CreateSystem\\Adapters\\": "acorn-create-system-classes/adapters/",
+            "Acorn\\CreateSystem\\Adapters\\Olap\\": "acorn-create-system-classes/adapters/olap/",
+            "Acorn\\CreateSystem\\Util\\": "acorn-create-system-classes/util/",
+            "Acorn\\CreateSystem\\": "acorn-create-system-classes/"
+        },
+        "files": [
+            "acorn-create-system-classes/util/GlobalHelpers.php",
+            "acorn-create-system-classes/util/Spyc.php",
+            "acorn-create-system-classes/adapters/WinterCMS.php",
+            "acorn-create-system-classes/adapters/OLAP.php"
+        ]
+    },
+    "require": {
+        "php": ">=8.0"
+    }
+}
