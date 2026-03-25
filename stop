@@ -4,3 +4,5 @@ sudo systemctl stop mysql
 sudo systemctl stop postgresql
 sudo systemctl stop tomcat9
 killall signal-desktop
+killall claude
+killall dotnet

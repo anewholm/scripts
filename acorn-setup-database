@@ -73,8 +73,16 @@ if [ "$1" == "mysql" ]; then
 	echo "${GREEN}INFO${NC}: MySQL version $mysql_version_major"
 	# --------------------------------- db
 	read -s -p "Please enter the ${YELLOW}$USER${NC} superuser mysql password: " mysql_password
-	db_exists=`mysql -u $mysql_username --password=$mysql_password -e "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '$db_name'" 2> /dev/null | wc -c`
 	echo ""
+	mysql -u $mysql_username --password=$mysql_password -e "SELECT 1" 2> /dev/null
+	if [ "$?" != "0" ]; then
+		echo "${RED}ERROR${NC}: Failed to connect with ${YELLOW}$mysql_username${NC}"
+		echo "MySQL first install will allow root access without password"
+		echo "So probably you should be running this as root"
+		exit
+	fi
+
+	db_exists=`mysql -u $mysql_username --password=$mysql_password -e "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '$db_name'" 2> /dev/null | wc -c`
 	yn=y
 	if [ $db_exists = 0 ]; then
   	   echo "DB [$db_name] does not exist yet. Creating..."
