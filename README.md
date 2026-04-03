@@ -1,33 +1,60 @@
 # Acorn helper scripts
 
-## Installation of these scripts
-Clone this repository in to `/var/www/` so they can be run with `scripts/acorn-*`.
+Shell scripts for setting up and managing WinterCMS installations, databases, Apache vhosts, and developer laptops on Ubuntu/KUbuntu.
 
-## Installation of new laptops
-There is an Acorn USB flash drive with KUbuntu installation on. Ask for it :)
-- Insert the USB flash
-- Change your BIOS settings to Boot From Flash drive
-- Install KUbuntu:
-  - **Set your username to your GitLab username**
-  - Set your computer name as you wish
-- Open a terminal (with Ctrl+Alt+T)
-- `cd /media/\<username\>/\<USB Flash Drive Name\>`
-- `bash acorn-setup-laptop-from-usb`
-- Enjoy the show
+## What's here
 
-## Server installation
-Same as above, except run `acorn-setup-server-from-usb <gitlab website repository, e.g. office/data-entry-satcop>`.
-This will then run `acorn-setup-laptop-from-usb` and additionally setup the website.
+| Script | Purpose |
+|--------|---------|
+| `acorn-setup-hostname` | Create Apache vhost, `/etc/hosts` entry, and SSL cert for a new local domain |
+| `acorn-setup-database` | Create PostgreSQL database and user for a project |
+| `acorn-setup-new-winter` | Install a fresh WinterCMS with Acorn + plugins into `/var/www/<name>` |
+| `acorn-setup-laptop` | Full developer laptop setup (Apache, PHP, PostgreSQL, tools) |
+| `acorn-setup-laptop-from-usb` | Automated laptop setup from Acorn USB drive |
+| `acorn-setup-server` | Server variant of laptop setup |
+| `acorn-setup-samba` | Configure Samba share for a project |
+| `acorn-setup-apache-https` | Enable HTTPS on an existing vhost |
+| `acorn-setup-security` | Harden a server installation |
+| `acorn-backup` / `acorn-restore` | Backup and restore a WinterCMS project (files + DB) |
+| `acorn-git-all` / `acorn-git-push-all` | Run git commands across all `/var/www/` projects |
+| `acorn-create-system` | DDL-first code generator — see below |
 
-## Usage
-`./acorn-setup-* [parameters]`
+## Quick start — new WinterCMS site
 
-For example:
-```
+```bash
 cd /var/www/
-./acorn-setup-winter justice
+./scripts/acorn-setup-hostname myproject
+./scripts/acorn-setup-database myproject
+./scripts/acorn-setup-new-winter myproject
 ```
-will create a complete website with a database and domain name, and all our plugins, at http://justice.laptop.
 
-## HOWTOS
-More guides can be found in the `howtos` sub-directory.
+This creates a complete WinterCMS installation with PostgreSQL database and Apache vhost at `http://myproject.laptop`.
+
+## Installation
+
+Clone into `/var/www/scripts` so the scripts are reachable as `scripts/acorn-*` from any project directory:
+
+```bash
+git clone https://github.com/anewholm/scripts /var/www/scripts
+```
+
+## create-system — DDL code generator
+
+`acorn-create-system` introspects an existing PostgreSQL schema and generates WinterCMS plugin scaffolding: models, migrations, backend controllers, list/form definitions, and language files.
+
+See `PATTERNS.md` for the YAML comment vocabulary used to annotate DDL and control the generated output.
+
+## Prerequisites
+
+- Ubuntu 22.04+ or KUbuntu
+- Apache 2, PHP 8.1+, PostgreSQL 12+, Composer
+
+## Related
+
+- [anewholm/acorn](https://github.com/anewholm/acorn) — the WinterCMS base module these scripts install
+- [anewholm/calendar](https://github.com/anewholm/calendar) — example plugin set up by these scripts
+- [anewholm/dbauth](https://github.com/anewholm/dbauth) — DB authentication module
+
+## License
+
+MIT
