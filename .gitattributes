@@ -1,0 +1,4 @@
+# olap/ contains a bundled third-party web application (Mondrian/xMondrian).
+# Mark as vendored so Linguist counts Shell/PHP/SQL as primary languages.
+olap/** linguist-vendored=true
+vendor/** linguist-vendored=true
