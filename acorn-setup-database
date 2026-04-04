@@ -1,5 +1,10 @@
 #!/bin/bash
 ################################
+[ -f ~/.acorn/credentials ] && source ~/.acorn/credentials
+if [ -z "${ACORN_DEV_PASSWORD}" ]; then
+  echo "ERROR: ACORN_DEV_PASSWORD is not set. Add it to ~/.acorn/credentials (see acorn-credentials.example)." >&2
+  exit 1
+fi
 RED="$(tput setaf 1)"
 GREEN="$(tput setaf 2)"
 YELLOW="$(tput setaf 3)"
@@ -56,7 +61,7 @@ if [ -z "$db_username" ]; then
 fi
 db_username=`echo "$db_username" | tr -d '-' | tr -d '.'`
 if [ -z "$db_password" ]; then
-  db_password="ACORN_DEV_PASSWORD"
+  db_password="${ACORN_DEV_PASSWORD}"
   echo "${YELLOW}WARNING${NC}: \$4 parameter (database password) set to default [${GREEN}$db_password${NC}]"
 fi
 echo

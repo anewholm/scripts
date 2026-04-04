@@ -1,4 +1,9 @@
 #!/bin/bash
+[ -f ~/.acorn/credentials ] && source ~/.acorn/credentials
+if [ -z "${ACORN_DEV_PASSWORD}" ]; then
+  echo "ERROR: ACORN_DEV_PASSWORD is not set. Add it to ~/.acorn/credentials (see acorn-credentials.example)." >&2
+  exit 1
+fi
 
 RED="$(tput setaf 1)"
 GREEN="$(tput setaf 2)"
@@ -41,7 +46,7 @@ if [ -z "$name" ];     then
 	echo "${RED}ERROR${NC}: name parameter required"
 	exit 1
 fi
-if [ -z "$password" ]; then password="ACORN_DEV_PASSWORD"; fi
+if [ -z "$password" ]; then password="${ACORN_DEV_PASSWORD}"; fi
 if [ -z "$db_port" ];  then db_port="5432"; fi
 
 # -------------------------------------------- 3rd party installs
@@ -332,7 +337,7 @@ case $yn in
 	[Yy]* )
 		# FIRST: Create the artisan superuser with current login credentials
 		echo "${GREEN}INFO${NC}: Create ${YELLOW}artisan${NC}/${YELLOW}ACORN_DEV_PASSWORD${NC} superuser"
-		./artisan user:create-user -c -s artisan ACORN_DEV_PASSWORD
+		./artisan user:create-user -c -s artisan "${ACORN_DEV_PASSWORD}"
 
 		# Switch to <DBAUTH> in .env
 		sed -i 's/^DB_USERNAME=.*/DB_USERNAME=<DBAUTH>/' .env
@@ -347,18 +352,18 @@ case $yn in
 		# acorn-create-system is linked above, so it will be present
 		if [ -f acorn-create-system ]; then
 			echo "${GREEN}INFO${NC}: Create ${YELLOW}create-system${NC}/${YELLOW}ACORN_DEV_PASSWORD${NC} superuser"
-			./artisan user:create-user -c -s createsystem ACORN_DEV_PASSWORD
+			./artisan user:create-user -c -s createsystem "${ACORN_DEV_PASSWORD}"
 		fi
 		;;
 esac
 
 # Create some AA & backend users with default setup
 # These creates will trigger DBAuth if it is enabled
-php artisan user:create-user -c -s seeder ACORN_DEV_PASSWORD # The lazy created backend seeder should already be present
+php artisan user:create-user -c -s seeder "${ACORN_DEV_PASSWORD}" # The lazy created backend seeder should already be present
 php artisan user:create-user -c -d -s admin password  # Backend Admin should already be present
-php artisan user:create-user -c -d -s $outeruser ACORN_DEV_PASSWORD
+php artisan user:create-user -c -d -s $outeruser "${ACORN_DEV_PASSWORD}"
 php artisan user:create-user -c -d demo password
-php artisan user:create-user -c -d frontend DBAUTH_FRONTEND_PASSWORD
+php artisan user:create-user -c -d frontend "${DBAUTH_FRONTEND_PASSWORD}"
 
 # Set the default backend timezone to server timezone
 timezone_name=`cat /etc/timezone`
