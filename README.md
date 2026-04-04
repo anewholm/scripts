@@ -17,7 +17,7 @@ Shell scripts for setting up and managing WinterCMS installations, databases, Ap
 | `acorn-setup-security` | Harden a server installation |
 | `acorn-backup` / `acorn-restore` | Backup and restore a WinterCMS project (files + DB) |
 | `acorn-git-all` / `acorn-git-push-all` | Run git commands across all `/var/www/` projects |
-| `acorn-create-system` | DDL-first code generator — see below |
+| `acorn-create-system` | DDL-first code generator — moved to [anewholm/create-system](https://github.com/anewholm/create-system) |
 
 ## Quick start — new WinterCMS site
 
@@ -40,9 +40,9 @@ git clone https://github.com/anewholm/scripts /var/www/scripts
 
 ## create-system — DDL code generator
 
-`acorn-create-system` introspects an existing PostgreSQL schema and generates WinterCMS plugin scaffolding: models, migrations, backend controllers, list/form definitions, and language files.
+The DDL-first code generator has its own repository: [anewholm/create-system](https://github.com/anewholm/create-system).
 
-See `PATTERNS.md` for the YAML comment vocabulary used to annotate DDL and control the generated output.
+It introspects an existing PostgreSQL schema and generates WinterCMS plugin scaffolding. See that repo for documentation and the full IS pattern catalogue.
 
 ## Prerequisites
 
