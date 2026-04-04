@@ -17,8 +17,6 @@ Shell scripts for setting up and managing WinterCMS installations, databases, Ap
 | `acorn-setup-security` | Harden a server installation |
 | `acorn-backup` / `acorn-restore` | Backup and restore a WinterCMS project (files + DB) |
 | `acorn-git-all` / `acorn-git-push-all` | Run git commands across all `/var/www/` projects |
-| `acorn-create-system` | DDL-first code generator — moved to [anewholm/create-system](https://github.com/anewholm/create-system) |
-
 ## Quick start — new WinterCMS site
 
 ```bash
@@ -38,12 +36,6 @@ Clone into `/var/www/scripts` so the scripts are reachable as `scripts/acorn-*` 
 git clone https://github.com/anewholm/scripts /var/www/scripts
 ```
 
-## create-system — DDL code generator
-
-The DDL-first code generator has its own repository: [anewholm/create-system](https://github.com/anewholm/create-system).
-
-It introspects an existing PostgreSQL schema and generates WinterCMS plugin scaffolding. See that repo for documentation and the full IS pattern catalogue.
-
 ## Prerequisites
 
 - Ubuntu 22.04+ or KUbuntu
@@ -51,6 +43,7 @@ It introspects an existing PostgreSQL schema and generates WinterCMS plugin scaf
 
 ## Related
 
+- [anewholm/create-system](https://github.com/anewholm/create-system) — DDL-first code generator: introspects PostgreSQL schema and scaffolds WinterCMS plugins
 - [anewholm/acorn](https://github.com/anewholm/acorn) — the WinterCMS base module these scripts install
 - [anewholm/calendar](https://github.com/anewholm/calendar) — example plugin set up by these scripts
 - [anewholm/dbauth](https://github.com/anewholm/dbauth) — DB authentication module
