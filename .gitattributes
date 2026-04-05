@@ -2,3 +2,4 @@
 # Mark as vendored so Linguist counts Shell/PHP/SQL as primary languages.
 olap/** linguist-vendored=true
 vendor/** linguist-vendored=true
+SQL/databases/** linguist-vendored=true
