@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+
+  shellcheck:
+    name: ShellCheck ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-22.04, ubuntu-24.04 ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: sudo apt-get install -y shellcheck
+
+      - name: Run ShellCheck on bash scripts (shebang detection, exclude SQL-heavy scripts)
+        run: |
+          grep -rlE '^#!/bin/(ba)?sh' . --include='*' --exclude-dir='.git' \
+            | grep -v acorn-setup-database-replication \
+            | grep -v acorn-restore \
+            | grep -v acorn-setup-laptop \
+            | xargs shellcheck --severity=error
+
+  help-flags:
+    name: Help flags ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-22.04, ubuntu-24.04 ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: sudo apt-get install -y apache2
+
+      - name: Fake credentials file
+        run: |
+          mkdir -p ~/.acorn
+          printf 'ACORN_DEV_PASSWORD=testpassword\n' > ~/.acorn/credentials
+
+      - name: acorn-setup-hostname --help
+        run: bash acorn-setup-hostname --help
+
+      - name: acorn-setup-database --help
+        run: bash acorn-setup-database --help

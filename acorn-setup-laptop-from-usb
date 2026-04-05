@@ -103,4 +103,4 @@ else
 fi
 
 # Pass over to the latest script
-bash ~/scripts/acorn-setup-laptop $@
+bash ~/scripts/acorn-setup-laptop "$@"

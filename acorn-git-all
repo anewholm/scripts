@@ -36,6 +36,6 @@ if [ "$yn" != 'n' ]; then
     repo=`basename $d`
     echo; echo
     echo "# --------------------------------------------- ${GREEN}$repo${NC} @ $d"
-    git -C $d $@
+    git -C "$d" "$@"
   done
 fi
