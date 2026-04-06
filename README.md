@@ -1,5 +1,7 @@
 # Acorn helper scripts
 
+![Human made content](human-made-content.png "Human made content")
+
 Shell scripts for setting up and managing WinterCMS installations, databases, Apache vhosts, and developer laptops on Ubuntu/KUbuntu.
 
 ## What's here
