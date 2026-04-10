@@ -1,28 +1,84 @@
 #!/bin/bash
+# Promote a WinterCMS / DBAuth installation from development to production.
+#
+# DBAuth-specific steps (PG roles, .env hardening, admin password) are
+# delegated to the artisan command which owns that logic and can be tested:
+#   php artisan dbauth:setup-access --promote [options]
+#
+# This script handles only the OS-level steps artisan cannot:
+#   - Disable Xdebug
+#   - Reload Apache
+#   - Clear demo data (winter:fresh — destructive, requires explicit confirmation)
+#
+# Run from the WinterCMS installation root while DB_USERNAME is still a real
+# superuser (Phase A). The artisan --promote step removes ARTISAN_AUTO_LOGIN
+# so subsequent artisan access in Phase B requires explicit credential entry.
+
+set -e
 
 RED="$(tput setaf 1)"
 GREEN="$(tput setaf 2)"
 YELLOW="$(tput setaf 3)"
 NC="$(tput sgr0)"
 TICK="${GREEN}✓${NC}"
-CROSS="${RED}✘${NC}"
 
-outeruser=$USER
+if [ "$(id -u)" = "0" ]; then
+    echo "${RED}ERROR${NC}: Do not run as root. Individual steps use sudo."
+    exit 1
+fi
 
-# TODO: Check and change admin password
-sudo -u postgres alteruser? -P admin
-# TODO: Check and remove demo and createsystem user(s)
-sudo -u postgres dropuser demo
-sudo -u postgres dropuser createsystem
-sudo -u postgres dropuser artisan
+if [ ! -f artisan ]; then
+    echo "${RED}ERROR${NC}: Run from the WinterCMS installation root (artisan must be present)."
+    exit 1
+fi
 
-# Remove winter demo
-php artisan winter:fresh
+echo ""
+echo "${YELLOW}=== Acorn Production Promotion ===${NC}"
+echo ""
 
-# TODO:
-# Remove ARTISAN_AUTO_LOGIN
-# Remove RESTRICT_BASE_DIR=false
-# Switch PHP to production
-# Switch Apache to production
-# Disable xdebug
-# Run all Laravel <plugin>-production CLI commands
+# ── Step 1: DBAuth hardening ──────────────────────────────────────────────────
+# Handles: pre-flight check, admin password, .env hardening, PG role cleanup.
+# Pass --drop-dev-roles to also remove createsystem and demo roles.
+# Pass --login=<login> if the admin login is not "admin".
+
+echo "${YELLOW}[1] DBAuth hardening (artisan)...${NC}"
+php artisan dbauth:setup-access --promote --drop-dev-roles "$@"
+echo "${TICK} DBAuth hardening complete."
+echo ""
+
+# ── Step 2: Clear WinterCMS demo data ────────────────────────────────────────
+# winter:fresh removes the demo page, theme, and related content. Destructive.
+
+echo "${YELLOW}[2] Clear WinterCMS demo data?${NC}"
+echo -n "    Run 'php artisan winter:fresh'? This REMOVES demo content [y/N]: "
+read -r confirm_fresh
+if [ "$confirm_fresh" = "y" ] || [ "$confirm_fresh" = "Y" ]; then
+    php artisan winter:fresh
+    echo "${TICK} Demo data cleared."
+else
+    echo "    Skipped."
+fi
+echo ""
+
+# ── Step 3: Disable Xdebug ───────────────────────────────────────────────────
+
+echo "${YELLOW}[3] Disabling Xdebug...${NC}"
+if php -m | grep -qi xdebug; then
+    sudo phpdismod xdebug
+    sudo systemctl reload apache2
+    echo "${TICK} Xdebug disabled, Apache reloaded."
+else
+    echo "    Xdebug not loaded — no action needed."
+fi
+echo ""
+
+# ── Summary ───────────────────────────────────────────────────────────────────
+
+echo "${GREEN}=== Promotion complete ===${NC}"
+echo ""
+echo "Remaining manual steps:"
+echo "  - Apache: disable dev vhosts, enable HTTPS, harden security headers"
+echo "  - PHP ini: display_errors=Off, expose_php=Off"
+echo "  - Rotate APP_KEY if this is a copy of a dev environment"
+echo "  - Run any plugin-specific artisan production commands"
+echo ""
