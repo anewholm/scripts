@@ -1,16 +1,98 @@
 #!/bin/bash
-[ -f ~/.acorn/credentials ] && source ~/.acorn/credentials
-if [ -z "${ACORN_DEV_PASSWORD}" ]; then
-  echo "ERROR: ACORN_DEV_PASSWORD is not set. Add it to ~/.acorn/credentials (see acorn-credentials.example)." >&2
-  exit 1
-fi
+# Usage: acorn-setup-new-winter [OPTIONS] <name> [password] [db_port]
+#
+# Options:
+#   --winter-version=VER       WinterCMS version (e.g. 1.2.0, dev-develop; default: latest)
+#   --admin-password=PASS      Backend admin password (default: "password")
+#   --db-username=USER         Database username (default: <name>)
+#   --db-password=PASS         Database password (default: ACORN_DEV_PASSWORD)
+#   --db-host=HOST             Database host (default: 127.0.0.1)
+#   --acorn-github=REPO        Install Acorn module from GitHub repo (e.g. anewholm/acorn)
+#                              instead of the local /var/www/plugins/acorn path
+#   --add-acorn-user           Also install the Acorn.User plugin (from same GitHub org
+#                              as --acorn-github, or local /var/www/plugins/acorn/user)
+#   --calendar-src=PATH        Copy Calendar plugin from this directory path
+#   --no-interactive           Skip all interactive prompts (CI mode)
+#   --no-dbauth                Skip DBAuth installation and user setup entirely
+#   --apply-l10-fix            Apply the lists()→pluck() fix for WinterCMS 1.2.0 on Laravel 10+
+#   --seed-calendar            Insert seed rows for acorn_calendar_event_statuses/types
+#   --no-hostname              Skip acorn-setup-hostname (useful in CI / non-Apache setups)
+#   --no-apache                Skip acorn-setup-hostname and Apache-related steps
+#   --install-dir=DIR          Installation base directory (default: /var/www)
+#
+# CI example:
+#   acorn-setup-new-winter \
+#     --winter-version=1.2.0 \
+#     --admin-password=testpassword123 \
+#     --db-username=createsystem \
+#     --db-password=testpassword \
+#     --db-host=127.0.0.1 \
+#     --acorn-github=anewholm/acorn \
+#     --calendar-src=/path/to/calendar \
+#     --no-interactive \
+#     --no-dbauth \
+#     --apply-l10-fix \
+#     --seed-calendar \
+#     --no-apache \
+#     wintercms_test
 
-RED="$(tput setaf 1)"
-GREEN="$(tput setaf 2)"
-YELLOW="$(tput setaf 3)"
-NC="$(tput sgr0)"
+[ -f ~/.acorn/credentials ] && source ~/.acorn/credentials
+
+RED="$(tput setaf 1 2>/dev/null || true)"
+GREEN="$(tput setaf 2 2>/dev/null || true)"
+YELLOW="$(tput setaf 3 2>/dev/null || true)"
+NC="$(tput sgr0 2>/dev/null || true)"
 TICK="${GREEN}✓${NC}"
 CROSS="${RED}✘${NC}"
+
+# -------------------------------------------- Parse flags and positional args
+WINTER_VERSION=
+ADMIN_PASSWORD=
+DB_USERNAME_FLAG=
+DB_PASSWORD_FLAG=
+DB_HOST_FLAG=
+ACORN_GITHUB=
+ADD_ACORN_USER=
+CALENDAR_SRC=
+NO_INTERACTIVE=
+NO_DBAUTH=
+APPLY_L10_FIX=
+SEED_CALENDAR=
+NO_APACHE=
+INSTALL_DIR_FLAG=
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --winter-version=*)  WINTER_VERSION="${1#*=}" ;;
+        --admin-password=*)  ADMIN_PASSWORD="${1#*=}" ;;
+        --db-username=*)     DB_USERNAME_FLAG="${1#*=}" ;;
+        --db-password=*)     DB_PASSWORD_FLAG="${1#*=}" ;;
+        --db-host=*)         DB_HOST_FLAG="${1#*=}" ;;
+        --acorn-github=*)    ACORN_GITHUB="${1#*=}" ;;
+        --add-acorn-user)    ADD_ACORN_USER=1 ;;
+        --calendar-src=*)    CALENDAR_SRC="${1#*=}" ;;
+        --no-interactive)    NO_INTERACTIVE=1 ;;
+        --no-dbauth)         NO_DBAUTH=1 ;;
+        --no-hostname)       NO_APACHE=1 ;;
+        --no-apache)         NO_APACHE=1 ;;
+        --apply-l10-fix)     APPLY_L10_FIX=1 ;;
+        --seed-calendar)     SEED_CALENDAR=1 ;;
+        --install-dir=*)     INSTALL_DIR_FLAG="${1#*=}" ;;
+        --*)                 echo "${RED}ERROR${NC}: Unknown option: $1"; exit 1 ;;
+        *)
+            if   [ -z "$name" ];         then name="$1"
+            elif [ -z "$password_arg" ]; then password_arg="$1"
+            elif [ -z "$db_port" ];      then db_port="$1"
+            fi ;;
+    esac
+    shift
+done
+
+# Require ACORN_DEV_PASSWORD only if not all credentials are supplied via flags
+if [ -z "${ACORN_DEV_PASSWORD}" ] && [ -z "$DB_PASSWORD_FLAG" ]; then
+  echo "ERROR: ACORN_DEV_PASSWORD is not set. Add it to ~/.acorn/credentials (see acorn-credentials.example), or pass --db-password=." >&2
+  exit 1
+fi
 
 # This script installs ALL Acorn plugins and runs the system
 # It can be run from within an existing Laravel / Winter installation
@@ -18,12 +100,10 @@ CROSS="${RED}✘${NC}"
 run_dir=`pwd` # Bald
 script_dir=`dirname $(realpath $0)`
 script=`basename $0`
-install_dir=/var/www
+install_dir="${INSTALL_DIR_FLAG:-/var/www}"
 install_grp=www-data
 
-name=$1
-password=$2
-db_port=$3
+password="${password_arg:-${DB_PASSWORD_FLAG:-${ACORN_DEV_PASSWORD}}}"
 outeruser=$USER
 
 # --no-scripts
@@ -34,20 +114,21 @@ if [ "$(id -u)" == "0" ]; then
 	echo "${RED}ERROR${NC}: Do not run this script as root"
 	exit 1
 fi
-if [ ! -f $script_dir/acorn-setup-database ]; then
-	echo "${RED}ERROR${NC}: acorn-setup-database required"
-	exit 1
+if [ -z "$NO_APACHE" ]; then
+	if [ ! -f $script_dir/acorn-setup-database ]; then
+		echo "${RED}ERROR${NC}: acorn-setup-database required"
+		exit 1
+	fi
+	if [ ! -f $script_dir/acorn-setup-hostname ]; then
+		echo "${RED}ERROR${NC}: acorn-setup-hostname required"
+		exit 1
+	fi
 fi
-if [ ! -f $script_dir/acorn-setup-hostname ]; then
-	echo "${RED}ERROR${NC}: acorn-setup-database required"
-	exit 1
-fi
-if [ -z "$name" ];     then
+if [ -z "$name" ]; then
 	echo "${RED}ERROR${NC}: name parameter required"
 	exit 1
 fi
-if [ -z "$password" ]; then password="${ACORN_DEV_PASSWORD}"; fi
-if [ -z "$db_port" ];  then db_port="5432"; fi
+if [ -z "$db_port" ]; then db_port="5432"; fi
 
 # -------------------------------------------- 3rd party installs
 if [ -z "$(which php)" ]; then
@@ -92,7 +173,7 @@ fi
 # sudo apt install -y php php-curl php-xml php-gd php-json php-mbstring php-mysql php-sqlite3 php-zip
 # sudo apt install -y php-ctype php-fileinfo
 
-if [ -z "$(groups | grep $install_grp)" ]; then
+if [ -z "$NO_APACHE" ] && [ -z "$(groups | grep $install_grp)" ]; then
 	echo "${RED}ERROR${NC}: $outeruser was not in the Apache2 web-server group $install_grp, so you have been added to it now. Please log out and in again from your laptop and then run this $0 script again"
 	sudo usermod -a -G $install_grp $outeruser
 	exit 1
@@ -101,10 +182,9 @@ fi
 # Work only in the standard install place
 if [ ! -d $install_dir ]; then
 	echo "${YELLOW}WARNING${NC}: $install_dir was not found, creating..."
-	sudo mkdir -p $install_dir
-	sudo chown $install_grp:$install_grp .; sudo chmod g+rw .
+	mkdir -p "$install_dir"
 fi
-cd $install_dir
+cd "$install_dir"
 
 # -------------------------------------------- Website Installation
 if [ -d $name ] && [ -z "$(ls $name)" ]; then
@@ -133,73 +213,48 @@ if [ -d winter_template ]; then
 	cp -r winter_template "$name"
 	if [ "$?" != "0" ]; then exit 1; fi
 else
-	echo "${GREEN}INFO${NC}: Installing latest Winter into directory $(pwd)/${YELLOW}$name${NC}"
-	echo "  Note that Winter:1.2.6=>7 has incompatible changes for Trait HasRelations"
-	# https://getcomposer.org/doc/03-cli.md#create-project
-	# We have our own install procedures below, so we disable the standard scripts
-	composer create-project wintercms/winter $name --no-scripts
+	if [ -n "$WINTER_VERSION" ]; then
+		echo "${GREEN}INFO${NC}: Installing WinterCMS ${YELLOW}$WINTER_VERSION${NC} into directory $(pwd)/${YELLOW}$name${NC}"
+		composer create-project wintercms/winter:"$WINTER_VERSION" "$name" --prefer-dist --no-interaction
+	else
+		echo "${GREEN}INFO${NC}: Installing latest Winter into directory $(pwd)/${YELLOW}$name${NC}"
+		echo "  Note that Winter:1.2.6=>7 has incompatible changes for Trait HasRelations"
+		# https://getcomposer.org/doc/03-cli.md#create-project
+		# We have our own install procedures below, so we disable the standard scripts
+		composer create-project wintercms/winter "$name" --no-scripts
+	fi
 	if [ "$?" != "0" ]; then exit 1; fi
 fi
 cd "$name"
 chmod +x artisan
 
+db_host="${DB_HOST_FLAG:-127.0.0.1}"
+db_username="${DB_USERNAME_FLAG:-$name}"
+db_password="${DB_PASSWORD_FLAG:-$password}"
+
 linecount_env=0
 if [ -f .env ]; then linecount_env=`wc -l .env | cut -d " " -f 1`; fi
 if [ $linecount_env -le 2 ]; then
-	echo "${YELLOW}WARNING${NC}: Auto-populating> 2 the .env file"
-	echo "APP_NAME=intranet
-APP_DEBUG=true
-APP_URL='http://$hostname'
-
-# PostgreSQL only
-DB_CONNECTION='pgsql'
-DB_HOST='127.0.0.1'
-DB_PORT=$db_port
-DB_DATABASE='$name'
-DB_USERNAME='$name'
-DB_PASSWORD='$password'
-
-CACHE_DRIVER='file'
-SESSION_DRIVER='file'
-QUEUE_CONNECTION='sync'
-
-# Default logging email setup
-MAIL_MAILER=log
-MAIL_LOG_CHANNEL=null
-MAIL_HOST=null
-MAIL_PORT=null
-MAIL_USERNAME=null
-MAIL_PASSWORD=null
-MAIL_ENCRYPTION=null
-MAIL_FROM_ADDRESS=noreply@example.com
-MAIL_FROM_NAME="${APP_NAME}"
-
-# Example SMTP setup. Set the username in your account
-# MAIL_MAILER='smtp'
-# MAIL_ENCRYPTION='tls'
-# MAIL_HOST='smtp.stackmail.com'
-# MAIL_PASSWORD=null
-# MAIL_PORT=465
-# MAIL_USERNAME=null
-
-ROUTES_CACHE=false
-ASSET_CACHE=false
-LINK_POLICY='detect'
-ENABLE_CSRF=true
-DATABASE_TEMPLATES=false
-RESTRICT_BASE_DIR=false # We have sym-linked plugins
-" >> .env
+	echo "${YELLOW}WARNING${NC}: Auto-populating the .env file"
+	hostname_url="${NO_APACHE:+http://localhost:8000}"
+	hostname_url="${hostname_url:-http://$name.laptop}"
+	printf 'APP_NAME=intranet\nAPP_DEBUG=true\nAPP_URL=%s\n\n# PostgreSQL only\nDB_CONNECTION=pgsql\nDB_HOST=%s\nDB_PORT=%s\nDB_DATABASE=%s\nDB_USERNAME=%s\nDB_PASSWORD=%s\n\nCACHE_DRIVER=file\nSESSION_DRIVER=file\nQUEUE_CONNECTION=sync\n\n# Default logging email setup\nMAIL_MAILER=log\nMAIL_LOG_CHANNEL=null\nMAIL_HOST=null\nMAIL_PORT=null\nMAIL_USERNAME=null\nMAIL_PASSWORD=null\nMAIL_ENCRYPTION=null\nMAIL_FROM_ADDRESS=noreply@example.com\nMAIL_FROM_NAME=intranet\n\nROUTES_CACHE=false\nASSET_CACHE=false\nLINK_POLICY=detect\nENABLE_CSRF=true\nDATABASE_TEMPLATES=false\nRESTRICT_BASE_DIR=false\n' \
+		"$hostname_url" "$db_host" "$db_port" "$name" "$db_username" "$db_password" >> .env
 fi
 
-# This will also update the Laravel .env file to use the created database
-$script_dir/acorn-setup-database pgsql $name
-if [ "$?" != "0" ]; then exit 1; fi
+if [ -z "$NO_APACHE" ]; then
+	# This will also update the Laravel .env file to use the created database
+	$script_dir/acorn-setup-database pgsql $name
+	if [ "$?" != "0" ]; then exit 1; fi
 
-# This will also update the Laravel .env file to use the hostname (.laptop)
-sudo $script_dir/acorn-setup-hostname $name
-if [ "$?" != "0" ]; then exit 1; fi
+	# This will also update the Laravel .env file to use the hostname (.laptop)
+	sudo $script_dir/acorn-setup-hostname $name
+	if [ "$?" != "0" ]; then exit 1; fi
 
-hostname=$name.laptop
+	hostname=$name.laptop
+else
+	hostname="localhost:8000"
+fi
 winter_version=`composer show winter/storm | grep ^versions | cut -d ':' -f 2 | cut -d v -f 2`
 echo "${GREEN}INFO${NC}: Winter v${YELLOW}$winter_version${NC} detected"
 
@@ -207,109 +262,148 @@ echo "${GREEN}INFO${NC}: Winter v${YELLOW}$winter_version${NC} detected"
 # We could also use ./artisan winter:install --no-interaction
 echo "${GREEN}INFO${NC}: composer install"
 composer install
-echo "${GREEN}INFO${NC}: Initial winter system artisan migrate"
-php artisan migrate
-if [ "$?" != 0 ]; then
-	echo "${RED}ERROR${NC}: Migration failed, exiting"
-	exit 0
-fi
+echo "${GREEN}INFO${NC}: php artisan key:generate"
 php artisan key:generate
 
-# -------------------------------------------- Install 3rd party modules
-echo "${GREEN}INFO${NC}: composer require $no_scripts 3rd party vendor modules"
-# IMAP & SMTP
-if [ ! -d vendor/webklex/php-imap ];     then composer require $no_scripts webklex/php-imap;     fi
-if [ ! -d vendor/webklex/laravel-imap ]; then composer require $no_scripts webklex/laravel-imap; fi
-sed -i "s|MAIL_HOST=\".*\"|MAIL_HOST=\"smtp.stackmail.com\"|" .env
-sed -i "s|MAIL_PORT=\".*\"|MAIL_PORT=465|" .env
-
-# QR Codes are supported in core now
-if [ ! -d vendor/simplesoftwareio/simple-qrcode ]; then composer require $no_scripts simplesoftwareio/simple-qrcode; fi
-
-# Copy Kurdish system and backend lang.php files in to place
-cp -r $script_dir/winter/system/lang/ku modules/system/lang
-if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install system module ku\lang.php"; exit 1; fi
-cp -r $script_dir/winter/backend/lang/ku modules/system/lang
-if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install backend module ku\lang.php"; exit 1; fi
-composer require $no_scripts winter/wn-translate-plugin
-if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-composer require $no_scripts winter/wn-location-plugin
-if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-composer require $no_scripts winter/wn-tailwindui-plugin # Menus
-if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-composer require $no_scripts staudenmeir/eloquent-has-many-deep # New Deep relations
-if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-composer require $no_scripts --dev winter/wn-debugbar-plugin
-if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-
-# We use acorn-create-system usually, so no builder
-# composer require $no_scripts winter/wn-builder-plugin
-# if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
-
-# -------------------------------------------- Patches (pre-AA)
-echo "${GREEN}INFO${NC}: Pre-Patches for Winter v${YELLOW}$winter_version${NC}"
-# TODO: The tailwind patch will not work because app.js is now minified
-if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter/patches-pre ]; then
-	$script_dir/acorn-apply-patch-directory "$script_dir/winter/patches-pre" $winter_version
+# -------------------------------------------- Laravel 10+ compatibility fix
+# lists() was removed in Laravel 10; WinterCMS 1.2.0's VersionManager still uses it.
+if [ -n "$APPLY_L10_FIX" ]; then
+	echo "${GREEN}INFO${NC}: Applying lists()→pluck() fix for WinterCMS 1.2.0 on Laravel 10+"
+	find modules/system/classes -name "VersionManager.php" -exec sed -i "s/->lists(/->pluck(/g" {} \;
 fi
 
 # -------------------------------------------- Install AA modules and plugins
-echo "${GREEN}INFO${NC}: composer require ($no_scripts) AA modules (from AA gitlab)"
-local_acorn=/var/www/plugins/acorn
-gitlab_acorn=gitlab.acorn.org
-gitlab_group=office
+if [ -n "$ACORN_GITHUB" ]; then
+	# GitHub-based Acorn installation (used in CI; also suitable for clean server installs)
+	echo "${GREEN}INFO${NC}: Installing Acorn module from GitHub: ${YELLOW}$ACORN_GITHUB${NC}"
+	git clone "https://github.com/$ACORN_GITHUB.git" modules/acorn
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to clone $ACORN_GITHUB"; exit 1; fi
 
-install_strategy=local-composer # local-composer, gitlab, local-copy
-for repo_path in $local_acorn/*/; do
-	repo_path=${repo_path%/} # Strip trailing slash
-	repo_name=`basename "$repo_path"`
-	repo_fqn="acorn/$repo_name"
-	repo_type=`jq -r .type "$repo_path/composer.json"`
-	target_path=plugins/acorn
-	if [ "$repo_type" == 'winter-module' ]; then target_path=modules; fi
-	
-	echo "${GREEN}INFO${NC}: Installing $install_strategy ${YELLOW}$repo_fqn${NC} $repo_type($target_path)"
-	git config --global --add safe.directory "$repo_path"
-	mkdir -p "$target_path"
+	# Acorn requires staudenmeir/eloquent-has-many-deep
+	composer require staudenmeir/eloquent-has-many-deep --no-interaction --no-audit
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install staudenmeir/eloquent-has-many-deep"; exit 1; fi
 
-	if [ $install_strategy == 'local-composer' ]; then
-		# This will sym link it
-		# into the appropriate directory based on the composer.json type
-		composer config repositories.$repo_name path "$repo_path/"
-		composer require $no_scripts "$repo_fqn @dev"
-		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to require local $gitlab_group/$repo_name repository."; exit 1; fi
-	elif [ $install_strategy == 'gitlab' ]; then
-		git clone git@$gitlab_acorn:$gitlab_group/$repo_name.git "$target_path"
-		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to checkout $gitlab_group/$repo_name repository. Probably you do not have permissions. Please resolve and start again."; exit 1; fi
-	elif [ $install_strategy == 'local-copy' ]; then
-		# This will copy -L
-		cp -rL "$repo_path" "$target_path"
-		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to copy repository."; exit 1; fi
+	# Register the Acorn module in config/cms.php (adds 'Acorn' to the modules array)
+	sed -i "s/'Cms'/'Cms', 'Acorn'/" config/cms.php
+	echo "${GREEN}INFO${NC}: Acorn module registered in config/cms.php"
+
+	# Optionally install the Acorn.User plugin from the same GitHub organisation
+	if [ -n "$ADD_ACORN_USER" ]; then
+		acorn_org="${ACORN_GITHUB%%/*}"
+		echo "${GREEN}INFO${NC}: Installing Acorn.User plugin from GitHub: ${YELLOW}$acorn_org/user${NC}"
+		mkdir -p plugins/acorn
+		git clone "https://github.com/$acorn_org/user.git" plugins/acorn/user
+		if [ "$?" != 0 ]; then
+			echo "${YELLOW}WARNING${NC}: Could not clone $acorn_org/user — Acorn.User will not be installed"
+		fi
 	fi
-done
+else
+	# ---- Local installation (developer workstation) --------------------------
+	echo "${GREEN}INFO${NC}: composer require ($no_scripts) AA modules (from local path)"
+	local_acorn=/var/www/plugins/acorn
+	gitlab_acorn=gitlab.acorn.org
+	gitlab_group=office
 
-# TODO: Support websockets
-# if [ -f $script_dir/acorn-add-websockets ]; then
-#	$script_dir/acorn-add-websockets
-# fi
+	install_strategy=local-composer # local-composer, gitlab, local-copy
+	for repo_path in $local_acorn/*/; do
+		repo_path=${repo_path%/} # Strip trailing slash
+		repo_name=`basename "$repo_path"`
+		repo_fqn="acorn/$repo_name"
+		repo_type=`jq -r .type "$repo_path/composer.json"`
+		target_path=plugins/acorn
+		if [ "$repo_type" == 'winter-module' ]; then target_path=modules; fi
 
-# -------------------------------------------- Patches (post-AA)
-# service-providers.php patch will add the service providers in the correct order
-echo "${GREEN}INFO${NC}: Post-Patches for Winter v${YELLOW}$winter_version${NC}"
-if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter/patches-post ]; then
-	$script_dir/acorn-apply-patch-directory "$script_dir/winter/patches-post" $winter_version
+		echo "${GREEN}INFO${NC}: Installing $install_strategy ${YELLOW}$repo_fqn${NC} $repo_type($target_path)"
+		git config --global --add safe.directory "$repo_path"
+		mkdir -p "$target_path"
+
+		if [ $install_strategy == 'local-composer' ]; then
+			# This will sym link it
+			# into the appropriate directory based on the composer.json type
+			composer config repositories.$repo_name path "$repo_path/"
+			composer require $no_scripts "$repo_fqn @dev"
+			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to require local $gitlab_group/$repo_name repository."; exit 1; fi
+		elif [ $install_strategy == 'gitlab' ]; then
+			git clone git@$gitlab_acorn:$gitlab_group/$repo_name.git "$target_path"
+			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to checkout $gitlab_group/$repo_name repository. Probably you do not have permissions. Please resolve and start again."; exit 1; fi
+		elif [ $install_strategy == 'local-copy' ]; then
+			# This will copy -L
+			cp -rL "$repo_path" "$target_path"
+			if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to copy repository."; exit 1; fi
+		fi
+	done
+
+	# ---- 3rd party modules (developer workstation only) ---------------------
+	echo "${GREEN}INFO${NC}: composer require $no_scripts 3rd party vendor modules"
+	# IMAP & SMTP
+	if [ ! -d vendor/webklex/php-imap ];     then composer require $no_scripts webklex/php-imap;     fi
+	if [ ! -d vendor/webklex/laravel-imap ]; then composer require $no_scripts webklex/laravel-imap; fi
+	sed -i "s|MAIL_HOST=\".*\"|MAIL_HOST=\"smtp.stackmail.com\"|" .env
+	sed -i "s|MAIL_PORT=\".*\"|MAIL_PORT=465|" .env
+
+	# QR Codes are supported in core now
+	if [ ! -d vendor/simplesoftwareio/simple-qrcode ]; then composer require $no_scripts simplesoftwareio/simple-qrcode; fi
+
+	# Copy Kurdish system and backend lang.php files in to place
+	cp -r $script_dir/winter/system/lang/ku modules/system/lang
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install system module ku\lang.php"; exit 1; fi
+	cp -r $script_dir/winter/backend/lang/ku modules/system/lang
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install backend module ku\lang.php"; exit 1; fi
+	composer require $no_scripts winter/wn-translate-plugin
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+	composer require $no_scripts winter/wn-location-plugin
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+	composer require $no_scripts winter/wn-tailwindui-plugin # Menus
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+	composer require $no_scripts staudenmeir/eloquent-has-many-deep # New Deep relations
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
+	composer require $no_scripts --dev winter/wn-debugbar-plugin
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi
 fi
 
-# Migrate our new plugins / modules
-echo "${GREEN}INFO${NC}: Final artisan migrate"
-php artisan migrate
+# -------------------------------------------- Calendar plugin
+if [ -n "$CALENDAR_SRC" ]; then
+	echo "${GREEN}INFO${NC}: Installing Calendar plugin from ${YELLOW}$CALENDAR_SRC${NC}"
+	mkdir -p plugins/acorn
+	cp -r "$CALENDAR_SRC" plugins/acorn/calendar
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to copy Calendar plugin"; exit 1; fi
+fi
+
+# -------------------------------------------- Patches (pre/post-AA) — developer workstation only
+if [ -z "$ACORN_GITHUB" ]; then
+	echo "${GREEN}INFO${NC}: Pre-Patches for Winter v${YELLOW}$winter_version${NC}"
+	if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter/patches-pre ]; then
+		$script_dir/acorn-apply-patch-directory "$script_dir/winter/patches-pre" $winter_version
+	fi
+fi
+
+# Migrate all plugins / modules
+echo "${GREEN}INFO${NC}: php artisan winter:up"
+php artisan winter:up
 if [ "$?" != 0 ]; then
 	echo "${RED}ERROR${NC}: Migration failed, exiting"
-	exit 0
+	exit 1
+fi
+
+if [ -z "$ACORN_GITHUB" ]; then
+	echo "${GREEN}INFO${NC}: Post-Patches for Winter v${YELLOW}$winter_version${NC}"
+	if [ -f $script_dir/acorn-apply-patch-directory ] && [ -d $script_dir/winter/patches-post ]; then
+		$script_dir/acorn-apply-patch-directory "$script_dir/winter/patches-post" $winter_version
+	fi
+fi
+
+# -------------------------------------------- Seed calendar data
+# Required for event creation: every event needs a status and a type.
+if [ -n "$SEED_CALENDAR" ]; then
+	echo "${GREEN}INFO${NC}: Seeding minimal calendar data (event_statuses, event_types)"
+	PGPASSWORD="$db_password" psql -h "$db_host" -U "$db_username" -d "$name" -c \
+		"INSERT INTO acorn_calendar_event_statuses (name, created_at, updated_at) VALUES ('Confirmed', NOW(), NOW()) ON CONFLICT DO NOTHING;"
+	PGPASSWORD="$db_password" psql -h "$db_host" -U "$db_username" -d "$name" -c \
+		"INSERT INTO acorn_calendar_event_types (name, created_at, updated_at) VALUES ('General', NOW(), NOW()) ON CONFLICT DO NOTHING;"
 fi
 
 # -------------------------------------------- Admin
-if [ -d ../scripts ]; then
+if [ -z "$NO_APACHE" ] && [ -d ../scripts ]; then
 	echo "${GREEN}INFO${NC}: Linking ${YELLOW}acorn-*${NC} scripts"
 	for script in ../scripts/acorn-git-* ../scripts/acorn-create-system ../scripts/acorn-winter-down-up ../scripts/acorn-winter-update-sqls; do
 		script_name=`basename "$script"`
@@ -317,76 +411,105 @@ if [ -d ../scripts ]; then
 	done
 fi
 
-php artisan winter:passwd -q admin password
+admin_pass="${ADMIN_PASSWORD:-password}"
+php artisan winter:passwd -q admin "$admin_pass"
 if [ "$?" == 0 ]; then
-	echo "${GREEN}INFO${NC}: ${YELLOW}admin${NC} password set to ${YELLOW}password${NC}"
+	echo "${GREEN}INFO${NC}: ${YELLOW}admin${NC} password set to ${YELLOW}$admin_pass${NC}"
 else
 	echo "${RED}ERROR${NC}: ${YELLOW}admin${NC} password not set because user not found"
 fi
 
-php artisan winter:passwd -q $name $password
-if [ "$?" == 0 ]; then
-	echo "${GREEN}INFO${NC}: ${YELLOW}$name${NC} password set to ${YELLOW}$password${NC}"
-else
-	echo "${YELLOW}WARNING${NC}: ${YELLOW}$name${NC} password not set because user not found"
+if [ -z "$NO_APACHE" ]; then
+	php artisan winter:passwd -q $name $password
+	if [ "$?" == 0 ]; then
+		echo "${GREEN}INFO${NC}: ${YELLOW}$name${NC} password set to ${YELLOW}$password${NC}"
+	else
+		echo "${YELLOW}WARNING${NC}: ${YELLOW}$name${NC} password not set because user not found"
+	fi
 fi
 
-echo "${YELLOW}WARNING${NC}: DBAuth was installed but not enabled. This is because setup would not have been possible without continually entering the user/pass for all artisan operations. Change .env DB_USERNAME=<DBAUTH> to enable."
-read -p "Enable now? [Y/n] " yn
-case $yn in
-	[Yy]* )
-		# FIRST: Create the artisan superuser with current login credentials
-		echo "${GREEN}INFO${NC}: Create ${YELLOW}artisan${NC}/${YELLOW}ACORN_DEV_PASSWORD${NC} superuser"
-		./artisan user:create-user -c -s artisan "${ACORN_DEV_PASSWORD}"
+# -------------------------------------------- DBAuth setup
+if [ -z "$NO_DBAUTH" ]; then
+	echo "${YELLOW}WARNING${NC}: DBAuth was installed but not enabled. This is because setup would not have been possible without continually entering the user/pass for all artisan operations. Change .env DB_USERNAME=<DBAUTH> to enable."
+	if [ -z "$NO_INTERACTIVE" ]; then
+		read -p "Enable now? [Y/n] " yn
+	else
+		yn=n
+	fi
+	case $yn in
+		[Yy]* )
+			# FIRST: Create the artisan superuser with current login credentials
+			echo "${GREEN}INFO${NC}: Create ${YELLOW}artisan${NC}/${YELLOW}ACORN_DEV_PASSWORD${NC} superuser"
+			./artisan user:create-user -c -s artisan "${ACORN_DEV_PASSWORD}"
 
-		# Switch to <DBAUTH> in .env
-		sed -i 's/^DB_USERNAME=.*/DB_USERNAME=<DBAUTH>/' .env
-		sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=<DBAUTH>/' .env
-		echo "${GREEN}INFO${NC}: DBAuth enabled."
+			# Switch to <DBAUTH> in .env
+			sed -i 's/^DB_USERNAME=.*/DB_USERNAME=<DBAUTH>/' .env
+			sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=<DBAUTH>/' .env
+			echo "${GREEN}INFO${NC}: DBAuth enabled."
 
-		# ARTISAN_AUTO_LOGIN will hardcoded use the above artisan superuser from now on
-		echo "${GREEN}INFO${NC}: ARTISAN_AUTO_LOGIN & artisan user."
-		echo "ARTISAN_AUTO_LOGIN=1" >> .env
+			# ARTISAN_AUTO_LOGIN will hardcoded use the above artisan superuser from now on
+			echo "${GREEN}INFO${NC}: ARTISAN_AUTO_LOGIN & artisan user."
+			echo "ARTISAN_AUTO_LOGIN=1" >> .env
 
-		# create-system will now also need its own hardcoded user
-		# acorn-create-system is linked above, so it will be present
-		if [ -f acorn-create-system ]; then
-			echo "${GREEN}INFO${NC}: Create ${YELLOW}create-system${NC}/${YELLOW}ACORN_DEV_PASSWORD${NC} superuser"
-			./artisan user:create-user -c -s createsystem "${ACORN_DEV_PASSWORD}"
-		fi
-		;;
-esac
-
-# Create some AA & backend users with default setup
-# These creates will trigger DBAuth if it is enabled
-php artisan user:create-user -c -s seeder "${ACORN_DEV_PASSWORD}" # The lazy created backend seeder should already be present
-php artisan user:create-user -c -d -s admin password  # Backend Admin should already be present
-php artisan user:create-user -c -d -s $outeruser "${ACORN_DEV_PASSWORD}"
-php artisan user:create-user -c -d demo password
-php artisan user:create-user -c -d frontend "${DBAUTH_FRONTEND_PASSWORD}"
-
-# Set the default backend timezone to server timezone
-timezone_name=`cat /etc/timezone`
-if [ -n "$timezone_name" ]; then 
-	echo "${GREEN}INFO${NC}: Setting timezone to server timezone ${YELLOW}$timezone_name${NC}"
-else
-	timezone_name=Europe/Istanbul
-	echo "${YELLOW}WARNING${NC}: ${YELLOW}/etc/timezone${NC} was empty. Setting timezone to ${RED}default${NC} timezone [${YELLOW}$timezone_name${NC}]"
+			# create-system will now also need its own hardcoded user
+			# acorn-create-system is linked above, so it will be present
+			if [ -f acorn-create-system ]; then
+				echo "${GREEN}INFO${NC}: Create ${YELLOW}create-system${NC}/${YELLOW}ACORN_DEV_PASSWORD${NC} superuser"
+				./artisan user:create-user -c -s createsystem "${ACORN_DEV_PASSWORD}"
+			fi
+			;;
+	esac
 fi
-php artisan acorn:set-config cms.backendTimezone $timezone_name
-php artisan support:kurdish
 
-# Usually the Lojistiks plugin is just infrastructure
-# TODO: Deployment conofiguration files for spinning up servers. One day :D
-if [ -d plugins/acorn/lojistiks ]; then
-	php artisan acorn:config-plugin Acorn.Lojistiks infrastructure true
+# -------------------------------------------- Acorn User setup (requires Acorn.User plugin)
+# user:create-user artisan command is provided by Acorn.User — skip if the plugin is absent.
+if [ -n "$ADD_ACORN_USER" ] && [ -d plugins/acorn/user ]; then
+	echo "${GREEN}INFO${NC}: Creating Acorn frontend users"
+	# These creates will trigger DBAuth if it is enabled
+	php artisan user:create-user -c -s seeder "${ACORN_DEV_PASSWORD}" # Backend seeder user
+	php artisan user:create-user -c -d -s admin "$admin_pass"          # Backend Admin
+	php artisan user:create-user -c -d -s $outeruser "${ACORN_DEV_PASSWORD}"
+	php artisan user:create-user -c -d demo password
+	php artisan user:create-user -c -d frontend "${DBAUTH_FRONTEND_PASSWORD}"
+elif [ -z "$ACORN_GITHUB" ] && [ -d plugins/acorn/user ]; then
+	# Developer workstation: Acorn.User is part of the local plugin set
+	echo "${GREEN}INFO${NC}: Creating Acorn frontend users"
+	php artisan user:create-user -c -s seeder "${ACORN_DEV_PASSWORD}"
+	php artisan user:create-user -c -d -s admin password
+	php artisan user:create-user -c -d -s $outeruser "${ACORN_DEV_PASSWORD}"
+	php artisan user:create-user -c -d demo password
+	php artisan user:create-user -c -d frontend "${DBAUTH_FRONTEND_PASSWORD}"
+fi
+
+# -------------------------------------------- Timezone and Kurdish support (developer workstation)
+if [ -z "$ACORN_GITHUB" ]; then
+	timezone_name=`cat /etc/timezone`
+	if [ -n "$timezone_name" ]; then
+		echo "${GREEN}INFO${NC}: Setting timezone to server timezone ${YELLOW}$timezone_name${NC}"
+	else
+		timezone_name=Europe/Istanbul
+		echo "${YELLOW}WARNING${NC}: ${YELLOW}/etc/timezone${NC} was empty. Setting timezone to ${RED}default${NC} timezone [${YELLOW}$timezone_name${NC}]"
+	fi
+	php artisan acorn:set-config cms.backendTimezone $timezone_name
+	php artisan support:kurdish
+
+	# Usually the Lojistiks plugin is just infrastructure
+	if [ -d plugins/acorn/lojistiks ]; then
+		php artisan acorn:config-plugin Acorn.Lojistiks infrastructure true
+	fi
 fi
 
 # -------------------------------------------- Security
-# Note that our demons auto-run now
-# courtesy of our AA module
-echo "${GREEN}INFO${NC}: Resettings permissions"
-sudo chown -R $install_grp:$install_grp .; sudo chmod -R g+rw .
+if [ -z "$NO_APACHE" ]; then
+	# Note that our demons auto-run now courtesy of our AA module
+	echo "${GREEN}INFO${NC}: Resetting permissions"
+	sudo chown -R $install_grp:$install_grp .
+	sudo chmod -R g+rw .
+fi
 
-echo "${GREEN}INFO${NC}: Login in to http://$name.laptop"
+if [ -n "$NO_APACHE" ]; then
+	echo "${GREEN}INFO${NC}: Setup complete."
+else
+	echo "${GREEN}INFO${NC}: Setup complete. Login at http://$name.laptop/backend"
+fi
 
