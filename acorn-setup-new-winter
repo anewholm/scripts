@@ -240,6 +240,13 @@ if [ $linecount_env -le 2 ]; then
 	hostname_url="${hostname_url:-http://$name.laptop}"
 	printf 'APP_NAME=intranet\nAPP_DEBUG=true\nAPP_URL=%s\n\n# PostgreSQL only\nDB_CONNECTION=pgsql\nDB_HOST=%s\nDB_PORT=%s\nDB_DATABASE=%s\nDB_USERNAME=%s\nDB_PASSWORD=%s\n\nCACHE_DRIVER=file\nSESSION_DRIVER=file\nQUEUE_CONNECTION=sync\n\n# Default logging email setup\nMAIL_MAILER=log\nMAIL_LOG_CHANNEL=null\nMAIL_HOST=null\nMAIL_PORT=null\nMAIL_USERNAME=null\nMAIL_PASSWORD=null\nMAIL_ENCRYPTION=null\nMAIL_FROM_ADDRESS=noreply@example.com\nMAIL_FROM_NAME=intranet\n\nROUTES_CACHE=false\nASSET_CACHE=false\nLINK_POLICY=detect\nENABLE_CSRF=true\nDATABASE_TEMPLATES=false\nRESTRICT_BASE_DIR=false\n' \
 		"$hostname_url" "$db_host" "$db_port" "$name" "$db_username" "$db_password" >> .env
+elif [ -n "$NO_APACHE" ]; then
+	# CI mode: composer create-project may have generated a .env (e.g. with DB_CONNECTION=sqlite
+	# for newer WinterCMS/Laravel defaults). Overwrite it entirely so PostgreSQL is used.
+	echo "${YELLOW}WARNING${NC}: CI mode — overwriting existing .env with PostgreSQL settings"
+	hostname_url="http://localhost:8000"
+	printf 'APP_NAME=intranet\nAPP_DEBUG=true\nAPP_URL=%s\n\n# PostgreSQL only\nDB_CONNECTION=pgsql\nDB_HOST=%s\nDB_PORT=%s\nDB_DATABASE=%s\nDB_USERNAME=%s\nDB_PASSWORD=%s\n\nCACHE_DRIVER=file\nSESSION_DRIVER=file\nQUEUE_CONNECTION=sync\n\nMAIL_MAILER=log\nMAIL_LOG_CHANNEL=null\nMAIL_HOST=null\nMAIL_PORT=null\nMAIL_USERNAME=null\nMAIL_PASSWORD=null\nMAIL_ENCRYPTION=null\nMAIL_FROM_ADDRESS=noreply@example.com\nMAIL_FROM_NAME=intranet\n\nROUTES_CACHE=false\nASSET_CACHE=false\nLINK_POLICY=detect\nENABLE_CSRF=true\nDATABASE_TEMPLATES=false\nRESTRICT_BASE_DIR=false\n' \
+		"$hostname_url" "$db_host" "$db_port" "$name" "$db_username" "$db_password" > .env
 fi
 
 if [ -z "$NO_APACHE" ]; then
