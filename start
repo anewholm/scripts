@@ -2,5 +2,7 @@
 sudo systemctl start apache2
 sudo systemctl start mysql
 sudo systemctl start postgresql
+sudo systemctl start mongod
 sudo systemctl start tomcat9
+sudo systemctl start php8.3-fpm
 signal-desktop &
