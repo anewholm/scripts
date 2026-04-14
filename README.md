@@ -1,10 +1,12 @@
 # Acorn helper scripts
 
+> CI runs for this repository under development. Currently tested on Ubuntu 22+ only.
+
 ![Human made content](human-made-content.png "Human made content")
 
-Shell scripts for setting up and managing WinterCMS installations, databases, Apache vhosts, and developer laptops on Ubuntu/KUbuntu.
+Shell scripts for setting up and managing WinterCMS installations, databases, Apache vhosts, and developer laptops on Ubuntu/KUbuntu. These are used commonly in CI/CD runs for the other repositories.
 
-## What's here
+## Prominent scripts
 
 | Script | Purpose |
 |--------|---------|
@@ -19,29 +21,29 @@ Shell scripts for setting up and managing WinterCMS installations, databases, Ap
 | `acorn-setup-security` | Harden a server installation |
 | `acorn-backup` / `acorn-restore` | Backup and restore a WinterCMS project (files + DB) |
 | `acorn-git-all` / `acorn-git-push-all` | Run git commands across all `/var/www/` projects |
+
 ## Quick start — new WinterCMS site
 
 ```bash
 cd /var/www/
-./scripts/acorn-setup-hostname myproject
-./scripts/acorn-setup-database myproject
 ./scripts/acorn-setup-new-winter myproject
 ```
 
-This creates a complete WinterCMS installation with PostgreSQL database and Apache vhost at `http://myproject.laptop`.
+This creates a complete WinterCMS installation with PostgreSQL database and Apache vhost at `http://myproject.laptop`. It will automatically call `acorn-setup-hostname myproject` and `acorn-setup-database myproject` using `sudo` where necessary. Resultant website filesystem will be ch-owned by `www-data:www-data`.
 
 ## Installation
 
-Clone into `/var/www/scripts` so the scripts are reachable as `scripts/acorn-*` from any project directory:
+Clone into `/var/www/scripts` so the scripts are reachable as `../scripts/acorn-*` from any `/var/www` project directory:
 
 ```bash
 git clone https://github.com/anewholm/scripts /var/www/scripts
 ```
 
-## Prerequisites
+## Compatibility
 
-- Ubuntu 22.04+ or KUbuntu
-- Apache 2, PHP 8.1+, PostgreSQL 12+, Composer
+| OS (LTS) | [WinterCMS](https://wintercms.com/install) (target) | [Composer](https://getcomposer.org/download/) | [PHP](https://www.php.net/downloads.php)  | [PostgreSQL](https://www.postgresql.org/download/) |
+|-----------|---------|---|------|------------|
+| Ubuntu 22+ | v1.2+ | 2 | v8.1+ | v15+ |
 
 ## Related
 

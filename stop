@@ -2,6 +2,8 @@
 sudo systemctl stop apache2
 sudo systemctl stop mysql
 sudo systemctl stop postgresql
+sudo systemctl stop mongod
 sudo systemctl stop tomcat9
+sudo systemctl stop php8.3-fpm
 killall signal-desktop
-killall dotnet
+sudo killall dotnet
