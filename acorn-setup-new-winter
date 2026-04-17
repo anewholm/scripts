@@ -65,7 +65,7 @@ NO_APACHE=
 INSTALL_DIR_FLAG=
 CI_MODE=
 CI_NO_START_SERVER=
-CI_WORKERS=2
+CI_WORKERS=2   # workers >= 2 required; artisan serve warns "must be larger than 1" with workers=1
 CI_COOKIE_JAR=/tmp/cookies.txt
 
 while [[ $# -gt 0 ]]; do
@@ -541,7 +541,10 @@ if [ -n "$CI_MODE" ]; then
 
 	if [ -z "$CI_NO_START_SERVER" ]; then
 		# Start PHP built-in server in background
-		PHP_INI_SCAN_DIR="/tmp:" PHP_CLI_SERVER_WORKERS="$CI_WORKERS" nohup php artisan serve --port=8000 > /tmp/php-server.log 2>&1 &
+		# Export so the env vars are inherited through nohup into the long-lived server process
+		export PHP_INI_SCAN_DIR="/tmp:"
+		export PHP_CLI_SERVER_WORKERS="$CI_WORKERS"
+		nohup php artisan serve --port=8000 > /tmp/php-server.log 2>&1 &
 		echo "${GREEN}INFO${NC}: PHP server started (workers=$CI_WORKERS), waiting for it to accept connections..."
 
 		# Wait up to 40s for the server to respond
