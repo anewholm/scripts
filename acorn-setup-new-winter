@@ -16,7 +16,9 @@
 #   --no-interactive           Skip all interactive prompts (CI mode)
 #   --no-dbauth                Skip DBAuth installation and user setup entirely
 #   --apply-l10-fix            Apply the lists()→pluck() fix for WinterCMS 1.2.0 on Laravel 10+
-#   --seed-calendar            Insert seed rows for acorn_calendar_event_statuses/types
+#   --ci                       CI mode: set PHP memory/logging, clear bootstrap cache, start server, auto-login
+#   --workers=N                PHP_CLI_SERVER_WORKERS for --ci mode (default: 2)
+#   --cookie-jar=PATH          Cookie jar path for --ci auto-login (default: /tmp/cookies.txt)
 #   --no-hostname              Skip acorn-setup-hostname (useful in CI / non-Apache setups)
 #   --no-apache                Skip acorn-setup-hostname and Apache-related steps
 #   --install-dir=DIR          Installation base directory (default: /var/www)
@@ -33,7 +35,6 @@
 #     --no-interactive \
 #     --no-dbauth \
 #     --apply-l10-fix \
-#     --seed-calendar \
 #     --no-apache \
 #     wintercms_test
 
@@ -59,9 +60,11 @@ DBAUTH_SRC=
 NO_INTERACTIVE=
 NO_DBAUTH=
 APPLY_L10_FIX=
-SEED_CALENDAR=
 NO_APACHE=
 INSTALL_DIR_FLAG=
+CI_MODE=
+CI_WORKERS=2
+CI_COOKIE_JAR=/tmp/cookies.txt
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -79,7 +82,10 @@ while [[ $# -gt 0 ]]; do
         --no-hostname)       NO_APACHE=1 ;;
         --no-apache)         NO_APACHE=1 ;;
         --apply-l10-fix)     APPLY_L10_FIX=1 ;;
-        --seed-calendar)     SEED_CALENDAR=1 ;;
+        --ci)                CI_MODE=1 ;;
+        --workers=*)         CI_WORKERS="${1#*=}" ;;
+        --cookie-jar=*)      CI_COOKIE_JAR="${1#*=}" ;;
+        --seed-calendar)     echo "${YELLOW}WARN${NC}: --seed-calendar is deprecated; seeding runs automatically via seed_calendar.php in winter:up" ;;
         --install-dir=*)     INSTALL_DIR_FLAG="${1#*=}" ;;
         --*)                 echo "${RED}ERROR${NC}: Unknown option: $1"; exit 1 ;;
         *)
@@ -412,15 +418,8 @@ if [ -z "$ACORN_GITHUB" ]; then
 	fi
 fi
 
-# -------------------------------------------- Seed calendar data
-# Required for event creation: every event needs a status and a type.
-if [ -n "$SEED_CALENDAR" ]; then
-	echo "${GREEN}INFO${NC}: Seeding minimal calendar data (event_statuses, event_types)"
-	PGPASSWORD="$db_password" psql -h "$db_host" -U "$db_username" -d "$name" -c \
-		"INSERT INTO acorn_calendar_event_statuses (name, created_at, updated_at) VALUES ('Confirmed', NOW(), NOW()) ON CONFLICT DO NOTHING;"
-	PGPASSWORD="$db_password" psql -h "$db_host" -U "$db_username" -d "$name" -c \
-		"INSERT INTO acorn_calendar_event_types (name, created_at, updated_at) VALUES ('General', NOW(), NOW()) ON CONFLICT DO NOTHING;"
-fi
+# Seeding is handled automatically by seed_calendar.php (version.yaml) during winter:up,
+# which calls fn_acorn_calendar_seed() with fixed UUIDs. No manual seed step needed.
 
 # -------------------------------------------- Admin
 if [ -z "$NO_APACHE" ] && [ -d ../scripts ]; then
@@ -525,6 +524,49 @@ if [ -z "$NO_APACHE" ]; then
 	echo "${GREEN}INFO${NC}: Resetting permissions"
 	sudo chown -R $install_grp:$install_grp .
 	sudo chmod -R g+rw .
+fi
+
+# -------------------------------------------- CI mode: server + auto-login
+if [ -n "$CI_MODE" ]; then
+	echo "${GREEN}INFO${NC}: CI mode — configuring PHP, clearing cache, starting server"
+
+	# PHP ini: raise memory, suppress display_errors, log to file, disable PCRE JIT
+	printf '[PHP]\nerror_log=/tmp/php-errors.log\nlog_errors=1\ndisplay_errors=0\nerror_reporting=32767\nmemory_limit=512M\npcre.jit=0\n' > /tmp/ci-php.ini
+
+	# Clear bootstrap cache so Acorn/Calendar registrations are picked up
+	rm -f bootstrap/cache/packages.php bootstrap/cache/services.php
+
+	# Start PHP built-in server in background
+	PHP_INI_SCAN_DIR="/tmp:" PHP_CLI_SERVER_WORKERS="$CI_WORKERS" nohup php artisan serve --port=8000 > /tmp/php-server.log 2>&1 &
+	echo "${GREEN}INFO${NC}: PHP server started (workers=$CI_WORKERS), waiting for it to accept connections..."
+
+	# Wait up to 40s for the server to respond
+	for i in $(seq 1 20); do
+		if curl -sfL http://localhost:8000/backend/backend/auth/signin -o /dev/null 2>/dev/null; then
+			echo "${GREEN}INFO${NC}: Server ready after ${i}s"
+			break
+		fi
+		sleep 2
+	done
+
+	# Auto-login: obtain session cookie and CSRF token, POST credentials
+	echo "${GREEN}INFO${NC}: Logging in as admin, saving session to $CI_COOKIE_JAR"
+	BODY=$(curl -s -L -c "$CI_COOKIE_JAR" http://localhost:8000/backend/backend/auth/signin)
+	TOKEN=$(echo "$BODY" | grep -o 'name="csrf-token" content="[^"]*"' | sed 's/.*content="\([^"]*\)"/\1/' | head -1)
+	if [ -z "$TOKEN" ]; then
+		echo "${RED}ERROR${NC}: Could not extract CSRF token from login page — server may not be running"
+		exit 1
+	fi
+	STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+		-c "$CI_COOKIE_JAR" -b "$CI_COOKIE_JAR" \
+		--data-urlencode "_token=$TOKEN" \
+		-d "postback=1&login=admin&password=${ADMIN_PASSWORD}" \
+		http://localhost:8000/backend/backend/auth/signin)
+	if [ "$STATUS" != "302" ]; then
+		echo "${RED}ERROR${NC}: Login failed (HTTP $STATUS) — check admin password and server logs"
+		exit 1
+	fi
+	echo "${GREEN}INFO${NC}: Logged in successfully. Cookies saved to $CI_COOKIE_JAR"
 fi
 
 if [ -n "$NO_APACHE" ]; then
