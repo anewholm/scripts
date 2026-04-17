@@ -12,6 +12,7 @@
 #   --add-acorn-user           Also install the Acorn.User plugin (from same GitHub org
 #                              as --acorn-github, or local /var/www/plugins/acorn/user)
 #   --calendar-src=PATH        Copy Calendar plugin from this directory path
+#   --dbauth-src=PATH          Copy DBAuth module from this directory path and register it
 #   --no-interactive           Skip all interactive prompts (CI mode)
 #   --no-dbauth                Skip DBAuth installation and user setup entirely
 #   --apply-l10-fix            Apply the lists()→pluck() fix for WinterCMS 1.2.0 on Laravel 10+
@@ -54,6 +55,7 @@ DB_HOST_FLAG=
 ACORN_GITHUB=
 ADD_ACORN_USER=
 CALENDAR_SRC=
+DBAUTH_SRC=
 NO_INTERACTIVE=
 NO_DBAUTH=
 APPLY_L10_FIX=
@@ -71,6 +73,7 @@ while [[ $# -gt 0 ]]; do
         --acorn-github=*)    ACORN_GITHUB="${1#*=}" ;;
         --add-acorn-user)    ADD_ACORN_USER=1 ;;
         --calendar-src=*)    CALENDAR_SRC="${1#*=}" ;;
+        --dbauth-src=*)      DBAUTH_SRC="${1#*=}" ;;
         --no-interactive)    NO_INTERACTIVE=1 ;;
         --no-dbauth)         NO_DBAUTH=1 ;;
         --no-hostname)       NO_APACHE=1 ;;
@@ -374,6 +377,16 @@ if [ -n "$CALENDAR_SRC" ]; then
 	mkdir -p plugins/acorn
 	cp -r "$CALENDAR_SRC" plugins/acorn/calendar
 	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to copy Calendar plugin"; exit 1; fi
+fi
+
+# -------------------------------------------- DBAuth module
+if [ -n "$DBAUTH_SRC" ]; then
+	echo "${GREEN}INFO${NC}: Installing DBAuth module from ${YELLOW}$DBAUTH_SRC${NC}"
+	mkdir -p modules
+	cp -r "$DBAUTH_SRC" modules/dbauth
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to copy DBAuth module"; exit 1; fi
+	sed -i "s/'Acorn'/'Acorn', 'DBAuth'/" config/cms.php
+	echo "${GREEN}INFO${NC}: DBAuth module registered in config/cms.php"
 fi
 
 # -------------------------------------------- Patches (pre/post-AA) — developer workstation only
