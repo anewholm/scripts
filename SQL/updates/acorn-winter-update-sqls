@@ -71,7 +71,7 @@ author_name=`basename $author_dir`
 schema="*"
 author_plugin="${author_name}_${plugin_name}"
 table_space="$schema.${author_plugin}_*"
-function_space="[^ ]*$author_plugin[a-z0-9_]+\([a-z0-9, ]*\)"
+function_space="[^ ]*$author_plugin\[a-z0-9_\]+\([a-z0-9, ]*\)"
 echo "Author: ${YELLOW}$author_name${NC}, Plugin: ${YELLOW}$plugin_name${NC}, Tablespace: ${YELLOW}$table_space${NC}"
 if [ "$author_name" != 'acorn' ]; then
   echo "${RED}$author_name${NC} is not ours. Aborted"
