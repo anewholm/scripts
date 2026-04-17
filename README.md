@@ -3,6 +3,7 @@
 > CI runs for this repository under development. Currently tested on Ubuntu 22+ only.
 
 ![Human made content](human-made-content.png "Human made content")
+[![CI](https://github.com/anewholm/scripts/actions/workflows/ci.yml/badge.svg)](https://github.com/anewholm/scripts/actions/workflows/ci.yml)
 
 Shell scripts for setting up and managing WinterCMS installations, databases, Apache vhosts, and developer laptops on Ubuntu/KUbuntu. These are used commonly in CI/CD runs for the other repositories.
 
