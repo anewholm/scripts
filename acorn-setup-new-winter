@@ -533,8 +533,9 @@ fi
 if [ -n "$CI_MODE" ]; then
 	echo "${GREEN}INFO${NC}: CI mode — configuring PHP, clearing cache, starting server"
 
-	# PHP ini: raise memory, suppress display_errors, log to file, disable PCRE JIT
-	printf '[PHP]\nerror_log=/tmp/php-errors.log\nlog_errors=1\ndisplay_errors=0\nerror_reporting=32767\nmemory_limit=512M\npcre.jit=0\n' > /tmp/ci-php.ini
+	# PHP ini: suppress display_errors, log to file, disable PCRE JIT
+	# memory_limit intentionally not set — leave system default (-1 unlimited) for heavy WinterCMS operations
+	printf '[PHP]\nerror_log=/tmp/php-errors.log\nlog_errors=1\ndisplay_errors=0\nerror_reporting=32767\npcre.jit=0\n' > /tmp/ci-php.ini
 
 	# Clear bootstrap cache so Acorn/plugin registrations are picked up
 	rm -f bootstrap/cache/packages.php bootstrap/cache/services.php
@@ -542,7 +543,7 @@ if [ -n "$CI_MODE" ]; then
 	if [ -z "$CI_NO_START_SERVER" ]; then
 		# Start PHP built-in server in background
 		# Export so the env vars are inherited through nohup into the long-lived server process
-		export PHP_INI_SCAN_DIR=":/tmp"
+		export PHP_INI_SCAN_DIR="/tmp:"
 		export PHP_CLI_SERVER_WORKERS="$CI_WORKERS"
 		nohup php artisan serve --port=8000 > /tmp/php-server.log 2>&1 &
 		echo "${GREEN}INFO${NC}: PHP server started (workers=$CI_WORKERS), waiting for it to accept connections..."
