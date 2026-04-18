@@ -1,0 +1,180 @@
+#!/bin/bash
+# acorn-cli-wintercms-request — Make a request to a WinterCMS backend endpoint.
+#
+# Handles session cookies and WinterCMS AJAX protocol automatically:
+# when --handler is given the script fetches the page first to extract the CSRF
+# token, then POSTs with the correct X-WINTER-REQUEST-* headers and form data.
+#
+# Usage:
+#   acorn-cli-wintercms-request [OPTIONS] URL [key=value ...]
+#
+# Options:
+#   --handler=NAME      WinterCMS AJAX handler (X-WINTER-REQUEST-HANDLER).
+#                       When set: GET URL for CSRF token, then POST with handler.
+#   --token-url=URL     Fetch CSRF token from this URL instead of the request URL.
+#   --partials=LIST     X-WINTER-REQUEST-PARTIALS value (default: empty string).
+#   --cookies=FILE      Cookie jar file (default: /tmp/cookies.txt if it exists).
+#   --expected=CODE     Expected HTTP status, or comma-separated list e.g. 200,302
+#                       (default: 200).
+#   --check-errors      Fail if the response body contains WinterCMS error markers:
+#                       "error":, Class.*not found, "exception":"<string>
+#   --quiet             Suppress informational output (errors still go to stderr).
+#   --help              Show this help and exit.
+#
+# Form parameters can be given as key=value arguments after the URL, or piped
+# via stdin (one key=value per line).  Both sources are combined.
+#
+# Examples:
+#   # Page load check
+#   acorn-cli-wintercms-request http://localhost/backend/acorn/calendar/months
+#
+#   # AJAX call
+#   acorn-cli-wintercms-request \
+#     --handler=onSave --check-errors \
+#     http://localhost/backend/acorn/calendar/calendars/create \
+#     "Calendar[name]=Test" "Calendar[description]=Created by CI"
+#
+#   # AJAX call with params from stdin
+#   printf 'Calendar[name]=Test\nCalendar[description]=From stdin\n' \
+#     | acorn-cli-wintercms-request --handler=onSave \
+#         http://localhost/backend/acorn/calendar/calendars/create
+
+set -euo pipefail
+
+HANDLER=""
+TOKEN_URL=""
+PARTIALS=""
+COOKIES=""
+EXPECTED="200"
+CHECK_ERRORS=0
+QUIET=0
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+usage() {
+    sed -n '2,/^set -euo pipefail$/{/^set -euo pipefail$/d; s/^# \{0,1\}//; p}' "$0"
+    exit 0
+}
+
+die() {
+    echo "ERROR: $*" >&2
+    exit 1
+}
+
+log() {
+    [[ "$QUIET" -eq 1 ]] && return
+    echo "$*"
+}
+
+# ── Parse options ─────────────────────────────────────────────────────────────
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --handler=*)    HANDLER="${1#*=}" ;;
+        --handler)      HANDLER="$2";    shift ;;
+        --token-url=*)  TOKEN_URL="${1#*=}" ;;
+        --token-url)    TOKEN_URL="$2";  shift ;;
+        --partials=*)   PARTIALS="${1#*=}" ;;
+        --partials)     PARTIALS="$2";   shift ;;
+        --cookies=*)    COOKIES="${1#*=}" ;;
+        --cookies)      COOKIES="$2";    shift ;;
+        --expected=*)   EXPECTED="${1#*=}" ;;
+        --expected)     EXPECTED="$2";   shift ;;
+        --check-errors) CHECK_ERRORS=1 ;;
+        --quiet)        QUIET=1 ;;
+        --help|-h)      usage ;;
+        --)             shift; break ;;
+        -*)             die "Unknown option: $1" ;;
+        *)              break ;;
+    esac
+    shift
+done
+
+URL="${1:-}"
+[[ -n "$URL" ]] || die "URL required. Run with --help for usage."
+shift
+
+# ── Collect form parameters (args + stdin) ────────────────────────────────────
+
+PARAMS=("$@")
+if [[ ! -t 0 ]]; then
+    while IFS= read -r line; do
+        [[ -n "$line" ]] && PARAMS+=("$line")
+    done
+fi
+
+# ── Cookie jar ────────────────────────────────────────────────────────────────
+
+if [[ -z "$COOKIES" && -f /tmp/cookies.txt ]]; then
+    COOKIES=/tmp/cookies.txt
+fi
+
+COOKIE_ARGS=()
+if [[ -n "$COOKIES" ]]; then
+    COOKIE_ARGS=(-b "$COOKIES" -c "$COOKIES")
+fi
+
+# ── Make the request ──────────────────────────────────────────────────────────
+
+if [[ -n "$HANDLER" ]]; then
+    CSRF_URL="${TOKEN_URL:-$URL}"
+    log "Fetching CSRF token from ${CSRF_URL} ..."
+
+    CSRF_BODY=$(curl -s "${COOKIE_ARGS[@]}" "$CSRF_URL")
+    TOKEN=$(echo "$CSRF_BODY" \
+        | grep -o 'name="csrf-token" content="[^"]*"' \
+        | sed 's/.*content="\([^"]*\)"/\1/' \
+        | head -1)
+    [[ -n "$TOKEN" ]] || die "Could not extract CSRF token from ${CSRF_URL}"
+
+    FORM_ARGS=(-F "_token=${TOKEN}")
+    for param in "${PARAMS[@]}"; do
+        FORM_ARGS+=(-F "$param")
+    done
+
+    log "Posting to ${URL} with handler ${HANDLER} ..."
+    RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
+        "${COOKIE_ARGS[@]}" \
+        -H "X-WINTER-REQUEST-HANDLER: ${HANDLER}" \
+        -H "X-WINTER-REQUEST-PARTIALS: ${PARTIALS}" \
+        -H "X-Requested-With: XMLHttpRequest" \
+        "${FORM_ARGS[@]}" \
+        "$URL")
+else
+    log "GET ${URL} ..."
+    RESPONSE=$(curl -s -L -w "\nHTTP_STATUS:%{http_code}" \
+        "${COOKIE_ARGS[@]}" \
+        "$URL")
+fi
+
+STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | sed 's/.*HTTP_STATUS://')
+BODY=$(echo "$RESPONSE" | grep -v "HTTP_STATUS:")
+
+log "HTTP status: ${STATUS}"
+
+# ── Validate HTTP status ──────────────────────────────────────────────────────
+
+MATCHED=0
+IFS=',' read -ra EXPECTED_CODES <<< "$EXPECTED"
+for code in "${EXPECTED_CODES[@]}"; do
+    [[ "$STATUS" == "$code" ]] && MATCHED=1 && break
+done
+
+if [[ "$MATCHED" -eq 0 ]]; then
+    echo "ERROR: expected ${EXPECTED}, got ${STATUS}" >&2
+    echo "=== Response body (first 40 lines) ===" >&2
+    echo "$BODY" | head -40 >&2
+    exit 1
+fi
+
+# ── Check for WinterCMS error markers ────────────────────────────────────────
+
+if [[ "$CHECK_ERRORS" -eq 1 ]]; then
+    if echo "$BODY" | grep -qiE '"error":|Class .* not found|"exception":"[^n]'; then
+        echo "ERROR: WinterCMS error marker found in ${STATUS} response" >&2
+        echo "$BODY" | head -40 >&2
+        exit 1
+    fi
+fi
+
+log "OK"
