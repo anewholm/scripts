@@ -18,7 +18,8 @@
 #                       (default: 200).
 #   --check-errors      Fail if the response body contains WinterCMS error markers:
 #                       "error":, Class.*not found, "exception":"<string>, LARAVEL_START
-#   --retry=N           Retry up to N times on 503 or missing CSRF token (5s delay).
+#   --retry=N           Retry up to N times on 503 or missing CSRF token.
+#   --retry-sleep=N     Seconds to wait between retries (default: 5).
 #   --quiet             Suppress informational output (errors still go to stderr).
 #   --help              Show this help and exit.
 #
@@ -49,6 +50,7 @@ COOKIES=""
 EXPECTED="200"
 CHECK_ERRORS=0
 RETRY=0
+RETRY_SLEEP=5
 QUIET=0
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -85,6 +87,8 @@ while [[ $# -gt 0 ]]; do
         --check-errors) CHECK_ERRORS=1 ;;
         --retry=*)      RETRY="${1#*=}" ;;
         --retry)        RETRY="$2"; shift ;;
+        --retry-sleep=*) RETRY_SLEEP="${1#*=}" ;;
+        --retry-sleep)  RETRY_SLEEP="$2"; shift ;;
         --quiet)        QUIET=1 ;;
         --help|-h)      usage ;;
         --)             shift; break ;;
@@ -138,8 +142,8 @@ while [[ $_attempt -lt $_max ]]; do
             | head -1)
         if [[ -z "$TOKEN" ]]; then
             if [[ $_attempt -lt $_max ]]; then
-                log "Attempt $_attempt: no CSRF token — FPM may be recovering, waiting 5s..."
-                sleep 5
+                log "Attempt $_attempt: no CSRF token — FPM may be recovering, waiting ${RETRY_SLEEP}s..."
+                sleep "$RETRY_SLEEP"
                 continue
             fi
             die "Could not extract CSRF token from ${CSRF_URL}"
@@ -170,8 +174,8 @@ while [[ $_attempt -lt $_max ]]; do
     log "HTTP status: ${STATUS}"
 
     if [[ "$STATUS" == "503" && $_attempt -lt $_max ]]; then
-        log "FPM unavailable (503), waiting 5s for worker respawn (attempt $_attempt/$_max)..."
-        sleep 5
+        log "FPM unavailable (503), waiting ${RETRY_SLEEP}s for worker respawn (attempt $_attempt/$_max)..."
+        sleep "$RETRY_SLEEP"
         continue
     fi
 
