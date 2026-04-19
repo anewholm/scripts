@@ -17,7 +17,8 @@
 #   --expected=CODE     Expected HTTP status, or comma-separated list e.g. 200,302
 #                       (default: 200).
 #   --check-errors      Fail if the response body contains WinterCMS error markers:
-#                       "error":, Class.*not found, "exception":"<string>
+#                       "error":, Class.*not found, "exception":"<string>, LARAVEL_START
+#   --retry=N           Retry up to N times on 503 or missing CSRF token (5s delay).
 #   --quiet             Suppress informational output (errors still go to stderr).
 #   --help              Show this help and exit.
 #
@@ -47,6 +48,7 @@ PARTIALS=""
 COOKIES=""
 EXPECTED="200"
 CHECK_ERRORS=0
+RETRY=0
 QUIET=0
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -81,6 +83,8 @@ while [[ $# -gt 0 ]]; do
         --expected=*)   EXPECTED="${1#*=}" ;;
         --expected)     EXPECTED="$2";   shift ;;
         --check-errors) CHECK_ERRORS=1 ;;
+        --retry=*)      RETRY="${1#*=}" ;;
+        --retry)        RETRY="$2"; shift ;;
         --quiet)        QUIET=1 ;;
         --help|-h)      usage ;;
         --)             shift; break ;;
@@ -114,43 +118,65 @@ if [[ -n "$COOKIES" ]]; then
     COOKIE_ARGS=(-b "$COOKIES" -c "$COOKIES")
 fi
 
-# ── Make the request ──────────────────────────────────────────────────────────
+# ── Make the request (with optional retry on 503 or missing CSRF token) ───────
 
-if [[ -n "$HANDLER" ]]; then
-    CSRF_URL="${TOKEN_URL:-$URL}"
-    log "Fetching CSRF token from ${CSRF_URL} ..."
+_attempt=0
+_max=$(( RETRY + 1 ))
+STATUS=""
+BODY=""
 
-    CSRF_BODY=$(curl -s "${COOKIE_ARGS[@]}" "$CSRF_URL")
-    TOKEN=$(echo "$CSRF_BODY" \
-        | grep -o 'name="csrf-token" content="[^"]*"' \
-        | sed 's/.*content="\([^"]*\)"/\1/' \
-        | head -1)
-    [[ -n "$TOKEN" ]] || die "Could not extract CSRF token from ${CSRF_URL}"
+while [[ $_attempt -lt $_max ]]; do
+    _attempt=$(( _attempt + 1 ))
 
-    FORM_ARGS=(-F "_token=${TOKEN}")
-    for param in "${PARAMS[@]}"; do
-        FORM_ARGS+=(-F "$param")
-    done
+    if [[ -n "$HANDLER" ]]; then
+        CSRF_URL="${TOKEN_URL:-$URL}"
+        log "Fetching CSRF token from ${CSRF_URL} ..."
+        CSRF_BODY=$(curl -s "${COOKIE_ARGS[@]}" "$CSRF_URL")
+        TOKEN=$(echo "$CSRF_BODY" \
+            | grep -o 'name="csrf-token" content="[^"]*"' \
+            | sed 's/.*content="\([^"]*\)"/\1/' \
+            | head -1)
+        if [[ -z "$TOKEN" ]]; then
+            if [[ $_attempt -lt $_max ]]; then
+                log "Attempt $_attempt: no CSRF token — FPM may be recovering, waiting 5s..."
+                sleep 5
+                continue
+            fi
+            die "Could not extract CSRF token from ${CSRF_URL}"
+        fi
 
-    log "Posting to ${URL} with handler ${HANDLER} ..."
-    RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
-        "${COOKIE_ARGS[@]}" \
-        -H "X-WINTER-REQUEST-HANDLER: ${HANDLER}" \
-        -H "X-WINTER-REQUEST-PARTIALS: ${PARTIALS}" \
-        -H "X-Requested-With: XMLHttpRequest" \
-        "${FORM_ARGS[@]}" \
-        "$URL")
-else
-    log "GET ${URL} ..."
-    RESPONSE=$(curl -s -L -w "\nHTTP_STATUS:%{http_code}" \
-        "${COOKIE_ARGS[@]}" \
-        "$URL")
-fi
+        FORM_ARGS=(-F "_token=${TOKEN}")
+        for param in "${PARAMS[@]}"; do
+            FORM_ARGS+=(-F "$param")
+        done
 
-STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | sed 's/.*HTTP_STATUS://')
-BODY=$(echo "$RESPONSE" | grep -v "HTTP_STATUS:")
+        log "Posting to ${URL} with handler ${HANDLER} ..."
+        RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
+            "${COOKIE_ARGS[@]}" \
+            -H "X-WINTER-REQUEST-HANDLER: ${HANDLER}" \
+            -H "X-WINTER-REQUEST-PARTIALS: ${PARTIALS}" \
+            -H "X-Requested-With: XMLHttpRequest" \
+            "${FORM_ARGS[@]}" \
+            "$URL")
+    else
+        log "GET ${URL} ..."
+        RESPONSE=$(curl -s -L -w "\nHTTP_STATUS:%{http_code}" \
+            "${COOKIE_ARGS[@]}" \
+            "$URL")
+    fi
 
-log "HTTP status: ${STATUS}"
+    STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | sed 's/.*HTTP_STATUS://')
+    BODY=$(echo "$RESPONSE" | grep -v "HTTP_STATUS:")
+    log "HTTP status: ${STATUS}"
+
+    if [[ "$STATUS" == "503" && $_attempt -lt $_max ]]; then
+        log "FPM unavailable (503), waiting 5s for worker respawn (attempt $_attempt/$_max)..."
+        sleep 5
+        continue
+    fi
+
+    break
+done
 
 # ── Validate HTTP status ──────────────────────────────────────────────────────
 
@@ -170,7 +196,7 @@ fi
 # ── Check for WinterCMS error markers ────────────────────────────────────────
 
 if [[ "$CHECK_ERRORS" -eq 1 ]]; then
-    if echo "$BODY" | grep -qiE '"error":|Class .* not found|"exception":"[^n]'; then
+    if echo "$BODY" | grep -qiE '"error":|Class .* not found|"exception":"[^n]|LARAVEL_START'; then
         echo "ERROR: WinterCMS error marker found in ${STATUS} response" >&2
         echo "$BODY" | head -40 >&2
         exit 1
