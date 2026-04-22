@@ -1,0 +1,112 @@
+#!/bin/bash
+# acorn-cli-wintercms-login — Wait for a WinterCMS backend to become ready,
+# then perform an admin login and save the session cookie.
+#
+# Usage:
+#   acorn-cli-wintercms-login [OPTIONS]
+#
+# Options:
+#   --url=URL          Base URL of the WinterCMS install (default: http://localhost)
+#   --username=NAME    Backend login username (default: admin)
+#   --password=PASS    Backend login password (required)
+#   --cookies=FILE     Cookie jar path (default: /tmp/cookies.txt)
+#   --wait=N           Poll up to N times (2-second intervals) for server ready (default: 20)
+#   --quiet            Suppress informational output
+#   --help             Show this help and exit
+#
+# Exits 0 on successful login (HTTP 302 redirect), non-zero on any failure.
+#
+# Examples:
+#   acorn-cli-wintercms-login --password=testpassword123
+#   acorn-cli-wintercms-login --url=http://localhost:8000 --password=secret --cookies=/tmp/my.txt
+
+set -euo pipefail
+
+URL="http://localhost"
+USERNAME="admin"
+PASSWORD=""
+COOKIES="/tmp/cookies.txt"
+WAIT=20
+QUIET=0
+
+usage() {
+    sed -n '2,/^set -euo pipefail$/{/^set -euo pipefail$/d; s/^# \{0,1\}//; p}' "$0"
+    exit 0
+}
+
+die() {
+    echo "ERROR: $*" >&2
+    exit 1
+}
+
+log() {
+    [[ "$QUIET" -eq 1 ]] && return
+    echo "$*"
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --url=*)       URL="${1#*=}" ;;
+        --url)         URL="$2"; shift ;;
+        --username=*)  USERNAME="${1#*=}" ;;
+        --username)    USERNAME="$2"; shift ;;
+        --password=*)  PASSWORD="${1#*=}" ;;
+        --password)    PASSWORD="$2"; shift ;;
+        --cookies=*)   COOKIES="${1#*=}" ;;
+        --cookies)     COOKIES="$2"; shift ;;
+        --wait=*)      WAIT="${1#*=}" ;;
+        --wait)        WAIT="$2"; shift ;;
+        --quiet)       QUIET=1 ;;
+        --help|-h)     usage ;;
+        --)            shift; break ;;
+        -*)            die "Unknown option: $1" ;;
+        *)             break ;;
+    esac
+    shift
+done
+
+[[ -n "$PASSWORD" ]] || die "--password is required. Run with --help for usage."
+
+SIGNIN="${URL}/backend/backend/auth/signin"
+
+# ── Wait for server ───────────────────────────────────────────────────────────
+
+log "Waiting for server at ${SIGNIN} ..."
+for i in $(seq 1 "$WAIT"); do
+    if curl -sfL "$SIGNIN" -o /dev/null 2>/dev/null; then
+        log "Server ready after $((i * 2))s"
+        break
+    fi
+    if [[ "$i" -eq "$WAIT" ]]; then
+        die "Server not ready after $((WAIT * 2))s"
+    fi
+    sleep 2
+done
+
+# ── Fetch CSRF token ──────────────────────────────────────────────────────────
+
+BODY=$(curl -s -L -c "$COOKIES" "$SIGNIN")
+TOKEN=$(echo "$BODY" | grep -o 'name="csrf-token" content="[^"]*"' | sed 's/.*content="\([^"]*\)"/\1/' | head -1)
+
+if [[ -z "$TOKEN" ]]; then
+    echo "ERROR: no CSRF token in login page response — server may not be ready" >&2
+    echo "$BODY" | head -20 >&2
+    exit 1
+fi
+
+# ── POST credentials ──────────────────────────────────────────────────────────
+
+log "Logging in as ${USERNAME} ..."
+STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+    -c "$COOKIES" -b "$COOKIES" \
+    --data-urlencode "_token=${TOKEN}" \
+    -d "postback=1&login=${USERNAME}&password=${PASSWORD}" \
+    "$SIGNIN")
+
+log "Login status: ${STATUS}"
+
+if [[ "$STATUS" != "302" ]]; then
+    die "Login failed: expected 302, got ${STATUS}"
+fi
+
+log "OK — session cookie saved to ${COOKIES}"
