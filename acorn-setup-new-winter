@@ -9,8 +9,8 @@
 #   --db-host=HOST             Database host (default: 127.0.0.1)
 #   --acorn-github=REPO        Install Acorn module from GitHub repo (e.g. anewholm/acorn)
 #                              instead of the local /var/www/plugins/acorn path
-#   --add-acorn-user           Also install the Acorn.User plugin (from same GitHub org
-#                              as --acorn-github, or local /var/www/plugins/acorn/user)
+#   --user-src=PATH            Copy Acorn.User plugin from this directory path
+#   --add-acorn-user           Clone Acorn.User from GitHub (same org as --acorn-github)
 #   --calendar-src=PATH        Copy Calendar plugin from this directory path
 #   --dbauth-src=PATH          Copy DBAuth module from this directory path and register it
 #   --no-interactive           Skip all interactive prompts (CI mode)
@@ -56,6 +56,7 @@ DB_PASSWORD_FLAG=
 DB_HOST_FLAG=
 ACORN_GITHUB=
 ADD_ACORN_USER=
+USER_SRC=
 CALENDAR_SRC=
 DBAUTH_SRC=
 NO_INTERACTIVE=
@@ -77,6 +78,7 @@ while [[ $# -gt 0 ]]; do
         --db-host=*)         DB_HOST_FLAG="${1#*=}" ;;
         --acorn-github=*)    ACORN_GITHUB="${1#*=}" ;;
         --add-acorn-user)    ADD_ACORN_USER=1 ;;
+        --user-src=*)        USER_SRC="${1#*=}" ;;
         --calendar-src=*)    CALENDAR_SRC="${1#*=}" ;;
         --dbauth-src=*)      DBAUTH_SRC="${1#*=}" ;;
         --no-interactive)    NO_INTERACTIVE=1 ;;
@@ -306,8 +308,13 @@ if [ -n "$ACORN_GITHUB" ]; then
 	sed -i "s/'Cms'/'Cms', 'Acorn'/" config/cms.php
 	echo "${GREEN}INFO${NC}: Acorn module registered in config/cms.php"
 
-	# Optionally install the Acorn.User plugin from the same GitHub organisation
-	if [ -n "$ADD_ACORN_USER" ]; then
+	# Install Acorn.User: from local path (--user-src) or GitHub (--add-acorn-user)
+	if [ -n "$USER_SRC" ]; then
+		echo "${GREEN}INFO${NC}: Installing Acorn.User plugin from ${YELLOW}$USER_SRC${NC}"
+		mkdir -p plugins/acorn
+		cp -r "$USER_SRC" plugins/acorn/user
+		if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to copy User plugin"; exit 1; fi
+	elif [ -n "$ADD_ACORN_USER" ]; then
 		acorn_org="${ACORN_GITHUB%%/*}"
 		echo "${GREEN}INFO${NC}: Installing Acorn.User plugin from GitHub: ${YELLOW}$acorn_org/user${NC}"
 		mkdir -p plugins/acorn
