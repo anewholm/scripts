@@ -5,4 +5,6 @@ sudo systemctl start postgresql
 sudo systemctl start mongod
 sudo systemctl start tomcat9
 sudo systemctl start php8.3-fpm
+sudo systemctl start snap.docker.dockerd
+sudo systemctl start clamav-freshclam
 signal-desktop &
