@@ -1,3 +1,11 @@
+# This patch is cancelled for the new version of winter
+# Laravel and HasManyDeep use: $recordsPerPage, $columns, $name, $currentPageNumber
+# Storm uses: $recordsPerPage, $currentPageNumber, $columns, $name
+# Everything is correctly wrapped: Storm Builder and relations, except HasManyDeep
+# which does not have type hinting so the params accidentally flow through correctly
+# It uses no shouldSelect(array $columns)
+
+
 --- modules/backend/widgets/Lists.php    2025-12-15 12:36:11.224281798 +0300
 +++ modules/backend/widgets/Lists-new.php   2025-12-15 12:37:42.815455230 +0300
 @@ -624,7 +624,12 @@

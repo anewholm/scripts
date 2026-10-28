@@ -1,18 +1,49 @@
 #!append storage/framework/classes.php
 #!search return
-<?php return array (
+<?php
+/*
+ * Bootstrap seed for Winter CMS's ClassLoader manifest (storage/framework/classes.php).
+ *
+ * WHY THIS FILE EXISTS — TWO INTERLOCKING REASONS
+ * -------------------------------------------------
+ *
+ * 1. CASE MISMATCH: WinterCMS module directories use lowercase names (traits/, classes/,
+ *    models/, behaviors/, etc.) while PHP namespaces use StudlyCase (Traits, Classes...).
+ *    Composer's PSR-4 autoloader is case-sensitive on Linux: it maps System\Traits\Foo to
+ *    modules/system/Traits/Foo.php (capital T), which does not exist. All WinterCMS module
+ *    classes with intermediate namespace parts therefore FAIL to resolve via Composer on Linux.
+ *
+ *    Winter's own ClassLoader handles this correctly via strtolower() in its autoloadedPackages
+ *    lookup. But autoloadPackage() is only called when System\ServiceProvider::register() runs.
+ *    Classes needed before that point must be pre-seeded here.
+ *
+ * 2. SYMLINKED MODULES: Composer path repos install local modules as symlinks:
+ *    modules/acorn → /home/<user>/Software/GitHub/infrastructure/
+ *    modules/dbauth → /home/<user>/Software/GitHub/dbauth/
+ *    PHP-FPM (www-data) uses realpath() to validate paths. If the home directory lacks the
+ *    execute bit for "others" (drwxr-x--- is the Linux default), realpath() returns false and
+ *    Composer cannot resolve those symlinked module classes at all. The fix is:
+ *    sudo chmod o+x /home/<user>/   (adds traverse permission, not listing)
+ *    The ClassLoader uses the same realpath() check, so this also affects manifest entries.
+ *
+ * RESULT: This file must contain the module classes for System, Backend, Cms, Acorn, and
+ * DBAuth so they are resolvable during the bootstrap phase before register() has run.
+ * Plugin classes (acorn/calendar, winter/user etc.) do not need to be here — they are
+ * registered by PluginManager::registerAll() which runs inside System\ServiceProvider::register().
+ *
+ * AUTO-GROWN AFTER FIRST BOOT
+ * ----------------------------
+ * Once the app boots successfully, ClassLoader::build() rewrites this file with every class
+ * the ClassLoader resolved during that session. The file then grows to reflect actual usage.
+ * Stale entries (removed plugins etc.) are safe: isRealFilePath() uses realpath() to validate
+ * each entry and silently skips any path that no longer exists.
+ */
+return array (
   'System\\Traits\\SecurityController' => 'modules/system/traits/SecurityController.php',
   'DBAuth\\ServiceProvider' => 'modules/dbauth/ServiceProvider.php',
   'Acorn\\ServiceProvider' => 'modules/acorn/ServiceProvider.php',
   'System\\Classes\\PluginManager' => 'modules/system/classes/PluginManager.php',
   'System\\Classes\\PluginBase' => 'modules/system/classes/PluginBase.php',
-  'Winter\\User\\Plugin' => 'plugins/winter/user/Plugin.php',
-  'Winter\\Location\\Plugin' => 'plugins/winter/location/Plugin.php',
-  'Winter\\Demo\\Plugin' => 'plugins/winter/demo/Plugin.php',
-  'Winter\\Builder\\Plugin' => 'plugins/winter/builder/Plugin.php',
-  'Acorn\\Messaging\\Plugin' => 'plugins/acorn/messaging/Plugin.php',
-  'Acorn\\Location\\Plugin' => 'plugins/acorn/location/Plugin.php',
-  'Acorn\\Calendar\\Plugin' => 'plugins/acorn/calendar/Plugin.php',
   'System\\Traits\\LazyOwnerAlias' => 'modules/system/traits/LazyOwnerAlias.php',
   'System\\Classes\\SettingsManager' => 'modules/system/classes/SettingsManager.php',
   'Backend\\Classes\\NavigationManager' => 'modules/backend/classes/NavigationManager.php',
@@ -41,15 +72,11 @@
   'Backend\\Behaviors\\FormController' => 'modules/backend/behaviors/FormController.php',
   'Backend\\Behaviors\\ListController' => 'modules/backend/behaviors/ListController.php',
   'Cms\\Classes\\Theme' => 'modules/cms/classes/Theme.php',
-  'Winter\\User\\Models\\User' => 'plugins/winter/user/models/User.php',
-  'Acorn\\Messaging\\Events\\MessageListReady' => 'plugins/acorn/messaging/events/MessageListReady.php',
   'Acorn\\DeepReplicates' => 'modules/acorn/DeepReplicates.php',
   'Acorn\\DirtyWriteProtection' => 'modules/acorn/DirtyWriteProtection.php',
   'Acorn\\ObjectLocking' => 'modules/acorn/ObjectLocking.php',
   'Acorn\\PostGreSQLFieldTypeUtilities' => 'modules/acorn/PostGreSQLFieldTypeUtilities.php',
   'Acorn\\Model' => 'modules/acorn/Model.php',
-  'Acorn\\Messaging\\Models\\Message' => 'plugins/acorn/messaging/models/Message.php',
-  'Acorn\\Messaging\\Controllers\\Conversations' => 'plugins/acorn/messaging/controllers/Conversations.php',
   'DBAuth\\PostGreSQLManager' => 'modules/dbauth/PostGreSQLManager.php',
   'Backend\\Classes\\BackendController' => 'modules/backend/classes/BackendController.php',
   'Backend\\Classes\\Skin' => 'modules/backend/classes/Skin.php',
@@ -69,12 +96,10 @@
   'Backend\\Traits\\FormModelWidget' => 'modules/backend/traits/FormModelWidget.php',
   'Backend\\FormWidgets\\FileUpload' => 'modules/backend/formwidgets/FileUpload.php',
   'System\\Models\\File' => 'modules/system/models/File.php',
-  'Acorn\\Messaging\\Models\\Settings' => 'plugins/acorn/messaging/models/Settings.php',
   'System\\Classes\\ModelBehavior' => 'modules/system/classes/ModelBehavior.php',
   'System\\Behaviors\\SettingsModel' => 'modules/system/behaviors/SettingsModel.php',
   'Backend\\FormWidgets\\Sensitive' => 'modules/backend/formwidgets/Sensitive.php',
   'Acorn\\LinuxPermissions' => 'modules/acorn/LinuxPermissions.php',
-  'Acorn\\Calendar\\Models\\Calendar' => 'plugins/acorn/calendar/models/Calendar.php',
   'Backend\\FormWidgets\\DatePicker' => 'modules/backend/formwidgets/DatePicker.php',
   'Backend\\FormWidgets\\PermissionEditor' => 'modules/backend/formwidgets/PermissionEditor.php',
   'Backend\\Facades\\Backend' => 'modules/backend/facades/Backend.php',
@@ -89,7 +114,6 @@
   'Backend\\Classes\\SideMenuItem' => 'modules/backend/classes/SideMenuItem.php',
   'Backend\\Classes\\QuickActionItem' => 'modules/backend/classes/QuickActionItem.php',
   'System\\Models\\LogSetting' => 'modules/system/models/LogSetting.php',
-  'Winter\\User\\Classes\\UserRedirector' => 'plugins/winter/user/classes/UserRedirector.php',
   'System\\Models\\EventLog' => 'modules/system/models/EventLog.php',
   'System\\Classes\\ErrorHandler' => 'modules/system/classes/ErrorHandler.php',
   'Backend\\Traits\\PreferenceMaker' => 'modules/backend/traits/PreferenceMaker.php',
@@ -115,33 +139,12 @@
   'System\\Models\\RequestLog' => 'modules/system/models/RequestLog.php',
   'System\\Controllers\\Settings' => 'modules/system/controllers/Settings.php',
   'Backend\\Controllers\\Auth' => 'modules/backend/controllers/Auth.php',
-  'Acorn\\Location\\Controllers\\Location' => 'plugins/acorn/location/controllers/Location.php',
   'Backend\\Behaviors\\ReorderController' => 'modules/backend/behaviors/ReorderController.php',
-  'Acorn\\Location\\Models\\Location' => 'plugins/acorn/location/models/Location.php',
-  'Acorn\\Calendar\\Controllers\\Calendar' => 'plugins/acorn/calendar/controllers/Calendar.php',
-  'Acorn\\Calendar\\Behaviors\\CalendarController' => 'plugins/acorn/calendar/behaviors/CalendarController.php',
-  'Acorn\\Calendar\\Models\\Instance' => 'plugins/acorn/calendar/models/Instance.php',
-  'Acorn\\Calendar\\Widgets\\Calendars' => 'plugins/acorn/calendar/widgets/Calendars.php',
-  'Acorn\\Calendar\\Models\\Status' => 'plugins/acorn/calendar/models/Status.php',
-  'Acorn\\Calendar\\Models\\Type' => 'plugins/acorn/calendar/models/Type.php',
-  'Acorn\\Calendar\\Models\\EventPart' => 'plugins/acorn/calendar/models/EventPart.php',
-  'Acorn\\Calendar\\Widgets\\CalendarCell' => 'plugins/acorn/calendar/widgets/CalendarCell.php',
-  'Acorn\\Calendar\\Models\\Event' => 'plugins/acorn/calendar/models/Event.php',
   'Backend\\Traits\\SelectableWidget' => 'modules/backend/traits/SelectableWidget.php',
   'Backend\\Traits\\CollapsableWidget' => 'modules/backend/traits/CollapsableWidget.php',
-  'Acorn\\Messaging\\Widgets\\ConversationList' => 'plugins/acorn/messaging/widgets/ConversationList.php',
-  'Acorn\\Calendar\\Listeners\\MixinEvents' => 'plugins/acorn/calendar/listeners/MixinEvents.php',
   'Backend\\FormWidgets\\Relation' => 'modules/backend/formwidgets/Relation.php',
   'Backend\\FormWidgets\\RichEditor' => 'modules/backend/formwidgets/RichEditor.php',
-  'Acorn\\Messaging\\Models\\Conversation' => 'plugins/acorn/messaging/models/Conversation.php',
-  'Acorn\\Calendar\\Models\\Settings' => 'plugins/acorn/calendar/models/Settings.php',
-  'Acorn\\Calendar\\Controllers\\Calendars' => 'plugins/acorn/calendar/controllers/Calendars.php',
-  'Acorn\\Calendar\\Events\\EventNew' => 'plugins/acorn/calendar/events/EventNew.php',
-  'Winter\\Location\\FormWidgets\\AddressFinder' => 'plugins/winter/location/formwidgets/AddressFinder.php',
-  'Winter\\Location\\Models\\Setting' => 'plugins/winter/location/models/Setting.php',
-  'Acorn\\Calendar\\Events\\EventUpdated' => 'plugins/acorn/calendar/events/EventUpdated.php',
   'DBAuth\\Models\\Settings' => 'modules/dbauth/models/Settings.php',
-  'Acorn\\Messaging\\Console\\RunCommand' => 'plugins/acorn/messaging/console/RunCommand.php',
   'System\\Console\\Traits\\HasPluginArgument' => 'modules/system/console/traits/HasPluginArgument.php',
   'System\\Console\\BaseScaffoldCommand' => 'modules/system/console/BaseScaffoldCommand.php',
   'System\\Console\\CreateCommand' => 'modules/system/console/CreateCommand.php',
@@ -214,11 +217,6 @@
   'Cms\\Classes\\Partial' => 'modules/cms/classes/Partial.php',
   'Cms\\Classes\\PartialCode' => 'modules/cms/classes/PartialCode.php',
   'Cms\\Classes\\MediaViewHelper' => 'modules/cms/classes/MediaViewHelper.php',
-  'Winter\\User\\Controllers\\Users' => 'plugins/winter/user/controllers/Users.php',
-  'Acorn\\Aauser\\Controllers\\Users' => 'plugins/acorn/aauser/controllers/Users.php',
-  'Winter\\User\\Models\\UserGroup' => 'plugins/winter/user/models/UserGroup.php',
-  'Winter\\User\\Controllers\\UserGroups' => 'plugins/winter/user/controllers/UserGroups.php',
-  'Acorn\\Messaging\\Events\\MessageNew' => 'plugins/acorn/messaging/events/MessageNew.php',
   'System\\Models\\PluginVersion' => 'modules/system/models/PluginVersion.php',
   'Acorn\\Builder' => 'modules/acorn/Builder.php',
 );

@@ -1,0 +1,13 @@
+--- modules/backend/widgets/Filter.php	2026-07-23 09:48:57.920671784 +0100
++++ modules/backend/widgets/Filter.php	2026-07-23 09:48:31.221959749 +0100
+@@ -420,3 +420,10 @@
+     protected function getOptionsFromModel($scope, $searchQuery = null)
+     {
++        if (!isset($this->scopeModels[$scope->scopeName])) {
++            // TODO: This is a hack to prevent RelationManager exceptions
++            // because the has-many-deep can-filter fails
++            // because SQL is needed to access the deep value
++            return collect();
++            throw new \Exception("Undefined array key $scope->scopeName");
++        }
+         $model = $this->scopeModels[$scope->scopeName];

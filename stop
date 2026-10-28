@@ -4,7 +4,7 @@ sudo systemctl stop mysql
 sudo systemctl stop postgresql
 sudo systemctl stop mongod
 sudo systemctl stop tomcat9
-sudo systemctl stop php8.3-fpm
+sudo systemctl stop php8.4-fpm
 sudo systemctl stop snap.docker.dockerd
 sudo systemctl stop clamav-freshclam
 killall signal-desktop

@@ -9,15 +9,27 @@ NC="$(tput sgr0)"
 TICK="${GREEN}✓${NC}"
 CROSS="${RED}✘${NC}"
 
+PHP_VERSION=
+positional=()
+for arg in "$@"; do
+    case "$arg" in
+        --php-version=*) PHP_VERSION="${arg#*=}" ;;
+        *) positional+=("$arg") ;;
+    esac
+done
+set -- "${positional[@]}"
+
 input=$1
 
 if [ "$1" == "help" ] || [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
-	echo "Usage: acorn-setup-hostname [hostname]"
+	echo "Usage: acorn-setup-hostname [--php-version=X.X] [hostname]"
 	echo "Normally:"
 	echo "  * Install this script in /var/www/scripts"
 	echo "  * navigate to the /var/www/<DOCUMENT_ROOT> of the website and run:"
 	echo "  * $ ../scripts/acorn-setup-hostname"
-	echo "hostname: Host Name. By default ${GREEN}the current directory${NC}."
+	echo "hostname:           Host Name. By default ${GREEN}the current directory${NC}."
+	echo "--php-version=X.X:  Route PHP requests via PHP-FPM at the given version (e.g. 8.4)."
+	echo "                    Errors if that FPM package is not installed or not running."
 	exit 0
 fi
 
@@ -25,6 +37,17 @@ fi
 if ! ps -A | grep -q apache2; then
   echo "${RED}ERROR${NC}: Apache2 not running on this server"
   exit 1;
+fi
+if [ -n "$PHP_VERSION" ]; then
+  if [ ! -d "/etc/php/${PHP_VERSION}/fpm" ]; then
+    echo "${RED}ERROR${NC}: PHP ${PHP_VERSION} FPM is not installed (/etc/php/${PHP_VERSION}/fpm not found)"
+    exit 1
+  fi
+  fpm_socket="/run/php/php${PHP_VERSION}-fpm.sock"
+  if [ ! -S "$fpm_socket" ]; then
+    echo "${RED}ERROR${NC}: PHP ${PHP_VERSION} FPM socket not found at [$fpm_socket] — is php${PHP_VERSION}-fpm running?"
+    exit 1
+  fi
 fi
 if [ -z "$input" ]; then
   echo "${YELLOW}WARNING${NC}: \$1 parameter (domain name without TLD, which will be .laptop) required"
@@ -68,21 +91,33 @@ else
   if [ -f /etc/apache2/sites-enabled/$virtualhost_filename ]; then
     echo "/etc/apache2/sites-enabled/$virtualhost_filename already exists"
   else
-    current_directory=`pwd`
+    current_directory=$(realpath "$(pwd)")
     if [ -f /etc/apache2/sites-available/$virtualhost_filename ]; then
       rm /etc/apache2/sites-available/$virtualhost_filename
       rm /etc/apache2/sites-enabled/$virtualhost_filename
     fi
-    # We also enable .htaccess with AllowOverride All
+    # Build VirtualHost config — optionally with PHP-FPM handler
+    vhost_fpm_block=
+    if [ -n "$PHP_VERSION" ]; then
+      vhost_fpm_block="            <FilesMatch \\.php\$>
+                SetHandler \"proxy:unix:${fpm_socket}|fcgi://localhost\"
+            </FilesMatch>\n"
+    fi
     printf "<VirtualHost *:80>\n \
             ServerName $hostname\n \
             ServerAlias www.$hostname\n \
             DocumentRoot $current_directory\n \
             <Directory $current_directory>\n \
+              Options +FollowSymLinks\n \
               AllowOverride All\n \
+              Require all granted\n \
             </Directory>\n \
-    </VirtualHost>" > /etc/apache2/sites-available/$virtualhost_filename
+    ${vhost_fpm_block}</VirtualHost>" > /etc/apache2/sites-available/$virtualhost_filename
     ln -s /etc/apache2/sites-available/$virtualhost_filename /etc/apache2/sites-enabled/$virtualhost_filename
+    if [ -n "$PHP_VERSION" ]; then
+      a2enmod proxy proxy_fcgi > /dev/null
+      echo "${GREEN}INFO${NC}: Enabled Apache proxy_fcgi for PHP ${PHP_VERSION} FPM"
+    fi
 
     # Laravel / Winter
     if [ -f .env.example ] || [ -f .env ]; then
@@ -141,9 +176,7 @@ fi
 
 # ------------------------------------ Permissions (if in group www-data)
 if [ -n "$(groups | grep www-data)" ]; then
-  chown -R www-data:www-data 2> /dev/null
-  chmod -R o-w .   2> /dev/null
-  chmod -R o+w .   2> /dev/null
-  chmod -R ug+rw . 2> /dev/null
+  chgrp -R www-data .
+  chmod -R ug+rw .
 fi
 
