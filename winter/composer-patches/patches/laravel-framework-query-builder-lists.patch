@@ -1,0 +1,23 @@
+diff --git a/src/Illuminate/Database/Query/Builder.php b/src/Illuminate/Database/Query/Builder.php
+index de23e81..ac2825c 100755
+--- a/src/Illuminate/Database/Query/Builder.php
++++ b/src/Illuminate/Database/Query/Builder.php
+@@ -2938,6 +2938,18 @@ class Builder implements BuilderContract
+                     : $this->pluckFromObjectColumn($queryResult, $column, $key);
+     }
+ 
++    /**
++     * Winter's lists(), for connections that are plain Laravel ones.
++     *
++     * DBAuth makes the pgsql connection with Illuminate's ConnectionFactory, not Winter's, so
++     * Db::table() returns this builder rather than Winter's QueryBuilder. Winter core still calls
++     * Db::table(...)->lists() (VersionManager, PluginManager), which fails without this.
++     */
++    public function lists($column, $key = null)
++    {
++        return $this->pluck($column, $key)->all();
++    }
++
+     /**
+      * Strip off the table name or alias from a column identifier.
+      *

@@ -330,6 +330,37 @@ composer install
 echo "${GREEN}INFO${NC}: php artisan key:generate"
 php artisan key:generate
 
+# -------------------------------------------- Vendor patches (cweagans/composer-patches) — developer workstation only
+#
+# Fixes to composer packages (Laravel, Winter modules, phpcolors) that Acorn needs. They are patch
+# files that composer re-applies on every install and update, so a `composer update` can never
+# silently drop one, and one that no longer applies fails the update loudly instead.
+#
+# $script_dir/winter/composer-patches is the single source: patches.json lists the patches and
+# patches/ holds them, both copied verbatim into the project root, where composer-patches reads
+# patches.json by default. Relay carries the same two.
+#
+# Runs straight after composer install, for two reasons:
+#   - From here on the plugin patches every listed package as composer installs it (phpcolors
+#     arrives later with the TailwindUI plugin), so only the packages already installed need the
+#     repatch, and the later ku lang copies into modules/backend are not wiped by its reinstall.
+#   - It must precede winter:up: DBAuth makes the pgsql connection with Laravel's own
+#     ConnectionFactory, so Db::table() is a plain Illuminate builder, and Winter's VersionManager
+#     calls lists() on it while migrating. The laravel/framework patch adds that lists().
+#
+# composer-patches goes in require, not require-dev: a `composer install --no-dev` deploy would
+# otherwise not load the plugin and would install every package unpatched.
+if [ -z "$ACORN_GITHUB" ]; then
+	echo "${GREEN}INFO${NC}: Vendor patches from ${YELLOW}$script_dir/winter/composer-patches${NC}"
+	cp "$script_dir/winter/composer-patches/patches.json" .
+	cp -r "$script_dir/winter/composer-patches/patches" .
+	composer config allow-plugins.cweagans/composer-patches true
+	composer require $no_scripts --no-interaction "cweagans/composer-patches:^2.0"
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install cweagans/composer-patches"; exit 1; fi
+	composer patches-repatch --no-interaction
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: A vendor patch failed to apply — see patches.json"; exit 1; fi
+fi
+
 # -------------------------------------------- Laravel 10+ compatibility fix
 # lists() was removed in Laravel 10; WinterCMS 1.2.0's VersionManager still uses it.
 if [ -n "$APPLY_L10_FIX" ]; then
@@ -432,7 +463,7 @@ else
 	# Copy Kurdish system and backend lang.php files in to place
 	cp -r $script_dir/winter/system/lang/ku modules/system/lang
 	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install system module ku\lang.php"; exit 1; fi
-	cp -r $script_dir/winter/backend/lang/ku modules/system/lang
+	cp -r $script_dir/winter/backend/lang/ku modules/backend/lang
 	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install backend module ku\lang.php"; exit 1; fi
 	composer require $no_scripts winter/wn-translate-plugin
 	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to install package"; exit 1; fi

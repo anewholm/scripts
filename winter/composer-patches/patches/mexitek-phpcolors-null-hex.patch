@@ -1,0 +1,17 @@
+diff --git a/src/Mexitek/PHPColors/Color.php b/src/Mexitek/PHPColors/Color.php
+index 282e992..c9a769d 100644
+--- a/src/Mexitek/PHPColors/Color.php
++++ b/src/Mexitek/PHPColors/Color.php
+@@ -42,9 +42,10 @@ class Color
+      * @param string $hex
+      * @throws Exception
+      */
+-    public function __construct(string $hex)
++    public function __construct(?string $hex)
+     {
+-        $color = self::sanitizeHex($hex);
++        // Winter's TailwindUI skin passes NULL when a brand colour is not set: fall back to black
++        $color = self::sanitizeHex($hex ?: '#000');
+         $this->_hex = $color;
+         $this->_hsl = self::hexToHsl($color);
+         $this->_rgb = self::hexToRgb($color);

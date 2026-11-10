@@ -1,15 +1,31 @@
---- modules/backend/widgets/Filter.php
-+++ modules/backend/widgets/Filter.php
-@@ -119,7 +119,7 @@
+diff --git a/widgets/Filter.php b/widgets/Filter.php
+index ce30f85..1b83396 100644
+--- a/widgets/Filter.php
++++ b/widgets/Filter.php
+@@ -119,7 +119,8 @@ class Filter extends WidgetBase
                      $after = $scope->value[0]->format('Y-m-d H:i:s');
                      $before = $scope->value[1]->format('Y-m-d H:i:s');
-
+ 
 -                    if (strcasecmp($after, '0000-01-01 00:00:00') > 0) {
++                    // PostgreSQL has no year 0000, so the open-ended lower bound is 0001-01-01
 +                    if (strcasecmp($after, '0001-01-01 00:00:00') > 0) {
                          $params['afterStr'] = Backend::dateTime($scope->value[0], ['formatAlias' => 'dateMin']);
                          $params['after']    = $after;
                      }
-@@ -1077,7 +1077,7 @@
+@@ -419,6 +420,12 @@ class Filter extends WidgetBase
+      */
+     protected function getOptionsFromModel($scope, $searchQuery = null)
+     {
++        // Acorn's hasManyDeep scopes register no scope model, because their value is only reachable in SQL.
++        // Offer no options rather than letting the RelationManager throw on the missing key
++        if (!isset($this->scopeModels[$scope->scopeName])) {
++            return collect();
++        }
++
+         $model = $this->scopeModels[$scope->scopeName];
+ 
+         $query = $model->newQuery();
+@@ -1078,7 +1085,7 @@ class Filter extends WidgetBase
                          $dates[] = Carbon::createFromFormat('Y-m-d H:i:s', $date);
                      } elseif (empty($date)) {
                          if ($i == 0) {

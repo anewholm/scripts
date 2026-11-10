@@ -1,0 +1,16 @@
+diff --git a/classes/FormField.php b/classes/FormField.php
+index 53c2a46..59b6166 100644
+--- a/classes/FormField.php
++++ b/classes/FormField.php
+@@ -681,7 +681,10 @@ class FormField
+         $last = array_pop($parts);
+ 
+         foreach ($parts as $part) {
+-            $model = $model->{$part};
++            // On create, a nested relation field such as user[avatar] has no related model yet,
++            // so walk on to an empty instance of the related class instead of NULL
++            $nextModel = $model->{$part};
++            $model = $nextModel ?? $model->{$part}()->getRelated();
+         }
+ 
+         return [$model, $last];

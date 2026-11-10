@@ -1,0 +1,14 @@
+{
+    "patches": {
+        "laravel/framework": {
+            "Query\\Builder: Winter's lists(), because DBAuth's pgsql connection is a plain Laravel one": "patches/laravel-framework-query-builder-lists.patch"
+        },
+        "winter/wn-backend-module": {
+            "FormField: nested relation fields such as user[avatar] resolve to the related class on create": "patches/winter-wn-backend-module-formfield-nested-relation.patch",
+            "Filter: PostgreSQL has no year 0000, and Acorn hasManyDeep scopes have no scope model": "patches/winter-wn-backend-module-filter-postgres-and-deep-scopes.patch"
+        },
+        "mexitek/phpcolors": {
+            "Color: an unset brand colour (NULL) falls back to black": "patches/mexitek-phpcolors-null-hex.patch"
+        }
+    }
+}
