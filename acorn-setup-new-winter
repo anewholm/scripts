@@ -265,20 +265,47 @@ if [ -d winter_template ]; then
 	cp -r winter_template "$name"
 	if [ "$?" != "0" ]; then exit 1; fi
 else
+	# --no-install: the advisory policy below must be in composer.json before Composer first resolves
 	if [ -n "$WINTER_VERSION" ]; then
 		echo "${GREEN}INFO${NC}: Installing WinterCMS ${YELLOW}$WINTER_VERSION${NC} into directory $(pwd)/${YELLOW}$name${NC}"
-		composer create-project wintercms/winter:"$WINTER_VERSION" "$name" --prefer-dist --no-interaction
+		composer create-project wintercms/winter:"$WINTER_VERSION" "$name" --prefer-dist --no-interaction --no-install --no-scripts
 	else
 		echo "${GREEN}INFO${NC}: Installing latest Winter into directory $(pwd)/${YELLOW}$name${NC}"
 		echo "  Note that Winter:1.2.6=>7 has incompatible changes for Trait HasRelations"
 		# https://getcomposer.org/doc/03-cli.md#create-project
 		# We have our own install procedures below, so we disable the standard scripts
-		composer create-project wintercms/winter "$name" --no-scripts
+		composer create-project wintercms/winter "$name" --no-install --no-scripts
 	fi
 	if [ "$?" != "0" ]; then exit 1; fi
 fi
 cd "$name"
 chmod +x artisan
+
+# -------------------------------------------- Composer advisory policy (until Winter 1.3)
+#
+# Composer 2.9+ refuses by default to resolve packages with known security advisories, and every
+# Laravel 9 release has some. Winter 1.2.x is Laravel 9, so a fresh resolve fails outright:
+# create-project here, and every `composer require` below. $script_dir/winter/composer-policy.json
+# accepts exactly the advisories that have been reviewed, each with its reason, and it goes into
+# the project's composer.json config before the first resolve. Any advisory not listed there
+# still blocks, which forces a review. Installing from an existing composer.lock is not blocked.
+#
+# All branches, the copied winter_template included, because the composer require calls below
+# resolve too. Relay's composer.json carries the same policy. Remove this step at Winter 1.3.
+echo "${GREEN}INFO${NC}: Composer advisory policy from ${YELLOW}$script_dir/winter/composer-policy.json${NC}"
+jq --indent 4 --slurpfile policy "$script_dir/winter/composer-policy.json" '.config.policy = $policy[0]' composer.json > composer.json.policy
+if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: Failed to add the advisory policy to composer.json"; exit 1; fi
+mv composer.json.policy composer.json
+
+if [ ! -d vendor ]; then
+	echo "${GREEN}INFO${NC}: composer install (first resolve, with the advisory policy)"
+	composer install --no-scripts --no-interaction
+	if [ "$?" != 0 ]; then echo "${RED}ERROR${NC}: composer install failed"; exit 1; fi
+	# create-project ran Winter's own post-create-project-cmd scripts for a pinned version; keep that
+	if [ -n "$WINTER_VERSION" ]; then
+		composer run-script post-create-project-cmd --no-interaction
+	fi
+fi
 
 db_host="${DB_HOST_FLAG:-127.0.0.1}"
 db_username="${DB_USERNAME_FLAG:-$name}"

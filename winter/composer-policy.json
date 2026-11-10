@@ -1,0 +1,13 @@
+{
+    "advisories": {
+        "ignore-id": {
+            "PKSA-b41t-wbzk-9q51": "Laravel 9, no 9.x fix. TokenGuard auth bypass: Acorn and Relay use no token guard. Accepted until Winter 1.3 (Laravel 12/13).",
+            "PKSA-d5tc-s1qs-h781": "Laravel 9, no 9.x fix. XSS on the debug error page: APP_DEBUG is false in production. Accepted until Winter 1.3.",
+            "PKSA-m5cs-t1y6-qpcs": "Laravel 9, no 9.x fix. Temporary signed URL path confusion: no signed URLs are used. Accepted until Winter 1.3.",
+            "PKSA-3r5d-mb8f-1qw9": "Laravel 9, no 9.x fix. CRLF in the email validation rule: only admin-only forms and a console command use it. Accepted until Winter 1.3.",
+            "PKSA-mdq4-51ck-6kdq": "Laravel 9, no 9.x fix. Same CRLF email-rule issue as PKSA-3r5d-mb8f-1qw9 (CVE-2026-48019). Accepted until Winter 1.3.",
+            "PKSA-8qx3-n5y5-vvnd": "Laravel 9, no 9.x fix. File validation bypass for arrays of uploads: none are validated. Accepted until Winter 1.3.",
+            "PKSA-y2cr-5h3j-g3ys": "firebase/php-jwt 6, low. Weak encryption only with short keys, fixed in 7.0. Accepted until php-jwt 7 is adopted."
+        }
+    }
+}
